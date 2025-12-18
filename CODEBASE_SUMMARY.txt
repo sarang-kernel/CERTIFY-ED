@@ -176,7 +176,7 @@ obs = calc.compute_all_standard(H, eigenpairs, H_norm)
 
 DEVELOPMENT INSTALL:
 ```bash
-git clone https://github.com/yourusername/certify-ed.git
+git clone https://github.com/sarang-kernel/CERTIFY-ED 
 cd certify-ed
 pip install -e .
 ```

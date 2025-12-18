@@ -35,6 +35,7 @@ LICENSE                         # MIT License
 ## Module Overview
 
 ### `hamiltonian.py`
+
 **Certified Hamiltonian Construction and Symbolic Verification**
 
 - `CertifiedHamiltonian`: Main class for Hamiltonian representation
@@ -44,6 +45,7 @@ LICENSE                         # MIT License
   - `to_numeric()`: Convert to floating-point matrix
 
 ### `diagonalizer.py`
+
 **Multi-Oracle Eigendecomposition and Consensus**
 
 - `MultiOracleDiagonalizer`: Orchestrates multi-oracle computation
@@ -55,6 +57,7 @@ LICENSE                         # MIT License
   - `_validate_agreement()`: Check oracle agreement
 
 ### `certificates.py`
+
 **Proof Certificate Generation and Management**
 
 - `CertifiedEigenpair`: Single eigenvalue-eigenvector pair with metadata
@@ -73,6 +76,7 @@ LICENSE                         # MIT License
   - `export()`: Export certificate to file
 
 ### `observables.py`
+
 **Observable Calculation with Error Propagation**
 
 - `ObservableCalculator`: Compute physical quantities
@@ -83,6 +87,7 @@ LICENSE                         # MIT License
   - `compute_all_standard()`: Compute all standard observables
 
 ### `engine.py`
+
 **Main Certification Pipeline Orchestrator**
 
 - `CertificationEngine`: Complete workflow management
@@ -155,7 +160,7 @@ print(f"Residual: {residual:.2e}")
 
 # Get spectral gap
 if len(certificate.eigenpairs) >= 2:
-    gap = (certificate.eigenpairs[1].eigenvalue - 
+    gap = (certificate.eigenpairs[1].eigenvalue -
            certificate.eigenpairs[0].eigenvalue)
     print(f"Spectral gap: {gap:.10f}")
 ```
@@ -178,6 +183,7 @@ CertifiedHamiltonian.TFIM(L: int, J: float, h: float) -> CertifiedHamiltonian
 Create transverse-field Ising model Hamiltonian.
 
 **Args:**
+
 - `L`: Chain length
 - `J`: Coupling strength (default 1.0)
 - `h`: Transverse field (default 1.0)
@@ -197,6 +203,7 @@ engine.certify_hamiltonian(
 Run complete certification pipeline.
 
 **Args:**
+
 - `ham`: CertifiedHamiltonian instance
 - `tolerance`: Oracle agreement tolerance
 - `use_lanczos`: Enable Lanczos for sparse systems
@@ -212,6 +219,7 @@ certificate.to_json(filename: str = None) -> str
 Export certificate to JSON format.
 
 **Args:**
+
 - `filename`: Optional output file path
 
 **Returns:** JSON string (and writes file if filename provided)
@@ -233,12 +241,12 @@ pytest --cov=certify_ed tests/
 ## Performance Characteristics
 
 | System Size | Dimension | Time (s) | Memory (MB) |
-|-------------|-----------|----------|------------|
-| N=4         | 16        | 0.01     | 1          |
-| N=6         | 64        | 0.05     | 2          |
-| N=8         | 256       | 0.3      | 8          |
-| N=10        | 1024      | 2.0      | 32         |
-| N=12        | 4096      | 15.0     | 128        |
+| ----------- | --------- | -------- | ----------- |
+| N=4         | 16        | 0.01     | 1           |
+| N=6         | 64        | 0.05     | 2           |
+| N=8         | 256       | 0.3      | 8           |
+| N=10        | 1024      | 2.0      | 32          |
+| N=12        | 4096      | 15.0     | 128         |
 
 ## License
 
@@ -260,8 +268,9 @@ If you use CERTIFY-ED in your research, please cite:
 ## Support
 
 For issues, questions, or contributions:
-- GitHub Issues: https://github.com/yourusername/certify-ed/issues
-- Email: [your.email@institution.edu]
+
+- GitHub Issues: https://github.com/ sarang-kernel/CERTIFY-ED/issues
+- Email: [sarangvehale2@gmail.com]
 
 ---
 
