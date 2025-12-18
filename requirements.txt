@@ -1,0 +1,18 @@
+# CERTIFY-ED Requirements
+
+# Core dependencies
+numpy>=1.20.0
+scipy>=1.7.0
+
+# Optional: HDF5 support for large certificates
+h5py>=3.0.0
+
+# Optional: Symbolic computation (SageMath)
+# sage>=9.8  # Install separately
+
+# Development dependencies
+pytest>=6.0.0
+pytest-cov>=2.12.0
+black>=22.0.0
+flake8>=4.0.0
+sphinx>=4.0.0
