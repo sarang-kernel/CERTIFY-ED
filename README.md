@@ -50,15 +50,15 @@ print(f"Ground state: {E_0:.10f}")
 - [Installation & Setup](docs/README.md)
 - [API Reference](docs/API.md)
 - [Tutorial](docs/TUTORIAL.md)
-- [Paper](https://arxiv.org/abs/XXXX.XXXXX) (preprint)
+<!-- - [Paper](https://arxiv.org/abs/XXXX.XXXXX) (preprint) -->
 
 ## Performance
 
-| System Size | Time | Memory |
-|-------------|------|--------|
-| N=4         | 10ms | 1 MB   |
-| N=8         | 300ms| 8 MB   |
-| N=12        | 15s  | 128 MB |
+| System Size | Time  | Memory |
+| ----------- | ----- | ------ |
+| N=4         | 10ms  | 1 MB   |
+| N=8         | 300ms | 8 MB   |
+| N=12        | 15s   | 128 MB |
 
 ## Citation
 
@@ -77,8 +77,6 @@ MIT License - See LICENSE file
 
 ## Contact
 
-[your.email@institution.edu]
+[sarangvehale2@gmail.com]
 
 ---
-
-**CERTIFY-ED** - Rigorous verification for quantum computing research
