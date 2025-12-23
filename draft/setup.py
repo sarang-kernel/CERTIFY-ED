@@ -17,7 +17,7 @@ setup(
     description="Formal verification framework for quantum many-body exact diagonalization",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/certify-ed",
+    url="https://github.com/sarang-kernel/CERTIFY-ED",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
