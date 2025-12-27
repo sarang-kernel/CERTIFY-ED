@@ -8,7 +8,7 @@ Thank you for considering contributing to CERTIFY-ED!
 2. Clone your fork locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/certify-ed
+git clone https://github.com/sarang-kernel/CERTIFY-ED.git
 cd certify-ed
 ```
 

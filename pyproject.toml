@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Sarang Vehale", email = "your.email@example.com"}
+    {name = "Sarang Vehale", email = "sarangvehale2@gmail.com"}
 ]
 keywords = ["quantum", "physics", "exact-diagonalization", "certification", "many-body"]
 classifiers = [
@@ -38,10 +38,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/certify-ed"
-Documentation = "https://github.com/yourusername/certify-ed"
-Repository = "https://github.com/yourusername/certify-ed"
-Issues = "https://github.com/yourusername/certify-ed/issues"
+Homepage = "https://github.com/sarang-kernel/CERTIFY-ED.git"
+Documentation = "https://github.com/sarang-kernel/CERTIFY-ED.git"
+Repository = "https://github.com/sarang-kernel/CERTIFY-ED.git"
+Issues = "https://github.com/sarang-kernel/CERTIFY-ED.git/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

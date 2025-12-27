@@ -14,7 +14,7 @@
 For active development and contribution:
 
 ```bash
-git clone https://github.com/yourusername/certify-ed
+git clone https://github.com/sarang-kernel/CERTIFY-ED.git
 cd certify-ed
 pip install -e .
 ```
@@ -26,7 +26,7 @@ This installs the package in "editable" mode, so changes to the source code are 
 For end users:
 
 ```bash
-git clone https://github.com/yourusername/certify-ed
+git clone https://github.com/sarang-kernel/CERTIFY-ED.git
 cd certify-ed
 pip install .
 ```

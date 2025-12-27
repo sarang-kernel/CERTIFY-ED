@@ -161,7 +161,7 @@ FOR JOURNAL SUBMISSION
    Add to your paper:
 
    "The complete source code for CERTIFY-ED is available at:
-   https://github.com/yourusername/certify-ed
+   https://github.com/sarang-kernel/CERTIFY-ED.git 
    Version 1.0.0 (DOI: [Zenodo DOI])
 
    All figures can be reproduced by running:
@@ -280,8 +280,8 @@ SUPPORT
 ═══════════════════════════════════════════════════════════════════════════════
 
 For questions or issues:
-- GitHub: https://github.com/yourusername/certify-ed/issues
-- Email: your.email@example.com
+- GitHub: https://github.com/sarang-kernel/CERTIFY-ED.git
+- Email: sarangvehale2@gmail.com
 
 
 ═══════════════════════════════════════════════════════════════════════════════
