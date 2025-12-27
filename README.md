@@ -18,16 +18,17 @@ CERTIFY-ED implements a complete five-phase protocol for certified exact diagona
 ### Theoretical Foundation
 
 All three theorems are fully implemented:
+
 - **Theorem 1**: Spectral certification via Davis-Kahan bounds
 - **Theorem 2**: Observable error propagation bounds
 - **Theorem 3**: Cross-platform reproducibility guarantees
 
 ## Installation
 
-### From source (recommended for publication)
+### From source
 
 ```bash
-git clone https://github.com/yourusername/certify-ed
+git clone https://github.com/sarang-kernel/CERTIFY-ED.git
 cd certify-ed
 pip install -e .
 ```
@@ -75,6 +76,7 @@ python scripts/run_complete_pipeline.py
 ```
 
 This will:
+
 1. Run all validation experiments (§6.1-6.3)
 2. Generate all 8 publication-quality figures
 3. Verify all theoretical claims
@@ -92,17 +94,20 @@ python scripts/validate_reproducibility.py
 ## Features
 
 ✅ **Complete Implementation**
+
 - All 5 sequential phases (Paper §3)
 - 3 independent oracles with consensus
 - Cryptographic certificate hashing (SHA-256)
 - Certified error bounds (Theorem 2)
 
 ✅ **Standard Models**
+
 - Transverse-Field Ising (TFIM)
 - Heisenberg XXX / XXZ
 - Extensible custom Hamiltonians
 
 ✅ **Validation**
+
 - Bethe ansatz comparison (15-16 digit agreement)
 - Cross-platform reproducibility (bitwise identical)
 - Complete test suite with >90% coverage
@@ -163,13 +168,13 @@ See `examples/basic_usage.py` for a complete walkthrough.
 
 ## Performance
 
-| System Size | Dimension | Time   |
-|------------|-----------|--------|
-| N=4        | 16        | 0.01s  |
-| N=6        | 64        | 0.1s   |
-| N=8        | 256       | 1s     |
-| N=10       | 1024      | 10s    |
-| N=12       | 4096      | 5min   |
+| System Size | Dimension | Time  |
+| ----------- | --------- | ----- |
+| N=4         | 16        | 0.01s |
+| N=6         | 64        | 0.1s  |
+| N=8         | 256       | 1s    |
+| N=10        | 1024      | 10s   |
+| N=12        | 4096      | 5min  |
 
 ## Citation
 
@@ -177,10 +182,10 @@ If you use CERTIFY-ED in your research, please cite:
 
 ```bibtex
 @article{vehale2025certify,
-  title={CERTIFY-ED: A Symbolic Validation Framework for Exact Diagonalization 
+  title={CERTIFY-ED: A Symbolic Validation Framework for Exact Diagonalization
          of Quantum Many-Body Systems},
   author={Vehale, Sarang},
-  journal={[Journal Name]},
+  journal={[Journal Name]},     //not yet published
   year={2025}
 }
 ```
@@ -201,17 +206,13 @@ Contributions are welcome! Please:
 
 ## Issues & Support
 
-- **Bug Reports**: [GitHub Issues](https://github.com/yourusername/certify-ed/issues)
+- **Bug Reports**: [GitHub Issues](https://github.com/sarang-kernel/CERTIFY-ED.git/issues)
 - **Questions**: Open a discussion or issue
 
 ## Contact
 
 **Author**: Sarang Vehale  
-**Email**: your.email@example.com  
+**Email**: sarangvehale2@gmail.com  
 **Institution**: National Forensic Sciences University
 
 ---
-
-**Status**: Production-Ready for Publication ✅  
-**Version**: 1.0.0  
-**Last Updated**: December 2025
