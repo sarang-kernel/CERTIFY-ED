@@ -6,8 +6,7 @@ CERTIFY-ED is a Python framework for exact diagonalization (ED) of quantum
 many-body Hamiltonians that ships with **thirteen independent validation
 layers**. The goal is not to be the fastest ED code, but to produce
 results that come with strong, machine-checkable certificates of
-correctness — which is what computational physics publications need
-when ED outputs feed into theoretical claims.
+correctness.
 
 ## What's in the box
 
@@ -24,7 +23,7 @@ when ED outputs feed into theoretical claims.
   downstream consumer can detect tampering.
 - **Master runner with embedded pytest** — single command runs the whole
   pipeline, streams progress to the terminal, and exports JSON + figures
-  + a tar.gz archive.
+  - a tar.gz archive.
 
 ## Quick install
 
@@ -69,7 +68,7 @@ Certificate(evals, evecs, H, consensus_report=report).save('cert.json')
 
 A single comparison with one external code is one data point. If both codes
 share a bug — say, a common LAPACK driver — neither will catch it. Real
-verification needs many *independent* checks that cannot all fail in the
+verification needs many _independent_ checks that cannot all fail in the
 same way. The thirteen validators here cover algebraic invariants, analytic
 limits, alternative algorithms, alternative arithmetic precisions,
 alternative codes, conservation laws, dynamical consistency, asymptotic

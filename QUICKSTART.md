@@ -122,7 +122,7 @@ Validator suite total: 78/78 tests passed
   Archive:                    results/run_20260507_041350.tar.gz
 ```
 
-The archive is what you attach to a paper submission. It contains:
+The archive is what you could attach to a submission. It contains:
 
 - `pytest_output.txt` — full pytest log
 - `validators/*.json` — per-validator detailed results
