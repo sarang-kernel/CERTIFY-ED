@@ -1,0 +1,113 @@
+Metadata-Version: 2.4
+Name: certify-ed
+Version: 1.0.0
+Summary: Verified exact diagonalization for quantum many-body systems
+Home-page: https://github.com/sarangvehale/certify-ed
+Author: Sarang Vehale
+Author-email: sarangvehale2@gmail.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: scipy>=1.7.0
+Provides-Extra: validation
+Requires-Dist: quspin>=0.3.6; extra == "validation"
+Provides-Extra: plotting
+Requires-Dist: matplotlib>=3.5.0; extra == "plotting"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=3.0.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# CERTIFY-ED: Verification Framework for Exact Diagonalization
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+A verification framework for exact diagonalization of quantum many-body systems, providing:
+
+- **Symbolic Hermiticity verification** before numerical computation
+- **Multi-oracle consensus validation** using independent LAPACK eigensolvers
+- **Exportable verification certificates** with SHA-256 integrity protection
+- **Comprehensive benchmarking suite** including QuSpin cross-validation
+- **Master runner script** that produces a single archive of all results
+
+## Installation
+
+```bash
+git clone https://github.com/sarangvehale/certify-ed.git
+cd certify-ed
+pip install -e .
+```
+
+## Quick Start
+
+```python
+from certify_ed import build_tfim, MultiOracle, Certificate
+
+# Build 4-site TFIM
+H = build_tfim(n_sites=4, J=1.0, h=0.5)
+
+# Diagonalize with multi-oracle consensus
+oracle = MultiOracle()
+evals, evecs, report = oracle.diagonalize_with_consensus(H)
+
+# Generate verification certificate
+cert = Certificate(evals, evecs, H, metadata={'model': 'TFIM'})
+cert.save('result.json')
+print(cert.summary())
+```
+
+## Run All Benchmarks
+
+To generate complete benchmark data for publication:
+
+```bash
+python run_all_benchmarks.py
+```
+
+This produces a `.tar.gz` archive with:
+- Analytic validation results
+- QuSpin cross-validation (if installed)
+- Performance scaling data
+- Platform reproducibility data
+- Error injection tests
+- Generated figures
+- Aggregated manuscript data
+
+## Documentation
+
+- [Code Documentation](docs/CODE_DOCUMENTATION.md) — Complete API reference
+
+## Examples
+
+- `examples/example_01_basic_workflow.py` — Complete TFIM workflow
+- `examples/example_02_validation.py` — Validation against analytic solutions
+
+## Testing
+
+```bash
+pytest tests/ -v
+```
+
+## License
+
+MIT License

@@ -1,0 +1,8 @@
+{
+  "returncode": 1,
+  "passed": 0,
+  "failed": 0,
+  "errors": 0,
+  "all_passed": false,
+  "output_file": "test_output.txt"
+}

@@ -1,0 +1,48 @@
+{
+  "run_timestamp": "2026-05-06T17:07:02.964433",
+  "total_elapsed_seconds": 13.40308690071106,
+  "mode": "full",
+  "flags": {
+    "no_tests": false,
+    "no_quspin": false
+  },
+  "phases": {
+    "platform": {
+      "status": "success",
+      "elapsed_seconds": 0.16822314262390137
+    },
+    "tests": {
+      "status": "success",
+      "elapsed_seconds": 0
+    },
+    "analytic": {
+      "status": "success",
+      "elapsed_seconds": 0.002771615982055664
+    },
+    "quspin": {
+      "status": "success",
+      "elapsed_seconds": 0.3830571174621582
+    },
+    "error_injection": {
+      "status": "success",
+      "elapsed_seconds": 0.0013828277587890625
+    },
+    "performance": {
+      "status": "success",
+      "elapsed_seconds": 12.826600313186646
+    }
+  },
+  "output_files": [
+    "analytic_results.json",
+    "error_injection_results.json",
+    "manuscript_data.json",
+    "performance_results.json",
+    "platform_results.json",
+    "quspin_results.json",
+    "test_output.txt",
+    "test_results.json"
+  ],
+  "output_directories": [
+    "figures"
+  ]
+}

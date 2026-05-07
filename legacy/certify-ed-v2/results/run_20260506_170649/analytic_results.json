@@ -1,0 +1,129 @@
+{
+  "n_total": 6,
+  "n_passed": 6,
+  "n_failed": 0,
+  "all_passed": true,
+  "max_residual_overall": 3.241258282463453e-15,
+  "max_disagreement_overall": 9.325873406851315e-15,
+  "individual_results": [
+    {
+      "test_name": "single_qubit",
+      "description": "Single qubit, H = -0.7*X",
+      "system_size": 1,
+      "dimension": 2,
+      "expected_eigenvalues": [
+        -0.7,
+        0.7
+      ],
+      "computed_eigenvalues": [
+        -0.7,
+        0.7
+      ],
+      "max_error": 0.0,
+      "max_residual": 0.0,
+      "consensus": true,
+      "max_disagreement": 0.0,
+      "passed": true
+    },
+    {
+      "test_name": "two_site_heisenberg",
+      "description": "Two-site Heisenberg, H = J*S1.S2",
+      "system_size": 2,
+      "dimension": 4,
+      "parameters": {
+        "J": 1.0
+      },
+      "expected_eigenvalues": [
+        -0.75,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "computed_eigenvalues": [
+        -0.75,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "singlet_energy_exact": -0.75,
+      "singlet_energy_computed": -0.75,
+      "triplet_energy_exact": 0.25,
+      "max_error": 0.0,
+      "max_residual": 0.0,
+      "consensus": "True",
+      "max_disagreement": 5.551115123125783e-16,
+      "passed": true
+    },
+    {
+      "test_name": "three_site_heisenberg_pbc",
+      "description": "Three-site Heisenberg with periodic BC",
+      "system_size": 3,
+      "dimension": 8,
+      "parameters": {
+        "J": 1.0,
+        "boundary": "periodic"
+      },
+      "expected_ground_energy": -0.75,
+      "computed_ground_energy": -0.7500000000000001,
+      "ground_energy_error": 1.1102230246251565e-16,
+      "max_residual": 2.884444029575346e-16,
+      "consensus": "True",
+      "max_disagreement": 5.551115123125783e-16,
+      "passed": true
+    },
+    {
+      "test_name": "tfim_classical_limit",
+      "description": "TFIM at h=0 (classical Ising, degenerate GS)",
+      "system_size": 4,
+      "dimension": 16,
+      "parameters": {
+        "J": 1.0,
+        "h": 0.0,
+        "N": 4
+      },
+      "expected_ground_energy": -3.0,
+      "computed_ground_energy": -3.0,
+      "ground_energy_error": 0.0,
+      "degeneracy_gap": 0.0,
+      "is_degenerate": true,
+      "max_residual": 0.0,
+      "consensus": true,
+      "max_disagreement": 0.0,
+      "passed": true
+    },
+    {
+      "test_name": "tfim_quantum_limit",
+      "description": "TFIM at J=0 (transverse field only)",
+      "system_size": 4,
+      "dimension": 16,
+      "parameters": {
+        "J": 0.0,
+        "h": 1.0,
+        "N": 4
+      },
+      "expected_ground_energy": -4.0,
+      "computed_ground_energy": -3.9999999999999987,
+      "ground_energy_error": 1.3322676295501878e-15,
+      "max_residual": 3.241258282463453e-15,
+      "consensus": "True",
+      "max_disagreement": 9.325873406851315e-15,
+      "passed": true
+    },
+    {
+      "test_name": "xx_chain",
+      "description": "XX chain (free fermion solvable)",
+      "system_size": 4,
+      "dimension": 16,
+      "parameters": {
+        "J": 1.0,
+        "Delta": 0.0,
+        "N": 4
+      },
+      "computed_ground_energy": -1.118033988749895,
+      "max_residual": 6.866350197783356e-16,
+      "consensus": "True",
+      "max_disagreement": 2.3314683517128287e-15,
+      "passed": true
+    }
+  ]
+}

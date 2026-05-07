@@ -1,0 +1,42 @@
+{
+  "n_total": 4,
+  "n_passed": 4,
+  "all_passed": true,
+  "individual_results": [
+    {
+      "test_name": "non_hermitian_detection",
+      "description": "Inject anti-Hermitian term, check detection",
+      "injected_perturbation_norm": 0.5,
+      "max_hermiticity_deviation": 0.5,
+      "detected": true,
+      "passed": true,
+      "note": "Detection means the framework correctly identifies the error"
+    },
+    {
+      "test_name": "matrix_corruption_detection",
+      "description": "Compute on corrupted matrix, check residuals against original",
+      "injected_noise_norm": 1.1259780514216166e-05,
+      "max_residual": 3.692436989489312e-06,
+      "expected_residual_order": 1e-06,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "oracle_disagreement_detection",
+      "description": "Add corrupted oracle, check consensus failure",
+      "consensus": "False",
+      "max_disagreement": 0.0010000000000000009,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "residual_amplification",
+      "description": "Perturb eigenvector by 1%, residual should grow",
+      "mixing_amplitude": 0.01,
+      "residual_correct": 8.252325904466732e-16,
+      "residual_perturbed": 0.0019392687037346503,
+      "amplification_ratio": 2349966210962.3945,
+      "passed": true
+    }
+  ]
+}

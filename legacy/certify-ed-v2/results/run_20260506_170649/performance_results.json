@@ -1,0 +1,322 @@
+{
+  "individual_results": [
+    {
+      "test_name": "performance_scaling",
+      "description": "Scaling from N=2 to N=10",
+      "n_runs_per_size": 5,
+      "sizes": [
+        {
+          "n_sites": 2,
+          "dimension": 4,
+          "build_time": {
+            "mean_seconds": 3.635999989152575e-05,
+            "std_seconds": 2.835387559066264e-06,
+            "min_seconds": 3.3380998502252623e-05,
+            "max_seconds": 4.0173999877879396e-05,
+            "mean_ms": 0.03635999989152575,
+            "std_ms": 0.002835387559066264
+          },
+          "single_oracle_time": {
+            "mean_seconds": 2.250359975732863e-05,
+            "std_seconds": 4.642910464662368e-06,
+            "min_seconds": 1.919499845826067e-05,
+            "max_seconds": 3.155800004606135e-05,
+            "mean_ms": 0.02250359975732863,
+            "std_ms": 0.004642910464662368
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.0001087179989553988,
+            "std_seconds": 8.432976955259619e-06,
+            "min_seconds": 9.904199760057963e-05,
+            "max_seconds": 0.00011952999921049923,
+            "mean_ms": 0.1087179989553988,
+            "std_ms": 0.00843297695525962
+          },
+          "consensus_overhead": 4.83113813468857,
+          "matrix_memory_mb": 0.000244140625
+        },
+        {
+          "n_sites": 3,
+          "dimension": 8,
+          "build_time": {
+            "mean_seconds": 8.989233295627248e-05,
+            "std_seconds": 1.8949664299571298e-06,
+            "min_seconds": 8.84830005816184e-05,
+            "max_seconds": 9.257100100512616e-05,
+            "mean_ms": 0.08989233295627248,
+            "std_ms": 0.00189496642995713
+          },
+          "single_oracle_time": {
+            "mean_seconds": 2.635819910210557e-05,
+            "std_seconds": 4.020901864318539e-06,
+            "min_seconds": 2.25609983317554e-05,
+            "max_seconds": 3.253899922128767e-05,
+            "mean_ms": 0.026358199102105573,
+            "std_ms": 0.004020901864318539
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.0002452916007314343,
+            "std_seconds": 0.00022381885713638477,
+            "min_seconds": 0.00013144199692760594,
+            "max_seconds": 0.0006929160008439794,
+            "mean_ms": 0.2452916007314343,
+            "std_ms": 0.22381885713638477
+          },
+          "consensus_overhead": 9.306083461211873,
+          "matrix_memory_mb": 0.0009765625
+        },
+        {
+          "n_sites": 4,
+          "dimension": 16,
+          "build_time": {
+            "mean_seconds": 0.0001802889977019125,
+            "std_seconds": 3.4079825438088166e-06,
+            "min_seconds": 0.0001762549982231576,
+            "max_seconds": 0.00018458999693393707,
+            "mean_ms": 0.1802889977019125,
+            "std_ms": 0.0034079825438088165
+          },
+          "single_oracle_time": {
+            "mean_seconds": 4.298700077924878e-05,
+            "std_seconds": 3.7492174207828517e-06,
+            "min_seconds": 3.917200228897855e-05,
+            "max_seconds": 4.8419002268929034e-05,
+            "mean_ms": 0.042987000779248774,
+            "std_ms": 0.0037492174207828517
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.00018121380126103758,
+            "std_seconds": 7.166937454429456e-06,
+            "min_seconds": 0.00017405100152245723,
+            "max_seconds": 0.00019354699907125905,
+            "mean_ms": 0.1812138012610376,
+            "std_ms": 0.007166937454429457
+          },
+          "consensus_overhead": 4.215548839790548,
+          "matrix_memory_mb": 0.00390625
+        },
+        {
+          "n_sites": 5,
+          "dimension": 32,
+          "build_time": {
+            "mean_seconds": 0.00036280833470906754,
+            "std_seconds": 3.840385297473169e-06,
+            "min_seconds": 0.00035960300010629,
+            "max_seconds": 0.0003682080023281742,
+            "mean_ms": 0.36280833470906754,
+            "std_ms": 0.003840385297473169
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.00012529039886430838,
+            "std_seconds": 6.730903976268017e-06,
+            "min_seconds": 0.00011973999789915979,
+            "max_seconds": 0.0001377829976263456,
+            "mean_ms": 0.12529039886430837,
+            "std_ms": 0.006730903976268017
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.0059929026007012,
+            "std_seconds": 0.0009044436639213293,
+            "min_seconds": 0.004966865002643317,
+            "max_seconds": 0.00700495799901546,
+            "mean_ms": 5.9929026007012,
+            "std_ms": 0.9044436639213292
+          },
+          "consensus_overhead": 47.832097710788,
+          "matrix_memory_mb": 0.015625
+        },
+        {
+          "n_sites": 6,
+          "dimension": 64,
+          "build_time": {
+            "mean_seconds": 0.0009259316660366798,
+            "std_seconds": 3.8178753224191165e-06,
+            "min_seconds": 0.0009208449992001988,
+            "max_seconds": 0.0009300429992435966,
+            "mean_ms": 0.9259316660366798,
+            "std_ms": 0.0038178753224191167
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.008772696401138091,
+            "std_seconds": 0.009961895221861587,
+            "min_seconds": 0.00040084800275508314,
+            "max_seconds": 0.020991680001316126,
+            "mean_ms": 8.772696401138091,
+            "std_ms": 9.961895221861587
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.029895063399453647,
+            "std_seconds": 0.01034918637999649,
+            "min_seconds": 0.022976965999987442,
+            "max_seconds": 0.05042394200063427,
+            "mean_ms": 29.895063399453647,
+            "std_ms": 10.34918637999649
+          },
+          "consensus_overhead": 3.4077394261102354,
+          "matrix_memory_mb": 0.0625
+        },
+        {
+          "n_sites": 7,
+          "dimension": 128,
+          "build_time": {
+            "mean_seconds": 0.002169588001076287,
+            "std_seconds": 2.650020405257254e-06,
+            "min_seconds": 0.0021667790024366695,
+            "max_seconds": 0.0021731410015490837,
+            "mean_ms": 2.169588001076287,
+            "std_ms": 0.002650020405257254
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.0021514194006158503,
+            "std_seconds": 9.308149426981771e-05,
+            "min_seconds": 0.002070302001811797,
+            "max_seconds": 0.0023218550013552886,
+            "mean_ms": 2.1514194006158505,
+            "std_ms": 0.09308149426981771
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.19079679619972012,
+            "std_seconds": 0.023361997519841485,
+            "min_seconds": 0.17362556399893947,
+            "max_seconds": 0.23557163999794284,
+            "mean_ms": 190.79679619972012,
+            "std_ms": 23.361997519841484
+          },
+          "consensus_overhead": 88.68414784449,
+          "matrix_memory_mb": 0.25
+        },
+        {
+          "n_sites": 8,
+          "dimension": 256,
+          "build_time": {
+            "mean_seconds": 0.018592322999514483,
+            "std_seconds": 0.0006721455825399114,
+            "min_seconds": 0.01764281500072684,
+            "max_seconds": 0.019105748000583844,
+            "mean_ms": 18.592322999514483,
+            "std_ms": 0.6721455825399113
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.010220736799237785,
+            "std_seconds": 0.0002809199468215252,
+            "min_seconds": 0.00987983099912526,
+            "max_seconds": 0.010548401998676127,
+            "mean_ms": 10.220736799237784,
+            "std_ms": 0.28091994682152516
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.22066270779978367,
+            "std_seconds": 0.031179493770207106,
+            "min_seconds": 0.1638907200031099,
+            "max_seconds": 0.25349228599952767,
+            "mean_ms": 220.66270779978368,
+            "std_ms": 31.179493770207106
+          },
+          "consensus_overhead": 21.589706508853617,
+          "matrix_memory_mb": 1.0
+        },
+        {
+          "n_sites": 9,
+          "dimension": 512,
+          "build_time": {
+            "mean_seconds": 0.05659361166544841,
+            "std_seconds": 0.0034127573172593227,
+            "min_seconds": 0.05338408199895639,
+            "max_seconds": 0.061320003998844186,
+            "mean_ms": 56.59361166544841,
+            "std_ms": 3.412757317259323
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.048019747000944336,
+            "std_seconds": 0.006056764197381305,
+            "min_seconds": 0.04345413800183451,
+            "max_seconds": 0.05946761399900424,
+            "mean_ms": 48.019747000944335,
+            "std_ms": 6.056764197381305
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.3004677605997131,
+            "std_seconds": 0.03830747621700661,
+            "min_seconds": 0.2489749189990107,
+            "max_seconds": 0.3626191330004076,
+            "mean_ms": 300.4677605997131,
+            "std_ms": 38.30747621700661
+          },
+          "consensus_overhead": 6.257170838359565,
+          "matrix_memory_mb": 4.0
+        },
+        {
+          "n_sites": 10,
+          "dimension": 1024,
+          "build_time": {
+            "mean_seconds": 0.20886827966508767,
+            "std_seconds": 0.0022842323326191143,
+            "min_seconds": 0.2057507829995302,
+            "max_seconds": 0.2111601629985671,
+            "mean_ms": 208.86827966508767,
+            "std_ms": 2.2842323326191143
+          },
+          "single_oracle_time": {
+            "mean_seconds": 0.2166144394002913,
+            "std_seconds": 0.016547780240152212,
+            "min_seconds": 0.2011600299993006,
+            "max_seconds": 0.24870683399785776,
+            "mean_ms": 216.6144394002913,
+            "std_ms": 16.54778024015221
+          },
+          "multi_oracle_time": {
+            "mean_seconds": 0.7544988108005782,
+            "std_seconds": 0.03875312958667552,
+            "min_seconds": 0.7173087230003148,
+            "max_seconds": 0.8275474970032519,
+            "mean_ms": 754.4988108005782,
+            "std_ms": 38.75312958667552
+          },
+          "consensus_overhead": 3.483141811272825,
+          "matrix_memory_mb": 16.0
+        }
+      ]
+    },
+    {
+      "test_name": "oracle_comparison",
+      "description": "Individual oracle performance at N=8",
+      "n_sites": 8,
+      "dimension": 256,
+      "n_runs": 5,
+      "oracles": {
+        "numpy_dsyevd": {
+          "mean_seconds": 0.012126742000691592,
+          "std_seconds": 0.006239845531454322,
+          "min_seconds": 0.008670533999975305,
+          "max_seconds": 0.02458901399950264,
+          "mean_ms": 12.126742000691593,
+          "std_ms": 6.239845531454322
+        },
+        "scipy_evd": {
+          "mean_seconds": 0.009238199999526842,
+          "std_seconds": 0.0002126085043832098,
+          "min_seconds": 0.008956370998930652,
+          "max_seconds": 0.009476909999648342,
+          "mean_ms": 9.238199999526842,
+          "std_ms": 0.2126085043832098
+        },
+        "scipy_evr": {
+          "mean_seconds": 0.014186861200141721,
+          "std_seconds": 0.00011269357309416727,
+          "min_seconds": 0.014089902997511672,
+          "max_seconds": 0.014356833999045193,
+          "mean_ms": 14.18686120014172,
+          "std_ms": 0.11269357309416726
+        },
+        "scipy_ev": {
+          "mean_seconds": 0.06212058960081777,
+          "std_seconds": 0.001028586565727498,
+          "min_seconds": 0.06071360699934303,
+          "max_seconds": 0.0638422170013655,
+          "mean_ms": 62.120589600817766,
+          "std_ms": 1.028586565727498
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0 -- /home/sarang/Downloads/certify-ed-v2/env/bin/python
+cachedir: .pytest_cache
+rootdir: /home/sarang/Downloads/certify-ed-v2
+collecting ... collected 26 items
+
+tests/test_certificates.py::TestCertificate::test_creation PASSED        [  3%]
+tests/test_certificates.py::TestCertificate::test_save_load PASSED       [  7%]
+tests/test_certificates.py::TestCertificate::test_summary PASSED         [ 11%]
+tests/test_hamiltonian.py::TestPauliMatrices::test_dimensions PASSED     [ 15%]
+tests/test_hamiltonian.py::TestPauliMatrices::test_hermiticity PASSED    [ 19%]
+tests/test_hamiltonian.py::TestPauliMatrices::test_squares PASSED        [ 23%]
+tests/test_hamiltonian.py::TestPauliMatrices::test_anticommutators PASSED [ 26%]
+tests/test_hamiltonian.py::TestSymbolicHamiltonian::test_creation PASSED [ 30%]
+tests/test_hamiltonian.py::TestSymbolicHamiltonian::test_invalid_sites PASSED [ 34%]
+tests/test_hamiltonian.py::TestSymbolicHamiltonian::test_invalid_operator PASSED [ 38%]
+tests/test_hamiltonian.py::TestSymbolicHamiltonian::test_invalid_site PASSED [ 42%]
+tests/test_hamiltonian.py::TestSymbolicHamiltonian::test_build_and_verify PASSED [ 46%]
+tests/test_hamiltonian.py::TestTFIM::test_2site_h0 PASSED                [ 50%]
+tests/test_hamiltonian.py::TestTFIM::test_hermiticity PASSED             [ 53%]
+tests/test_hamiltonian.py::TestTFIM::test_dimensions PASSED              [ 57%]
+tests/test_hamiltonian.py::TestHeisenberg::test_2site_singlet_triplet PASSED [ 61%]
+tests/test_hamiltonian.py::TestHeisenberg::test_hermiticity PASSED       [ 65%]
+tests/test_hamiltonian.py::TestXXZ::test_isotropic_limit PASSED          [ 69%]
+tests/test_hamiltonian.py::TestXXZ::test_xx_limit PASSED                 [ 73%]
+tests/test_oracles.py::TestNumPyOracle::test_diagonal PASSED             [ 76%]
+tests/test_oracles.py::TestScipyOracle::test_drivers PASSED              [ 80%]
+tests/test_oracles.py::TestScipyOracle::test_invalid_driver PASSED       [ 84%]
+tests/test_oracles.py::TestMultiOracle::test_consensus_simple PASSED     [ 88%]
+tests/test_oracles.py::TestMultiOracle::test_consensus_tfim PASSED       [ 92%]
+tests/test_oracles.py::TestMultiOracle::test_residuals PASSED            [ 96%]
+tests/test_oracles.py::TestMultiOracle::test_too_few_oracles PASSED      [100%]
+
+============================== 26 passed in 0.15s ==============================
+
+
+STDERR:
