@@ -1,5 +1,6 @@
 # CERTIFY-ED
 
+[![DOI:10.5281/zenodo.20066566](https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg)](https://doi.org/10.5281/zenodo.20066566)
 **Verified exact diagonalization for quantum many-body systems.**
 
 CERTIFY-ED is a Python framework for exact diagonalization (ED) of quantum
