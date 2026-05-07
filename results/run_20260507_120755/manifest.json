@@ -1,0 +1,14 @@
+{
+  "output_dir": "results/run_20260507_120755",
+  "timestamp": "2026-05-07T12:07:55.065584",
+  "pytest_log": "results/run_20260507_120755/pytest_output.txt",
+  "pytest_results": "results/run_20260507_120755/pytest_results.json",
+  "validators_dir": "results/run_20260507_120755/validators",
+  "figures": [
+    "results/run_20260507_120755/figures/fig1_sum_rule_errors.png",
+    "results/run_20260507_120755/figures/fig2_finite_size_scaling.png",
+    "results/run_20260507_120755/figures/fig3_validator_summary.png",
+    "results/run_20260507_120755/figures/fig4_error_injection.png"
+  ],
+  "manuscript_data": "results/run_20260507_120755/manuscript_data.json"
+}

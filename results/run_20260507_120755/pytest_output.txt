@@ -1,0 +1,62 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0 -- /home/sarang/Downloads/certify-ed/env/bin/python
+cachedir: .pytest_cache
+rootdir: /home/sarang/Downloads/certify-ed
+plugins: cov-7.1.0
+[1mcollecting ... [0mcollected 53 items
+
+tests/test_certificates.py::test_certificate_creation [32mPASSED[0m[32m             [  1%][0m
+tests/test_certificates.py::test_certificate_save_and_load [32mPASSED[0m[32m        [  3%][0m
+tests/test_certificates.py::test_certificate_tampering_detected [32mPASSED[0m[32m   [  5%][0m
+tests/test_certificates.py::test_certificate_summary_runs [32mPASSED[0m[32m         [  7%][0m
+tests/test_hamiltonian.py::test_pauli_matrices_hermitian [32mPASSED[0m[32m          [  9%][0m
+tests/test_hamiltonian.py::test_pauli_anticommutation [32mPASSED[0m[32m             [ 11%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[tfim-kwargs0] [32mPASSED[0m[32m  [ 13%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[heisenberg-kwargs1] [32mPASSED[0m[32m [ 15%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[xxz-kwargs2] [32mPASSED[0m[32m   [ 16%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[xyz-kwargs3] [32mPASSED[0m[32m   [ 18%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[ssh-kwargs4] [32mPASSED[0m[32m   [ 20%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[j1j2-kwargs5] [32mPASSED[0m[32m  [ 22%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[majumdar_ghosh-kwargs6] [32mPASSED[0m[32m [ 24%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[cluster-kwargs7] [32mPASSED[0m[32m [ 26%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[free_fermion-kwargs8] [32mPASSED[0m[32m [ 28%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[kitaev_chain-kwargs9] [32mPASSED[0m[32m [ 30%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[hubbard-kwargs10] [32mPASSED[0m[32m [ 32%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[aklt-kwargs11] [32mPASSED[0m[32m [ 33%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[haldane-kwargs12] [32mPASSED[0m[32m [ 35%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[tfim_2d-kwargs13] [32mPASSED[0m[32m [ 37%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[heisenberg_2d-kwargs14] [32mPASSED[0m[32m [ 39%][0m
+tests/test_hamiltonian.py::test_model_is_hermitian[kitaev_honeycomb-kwargs15] [32mPASSED[0m[32m [ 41%][0m
+tests/test_hamiltonian.py::test_list_models_complete [32mPASSED[0m[32m              [ 43%][0m
+tests/test_hamiltonian.py::test_tfim_classical_limit_ground_state [32mPASSED[0m[32m [ 45%][0m
+tests/test_hamiltonian.py::test_2site_heisenberg_singlet [32mPASSED[0m[32m          [ 47%][0m
+tests/test_hamiltonian.py::test_invalid_model_raises [32mPASSED[0m[32m              [ 49%][0m
+tests/test_oracles.py::test_oracle_consensus_basic [32mPASSED[0m[32m                [ 50%][0m
+tests/test_oracles.py::test_residuals_small [32mPASSED[0m[32m                       [ 52%][0m
+tests/test_oracles.py::test_eigenvectors_orthonormal [32mPASSED[0m[32m              [ 54%][0m
+tests/test_oracles.py::test_spectral_decomposition [32mPASSED[0m[32m                [ 56%][0m
+tests/test_oracles.py::test_sparse_lanczos_lowest_k [32mPASSED[0m[32m               [ 58%][0m
+tests/test_oracles.py::test_invalid_driver_raises [32mPASSED[0m[32m                 [ 60%][0m
+tests/test_oracles.py::test_multi_oracle_minimum_oracles [32mPASSED[0m[32m          [ 62%][0m
+tests/test_symmetries.py::test_sz_eigenvalues [32mPASSED[0m[32m                     [ 64%][0m
+tests/test_symmetries.py::test_parity_squared_is_identity [32mPASSED[0m[32m         [ 66%][0m
+tests/test_symmetries.py::test_heisenberg_conserves_sz [32mPASSED[0m[32m            [ 67%][0m
+tests/test_symmetries.py::test_tfim_conserves_parity [32mPASSED[0m[32m              [ 69%][0m
+tests/test_symmetries.py::test_tfim_does_not_conserve_sz [32mPASSED[0m[32m          [ 71%][0m
+tests/test_symmetries.py::test_free_fermion_conserves_number [32mPASSED[0m[32m      [ 73%][0m
+tests/test_symmetries.py::test_kitaev_conserves_fermion_parity [32mPASSED[0m[32m    [ 75%][0m
+tests/test_validators.py::test_analytic_validator_runs [32mPASSED[0m[32m            [ 77%][0m
+tests/test_validators.py::test_sum_rules_validator_runs [32mPASSED[0m[32m           [ 79%][0m
+tests/test_validators.py::test_orthonormality_validator_runs [32mPASSED[0m[32m      [ 81%][0m
+tests/test_validators.py::test_unitarity_validator_runs [32mPASSED[0m[32m           [ 83%][0m
+tests/test_validators.py::test_conservation_validator_runs [32mPASSED[0m[32m        [ 84%][0m
+tests/test_validators.py::test_symmetry_sector_validator_runs [32mPASSED[0m[32m     [ 86%][0m
+tests/test_validators.py::test_thermal_validator_runs [32mPASSED[0m[32m             [ 88%][0m
+tests/test_validators.py::test_jordan_wigner_validator_runs [32mPASSED[0m[32m       [ 90%][0m
+tests/test_validators.py::test_sparse_dense_validator_runs [32mPASSED[0m[32m        [ 92%][0m
+tests/test_validators.py::test_scaling_validator_runs [32mPASSED[0m[32m             [ 94%][0m
+tests/test_validators.py::test_error_injection_validator_detects_all [32mPASSED[0m[32m [ 96%][0m
+tests/test_validators.py::test_high_precision_if_available [32mPASSED[0m[32m        [ 98%][0m
+tests/test_validators.py::test_quspin_optional [32mPASSED[0m[32m                    [100%][0m
+
+[32m============================== [32m[1m53 passed[0m[32m in 5.34s[0m[32m ==============================[0m

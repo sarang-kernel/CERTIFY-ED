@@ -1,0 +1,107 @@
+{
+  "validator": "ConservationLawValidator",
+  "n_total": 7,
+  "n_passed": 7,
+  "all_passed": true,
+  "individual_results": [
+    {
+      "test_name": "conservation_heisenberg_total_Sz",
+      "description": "heisenberg with total_Sz (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 16,
+        "n_distinct_energies": 6,
+        "n_degenerate_subspaces": 4,
+        "max_off_block_S": 3.7008381302004274e-16,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    },
+    {
+      "test_name": "conservation_xxz_total_Sz",
+      "description": "xxz with total_Sz (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 16,
+        "n_distinct_energies": 11,
+        "n_degenerate_subspaces": 5,
+        "max_off_block_S": 1.906684143125017e-15,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    },
+    {
+      "test_name": "conservation_tfim_spin_flip_parity",
+      "description": "tfim with spin_flip_parity (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 16,
+        "n_distinct_energies": 16,
+        "n_degenerate_subspaces": 0,
+        "max_off_block_S": 1.3527363567557548e-14,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    },
+    {
+      "test_name": "conservation_tfim_total_Sz",
+      "description": "tfim with total_Sz (expect conserved=False)",
+      "expected_conserved": false,
+      "commutator_norm": 2.0,
+      "is_conserved": false,
+      "sector_check": null,
+      "passed": true
+    },
+    {
+      "test_name": "conservation_cluster_z_parity",
+      "description": "cluster with z_parity (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 32,
+        "n_distinct_energies": 4,
+        "n_degenerate_subspaces": 4,
+        "max_off_block_S": 5.059913398320222e-16,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    },
+    {
+      "test_name": "conservation_free_fermion_fermion_number",
+      "description": "free_fermion with fermion_number (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 16,
+        "n_distinct_energies": 9,
+        "n_degenerate_subspaces": 5,
+        "max_off_block_S": 8.662833122508086e-16,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    },
+    {
+      "test_name": "conservation_kitaev_chain_fermion_parity",
+      "description": "kitaev_chain with fermion_parity (expect conserved=True)",
+      "expected_conserved": true,
+      "commutator_norm": 0.0,
+      "is_conserved": true,
+      "sector_check": {
+        "eigenbasis_dimension": 16,
+        "n_distinct_energies": 16,
+        "n_degenerate_subspaces": 0,
+        "max_off_block_S": 1.926774905974184e-15,
+        "S_block_diagonal_in_H_eigenbasis": true
+      },
+      "passed": true
+    }
+  ]
+}

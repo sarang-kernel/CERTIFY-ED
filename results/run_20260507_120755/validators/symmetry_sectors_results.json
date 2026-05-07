@@ -1,0 +1,98 @@
+{
+  "validator": "SymmetrySectorValidator",
+  "n_total": 3,
+  "n_passed": 3,
+  "all_passed": true,
+  "individual_results": [
+    {
+      "test_name": "heisenberg_sz_sectors",
+      "description": "Heisenberg N=4: full spectrum vs union of Sz sectors",
+      "n_sectors": 5,
+      "sector_info": [
+        {
+          "Sz": -2.0,
+          "sector_dimension": 1,
+          "n_eigenvalues": 1
+        },
+        {
+          "Sz": -1.0,
+          "sector_dimension": 4,
+          "n_eigenvalues": 4
+        },
+        {
+          "Sz": 0.0,
+          "sector_dimension": 6,
+          "n_eigenvalues": 6
+        },
+        {
+          "Sz": 1.0,
+          "sector_dimension": 4,
+          "n_eigenvalues": 4
+        },
+        {
+          "Sz": 2.0,
+          "sector_dimension": 1,
+          "n_eigenvalues": 1
+        }
+      ],
+      "max_abs_diff": 4.440892098500626e-16,
+      "mean_abs_diff": 1.6740081543176188e-16,
+      "passed": true
+    },
+    {
+      "test_name": "tfim_parity_sectors",
+      "description": "TFIM N=4: full spectrum vs union of parity sectors",
+      "n_sectors": 2,
+      "sector_info": [
+        {
+          "parity": -0.9999999999999989,
+          "sector_dimension": 8,
+          "n_eigenvalues": 8
+        },
+        {
+          "parity": 1.0,
+          "sector_dimension": 8,
+          "n_eigenvalues": 8
+        }
+      ],
+      "max_abs_diff": 1.7763568394002505e-15,
+      "mean_abs_diff": 4.649058915617843e-16,
+      "passed": true
+    },
+    {
+      "test_name": "xxz_sz_sectors",
+      "description": "XXZ N=4, Delta=0.7: full vs Sz-sector spectrum",
+      "n_sectors": 5,
+      "sector_info": [
+        {
+          "Sz": -2.0,
+          "sector_dimension": 1,
+          "n_eigenvalues": 1
+        },
+        {
+          "Sz": -1.0,
+          "sector_dimension": 4,
+          "n_eigenvalues": 4
+        },
+        {
+          "Sz": 0.0,
+          "sector_dimension": 6,
+          "n_eigenvalues": 6
+        },
+        {
+          "Sz": 1.0,
+          "sector_dimension": 4,
+          "n_eigenvalues": 4
+        },
+        {
+          "Sz": 2.0,
+          "sector_dimension": 1,
+          "n_eigenvalues": 1
+        }
+      ],
+      "max_abs_diff": 4.440892098500626e-16,
+      "mean_abs_diff": 1.3704315460216776e-16,
+      "passed": true
+    }
+  ]
+}

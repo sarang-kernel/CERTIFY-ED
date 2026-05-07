@@ -1,0 +1,120 @@
+{
+  "validator": "SparseDenseValidator",
+  "tolerance": 1e-08,
+  "note": "Sparse Lanczos has lower numerical precision than dense LAPACK; tolerance reflects this",
+  "n_total": 5,
+  "n_passed": 5,
+  "all_passed": true,
+  "individual_results": [
+    {
+      "test_name": "sparse_dense_tfim",
+      "description": "TFIM N=6: ARPACK Lanczos vs LAPACK direct",
+      "k_compared": 5,
+      "dense_lowest": [
+        -5.522029570800217,
+        -5.49856768524506,
+        -4.220296867837656,
+        -4.196834982282496,
+        -3.703163722596938
+      ],
+      "sparse_lowest": [
+        -5.522029570800218,
+        -5.49856768524505,
+        -4.220296867837659,
+        -4.196834982282504,
+        -3.7031637225969414
+      ],
+      "max_abs_diff": 1.0658141036401503e-14,
+      "mean_abs_diff": 5.151434834260726e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sparse_dense_heisenberg",
+      "description": "Heisenberg N=6: ARPACK Lanczos vs LAPACK direct",
+      "k_compared": 5,
+      "dense_lowest": [
+        -2.4935771338879253,
+        -2.001995356898533,
+        -2.001995356898533,
+        -2.0019953568985307,
+        -1.4214615413885856
+      ],
+      "sparse_lowest": [
+        -2.4935771338879205,
+        -2.0019953568985263,
+        -2.0019953568985254,
+        -2.00199535689852,
+        -1.4214615413885832
+      ],
+      "max_abs_diff": 1.0658141036401503e-14,
+      "mean_abs_diff": 6.439293542825908e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sparse_dense_kitaev",
+      "description": "Kitaev chain N=6: sparse vs dense",
+      "k_compared": 5,
+      "dense_lowest": [
+        -4.8009076837154705,
+        -4.291855281697586,
+        -3.297061483507581,
+        -3.204182693098734,
+        -3.0786201865809724
+      ],
+      "sparse_lowest": [
+        -4.800907683715445,
+        -4.291855281697573,
+        -3.297061483507571,
+        -3.2041826930987494,
+        -3.0786201865809733
+      ],
+      "max_abs_diff": 2.5757174171303632e-14,
+      "mean_abs_diff": 1.305622276959184e-14,
+      "passed": true
+    },
+    {
+      "test_name": "sparse_dense_free_fermion",
+      "description": "Free fermion N=6: sparse vs dense",
+      "k_compared": 5,
+      "dense_lowest": [
+        -3.4939592074349344,
+        -3.048917339522306,
+        -3.048917339522305,
+        -2.6038754716096775,
+        -2.2469796037174676
+      ],
+      "sparse_lowest": [
+        -3.4939592074349397,
+        -3.048917339522303,
+        -3.048917339522299,
+        -2.6038754716096717,
+        -2.2469796037174636
+      ],
+      "max_abs_diff": 5.773159728050814e-15,
+      "mean_abs_diff": 4.7961634663806766e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sparse_dense_xxz",
+      "description": "XXZ N=6: sparse vs dense",
+      "k_compared": 5,
+      "dense_lowest": [
+        -2.0978876382578515,
+        -1.7444884069409508,
+        -1.7444884069409485,
+        -1.5938053668046093,
+        -1.248489801858734
+      ],
+      "sparse_lowest": [
+        -2.0978876382578524,
+        -1.7444884069409483,
+        -1.7444884069409436,
+        -1.5938053668046033,
+        -1.2484898018587374
+      ],
+      "max_abs_diff": 5.995204332975845e-15,
+      "mean_abs_diff": 3.508304757815495e-15,
+      "passed": true
+    }
+  ]
+}

@@ -1,5 +1,0 @@
-STDOUT:
-
-
-STDERR:
-/home/sarang/Downloads/certify-ed-v2/env/bin/python: No module named pytest

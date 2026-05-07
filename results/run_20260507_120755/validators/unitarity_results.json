@@ -1,0 +1,114 @@
+{
+  "validator": "UnitarityValidator",
+  "n_total": 7,
+  "n_passed": 7,
+  "all_passed": true,
+  "max_unitarity_error_overall": 2.220446049250313e-15,
+  "individual_results": [
+    {
+      "test_name": "unitarity_tfim",
+      "description": "Time evolution unitarity for tfim",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 2.220446049250313e-15,
+      "max_group_property_error": 1.1430445635548515e-15,
+      "spectral_vs_expm_error": 1.432843787967409e-15,
+      "max_error": 2.220446049250313e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_heisenberg",
+      "description": "Time evolution unitarity for heisenberg",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 2.220446049250313e-15,
+      "max_group_property_error": 9.155133597044475e-16,
+      "spectral_vs_expm_error": 1.0053497077208614e-15,
+      "max_error": 2.220446049250313e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_xxz",
+      "description": "Time evolution unitarity for xxz",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 2.1094237467877974e-15,
+      "max_group_property_error": 9.836601059614787e-16,
+      "spectral_vs_expm_error": 7.776515945702111e-16,
+      "max_error": 2.1094237467877974e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_ssh",
+      "description": "Time evolution unitarity for ssh",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 1.5543122344752192e-15,
+      "max_group_property_error": 5.600645149644319e-16,
+      "spectral_vs_expm_error": 6.639639693411202e-16,
+      "max_error": 1.5543122344752192e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_cluster",
+      "description": "Time evolution unitarity for cluster",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 1.5012638129492578e-15,
+      "max_group_property_error": 8.812461518952195e-16,
+      "spectral_vs_expm_error": 1.0133677386077137e-15,
+      "max_error": 1.5012638129492578e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_free_fermion",
+      "description": "Time evolution unitarity for free_fermion",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 1.6653345369377348e-15,
+      "max_group_property_error": 6.721959509125477e-16,
+      "spectral_vs_expm_error": 7.776013198539587e-16,
+      "max_error": 1.6653345369377348e-15,
+      "passed": true
+    },
+    {
+      "test_name": "unitarity_kitaev_chain",
+      "description": "Time evolution unitarity for kitaev_chain",
+      "dimension": 16,
+      "times_tested": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_unitarity_error": 2.220446049250313e-15,
+      "max_group_property_error": 9.485749680535094e-16,
+      "spectral_vs_expm_error": 1.083889877282842e-15,
+      "max_error": 2.220446049250313e-15,
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "validator": "ErrorInjectionValidator",
+  "n_total": 6,
+  "n_passed": 6,
+  "all_detected": true,
+  "note": "A validator that fails its own injection tests cannot be trusted",
+  "individual_results": [
+    {
+      "test_name": "non_hermitian_detection",
+      "description": "Inject anti-Hermitian term -> framework should detect",
+      "injected_norm": 0.1,
+      "hermiticity_deviation": 0.1,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "matrix_corruption_residual",
+      "description": "Wrong matrix used -> residuals against true H reveal it",
+      "noise_norm": 0.00011259780514216167,
+      "max_residual_against_original": 3.6925136982706736e-05,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "oracle_disagreement_detection",
+      "description": "Bad oracle -> consensus must fail",
+      "consensus": "False",
+      "max_disagreement": 0.0010000000000000009,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "eigenvector_perturbation",
+      "description": "Perturb eigenvector -> residual must grow",
+      "mixing_amplitude": 0.01,
+      "residual_correct": 1.36285246390321e-15,
+      "residual_perturbed": 0.0009478284871907676,
+      "amplification_ratio": 695474024001.2382,
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "certificate_tampering",
+      "description": "Tampered certificate -> hash check must detect",
+      "detected": true,
+      "passed": true
+    },
+    {
+      "test_name": "swapped_eigenvectors",
+      "description": "Mismatched (E_n, |psi_n>) -> residual should reveal",
+      "gap_between_swapped": 0.6589186225978912,
+      "max_residual_after_swap": 0.6589186225978912,
+      "detected": true,
+      "passed": true
+    }
+  ]
+}

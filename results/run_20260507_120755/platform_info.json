@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-05-07T12:07:55.065584",
+  "system": "Linux",
+  "machine": "x86_64",
+  "processor": "",
+  "python_version": "3.14.4",
+  "numpy_version": "2.4.4",
+  "scipy_version": "1.17.1",
+  "mpmath_version": "1.4.1",
+  "quspin_version": "1.0.1"
+}

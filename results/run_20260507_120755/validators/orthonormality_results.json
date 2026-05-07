@@ -1,0 +1,117 @@
+{
+  "validator": "OrthonormalityValidator",
+  "n_total": 9,
+  "n_passed": 9,
+  "all_passed": true,
+  "max_orthonormality_error_overall": 3.552713678800501e-15,
+  "individual_results": [
+    {
+      "test_name": "orthonormality_tfim",
+      "description": "Orthonormality + completeness for tfim",
+      "dimension": 32,
+      "orthonormality_error": 3.1086244689504383e-15,
+      "completeness_error": 1.1102230246251565e-15,
+      "spectral_decomposition_error": 3.552713678800501e-15,
+      "max_norm_error": 1.7763568394002505e-15,
+      "max_pairwise_overlap": 9.564708292616023e-16,
+      "max_error": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_heisenberg",
+      "description": "Orthonormality + completeness for heisenberg",
+      "dimension": 16,
+      "orthonormality_error": 1.3322676295501878e-15,
+      "completeness_error": 9.992007221626409e-16,
+      "spectral_decomposition_error": 6.661338147750939e-16,
+      "max_norm_error": 6.661338147750939e-16,
+      "max_pairwise_overlap": 3.456264085769104e-16,
+      "max_error": 1.3322676295501878e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_xxz",
+      "description": "Orthonormality + completeness for xxz",
+      "dimension": 16,
+      "orthonormality_error": 9.992007221626409e-16,
+      "completeness_error": 1.2212453270876722e-15,
+      "spectral_decomposition_error": 8.326672684688674e-16,
+      "max_norm_error": 5.551115123125783e-16,
+      "max_pairwise_overlap": 5.330264263533068e-16,
+      "max_error": 1.2212453270876722e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_ssh",
+      "description": "Orthonormality + completeness for ssh",
+      "dimension": 32,
+      "orthonormality_error": 1.6653345369377348e-15,
+      "completeness_error": 1.2212453270876722e-15,
+      "spectral_decomposition_error": 2.1347684296743922e-15,
+      "max_norm_error": 8.881784197001252e-16,
+      "max_pairwise_overlap": 6.392157656152539e-16,
+      "max_error": 2.1347684296743922e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_j1j2",
+      "description": "Orthonormality + completeness for j1j2",
+      "dimension": 16,
+      "orthonormality_error": 1.5543122344752192e-15,
+      "completeness_error": 1.3322676295501878e-15,
+      "spectral_decomposition_error": 1.4432899320127035e-15,
+      "max_norm_error": 6.661338147750939e-16,
+      "max_pairwise_overlap": 4.649488319132442e-16,
+      "max_error": 1.5543122344752192e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_cluster",
+      "description": "Orthonormality + completeness for cluster",
+      "dimension": 32,
+      "orthonormality_error": 1.7763568394002505e-15,
+      "completeness_error": 5.864167946104809e-16,
+      "spectral_decomposition_error": 2.222497329761257e-15,
+      "max_norm_error": 8.881784197001252e-16,
+      "max_pairwise_overlap": 9.132460370763372e-16,
+      "max_error": 2.222497329761257e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_free_fermion",
+      "description": "Orthonormality + completeness for free_fermion",
+      "dimension": 32,
+      "orthonormality_error": 2.220446049250313e-15,
+      "completeness_error": 1.3322676295501878e-15,
+      "spectral_decomposition_error": 1.9349676837576174e-15,
+      "max_norm_error": 1.1102230246251565e-15,
+      "max_pairwise_overlap": 9.351944154182147e-16,
+      "max_error": 2.220446049250313e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_kitaev_chain",
+      "description": "Orthonormality + completeness for kitaev_chain",
+      "dimension": 32,
+      "orthonormality_error": 1.4432899320127035e-15,
+      "completeness_error": 1.1102230246251565e-15,
+      "spectral_decomposition_error": 1.78954990914314e-15,
+      "max_norm_error": 7.771561172376096e-16,
+      "max_pairwise_overlap": 9.394188915342775e-16,
+      "max_error": 1.78954990914314e-15,
+      "passed": true
+    },
+    {
+      "test_name": "orthonormality_aklt",
+      "description": "Orthonormality + completeness for aklt",
+      "dimension": 27,
+      "orthonormality_error": 1.9984014443252818e-15,
+      "completeness_error": 6.661338147750939e-16,
+      "spectral_decomposition_error": 1.9984014443252818e-15,
+      "max_norm_error": 8.881784197001252e-16,
+      "max_pairwise_overlap": 1.4973728446607253e-15,
+      "max_error": 1.9984014443252818e-15,
+      "passed": true
+    }
+  ]
+}

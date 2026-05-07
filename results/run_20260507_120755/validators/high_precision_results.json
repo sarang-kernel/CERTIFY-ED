@@ -1,0 +1,47 @@
+{
+  "validator": "HighPrecisionValidator",
+  "available": true,
+  "precision_dps": 50,
+  "n_total": 3,
+  "n_passed": 3,
+  "all_passed": true,
+  "individual_results": [
+    {
+      "test_name": "tfim_high_precision",
+      "description": "TFIM N=3, double vs mpmath 50-digit",
+      "precision_dps": 50,
+      "n_eigenvalues": 8,
+      "max_abs_diff": 8.881784197001252e-16,
+      "mean_abs_diff": 2.706168622523819e-16,
+      "eigenvalues_dp_first_few": [
+        -2.4032119259115534,
+        -2.209275359436922,
+        -0.5000000000000001,
+        -0.30606343352536897
+      ],
+      "eigenvalues_hp_first_few": [
+        -2.4032119259115534,
+        -2.2092753594369228,
+        -0.5,
+        -0.3060634335253696
+      ],
+      "passed": true
+    },
+    {
+      "test_name": "heisenberg_high_precision",
+      "description": "Heisenberg N=3 PBC, double vs mpmath 50-digit",
+      "precision_dps": 50,
+      "max_abs_diff": 1.1102230246251565e-16,
+      "mean_abs_diff": 8.326672684688674e-17,
+      "passed": true
+    },
+    {
+      "test_name": "kitaev_high_precision",
+      "description": "Kitaev chain N=4, double vs mpmath 50-digit",
+      "precision_dps": 50,
+      "max_abs_diff": 1.5543122344752192e-15,
+      "mean_abs_diff": 5.169475958410885e-16,
+      "passed": true
+    }
+  ]
+}

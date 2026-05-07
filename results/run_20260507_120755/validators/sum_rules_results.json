@@ -1,0 +1,200 @@
+{
+  "validator": "SpectralSumRuleValidator",
+  "n_total": 11,
+  "n_passed": 11,
+  "all_passed": true,
+  "max_sum_rule_error_overall": 1.9895196601282805e-13,
+  "sum_rules_tested": [
+    "trace",
+    "trace_H_squared",
+    "trace_H_cubed",
+    "log_determinant",
+    "operator_norm"
+  ],
+  "individual_results": [
+    {
+      "test_name": "sum_rules_tfim",
+      "description": "Sum rules for tfim",
+      "parameters": {
+        "n_sites": 5,
+        "J": 1.0,
+        "h": 0.5
+      },
+      "dimension": 32,
+      "trace_error": 0.0,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 1.9895196601282805e-13,
+      "logdet_error": 5.329070518200751e-15,
+      "operator_norm_error": 8.881784197001252e-16,
+      "max_error": 1.9895196601282805e-13,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_heisenberg",
+      "description": "Sum rules for heisenberg",
+      "parameters": {
+        "n_sites": 4,
+        "J": 1.0
+      },
+      "dimension": 16,
+      "trace_error": 4.440892098500626e-16,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 8.881784197001252e-16,
+      "logdet_error": 3.552713678800501e-15,
+      "operator_norm_error": 0.0,
+      "max_error": 8.881784197001252e-16,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_xxz",
+      "description": "Sum rules for xxz",
+      "parameters": {
+        "n_sites": 4,
+        "J": 1.0,
+        "Delta": 0.7
+      },
+      "dimension": 16,
+      "trace_error": 4.440892098500626e-16,
+      "trace_squared_error": 3.552713678800501e-15,
+      "trace_cubed_error": 2.6645352591003757e-15,
+      "logdet_error": 1.7763568394002505e-15,
+      "operator_norm_error": 4.440892098500626e-16,
+      "max_error": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_xyz",
+      "description": "Sum rules for xyz",
+      "parameters": {
+        "n_sites": 4,
+        "Jx": 1.0,
+        "Jy": 1.2,
+        "Jz": 0.8
+      },
+      "dimension": 16,
+      "trace_error": 4.440892098500626e-16,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 3.552713678800501e-15,
+      "logdet_error": 0.0,
+      "operator_norm_error": 2.220446049250313e-16,
+      "max_error": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_ssh",
+      "description": "Sum rules for ssh",
+      "parameters": {
+        "n_sites": 5,
+        "t1": 1.0,
+        "t2": 0.5
+      },
+      "dimension": 32,
+      "trace_error": 2.6645352591003757e-15,
+      "trace_squared_error": 7.105427357601002e-15,
+      "trace_cubed_error": 1.7763568394002505e-14,
+      "logdet_error": null,
+      "operator_norm_error": 8.881784197001252e-16,
+      "max_error": 1.7763568394002505e-14,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_j1j2",
+      "description": "Sum rules for j1j2",
+      "parameters": {
+        "n_sites": 4,
+        "J1": 1.0,
+        "J2": 0.4
+      },
+      "dimension": 16,
+      "trace_error": 4.440892098500626e-16,
+      "trace_squared_error": 3.552713678800501e-15,
+      "trace_cubed_error": 2.886579864025407e-15,
+      "logdet_error": 1.7763568394002505e-15,
+      "operator_norm_error": 4.440892098500626e-16,
+      "max_error": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_cluster",
+      "description": "Sum rules for cluster",
+      "parameters": {
+        "n_sites": 5,
+        "h": 0.5
+      },
+      "dimension": 32,
+      "trace_error": 1.7763568394002505e-15,
+      "trace_squared_error": 1.1368683772161603e-13,
+      "trace_cubed_error": 2.842170943040401e-14,
+      "logdet_error": 1.0658141036401503e-14,
+      "operator_norm_error": 4.440892098500626e-15,
+      "max_error": 1.1368683772161603e-13,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_free_fermion",
+      "description": "Sum rules for free_fermion",
+      "parameters": {
+        "n_sites": 5,
+        "t": 1.0,
+        "mu": 0.3
+      },
+      "dimension": 32,
+      "trace_error": 8.881784197001252e-16,
+      "trace_squared_error": 2.842170943040401e-14,
+      "trace_cubed_error": 3.552713678800501e-14,
+      "logdet_error": null,
+      "operator_norm_error": 8.881784197001252e-16,
+      "max_error": 3.552713678800501e-14,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_kitaev_chain",
+      "description": "Sum rules for kitaev_chain",
+      "parameters": {
+        "n_sites": 5,
+        "t": 1.0,
+        "mu": 0.5,
+        "Delta": 0.7
+      },
+      "dimension": 32,
+      "trace_error": 0.0,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 1.4210854715202004e-14,
+      "logdet_error": null,
+      "operator_norm_error": 8.881784197001252e-16,
+      "max_error": 1.4210854715202004e-14,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_aklt",
+      "description": "Sum rules for aklt",
+      "parameters": {
+        "n_sites": 3
+      },
+      "dimension": 27,
+      "trace_error": 3.552713678800501e-15,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 0.0,
+      "logdet_error": 6.661338147750939e-15,
+      "operator_norm_error": 3.552713678800501e-15,
+      "max_error": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "test_name": "sum_rules_haldane",
+      "description": "Sum rules for haldane",
+      "parameters": {
+        "n_sites": 3,
+        "D": 0.2
+      },
+      "dimension": 27,
+      "trace_error": 7.105427357601002e-15,
+      "trace_squared_error": 0.0,
+      "trace_cubed_error": 1.1368683772161603e-13,
+      "logdet_error": 1.7763568394002505e-15,
+      "operator_norm_error": 3.1086244689504383e-15,
+      "max_error": 1.1368683772161603e-13,
+      "passed": true
+    }
+  ]
+}

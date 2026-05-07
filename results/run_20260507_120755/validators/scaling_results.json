@@ -1,0 +1,85 @@
+{
+  "validator": "FiniteSizeScalingValidator",
+  "n_total": 3,
+  "n_passed": 3,
+  "all_passed": true,
+  "note": "Tolerance is loose (~5-15%) because finite-N values genuinely differ from thermodynamic limit",
+  "individual_results": [
+    {
+      "test_name": "heisenberg_scaling",
+      "description": "Heisenberg PBC: E_0/N approaches Bethe ansatz -0.443147",
+      "sizes": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "energies_per_bond": [
+        -0.4999999999999999,
+        -0.4671292729553322,
+        -0.4563866761171466,
+        -0.45154463544920426
+      ],
+      "bethe_ansatz_limit": -0.4431471805599453,
+      "deviations": [
+        0.0568528194400546,
+        0.0239820923953869,
+        0.01323949555720133,
+        0.00839745488925897
+      ],
+      "final_deviation": 0.00839745488925897,
+      "monotonic_convergence": true,
+      "passed": true
+    },
+    {
+      "test_name": "free_fermion_scaling",
+      "description": "Free fermion PBC: E_0/N -> -2t/pi = -0.636620",
+      "sizes": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "energies_per_site": [
+        -0.5000000000000001,
+        -0.6666666666666666,
+        -0.603553390593274,
+        -0.6472135954999583
+      ],
+      "thermodynamic_limit": -0.6366197723675814,
+      "deviations": [
+        0.13661977236758127,
+        0.030046894299085247,
+        0.03306638177430743,
+        0.01059382313237689
+      ],
+      "final_deviation": 0.01059382313237689,
+      "passed": true
+    },
+    {
+      "test_name": "tfim_critical_scaling",
+      "description": "TFIM critical point: E_0/N -> -4/pi = -1.273240",
+      "sizes": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "energies_per_site": [
+        -1.3065629648763775,
+        -1.2879011017187574,
+        -1.281457723870753,
+        -1.2784906442999322
+      ],
+      "thermodynamic_limit": -1.2732395447351628,
+      "deviations": [
+        0.0333234201412147,
+        0.014661556983594615,
+        0.008218179135590198,
+        0.005251099564769435
+      ],
+      "final_deviation": 0.005251099564769435,
+      "passed": true
+    }
+  ]
+}

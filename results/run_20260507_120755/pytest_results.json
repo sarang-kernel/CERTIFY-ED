@@ -1,0 +1,10 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 5.918580532073975,
+  "passed": 53,
+  "failed": 0,
+  "skipped": 0,
+  "errors": 0,
+  "success": true,
+  "log_file": "results/run_20260507_120755/pytest_output.txt"
+}

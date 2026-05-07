@@ -1,0 +1,157 @@
+{
+  "package": "CERTIFY-ED",
+  "version": "1.0.0",
+  "timestamp": "2026-05-07T12:07:55.065584",
+  "platform": {
+    "timestamp": "2026-05-07T12:07:55.065584",
+    "system": "Linux",
+    "machine": "x86_64",
+    "processor": "",
+    "python_version": "3.14.4",
+    "numpy_version": "2.4.4",
+    "scipy_version": "1.17.1",
+    "mpmath_version": "1.4.1",
+    "quspin_version": "1.0.1"
+  },
+  "pytest": {
+    "returncode": 0,
+    "elapsed_seconds": 5.918580532073975,
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "success": true,
+    "log_file": "results/run_20260507_120755/pytest_output.txt"
+  },
+  "validators": {
+    "total_individual_tests": 81,
+    "total_individual_tests_passed": 81,
+    "per_validator_summary": {
+      "analytic": {
+        "description": "Closed-form analytic results (Bethe ansatz, SU(2), exact GS)",
+        "n_total": 12,
+        "n_passed": 12,
+        "available": true,
+        "elapsed_seconds": 0.27463245391845703,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/analytic_results.json"
+      },
+      "quspin": {
+        "description": "Cross-validation against QuSpin",
+        "n_total": 3,
+        "n_passed": 3,
+        "available": true,
+        "elapsed_seconds": 0.21078824996948242,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/quspin_results.json"
+      },
+      "high_precision": {
+        "description": "mpmath arbitrary-precision (50 digits) reference",
+        "n_total": 3,
+        "n_passed": 3,
+        "available": true,
+        "elapsed_seconds": 0.05823206901550293,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/high_precision_results.json"
+      },
+      "sparse_dense": {
+        "description": "ARPACK Lanczos vs LAPACK direct",
+        "n_total": 5,
+        "n_passed": 5,
+        "available": true,
+        "elapsed_seconds": 0.02760767936706543,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/sparse_dense_results.json"
+      },
+      "jordan_wigner": {
+        "description": "Free-fermion analytic spectra via JW",
+        "n_total": 4,
+        "n_passed": 4,
+        "available": true,
+        "elapsed_seconds": 0.009239912033081055,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/jordan_wigner_results.json"
+      },
+      "sum_rules": {
+        "description": "Trace, Frobenius, log-det, operator norm sum rules",
+        "n_total": 11,
+        "n_passed": 11,
+        "available": true,
+        "elapsed_seconds": 0.026149511337280273,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/sum_rules_results.json"
+      },
+      "orthonormality": {
+        "description": "Eigenvector orthonormality + completeness + spectral decomp",
+        "n_total": 9,
+        "n_passed": 9,
+        "available": true,
+        "elapsed_seconds": 0.023107528686523438,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/orthonormality_results.json"
+      },
+      "unitarity": {
+        "description": "exp(-iHt) unitarity and group property",
+        "n_total": 7,
+        "n_passed": 7,
+        "available": true,
+        "elapsed_seconds": 0.06424069404602051,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/unitarity_results.json"
+      },
+      "conservation": {
+        "description": "Conservation laws [H,S]=0 and quantum-number block-diag",
+        "n_total": 7,
+        "n_passed": 7,
+        "available": true,
+        "elapsed_seconds": 0.010529756546020508,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/conservation_results.json"
+      },
+      "symmetry_sectors": {
+        "description": "Symmetry-resolved spectrum decomposition",
+        "n_total": 3,
+        "n_passed": 3,
+        "available": true,
+        "elapsed_seconds": 0.003717184066772461,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/symmetry_sectors_results.json"
+      },
+      "thermal": {
+        "description": "High-T (beta->0) and low-T (beta->inf) thermal limits",
+        "n_total": 8,
+        "n_passed": 8,
+        "available": true,
+        "elapsed_seconds": 0.006160736083984375,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/thermal_results.json"
+      },
+      "scaling": {
+        "description": "Finite-size scaling toward thermodynamic limits",
+        "n_total": 3,
+        "n_passed": 3,
+        "available": true,
+        "elapsed_seconds": 4.426868915557861,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/scaling_results.json"
+      },
+      "error_injection": {
+        "description": "Framework error-detection capability",
+        "n_total": 6,
+        "n_passed": 6,
+        "available": true,
+        "elapsed_seconds": 0.0064544677734375,
+        "status": "PASS",
+        "output_file": "results/run_20260507_120755/validators/error_injection_results.json"
+      }
+    }
+  },
+  "headline_numbers": {
+    "n_models_supported": 16,
+    "n_independent_validators": 13,
+    "n_pytest_tests": 53,
+    "pytest_passed": 53,
+    "validator_tests_passed": 81,
+    "validator_tests_total": 81
+  }
+}

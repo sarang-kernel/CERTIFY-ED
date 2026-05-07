@@ -1,0 +1,180 @@
+{
+  "validator": "AnalyticValidator",
+  "n_total": 12,
+  "n_passed": 12,
+  "all_passed": true,
+  "max_residual_overall": 6.3410028359080915e-15,
+  "individual_results": [
+    {
+      "test_name": "single_qubit_field",
+      "description": "Single qubit, H = -h X (h=0.7)",
+      "expected": [
+        -0.7,
+        0.7
+      ],
+      "computed": [
+        -0.7,
+        0.7
+      ],
+      "max_error": 0.0,
+      "max_residual": 0.0,
+      "consensus": true,
+      "passed": true
+    },
+    {
+      "test_name": "2site_heisenberg",
+      "description": "Two-site H = J*S1.S2",
+      "expected_singlet": -0.75,
+      "expected_triplet": 0.25,
+      "computed_eigenvalues": [
+        -0.75,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "max_error": 0.0,
+      "max_residual": 0.0,
+      "consensus": "True",
+      "max_disagreement": 5.551115123125783e-16,
+      "passed": true
+    },
+    {
+      "test_name": "3site_heisenberg_pbc",
+      "description": "3-site Heisenberg PBC, exact via SU(2) Casimir",
+      "expected_ground": -0.75,
+      "expected_top": 0.75,
+      "computed_ground": -0.7500000000000001,
+      "computed_top": 0.75,
+      "ground_error": 1.1102230246251565e-16,
+      "top_error": 0.0,
+      "max_residual": 2.884444029575346e-16,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "4site_heisenberg_pbc",
+      "description": "4-site Heisenberg PBC, exact via Bethe ansatz",
+      "expected_ground": -2.0,
+      "computed_ground": -1.9999999999999996,
+      "ground_error": 4.440892098500626e-16,
+      "max_residual": 1.2161883888976235e-15,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "tfim_classical_limit",
+      "description": "TFIM N=5 at h=0",
+      "expected_ground": -4.0,
+      "computed_ground": -4.0,
+      "ground_error": 0.0,
+      "degeneracy_gap": 0.0,
+      "is_doubly_degenerate": true,
+      "max_residual": 0.0,
+      "consensus": true,
+      "passed": true
+    },
+    {
+      "test_name": "tfim_free_field_limit",
+      "description": "TFIM N=5 at J=0 (free field)",
+      "expected_ground": -3.5,
+      "computed_ground": -3.499999999999999,
+      "ground_error": 8.881784197001252e-16,
+      "max_residual": 2.656536296612216e-15,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "2site_xxz_anisotropy",
+      "description": "2-site XXZ Delta=0.7",
+      "expected": [
+        -0.675,
+        0.175,
+        0.175,
+        0.325
+      ],
+      "computed": [
+        -0.675,
+        0.175,
+        0.175,
+        0.32499999999999996
+      ],
+      "max_error": 5.551115123125783e-17,
+      "max_residual": 7.850462293418876e-17,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "majumdar_ghosh_dimer",
+      "description": "Majumdar-Ghosh point (N=4, J2/J1=1/2)",
+      "computed_ground": -1.5,
+      "spectral_gap": 2.220446049250313e-16,
+      "max_residual": 9.994476488133794e-16,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "free_fermion_dispersion",
+      "description": "Free fermion N=6 OBC, exact dispersion",
+      "single_particle_energies": [
+        -1.8019377358048383,
+        -1.2469796037174672,
+        -0.4450418679126289,
+        0.4450418679126287,
+        1.246979603717467,
+        1.801937735804838
+      ],
+      "expected_ground": -3.4939592074349344,
+      "computed_ground": -3.4939592074349344,
+      "ground_error": 0.0,
+      "max_residual": 3.605785188296149e-15,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "aklt_ground_state",
+      "description": "AKLT chain N=4 PBC",
+      "computed_ground": -2.666666666666671,
+      "spectral_gap": 0.6666666666666692,
+      "has_finite_gap": true,
+      "max_residual": 6.3410028359080915e-15,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "cluster_model_ground_state",
+      "description": "Cluster model N=5 at h=0 (stabilizer Hamiltonian)",
+      "expected_ground": -3,
+      "computed_ground": -3.0000000000000013,
+      "ground_error": 1.3322676295501878e-15,
+      "max_residual": 2.7837875326519597e-15,
+      "consensus": "True",
+      "passed": true
+    },
+    {
+      "test_name": "heisenberg_su2_casimir",
+      "description": "3-site Heisenberg, full SU(2) spectrum check",
+      "expected_eigenvalues": [
+        -0.75,
+        -0.75,
+        -0.75,
+        -0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "computed_eigenvalues": [
+        -0.7500000000000001,
+        -0.7500000000000001,
+        -0.7499999999999999,
+        -0.7499999999999999,
+        0.7499999999999999,
+        0.7499999999999999,
+        0.75,
+        0.75
+      ],
+      "max_error": 1.1102230246251565e-16,
+      "passed": true
+    }
+  ]
+}

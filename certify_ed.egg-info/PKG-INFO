@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: certify-ed
+Version: 1.0.0
+Summary: Verified exact diagonalization for quantum many-body systems
+Author: Sarang Vehale
+Author-email: sarangvehale2@gmail.com
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: scipy>=1.7.0
+Provides-Extra: validation
+Requires-Dist: quspin>=0.3.6; extra == "validation"
+Provides-Extra: high-precision
+Requires-Dist: mpmath>=1.2.0; extra == "high-precision"
+Provides-Extra: plotting
+Requires-Dist: matplotlib>=3.5.0; extra == "plotting"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=3.0.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
