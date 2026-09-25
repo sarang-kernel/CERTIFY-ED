@@ -1,0 +1,14 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+title: "sarang-kernel/CERTIFY-ED: v1.0.0"
+version: "v1.0.0"
+date-released: 2026-05-07
+
+authors:
+  - family-names: "Sarang"
+    given-names: "Vehale"
+    orcid: "https://orcid.org/0009-0001-5911-9503"
+
+  - family-names: "Ritu"
+    given-names: "Goel"
+    orcid: "https://orcid.org/0000-0002-5597-3091"
