@@ -1,0 +1,139 @@
+"""Certified low-energy spectrum of H assembled from symmetry sectors.
+
+Typical ED practice: diagonalize every symmetry block H_s = V_s^* H V_s
+separately, pool the eigenvalues, sort, and report "the K lowest states" with
+their quantum numbers. The pooled list is only the spectrum of H if (i) every
+V_s is an isometry onto an H-invariant subspace, (ii) the subspaces are
+mutually orthogonal, (iii) they span the whole Hilbert space, and (iv) no block
+is missing eigenvalues below the cut. Each condition fails in practice through
+a different bug (wrong representative phase or normalisation, a forgotten or
+double-counted sector, Lanczos missing a state inside one block).
+
+Statement (proof in the paper's appendix). Let W = [V_1 ... V_m] (n x n),
+eta = ||W^*W - I||_2 < 1, D = ||H W - W B||_2 with B = diag(H_1..H_m), and
+eps from Theorem 2 with (X, M) = (W, B). Suppose in every sector the claimed
+eigenvalues below the cut are certified distinct with radius <= r and inertia
+certifies that H_s has no further eigenvalue below E_cut - beta_s. Let
+c_(1) <= ... <= c_(K) be the pooled claimed values. Then the K lowest
+eigenvalues of H satisfy |lambda_j - c_(j)| <= r + eps, and
+lambda_{K+1} >= E_cut - max_s beta_s - eps.
+"""
+
+from __future__ import annotations
+
+import math
+import time
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Sequence
+
+import numpy as np
+import scipy.sparse as sp
+
+from .construct import build_bitwise
+from .enclosure import OperatorAdapter, enclose
+from .fp import U, fro_upper, gamma_dot, inf_norm_upper, up
+from .inertia import inertia as inertia_count
+from .sectors import audit_sector
+from .spec import ModelSpec
+
+
+@dataclass
+class SectorResult:
+    label: str
+    V: sp.spmatrix                      # n x d_s isometry (rows in the spec's full-space encoding)
+    H: sp.spmatrix                      # d_s x d_s sector block (as used by the producer)
+    eigenvalues: np.ndarray             # producer's claimed eigenvalues below the cut (may be empty)
+    eigenvectors: Optional[np.ndarray]  # d_s x k
+
+
+def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: float,
+                       H_full=None, inertia_method: str = "auto") -> Dict:
+    t0 = time.time()
+    H = build_bitwise(spec) if H_full is None else sp.csr_matrix(H_full)
+    n = H.shape[0]
+    Hn = inf_norm_upper(H)
+    per = []
+    ok_all = True
+    pooled, rmax, beta_max = [], 0.0, 0.0
+    Bn = 0.0
+    for s in sectors:
+        Hs = sp.csr_matrix(s.H)
+        asym = abs(Hs - Hs.conj().T)
+        if asym.nnz and asym.max() > 0:
+            Hs = ((Hs + Hs.conj().T) / 2).tocsr()
+        Bn = max(Bn, inf_norm_upper(Hs))
+        aud = audit_sector(H, s.V, Hs, label=s.label)
+        rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
+               "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}
+        mu = np.asarray(s.eigenvalues, dtype=float)
+        mu_below = mu[mu < E_cut]
+        r = inertia_count(Hs, E_cut, method=inertia_method)
+        rec["inertia"] = r.to_dict()
+        if not r.conclusive:
+            rec["status"] = "INCONCLUSIVE"
+            ok_all = False
+            per.append(rec)
+            continue
+        if mu_below.size:
+            sel = np.where(mu < E_cut)[0]
+            enc = enclose(OperatorAdapter(Hs), mu[sel], np.asarray(s.eigenvectors)[:, sel])
+            inside = bool(np.all(enc.mu + enc.radius < E_cut - r.beta))
+            distinct = enc.all_distinct
+            rad = float(enc.radius.max())
+        else:
+            inside, distinct, rad = True, True, 0.0
+        rec.update(n_claimed=int(mu_below.size), count=int(r.negative), max_radius=rad,
+                   beta=float(r.beta))
+        if distinct and inside and r.negative == mu_below.size:
+            rec["status"] = "COMPLETE"
+            pooled.extend(mu_below.tolist())
+            rmax = max(rmax, rad)
+            beta_max = max(beta_max, r.beta)
+        elif r.negative > mu_below.size:
+            rec["status"] = "MISSING"
+            rec["missing_at_least"] = int(r.negative - mu_below.size)
+            ok_all = False
+        else:
+            rec["status"] = "INCONCLUSIVE"
+            ok_all = False
+        per.append(rec)
+
+    # decomposition: W^*W - I and total invariance defect
+    W = sp.hstack([sp.csr_matrix(s.V) for s in sectors]).tocsc()
+    cplx = np.iscomplexobj(W.data)
+    covered = int(W.shape[1])
+    G = (W.conj().T @ W - sp.identity(covered, format="csc")).tocsr()
+    wmax = int(np.diff(W.indptr).max()) if covered else 1
+    eta = up(fro_upper(G) + gamma_dot(wmax, cplx) * fro_upper(W) ** 2)
+    D = up(math.sqrt(sum(p["invariance_defect"] ** 2 for p in per)))
+    out = {"n": n, "covered_dim": covered, "n_sectors": len(sectors), "eta": eta,
+           "invariance_total": D, "E_cut": E_cut, "sectors": per}
+    status, summary = "CERTIFIED", ""
+    bad_audit = [p["label"] for p in per if not p["audit_passed"]]
+    if bad_audit:
+        status = "FAILED"
+        summary = (f"{len(bad_audit)} sector basis/bases are not orthonormal H-invariant subspaces "
+                   f"(e.g. {bad_audit[:4]})")
+    elif covered != n:
+        status = "FAILED"
+        summary = f"sectors cover {covered} of {n} dimensions"
+    elif not eta < 1:
+        status = "FAILED"
+        summary = f"sector bases are not orthonormal (eta={eta:.2e})"
+    elif not ok_all:
+        bad = [p["label"] for p in per if p.get("status") != "COMPLETE"]
+        status = "FAILED" if any(p.get("status") == "MISSING" for p in per) else "INCONCLUSIVE"
+        summary = f"sectors not certified complete below the cut: {bad[:8]}"
+    if status == "CERTIFIED":
+        delta = up(1 - math.sqrt(1 - eta)) + 4 * U
+        rho = up(D + (Hn + Bn) * delta)
+        eps = up(0.5 * (rho + math.sqrt(5.0) * rho))
+        pooled = np.sort(np.asarray(pooled))
+        K = int(pooled.size)
+        out.update(eps_decomposition=eps, max_sector_radius=rmax, K=K,
+                   lowest=pooled.tolist(), radius=rmax + eps,
+                   next_lower_bound=E_cut - beta_max - eps)
+        summary = (f"the {K} lowest eigenvalues of H equal the pooled sector values within "
+                   f"{rmax + eps:.2e}; the next eigenvalue is >= {E_cut - beta_max - eps:.10g}")
+    out.update(status=status, summary=summary, seconds=time.time() - t0)
+    return out

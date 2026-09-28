@@ -35,7 +35,7 @@ from .construct import (StateSet, build_bitwise, build_kron, cross_construct, fu
                         matrix_difference, product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
-from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound
+from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
 from .fp import U, float_env_record, inf_norm_upper, up
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
@@ -86,6 +86,7 @@ class Options:
     gap_fractions: Sequence[float] = (0.9, 0.5, 0.2, 0.05)
     kato_temple: bool = True
     eigenspaces: str = "clusters"            # 'none' | 'clusters' | 'all'
+    cluster_tol: float = 0.0                 # claimed values closer than this form one cluster (S4)
     observables: Dict[str, Any] = field(default_factory=dict)       # name -> operator in claim space
     symmetries: Dict[str, Tuple[np.ndarray, Optional[float]]] = field(default_factory=dict)
     #   name -> (diagonal of S in the claim space, lattice spacing of its eigenvalues or None)
@@ -567,39 +568,48 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED",
                                 "requires a certified complete window (S3) to bound separations"))
     else:
-        groups = [g for g in enc.groups if (g.size > 1 or opts.eigenspaces == "all")]
+        clusters = cluster_groups(enc, opts.cluster_tol)
+        groups = [c for c in clusters if (len(c) > 1 or opts.eigenspaces == "all")]
         n_ok = 0
-        for g in groups:
-            lo_g = min(enc.mu[i] for i in g.members)
-            hi_g = max(enc.mu[i] for i in g.members)
-            others = [h for h in enc.groups if h is not g]
-            below = [max(enc.mu[i] + enc.radius[i] for i in h.members) for h in others
-                     if max(enc.mu[i] for i in h.members) < lo_g]
-            above = [min(enc.mu[i] - enc.radius[i] for i in h.members) for h in others
-                     if min(enc.mu[i] for i in h.members) > hi_g]
-            cands = [lo_g - max(below + [window[0]]), min(above + [window[1]]) - hi_g]
-            sep = min(cands)
-            cb = _cluster_bound(adapter, enc.mu, X, enc.residual, g.members)
-            rec = {"members": g.members, "claimed": [float(enc.mu[i]) for i in g.members],
-                   "separation_lower_bound": float(sep)}
-            if cb is None or not (sep > 0):
-                rec["status"] = "INCONCLUSIVE"
+        rad = enc.radius
+        for C in groups:
+            Cset = set(C)
+            a_ = min(enc.mu[i] for i in C)
+            b_ = max(enc.mu[i] for i in C)
+            rec = {"members": C, "claimed": [float(enc.mu[i]) for i in C], "splitting": float(b_ - a_)}
+            cb = _cluster_bound(adapter, enc.mu, X, enc.residual, C)
+            if cb is None:
+                rec.update(status="INCONCLUSIVE", reason="cluster vectors too far from orthonormal")
                 eig_records.append(rec)
                 continue
             eps, eta, rho = cb
-            ec = certify_eigenspace(X, g.members, enc.mu, rho, eta, sep)
+            JL = min(a_ - eps, min(enc.mu[i] - rad[i] for i in C))
+            JU = max(b_ + eps, max(enc.mu[i] + rad[i] for i in C))
+            others = [i for i in range(enc.mu.size) if i not in Cset]
+            clash = [i for i in others if not (enc.mu[i] + rad[i] < JL or enc.mu[i] - rad[i] > JU)]
+            if clash or not (JL > window[0] and JU < window[1]):
+                rec.update(status="INCONCLUSIVE",
+                           reason="cluster interval overlaps other claimed pairs or the window edge")
+                eig_records.append(rec)
+                continue
+            U_below = max([enc.mu[i] + rad[i] for i in others if enc.mu[i] < a_] + [window[0]])
+            L_above = min([enc.mu[i] - rad[i] for i in others if enc.mu[i] > b_] + [window[1]])
+            sep = min(a_ - U_below, L_above - b_)
+            rec["separation_lower_bound"] = float(sep)
+            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep)
             if ec is None:
-                rec["status"] = "INCONCLUSIVE"
+                rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
                 eig_records.append(rec)
                 continue
             for name, O in opts.observables.items():
                 certify_observable(ec, X, O, name)
-                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, g.members, O)
+                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 okc = commutes_diagonal(op, sdiag) if is_matrix(op) else False
                 certify_quantum_numbers(ec, X, sp.diags(sdiag), name, lattice=lattice,
                                         commutation_certified=okc)
             r = ec.to_dict()
+            r["splitting"] = rec["splitting"]
             r["status"] = "CERTIFIED"
             n_ok += 1
             eig_records.append(r)

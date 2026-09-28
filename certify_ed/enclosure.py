@@ -39,7 +39,9 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import (U, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
-                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper)
+                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper, exact_dot, exact_gram)
+
+EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
 
 # ---------------------------------------------------------------------------
@@ -211,10 +213,15 @@ def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray,
     Xg = X[:, idx]
     n, g = Xg.shape
     cplx = np.iscomplexobj(Xg)
-    G = Xg.conj().T @ Xg
-    xf2 = fro_upper(Xg) ** 2
     gd = gamma_dot(n, cplx)
-    eta = up(fro_upper(G - np.eye(g)) + gd * xf2)
+    if n * g * (g + 1) // 2 <= EXACT_GRAM_BUDGET:
+        # accurately rounded Gram entries: error <= 2u|G_ij| each (error-free transformations)
+        G, Eg = exact_gram(Xg)
+        eta = up(fro_upper(G - np.eye(g)) + fro_upper(Eg) + 4 * U * g)
+    else:
+        G = Xg.conj().T @ Xg
+        xf2 = fro_upper(Xg) ** 2
+        eta = up(fro_upper(G - np.eye(g)) + gd * xf2)
     if not eta < 1.0:
         return None
     delta = 1.0 - math.sqrt(1.0 - eta)
@@ -303,8 +310,46 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
         group_objs.append(Group(members, float(max(rads)), distinct, kd if res.rigorous else "estimate",
                                 eta=None if me is None else float(me[0]),
                                 rho=None if me is None else float(me[1])))
+    # safety net: a group may claim distinct eigenvalues only if its union interval is
+    # disjoint from every other group's union interval
+    if len(group_objs) > 1:
+        L = np.array([min(mu[i] - final_radius[i] for i in g.members) for g in group_objs])
+        Uu = np.array([max(mu[i] + final_radius[i] for i in g.members) for g in group_objs])
+        order_g = np.argsort(L, kind="stable")
+        Ls, Us = L[order_g], Uu[order_g]
+        prefmax = np.maximum.accumulate(np.r_[-np.inf, Us[:-1]])
+        nextL = np.r_[Ls[1:], np.inf]
+        clash = (Ls <= prefmax) | (Us >= nextL)
+        for pos, gi in enumerate(order_g):
+            if clash[pos] and group_objs[gi].distinct:
+                group_objs[gi].distinct = False
+                group_objs[gi].note = "union interval overlaps another group"
     all_distinct = all(g.distinct for g in group_objs)
     return EnclosureSet(mu, final_radius, group_of, group_objs, res, res.rigorous, all_distinct)
+
+
+def cluster_groups(enc: EnclosureSet, cluster_tol: float) -> List[List[int]]:
+    """Partition claimed pairs into clusters: members of the same enclosure group,
+    or consecutive claimed values closer than cluster_tol."""
+    order = np.argsort(enc.mu, kind="stable")
+    parent = list(range(enc.mu.size))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for g in enc.groups:
+        for m in g.members[1:]:
+            parent[find(m)] = find(g.members[0])
+    for a, b in zip(order[:-1], order[1:]):
+        if enc.mu[b] - enc.mu[a] <= cluster_tol:
+            parent[find(b)] = find(a)
+    out = {}
+    for i in order:
+        out.setdefault(find(i), []).append(int(i))
+    return list(out.values())
 
 
 # ---------------------------------------------------------------------------
@@ -312,21 +357,25 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
 # ---------------------------------------------------------------------------
 
 def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray):
-    """Rigorous enclosure [lo, hi] of theta = x^* A x / x^* x and ||A x - theta_hat x|| bound."""
+    """Rigorous enclosure [lo, hi] of theta = x^* A x / x^* x and the Theorem-1 radius at theta_hat.
+
+    A x is computed in floating point (componentwise error <= gamma_w |A||x|); the two inner
+    products are evaluated with error-free transformations (see fp.exact_dot).
+    """
     x = np.asarray(x).ravel()
-    n = x.size
     cplx = adapter.complex or np.iscomplexobj(x)
     Ax = adapter.matvec(x)
-    num = np.vdot(x, Ax).real
-    den = np.vdot(x, x).real
+    num_c, num_e = exact_dot(x, Ax)
+    num = float(np.real(num_c))
+    den_c, den_e = exact_dot(x, x)
+    den = float(np.real(den_c))
+    gdw = gamma_dot(adapter.width + 2, cplx)
     gw = gamma(adapter.width + 1)
     absAx = adapter.abs_matvec(x) / (1 - gw)
-    # error in Ax: gamma_dot(width) |A||x| ; error in x^*(Ax): gamma_dot(n)|x|^T|Ax| + |x|^T err
-    gdw = gamma_dot(adapter.width, cplx)
-    gdn = gamma_dot(n + 2, cplx)
     xa = np.abs(x)
-    num_err = up(gdn * float(xa @ (np.abs(Ax) + gdw * absAx)) + gdw * float(xa @ absAx))
-    den_err = up(gamma(n + 2) * float(xa @ xa))
+    # |x^*(Ax - fl(Ax))| <= |x|^T gdw |A||x|, bounded with a guarded float dot of non-negatives
+    num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
+    den_err = up(den_e)
     den_lo = den - den_err
     if den_lo <= 0:
         return None

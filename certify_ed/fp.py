@@ -122,3 +122,66 @@ def float_env_record() -> dict:
 
 def safe_sqrt_upper(x: float) -> float:
     return math.sqrt(max(x, 0.0)) * _GUARD
+
+
+# ---------------------------------------------------------------------------
+# error-free transformations: accurately rounded inner products
+# ---------------------------------------------------------------------------
+
+_SPLITTER = 134217729.0  # 2**27 + 1 (Dekker)
+
+
+def _two_product(a: np.ndarray, b: np.ndarray):
+    """p, e with p + e == a*b exactly (Dekker 1971), barring overflow/underflow."""
+    p = a * b
+    c = _SPLITTER * a
+    ah = c - (c - a)
+    al = a - ah
+    c = _SPLITTER * b
+    bh = c - (c - b)
+    bl = b - bh
+    e = al * bl - (((p - ah * bh) - al * bh) - ah * bl)
+    return p, e
+
+
+def exact_dot(x: np.ndarray, y: np.ndarray):
+    """Return (s, err) with |s - x^H y| <= err, where s is the correctly rounded
+    value of the exact inner product (computed with TwoProduct and math.fsum).
+
+    err = 2u|s| per real component (fsum is correctly rounded; the factor 2
+    covers the conversion of the complex result). Underflow is excluded by the
+    stated arithmetic assumptions.
+    """
+    x = np.asarray(x).ravel()
+    y = np.asarray(y).ravel()
+    if np.iscomplexobj(x) or np.iscomplexobj(y):
+        xr, xi = np.real(x).astype(float), np.imag(x).astype(float)
+        yr, yi = np.real(y).astype(float), np.imag(y).astype(float)
+        p1, e1 = _two_product(xr, yr)
+        p2, e2 = _two_product(xi, yi)
+        p3, e3 = _two_product(xr, yi)
+        p4, e4 = _two_product(xi, yr)
+        re = math.fsum(np.concatenate([p1, e1, p2, e2]).tolist())
+        im = math.fsum(np.concatenate([p3, e3, -p4, -e4]).tolist())
+        s = complex(re, im)
+        err = 2 * U * (abs(re) + abs(im))
+        return s, err
+    p, e = _two_product(x.astype(float), y.astype(float))
+    s = math.fsum(np.concatenate([p, e]).tolist())
+    return s, 2 * U * abs(s)
+
+
+def exact_gram(X: np.ndarray):
+    """Gram matrix X^H X with an entrywise error bound (accurately rounded entries)."""
+    g = X.shape[1]
+    G = np.zeros((g, g), dtype=complex if np.iscomplexobj(X) else float)
+    E = np.zeros((g, g))
+    for i in range(g):
+        for j in range(i, g):
+            s, e = exact_dot(X[:, i], X[:, j])
+            G[i, j] = s
+            E[i, j] = e
+            if i != j:
+                G[j, i] = np.conj(s)
+                E[j, i] = e
+    return G, E
