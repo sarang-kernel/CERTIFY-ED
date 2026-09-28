@@ -275,7 +275,13 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
 # ---------------------------------------------------------------------------
 
 def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
-    """Completeness of a 'k lowest' claim. A: matrix used for inertia."""
+    """Completeness of a 'k lowest' claim. A: matrix used for inertia.
+
+    Probe order (each probe = one sparse/dense LDL^T factorization): first near a
+    floating-point estimate of the (k+1)-th eigenvalue (a hint; correctness rests only
+    on the inertia counts), then progressively closer to the highest claimed value,
+    finally at a minimal margin. Typical cost when the claim is complete: one factorization.
+    """
     k = mu_sorted.size
     rad = enc.radius[np.argsort(enc.mu, kind="stable")] + eps_shift
     hi = mu_sorted + rad
@@ -284,44 +290,55 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     counts = []
     scale = max(1.0, float(np.max(np.abs(mu_sorted))))
     margin = max(1e-8 * scale, 16 * float(rad.max()))
-    sigma = hi_k + margin
-    r = inertia_count(A, sigma, method=opts.inertia_method)
-    counts.append(r.to_dict())
-    tries = 0
-    while r.conclusive and r.beta + eps_shift >= margin / 2 and tries < 3:
-        margin = 4 * (r.beta + eps_shift)
-        sigma = hi_k + margin
-        r = inertia_count(A, sigma, method=opts.inertia_method)
-        counts.append(r.to_dict())
-        tries += 1
-    if not r.conclusive:
-        return "INCONCLUSIVE", {"reason": f"inertia at sigma={sigma} inconclusive: {r.note}", "counts": counts}, None
-    beta = r.beta + eps_shift
     distinct = enc.all_distinct
-    ev = {"counts": counts, "top_shift": sigma, "beta_effective": beta}
-    if r.negative == k and distinct and hi_k < sigma - beta:
-        # Exactly k eigenvalues lie below sigma - beta, and they are the claimed ones.
-        # Push the certified window up: probe near a (non-certified) estimate of the next
-        # eigenvalue; correctness rests only on the inertia counts.
-        best_lb = sigma - beta
-        gap_counts = []
-        est = _estimate_next(A, k)
-        ev["next_eigenvalue_estimate"] = est
-        if est is not None and est > hi_k:
-            for f in opts.gap_fractions:
-                s2 = hi_k + f * (est - hi_k)
-                if s2 <= best_lb:
-                    break
-                r2 = inertia_count(A, s2, method=opts.inertia_method)
-                gap_counts.append(r2.to_dict())
-                if r2.conclusive and r2.negative == k and s2 - r2.beta - eps_shift > best_lb:
-                    best_lb = s2 - r2.beta - eps_shift
-                    break
-        ev["gap_counts"] = gap_counts
-        ev["next_eigenvalue_lower_bound"] = best_lb
-        ev["certified_window"] = ["-inf", best_lb]
-        ev["gap_lower_bound"] = best_lb - hi_k
-        return "CERTIFIED", ev, (float("-inf"), best_lb)
+    est = _estimate_next(A, k)
+    sigmas = []
+    if est is not None and est > hi_k + margin:
+        sigmas += [hi_k + f * (est - hi_k) for f in opts.gap_fractions if f * (est - hi_k) > margin]
+    sigmas.append(hi_k + margin)
+    ev = {"counts": counts, "next_eigenvalue_estimate": est}
+    r, sigma = None, None
+    last_reason = None
+    for idx, sigma in enumerate(sigmas):
+        tries = 0
+        while True:
+            r = inertia_count(A, sigma, method=opts.inertia_method)
+            counts.append(r.to_dict())
+            # the final (minimal-margin) probe sits close to a claimed eigenvalue, where a
+            # no-pivoting factorization can lose accuracy: widen the margin to the observed beta
+            if (idx == len(sigmas) - 1 and r.conclusive and r.beta + eps_shift >= (sigma - hi_k) / 2
+                    and tries < 3):
+                sigma = hi_k + 4 * (r.beta + eps_shift)
+                tries += 1
+                continue
+            break
+        if not r.conclusive:
+            last_reason = f"factorization at sigma={sigma:.10g} inconclusive ({r.note})"
+            continue
+        beta = r.beta + eps_shift
+        if r.negative == k and distinct and hi_k < sigma - beta:
+            # exactly k eigenvalues below sigma - beta, and they are the claimed ones
+            ev.update(top_shift=sigma, beta_effective=beta, next_eigenvalue_lower_bound=sigma - beta,
+                      certified_window=["-inf", sigma - beta], gap_lower_bound=(sigma - beta) - hi_k)
+            return "CERTIFIED", ev, (float("-inf"), sigma - beta)
+        if r.negative == k and distinct:
+            last_reason = (f"factorization backward error ({beta:.2e}) too large relative to the "
+                           f"margin above the highest claimed value")
+        if r.negative <= k:
+            break           # descending further cannot help
+    if r is None or not r.conclusive:
+        return "INCONCLUSIVE", dict(ev, reason=last_reason or "no conclusive inertia count"), None
+    beta = r.beta + eps_shift
+    ev.update(top_shift=sigma, beta_effective=beta)
+    if r.negative == k and not distinct:
+        return "INCONCLUSIVE", dict(ev, reason="claimed pairs not all certified distinct (S2); "
+                                               "the count matches but cannot be attributed"), None
+    if r.negative == k:
+        return "INCONCLUSIVE", dict(ev, reason=last_reason), None
+    if r.negative < k:
+        return "INCONCLUSIVE", dict(ev, reason=f"inertia counts {r.negative} eigenvalues below "
+                                               f"{sigma:.10g} but {k} claimed pairs lie below it: "
+                                               "claimed pairs are not all distinct eigenpairs"), None
     # Something is not accounted for. Is anything missing BELOW the top claimed value?
     lo_k = float(lo[np.argmax(mu_sorted)])
     s_low = lo_k - margin
@@ -353,7 +370,7 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
             ev["reason"] = ("at least one unclaimed eigenvalue lies within "
                             f"{margin + beta:.2e} above the highest claimed one")
         return "INCONCLUSIVE", ev, None
-    ev["reason"] = "claimed pairs not all certified distinct; count cannot be matched"
+    ev["reason"] = "count above the claim could not be classified"
     return "INCONCLUSIVE", ev, None
 
 
@@ -368,7 +385,7 @@ def _estimate_next(A, k):
             import scipy.linalg as _la
             return float(_la.eigvalsh(M, subset_by_index=[k, k])[0])
         import scipy.sparse.linalg as _spla
-        w = _spla.eigsh(A, k=min(k + 2, n - 2), which="SA", return_eigenvectors=False, tol=1e-8)
+        w = _spla.eigsh(A, k=min(k + 6, n - 2), which="SA", return_eigenvectors=False, tol=1e-10)
         return float(np.sort(w)[k])
     except Exception:
         return None
