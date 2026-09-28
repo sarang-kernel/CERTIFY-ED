@@ -33,7 +33,7 @@ from .construct import build_bitwise
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, fro_upper, gamma_dot, inf_norm_upper, up
 from .inertia import inertia as inertia_count
-from .sectors import audit_sector
+from .sectors import audit_sector, restrict_to_u1
 from .spec import ModelSpec
 
 
@@ -49,9 +49,10 @@ class SectorResult:
 def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: float,
                        H_full=None, inertia_method: str = "auto") -> Dict:
     t0 = time.time()
-    H = build_bitwise(spec) if H_full is None else sp.csr_matrix(H_full)
-    n = H.shape[0]
-    Hn = inf_norm_upper(H)
+    H = None if H_full is None else sp.csr_matrix(H_full)
+    n = spec.dim
+    cache = {}
+    Hn = inf_norm_upper(H) if H is not None else 0.0
     per = []
     ok_all = True
     pooled, rmax, beta_max = [], 0.0, 0.0
@@ -62,7 +63,15 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         if asym.nnz and asym.max() > 0:
             Hs = ((Hs + Hs.conj().T) / 2).tocsr()
         Bn = max(Bn, inf_norm_upper(Hs))
-        aud = audit_sector(H, s.V, Hs, label=s.label)
+        red = restrict_to_u1(spec, s.V, cache) if H is None else None
+        if red is not None:
+            Ha, Va, _ = red
+        else:
+            if H is None:
+                H = build_bitwise(spec)
+            Ha, Va = H, s.V
+        Hn = max(Hn, inf_norm_upper(Ha))
+        aud = audit_sector(Ha, Va, Hs, label=s.label)
         rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
                "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}
         mu = np.asarray(s.eigenvalues, dtype=float)

@@ -39,7 +39,7 @@ from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cl
 from .fp import U, float_env_record, inf_norm_upper, up
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
-from .sectors import audit_sector
+from .sectors import audit_sector, restrict_to_u1
 from .spec import ModelSpec
 
 
@@ -71,7 +71,7 @@ class Claim:
     states: Optional[StateSet] = None
     sector_isometry: Optional[sp.spmatrix] = None
     producer: Dict[str, Any] = field(default_factory=dict)
-    accuracy_target: Optional[float] = None
+    accuracy_target: Optional[float] = None   # None -> default 1e-8*max(1,||H||); inf -> no target
     description: str = ""
 
 
@@ -94,6 +94,9 @@ class Options:
     store_eigenvectors: bool = False
     probe_vectors: int = 3
     seed: int = 12345
+
+
+DEFAULT_REL_ACCURACY = 1e-8
 
 
 def _stmt(sid, status, summary, evidence=None, assumptions=None, seconds=0.0):
@@ -173,14 +176,21 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
     ev = {"spec_sha256": spec.sha256(), "spec_name": spec.name}
     op = claim.operator
     if claim.sector_isometry is not None:
-        if H_full_ref is None:
+        V_audit = claim.sector_isometry
+        red = restrict_to_u1(spec, claim.sector_isometry) if H_full_ref is None else None
+        if red is not None:
+            H_full_ref, V_audit, st_u1 = red
+            ev["audit_space"] = {"kind": "U(1) block (exactly invariant; leak 0)", "label": st_u1.label,
+                                 "dimension": int(st_u1.size)}
+        elif H_full_ref is None:
             H_full_ref = build_bitwise(spec)
+            ev["audit_space"] = {"kind": "full Hilbert space", "dimension": int(spec.dim)}
         Hs = sp.csr_matrix(op)
         herm = float(abs(Hs - Hs.conj().T).max()) if Hs.nnz else 0.0
         ev["hermiticity_max_abs"] = herm
         # the Hermitian part is what S2-S4 certify; audit exactly that matrix
         Hs = ((Hs + Hs.conj().T) / 2).tocsr() if herm > 0 else Hs
-        audit = audit_sector(H_full_ref, claim.sector_isometry, Hs, label="producer sector")
+        audit = audit_sector(H_full_ref, V_audit, Hs, label="producer sector")
         ev["sector_audit"] = audit.to_dict()
         status = "CERTIFIED" if audit.passed else "FAILED"
         summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
@@ -478,9 +488,19 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             summ = (f"{mu.size} claimed values matched to distinct eigenvalues; max radius "
                     f"{enc.radius.max():.2e}" + (f" (sector block); {enc.radius.max() + eps_shift:.2e} "
                                                  f"for the full operator" if audit is not None else ""))
-        if claim.accuracy_target is not None and st == "CERTIFIED" and enc.radius.max() + eps_shift > claim.accuracy_target:
+        # accuracy presumption: unless the producer states otherwise, a claimed eigenpair is
+        # presumed accurate to DEFAULT_REL_ACCURACY * ||H|| (a true but loose enclosure is FAILED)
+        Hn_ = adapter.norm_upper() or 1.0
+        if claim.accuracy_target is None:
+            target, tsrc = DEFAULT_REL_ACCURACY * max(1.0, Hn_), "default (1e-8 * max(1, ||H||))"
+        else:
+            target, tsrc = float(claim.accuracy_target), "stated by producer"
+        ev["accuracy_target"] = {"value": target, "source": tsrc}
+        if st == "CERTIFIED" and enc.radius.max() + eps_shift > target:
             st = "FAILED"
-            summ = f"certified radius {enc.radius.max():.2e} exceeds the claimed accuracy {claim.accuracy_target:.1e}"
+            worst = int(np.argmax(enc.radius))
+            summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
+                    f"accuracy target {target:.1e} [{tsrc}]")
         statements.append(_stmt("S2.eigenpairs", st, summ, ev,
                                 ["standard floating-point model (see 'arithmetic')"] if enc.rigorous else [],
                                 time.time() - t0))

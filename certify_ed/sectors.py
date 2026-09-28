@@ -153,3 +153,43 @@ def lift_radius(sector_rel_radius: float, audit: "SectorAudit") -> float:
     if iso >= 1:
         return float("inf")
     return up((math.sqrt(1 + iso) * sector_rel_radius + audit.invariance_defect) / math.sqrt(1 - iso))
+
+
+# ---------------------------------------------------------------------------
+# Restricting sector audits to an exactly invariant U(1) block
+# ---------------------------------------------------------------------------
+
+def restrict_to_u1(spec, V, cache: Optional[dict] = None):
+    """If every row in the support of V lies in one digit-sum (U(1)) sector and the
+    spec conserves the digit sum exactly (zero leak), return (H_u, V_u, stateset):
+    the spec operator on that sector and V with rows re-indexed into it.
+    Returns None otherwise (the caller then needs the full-space operator)."""
+    from .basis import digit_sum, u1_state_set
+    from .construct import build_bitwise, full_state_set
+    V = sp.csr_matrix(V)
+    rows = np.unique(V.nonzero()[0])
+    if rows.size == 0:
+        return None
+    full = full_state_set(spec)
+    states = full.states_in_order()[rows]
+    ds = digit_sum(states.astype(np.int64), spec.q, spec.n_sites)
+    if not np.all(ds == ds[0]):
+        return None
+    total = int(ds[0])
+    key = ("u1", total)
+    if cache is not None and key in cache:
+        Hu, st = cache[key]
+    else:
+        st = u1_state_set(spec, total)
+        Hu, leak = build_bitwise(spec, st, return_leak=True)
+        if leak > 0:
+            return None
+        if cache is not None:
+            cache[key] = (Hu, st)
+    idx, found = st.index_of(states)
+    if not np.all(found):
+        return None
+    Vc = V.tocoo()
+    pos = np.searchsorted(rows, Vc.row)
+    Vu = sp.csr_matrix((Vc.data, (idx[pos], Vc.col)), shape=(st.size, V.shape[1]))
+    return Hu, Vu, st
