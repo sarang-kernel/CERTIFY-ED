@@ -1,6 +1,6 @@
 """CERTIFY-ED: Verified Exact Diagonalization."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.0.dev0"
 __author__ = "Sarang Vehale"
 
 from .hamiltonian import (
@@ -31,3 +31,21 @@ from .symmetries import (
     fermion_number_operator, fermion_parity_operator,
     project_onto_sector, commutator, commutator_norm, check_conservation,
 )
+
+# ---------------------------------------------------------------------------
+# v2 API: certification of claimed results from arbitrary producers
+# ---------------------------------------------------------------------------
+from .localops import LocalSpace
+from .spec import (ModelSpec, Term, spec_from_quspin, heisenberg_chain, tfim_chain,
+                   heisenberg_square, spinless_fermion_chain, bose_hubbard_chain,
+                   spin1_heisenberg_chain)
+from .construct import (build_bitwise, build_kron, cross_construct, SpecOperator,
+                        StateSet, full_state_set)
+from .basis import (u1_state_set, magnetization_state_set, translation, spin_flip,
+                    reflection, cyclic_isometry, sector_matrix)
+from .enclosure import OperatorAdapter, enclose, kato_temple
+from .inertia import inertia as inertia_count
+from .certify import Claim, Options, certify
+from .certificate_v2 import Certificate as CertificateV2
+from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
+                        claim_from_hdf5, export_npz)

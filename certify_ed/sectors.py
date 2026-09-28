@@ -1,0 +1,155 @@
+"""Audit of a producer's symmetry-sector decomposition, and composition of
+per-sector statements into statements about the full operator.
+
+A producer that diagonalizes H block by block implicitly claims that its
+sector basis V_s (d x d_s) is an isometry onto an H-invariant subspace and that
+H_s = V_s^* H V_s. Given the producer's V_s and H_s and an independently built
+full-space H (from the spec), we measure
+
+  iso_s  = || V_s^* V_s - I ||          (orthonormal basis)
+  inv_s  = || H V_s - V_s H_s ||        (invariance; the key condition: V^*HV = H_s
+                                          alone holds for ANY subspace)
+  orth   = || V_s^* V_t ||, s != t      (sectors mutually orthogonal)
+  dim    = sum_s d_s vs dim of the covered space
+
+If iso_s and inv_s are small, every certified eigenpair (mu, y) of H_s lifts to
+(mu, V_s y) for H with residual <= ||H_s y - mu y|| + inv_s ||y||, and
+per-sector inertia counts add up to counts for H on the covered subspace (with
+the invariance defect added to the backward-error bound). Frobenius-norm
+upper bounds are used throughout (computable in O(nnz)).
+
+When the producer does not expose V_s, only necessary conditions are
+available: dimension sums and trace moments sum_s tr H_s = tr H,
+sum_s ||H_s||_F^2 = ||H||_F^2 (computed from the spec, see invariants.py).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
+import numpy as np
+import scipy.sparse as sp
+
+from .fp import fro_upper, gamma_dot, up, U
+
+
+@dataclass
+class SectorAudit:
+    label: str
+    dim: int
+    isometry_defect: float
+    invariance_defect: float
+    compression_defect: float
+    passed: bool
+    note: str = ""
+
+    def to_dict(self):
+        return dict(self.__dict__)
+
+
+def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "",
+                 tol: float = 1e-10) -> SectorAudit:
+    H = sp.csr_matrix(H)
+    V = sp.csr_matrix(V)
+    Hs = sp.csr_matrix(Hs)
+    ds = V.shape[1]
+    cplx = np.iscomplexobj(V.data) or np.iscomplexobj(H.data) or np.iscomplexobj(Hs.data)
+    G = (V.conj().T @ V - sp.identity(ds, format="csr")).tocsr()
+    wv = int(np.diff(sp.csc_matrix(V).indptr).max()) if ds else 1
+    iso = up(fro_upper(G) + gamma_dot(wv, cplx) * fro_upper(V) ** 2)
+    HV = H @ V
+    VHs = V @ Hs
+    D = (HV - VHs).tocsr()
+    wh = int(np.diff(H.indptr).max()) if H.shape[0] else 1
+    rnd = gamma_dot(wh + int(np.diff(Hs.indptr).max() if ds else 1) + 2, cplx) * (
+        fro_upper(abs(H) @ abs(V)) + fro_upper(abs(V) @ abs(Hs)))
+    inv = up(fro_upper(D) + rnd)
+    C = (V.conj().T @ HV - Hs).tocsr()
+    comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(abs(V).T @ abs(H) @ abs(V)))
+    passed = iso <= tol and inv <= tol * max(1.0, fro_upper(H) / max(1.0, np.sqrt(H.shape[0])))
+    return SectorAudit(label, int(ds), float(iso), float(inv), float(comp), bool(passed))
+
+
+def audit_orthogonality(Vs: List[sp.spmatrix]) -> float:
+    """max_{s<t} || V_s^* V_t ||_F upper bound."""
+    worst = 0.0
+    for a in range(len(Vs)):
+        for b in range(a + 1, len(Vs)):
+            M = (Vs[a].conj().T @ Vs[b]).tocsr()
+            if M.nnz:
+                worst = max(worst, fro_upper(M))
+    return up(worst)
+
+
+@dataclass
+class DecompositionAudit:
+    sectors: List[SectorAudit]
+    orthogonality_defect: float
+    covered_dim: int
+    expected_dim: int
+    trace_check: Optional[dict] = None
+    passed: bool = False
+
+    def to_dict(self):
+        return {"sectors": [s.to_dict() for s in self.sectors],
+                "orthogonality_defect": self.orthogonality_defect,
+                "covered_dim": self.covered_dim, "expected_dim": self.expected_dim,
+                "trace_check": self.trace_check, "passed": self.passed}
+
+
+def audit_decomposition(H: sp.spmatrix, Vs: List[sp.spmatrix], Hss: List[sp.spmatrix],
+                        labels: Optional[List[str]] = None, tol: float = 1e-10) -> DecompositionAudit:
+    labels = labels or [f"sector_{i}" for i in range(len(Vs))]
+    audits = [audit_sector(H, V, Hs, lab, tol) for V, Hs, lab in zip(Vs, Hss, labels)]
+    orth = audit_orthogonality(Vs)
+    cov = sum(a.dim for a in audits)
+    exp = H.shape[0]
+    tr = trace_moments_check(H, Hss)
+    passed = all(a.passed for a in audits) and orth <= tol and cov == exp and tr["consistent"]
+    return DecompositionAudit(audits, float(orth), int(cov), int(exp), tr, bool(passed))
+
+
+def trace_moments_check(H: sp.spmatrix, Hss: List[sp.spmatrix], rtol: float = 1e-10) -> dict:
+    """Necessary conditions without isometries: tr and Frobenius norm additivity."""
+    tH = complex(sp.csr_matrix(H).diagonal().sum())
+    fH = float(sp.linalg.norm(H) ** 2)
+    ts = complex(sum(sp.csr_matrix(M).diagonal().sum() for M in Hss))
+    fs = float(sum(sp.linalg.norm(M) ** 2 for M in Hss))
+    scale = max(1.0, fH)
+    ok = abs(tH - ts) <= rtol * scale and abs(fH - fs) <= rtol * scale
+    return {"trace_full": tH.real, "trace_sectors": ts.real, "fro2_full": fH, "fro2_sectors": fs,
+            "consistent": bool(ok), "rtol": rtol}
+
+
+def decomposition_shift(audit: "DecompositionAudit", H_norm: float, B_norm: float) -> Optional[float]:
+    """Bound eps such that the union of sector spectra (block-diagonal B) and the
+    spectrum of H match within eps in sorted order (Theorem 2 applied with the
+    square, nearly unitary W = [V_1 ... V_m] and M = B).
+
+    Requires the sectors to cover the space (covered_dim == expected_dim).
+    Returns None if the audit cannot support the statement.
+    """
+    import math
+    if audit.covered_dim != audit.expected_dim:
+        return None
+    m = len(audit.sectors)
+    eta_sq = sum(s.isometry_defect ** 2 for s in audit.sectors) + 2 * (m * (m - 1) / 2) * audit.orthogonality_defect ** 2
+    eta = up(math.sqrt(eta_sq))
+    if not eta < 1:
+        return None
+    delta = up(1 - math.sqrt(1 - eta)) + 4 * U
+    D = up(math.sqrt(sum(s.invariance_defect ** 2 for s in audit.sectors)))
+    rho = up(D + (H_norm + B_norm) * delta)
+    w = rho
+    return up(0.5 * (w + math.sqrt(w * w + 4 * rho * rho)))
+
+
+def lift_radius(sector_rel_radius: float, audit: "SectorAudit") -> float:
+    """Theorem-1 radius in the full space for (mu, V y) given the sector radius
+    ||H_s y - mu y||/||y||: (sqrt(1+iso) r + inv) / sqrt(1-iso)."""
+    import math
+    iso = audit.isometry_defect
+    if iso >= 1:
+        return float("inf")
+    return up((math.sqrt(1 + iso) * sector_rel_radius + audit.invariance_defect) / math.sqrt(1 - iso))

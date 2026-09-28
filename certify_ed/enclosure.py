@@ -1,0 +1,359 @@
+"""Eigenvalue enclosures for claimed eigenpairs of a Hermitian operator.
+
+Statements produced here concern the operator AS STORED (the floating-point
+matrix or the exact operator defined by a spec, see `operator_kind`).
+
+Theorem 1 (single pair; e.g. Parlett 1998, Thm 4.5.1). For Hermitian A, any
+nonzero x and any real mu, some eigenvalue lambda_j satisfies
+    |lambda_j - mu| <= ||A x - mu x|| / ||x||.
+
+Theorem 2 (cluster; proved in the paper's appendix). Let X (n x g) satisfy
+||X^* X - I||_2 <= eta < 1, let Lambda = diag(mu_1..mu_g) be real, and let
+R = A X - X Lambda. Put delta = 1 - sqrt(1 - eta),
+    rho = ||R||_2 + (||A||_2 + ||Lambda||_2) delta,
+    w   = any upper bound on ||Qhat^* Rhat||_2 (w <= rho),
+    eps = (w + sqrt(w^2 + 4 rho^2)) / 2,
+where Qhat is the orthonormal polar factor of X. Then there is an injective
+map i -> j(i) with |lambda_{j(i)} - mu_i| <= eps for i = 1..g.
+
+Disjoint groups therefore certify distinct eigenvalues; overlapping groups are
+merged and re-bounded until the enlarged intervals of different groups are
+disjoint. When vectors are missing or too far from orthonormal (eta >= 1),
+the group only certifies existence (at least one eigenvalue per interval),
+not multiplicity; multiplicities then come from inertia counts.
+
+Theorem 3 (Kato 1949; Temple 1928). If the open interval (alpha, beta) contains
+exactly one distinct eigenvalue lambda of A, x is a unit vector with Rayleigh
+quotient theta in (alpha, beta) and r = ||A x - theta x||, then
+    theta - r^2/(beta - theta) <= lambda <= theta + r^2/(theta - alpha).
+Used to sharpen isolated enclosures once inertia counts certify isolation.
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field, asdict
+from typing import Dict, List, Optional, Sequence
+
+import numpy as np
+import scipy.sparse as sp
+
+from .fp import (U, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
+                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper)
+
+
+# ---------------------------------------------------------------------------
+# operator adapters
+# ---------------------------------------------------------------------------
+
+class OperatorAdapter:
+    """Uniform access to H x, |H| |x| bounds and ||H||_2 bounds.
+
+    kind:
+      'matrix'   : dense ndarray or scipy.sparse matrix (bounds rigorous)
+      'spec'     : certify_ed.construct.SpecOperator (bounds rigorous, via abs_matvec)
+      'blackbox' : LinearOperator / callable without |H| access (rounding of
+                   the producer's matvec cannot be bounded; statements are
+                   marked 'floating-point estimate')
+    """
+
+    def __init__(self, op, norm_bound: Optional[float] = None):
+        self.op = op
+        if sp.issparse(op) or isinstance(op, np.ndarray):
+            self.kind = "matrix"
+            self.A = op.tocsr() if sp.issparse(op) else np.asarray(op)
+            self.shape = self.A.shape
+            self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
+            self.width = max_nnz_per_row(self.A)
+            self._absA = abs(self.A) if sp.issparse(self.A) else np.abs(self.A)
+            self._norm = inf_norm_upper(self.A)
+        elif hasattr(op, "abs_matvec") and hasattr(op, "spec"):
+            self.kind = "spec"
+            self.shape = op.shape
+            self.complex = op.dtype == np.complex128
+            spec = op.spec
+            max_len = max((len(t.op) for t in spec.terms), default=1)
+            # each matrix element is a sum over couplings of products of <= max_len+1 factors
+            self.width = spec.n_terms * (2 ** max_len) + max_len + 2
+            ones = np.ones(op.shape[0])
+            self._norm = up(float(np.max(op.abs_matvec(ones)))) * (1 + gamma(self.width))
+        else:
+            self.kind = "blackbox"
+            self.shape = op.shape
+            self.complex = np.dtype(getattr(op, "dtype", np.complex128)).kind == "c"
+            self.width = None
+            self._norm = norm_bound
+        if norm_bound is not None:
+            self._norm = norm_bound if self._norm is None else min(self._norm, norm_bound)
+
+    @property
+    def rigorous(self) -> bool:
+        return self.kind in ("matrix", "spec")
+
+    def matvec(self, X):
+        if self.kind == "matrix":
+            return self.A @ X
+        if self.kind == "spec":
+            return self.op.matvec(X)
+        if hasattr(self.op, "matmat") and X.ndim == 2:
+            return self.op.matmat(X)
+        if X.ndim == 2:
+            return np.column_stack([self.op.matvec(X[:, i]) for i in range(X.shape[1])])
+        return self.op.matvec(X)
+
+    def abs_matvec(self, X):
+        if self.kind == "matrix":
+            return self._absA @ np.abs(X)
+        if self.kind == "spec":
+            return self.op.abs_matvec(np.abs(X))
+        raise RuntimeError("no |H| access for black-box operator")
+
+    def norm_upper(self) -> Optional[float]:
+        return self._norm
+
+
+# ---------------------------------------------------------------------------
+# residuals
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ResidualReport:
+    computed: np.ndarray        # ||fl(Hx - mu x)||_2 as computed
+    upper: np.ndarray           # rigorous upper bound on exact ||Hx - mu x||_2 (inf if not rigorous)
+    xnorm_lower: np.ndarray
+    rel_bound: np.ndarray       # upper / xnorm_lower  (Theorem 1 radius; inf if not rigorous)
+    rel_estimate: np.ndarray    # computed / ||x|| (floating-point estimate, always finite)
+    R: np.ndarray               # computed residual vectors (n x k)
+    E: np.ndarray               # componentwise rounding bound on R (n x k), zeros if not rigorous
+    rigorous: bool
+
+
+def residuals(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray) -> ResidualReport:
+    mu = np.asarray(mu, dtype=float)
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X[:, None]
+    HX = adapter.matvec(X)
+    if HX.ndim == 1:
+        HX = HX[:, None]
+    R = HX - X * mu[None, :]
+    n, k = X.shape
+    computed = np.linalg.norm(R, axis=0)
+    xl = np.array([norm2_lower(X[:, i]) for i in range(k)])
+    if adapter.rigorous:
+        cplx = adapter.complex or np.iscomplexobj(X)
+        g = gamma_dot(adapter.width + 2, cplx)
+        absHX = adapter.abs_matvec(X)
+        if absHX.ndim == 1:
+            absHX = absHX[:, None]
+        gw = gamma(adapter.width + 1)
+        absHX_up = absHX / (1.0 - gw) * (1 + 4 * U)
+        E = g * (absHX_up + np.abs(X) * np.abs(mu)[None, :]) * (1 + 4 * U)
+        upper = np.array([norm2_upper(R[:, i]) + norm2_upper(E[:, i]) for i in range(k)])
+    else:
+        E = np.zeros_like(np.abs(R))
+        upper = np.full(k, np.inf)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rel = np.where(xl > 0, upper / xl, np.inf) * (1 + 4 * U)
+        est = computed / np.linalg.norm(X, axis=0)
+    return ResidualReport(computed, upper, xl, rel, est, R, E, adapter.rigorous)
+
+
+# ---------------------------------------------------------------------------
+# enclosures
+# ---------------------------------------------------------------------------
+
+@dataclass
+class Group:
+    members: List[int]           # indices into the claimed list (sorted by claimed value)
+    radius: float                # certified radius for every member
+    distinct: bool               # True: members matched to distinct eigenvalues
+    method: str                  # 'single' | 'cluster' | 'existence-only' | 'kato-temple'
+    eta: Optional[float] = None  # orthonormality defect bound (cluster)
+    rho: Optional[float] = None  # ||Rhat||_2 bound (cluster)
+    note: str = ""
+
+    @property
+    def size(self):
+        return len(self.members)
+
+
+@dataclass
+class EnclosureSet:
+    mu: np.ndarray               # claimed values
+    radius: np.ndarray           # per-pair certified radius
+    group_of: np.ndarray         # group index per pair
+    groups: List[Group]
+    residual: ResidualReport
+    rigorous: bool
+    all_distinct: bool
+
+    def interval(self, i):
+        return (self.mu[i] - self.radius[i], self.mu[i] + self.radius[i])
+
+    def to_records(self) -> List[dict]:
+        out = []
+        for i in range(self.mu.size):
+            g = self.groups[self.group_of[i]]
+            out.append({"index": int(i), "claimed": float(self.mu[i]), "radius": float(self.radius[i]),
+                        "lower": float(self.mu[i] - self.radius[i]),
+                        "upper": float(self.mu[i] + self.radius[i]),
+                        "group": int(self.group_of[i]), "group_size": g.size,
+                        "method": g.method, "distinct": bool(g.distinct),
+                        "residual_computed": float(self.residual.computed[i]),
+                        "residual_bound": float(self.residual.upper[i])})
+        return out
+
+
+def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray,
+                   res: ResidualReport, idx: Sequence[int]):
+    """Theorem 2 radius for the group idx. Returns (eps, eta, rho) or None."""
+    Xg = X[:, idx]
+    n, g = Xg.shape
+    cplx = np.iscomplexobj(Xg)
+    G = Xg.conj().T @ Xg
+    xf2 = fro_upper(Xg) ** 2
+    gd = gamma_dot(n, cplx)
+    eta = up(fro_upper(G - np.eye(g)) + gd * xf2)
+    if not eta < 1.0:
+        return None
+    delta = 1.0 - math.sqrt(1.0 - eta)
+    delta = up(delta) + 4 * U
+    Rg_fro = safe_sqrt_upper(float(np.sum(res.upper[list(idx)] ** 2)))
+    Hn = adapter.norm_upper()
+    if Hn is None or not np.isfinite(Hn):
+        return None
+    lam_n = float(np.max(np.abs(mu[list(idx)])))
+    rho = up(Rg_fro + (Hn + lam_n) * delta)
+    # w bound: ||Qhat^* Rhat|| <= ||X^* R_exact|| + ||X|| ||Rhat - R|| + delta ||Rhat||
+    Rc = res.R[:, idx]
+    XR = Xg.conj().T @ Rc
+    xnorm = math.sqrt(1.0 + eta)
+    Rerr = safe_sqrt_upper(float(sum(norm2_upper(res.E[:, j]) ** 2 for j in idx)))
+    w = (fro_upper(XR) + gd * fro_upper(Xg) * fro_upper(Rc) + xnorm * Rerr
+         + xnorm * (Hn + lam_n) * delta + delta * rho)
+    w = min(up(w), rho)
+    eps = up(0.5 * (w + math.sqrt(w * w + 4.0 * rho * rho)))
+    return eps, eta, rho
+
+
+def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarray]) -> EnclosureSet:
+    """Certified intervals for claimed eigenpairs (mu_i, x_i) of the stored operator."""
+    mu = np.asarray(mu, dtype=float)
+    k = mu.size
+    if X is None:
+        raise ValueError("eigenvectors are required for enclosures (eigenvalue-only claims "
+                         "are handled by inertia counts)")
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X[:, None]
+    order = np.argsort(mu, kind="stable")
+    res = residuals(adapter, mu, X)
+    radius = res.rel_bound.copy() if res.rigorous else res.rel_estimate.copy()
+
+    # start: every pair its own group; merge by overlap of current intervals
+    groups: List[List[int]] = [[int(i)] for i in order]
+    rad_of_group = [float(radius[g[0]]) for g in groups]
+    kinds = ["single"] * len(groups)
+    meta = [None] * len(groups)
+
+    def overlaps(ga, ra, gb, rb):
+        hi_a = max(mu[i] for i in ga) + ra
+        lo_b = min(mu[i] for i in gb) - rb
+        return hi_a >= lo_b
+
+    changed = True
+    while changed:
+        changed = False
+        merged, mr, mk, mm = [groups[0]], [rad_of_group[0]], [kinds[0]], [meta[0]]
+        for g, r, kd, me in zip(groups[1:], rad_of_group[1:], kinds[1:], meta[1:]):
+            if overlaps(merged[-1], mr[-1], g, r):
+                newg = merged[-1] + g
+                cb = _cluster_bound(adapter, mu, X, res, newg) if res.rigorous else None
+                if cb is None:
+                    # existence only: each member keeps its own Theorem-1 radius
+                    merged[-1] = newg
+                    mr[-1] = float(max(radius[i] for i in newg))
+                    mk[-1] = "existence-only"
+                    mm[-1] = None
+                else:
+                    eps, eta, rho = cb
+                    merged[-1] = newg
+                    mr[-1] = eps
+                    mk[-1] = "cluster"
+                    mm[-1] = (eta, rho)
+                changed = True
+            else:
+                merged.append(g); mr.append(r); mk.append(kd); mm.append(me)
+        groups, rad_of_group, kinds, meta = merged, mr, mk, mm
+
+    group_objs: List[Group] = []
+    group_of = np.zeros(k, dtype=int)
+    final_radius = np.zeros(k)
+    for gi, (g, r, kd, me) in enumerate(zip(groups, rad_of_group, kinds, meta)):
+        members = sorted(g, key=lambda i: mu[i])
+        distinct = kd in ("single", "cluster") and res.rigorous
+        if kd == "existence-only":
+            rads = [float(radius[i]) for i in members]
+        else:
+            rads = [float(r)] * len(members)
+        for i, ri in zip(members, rads):
+            group_of[i] = gi
+            final_radius[i] = ri
+        group_objs.append(Group(members, float(max(rads)), distinct, kd if res.rigorous else "estimate",
+                                eta=None if me is None else float(me[0]),
+                                rho=None if me is None else float(me[1])))
+    all_distinct = all(g.distinct for g in group_objs)
+    return EnclosureSet(mu, final_radius, group_of, group_objs, res, res.rigorous, all_distinct)
+
+
+# ---------------------------------------------------------------------------
+# Kato-Temple sharpening
+# ---------------------------------------------------------------------------
+
+def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray):
+    """Rigorous enclosure [lo, hi] of theta = x^* A x / x^* x and ||A x - theta_hat x|| bound."""
+    x = np.asarray(x).ravel()
+    n = x.size
+    cplx = adapter.complex or np.iscomplexobj(x)
+    Ax = adapter.matvec(x)
+    num = np.vdot(x, Ax).real
+    den = np.vdot(x, x).real
+    gw = gamma(adapter.width + 1)
+    absAx = adapter.abs_matvec(x) / (1 - gw)
+    # error in Ax: gamma_dot(width) |A||x| ; error in x^*(Ax): gamma_dot(n)|x|^T|Ax| + |x|^T err
+    gdw = gamma_dot(adapter.width, cplx)
+    gdn = gamma_dot(n + 2, cplx)
+    xa = np.abs(x)
+    num_err = up(gdn * float(xa @ (np.abs(Ax) + gdw * absAx)) + gdw * float(xa @ absAx))
+    den_err = up(gamma(n + 2) * float(xa @ xa))
+    den_lo = den - den_err
+    if den_lo <= 0:
+        return None
+    cands = [(num - num_err) / (den + den_err), (num - num_err) / den_lo,
+             (num + num_err) / (den + den_err), (num + num_err) / den_lo]
+    lo, hi = min(cands), max(cands)
+    lo -= abs(lo) * 4 * U
+    hi += abs(hi) * 4 * U
+    theta_hat = num / den
+    res = residuals(adapter, np.array([theta_hat]), x[:, None])
+    return lo, hi, theta_hat, float(res.rel_bound[0])
+
+
+def kato_temple(adapter: OperatorAdapter, x: np.ndarray, alpha: float, beta: float):
+    """Certified [lo, hi] for the unique eigenvalue in (alpha, beta), or None if
+    the hypotheses cannot be verified (theta not safely inside, or margins
+    smaller than the residual)."""
+    ri = rayleigh_interval(adapter, x)
+    if ri is None:
+        return None
+    th_lo, th_hi, th, r_hat = ri
+    # r = ||Ax - theta x|| <= ||Ax - th x|| + |theta - th| (unit-norm normalisation in rel_bound)
+    r = up(r_hat + max(th_hi - th, th - th_lo))
+    if not (alpha < th_lo - r and th_hi + r < beta):
+        return None
+    lower = th_lo - r * r / (beta - th_lo)
+    upper = th_hi + r * r / (th_hi - alpha)
+    lower -= abs(lower) * 8 * U
+    upper += abs(upper) * 8 * U
+    return float(lower), float(upper), float(th), float(r)
