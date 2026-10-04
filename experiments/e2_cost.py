@@ -96,11 +96,22 @@ print("RESULT" + json.dumps(out))
 '''.replace("ROOT", repr(ROOT))
 
 
+MEM_CAP_BYTES = int(4.5 * 2 ** 30)   # each child process is capped; exceeding it raises MemoryError
+THREADS = "1"                         # single-threaded BLAS for producer and certifier alike
+
+
+def _limit():
+    import resource
+    resource.setrlimit(resource.RLIMIT_AS, (MEM_CAP_BYTES, MEM_CAP_BYTES))
+
+
 def run_child(code, cfg, timeout):
     t = time.time()
+    env = dict(os.environ, OMP_NUM_THREADS=THREADS, OPENBLAS_NUM_THREADS=THREADS, MKL_NUM_THREADS=THREADS,
+               NUMBA_NUM_THREADS=THREADS)
     try:
         p = subprocess.run([sys.executable, "-c", code, json.dumps(cfg)], capture_output=True, text=True,
-                           timeout=timeout)
+                           timeout=timeout, env=env, preexec_fn=_limit)
     except subprocess.TimeoutExpired:
         return {"error": f"timeout after {timeout}s"}, time.time() - t
     for line in p.stdout.splitlines():
@@ -114,6 +125,8 @@ def main():
              [dict(model="chain", block="k0", N=N) for N in (16, 18, 20, 22, 24)] + \
              [dict(model="square", block="u1", Lx=4, Ly=4), dict(model="square", block="u1", Lx=4, Ly=4, J2=0.5)]
     with Run("e2_cost") as run:
+        run.record("settings", {"threads": int(THREADS), "memory_cap_GiB": MEM_CAP_BYTES / 2 ** 30,
+                                "producer_timeout_s": 1800, "certifier_timeout_s": 900})
         rows = []
         for i, pt in enumerate(points):
             cfg = dict(pt, k=8, npz=os.path.join(run.dir, f"point{i}.npz"))
@@ -124,12 +137,12 @@ def main():
                 run.log(f"{label}: producer failed: {prod['error'][-200:]}")
                 rows.append(dict(label=label, cfg=pt, producer=prod))
                 continue
-            cert, tc = run_child(CERTIFIER, cfg, 1500)
+            cert, tc = run_child(CERTIFIER, cfg, 900)
             rec = dict(label=label, cfg=pt, producer=prod, certifier=cert)
             if "error" in cert:
                 # completeness (S3) unaffordable: measure S1+S2 alone
                 cfg2 = dict(cfg, inertia_max_dim=0)
-                cert2, _ = run_child(CERTIFIER, cfg2, 1500)
+                cert2, _ = run_child(CERTIFIER, cfg2, 900)
                 rec["certifier_without_S3"] = cert2
                 run.log(f"{label}: S3 failed ({cert['error'][-120:]}); without S3: "
                         f"{cert2.get('total', float('nan')):.1f}s, mem {cert2.get('maxrss_mb', float('nan')):.0f}MB")
