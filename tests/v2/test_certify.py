@@ -267,3 +267,21 @@ def test_global_spectrum_from_sectors(bug):
         assert wfull[res["K"]] >= res["next_lower_bound"]
     else:
         assert res["status"] == "FAILED", (bug, res["summary"])
+
+
+def test_radius_includes_model_shift():
+    """S2 radii refer to the declared model: a producer matrix that differs from the spec
+    within rounding tolerance is certified, and the difference is added to the radius."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec).tolil()
+    d = 4e-16
+    H[3, 5] += d
+    H[5, 3] += d
+    H = H.tocsr()
+    w, V = la.eigh(H.toarray())
+    c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec)
+    assert status(c, "S1.model_fidelity") == "CERTIFIED"
+    s2 = [s for s in c.statements if s["id"] == "S2.eigenpairs"][0]
+    assert s2["evidence"]["model_shift"] >= d
+    assert s2["evidence"]["radius_refers_to"] == "declared model (spec)"
+    assert np.all(c.arrays["radius"] >= d)

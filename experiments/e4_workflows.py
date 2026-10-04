@@ -163,8 +163,13 @@ def w4_benchmarks(run):
         o = np.argsort(w)
         w, V = w[o], V[:, o]
         t_prod = time.time() - t0
-        c = ce.certify(ce.Claim(w[:1], V[:, :1], operator=H.tocsr(), kind="lowest", **kw), spec,
-                       ce.Options(inertia_method="sparse", inertia_max_dim=10 ** 6))
+        claim = ce.Claim(w[:1], V[:, :1], operator=H.tocsr(), kind="lowest", **kw)
+        s3_note = None
+        try:
+            c = ce.certify(claim, spec, ce.Options(inertia_method="sparse", inertia_max_dim=10 ** 6))
+        except MemoryError as e:
+            s3_note = f"S3 factorization exceeded the {MEM_CAP_GIB} GiB memory cap ({type(e).__name__}); rerun without S3"
+            c = ce.certify(claim, spec, ce.Options(inertia_max_dim=0))
         rad = float(c.arrays["radius"][0])
         s3 = [s for s in c.statements if s["id"] == "S3.completeness"][0]
         rows.append({"system": name, "dim": int(b.Ns), "E0": float(w[0]), "radius": rad,
@@ -172,19 +177,31 @@ def w4_benchmarks(run):
                      "statuses": {s["id"]: s["status"] for s in c.statements},
                      "gap_lower_bound": s3["evidence"].get("gap_lower_bound"),
                      "estimated_gap": float(w[1] - w[0]),
+                     "s3_note": s3_note,
                      "producer_seconds": t_prod, "certify_seconds": c.body["timing"]["total_seconds"]})
         run.log(f"W4 {name}: E0={w[0]:.12f} +- {rad:.1e}; {rows[-1]['statuses']}; "
                 f"gap >= {rows[-1]['gap_lower_bound']}")
         run.record("W4", rows)
 
 
+MEM_CAP_GIB = 5.0
+
+
 def main():
+    import resource
     import sys
-    parts = sys.argv[1:] or ["W1", "W2", "W3", "W4"]
+    cap = int(MEM_CAP_GIB * 2 ** 30)
+    resource.setrlimit(resource.RLIMIT_AS, (cap, cap))
+    parts = [a for a in sys.argv[1:] if not a.startswith("N=")] or ["W1", "W2", "W3", "W4"]
+    n3 = [int(a[2:]) for a in sys.argv[1:] if a.startswith("N=")]
     fns = {"W1": w1_sectors, "W2": w2_multiplet, "W3": w3_matrix_free, "W4": w4_benchmarks}
     with Run("e4_workflows_" + "".join(parts)) as run:
+        run.record("settings", {"memory_cap_GiB": MEM_CAP_GIB, "threads": 1})
         for p in parts:
-            fns[p](run)
+            if p == "W3" and n3:
+                w3_matrix_free(run, N=n3[0])
+            else:
+                fns[p](run)
 
 
 if __name__ == "__main__":

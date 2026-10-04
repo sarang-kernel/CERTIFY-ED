@@ -171,6 +171,18 @@ def _diagnose_mismatch(spec: ModelSpec, states: StateSet, Hp: sp.spmatrix, Href:
     return out
 
 
+def _builder_shift(spec: ModelSpec, Href) -> float:
+    """Upper bound on ||Href - H_spec||_2, where H_spec is the spec operator in exact arithmetic
+    (couplings taken as the given binary floating-point numbers) and Href its floating-point build:
+    every entry carries at most `product_tolerance` of rounding, and a Hermitian matrix with at
+    most w nonzeros per row satisfies ||E||_2 <= max row sum of |E|."""
+    if Href is None or Href.nnz == 0:
+        return 0.0
+    tol = product_tolerance(spec, float(abs(Href).max()))
+    w = int(np.max(np.diff(sp.csr_matrix(Href).indptr)))
+    return up(w * tol)
+
+
 def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_ref=None):
     t0 = time.time()
     ev = {"spec_sha256": spec.sha256(), "spec_name": spec.name}
@@ -192,6 +204,7 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         Hs = ((Hs + Hs.conj().T) / 2).tocsr() if herm > 0 else Hs
         audit = audit_sector(H_full_ref, V_audit, Hs, label="producer sector")
         ev["sector_audit"] = audit.to_dict()
+        ev["model_shift_bound"] = _builder_shift(spec, H_full_ref)
         status = "CERTIFIED" if audit.passed else "FAILED"
         summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
                 f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
@@ -225,6 +238,7 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         return _stmt("S1.model_fidelity", "FAILED",
                      f"the spec does not conserve the quantity defining the producer's basis "
                      f"(amplitude leaving the state set: {leak:.3e})", ev, [], time.time() - t0), Href, None
+    ev["model_shift_bound"] = _builder_shift(spec, Href)   # replaced below when a producer matrix is compared
     if op is None:
         ev["operator_source"] = "built by CERTIFY-ED from the spec"
         return _stmt("S1.model_fidelity", "CERTIFIED",
@@ -239,6 +253,11 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         ev["comparison"] = dict(diff, tolerance=tol)
         ok = diff["shape_match"] and diff["max_abs_diff"] <= tol
         if ok:
+            Hh = ((Hp + Hp.conj().T) / 2).tocsr() if herm > 0 else Hp
+            Dm = (Hh - Href).tocsr()
+            # ||D||_2 <= sqrt(||D||_1 ||D||_inf) <= max(||D||_1, ||D||_inf)
+            ev["model_shift_bound"] = up(max(inf_norm_upper(Dm), inf_norm_upper(Dm.conj().T.tocsr()))
+                                         + _builder_shift(spec, Href))
             return _stmt("S1.model_fidelity", "CERTIFIED",
                          f"producer matrix equals the spec matrix entrywise (max |diff| "
                          f"{diff['max_abs_diff']:.1e} <= {tol:.1e})", ev,
@@ -475,11 +494,16 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             herm_note = {"max_abs_asymmetry": dev,
                          "note": "producer matrix not exactly Hermitian; statements concern its Hermitian part"}
     adapter = OperatorAdapter(op)
-    eps_shift = 0.0
+    # model shift: bound on ||H_operator_used - H_spec||_2 (exact spec operator), so that S2/S3
+    # statements refer to the declared model; 0 when there is no spec or S1 did not certify it
+    model_shift = 0.0
+    if spec is not None and statements and statements[0]["status"] == "CERTIFIED":
+        model_shift = float(statements[0]["evidence"].get("model_shift_bound", 0.0))
+    eps_shift = model_shift
     if audit is not None:
         e = _subspace_shift(audit.isometry_defect, audit.invariance_defect,
                             inf_norm_upper(H_full_ref), adapter.norm_upper())
-        eps_shift = float("inf") if e is None else e
+        eps_shift = float("inf") if e is None else up(e + model_shift)
 
     # ---------------- S2
     t0 = time.time()
@@ -493,7 +517,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
               "median_radius": float(np.median(enc.radius)),
               "groups": [{"members": g.members, "method": g.method, "radius": g.radius,
                           "distinct": g.distinct} for g in enc.groups if g.size > 1],
-              "rigorous": enc.rigorous, "sector_lift_shift": eps_shift if audit is not None else None}
+              "rigorous": enc.rigorous, "sector_lift_shift": eps_shift if audit is not None else None,
+              "model_shift": model_shift,
+              "radius_refers_to": ("declared model (spec)" if model_shift > 0 or (spec is not None and
+                                   statements[0]["status"] == "CERTIFIED") else "producer operator")}
         if not enc.rigorous:
             st, summ = "INCONCLUSIVE", "residuals computed but rounding not boundable for this operator (estimates only)"
         elif not enc.all_distinct:
@@ -504,7 +531,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             st = "CERTIFIED"
             summ = (f"{mu.size} claimed values matched to distinct eigenvalues; max radius "
                     f"{enc.radius.max():.2e}" + (f" (sector block); {enc.radius.max() + eps_shift:.2e} "
-                                                 f"for the full operator" if audit is not None else ""))
+                                                 f"for the full operator" if audit is not None else
+                                                 (f" (+{model_shift:.1e} model shift)" if model_shift > 0 else "")))
         # accuracy presumption: unless the producer states otherwise, a claimed eigenpair is
         # presumed accurate to DEFAULT_REL_ACCURACY * ||H|| (a true but loose enclosure is FAILED)
         Hn_ = adapter.norm_upper() or 1.0
@@ -526,7 +554,9 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     t0 = time.time()
     window = None
     inertia_op = op if is_matrix(op) else Href
-    eps_s3 = 0.0   # S3/S4 concern the operator actually factorized (the producer's sector block if any)
+    # S3/S4 concern the declared model when S1 certified the producer's matrix (model shift added);
+    # for a symmetry sector they concern the producer's sector block (see compose.py for the lift)
+    eps_s3 = model_shift if audit is None else 0.0
     if claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",
