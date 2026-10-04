@@ -136,6 +136,12 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         bad = [p["label"] for p in per if p.get("status") != "COMPLETE"]
         status = "FAILED" if any(p.get("status") == "MISSING" for p in per) else "INCONCLUSIVE"
         summary = f"sectors not certified complete below the cut: {bad[:8]}"
+    if status == "CERTIFIED" and pooled and max(pooled) + rmax >= E_cut - beta_max:
+        # an unclaimed eigenvalue of one block could lie in [E_cut - beta_max, E_cut - beta_s) below a
+        # claimed value of another block; the pooled list is then not provably the K lowest
+        status = "INCONCLUSIVE"
+        summary = (f"highest claimed value {max(pooled):.10g} (+{rmax:.1e}) is not below "
+                   f"E_cut - max beta = {E_cut - beta_max:.10g}")
     if status == "CERTIFIED":
         delta = up(1 - math.sqrt(1 - eta)) + 4 * U
         rho = up(D + (Hn + Bn) * delta)
