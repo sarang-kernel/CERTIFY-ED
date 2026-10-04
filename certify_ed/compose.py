@@ -34,6 +34,7 @@ from .enclosure import OperatorAdapter, enclose
 from .fp import U, fro_upper, gamma_dot, inf_norm_upper, up
 from .inertia import inertia as inertia_count
 from .sectors import audit_sector, restrict_to_u1
+from .certify import _builder_shift
 from .spec import ModelSpec
 
 
@@ -57,6 +58,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     ok_all = True
     pooled, rmax, beta_max = [], 0.0, 0.0
     Bn = 0.0
+    m_build = 0.0     # rounding of CERTIFY-ED's own reference blocks (statements refer to the exact spec)
     for s in sectors:
         Hs = sp.csr_matrix(s.H)
         asym = abs(Hs - Hs.conj().T)
@@ -71,6 +73,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
                 H = build_bitwise(spec)
             Ha, Va = H, s.V
         Hn = max(Hn, inf_norm_upper(Ha))
+        m_build = max(m_build, _builder_shift(spec, Ha))
         aud = audit_sector(Ha, Va, Hs, label=s.label)
         rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
                "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}
@@ -136,10 +139,10 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     if status == "CERTIFIED":
         delta = up(1 - math.sqrt(1 - eta)) + 4 * U
         rho = up(D + (Hn + Bn) * delta)
-        eps = up(0.5 * (rho + math.sqrt(5.0) * rho))
+        eps = up(0.5 * (rho + math.sqrt(5.0) * rho) + m_build)
         pooled = np.sort(np.asarray(pooled))
         K = int(pooled.size)
-        out.update(eps_decomposition=eps, max_sector_radius=rmax, K=K,
+        out.update(eps_decomposition=eps, builder_shift=m_build, max_sector_radius=rmax, K=K,
                    lowest=pooled.tolist(), radius=rmax + eps,
                    next_lower_bound=E_cut - beta_max - eps)
         summary = (f"the {K} lowest eigenvalues of H equal the pooled sector values within "

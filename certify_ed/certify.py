@@ -615,13 +615,16 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 continue
             j_lo = order[pos - 1] if pos > 0 else None
             j_hi = order[pos + 1] if pos + 1 < len(order) else None
-            alpha = (enc.mu[j_lo] + enc.radius[j_lo]) if j_lo is not None else window[0]
-            beta_ = (enc.mu[j_hi] - enc.radius[j_hi]) if j_hi is not None else window[1]
+            # isolation interval for the operator in `adapter`; the S3 window refers to the declared
+            # model, so it is shrunk by the model shift
+            alpha = (enc.mu[j_lo] + enc.radius[j_lo]) if j_lo is not None else window[0] + eps_s3
+            beta_ = (enc.mu[j_hi] - enc.radius[j_hi]) if j_hi is not None else window[1] - eps_s3
             if not np.isfinite(beta_):
                 continue
             res = kato_temple(adapter, X[:, i], alpha, beta_)
             if res is not None:
                 lower, upper, th, r = res
+                lower, upper = lower - eps_s3, upper + eps_s3      # refer to the declared model
                 if upper - lower < 2 * float(enc.radius[i]):
                     kt.append({"index": int(i), "lower": lower, "upper": upper,
                                "width": upper - lower, "residual_width": 2 * float(enc.radius[i]),
