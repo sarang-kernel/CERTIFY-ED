@@ -11,10 +11,11 @@ arrays (eigenvectors, per-pair data). Integrity:
 
 The hash detects modification of a saved certificate. It does NOT show that
 the computation behind it was honest: a certificate can always be regenerated
-from different inputs. Re-verification (`reverify`) recomputes the statements
-from the stored claim and a user-supplied operator/spec and is the only check
-that does not trust the producer of the certificate. See THREAT_MODEL in the
-documentation.
+from different inputs. Re-verification means running `certify` again on the
+stored claim (the eigenvalues; the eigenvectors only if they were stored with
+Options(store_eigenvectors=True)) with an operator and a specification that the
+checker supplies; it is the only check that does not trust the producer of the
+certificate. `Certificate.load(verify=True)` checks integrity only.
 
 Status vocabulary for statements:
   CERTIFIED     the statement holds, with the stated assumptions
@@ -22,7 +23,9 @@ Status vocabulary for statements:
                 eigenvalues provably missing)
   INCONCLUSIVE  checks ran but could not decide (e.g. zero pivot, overlapping
                 existence-only intervals)
-  NOT_CHECKED   the check was not requested or its inputs were unavailable
+  NOT_CHECKED   the check was not requested, its inputs were unavailable, or it did not fit
+                in memory
+  CORROBORATED  (S5 only) independent recomputation agrees; evidence, not a certified statement
 """
 
 from __future__ import annotations

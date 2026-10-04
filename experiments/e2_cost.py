@@ -141,12 +141,14 @@ def main():
                 continue
             cert, tc = run_child(CERTIFIER, cfg, 900)
             rec = dict(label=label, cfg=pt, producer=prod, certifier=cert)
-            if "error" in cert:
-                # completeness (S3) unaffordable: measure S1+S2 alone
+            s3_status = cert.get("statements", {}).get("S3.completeness", {}).get("status")
+            if "error" in cert or s3_status == "NOT_CHECKED":
+                # completeness (S3) did not fit in memory: measure S1+S2 alone (time and peak memory)
                 cfg2 = dict(cfg, inertia_max_dim=0)
                 cert2, _ = run_child(CERTIFIER, cfg2, 900)
                 rec["certifier_without_S3"] = cert2
-                run.log(f"{label}: S3 failed ({cert['error'][-120:]}); without S3: "
+                why = cert["error"][-120:] if "error" in cert else cert["statements"]["S3.completeness"]["summary"][:160]
+                run.log(f"{label}: S3 not completed ({why}); without S3: "
                         f"{cert2.get('total', float('nan')):.1f}s, mem {cert2.get('maxrss_mb', float('nan')):.0f}MB")
             rows.append(rec)
             run.record("rows", rows)

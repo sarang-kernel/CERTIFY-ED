@@ -346,3 +346,70 @@ def test_import_from_files_and_hdf5_export(tmp_path, fmt):
             body = json.loads(f.attrs["certificate_json"])
             assert body["integrity"]["body_sha256"]
             assert np.allclose(f["radius"][...], c.arrays["radius"])
+
+
+def test_corroboration_has_its_own_status():
+    spec = ce.heisenberg_chain(8)                 # the NumPy Jacobi oracle is slow: keep d small
+    H = ce.build_bitwise(spec)
+    w, V = la.eigh(H.toarray())
+    c = ce.certify(ce.Claim(w[:4], V[:, :4], operator=H, kind="lowest"), spec,
+                   ce.Options(corroborate=("lapack_evr", "jacobi")))
+    assert status(c, "S5.corroboration") == "CORROBORATED"
+
+
+def test_factorization_out_of_memory_is_not_checked(heis10, monkeypatch):
+    import certify_ed.inertia as inertia_mod
+    spec, H, w, V = heis10
+
+    def boom(*a, **k):
+        raise MemoryError("simulated")
+    monkeypatch.setattr(inertia_mod, "inertia_sparse", boom)
+    c = ce.certify(ce.Claim(w[:4], V[:, :4], operator=H, kind="lowest"), spec,
+                   ce.Options(inertia_method="sparse"))
+    s3 = [s for s in c.statements if s["id"] == "S3.completeness"][0]
+    assert s3["status"] == "NOT_CHECKED" and "MemoryError" in s3["summary"]
+    assert status(c, "S2.eigenpairs") == "CERTIFIED"
+
+
+def test_reference_build_out_of_memory_is_not_checked(heis10, monkeypatch):
+    import sys
+    cmod = sys.modules["certify_ed.certify"]
+    spec, H, w, V = heis10
+
+    def boom(*a, **k):
+        raise MemoryError("simulated")
+    monkeypatch.setattr(cmod, "build_bitwise", boom)
+    c = ce.certify(ce.Claim(w[:4], V[:, :4], operator=H, kind="lowest"), spec, ce.Options(inertia=False))
+    assert status(c, "S1.model_fidelity") == "NOT_CHECKED"
+    assert status(c, "S2.eigenpairs") == "CERTIFIED"     # concerns the producer's matrix
+
+
+def test_large_stored_matrix_is_compared_matrix_free(heis10):
+    """Above reference_max_dim no reference matrix is stored: S1 by probes, S2 with the spec operator."""
+    spec, H, w, V = heis10
+    c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec,
+                   ce.Options(reference_max_dim=100, inertia=False))
+    s1 = [s for s in c.statements if s["id"] == "S1.model_fidelity"][0]
+    assert s1["status"] == "CERTIFIED" and "probe" in s1["evidence"]
+    assert status(c, "S2.eigenpairs") == "CERTIFIED"
+    assert "spec operator" in (c.body.get("operator_note") or "")
+    # a stored matrix with a wrong bond fails the probe comparison
+    bad = ce.heisenberg_chain(10)
+    Hb = H.tolil(copy=True)
+    Hb[0, 0] += 0.5
+    c2 = ce.certify(ce.Claim(w[:2], V[:, :2], operator=Hb.tocsr(), kind="lowest"), spec,
+                    ce.Options(reference_max_dim=100, inertia=False))
+    assert status(c2, "S1.model_fidelity") == "FAILED"
+
+
+def test_abs_rmatvec_is_the_transpose():
+    from certify_ed.construct import SpecOperator
+    spec = ce.ModelSpec.from_static(6, ce.LocalSpace.spin_space("1/2", "spin"),
+                                    [["+-", [[0.7, 0, 1], [0.3, 2, 4]]], ["-+", [[0.2, 0, 1]]],
+                                     ["zz", [[1.0, 1, 2]]], ["x", [[0.4, 3]]]])
+    op = SpecOperator(spec)
+    n = op.shape[0]
+    M = np.column_stack([op.abs_matvec(np.eye(n)[:, j]) for j in range(n)])
+    MT = np.column_stack([op.abs_rmatvec(np.eye(n)[:, j]) for j in range(n)])
+    assert np.allclose(MT, M.T)
+    assert not np.allclose(M, M.T)        # |H|_abs need not be symmetric (unpaired strings)

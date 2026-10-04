@@ -56,6 +56,7 @@ class InertiaResult:
     conclusive: bool
     note: str = ""
     fill_nnz: Optional[int] = None
+    resource_failure: bool = False   # the factorization could not be completed (memory / library error)
 
     def to_dict(self):
         return asdict(self)
@@ -164,11 +165,24 @@ def inertia_sparse(A: sp.spmatrix, sigma: float) -> InertiaResult:
 
 
 def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096) -> InertiaResult:
+    """Inertia count with backward-error bound. If the factorization cannot be completed for lack of
+    memory (MemoryError) or SuperLU reports an internal failure (SystemError, which SciPy raises when
+    SuperLU's allocation fails), the result is inconclusive with ``resource_failure=True``; the
+    certificate then reports completeness as NOT_CHECKED rather than failing."""
     if method == "auto":
         method = "dense" if (not sp.issparse(A) or A.shape[0] <= dense_max and A.shape[0] <= 2500) else "sparse"
-    if method == "dense":
-        return inertia_dense(A.toarray() if sp.issparse(A) else np.asarray(A), sigma)
-    return inertia_sparse(A if sp.issparse(A) else sp.csc_matrix(A), sigma)
+    t0 = time.time()
+    try:
+        if method == "dense":
+            return inertia_dense(A.toarray() if sp.issparse(A) else np.asarray(A), sigma)
+        return inertia_sparse(A if sp.issparse(A) else sp.csc_matrix(A), sigma)
+    except (MemoryError, SystemError) as e:
+        msg = " ".join(str(e).split())[:160]
+        return InertiaResult(float(sigma), None, float("inf"),
+                             "dense-bunch-kaufman" if method == "dense" else "sparse-superlu-symmetric",
+                             time.time() - t0, False,
+                             f"factorization could not be completed ({type(e).__name__}: {msg})",
+                             resource_failure=True)
 
 
 def count_bounds(res: InertiaResult):

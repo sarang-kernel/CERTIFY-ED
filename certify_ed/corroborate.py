@@ -134,7 +134,8 @@ def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_
     tol = max(1e-8 * max(scale, 1.0), float(enc.radius.max()) * 10 if enc is not None else 0.0)
     ok = all("error" not in v for v in out["oracles"].values()) and worst <= tol
     out["tolerance"] = tol
-    out["status"] = "CERTIFIED" if ok else "INCONCLUSIVE"
+    # agreement is corroboration, not a certified statement: it gets its own status value
+    out["status"] = "CORROBORATED" if ok else "INCONCLUSIVE"
     out["summary"] = (f"{len(oracles)} recomputation(s) agree with the claim to {worst:.1e}" if ok else
                       f"recomputation disagrees with the claim by {worst:.2e} (tolerance {tol:.1e})")
     out["note"] = "corroboration only: agreement is evidence, not a certified statement"

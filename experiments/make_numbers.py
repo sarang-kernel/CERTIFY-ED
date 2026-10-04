@@ -80,7 +80,8 @@ def tex_escape(s):
 
 # ============================================================== environment / provenance
 runs = {}
-for name in ("e0_verifier_validation", "e1_failure_matrix", "e2_cost", "e3_tightness", "e4_workflows_W1W2W3W4"):
+for name in ("e0_verifier_validation", "e1_failure_matrix", "e2_cost", "e3_tightness", "e4_workflows_W1W2W3W4",
+             "e5_arpack_multiplet"):
     runs[name] = latest(name)
 commits = {r[2].get("git_commit") for r in runs.values()}
 env0 = runs["e0_verifier_validation"][2]
@@ -102,8 +103,9 @@ macro("PyVersion", env0["python"].split()[0])
 macro("NumpyVersion", env0["numpy"])
 macro("ScipyVersion", env0["scipy"])
 macro("QuspinVersion", env0.get("quspin", "?"))
-el_B = sum(runs[k][1].get("_elapsed_seconds", 0) for k in runs if k != "e2_cost")
-el_A = runs["e2_cost"][1].get("_elapsed_seconds", 0)
+QUEUE_A = ("e2_cost", "e4_workflows_W1W2W3W4", "e5_arpack_multiplet")
+el_B = sum(runs[k][1].get("_elapsed_seconds", 0) for k in runs if k not in QUEUE_A)
+el_A = sum(runs[k][1].get("_elapsed_seconds", 0) for k in QUEUE_A)
 macro("RunMinutes", str(int(round(max(el_A, el_B) / 60 / 5) * 5) or 5))
 
 # ============================================================== code statistics
@@ -141,6 +143,7 @@ macro("VaViol", "no" if viol_a == 0 else str(viol_a))
 macro("VaRatioMedian", f"{a['bound_over_arb_residual']['median']:.2f}")
 macro("VaRatioMax", f"{a['bound_over_arb_residual']['max']:.0f}")
 macro("VaNoRef", str(a.get("reference_unavailable", 0)))
+macro("VaBallW", sci(a.get("arb_ball_max_width", float("nan"))))
 check(viol_a == 0, "E0(a): no enclosure violations")
 macro("VbMatrices", str(b["matrices"]))
 macro("VbChecks", thin(b["checks"]))
@@ -364,7 +367,17 @@ def stmt_time(c, sid):
     return c["statements"][sid]["seconds"] if c and "statements" in c else None
 
 
+def s_status(c, sid):
+    return c["statements"][sid]["status"] if c and "statements" in c else None
+
+
+def s1_ok(c):
+    """S1 ran to completion (the reference fitted in memory)."""
+    return c is not None and "statements" in c and s_status(c, "S1.model_fidelity") != "NOT_CHECKED"
+
+
 ok_rows = [r for r in rows2 if "error" not in r.get("certifier", {"error": 1})]
+check(len(ok_rows) == len(rows2), "E2: every certifier run produced a certificate (no crash)")
 s3_ok = [r for r in ok_rows if r["certifier"]["statements"]["S3.completeness"]["status"] == "CERTIFIED"]
 dmax = max(r["producer"]["dim"] for r in s3_ok)
 rmax = max(s3_ok, key=lambda r: (r["producer"]["dim"], r["certifier"]["statements"]["S3.completeness"]["seconds"]))
@@ -385,8 +398,8 @@ check(all(t <= p for t, p in s2_times), "E2: S2 costs less than the producer (bu
 u1 = [r for r in rows2 if fam(r) == "chain-u1"]
 s1u1 = []
 for r in u1:
-    c = r["certifier"] if "statements" in r.get("certifier", {}) else r.get("certifier_without_S3")
-    if c and "statements" in c:
+    c = r["certifier"]
+    if s1_ok(c):
         s1u1.append((stmt_time(c, "S1.model_fidelity"), r["producer"]["dim"], r["producer"]["t_build"]))
 t1, d1, b1 = max(s1u1, key=lambda x: x[1])
 macro("CSoneUoneMax", f"{t1:.2f}")
@@ -398,17 +411,33 @@ macro("CkTwentyTwoDim", thin(k22["producer"]["dim"]))
 macro("CkTwentyTwoSone", f"{stmt_time(c22, 'S1.model_fidelity'):.0f}" if "statements" in c22 else "?")
 macro("CkTwentyTwoMem", f"{c22.get('maxrss_mb', float('nan')):.0f}")
 all_s1 = [stmt_time(c, "S1.model_fidelity") for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
-          if c and "statements" in c]
+          if s1_ok(c)]
 check(max(all_s1) <= stmt_time(c22, "S1.model_fidelity") + 1e-9, "E2: the N=22 momentum block has the largest S1 time")
 k24 = next(r for r in rows2 if fam(r) == "chain-k0" and r["cfg"]["N"] == 24)
-check("error" in (k24.get("certifier_without_S3") or {}), "E2: N=24 momentum block S1 exceeds the memory cap")
-sq = next(r for r in s3_ok if fam(r) == "square" and not r["cfg"].get("J2"))
+check(s_status(k24["certifier"], "S1.model_fidelity") == "NOT_CHECKED"
+      and "memory" in k24["certifier"]["statements"]["S1.model_fidelity"]["summary"],
+      "E2: N=24 momentum block: the S1 reference exceeds the memory cap and S1 is NOT_CHECKED")
+s3_mem = [r for r in rows2 if s_status(r["certifier"], "S3.completeness") == "NOT_CHECKED"]
+check(all("could not be completed" in r["certifier"]["statements"]["S3.completeness"]["summary"] for r in s3_mem),
+      "E2: every S3 NOT_CHECKED is a factorization that did not fit")
+sq = next(r for r in ok_rows if fam(r) == "square" and not r["cfg"].get("J2"))
 ch16 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 16)
+
+
+def per_fact(r):
+    c = r["certifier"]
+    n = max(1, len([x for x in c["fill_nnz"] if x]))
+    return c["statements"]["S3.completeness"]["seconds"] / n, n
+
+
 macro("CfillSquare", sci(max(x for x in sq["certifier"]["fill_nnz"] if x)))
 macro("CnnzSquare", sci(sq["producer"]["nnz"]))
-macro("CSthreeSquare", f"{sq['certifier']['statements']['S3.completeness']['seconds']:.0f}")
+macro("CfactSquare", f"{per_fact(sq)[0]:.0f}")
 macro("CsolveSquare", f"{sq['producer']['t_solve']:.1f}")
-macro("CSthreeChain", f"{ch16['certifier']['statements']['S3.completeness']['seconds']:.0f}")
+macro("CfactChain", f"{per_fact(ch16)[0]:.0f}")
+sq_status = sq["certifier"]["statements"]["S3.completeness"]["status"]
+macro("CSthreeSquareStatus", "\\st{" + sq_status.replace("_", "\\_") + "}")
+macro("CSthreeSquareNfact", str(per_fact(sq)[1]))
 ch14 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 14)
 growth = max(x for x in ch16["certifier"]["fill_nnz"] if x) / max(x for x in ch14["certifier"]["fill_nnz"] if x)
 macro("CfillGrowth", f"{growth:.0f}")
@@ -426,9 +455,12 @@ failed_s3 = [r for r in rows2 if r not in s3_ok]
 with open(os.path.join(MS, "tables", "e2.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{Cost of certification (Section~\\ref{sec:e2}). Producer: "
             "QuSpin basis and matrix construction (build) and ARPACK for eight states (solve). Certifier: "
-            "statements \\Sone{}--\\Sthree{} in seconds and peak memory. ``mem'' means the step exceeded the "
-            f"{settings.get('memory_cap_GiB', 4.5):.1f}\\,GiB cap; the certificate then reports \\Sthree{{}} as not "
-            "checked. Gap: certified gap divided by the gap estimated from the producer's eigenvalues.}\n"
+            "statements \\Sone{}--\\Sthree{} in seconds and peak memory (MB). ``mem'' means the step did not fit "
+            f"in the {settings.get('memory_cap_GiB', 4.5):.1f}\\,GiB address-space limit and the certificate reports "
+            "the statement as not checked; MB is then from a second run without \\Sthree{}. Gap: certified gap divided by the gap estimated from the producer's eigenvalues."
+            + (" $^\\dagger$\\Sthree{} inconclusive: the claim cuts a degenerate level (Section~\\ref{sec:e5})."
+               if any(r.get("certifier", {}).get("statements", {}).get("S3.completeness", {}).get("status")
+                      == "INCONCLUSIVE" for r in rows2) else "") + "}\n"
             "\\label{tab:e2}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n"
             "\\begin{tabular}{@{}l r r r r r r r r r r@{}}\n\\toprule\n"
             "Block & $d$ & nnz$(H)$ & build & solve & \\Sone & \\Stwo & \\Sthree & fill & gap & MB \\\\\n\\midrule\n")
@@ -444,9 +476,15 @@ with open(os.path.join(MS, "tables", "e2.tex"), "w") as f:
             st = c["statements"]
             s1, s2, s3 = (f"{st['S1.model_fidelity']['seconds']:.2f}", f"{st['S2.eigenpairs']['seconds']:.2f}",
                           f"{st['S3.completeness']['seconds']:.1f}")
+            if st["S1.model_fidelity"]["status"] == "NOT_CHECKED":
+                s1 = "mem"
+            if st["S3.completeness"]["status"] == "INCONCLUSIVE":
+                s3 += "$^\\dagger$"
+            if st["S3.completeness"]["status"] == "NOT_CHECKED":
+                s3 = "mem"
             fill = sci(max(x for x in c["fill_nnz"] if x)) if any(c["fill_nnz"]) else "---"
             gap = f"{c['gap_lower_bound'] / c['true_gap_estimate']:.2f}" if c.get("gap_lower_bound") else "---"
-            mb = f"{c['maxrss_mb']:.0f}"
+            mb = f"{(cw if s3 == 'mem' and 'statements' in cw else c)['maxrss_mb']:.0f}"
         elif "statements" in cw:
             st = cw["statements"]
             s1, s2, s3 = (f"{st['S1.model_fidelity']['seconds']:.2f}", f"{st['S2.eigenpairs']['seconds']:.2f}", "mem")
@@ -467,8 +505,8 @@ for fm in ("chain-u1", "chain-k0", "square"):
     prod = [r["producer"]["t_build"] + r["producer"]["t_solve"] for r in R]
     s12, s3d, s3t, fills, nnzs, dfill = [], [], [], [], [], []
     for r in R:
-        c = r["certifier"] if "statements" in r.get("certifier", {}) else r.get("certifier_without_S3") or {}
-        if "statements" in c:
+        c = r["certifier"]
+        if s1_ok(c):
             s12.append((r["producer"]["dim"], c["statements"]["S1.model_fidelity"]["seconds"] +
                         c["statements"]["S2.eigenpairs"]["seconds"]))
         if r in s3_ok:
@@ -492,6 +530,8 @@ for fm in ("chain-u1", "chain-k0", "square"):
         if r not in s3_ok:   # failure rug: x = block dimension, drawn at the top edge (no y value)
             axR.plot([r["producer"]["dim"]], [0.96], marker=mk[fm], mfc="none", color=ORANGE, ms=6, ls="none",
                      transform=trans, clip_on=False)
+ymax_R = max(max(x for x in r["certifier"]["fill_nnz"] if x) for r in s3_ok)
+axR.set_ylim(top=ymax_R * 12)
 for ax in (axL, axR):
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -508,7 +548,7 @@ hF = [Line2D([], [], color=INK2, marker=mk[k], ls="none", label=fam_label[k]) fo
 axL.legend(handles=hL, fontsize=7, loc="upper left")
 hR = [Line2D([], [], color=BLUE, lw=2, label="nnz(H)"), Line2D([], [], color=ORANGE, lw=2, label="nnz(L)+nnz(U)"),
       Line2D([], [], color=ORANGE, marker="o", mfc="none", ls="none", label="S3 exceeded memory cap (top edge)")]
-axR.legend(handles=hR, fontsize=7, loc="upper left", bbox_to_anchor=(0.0, 0.92))
+axR.legend(handles=hR, fontsize=7, loc="lower right")
 fig.legend(handles=hF, fontsize=7, loc="lower center", ncol=3, frameon=False)
 fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(os.path.join(MS, "figures", "fig_cost.pdf"))
@@ -517,6 +557,7 @@ plt.close(fig)
 # ============================================================== E4
 _, e4, _ = runs["e4_workflows_W1W2W3W4"]
 w1, w2, w3, w4 = e4["W1"], e4["W2"], e4["W3"], e4["W4"]
+macro("WcapGiB", f"{e4.get('settings', {}).get('memory_cap_GiB', 5.0):.1f}")
 macro("WoneN", str(w1["N"]))
 macro("WoneJtwo", f"{w1['J2']:g}")
 macro("WoneBlocks", str(w1["n_blocks"]))
@@ -578,7 +619,7 @@ with open(os.path.join(MS, "tables", "w4.tex"), "w") as f:
             "($J_1=1$, periodic boundaries; Section~\\ref{sec:w4}). Each value is the lowest eigenvalue of the "
             "stated block unless \\Sthree{} is not checked; ``gap'' is the certified lower bound on the "
             "distance to the next eigenvalue of the block.}\n\\label{tab:w4}\n\\footnotesize\n"
-            "\\begin{tabular}{@{}>{\\raggedright\\arraybackslash}p{0.33\\textwidth} r l l l l@{}}\n\\toprule\n"
+            "\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{@{}>{\\raggedright\\arraybackslash}p{0.30\\textwidth} r l l l l@{}}\n\\toprule\n"
             "System (block) & $d$ & $E_0$ & radius & \\Sthree{} & gap $\\ge$ \\\\\n\\midrule\n")
     names = {0: "Heisenberg ring $N=20$ ($S^z{=}0,k{=}0$)", 1: "$J_1$--$J_2$ ring $N=20$, $J_2=\\frac12$ ($S^z{=}0,k{=}0$)",
              2: "Heisenberg $4\\times4$ ($S^z{=}0$)", 3: "$J_1$--$J_2$ $4\\times4$, $J_2=\\frac12$ ($S^z{=}0$)"}
@@ -591,6 +632,75 @@ with open(os.path.join(MS, "tables", "w4.tex"), "w") as f:
 mg = w4[1]
 check(abs(mg["E0"] - (-7.5)) <= mg["radius"], f"W4: Majumdar-Ghosh E0=-7.5 within radius (E0={mg['E0']!r})")
 check(w4[3]["statuses"]["S3.completeness"] == "NOT_CHECKED", "W4: 4x4 J2=0.5 completeness not checked")
+
+# ============================================================== E5
+_, e5, _ = runs["e5_arpack_multiplet"]
+su, rows5 = e5["setup"], e5["rows"]
+lev = su["levels"]
+macro("EfDim", thin(su["dim"]))
+macro("EfDense", f"{su['dense_seconds'] / 60:.0f}")
+macro("EfLevel", f"{lev[3][0]:.8f}")
+macro("EfLevelMult", {2: "twofold", 3: "threefold", 4: "fourfold", 6: "sixfold"}.get(lev[3][1], f"{lev[3][1]}-fold"))
+macro("EfNextLevel", f"{lev[4][0]:.8f}")
+macro("EfSeeds", str(len(rows5)))
+trunc = [r for r in rows5 if not r["correct"]]
+corr = [r for r in rows5 if r["correct"]]
+macro("EfTrunc", str(len(trunc)))
+macro("EfCorrect", str(len(corr)))
+check(len(trunc) >= 1, f"E5: ARPACK truncated the multiplet in at least one start ({len(trunc)}/{len(rows5)})")
+check(all(r["members_of_fourfold_level"] < lev[3][1] for r in trunc),
+      "E5: every incorrect list misses members of the degenerate level")
+macro("EfMembersSeen", ", ".join(str(m) for m in sorted({r["members_of_fourfold_level"] for r in trunc})))
+n_p1 = sum(r["P1_flag"] for r in trunc)
+n_p2t = sum(r["P2_flag"] for r in trunc)
+n_p2c = sum(r["P2_flag"] for r in corr)
+macro("EfPoneFlag", "none" if n_p1 == 0 else str(n_p1))
+macro("EfPtwoFlagTrunc", str(n_p2t))
+macro("EfPtwoFlagCorrect", str(n_p2c))
+check(n_p1 == 0, "E5: the residual check passes every truncated list")
+p3_fail = [r for r in trunc if r["P3_statuses"]["S3.completeness"] == "FAILED"
+           and (r.get("P3_missing_at_least") or 0) >= 1]
+macro("EfPthreeFailed", str(len(p3_fail)))
+check(len(p3_fail) == len(trunc), "E5: CERTIFY-ED reports FAILED (missing eigenvalue) for every truncated list")
+check(all(r["P3_statuses"]["S2.eigenpairs"] == "CERTIFIED" for r in rows5),
+      "E5: S2 certifies the returned pairs in every start (they are accurate eigenpairs)")
+check(all(r["P3_statuses"]["S3.completeness"] != "FAILED" for r in corr),
+      "E5: no correct list is reported as FAILED")
+corr_s3 = sorted({r["P3_statuses"]["S3.completeness"] for r in corr})
+macro("EfCorrectSthree", " or ".join("\\st{" + x.replace("_", "\\_") + "}" for x in corr_s3) or "---")
+macro("EfFailFact", str(max(r["P3_factorizations"] for r in p3_fail)) if p3_fail else "?")
+macro("EfFailSeconds", f"{max(r['P3_seconds'] for r in p3_fail):.0f}" if p3_fail else "?")
+check(all(r["P3k_S3"] == "CERTIFIED" for r in corr) and all(r["P3k_S3"] == "INCONCLUSIVE" for r in trunc),
+      "E5: claim to the first gap: CERTIFIED for correct lists, INCONCLUSIVE for truncated ones")
+check(all("ill-posed" in r["P3k_S3_summary"] for r in trunc),
+      "E5: truncated claims to the first gap get the top-multiplet diagnosis")
+macro("EfKcorrect", ", ".join(str(k) for k in sorted({r["P3k_k"] for r in corr})) or "---")
+macro("EfKtrunc", ", ".join(str(k) for k in sorted({r["P3k_k"] for r in trunc})) or "---")
+with open(os.path.join(MS, "tables", "e5.tex"), "w") as f:
+    f.write("\\begin{table}[t]\n\\centering\n\\caption{ARPACK asked for the eight lowest states of the "
+            f"$4\\times4$ Heisenberg $S^z=0$ block ($d={thin(su['dim'])}$) from {len(rows5)} random start vectors "
+            "(Section~\\ref{sec:e5}). Rows: lists that contain all members of the "
+            + {2: "twofold", 3: "threefold", 4: "fourfold", 6: "sixfold"}.get(lev[3][1], "degenerate")
+            + f" level at $E={lev[3][0]:.3f}$, and lists that do not. P1, P2: number of starts flagged. P3, "
+            "P3$'$: status of \\Sthree{} for the claim ``these are the eight lowest'' (P3) and for the claim of "
+            "the states up to the first gap in the returned values (P3$'$).}\n"
+            "\\label{tab:e5}\n\\footnotesize\n"
+            "\\begin{tabular}{@{}l r r r l l@{}}\n\\toprule\n"
+            "Returned list & starts & P1 flags & P2 flags & P3 & P3$'$ \\\\\n\\midrule\n")
+
+    abbrev = {"CERTIFIED": "certified", "FAILED": "\\st{FAILED}", "INCONCLUSIVE": "\\st{INCONCL.}",
+              "NOT_CHECKED": "\\st{NOT\\_CHECKED}"}
+
+    def stat_cell(rs, key):
+        from collections import Counter
+        cnt = Counter(r[key] if isinstance(r[key], str) else r[key]["S3.completeness"] for r in rs)
+        return ", ".join(f"{n} {abbrev.get(k, k)}" for k, n in sorted(cnt.items())) or "---"
+
+    for label, rs in ((f"correct ({lev[3][1]} of {lev[3][1]} members)", corr),
+                      (f"incorrect (fewer members)", trunc)):
+        f.write(f"{label} & {len(rs)} & {sum(r['P1_flag'] for r in rs)} & {sum(r['P2_flag'] for r in rs)} & "
+                f"{stat_cell(rs, 'P3_statuses')} & {stat_cell(rs, 'P3k_S3')} \\\\\n")
+    f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 
 # ============================================================== write
 with open(os.path.join(MS, "numbers.tex"), "w") as f:

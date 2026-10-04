@@ -127,13 +127,16 @@ def w3_matrix_free(run, N=18):
     w, V = w[o], V[:, o]
     t_prod = time.time() - t0
     t0 = time.time()
-    c = ce.certify(ce.Claim(w, V, operator=op, kind="lowest"), spec, ce.Options())
+    # reference_max_dim below d: no reference matrix is stored, so S1 (probes) and S2 use the
+    # matrix-free reference operator, as they would for a block too large to store
+    c = ce.certify(ce.Claim(w, V, operator=op, kind="lowest"), spec, ce.Options(reference_max_dim=2 ** 18))
     t_cert = time.time() - t0
     run.record("W3", {"N": N, "dim": spec.dim, "eigenvalues": w.tolist(),
                       "statuses": {s["id"]: s["status"] for s in c.statements},
                       "summaries": {s["id"]: s["summary"] for s in c.statements},
                       "seconds": {s["id"]: s["seconds"] for s in c.statements},
                       "operator_note": c.body.get("operator_note"),
+                      "s1_reference": c.statements[0]["evidence"].get("reference"),
                       "producer_seconds": t_prod, "certify_seconds": t_cert,
                       "max_radius": float(c.arrays["radius"].max())})
     run.log(f"W3: producer {t_prod:.1f}s certify {t_cert:.1f}s\n{c.summary()}")
@@ -178,7 +181,7 @@ def w4_benchmarks(run):
                      "statuses": {s["id"]: s["status"] for s in c.statements},
                      "gap_lower_bound": s3["evidence"].get("gap_lower_bound"),
                      "estimated_gap": float(w[1] - w[0]),
-                     "s3_note": s3_note,
+                     "s3_note": s3_note or (s3["summary"] if s3["status"] == "NOT_CHECKED" else None),
                      "producer_seconds": t_prod, "certify_seconds": c.body["timing"]["total_seconds"]})
         run.log(f"W4 {name}: E0={w[0]:.12f} +- {rad:.1e}; {rows[-1]['statuses']}; "
                 f"gap >= {rows[-1]['gap_lower_bound']}")

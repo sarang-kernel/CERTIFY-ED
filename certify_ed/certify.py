@@ -100,7 +100,8 @@ DEFAULT_REL_ACCURACY = 1e-8
 
 
 def _stmt(sid, status, summary, evidence=None, assumptions=None, seconds=0.0):
-    assert status in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED")
+    assert status in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") or \
+        (sid == "S5.corroboration" and status == "CORROBORATED")
     return {"id": sid, "status": status, "summary": summary, "evidence": evidence or {},
             "assumptions": assumptions or [], "seconds": round(float(seconds), 6)}
 
@@ -176,21 +177,25 @@ def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
     arithmetic (couplings taken as the given binary floating-point numbers) and H_ref is CERTIFY-ED's
     floating-point build of it.
 
-    Every entry of H_ref is a sum of at most m = n_terms * 2^Lmax contributions, each a product of at
-    most Lmax + 1 factors, so |H_ref - H_spec| <= gamma_{m + Lmax + 2} |H|_abs entrywise, where |H|_abs
-    sums the absolute values of the contributions. For a Hermitian specification |H|_abs is symmetric,
-    hence ||H_ref - H_spec||_2 <= gamma * max_i (|H|_abs 1)_i, evaluated with the matrix-free operator
-    (the computed row sums of nonnegative terms are inflated by a further gamma factor)."""
+    Every entry of H_ref is a sum of at most m = n_terms * 2^Lmax contributions, each a product of the
+    coupling and at most Lmax local amplitudes; each local amplitude carries one rounding when it is not
+    exactly representable (square roots for S >= 1 and bosons), and the product Lmax + 1 more. Hence
+    |H_ref - H_spec| <= gamma_W |H|_abs entrywise with W = m + 2 Lmax + 2, where |H|_abs sums the absolute
+    values of the contributions, and ||H_ref - H_spec||_2 <= gamma_W sqrt(||H|_abs||_1 ||H|_abs||_inf).
+    Both norms are evaluated with the matrix-free operator (row sums and column sums of nonnegative terms,
+    inflated by a further gamma factor for their own rounding). No symmetry of |H|_abs is assumed."""
     from .fp import gamma
     op = SpecOperator(spec, states)
     n = op.shape[0]
     if n == 0 or spec.n_terms == 0:
         return 0.0
     max_len = max((len(t.op) for t in spec.terms), default=1)
-    width = spec.n_terms * (2 ** max_len) + max_len + 2
-    row = float(np.max(op.abs_matvec(np.ones(n))))
+    width = spec.n_terms * (2 ** max_len) + 2 * max_len + 2
+    ones = np.ones(n)
+    row = float(np.max(op.abs_matvec(ones)))
+    col = float(np.max(op.abs_rmatvec(ones)))
     g = gamma(width)
-    return up(g * row * (1 + gamma(width)))
+    return up(g * math.sqrt(row * col) * (1 + gamma(width)) * (1 + 4 * U))
 
 
 def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_ref=None):
@@ -225,11 +230,20 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
                      ["full-space reference built by CERTIFY-ED from the spec (bitwise path)"],
                      time.time() - t0), H_full_ref, audit
 
+    n_ref = claim.states.size if claim.states is not None else spec.dim
+    if n_ref > opts.reference_max_dim:
+        # too large to store a reference matrix: work with the matrix-free reference operator
+        ref = SpecOperator(spec, claim.states)
+        ev["reference"] = {"path": "bitwise, matrix-free", "dimension": int(n_ref),
+                           "note": f"dimension > reference_max_dim {opts.reference_max_dim}: no stored reference"}
+        ev["model_shift_bound"] = _builder_shift(spec, claim.states)
+        if op is None:
+            ev["operator_source"] = "applied matrix-free from the spec by CERTIFY-ED"
+            return _stmt("S1.model_fidelity", "CERTIFIED",
+                         "operator applied matrix-free from the spec by CERTIFY-ED (no producer matrix to compare)",
+                         ev, [], time.time() - t0), None, None
+        return _probe_comparison(op, ref.matvec, int(n_ref), spec, opts, ev, t0), None, None
     states = claim.states if claim.states is not None else full_state_set(spec)
-    if states.size > opts.reference_max_dim:
-        return _stmt("S1.model_fidelity", "NOT_CHECKED",
-                     f"reference build skipped (dimension {states.size} > {opts.reference_max_dim})",
-                     ev, [], time.time() - t0), None, None
     Href, leak = build_bitwise(spec, states, return_leak=True)
     ev["reference"] = {"path": "bitwise", "dimension": int(states.size), "nnz": int(Href.nnz),
                        "state_set": states.label, "leak_out_of_state_set": leak}
@@ -279,24 +293,31 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
                      f"producer matrix differs from the spec matrix (max |diff| {diff['max_abs_diff']:.3e}, "
                      f"{diff.get('n_differing_entries', '?')} entries)", ev, [], time.time() - t0), Href, None
     # black-box operator: probabilistic agreement on random vectors
+    return _probe_comparison(op, lambda z: Href @ z, states.size, spec, opts, ev, t0), Href, None
+
+
+def _probe_comparison(op, ref_apply, n: int, spec: ModelSpec, opts: Options, ev: dict, t0: float):
+    """S1 by random probes: the producer's operator (black box, or a stored matrix too large for a
+    stored reference) against the reference operator. Probabilistic; the bounds of S2-S4 are then
+    computed with the reference operator, so the statements refer to the declared model."""
     rng = np.random.default_rng(opts.seed)
     worst = 0.0
     for _ in range(opts.probe_vectors):
-        z = rng.standard_normal(states.size) + (1j * rng.standard_normal(states.size)
-                                                if not spec.is_real() else 0.0)
+        z = rng.standard_normal(n) + (1j * rng.standard_normal(n) if not spec.is_real() else 0.0)
         a = op.matvec(z) if hasattr(op, "matvec") else op @ z
-        b = Href @ z
+        b = ref_apply(z)
         worst = max(worst, float(np.linalg.norm(a - b) / max(np.linalg.norm(b), 1e-300)))
     ev["probe"] = {"n_vectors": opts.probe_vectors, "max_relative_difference": worst}
     tol = 1e3 * U * max(1, spec.n_terms)
     st = "CERTIFIED" if worst <= tol else "FAILED"
+    kind = "stored producer matrix" if (sp.issparse(op) or isinstance(op, np.ndarray)) else "matrix-free producer"
     return _stmt("S1.model_fidelity", st,
-                 f"matrix-free producer agrees with the spec on {opts.probe_vectors} random vectors "
+                 f"{kind} agrees with the spec on {opts.probe_vectors} random vectors "
                  f"(max rel. diff {worst:.1e})" if st == "CERTIFIED" else
-                 f"matrix-free producer disagrees with the spec (max rel. diff {worst:.3e})",
+                 f"{kind} disagrees with the spec (max rel. diff {worst:.3e})",
                  ev, ["probabilistic: a difference orthogonal to all probes would be missed "
                       "(probability zero for Gaussian probes in exact arithmetic)"],
-                 time.time() - t0), Href, None
+                 time.time() - t0)
 
 
 # ---------------------------------------------------------------------------
@@ -367,6 +388,8 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
         while True:
             r = inertia_count(A, sigma, method=opts.inertia_method)
             counts.append(r.to_dict())
+            if r.resource_failure:
+                return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {r.note}"), None
             # the final (minimal-margin) probe sits close to a claimed eigenvalue, where a
             # no-pivoting factorization can lose accuracy: widen the margin to the observed beta
             if (idx == len(sigmas) - 1 and r.conclusive and r.beta + eps_shift >= (sigma - hi_k) / 2
@@ -464,8 +487,13 @@ def _estimate_next(A, k, seed=12345):
 
 def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
     ra = inertia_count(A, a, method=opts.inertia_method)
+    if ra.resource_failure:
+        return "NOT_CHECKED", {"counts": [ra.to_dict()], "window": [a, b],
+                               "reason": f"inertia count not attempted to completion: {ra.note}"}, None
     rb = inertia_count(A, b, method=opts.inertia_method)
     ev = {"counts": [ra.to_dict(), rb.to_dict()], "window": [a, b]}
+    if rb.resource_failure:
+        return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {rb.note}"), None
     if not (ra.conclusive and rb.conclusive):
         return "INCONCLUSIVE", dict(ev, reason="inertia inconclusive at a window edge"), None
     ba, bb = ra.beta + eps_shift, rb.beta + eps_shift
@@ -504,7 +532,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     H_full_ref, audit = None, None
     Href = None
     if spec is not None and opts.model_fidelity:
-        s1, Href_or_full, audit = check_model_fidelity(claim, spec, opts)
+        t_s1 = time.time()
+        try:
+            s1, Href_or_full, audit = check_model_fidelity(claim, spec, opts)
+        except MemoryError as e:
+            s1 = _stmt("S1.model_fidelity", "NOT_CHECKED",
+                       f"reference build did not fit in memory ({type(e).__name__})",
+                       {"spec_sha256": spec.sha256(), "error": " ".join(str(e).split())[:160]}, [],
+                       time.time() - t_s1)
+            Href_or_full, audit = None, None
         statements.append(s1)
         if claim.sector_isometry is not None:
             H_full_ref = Href_or_full
@@ -515,6 +551,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                 "no model specification supplied" if spec is None else "disabled"))
 
     s1_status = statements[0]["status"]
+    s1_probe = "probe" in statements[0].get("evidence", {})
     op_note = None
     is_matrix = lambda o: sp.issparse(o) or isinstance(o, np.ndarray)
     if claim.operator is None:
@@ -525,14 +562,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             op_note = "operator applied matrix-free from the spec (no stored matrix)"
         else:
             raise ValueError("no operator: supply claim.operator or a spec")
-    elif is_matrix(claim.operator):
+    elif is_matrix(claim.operator) and not s1_probe:
         op = claim.operator
     else:
-        # black-box producer matvec: bound the spec operator instead, if S1 tied them together
+        # black-box producer matvec (or a stored matrix compared by probes): bound the spec operator
+        # instead, if S1 tied them together
         if spec is not None and s1_status == "CERTIFIED":
             op = Href if Href is not None else SpecOperator(spec, claim.states)
-            op_note = ("producer is matrix-free; S2-S4 bounds are computed for the spec operator, "
-                       "which S1 found to agree with the producer on random probes")
+            op_note = ("producer operator compared with the spec on random probes (S1); S2-S4 bounds are "
+                       "computed for the spec operator" + ("" if Href is not None else ", applied matrix-free"))
         else:
             op = claim.operator
             op_note = "black-box operator without a verified spec: rounding in the producer's matvec is not bounded"
@@ -649,7 +687,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 summ = {"CERTIFIED": f"claim contains every eigenvalue in ({window[0] if window else a:.10g}, "
                                      f"{window[1] if window else b:.10g})" if st == "CERTIFIED" else "",
                         "FAILED": f"at least {ev.get('missing_at_least')} eigenvalue(s) in the window are not claimed",
-                        "INCONCLUSIVE": "counts could not be matched to the claimed set"}[st]
+                        "INCONCLUSIVE": "counts could not be matched to the claimed set",
+                        "NOT_CHECKED": ev.get("reason", "")}[st]
             statements.append(_stmt("S3.completeness", st, summ, ev,
                                     ["Sylvester inertia of a computed LDL^T factorization with explicitly "
                                      "bounded backward error; standard floating-point model"],
@@ -705,18 +744,28 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 eig_records.append(rec)
                 continue
             eps, eta, rho = cb
-            JL = min(a_ - eps, min(enc.mu[i] - rad[i] for i in C))
-            JU = max(b_ + eps, max(enc.mu[i] + rad[i] for i in C))
+            if eps_s3 > 0:
+                # statements refer to the declared model: replacing the operator used for the bounds by
+                # H_spec changes the residual by at most shift*||X|| <= shift*sqrt(1+eta), ||A|| by at most
+                # shift, hence rho by at most (sqrt(1+eta) + delta) * shift < 2.5 * shift, and w by at most
+                # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift
+                rho = up(rho + 2.5 * eps_s3)
+                eps = up(eps + 3.5 * eps_s3)
+            rad_m = rad + eps_s3
+            JL = min(a_ - eps, min(enc.mu[i] - rad_m[i] for i in C))
+            JU = max(b_ + eps, max(enc.mu[i] + rad_m[i] for i in C))
             others = [i for i in range(enc.mu.size) if i not in Cset]
-            clash = [i for i in others if not (enc.mu[i] + rad[i] < JL or enc.mu[i] - rad[i] > JU)]
+            clash = [i for i in others if not (enc.mu[i] + rad_m[i] < JL or enc.mu[i] - rad_m[i] > JU)]
             if clash or not (JL > window[0] and JU < window[1]):
                 rec.update(status="INCONCLUSIVE",
                            reason="cluster interval overlaps other claimed pairs or the window edge")
                 eig_records.append(rec)
                 continue
-            U_below = max([enc.mu[i] + rad[i] for i in others if enc.mu[i] < a_] + [window[0]])
-            L_above = min([enc.mu[i] - rad[i] for i in others if enc.mu[i] > b_] + [window[1]])
-            sep = min(a_ - U_below, L_above - b_)
+            U_below = max([enc.mu[i] + rad_m[i] for i in others if enc.mu[i] < a_] + [window[0]])
+            L_above = min([enc.mu[i] - rad_m[i] for i in others if enc.mu[i] > b_] + [window[1]])
+            # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
+            # of the claimed values, to the remaining eigenvalues
+            sep = min(a_ - U_below, L_above - b_) - eps
             rec["separation_lower_bound"] = float(sep)
             ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep)
             if ec is None:
@@ -727,9 +776,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 certify_observable(ec, X, O, name)
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
             for name, (sdiag, lattice) in opts.symmetries.items():
-                okc = commutes_diagonal(op, sdiag) if is_matrix(op) else False
+                # [A, S] = 0 is needed for the operator the statement refers to: the reference built
+                # from the spec when there is one, else the operator used for the bounds
+                comm_op = Href if Href is not None else (op if is_matrix(op) else None)
+                okc = commutes_diagonal(comm_op, sdiag) if comm_op is not None else False
                 certify_quantum_numbers(ec, X, sp.diags(sdiag), name, lattice=lattice,
                                         commutation_certified=okc)
+                ec.quantum_numbers[name]["commutation_checked_on"] = (
+                    "reference matrix built from the spec" if Href is not None else
+                    "operator used for the bounds" if comm_op is not None else "not checked")
             r = ec.to_dict()
             r["splitting"] = rec["splitting"]
             r["status"] = "CERTIFIED"

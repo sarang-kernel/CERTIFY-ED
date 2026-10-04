@@ -224,7 +224,9 @@ class SpecOperator:
         self.dtype = _dtype(spec)
         self._s = self.states.states_in_order()
 
-    def _apply(self, x: np.ndarray, absolute: bool) -> np.ndarray:
+    def _apply(self, x: np.ndarray, absolute: bool, transpose: bool = False) -> np.ndarray:
+        if transpose and not absolute:
+            raise NotImplementedError("transposed application is provided for |H|_abs only")
         x = np.asarray(x)
         out_dtype = np.float64 if (absolute or (self.dtype == np.float64 and not np.iscomplexobj(x))) else np.complex128
         y = np.zeros(x.shape, dtype=out_dtype)
@@ -239,6 +241,8 @@ class SpecOperator:
                     a = amp[m][found]
                     src = col[m][found]
                     rr = r[found]
+                    if transpose:          # (|H|_abs)^T x: gather at the target, scatter to the source
+                        src, rr = rr, src
                     if absolute:
                         contrib = np.abs(a)[:, None] * np.abs(x[src]).reshape(len(src), -1) if x.ndim > 1 \
                             else np.abs(a) * np.abs(x[src])
@@ -254,6 +258,10 @@ class SpecOperator:
 
     def abs_matvec(self, x):
         return self._apply(x, absolute=True)
+
+    def abs_rmatvec(self, x):
+        """(|H|_abs)^T x, with |H|_abs the entrywise sum of absolute values of all contributions."""
+        return self._apply(x, absolute=True, transpose=True)
 
     def as_linear_operator(self):
         from scipy.sparse.linalg import LinearOperator

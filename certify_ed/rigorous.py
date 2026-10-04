@@ -49,8 +49,11 @@ def _lower(b) -> float:
     return math.nextafter(math.nextafter(l, -math.inf), -math.inf)
 
 
-def arb_residual_radii(A, mu, X, prec: int = 128) -> np.ndarray:
-    """Rigorous ||A x_i - mu_i x_i||_2 / ||x_i||_2 for each column, in ball arithmetic."""
+def arb_residual_radii(A, mu, X, prec: int = 128, lower: bool = False) -> np.ndarray:
+    """Rigorous ||A x_i - mu_i x_i||_2 / ||x_i||_2 for each column, in ball arithmetic.
+
+    Returns the upper endpoint of each ball (rounded up), or the lower endpoint (rounded down)
+    when ``lower`` is True."""
     _require()
     old = flint.ctx.prec
     flint.ctx.prec = prec
@@ -80,7 +83,7 @@ def arb_residual_radii(A, mu, X, prec: int = 128) -> np.ndarray:
                 s2 += (abs(acc) ** 2) if cplx else acc * acc
                 xn2 += (abs(xb[i]) ** 2) if cplx else xb[i] * xb[i]
             r = s2.sqrt() / xn2.sqrt()
-            out[j] = _upper(r)
+            out[j] = _lower(r) if lower else _upper(r)
         return out
     finally:
         flint.ctx.prec = old

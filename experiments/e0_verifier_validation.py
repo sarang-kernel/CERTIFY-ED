@@ -69,6 +69,7 @@ NOISE = [0.0, 1e-10, 1e-7, 1e-4]
 
 def part_a(run, rng):
     trials, viol_interval, viol_group, viol_resid, no_ref = 0, 0, 0, 0, 0
+    ball_w = 0.0
     ratios, by_kind = [], {}
     t0 = time.time()
     cases = []
@@ -97,6 +98,7 @@ def part_a(run, rng):
         except ArithmeticError:
             no_ref += 1
             continue
+        ball_w = max(ball_w, max(r[1] - r[0] for r in ref))
         bad_i = any(not any(r[0] <= E.interval(i)[1] and r[1] >= E.interval(i)[0] for r in ref) for i in range(n))
         bad_g = False
         for g in E.groups:
@@ -106,7 +108,9 @@ def part_a(run, rng):
                 if sum(1 for r in ref if r[0] <= hi and r[1] >= lo) < g.size:
                     bad_g = True
         rr = arb_residual_radii(A, w, V)
-        bad_r = bool(np.any(E.residual.rel_bound < rr * (1 - 1e-12)))
+        rr_lo = arb_residual_radii(A, w, V, lower=True)
+        # a violation: the floating-point bound lies below the rigorous lower end of the true residual
+        bad_r = bool(np.any(E.residual.rel_bound < rr_lo))
         pos = rr > 0
         ratios.extend((E.residual.rel_bound[pos] / rr[pos]).tolist())
         trials += 1
@@ -118,7 +122,7 @@ def part_a(run, rng):
     ratios = np.array(ratios)
     out = {"matrices": trials, "reference_unavailable": no_ref, "eigenpairs": int(ratios.size), "by_source": by_kind,
            "violations_interval": viol_interval, "violations_group_count": viol_group,
-           "violations_residual_bound": viol_resid,
+           "violations_residual_bound": viol_resid, "arb_ball_max_width": float(ball_w),
            "bound_over_arb_residual": {"min": float(ratios.min()), "median": float(np.median(ratios)),
                                        "p99": float(np.quantile(ratios, 0.99)), "max": float(ratios.max())},
            "seconds": time.time() - t0}
