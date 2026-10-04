@@ -101,7 +101,7 @@ certify_ed/
   importers.py              QuSpin, NPZ, HDF5
   corroborate.py, rigorous.py  S5 solvers (incl. Jacobi); Arb reference used in tests
 tests/v2/                   tests of the verification core
-experiments/                E0–E4 of the paper, run_all.sh, make_numbers.py
+experiments/                E0–E5 of the paper, run_all.sh, make_numbers.py
 ```
 
 The v1 modules (`hamiltonian.py`, `oracles.py`, `certificates.py`, `validators/`) remain for

@@ -85,8 +85,18 @@ for name in ("e0_verifier_validation", "e1_failure_matrix", "e2_cost", "e3_tight
     runs[name] = latest(name)
 commits = {r[2].get("git_commit") for r in runs.values()}
 env0 = runs["e0_verifier_validation"][2]
-check(len(commits) == 1, f"all experiments ran at one git commit (found {commits})")
-macro("GitCommit", (sorted(c for c in commits if c) or ["unknown"])[0][:10])
+
+
+def _tree(commit, path="certify_ed"):
+    out = subprocess.run(["git", "rev-parse", f"{commit}:{path}"], cwd=ROOT, capture_output=True, text=True)
+    return out.stdout.strip() or None
+
+
+trees = {_tree(c) for c in commits if c}
+check(len(trees) == 1 and None not in trees,
+      f"all experiments ran with the same certify_ed source tree (commits {sorted(c[:7] for c in commits if c)})")
+macro("GitCommit", ", ".join(sorted(c[:7] for c in commits if c)))
+macro("GitTree", (sorted(t for t in trees if t) or ["unknown"])[0][:10])
 macro("RunDate", env0["started"][:10])
 cpu = env0.get("cpu_model")
 if not cpu:
@@ -158,6 +168,13 @@ maxdiff = max(max(r["max_rel_diff_kron"], r["max_rel_diff_quspin"]) for r in row
 macro("VcMaxDiff", sci(maxdiff))
 check(all(r["kron_agree"] == r["models"] and r["quspin_agree"] == r["models"] for r in rows_c),
       "E0(c): all random models agree with Kronecker builder and QuSpin")
+dd = e0["d_jw_convention_episode"]
+macro("VdModels", str(dd["models"]))
+macro("VdDisagree", str(dd["disagree_with_quspin"]))
+macro("VdConserving", str(dd["number_conserving_models"]))
+check(dd["disagree_with_quspin"] == dd["disagreeing_with_number_changing_string"]
+      and dd["number_conserving_agree"] == dd["number_conserving_models"],
+      "E0(d): with the old JW ordering only models with number-changing strings disagree with QuSpin")
 with open(os.path.join(MS, "tables", "e0.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{Validation of the verifier against independent "
             "references (Section~\\ref{sec:e0}).}\n\\label{tab:e0}\n\\footnotesize\n"

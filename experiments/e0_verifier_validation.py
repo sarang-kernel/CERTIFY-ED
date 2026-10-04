@@ -198,12 +198,53 @@ def part_c(run, rng):
     run.record("c_builders", {"rows": rows, "seconds": time.time() - t0})
 
 
+def part_d(run, seed):
+    """The Jordan-Wigner episode, reproduced: with the string on sites of SMALLER index (CERTIFY-ED's
+    convention before commit 13d2149), random fermion models are compared with QuSpin (string on sites
+    of larger index). Number-conserving strings agree in both conventions; number-changing ones need not."""
+    from quspin.basis import spinless_fermion_basis_1d
+    from quspin.operators import hamiltonian
+    from certify_ed.localops import LocalSpace
+    rng = np.random.default_rng(seed)
+    N = 7
+    local = LocalSpace.fermion_space("lower")
+    basis = spinless_fermion_basis_1d(N)
+    n_dis, n_dis_changing, n_conserving, n_conserving_agree = 0, 0, 0, 0
+    for rep in range(80):
+        spec = random_spec(local, N, rng)
+        if rep >= 40:
+            # second half: keep only the number-conserving strings (adjoint pairs stay together)
+            terms = [t for t in spec.terms if t.op.count("+") == t.op.count("-")]
+            if not terms:
+                terms = ModelSpec.from_static(N, local, [["+-", [[0.5, 0, 1]]], ["-+", [[0.5, 0, 1]]]]).terms
+            spec = ModelSpec(N, local, terms)
+        changing = any(t.op.count("+") != t.op.count("-") for t in spec.terms)
+        Hb = build_bitwise(spec)
+        dtype = np.float64 if spec.is_real() else np.complex128
+        Hq = hamiltonian(spec.to_quspin_static(), [], basis=basis, dtype=dtype, check_herm=False,
+                         check_symm=False, check_pcon=False).tocsr()
+        dq = matrix_difference(Hq, Hb)
+        agree = dq["max_abs_diff"] <= 1e-13 * max(1.0, dq.get("max_abs_entry", 1.0))
+        n_dis += not agree
+        n_dis_changing += (not agree) and changing
+        if not changing:
+            n_conserving += 1
+            n_conserving_agree += agree
+    rec = {"models": 80, "disagree_with_quspin": n_dis, "disagreeing_with_number_changing_string": n_dis_changing,
+           "number_conserving_models": n_conserving, "number_conserving_agree": n_conserving_agree}
+    run.record("d_jw_convention_episode", rec)
+    run.log(f"(d) JW string on lower sites vs QuSpin: {n_dis}/80 models disagree "
+            f"({n_dis_changing} contain a number-changing string); number-conserving models agree "
+            f"{n_conserving_agree}/{n_conserving}")
+
+
 def main():
     with Run("e0_verifier_validation") as run:
         rng = np.random.default_rng(run.seed)
         part_c(run, rng)
         part_b(run, rng)
         part_a(run, rng)
+        part_d(run, run.seed + 3)
 
 
 if __name__ == "__main__":
