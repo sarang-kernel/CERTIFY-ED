@@ -2,7 +2,7 @@
 
 Each coupling c * o_1(i_1)...o_m(i_m) is a tensor product over sites of local
 q x q factors (letters at that site multiplied in string order, fermionic
-parity factors on smaller sites for Jordan-Wigner letters, identity elsewhere).
+parity factors on the string side for Jordan-Wigner letters, identity elsewhere).
 Hence, with O_t the operator of coupling t,
 
     tr H          = sum_t c_t prod_l tr(o_{t,l})
@@ -38,7 +38,7 @@ def _site_factors(spec: ModelSpec, op: str, sites) -> List[np.ndarray]:
         for l in range(N):
             if l == site:
                 facs[l] = facs[l] @ o
-            elif l < site and local.jw_letter(letter):
+            elif local.jw_on(letter, l, site):
                 facs[l] = facs[l] @ P
     return facs
 

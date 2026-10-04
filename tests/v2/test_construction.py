@@ -89,3 +89,66 @@ def test_equals_quspin(case):
                      check_herm=False, check_symm=False, check_pcon=False).tocsr()
     d = matrix_difference(Hq, build_bitwise(spec))
     assert d["pattern_match"] and d["max_abs_diff"] <= 1e-15 * max(1.0, d["max_abs_entry"]) * 8
+
+
+# ---------------------------------------------------------------------------
+# Jordan-Wigner direction (bug found by experiments/e0: before 2026-10-04 the
+# builders put the string on lower sites while QuSpin puts it on higher sites;
+# number-changing fermion strings then differed from QuSpin)
+# ---------------------------------------------------------------------------
+
+def _random_fermion_spec(rng, N, jw="higher"):
+    local = LocalSpace.fermion_space(jw)
+    letters = ["+", "-", "n", "z"]
+    adj = {"+": "-", "-": "+"}
+    static = []
+    for _ in range(6):
+        L = int(rng.integers(1, 4))
+        op = "".join(rng.choice(letters, L))
+        sites = [int(s) for s in rng.choice(N, L, replace=False)]
+        c = complex(rng.normal(), rng.normal())
+        static.append([op, [[c] + sites]])
+        static.append(["".join(adj.get(l, l) for l in op[::-1]), [[np.conj(c)] + sites[::-1]]])
+    return S.ModelSpec.from_static(N, local, static)
+
+
+@needs_quspin
+@pytest.mark.parametrize("seed", range(10))
+def test_fermion_strings_equal_quspin_including_number_changing(seed):
+    from quspin.basis import spinless_fermion_basis_1d
+    from quspin.operators import hamiltonian
+    rng = np.random.default_rng(seed)
+    spec = _random_fermion_spec(rng, 6)
+    Hq = hamiltonian(spec.to_quspin_static(), [], basis=spinless_fermion_basis_1d(6), dtype=np.complex128,
+                     check_herm=False, check_symm=False, check_pcon=False).tocsr()
+    d = matrix_difference(Hq, build_bitwise(spec))
+    assert d["max_abs_diff"] <= 1e-13 * max(1.0, d["max_abs_entry"])
+    assert cross_construct(spec)["agree"]
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_jw_direction_conventions(seed):
+    """Number-conserving strings: identical matrices. Pairing: sign flip. Spectra of Hermitian
+    even-parity Hamiltonians: identical."""
+    rng = np.random.default_rng(seed)
+    N = 6
+    hi = _random_fermion_spec(rng, N, "higher")
+    lo = S.ModelSpec.from_dict({**hi.to_dict(), "local_space": LocalSpace.fermion_space("lower").to_dict()})
+    assert cross_construct(lo)["agree"]
+    hop = S.ModelSpec.from_static(N, LocalSpace.fermion_space("higher"), [["+-", [[0.7, 0, 3], [0.2, 4, 1]]],
+                                                                           ["-+", [[-0.7, 0, 3], [-0.2, 4, 1]]]])
+    hop_lo = S.ModelSpec.from_dict({**hop.to_dict(), "local_space": LocalSpace.fermion_space("lower").to_dict()})
+    assert abs(build_bitwise(hop) - build_bitwise(hop_lo)).max() == 0
+    pair = S.ModelSpec.from_static(N, LocalSpace.fermion_space("higher"), [["++", [[0.5, 1, 2]]], ["--", [[0.5, 2, 1]]]])
+    pair_lo = S.ModelSpec.from_dict({**pair.to_dict(), "local_space": LocalSpace.fermion_space("lower").to_dict()})
+    assert abs(build_bitwise(pair) + build_bitwise(pair_lo)).max() == 0
+    even = S.ModelSpec.from_static(N, LocalSpace.fermion_space("higher"),
+                                   [["+-", [[-1.0, i, i + 1] for i in range(N - 1)]],
+                                    ["-+", [[1.0, i, i + 1] for i in range(N - 1)]],
+                                    ["++", [[0.6, i, i + 1] for i in range(N - 1)]],
+                                    ["--", [[0.6, i + 1, i] for i in range(N - 1)]],
+                                    ["n", [[0.3, i] for i in range(N)]]])
+    even_lo = S.ModelSpec.from_dict({**even.to_dict(), "local_space": LocalSpace.fermion_space("lower").to_dict()})
+    w1 = np.linalg.eigvalsh(build_bitwise(even).toarray())
+    w2 = np.linalg.eigvalsh(build_bitwise(even_lo).toarray())
+    assert np.max(np.abs(w1 - w2)) < 1e-12

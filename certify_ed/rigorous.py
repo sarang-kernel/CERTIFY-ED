@@ -96,8 +96,18 @@ def arb_eigenvalues(A, prec: int = 128, algorithm: str = None) -> List[Tuple[flo
     try:
         M = A.toarray() if sp.issparse(A) else np.asarray(A)
         n = M.shape[0]
-        rows = [[flint.acb(complex(M[i, j])) for j in range(n)] for i in range(n)]
-        E = flint.acb_mat(rows).eig(multiple=True, algorithm=algorithm)
+        E, err = None, None
+        for p in (prec, 2 * prec, 4 * prec, 8 * prec):
+            # Arb may fail to isolate tight clusters at a given precision; retry with more bits
+            flint.ctx.prec = p
+            rows = [[flint.acb(complex(M[i, j])) for j in range(n)] for i in range(n)]
+            try:
+                E = flint.acb_mat(rows).eig(multiple=True, algorithm=algorithm)
+                break
+            except ValueError as e:
+                err = e
+        if E is None:
+            raise ArithmeticError(f"Arb could not enclose the eigenvalues up to {8 * prec} bits: {err}")
         out = []
         for e in E:
             if not e.imag.contains(0):

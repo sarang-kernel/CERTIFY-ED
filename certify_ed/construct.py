@@ -72,7 +72,7 @@ def build_kron(spec: ModelSpec) -> sp.csr_matrix:
         for l in range(N):
             if l == site:
                 factors.append(o)
-            elif l < site and local.jw_letter(letter):
+            elif local.jw_on(letter, l, site):
                 factors.append(P)
             else:
                 factors.append(I)
@@ -157,9 +157,12 @@ def _apply_string(spec: ModelSpec, op: str, sites: Sequence[int], coeff: complex
             valid = (new_digit >= 0) & (new_digit < q)
             factor = ampvec[digit]
             if local.jw_letter(letter):
-                # (-1)^(occupied sites with smaller index); q == 2 for fermions
-                higher = s >> (N - site)
-                factor = factor * np.where(_popcount(higher) % 2 == 1, -1.0, 1.0)
+                # (-1)^(occupied sites on the string side); q == 2, site 0 is the most significant bit
+                if local.jw_string == "higher":
+                    side = s & ((1 << (N - 1 - site)) - 1)     # sites site+1 .. N-1
+                else:
+                    side = s >> (N - site)                      # sites 0 .. site-1
+                factor = factor * np.where(_popcount(side) % 2 == 1, -1.0, 1.0)
             amp = amp * factor
             ok &= valid & (factor != 0)
             s = np.where(valid, s + delta * place, s)

@@ -3,7 +3,7 @@
 A local space fixes (i) the local dimension q, (ii) the meaning of each digit
 0..q-1 of the integer encoding of basis states, and (iii) the matrix of every
 operator letter. The conventions below reproduce QuSpin 1.0 exactly
-(verified in tests/v2/test_quspin_interop.py):
+(verified in tests/v2/test_construction.py and experiments/e0_verifier_validation.py):
 
   spin S          digit k  <->  m = k - S          letters I x y z + -
       convention "spin"     : S^a operators (QuSpin pauli=0)
@@ -11,8 +11,13 @@ operator letter. The conventions below reproduce QuSpin 1.0 exactly
                               so sigma^+ has matrix element 2)
       convention "pauli_pm1": sigma^{x,y,z} = 2 S^{x,y,z}, sigma^+- = S^+- (QuSpin pauli=-1)
   fermion         digit n  = occupation 0/1     letters I + - n z   (z = n - 1/2)
-      '+' and '-' carry the Jordan-Wigner sign (-1)^(number of occupied sites
-      with smaller site index), evaluated on the state the operator acts on.
+      '+' and '-' carry a Jordan-Wigner sign (-1)^(number of occupied sites on
+      one side of the site), evaluated on the state the operator acts on.
+      jw_string = "higher" (default, QuSpin 1.0): sites with larger index;
+      jw_string = "lower": sites with smaller index (c_j = prod_{i<j}(-1)^{n_i} a_j).
+      Number-conserving strings (hopping, density, interactions) have identical
+      matrices in both conventions. Strings that change the particle number differ:
+      pairing terms c+c+ change sign, odd strings differ by the total parity.
   boson (n_max)   digit n  = occupation 0..n_max letters I + - n
 
 Every operator letter is decomposed into "shift components": o = sum_delta
@@ -45,6 +50,7 @@ class LocalSpace:
     spin: str = ""               # e.g. '1/2' (spin only)
     convention: str = ""         # spin: 'spin' | 'pauli' | 'pauli_pm1'
     n_max: int = 0               # boson cutoff
+    jw_string: str = ""          # fermion: 'higher' (QuSpin) | 'lower'
 
     # ------------------------------------------------------------------ build
     @staticmethod
@@ -57,8 +63,10 @@ class LocalSpace:
         return LocalSpace("spin", int(2 * f + 1), spin=str(f), convention=convention)
 
     @staticmethod
-    def fermion_space() -> "LocalSpace":
-        return LocalSpace("fermion", 2)
+    def fermion_space(jw_string: str = "higher") -> "LocalSpace":
+        if jw_string not in ("higher", "lower"):
+            raise ValueError(f"jw_string must be 'higher' or 'lower', got {jw_string!r}")
+        return LocalSpace("fermion", 2, jw_string=jw_string)
 
     @staticmethod
     def boson_space(n_max: int) -> "LocalSpace":
@@ -85,6 +93,8 @@ class LocalSpace:
             d.update(spin=self.spin, convention=self.convention)
         if self.kind == "boson":
             d.update(n_max=self.n_max)
+        if self.kind == "fermion":
+            d.update(jw_string=self.jw_string)
         return d
 
     @staticmethod
@@ -93,7 +103,7 @@ class LocalSpace:
         if k == "spin":
             return LocalSpace.spin_space(d.get("spin", "1/2"), d.get("convention", "spin"))
         if k == "fermion":
-            return LocalSpace.fermion_space()
+            return LocalSpace.fermion_space(d.get("jw_string", "higher"))
         if k == "boson":
             return LocalSpace.boson_space(int(d["n_max"]))
         raise ValueError(f"unknown local space kind {k!r}")
@@ -194,6 +204,12 @@ class LocalSpace:
     def jw_letter(self, letter: str) -> bool:
         """Whether this letter carries a Jordan-Wigner string."""
         return self.kind == "fermion" and letter in ("+", "-")
+
+    def jw_on(self, letter: str, l: int, site: int) -> bool:
+        """Whether site l carries a parity factor in the string of `letter` at `site`."""
+        if not self.jw_letter(letter):
+            return False
+        return l > site if self.jw_string == "higher" else l < site
 
     def local_parity(self) -> np.ndarray:
         """(-1)^n on the local space (fermions only)."""

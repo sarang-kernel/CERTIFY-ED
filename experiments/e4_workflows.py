@@ -110,21 +110,29 @@ def w2_multiplet(run, N=8):
     run.log(f"W2: {c.summary()}")
 
 
-def w3_matrix_free(run, N=20):
+def w3_matrix_free(run, N=18):
+    """Producer: QuSpin's matrix-free quantum_LinearOperator (no stored matrix) + ARPACK.
+    The certifier sees only a black-box matvec."""
+    from quspin.operators import quantum_LinearOperator
     spec = ce.tfim_chain(N, h=1.0)
-    op = ce.SpecOperator(spec).as_linear_operator()
+    pa = {"pauli": 1, "spin": 0, "pauli_pm1": -1}[spec.local.convention]
+    b = spin_basis_1d(N, pauli=pa)
+    qop = quantum_LinearOperator(spec.to_quspin_static(), basis=b, dtype=np.float64, check_herm=False,
+                                 check_symm=False, check_pcon=False)
+    op = spla.LinearOperator(qop.shape, matvec=qop.dot, dtype=np.float64)
     t0 = time.time()
-    w, V = spla.eigsh(op, k=3, which="SA", tol=1e-12)
+    w, V = spla.eigsh(op, k=3, which="SA", tol=1e-12, ncv=24, v0=np.ones(spec.dim))
     o = np.argsort(w)
     w, V = w[o], V[:, o]
     t_prod = time.time() - t0
     t0 = time.time()
-    c = ce.certify(ce.Claim(w, V, operator=op, kind="lowest"), spec, ce.Options(inertia_max_dim=60000))
+    c = ce.certify(ce.Claim(w, V, operator=op, kind="lowest"), spec, ce.Options())
     t_cert = time.time() - t0
     run.record("W3", {"N": N, "dim": spec.dim, "eigenvalues": w.tolist(),
                       "statuses": {s["id"]: s["status"] for s in c.statements},
                       "summaries": {s["id"]: s["summary"] for s in c.statements},
                       "seconds": {s["id"]: s["seconds"] for s in c.statements},
+                      "operator_note": c.body.get("operator_note"),
                       "producer_seconds": t_prod, "certify_seconds": t_cert,
                       "max_radius": float(c.arrays["radius"].max())})
     run.log(f"W3: producer {t_prod:.1f}s certify {t_cert:.1f}s\n{c.summary()}")
@@ -171,11 +179,12 @@ def w4_benchmarks(run):
 
 
 def main():
-    with Run("e4_workflows") as run:
-        w2_multiplet(run)
-        w1_sectors(run)
-        w3_matrix_free(run)
-        w4_benchmarks(run)
+    import sys
+    parts = sys.argv[1:] or ["W1", "W2", "W3", "W4"]
+    fns = {"W1": w1_sectors, "W2": w2_multiplet, "W3": w3_matrix_free, "W4": w4_benchmarks}
+    with Run("e4_workflows_" + "".join(parts)) as run:
+        for p in parts:
+            fns[p](run)
 
 
 if __name__ == "__main__":

@@ -104,6 +104,39 @@ def main():
                         f"{rows_c[-1]['fraction_of_gap_certified']:.3f} ({rows_c[-1]['n_factorizations']} factorizations)")
         run.record("c_gap", rows_c)
 
+        # (d) global spectrum assembled from all (Nup, k) blocks vs the full-space spectrum
+        from quspin.basis import spin_basis_1d
+        from quspin.operators import hamiltonian
+        from certify_ed.compose import SectorResult, certify_low_energy
+        Nd = 12
+        specd = ce.heisenberg_chain(Nd, J2=0.3)
+        static = specd.to_quspin_static()
+        Hfull = ce.build_bitwise(specd)
+        wfull = la.eigvalsh(Hfull.toarray())
+        jumps = np.where(np.diff(wfull[:40]) > 1e-4)[0]
+        E_cut = float((wfull[jumps[5]] + wfull[jumps[5] + 1]) / 2)
+        secs = []
+        for nup in range(Nd + 1):
+            for kb in range(Nd):
+                b = spin_basis_1d(Nd, Nup=nup, kblock=kb, pauli=0)
+                if b.Ns == 0:
+                    continue
+                Hs = hamiltonian(static, [], basis=b, dtype=np.complex128, check_herm=False,
+                                 check_symm=False, check_pcon=False).tocsr()
+                w, Y = la.eigh(Hs.toarray())
+                sel = np.where(w < E_cut)[0]
+                secs.append(SectorResult(f"{nup},{kb}", sp.csr_matrix(b.get_proj(np.complex128)), Hs, w[sel],
+                                         Y[:, sel]))
+        res = certify_low_energy(specd, secs, E_cut)
+        K = res.get("K") or 0
+        act = float(np.max(np.abs(np.array(res["lowest"]) - wfull[:K]))) if K else None
+        run.record("d_compose", {"N": Nd, "J2": 0.3, "n_sectors": len(secs), "E_cut": E_cut, "status": res["status"],
+                                 "K": K, "radius": res.get("radius"), "actual_max_error": act,
+                                 "eta": res["eta"], "invariance_total": res["invariance_total"],
+                                 "next_lower_bound": res.get("next_lower_bound"), "true_next": float(wfull[K]),
+                                 "summary": res["summary"]})
+        run.log(f"compose N={Nd}: {res['summary']}; actual max error {act:.2e}; true next {wfull[K]:.10f}")
+
 
 if __name__ == "__main__":
     main()
