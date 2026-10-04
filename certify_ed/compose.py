@@ -67,13 +67,16 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         Bn = max(Bn, inf_norm_upper(Hs))
         red = restrict_to_u1(spec, s.V, cache) if H is None else None
         if red is not None:
-            Ha, Va, _ = red
+            Ha, Va, st_a = red
         else:
             if H is None:
                 H = build_bitwise(spec)
-            Ha, Va = H, s.V
+            Ha, Va, st_a = H, s.V, None
         Hn = max(Hn, inf_norm_upper(Ha))
-        m_build = max(m_build, _builder_shift(spec, Ha))
+        key = None if st_a is None else (st_a.size, int(st_a.states_asc[0]), int(st_a.states_asc[-1]))
+        if key not in cache.setdefault("_builder_shift", {}):
+            cache["_builder_shift"][key] = _builder_shift(spec, st_a)
+        m_build = max(m_build, cache["_builder_shift"][key])
         aud = audit_sector(Ha, Va, Hs, label=s.label)
         rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
                "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}

@@ -171,16 +171,26 @@ def _diagnose_mismatch(spec: ModelSpec, states: StateSet, Hp: sp.spmatrix, Href:
     return out
 
 
-def _builder_shift(spec: ModelSpec, Href) -> float:
-    """Upper bound on ||Href - H_spec||_2, where H_spec is the spec operator in exact arithmetic
-    (couplings taken as the given binary floating-point numbers) and Href its floating-point build:
-    every entry carries at most `product_tolerance` of rounding, and a Hermitian matrix with at
-    most w nonzeros per row satisfies ||E||_2 <= max row sum of |E|."""
-    if Href is None or Href.nnz == 0:
+def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
+    """Upper bound on ||H_ref - H_spec||_2, where H_spec is the spec operator on `states` in exact
+    arithmetic (couplings taken as the given binary floating-point numbers) and H_ref is CERTIFY-ED's
+    floating-point build of it.
+
+    Every entry of H_ref is a sum of at most m = n_terms * 2^Lmax contributions, each a product of at
+    most Lmax + 1 factors, so |H_ref - H_spec| <= gamma_{m + Lmax + 2} |H|_abs entrywise, where |H|_abs
+    sums the absolute values of the contributions. For a Hermitian specification |H|_abs is symmetric,
+    hence ||H_ref - H_spec||_2 <= gamma * max_i (|H|_abs 1)_i, evaluated with the matrix-free operator
+    (the computed row sums of nonnegative terms are inflated by a further gamma factor)."""
+    from .fp import gamma
+    op = SpecOperator(spec, states)
+    n = op.shape[0]
+    if n == 0 or spec.n_terms == 0:
         return 0.0
-    tol = product_tolerance(spec, float(abs(Href).max()))
-    w = int(np.max(np.diff(sp.csr_matrix(Href).indptr)))
-    return up(w * tol)
+    max_len = max((len(t.op) for t in spec.terms), default=1)
+    width = spec.n_terms * (2 ** max_len) + max_len + 2
+    row = float(np.max(op.abs_matvec(np.ones(n))))
+    g = gamma(width)
+    return up(g * row * (1 + gamma(width)))
 
 
 def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_ref=None):
@@ -204,7 +214,7 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         Hs = ((Hs + Hs.conj().T) / 2).tocsr() if herm > 0 else Hs
         audit = audit_sector(H_full_ref, V_audit, Hs, label="producer sector")
         ev["sector_audit"] = audit.to_dict()
-        ev["model_shift_bound"] = _builder_shift(spec, H_full_ref)
+        ev["model_shift_bound"] = _builder_shift(spec, st_u1 if red is not None else None)
         status = "CERTIFIED" if audit.passed else "FAILED"
         summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
                 f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
@@ -238,7 +248,7 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         return _stmt("S1.model_fidelity", "FAILED",
                      f"the spec does not conserve the quantity defining the producer's basis "
                      f"(amplitude leaving the state set: {leak:.3e})", ev, [], time.time() - t0), Href, None
-    ev["model_shift_bound"] = _builder_shift(spec, Href)   # replaced below when a producer matrix is compared
+    ev["model_shift_bound"] = _builder_shift(spec, states)   # replaced below when a producer matrix is compared
     if op is None:
         ev["operator_source"] = "built by CERTIFY-ED from the spec"
         return _stmt("S1.model_fidelity", "CERTIFIED",
@@ -257,7 +267,7 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
             Dm = (Hh - Href).tocsr()
             # ||D||_2 <= sqrt(||D||_1 ||D||_inf) <= max(||D||_1, ||D||_inf)
             ev["model_shift_bound"] = up(max(inf_norm_upper(Dm), inf_norm_upper(Dm.conj().T.tocsr()))
-                                         + _builder_shift(spec, Href))
+                                         + ev["model_shift_bound"])
             return _stmt("S1.model_fidelity", "CERTIFIED",
                          f"producer matrix equals the spec matrix entrywise (max |diff| "
                          f"{diff['max_abs_diff']:.1e} <= {tol:.1e})", ev,

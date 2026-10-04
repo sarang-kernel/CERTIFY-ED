@@ -211,6 +211,8 @@ check(f3.get("fit_relative_residual") is not None and f3["fit_relative_residual"
       f"E1 F3: difference not expressible as coefficient changes (residual {f3.get('fit_relative_residual')})")
 macro("FnFtwelveBound", sci(f12["bound"]) if f12.get("bound") else "?")
 macro("FnFtwelveSpread", f"{f12['spread']:.3f}" if f12.get("spread") else "?")
+_words = {2: "twofold", 3: "threefold", 4: "fourfold"}
+macro("FnFtwelveMult", _words.get(f12.get("multiplicity"), f"{f12.get('multiplicity')}-fold"))
 
 short = {
     "F0": ("correct result", "---"),
@@ -227,7 +229,8 @@ short = {
     "F10b": ("phase error in one basis vector, block $(N_\\uparrow{=}2,k{=}0)$", None),
     "F11a": ("ground-state block omitted from pooled list", None),
     "F11b": ("fully polarized block omitted", None),
-    "F12": ("$\\langle O\\rangle$ quoted for one vector of a triplet", None),
+    "F12": ("$\\langle O\\rangle$ quoted for one vector of a " + _words.get(f12.get("multiplicity"), "degenerate")
+            + " level", None),
 }
 
 
