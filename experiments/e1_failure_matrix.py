@@ -63,7 +63,8 @@ def recompute(static_intended, basis, lam, k=None):
     if basis.Ns <= 2000:
         w = np.sort(la.eigvalsh(H.toarray()))[:kk]
     else:
-        w = np.sort(H.eigsh(k=kk, which="SA", return_eigenvectors=False, tol=1e-13))
+        v0 = np.random.default_rng(7).standard_normal(basis.Ns)   # reproducible start vector
+        w = np.sort(H.eigsh(k=kk, which="SA", return_eigenvectors=False, tol=1e-13, v0=v0))
     lam = np.sort(np.asarray(lam))
     ok = w.size == lam.size and np.max(np.abs(w - lam)) <= AGREE_TOL * max(1.0, np.max(np.abs(w)))
     return bool(ok), float(np.max(np.abs(w[:lam.size] - lam[:w.size]))) if w.size and lam.size else None, time.time() - t

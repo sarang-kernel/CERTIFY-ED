@@ -22,7 +22,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "..", "..", "ms_v2"))
-RES = os.path.join(HERE, "results")
+RES = os.environ.get("CERTIFY_RESULTS", os.path.join(HERE, "results"))
 os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
 os.makedirs(os.path.join(MS, "figures"), exist_ok=True)
 
@@ -157,12 +157,12 @@ check(all(r["kron_agree"] == r["models"] and r["quspin_agree"] == r["models"] fo
       "E0(c): all random models agree with Kronecker builder and QuSpin")
 with open(os.path.join(MS, "tables", "e0.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{Validation of the verifier against independent "
-            "references (Section~\\ref{sec:e0}).}\n\\label{tab:e0}\n\\small\n"
+            "references (Section~\\ref{sec:e0}).}\n\\label{tab:e0}\n\\footnotesize\n"
             "\\begin{tabular}{@{}l l r r@{}}\n\\toprule\n"
             "Component & Reference & Cases & Violations \\\\\n\\midrule\n")
-    f.write(f"\\Stwo{{}} enclosures (Theorems~\\ref{{thm:residual}}--\\ref{{thm:cluster}}) & Arb ball-arithmetic "
-            f"eigenvalues & {thin(a['eigenpairs'])} pairs & {viol_a} \\\\\n")
-    f.write(f"\\Stwo{{}} residual bound & Arb ball-arithmetic residual & {thin(a['eigenpairs'])} pairs & "
+    f.write(f"\\Stwo{{}} enclosures (Theorems~\\ref{{thm:residual}}--\\ref{{thm:cluster}}) & Arb eigenvalues (ball "
+            f"arithmetic) & {thin(a['eigenpairs'])} pairs & {viol_a} \\\\\n")
+    f.write(f"\\Stwo{{}} residual bound & Arb residual (ball arithmetic) & {thin(a['eigenpairs'])} pairs & "
             f"{a['violations_residual_bound']} \\\\\n")
     f.write(f"\\Sthree{{}} inertia (Lemma~\\ref{{lem:inertia}}) & exact count from spectrum & {thin(b['checks'])} "
             f"counts & {b['violations']} \\\\\n")
@@ -288,7 +288,7 @@ with open(os.path.join(MS, "tables", "e1.tex"), "w") as f:
             "QuSpin from the intended model; P3: \\pkg{}. ``flag'' means the practice reports a problem; "
             "``pass'' means it does not. Thirteen results (F1--F11b) are wrong; F0 is correct; F12 is a "
             "correct result whose single-vector observable is basis dependent.}\n\\label{tab:e1}\n"
-            "\\footnotesize\n\\begin{tabular}{@{}l p{0.36\\textwidth} c c l p{0.25\\textwidth}@{}}\n\\toprule\n"
+            "\\footnotesize\n\\begin{tabular}{@{}l >{\\raggedright\\arraybackslash}p{0.36\\textwidth} c c l >{\\raggedright\\arraybackslash}p{0.25\\textwidth}@{}}\n\\toprule\n"
             "Case & Mechanism & P1 & P2 & P3 & P3 diagnosis \\\\\n\\midrule\n")
     for r in rows:
         k = r["case"].split()[0]
@@ -397,21 +397,37 @@ c22 = k22.get("certifier_without_S3") or {}
 macro("CkTwentyTwoDim", thin(k22["producer"]["dim"]))
 macro("CkTwentyTwoSone", f"{stmt_time(c22, 'S1.model_fidelity'):.0f}" if "statements" in c22 else "?")
 macro("CkTwentyTwoMem", f"{c22.get('maxrss_mb', float('nan')):.0f}")
+all_s1 = [stmt_time(c, "S1.model_fidelity") for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
+          if c and "statements" in c]
+check(max(all_s1) <= stmt_time(c22, "S1.model_fidelity") + 1e-9, "E2: the N=22 momentum block has the largest S1 time")
 k24 = next(r for r in rows2 if fam(r) == "chain-k0" and r["cfg"]["N"] == 24)
 check("error" in (k24.get("certifier_without_S3") or {}), "E2: N=24 momentum block S1 exceeds the memory cap")
+sq = next(r for r in s3_ok if fam(r) == "square" and not r["cfg"].get("J2"))
+ch16 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 16)
+macro("CfillSquare", sci(max(x for x in sq["certifier"]["fill_nnz"] if x)))
+macro("CnnzSquare", sci(sq["producer"]["nnz"]))
+macro("CSthreeSquare", f"{sq['certifier']['statements']['S3.completeness']['seconds']:.0f}")
+macro("CsolveSquare", f"{sq['producer']['t_solve']:.1f}")
+macro("CSthreeChain", f"{ch16['certifier']['statements']['S3.completeness']['seconds']:.0f}")
+ch14 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 14)
+growth = max(x for x in ch16["certifier"]["fill_nnz"] if x) / max(x for x in ch14["certifier"]["fill_nnz"] if x)
+macro("CfillGrowth", f"{growth:.0f}")
 # fill exponent from the chain U(1) points with S3 certified
 pts = [(r["producer"]["dim"], max(x for x in r["certifier"]["fill_nnz"] if x)) for r in s3_ok if fam(r) == "chain-u1"]
 pts.sort()
 if len(pts) >= 2:
-    expo = math.log(pts[-1][1] / pts[-2][1]) / math.log(pts[-1][0] / pts[-2][0])
+    # least-squares slope of log(fill) vs log(d) over all chain S^z=0 points with S3 certified
+    xs_, ys_ = np.log([p[0] for p in pts]), np.log([p[1] for p in pts])
+    expo = float(np.polyfit(xs_, ys_, 1)[0])
     macro("CfillExponent", f"{expo:.1f}")
+    macro("CfillNpoints", str(len(pts)))
 failed_s3 = [r for r in rows2 if r not in s3_ok]
 
 with open(os.path.join(MS, "tables", "e2.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{Cost of certification (Section~\\ref{sec:e2}). Producer: "
             "QuSpin basis and matrix construction (build) and ARPACK for eight states (solve). Certifier: "
             "statements \\Sone{}--\\Sthree{} in seconds and peak memory. ``mem'' means the step exceeded the "
-            f"{settings.get('memory_cap_GiB', 4.5):.1f}\\,GiB cap; the certificate then reports \\Sthree{} as not "
+            f"{settings.get('memory_cap_GiB', 4.5):.1f}\\,GiB cap; the certificate then reports \\Sthree{{}} as not "
             "checked. Gap: certified gap divided by the gap estimated from the producer's eigenvalues.}\n"
             "\\label{tab:e2}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n"
             "\\begin{tabular}{@{}l r r r r r r r r r r@{}}\n\\toprule\n"
@@ -442,7 +458,7 @@ with open(os.path.join(MS, "tables", "e2.tex"), "w") as f:
     f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 
 # figure: cost
-fig, (axL, axR) = plt.subplots(1, 2, figsize=(7.2, 3.0))
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(7.2, 3.3))
 mk = {"chain-u1": "o", "chain-k0": "s", "square": "^"}
 fam_label = {"chain-u1": "chain, $S^z$ block", "chain-k0": "chain, $(S^z,k)$ block", "square": "4x4, $S^z$ block"}
 for fm in ("chain-u1", "chain-k0", "square"):
@@ -470,9 +486,12 @@ for fm in ("chain-u1", "chain-k0", "square"):
     axR.plot(d, nnzs, marker=mk[fm], ls=ls, color=BLUE, lw=1.5, ms=4.5)
     if dfill:
         axR.plot(dfill, fills, marker=mk[fm], ls=ls, color=ORANGE, lw=1.5, ms=4.5)
+    import matplotlib.transforms as mtransforms
+    trans = mtransforms.blended_transform_factory(axR.transData, axR.transAxes)
     for r in R:
-        if r not in s3_ok:
-            axR.plot([r["producer"]["dim"]], [r["producer"]["nnz"] * 300], marker="x", color=ORANGE, ms=6, ls="none")
+        if r not in s3_ok:   # failure rug: x = block dimension, drawn at the top edge (no y value)
+            axR.plot([r["producer"]["dim"]], [0.96], marker=mk[fm], mfc="none", color=ORANGE, ms=6, ls="none",
+                     transform=trans, clip_on=False)
 for ax in (axL, axR):
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -486,11 +505,12 @@ hL = [Line2D([], [], color=BLUE, lw=2, label="producer (build+solve)"),
       Line2D([], [], color=GREEN, lw=2, label="S1+S2"),
       Line2D([], [], color=ORANGE, lw=2, label="S3")]
 hF = [Line2D([], [], color=INK2, marker=mk[k], ls="none", label=fam_label[k]) for k in mk]
-axL.legend(handles=hL + hF, fontsize=6.8, loc="upper left")
+axL.legend(handles=hL, fontsize=7, loc="upper left")
 hR = [Line2D([], [], color=BLUE, lw=2, label="nnz(H)"), Line2D([], [], color=ORANGE, lw=2, label="nnz(L)+nnz(U)"),
-      Line2D([], [], color=ORANGE, marker="x", ls="none", label="S3 exceeded memory cap")]
-axR.legend(handles=hR, fontsize=6.8, loc="upper left")
-fig.tight_layout()
+      Line2D([], [], color=ORANGE, marker="o", mfc="none", ls="none", label="S3 exceeded memory cap (top edge)")]
+axR.legend(handles=hR, fontsize=7, loc="upper left", bbox_to_anchor=(0.0, 0.92))
+fig.legend(handles=hF, fontsize=7, loc="lower center", ncol=3, frameon=False)
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(os.path.join(MS, "figures", "fig_cost.pdf"))
 plt.close(fig)
 
@@ -540,7 +560,7 @@ for sid, st in w2["statuses"].items():
 import textwrap
 wrapped = []
 for line in lines:
-    wrapped.extend(textwrap.wrap(line, 96, subsequent_indent="              ") or [""])
+    wrapped.extend(textwrap.wrap(line, 84, subsequent_indent="              ") or [""])
 with open(os.path.join(MS, "tables", "w2_summary.txt"), "w") as f:
     f.write("\n".join(wrapped) + "\n")
 macro("WthreeProd", f"{w3['producer_seconds']:.0f}")
@@ -558,7 +578,7 @@ with open(os.path.join(MS, "tables", "w4.tex"), "w") as f:
             "($J_1=1$, periodic boundaries; Section~\\ref{sec:w4}). Each value is the lowest eigenvalue of the "
             "stated block unless \\Sthree{} is not checked; ``gap'' is the certified lower bound on the "
             "distance to the next eigenvalue of the block.}\n\\label{tab:w4}\n\\footnotesize\n"
-            "\\begin{tabular}{@{}l r l l l l@{}}\n\\toprule\n"
+            "\\begin{tabular}{@{}>{\\raggedright\\arraybackslash}p{0.33\\textwidth} r l l l l@{}}\n\\toprule\n"
             "System (block) & $d$ & $E_0$ & radius & \\Sthree{} & gap $\\ge$ \\\\\n\\midrule\n")
     names = {0: "Heisenberg ring $N=20$ ($S^z{=}0,k{=}0$)", 1: "$J_1$--$J_2$ ring $N=20$, $J_2=\\frac12$ ($S^z{=}0,k{=}0$)",
              2: "Heisenberg $4\\times4$ ($S^z{=}0$)", 3: "$J_1$--$J_2$ $4\\times4$, $J_2=\\frac12$ ($S^z{=}0$)"}

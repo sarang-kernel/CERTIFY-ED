@@ -44,7 +44,8 @@ def w1_sectors(run, N=16, J2=0.3, n_low=12):
             if b.Ns <= 400:
                 w, Y = la.eigh(H.toarray())
             else:
-                w, Y = H.eigsh(k=min(8, b.Ns - 2), which="SA", tol=0)
+                v0 = np.random.default_rng(run.seed + 100 * nup + k).standard_normal(b.Ns)
+                w, Y = H.eigsh(k=min(8, b.Ns - 2), which="SA", tol=0, v0=v0)
                 o = np.argsort(w)
                 w, Y = w[o], Y[:, o]
             blocks.append((nup, k, b, H, w, Y))
@@ -83,7 +84,7 @@ def w2_multiplet(run, N=8):
     spec = ce.spin1_heisenberg_chain(N)
     H = ce.build_bitwise(spec)
     t0 = time.time()
-    w, V = spla.eigsh(H, k=8, which="SA", tol=0)
+    w, V = spla.eigsh(H, k=8, which="SA", tol=0, v0=np.random.default_rng(run.seed).standard_normal(H.shape[0]))
     o = np.argsort(w)
     w, V = w[o], V[:, o]
     t_prod = time.time() - t0
@@ -159,7 +160,7 @@ def w4_benchmarks(run):
             kw = {"states": ce.StateSet(np.sort(np.asarray(b.states, dtype=np.int64)), "descending", "U(1)")}
         H = qs(spec.to_quspin_static(), b, np.float64)
         t0 = time.time()
-        w, V = H.eigsh(k=6, which="SA", tol=0)
+        w, V = H.eigsh(k=6, which="SA", tol=0, v0=np.random.default_rng(run.seed).standard_normal(b.Ns))
         o = np.argsort(w)
         w, V = w[o], V[:, o]
         t_prod = time.time() - t0

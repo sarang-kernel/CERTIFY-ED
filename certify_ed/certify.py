@@ -310,6 +310,9 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     floating-point estimate of the (k+1)-th eigenvalue (a hint; correctness rests only
     on the inertia counts), then progressively closer to the highest claimed value,
     finally at a minimal margin. Typical cost when the claim is complete: one factorization.
+    The first probe that counts more than k eigenvalues triggers one count just below the
+    highest claimed value; if eigenvalues are missing there the claim fails at once
+    (typical cost of a FAILED statement: two factorizations).
     """
     k = mu_sorted.size
     rad = enc.radius[np.argsort(enc.mu, kind="stable")] + eps_shift
@@ -320,7 +323,7 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     scale = max(1.0, float(np.max(np.abs(mu_sorted))))
     margin = max(1e-8 * scale, 16 * float(rad.max()))
     distinct = enc.all_distinct
-    est = _estimate_next(A, k)
+    est = _estimate_next(A, k, seed=opts.seed)
     sigmas = []
     if est is not None and est > hi_k + margin:
         sigmas += [hi_k + f * (est - hi_k) for f in opts.gap_fractions if f * (est - hi_k) > margin]
@@ -328,6 +331,24 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     ev = {"counts": counts, "next_eigenvalue_estimate": est}
     r, sigma = None, None
     last_reason = None
+    low_probe = {}
+
+    def _below_top():
+        """One inertia count just below the lower end of the highest claimed enclosure (cached)."""
+        if not low_probe:
+            s_low = float(lo[np.argmax(mu_sorted)]) - margin
+            r_low = inertia_count(A, s_low, method=opts.inertia_method)
+            counts.append(r_low.to_dict())
+            low_probe.update(s_low=s_low, r=r_low)
+        return low_probe["s_low"], low_probe["r"]
+
+    def _missing_below(s_low, r_low):
+        """Lower bound on eigenvalues missing below the top claim, or None if not conclusive."""
+        if r_low.conclusive and r_low.beta + eps_shift < margin:
+            bl = r_low.beta + eps_shift
+            return int(r_low.negative - np.sum(lo <= s_low + bl))
+        return None
+
     for idx, sigma in enumerate(sigmas):
         tries = 0
         while True:
@@ -355,6 +376,13 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
                            f"margin above the highest claimed value")
         if r.negative <= k:
             break           # descending further cannot help
+        # more than k eigenvalues below sigma: decide at once whether any lies below the top claim
+        s_low, r_low = _below_top()
+        miss = _missing_below(s_low, r_low)
+        if miss is not None and miss > 0:
+            ev.update(top_shift=sigma, beta_effective=beta, missing_below_top_claim_at_least=miss,
+                      witness_shift=s_low)
+            return "FAILED", ev, None
     if r is None or not r.conclusive:
         return "INCONCLUSIVE", dict(ev, reason=last_reason or "no conclusive inertia count"), None
     beta = r.beta + eps_shift
@@ -369,15 +397,12 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
                                                f"{sigma:.10g} but {k} claimed pairs lie below it: "
                                                "claimed pairs are not all distinct eigenpairs"), None
     # Something is not accounted for. Is anything missing BELOW the top claimed value?
-    lo_k = float(lo[np.argmax(mu_sorted)])
-    s_low = lo_k - margin
-    r_low = inertia_count(A, s_low, method=opts.inertia_method)
-    counts.append(r_low.to_dict())
-    if r_low.conclusive and r_low.beta + eps_shift < margin:
+    s_low, r_low = _below_top()
+    miss = _missing_below(s_low, r_low)
+    if miss is not None:
         bl = r_low.beta + eps_shift
-        c_le = int(np.sum(lo <= s_low + bl))
-        if r_low.negative > c_le:
-            ev["missing_below_top_claim_at_least"] = int(r_low.negative - c_le)
+        if miss > 0:
+            ev["missing_below_top_claim_at_least"] = miss
             ev["witness_shift"] = s_low
             return "FAILED", ev, None
         c_lt = int(np.sum(hi < s_low - bl))
@@ -403,8 +428,11 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     return "INCONCLUSIVE", ev, None
 
 
-def _estimate_next(A, k):
-    """Floating-point estimate of the (k+1)-th smallest eigenvalue (a hint only)."""
+def _estimate_next(A, k, seed=12345):
+    """Floating-point estimate of the (k+1)-th smallest eigenvalue (a hint only).
+
+    The Lanczos start vector is drawn from a generator seeded with ``seed`` so that the shifts, and
+    hence the certified gap and the run time, are reproducible (SciPy otherwise seeds from OS entropy)."""
     try:
         n = A.shape[0]
         if k + 1 > n:
@@ -414,7 +442,8 @@ def _estimate_next(A, k):
             import scipy.linalg as _la
             return float(_la.eigvalsh(M, subset_by_index=[k, k])[0])
         import scipy.sparse.linalg as _spla
-        w = _spla.eigsh(A, k=min(k + 6, n - 2), which="SA", return_eigenvectors=False, tol=1e-10)
+        v0 = np.random.default_rng(seed).standard_normal(n)
+        w = _spla.eigsh(A, k=min(k + 6, n - 2), which="SA", return_eigenvectors=False, tol=1e-10, v0=v0)
         return float(np.sort(w)[k])
     except Exception:
         return None

@@ -49,6 +49,38 @@ def test_missing_ground_state_fails(heis10):
     assert status(c, "S3.completeness") == "FAILED"
 
 
+def test_missing_eigenvalue_fails_fast():
+    """A claim that skips a member of a degenerate level (as ARPACK can) fails with two factorizations."""
+    spec = ce.heisenberg_chain(12)
+    states = magnetization_state_set(spec, 0)
+    H = ce.build_bitwise(spec, states)          # d = 924
+    w, V = la.eigh(H.toarray())
+    k = int(np.argmax(np.abs(np.diff(w)) < 1e-10))     # first index of a degenerate pair
+    idx = [i for i in range(k + 4) if i != k]          # drop one member, keep states above it
+    c = ce.certify(ce.Claim(w[idx], V[:, idx], operator=H, kind="lowest", states=states), spec,
+                   ce.Options(inertia_method="sparse"))
+    s3 = [s for s in c.statements if s["id"] == "S3.completeness"][0]
+    assert s3["status"] == "FAILED", c.summary()
+    assert s3["evidence"]["missing_below_top_claim_at_least"] >= 1
+    assert len(s3["evidence"]["counts"]) <= 2
+
+
+def test_certification_is_reproducible():
+    """Internal Lanczos hints use a seeded start vector: two runs give identical shifts and bounds."""
+    spec = ce.heisenberg_chain(14)
+    states = magnetization_state_set(spec, 0)
+    H = ce.build_bitwise(spec, states)          # d = 3432: the hint uses eigsh
+    w, V = spla.eigsh(H, k=6, which="SA", tol=0, v0=np.ones(H.shape[0]) + np.arange(H.shape[0]) * 1e-3)
+    o = np.argsort(w)
+    claim = ce.Claim(w[o][:1], V[:, o][:, :1], operator=H, kind="lowest", states=states)
+    ev = []
+    for _ in range(2):
+        c = ce.certify(claim, spec, ce.Options(inertia_method="sparse"))
+        ev.append([s for s in c.statements if s["id"] == "S3.completeness"][0]["evidence"])
+    assert ev[0]["next_eigenvalue_estimate"] == ev[1]["next_eigenvalue_estimate"]
+    assert ev[0]["gap_lower_bound"] == ev[1]["gap_lower_bound"]
+
+
 def test_truncated_multiplet_is_inconclusive_with_explanation(heis10):
     spec, H, w, V = heis10
     k = int(np.argmax(np.abs(np.diff(w)) < 1e-10)) + 1   # cut inside the first degenerate level

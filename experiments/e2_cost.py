@@ -41,7 +41,9 @@ dtype = np.float64
 H = hamiltonian(static, [], basis=basis, dtype=dtype, check_herm=False, check_symm=False, check_pcon=False)
 t_build = time.time() - t0
 t1 = time.time()
-w, V = H.eigsh(k=cfg["k"], which="SA", tol=0)
+# SciPy draws the ARPACK start vector from OS entropy unless v0 is given; seed it for reproducibility
+v0 = np.random.default_rng(cfg["seed"]).standard_normal(basis.Ns)
+w, V = H.eigsh(k=cfg["k"], which="SA", tol=0, v0=v0)
 t_solve = time.time() - t1
 order = np.argsort(w); w, V = w[order], V[:, order]
 Hc = H.tocsr()
@@ -129,7 +131,7 @@ def main():
                                 "producer_timeout_s": 1800, "certifier_timeout_s": 900})
         rows = []
         for i, pt in enumerate(points):
-            cfg = dict(pt, k=8, npz=os.path.join(run.dir, f"point{i}.npz"))
+            cfg = dict(pt, k=8, seed=run.seed + i, npz=os.path.join(run.dir, f"point{i}.npz"))
             label = (f"{pt['model']} N={pt.get('N', pt.get('Lx', 0) * pt.get('Ly', 0))} "
                      f"{pt['block']} J2={pt.get('J2', 0.0)}")
             prod, tp = run_child(PRODUCER, cfg, 1800)

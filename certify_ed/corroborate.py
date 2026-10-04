@@ -101,8 +101,9 @@ def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.n
         w = jacobi_eigvalsh(dense)
     elif name == "arpack":
         kk = k or 6
+        v0 = np.random.default_rng(0).standard_normal(A.shape[0])   # reproducible start vector
         w = spla.eigsh(sp.csr_matrix(A), k=min(kk, A.shape[0] - 2), which=which,
-                       return_eigenvectors=False, tol=0)
+                       return_eigenvectors=False, tol=0, v0=v0)
     elif name == "lobpcg":
         kk = k or 6
         rng = np.random.default_rng(0)
