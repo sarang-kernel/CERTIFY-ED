@@ -333,18 +333,31 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     last_reason = None
     low_probe = {}
 
+    lo_top = float(lo[np.argmax(mu_sorted)])
+
     def _below_top():
-        """One inertia count just below the lower end of the highest claimed enclosure (cached)."""
+        """Inertia count just below the lower end of the highest claimed enclosure (cached).
+
+        The shift starts at a minimal margin below; if the factorization's backward error is not
+        smaller than the distance to the enclosure, the shift is moved down to four times the
+        backward error (at most three retries), as for the probe above the claim."""
         if not low_probe:
-            s_low = float(lo[np.argmax(mu_sorted)]) - margin
-            r_low = inertia_count(A, s_low, method=opts.inertia_method)
-            counts.append(r_low.to_dict())
+            s_low = lo_top - margin
+            for _ in range(4):
+                r_low = inertia_count(A, s_low, method=opts.inertia_method)
+                counts.append(r_low.to_dict())
+                if not r_low.conclusive or r_low.beta + eps_shift < lo_top - s_low:
+                    break
+                s_low = lo_top - 4 * (r_low.beta + eps_shift)
             low_probe.update(s_low=s_low, r=r_low)
         return low_probe["s_low"], low_probe["r"]
 
     def _missing_below(s_low, r_low):
-        """Lower bound on eigenvalues missing below the top claim, or None if not conclusive."""
-        if r_low.conclusive and r_low.beta + eps_shift < margin:
+        """Lower bound on eigenvalues missing below the top claim, or None if not conclusive.
+
+        Eigenvalues <= s_low + beta number at least nu; claimed enclosures reaching below s_low + beta
+        number c; if nu > c, at least nu - c eigenvalues below the top enclosure are unclaimed."""
+        if r_low.conclusive and r_low.beta + eps_shift < lo_top - s_low:
             bl = r_low.beta + eps_shift
             return int(r_low.negative - np.sum(lo <= s_low + bl))
         return None
