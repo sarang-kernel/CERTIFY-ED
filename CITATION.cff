@@ -1,14 +1,18 @@
-cff-version: 1.1.0
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "sarang-kernel/CERTIFY-ED: v1.0.0"
-version: "v1.0.0"
-date-released: 2026-05-07
-
+title: "CERTIFY-ED: producer-independent certificates for exact-diagonalization results"
+version: "2.0.0.dev0"
+date-released: 2026-10-04
+license: MIT
+repository-code: "https://github.com/sarang-kernel/CERTIFY-ED"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20066565"
+    description: "Zenodo archive of v1.0.0 (check: concept vs. version DOI, see REVISION_REPORT.md)"
 authors:
-  - family-names: "Sarang"
-    given-names: "Vehale"
+  - family-names: "Vehale"
+    given-names: "Sarang"
     orcid: "https://orcid.org/0009-0001-5911-9503"
-
-  - family-names: "Ritu"
-    given-names: "Goel"
+  - family-names: "Goel"
+    given-names: "Ritu"
     orcid: "https://orcid.org/0000-0002-5597-3091"

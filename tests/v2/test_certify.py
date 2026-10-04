@@ -285,3 +285,32 @@ def test_radius_includes_model_shift():
     assert s2["evidence"]["model_shift"] >= d
     assert s2["evidence"]["radius_refers_to"] == "declared model (spec)"
     assert np.all(c.arrays["radius"] >= d)
+
+
+@pytest.mark.parametrize("fmt", ["npz", "hdf5"])
+def test_import_from_files_and_hdf5_export(tmp_path, fmt):
+    """Producers without a native importer: eigenpairs + CSR matrix in NPZ/HDF5; certificate to HDF5."""
+    h5py = pytest.importorskip("h5py") if fmt == "hdf5" else None
+    spec = ce.heisenberg_chain(8, J2=0.2)
+    st = magnetization_state_set(spec, 0)
+    H = ce.build_bitwise(spec, st)
+    w, V = la.eigh(H.toarray())
+    path = str(tmp_path / f"result.{fmt}")
+    if fmt == "npz":
+        ce.export_npz(path, w[:3], V[:, :3], H)
+        claim = ce.claim_from_npz(path, kind="lowest", states=st)
+    else:
+        with h5py.File(path, "w") as f:
+            f["eigenvalues"] = w[:3]
+            f["eigenvectors"] = V[:, :3]
+            g = f.create_group("H")
+            g["data"], g["indices"], g["indptr"], g["shape"] = H.data, H.indices, H.indptr, np.array(H.shape)
+        claim = ce.claim_from_hdf5(path, kind="lowest", states=st)
+    c = ce.certify(claim, spec)
+    assert all(status(c, s) == "CERTIFIED" for s in ("S1.model_fidelity", "S2.eigenpairs", "S3.completeness"))
+    if fmt == "hdf5":
+        out = c.export_hdf5(str(tmp_path / "cert.h5"))
+        with h5py.File(out, "r") as f:
+            body = json.loads(f.attrs["certificate_json"])
+            assert body["integrity"]["body_sha256"]
+            assert np.allclose(f["radius"][...], c.arrays["radius"])

@@ -141,7 +141,7 @@ class Certificate:
         return None
 
     def summary(self) -> str:
-        lines = [f"CERTIFY-ED certificate ({self.body.get('schema')})",
+        lines = [f"CERTIFY-ED certificate ({self.body.get('schema', CERT_SCHEMA)})",
                  f"  subject : {self.body.get('subject', {}).get('description', '')}",
                  f"  claim   : {self.body.get('claim', {}).get('description', '')}"]
         for s in self.statements:
@@ -212,5 +212,6 @@ class Certificate:
         with h5py.File(path, "w") as f:
             for k, v in self.arrays.items():
                 f.create_dataset(k, data=v)
-            f.attrs["certificate_json"] = canonical_json(self.body)
+            # same body (with array hashes and integrity record) as the JSON file
+            f.attrs["certificate_json"] = canonical_json(self._finalize_body(None))
         return path

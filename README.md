@@ -1,118 +1,119 @@
 # CERTIFY-ED
 
-[![DOI:10.5281/zenodo.20066566](https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg)](https://doi.org/10.5281/zenodo.20066566)
+**Producer-independent certificates for exact-diagonalization (ED) results.**
 
-**Verified exact diagonalization for quantum many-body systems.**
+CERTIFY-ED checks a result produced by any ED code (QuSpin, XDiag, HΦ, your own) against a
+declared model and returns a *certificate*: a machine-readable list of statements, each marked
+`CERTIFIED`, `FAILED` (with a diagnosis), `INCONCLUSIVE` (with the reason) or `NOT_CHECKED`
+(with the reason). It does not diagonalize anything for you and it never calls your code.
 
-CERTIFY-ED is a Python framework for exact diagonalization (ED) of quantum
-many-body Hamiltonians that ships with **thirteen independent validation
-layers**. The goal is not to be the fastest ED code, but to produce
-results that come with strong, machine-checkable certificates of
-correctness.
+| Statement | What it says when CERTIFIED |
+|---|---|
+| **S1** model fidelity | your matrix (or symmetry block) is the matrix of the declared model, built independently; on failure, a least-squares fit names the terms whose coefficients differ |
+| **S2** enclosures | each claimed eigenvalue lies within a stated radius of a *distinct* eigenvalue of the declared model |
+| **S3** completeness | no eigenvalue below the top claimed one is missing; certified lower bound on the next one |
+| **S4** eigenspaces | for degenerate levels: projector error, basis-independent observables tr(PO), certified quantum numbers |
+| **S5** corroboration | (optional) independent solvers reproduce the values; their shared components are recorded |
 
-## What's in the box
+`certify_low_energy` assembles certified symmetry-block results into a certified statement
+about the low-energy spectrum of the full Hilbert space.
 
-- **16 physics models** — TFIM, Heisenberg, XXZ, XYZ, SSH, J1–J2, Majumdar-Ghosh,
-  cluster model, free fermions, Kitaev chain, Hubbard, AKLT, Haldane,
-  2D TFIM, 2D Heisenberg, Kitaev honeycomb.
-- **Multi-oracle eigendecomposition** — NumPy LAPACK-DSYEVD, SciPy LAPACK-DSYEVD,
-  SciPy LAPACK-DSYEVR, plus an ARPACK Lanczos sparse oracle for cross-checks.
-- **13 independent validators** — analytic, QuSpin, mpmath arbitrary-precision,
-  sparse-vs-dense, Jordan-Wigner free-fermion, sum rules, orthonormality,
-  unitarity, conservation laws, symmetry-resolved spectra, thermal limits,
-  finite-size scaling, error-injection.
-- **SHA-256 verified certificates** — JSON output with hash chain so any
-  downstream consumer can detect tampering.
-- **Master runner with embedded pytest** — single command runs the whole
-  pipeline, streams progress to the terminal, and exports JSON + figures
-  - a tar.gz archive.
+The bounds come from residual, Kato–Temple, Davis–Kahan and Sylvester-inertia arguments with
+explicit floating-point error terms (standard model, IEEE binary64). They are tested against
+ball arithmetic (Arb). The manuscript in preparation describes the mathematics and the
+experiments; `experiments/` regenerates every number in it.
 
-## Quick install
+## Install
 
 ```bash
-git clone <repo>
-cd certify-ed
-pip install -e .
+pip install -e .                 # numpy, scipy
+pip install -e .[validation]     # QuSpin importer and examples
+pip install -e .[rigorous,hdf5]  # python-flint (Arb) reference checks, HDF5 import/export
+pip install -e .[dev]            # pytest
 ```
 
-Optional extras:
+Tested with Python 3.11, NumPy 2.4, SciPy 1.17, QuSpin 1.0.1.
 
-```bash
-pip install -e .[validation]      # QuSpin (Python 3.10 only)
-pip install -e .[high_precision]  # mpmath
-pip install -e .[plotting]        # matplotlib
-pip install -e .[dev]             # pytest
-```
-
-## One-command verification
-
-```bash
-python run_all_benchmarks.py
-```
-
-This runs all 53 pytest tests, all 13 validators (≈80 individual checks),
-generates four figures, and packages everything into a timestamped
-`results/run_YYYYMMDD_HHMMSS.tar.gz` you can attach to a paper submission.
-
-Total run time: about 30 seconds on a modern laptop.
-
-## Three-line usage
+## Certify a QuSpin result
 
 ```python
-from certify_ed import build_model, MultiOracle, Certificate
+import numpy as np, certify_ed as ce
+from quspin.basis import spin_basis_1d
+from quspin.operators import hamiltonian
 
-H = build_model('heisenberg', n_sites=6)
-evals, evecs, report = MultiOracle().diagonalize_with_consensus(H)
-Certificate(evals, evecs, H, consensus_report=report).save('cert.json')
+L = 16
+spec = ce.heisenberg_chain(L, J2=0.3)                 # the model you intend
+static = spec.to_quspin_static()
+basis = spin_basis_1d(L, Nup=L // 2, kblock=0, pauli=0)
+H = hamiltonian(static, [], basis=basis, dtype=np.float64)
+E, V = H.eigsh(k=6, which="SA")
+
+claim, _ = ce.claim_from_quspin(H, basis, static, E, V, kind="lowest")
+cert = ce.certify(claim, spec)
+print(cert.summary())
+cert.save("result.json")                              # + result.arrays.npz, hashed
 ```
 
-## Why thirteen validators?
+Write the specification independently of the producer's input (as above) so that S1 can catch
+input errors. A reader re-checks the file with `ce.CertificateV2.load("result.json", verify=True)`.
 
-A single comparison with one external code is one data point. If both codes
-share a bug — say, a common LAPACK driver — neither will catch it. Real
-verification needs many _independent_ checks that cannot all fail in the
-same way. The thirteen validators here cover algebraic invariants, analytic
-limits, alternative algorithms, alternative arithmetic precisions,
-alternative codes, conservation laws, dynamical consistency, asymptotic
-limits, and error injection. Each catches a different class of failure.
+## Other producers
 
-The full failure-mode coverage matrix is in `docs/VALIDATORS.md`.
+Export eigenvalues, eigenvectors and the sparse matrix (CSR triplet) to NPZ or HDF5 and use
+`claim_from_npz` / `claim_from_hdf5`; pass `states=` (a fixed-particle-number basis) or
+`sector_isometry=` (an n × d sparse isometry) if you worked in a symmetry block. For a
+matrix-free producer pass a `scipy.sparse.linalg.LinearOperator`; S1 then compares it with the
+model on random vectors (probabilistic), and S2–S4 are evaluated with CERTIFY-ED's reference
+operator.
 
-## Repository layout
+## Model specifications
+
+`ModelSpec` uses QuSpin's `static` operator-string format. Local spaces: spin S (three
+conventions for S = 1/2), spinless fermions (Jordan–Wigner string on higher-index sites as in
+QuSpin, or on lower-index sites), bosons with a cutoff. Factories: `heisenberg_chain`,
+`tfim_chain`, `heisenberg_square`, `spinless_fermion_chain`, `bose_hubbard_chain`,
+`spin1_heisenberg_chain`, or `ModelSpec.from_static(N, local_space, static)`.
+
+## Limits (read these)
+
+* **Completeness (S3)** needs a sparse LDLᵀ factorization. Its fill-in limits S3 to blocks of
+  dimension ~10⁴ on a workstation (4×4 Heisenberg S^z=0: 31 s, 1.9 GB). Larger blocks get
+  `NOT_CHECKED`, never an uncertified count.
+* **Model fidelity (S1)** for momentum blocks is audited in the parent U(1) block (N times
+  larger). Black-box operators are checked probabilistically.
+* Bounds assume the standard floating-point model (no Strassen-type BLAS, no reduced-precision
+  modes). They are not interval arithmetic.
+* Hermitian, time-independent operator-string Hamiltonians only; single process (no MPI);
+  native importer for QuSpin only.
+
+## Layout
 
 ```
-certify-ed/
-├── certify_ed/                 Core package
-│   ├── hamiltonian.py          16 model builders
-│   ├── oracles.py              Multi-oracle consensus
-│   ├── certificates.py         Hashed JSON certificates
-│   ├── observables.py          Expectation, thermal averages
-│   └── symmetries.py           Conservation operators
-├── validators/                 13 independent validation layers
-├── tests/                      Pytest suite (53 tests)
-├── examples/                   Usage examples
-├── docs/                       API + validator documentation
-├── run_all_benchmarks.py       Master pipeline runner
-├── QUICKSTART.md               Five-minute introduction
-└── README.md                   You are here
+certify_ed/
+  spec.py, localops.py      model specification, local spaces and conventions
+  construct.py, basis.py    two independent reference builders, matrix-free operator, sectors
+  enclosure.py, fp.py       S2 bounds, floating-point error model, error-free inner products
+  inertia.py                S3 inertia counts with backward-error bounds
+  eigenspace.py, sectors.py S4 bounds, sector audits, U(1) restriction
+  compose.py                certified global spectrum from symmetry blocks
+  certify.py                orchestration: certify(claim, spec, options)
+  certificate_v2.py         certificate format (canonical JSON + hashed NPZ, HDF5 export)
+  importers.py              QuSpin, NPZ, HDF5
+  corroborate.py, rigorous.py  S5 solvers (incl. Jacobi); Arb reference used in tests
+tests/v2/                   tests of the verification core
+experiments/                E0–E4 of the paper, run_all.sh, make_numbers.py
 ```
 
-## Testing
+The v1 modules (`hamiltonian.py`, `oracles.py`, `certificates.py`, `validators/`) remain for
+backward compatibility; they are code-verification utilities, not part of the certification
+described above.
+
+## Tests
 
 ```bash
-pytest tests/ -v
+pytest tests/ -q
 ```
 
-53 tests covering Hamiltonian construction (parameterised over all 16
-models), oracle consensus, certificate hashing and tamper detection,
-symmetry operators, and validator smoke tests.
+## License and citation
 
-## License
-
-MIT. See `LICENSE`.
-
-## Citation
-
-This package was built to support the manuscript **"CERTIFY-ED: A Symbolic
-Validation Framework for Exact Diagonalization of Quantum Many-Body
-Systems."** A draft is being prepared for submission.
+MIT (see `LICENSE`). Citation metadata: `CITATION.cff`.

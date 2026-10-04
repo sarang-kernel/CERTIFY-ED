@@ -157,7 +157,8 @@ def main():
             statuses(cert)["S1.model_fidelity"],
             f"fit: {top.get('op')} on {top.get('sites')} changed by {top.get('producer_minus_spec')}; "
             f"residual {fit.get('relative_residual', float('nan')):.1e}", True,
-            _LAST_P2["t"], time.time() - t)
+            _LAST_P2["t"], time.time() - t, fit_term=[top.get("op"), top.get("sites")],
+            fit_delta=top.get("producer_minus_spec"), fit_relative_residual=fit.get("relative_residual"))
 
         # ---------------------------------------------------------- F2 convention factor
         # user writes spin-convention couplings but builds the basis with Pauli matrices
@@ -172,7 +173,8 @@ def main():
             residual_only(Hc, wc[:K], Vc[:, :K])[0], P2(static, b_u1, wc[:K]),
             statuses(cert)["S1.model_fidelity"],
             f"best global scale factor {diag.get('best_scale_factor', float('nan')):.3f}", True,
-            _LAST_P2["t"], time.time() - t)
+            _LAST_P2["t"], time.time() - t, scale_factor=diag.get("best_scale_factor"),
+            relative_residual_after_scaling=diag.get("relative_residual_after_scaling"))
 
         # ---------------------------------------------------------- F3 site relabelling with a local field
         spec_f = ce.ModelSpec.from_static(N, spec.local, static + [["z", [[0.4, 0]]]])
@@ -187,8 +189,11 @@ def main():
         add("F3 site-order mismatch", "producer numbers sites right-to-left; field on site 0",
             residual_only(Hr, wr[:K], Vr[:, :K])[0], P2(static_f, b_u1, wr[:K]),
             statuses(cert)["S1.model_fidelity"],
-            f"fit implicates {[ (c['op'], c['sites']) for c in fit.get('couplings', [])][:3]}", True,
-            _LAST_P2["t"], time.time() - t)
+            f"fit implicates {[ (c['op'], c['sites']) for c in fit.get('couplings', [])][:3]}; residual "
+            f"{fit.get('relative_residual', float('nan')):.1e}", True,
+            _LAST_P2["t"], time.time() - t, fit_relative_residual=fit.get("relative_residual"),
+            fit_interpretation=fit.get("interpretation"),
+            fit_terms=[(c["op"], c["sites"]) for c in fit.get("couplings", [])][:6])
 
         # ---------------------------------------------------------- F4 missing Jordan-Wigner sign at the PBC bond
         specF = ce.spinless_fermion_chain(N, t=1.0, V=1.0, boundary="periodic")
@@ -213,7 +218,9 @@ def main():
             residual_only(Hbos, wF[:K], VF[:, :K])[0], P2(specF.to_quspin_static(), bF, wF[:K]),
             statuses(cert)["S1.model_fidelity"],
             f"fit: {[ (c['op'], c['sites']) for c in fit.get('couplings', [])][:2]}, residual "
-            f"{fit.get('relative_residual', float('nan')):.1e}", True, _LAST_P2["t"], time.time() - t)
+            f"{fit.get('relative_residual', float('nan')):.1e}", True, _LAST_P2["t"], time.time() - t,
+            fit_relative_residual=fit.get("relative_residual"),
+            fit_terms=[(c["op"], c["sites"]) for c in fit.get("couplings", [])][:6])
 
         # ---------------------------------------------------------- F5 sector result reported as global
         # the producer diagonalizes the Sz=0 block and reports its lowest states as "the K lowest
@@ -356,7 +363,8 @@ def main():
             (f"certified tr(P O)={info.get('value', float('nan')):.12f} +- {info.get('bound', float('nan')):.1e}; "
              f"per-vector values span {info.get('per_vector_spread_under_rotation', {}).get('spread', float('nan')):.3f} "
              f"across equally valid bases") if info else "n/a", True, None, time.time() - t,
-            multiplicity=len(lev))
+            multiplicity=len(lev), value=info.get("value"), bound=info.get("bound"),
+            spread=info.get("per_vector_spread_under_rotation", {}).get("spread"))
 
         run.record("rows", rows)
         run.record("settings", {"N": N, "K": K, "residual_tolerance": RES_TOL,

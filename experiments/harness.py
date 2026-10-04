@@ -68,6 +68,16 @@ class Run:
                            for d in threadpool_info()]
         except Exception:
             pass
+        try:
+            with open("/proc/cpuinfo") as f:
+                env["cpu_model"] = next((l.split(":", 1)[1].strip() for l in f if l.startswith("model name")), None)
+            with open("/proc/meminfo") as f:
+                kb = next(int(l.split()[1]) for l in f if l.startswith("MemTotal"))
+            env["memory_GiB"] = round(kb / 2 ** 20, 1)
+        except Exception:
+            pass
+        env["threads_env"] = {k: os.environ.get(k) for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                                                            "MKL_NUM_THREADS")}
         with open(os.path.join(self.dir, "environment.json"), "w") as f:
             json.dump(env, f, indent=2)
         self.log(f"=== {self.name} started; output {self.dir}")
