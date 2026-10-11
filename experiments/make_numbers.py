@@ -437,6 +437,10 @@ check(s_status(k24["certifier"], "S1.model_fidelity") == "NOT_CHECKED"
 s3_mem = [r for r in rows2 if s_status(r["certifier"], "S3.completeness") == "NOT_CHECKED"]
 check(all("could not be completed" in r["certifier"]["statements"]["S3.completeness"]["summary"] for r in s3_mem),
       "E2: every S3 NOT_CHECKED is a factorization that did not fit")
+if s3_mem:
+    worst_fail = max(s3_mem, key=lambda r: r["certifier"]["statements"]["S3.completeness"]["seconds"])
+    macro("CfailSeconds", f"{worst_fail['certifier']['statements']['S3.completeness']['seconds']:.0f}")
+    macro("CfailDim", thin(worst_fail["producer"]["dim"]))
 sq = next(r for r in ok_rows if fam(r) == "square" and not r["cfg"].get("J2"))
 ch16 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 16)
 
@@ -689,8 +693,9 @@ macro("EfFailFact", str(max(r["P3_factorizations"] for r in p3_fail)) if p3_fail
 macro("EfFailSeconds", f"{max(r['P3_seconds'] for r in p3_fail):.0f}" if p3_fail else "?")
 check(all(r["P3k_S3"] == "CERTIFIED" for r in corr) and all(r["P3k_S3"] == "INCONCLUSIVE" for r in trunc),
       "E5: claim to the first gap: CERTIFIED for correct lists, INCONCLUSIVE for truncated ones")
-check(all("ill-posed" in r["P3k_S3_summary"] for r in trunc),
-      "E5: truncated claims to the first gap get the top-multiplet diagnosis")
+check(all("ill-posed" in r["P3k_S3_summary"] and "at least 4 eigenvalues" in r["P3k_S3_summary"]
+          and "only 3 are claimed" in r["P3k_S3_summary"] for r in trunc),
+      "E5: truncated claims to the first gap get the top-multiplet diagnosis (at least 4, 3 claimed)")
 macro("EfKcorrect", ", ".join(str(k) for k in sorted({r["P3k_k"] for r in corr})) or "---")
 macro("EfKtrunc", ", ".join(str(k) for k in sorted({r["P3k_k"] for r in trunc})) or "---")
 with open(os.path.join(MS, "tables", "e5.tex"), "w") as f:
