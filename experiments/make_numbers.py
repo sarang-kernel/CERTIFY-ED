@@ -97,7 +97,10 @@ check(len(trees) == 1 and None not in trees,
       f"all experiments ran with the same certify_ed source tree (commits {sorted(c[:7] for c in commits if c)})")
 macro("GitCommit", ", ".join(sorted(c[:7] for c in commits if c)))
 macro("GitTree", (sorted(t for t in trees if t) or ["unknown"])[0][:10])
-macro("RunDate", env0["started"][:10])
+_dates = {k: r[2]["started"][:10] for k, r in runs.items()}
+_main_date = max(set(_dates.values()), key=list(_dates.values()).count)
+_other = sorted((d, f"E{k[1]}") for k, d in _dates.items() if d != _main_date)
+macro("RunDate", _main_date + (" (" + "; ".join(f"{e} on {d}" for d, e in _other) + ")" if _other else ""))
 cpu = env0.get("cpu_model")
 if not cpu:
     with open("/proc/cpuinfo") as f:
