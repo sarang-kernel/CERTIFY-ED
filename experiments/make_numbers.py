@@ -554,14 +554,16 @@ for fm in ("chain-u1", "chain-k0", "square"):
         if r not in s3_ok:   # failure rug: x = block dimension, drawn at the top edge (no y value)
             axR.plot([r["producer"]["dim"]], [0.96], marker=mk[fm], mfc="none", color=ORANGE, ms=6, ls="none",
                      transform=trans, clip_on=False)
-ymax_R = max(max(x for x in r["certifier"]["fill_nnz"] if x) for r in s3_ok)
-axR.set_ylim(top=ymax_R * 12)
 for ax in (axL, axR):
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("block dimension $d$")
     ax.grid(color=GRID, lw=0.6)
     ax.set_axisbelow(True)
+# explicit limits on the log axis: the failure rug sits at the top edge and must not set the scale
+ymax_R = max(max(x for x in r["certifier"]["fill_nnz"] if x) for r in s3_ok)
+ymin_R = min(r["producer"]["nnz"] for r in rows2)
+axR.set_ylim(ymin_R / 3, ymax_R * 12)
 axL.set_ylabel("wall time (s)")
 axR.set_ylabel("nonzeros")
 from matplotlib.lines import Line2D
