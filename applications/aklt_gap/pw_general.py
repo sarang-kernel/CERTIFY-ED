@@ -446,3 +446,172 @@ def certify_eta_blocks(g: Graph, L, C, R, thresholds, log=print):
         log(f"  t = {float(t):.6f}: {pos_total} pencil eigenvalues above t' = {float(tprime):.10f}; "
             f"eta <= {float(tprime) ** 0.5:.10f}: {ok}  [{time.time()-t0:.0f}s]")
     return out
+
+
+# ------------------------------------------------------------------ reduced (symmetrized) boundaries
+def slot_reduction(slots):
+    """Boundary configurations depend on the VBS only through the number of down spins among the
+    slots of each site. Returns (red_of_full: array, reps: list of a full index per reduced index,
+    downs_of_red: array)."""
+    nb = len(slots)
+    sites = []
+    for sl in slots:
+        if sl[2] not in sites:
+            sites.append(sl[2])
+    groups = [[i for i, sl in enumerate(slots) if sl[2] == s] for s in sites]
+    sizes = [len(g_) for g_ in groups]
+    radix = [m + 1 for m in sizes]
+    red_of_full = np.zeros(2 ** nb, dtype=np.int64)
+    downs_full = np.zeros(2 ** nb, dtype=np.int64)
+    for f in range(2 ** nb):
+        bits = [(f >> (nb - 1 - i)) & 1 for i in range(nb)]
+        counts = [sum(bits[i] for i in g_) for g_ in groups]
+        r = 0
+        for c, rr in zip(counts, radix):
+            r = r * rr + c
+        red_of_full[f] = r
+        downs_full[f] = sum(counts)
+    nred = int(np.prod(radix)) if radix else 1
+    reps = [int(np.nonzero(red_of_full == r)[0][0]) for r in range(nred)]
+    downs_red = np.array([downs_full[reps[r]] for r in range(nred)])
+    return red_of_full, reps, downs_red
+
+
+def reduce_rows(T, red_a, red_b, n_red_a, n_red_b, nb_full):
+    """T rows indexed (full_a, full_b) -> rows (red_a, red_b) by summation."""
+    out = np.zeros((n_red_a * n_red_b, T.shape[1]), dtype=object)
+    out[:] = 0
+    for fa in range(len(red_a)):
+        for fb in range(nb_full):
+            out[red_a[fa] * n_red_b + red_b[fb]] += T[fa * nb_full + fb].astype(object)
+    return out
+
+
+def certify_eta_general(g: Graph, L, C, R, thresholds, log=print):
+    """Exact eta certificate with symmetrized boundaries (sites with several boundary slots), mixed
+    spins (site spin = degree/2 in the lattice), and S^z blocks."""
+    import time
+    t0 = time.time()
+    toint = lambda M: np.array([[int(x) for x in row] for row in M.tolist()], dtype=object)
+    reg = {}
+    for name, X in (("L", L), ("C", C), ("R", R)):
+        U, s = region_map(g, X)
+        red, reps, downs = slot_reduction(s)
+        Ur = U[:, reps]
+        sites = sorted(X)
+        w = np.array([1], dtype=object)
+        for st in sites:
+            w = np.kron(w, site_weight(g.z[st]))
+        G = flint.fmpz_mat([[int(x) for x in row] for row in Ur.T.tolist()]) * \
+            flint.fmpz_mat([[int(w[i]) * int(Ur[i, j]) for j in range(Ur.shape[1])] for i in range(Ur.shape[0])])
+        assert G.rank() == G.nrows(), f"reduced U_{name} not injective"
+        reg[name] = dict(slots=s, red=red, reps=reps, downs=downs, G=G, Gn=toint(G), n=len(reps), nfull=2 ** len(s))
+    rL, rC, rR = reg["L"], reg["C"], reg["R"]
+    Ti, kLi, kCi = contraction(rL["slots"], rC["slots"], L, C)
+    Tj, kCj, kRj = contraction(rC["slots"], rR["slots"], C, R)
+    Ti_r = reduce_rows(Ti, rL["red"], rC["red"], rL["n"], rC["n"], rC["nfull"])
+    Tj_r = reduce_rows(Tj, rC["red"], rR["red"], rC["n"], rR["n"], rR["nfull"])
+    redi, repsi, downsi = slot_reduction(kLi + kCi)
+    redj, repsj, downsj = slot_reduction(kCj + kRj)
+    for T_, red_, reps_ in ((Ti_r, redi, repsi), (Tj_r, redj, repsj)):
+        for f in range(T_.shape[1]):
+            assert np.array_equal(T_[:, f], T_[:, reps_[red_[f]]]), "VBS not symmetric in the Gamma boundary"
+    Ti_r, Tj_r = Ti_r[:, repsi], Tj_r[:, repsj]
+    nL, nC, nR = rL["n"], rC["n"], rR["n"]
+    fi, fj = Ti_r.shape[1], Tj_r.shape[1]
+    Tif = flint.fmpz_mat(Ti_r.tolist()); Tjf = flint.fmpz_mat(Tj_r.tolist())
+    GLC = flint.fmpz_mat(np.kron(rL["Gn"], rC["Gn"]).tolist()); GCR = flint.fmpz_mat(np.kron(rC["Gn"], rR["Gn"]).tolist())
+    Gi = Tif.transpose() * GLC * Tif
+    Gj = Tjf.transpose() * GCR * Tjf
+    assert Gi.rank() == fi and Gj.rank() == fj
+    Gin, Gjn = toint(Gi), toint(Gj)
+    log(f"  reduced dims L {nL}, C {nC}, R {nR}; Gamma boundaries {fi}, {fj}  [{time.time()-t0:.0f}s]")
+    Zm = rL["G"].transpose() * flint.fmpz_mat(Ti_r.reshape(nL, nC * fi).tolist())
+    Z = toint(Zm).reshape(nL, nC, fi)
+    Y = toint(GCR * Tjf).reshape(nC, nR, fj)
+    Zbl = flint.fmpz_mat(Z.transpose(2, 0, 1).reshape(fi * nL, nC).tolist())
+    T = Zbl * flint.fmpz_mat(Y.reshape(nC, nR * fj).tolist())        # T[(b, l), (r, d)]
+    LC = set(L) | set(C); CR = set(C) | set(R)
+    sing_A = len([e for e in g.edges if (e[0] in LC and e[1] in LC) or (e[0] in R and e[1] in R)])
+    sing_B = len([e for e in g.edges if (e[0] in L and e[1] in L) or (e[0] in CR and e[1] in CR)])
+    labA, labB = {}, {}
+    for b in range(fi):
+        for r in range(nR):
+            labA.setdefault(sing_A + downsi[b] + rR["downs"][r], []).append((b, r))
+    for l in range(nL):
+        for d in range(fj):
+            labB.setdefault(sing_B + rL["downs"][l] + downsj[d], []).append((l, d))
+    lam = Fraction(1)
+    for G in (Gi, rR["G"]):
+        Gn = np.array([[float(int(x)) for x in row] for row in G.tolist()])
+        lo = Fraction(float(np.min(la.eigvalsh(Gn))) * 0.5).limit_denominator(10 ** 9)
+        Gq = flint.fmpq_mat(G) - flint.fmpq_mat(G.nrows(), G.nrows(),
+                                                [flint.fmpq(lo.numerator, lo.denominator) if i == j else 0
+                                                 for i in range(G.nrows()) for j in range(G.nrows())])
+        assert all(flint.fmpq_mat(m, m, [Gq[i, j] for i in range(m) for j in range(m)]).det() > 0
+                   for m in range(1, G.nrows() + 1))
+        lam *= lo
+    dGL, dGj = int(rL["G"].det()), int(Gj.det())
+    adjGL = toint(flint.fmpq_mat(rL["G"]).inv() * dGL); adjGj = toint(flint.fmpq_mat(Gj).inv() * dGj)
+    scale = dGL * dGj
+    # union VBS: built two ways in full coordinates, compared, reduced, counted
+    T_LC_R, k1, k2 = contraction(kLi + kCi, rR["slots"], LC, R)
+    T_L_CR, k3, k4 = contraction(rL["slots"], kCj + kRj, L, CR)
+    slots_a, slots_b = k1 + k2, k3 + k4
+    nu = len(slots_a)
+    perm = [slots_b.index(x) for x in slots_a]
+    cols_b = []
+    for ua in range(2 ** nu):
+        bits_a = [(ua >> (nu - 1 - i)) & 1 for i in range(nu)]
+        bits_b = [0] * nu
+        for i, pi in enumerate(perm):
+            bits_b[pi] = bits_a[i]
+        cols_b.append(int("".join(map(str, bits_b)), 2) if nu else 0)
+    nfL, nfC, nfR = rL["nfull"], rC["nfull"], rR["nfull"]
+    fiF, fjF = Ti.shape[1], Tj.shape[1]
+    TUa = np.einsum("xb,brU->xrU", Ti, T_LC_R.reshape(fiF, nfR, -1)).reshape(nfL * nfC * nfR, -1)
+    TUb = np.einsum("crd,ldU->lcrU", Tj.reshape(nfC, nfR, fjF), T_L_CR.reshape(nfL, fjF, -1)).reshape(nfL * nfC * nfR, -1)
+    assert np.array_equal(TUa, TUb[:, cols_b]), "union VBS differs between the two constructions"
+    redU, repsU, _ = slot_reduction(slots_a)
+    TUa = TUa[:, repsU]
+    # reduce rows (l, c, r) full -> reduced
+    TU3 = np.zeros((nL, nC, nR, TUa.shape[1]), dtype=object); TU3[:] = 0
+    for fl_ in range(nfL):
+        for fc in range(nfC):
+            base = (fl_ * nfC + fc) * nfR
+            for fr in range(nfR):
+                row = TUa[base + fr]
+                if np.any(row):
+                    TU3[rL["red"][fl_], rC["red"][fc], rR["red"][fr]] += row.astype(object)
+    X1 = np.einsum("lm,mcrU->lcrU", rL["Gn"], TU3)
+    X2 = np.einsum("cm,lmrU->lcrU", rC["Gn"], X1)
+    X3 = np.einsum("rm,lcmU->lcrU", rR["Gn"], X2)
+    GU = flint.fmpz_mat(TU3.reshape(-1, TU3.shape[3]).T.tolist()) * flint.fmpz_mat(X3.reshape(-1, X3.shape[3]).tolist())
+    n_unit = GU.rank()
+    log(f"  union VBS: {n_unit} independent states in A and B  [{time.time()-t0:.0f}s]")
+    out = {"pencil_size": fi * nR, "unit_cosines_at_least": int(n_unit), "lambda_min_GA_lower": float(lam),
+           "thresholds": {}}
+    for t in thresholds:
+        p, q = t.numerator, t.denominator
+        pos_total, worst = 0, Fraction(0)
+        for key in sorted(set(labA) | set(labB)):
+            ra, cb = labA.get(key, []), labB.get(key, [])
+            if not ra:
+                continue
+            GAb = flint.fmpz_mat([[Gin[b, b2] * rR["Gn"][r, r2] for (b2, r2) in ra] for (b, r) in ra])
+            if cb:
+                Cb = flint.fmpz_mat([[T[b * nL + l, r * fj + d] for (l, d) in cb] for (b, r) in ra])
+                Mb = flint.fmpz_mat([[adjGL[l, l2] * adjGj[d, d2] for (l2, d2) in cb] for (l, d) in cb])
+                K = (Cb * Mb * Cb.transpose()) * q - GAb * (p * scale)
+            else:
+                K = GAb * (-(p * scale))
+            neg, pos, bE = ldl_inertia_exact(K)
+            pos_total += pos
+            worst = max(worst, bE)
+        tprime = t + worst / (Fraction(q * scale) * lam)
+        ok = pos_total <= n_unit
+        out["thresholds"][str(t)] = {"positive": pos_total, "t_prime": float(tprime),
+                                     "t_prime_exact": f"{tprime.numerator}/{tprime.denominator}", "certified": ok}
+        log(f"  t = {float(t):.6f}: {pos_total} pencil eigenvalues above t' = {float(tprime):.10f}; "
+            f"eta <= {float(tprime) ** 0.5:.10f}: {ok}  [{time.time()-t0:.0f}s]")
+    return out
