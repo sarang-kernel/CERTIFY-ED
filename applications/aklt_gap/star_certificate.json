@@ -1,0 +1,38 @@
+{
+ "model": "spin-3/2 AKLT, star lattice",
+ "criterion": "eta < 1/4 (z=4)",
+ "Gi_HPsi_zero": true,
+ "Gi_rank": 16,
+ "Gj_HPsi_zero": true,
+ "Gj_rank": 16,
+ "U_HPsi_zero": true,
+ "U_rank": 32,
+ "Gi_kernel_count": {
+  "negative": 16,
+  "bound_E": 9.18e-09
+ },
+ "Gj_kernel_count": {
+  "negative": 16,
+  "bound_E": 2.01e-08
+ },
+ "lambda_min_GA_lower": 341172.0,
+ "pencil": {
+  "1/16": {
+   "negative": 992,
+   "positive_in_D": 32,
+   "bound_E": 3.665088744600851e+89,
+   "t_prime": 0.06250000000005536,
+   "at_most_32_above_tprime": true
+  },
+  "12331/1000000": {
+   "negative": 992,
+   "positive_in_D": 32,
+   "bound_E": 5.7002892346637406e+94,
+   "t_prime": 0.012331000000137766,
+   "at_most_32_above_tprime": true
+  }
+ },
+ "eta_upper": 0.11104503590948028,
+ "criterion_holds": true,
+ "seconds": 63.14581656455994
+}
