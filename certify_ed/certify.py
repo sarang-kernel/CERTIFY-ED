@@ -36,7 +36,7 @@ from .construct import (StateSet, build_bitwise, build_kron, cross_construct, fu
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
-from .fp import U, float_env_record, inf_norm_upper, up
+from .fp import U, float_env_record, inf_norm_upper, probe_float_environment, up
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .sectors import audit_sector, restrict_to_u1
@@ -776,6 +776,9 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 certify_observable(ec, X, O, name)
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
             for name, (sdiag, lattice) in opts.symmetries.items():
+                if isinstance(sdiag, str) and sdiag == "su2":
+                    _total_spin(ec, X, name, spec, claim, rec)
+                    continue
                 # [A, S] = 0 is needed for the operator the statement refers to: the reference built
                 # from the spec when there is one, else the operator used for the bounds
                 comm_op = Href if Href is not None else (op if is_matrix(op) else None)
@@ -836,10 +839,21 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         not_verified.append(f"anything outside the certified window {list(window)}")
     if opts.eigenspaces == "clusters":
         not_verified.append("eigenvector subspaces of isolated (non-cluster) pairs beyond their residuals")
+    fp_probe = probe_float_environment()
+    if not fp_probe["standard_model_hypotheses_hold"]:
+        why = ("the floating-point environment of this process violates the standard model "
+               f"(failed probes: {', '.join(fp_probe['failed'])}); bounds computed under it are not certified")
+        for s in statements:
+            if s["status"] == "CERTIFIED":
+                s["status"] = "INCONCLUSIVE"
+                s["summary"] = why + "; would otherwise be: " + s["summary"]
+        not_verified.append("bounds: " + why)
+    arithmetic = float_env_record()
+    arithmetic["runtime_probe"] = fp_probe
     body = {"subject": subject, "claim": claim_rec, "statements": statements,
             "enclosures": enc.to_records() if enc is not None else [],
             "kato_temple": kt,
-            "arithmetic": float_env_record(), "environment": environment_record(),
+            "arithmetic": arithmetic, "environment": environment_record(),
             "hermitian_part": herm_note,
             "operator_note": op_note,
             "scope": ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
@@ -853,3 +867,24 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     if opts.store_eigenvectors and X is not None:
         arrays["eigenvectors"] = X
     return Certificate(body, arrays)
+
+
+def _total_spin(ec, X, name, spec, claim, rec):
+    """Certified total-spin content of a cluster: eigenvalues of X^+ S^2 X snapped to S(S+1).
+    [H, S^2] = 0 for the declared model is established structurally (certify_ed.su2)."""
+    from .su2 import allowed_casimir_values, casimir_spec, su2_structural
+    if spec is None or claim.sector_isometry is not None:
+        ec.quantum_numbers[name] = {"status": "NOT-CHECKED",
+                                    "reason": "needs a specification and a computational-basis claim"}
+        return
+    ok, why = su2_structural(spec)
+    if not ok:
+        ec.quantum_numbers[name] = {"status": "NOT-CHECKED", "reason": "SU(2) invariance not established: " + why}
+        return
+    states = claim.states if claim.states is not None else full_state_set(spec)
+    S2 = build_bitwise(casimir_spec(spec), states)
+    av = allowed_casimir_values(spec)
+    r = certify_quantum_numbers(ec, X, S2, name, commutation_certified=True, allowed_values=av)
+    r["commutation_checked_on"] = "structural SU(2) invariance of the specification: " + why
+    if "certified_values" in r:
+        r["total_spin"] = [float((-1 + np.sqrt(1 + 4 * v)) / 2) for v in r["certified_values"]]

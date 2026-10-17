@@ -193,3 +193,61 @@ def restrict_to_u1(spec, V, cache: Optional[dict] = None):
     pos = np.searchsorted(rows, Vc.row)
     Vu = sp.csr_matrix((Vc.data, (idx[pos], Vc.col)), shape=(st.size, V.shape[1]))
     return Hu, Vu, st
+
+
+def symmetry_matrix(states, g) -> sp.csr_matrix:
+    """Signed permutation matrix of a cyclic symmetry g on a closed state set:
+    G e_s = phase(s) e_{g(s)}, rows/columns in states.states_in_order()."""
+    s = states.states_in_order()
+    t, ph = g.apply(s.astype(np.int64))
+    idx, found = states.index_of(t)
+    if not np.all(found):
+        raise ValueError("state set is not closed under the symmetry")
+    n = s.size
+    return sp.csr_matrix((ph, (idx, np.arange(n))), shape=(n, n))
+
+
+def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
+    """Which eigenvalue of a cyclic symmetry g a sector carries, with a certified leakage bound.
+
+    For the n-th roots lambda_k of unity, picks the k minimising ||G V - lambda_k V||_F. Since G is
+    unitary with spectrum in the n-th roots, any unit vector x in range(V) has a component outside
+    the lambda_k-eigenspace of norm at most delta / ((1 - iso) min_{l != k} |lambda_l - lambda_k|),
+    where delta >= ||G V - lambda_k V||_2 and iso = ||V^+ V - I|| (a bound, from computed
+    quantities plus their rounding). Labels are reported as the eigenvalue exp(2 pi i j / n) of g (for
+    translation, g maps site i to i+1) and as QuSpin's block index q."""
+    from .basis import translation, spin_flip, reflection
+    from .fp import fro_upper, gamma_dot, up
+    gfun = {"translation": translation, "spin_flip": spin_flip, "reflection": reflection}[symmetry]
+    g = gfun(spec)
+    red = restrict_to_u1(spec, V, cache)
+    if red is not None:
+        _, Vu, st = red
+    else:
+        from .construct import full_state_set
+        st, Vu = full_state_set(spec), sp.csr_matrix(V)
+    G = symmetry_matrix(st, g)
+    Vd = sp.csr_matrix(Vu)
+    GV = G @ Vd
+    n = g.order
+    roots = np.exp(2j * np.pi * np.arange(n) / n)
+    defects = [fro_upper((GV - lam * Vd).toarray() if Vd.shape[0] * Vd.shape[1] <= 4e7
+                         else (GV - lam * Vd).data) for lam in roots]
+    k = int(np.argmin(defects))
+    lam = roots[k]
+    width = 4
+    rnd = gamma_dot(width, True) * 2 * fro_upper(np.abs(Vd.data))   # rounding in lam*V and the difference
+    delta = up(defects[k] + rnd)
+    gram = (Vd.conj().T @ Vd - sp.identity(Vd.shape[1])).tocsr()
+    iso = up(fro_upper(gram.data) + gamma_dot(int(np.diff(Vd.tocsc().indptr).max()) + 1, True)
+             * fro_upper(np.abs(Vd.data)) ** 2) if gram.nnz else 0.0
+    sep = min(abs(lam - roots[j]) for j in range(n) if j != k) if n > 1 else np.inf
+    leak = delta / ((1 - iso) * sep) if iso < 1 else np.inf
+    # QuSpin's block index q: eigenvalue exp(-2 pi i q/n) of its translation, which maps site i to
+    # i-1; with CERTIFY-ED's T (site i -> i+1) that is exp(+2 pi i q / n), i.e. q = k (checked against
+    # QuSpin blocks in tests/v2/test_label_audit.py)
+    q_quspin = k
+    return {"symmetry": symmetry, "order": n, "eigenvalue": [lam.real, lam.imag],
+            "j_physics": k, "quspin_q": q_quspin, "defect_upper": float(delta),
+            "isometry_defect_upper": float(iso), "leakage_bound": float(leak),
+            "certified": bool(leak < 0.5)}

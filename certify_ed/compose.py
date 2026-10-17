@@ -48,7 +48,7 @@ class SectorResult:
 
 
 def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: float,
-                       H_full=None, inertia_method: str = "auto") -> Dict:
+                       H_full=None, inertia_method: str = "auto", label_symmetries: Sequence[str] = ()) -> Dict:
     t0 = time.time()
     H = None if H_full is None else sp.csr_matrix(H_full)
     n = spec.dim
@@ -80,6 +80,9 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         aud = audit_sector(Ha, Va, Hs, label=s.label)
         rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
                "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}
+        if label_symmetries:
+            from .sectors import audit_label
+            rec["label_audit"] = {g: audit_label(spec, s.V, g, cache) for g in label_symmetries}
         mu = np.asarray(s.eigenvalues, dtype=float)
         mu_below = mu[mu < E_cut]
         r = inertia_count(Hs, E_cut, method=inertia_method)

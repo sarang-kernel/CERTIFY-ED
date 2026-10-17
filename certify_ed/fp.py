@@ -120,6 +120,34 @@ def float_env_record() -> dict:
     }
 
 
+def probe_float_environment() -> dict:
+    """Run-time test of the hypotheses behind the standard-model bounds, in this process.
+
+    Shared libraries compiled with -ffast-math can switch on flush-to-zero (FTZ) and
+    denormals-are-zero (DAZ) for the whole process when they are imported (documented for thousands
+    of PyPI binaries); a directed rounding mode or a reduced-precision BLAS also break the model.
+    The probes use NumPy arrays so that nothing is constant-folded."""
+    t = np.array([2.0 ** -1022, 2.0 ** -1074, 1.0, 2.0 ** -60, 2.0 ** -53], dtype=np.float64)
+    checks = {}
+    # compare bit patterns: under DAZ a comparison with a subnormal treats it as zero
+    checks["gradual_underflow"] = bool((t[0:1] / 2.0).view(np.uint64)[0] == np.uint64(1 << 51))  # FTZ
+    checks["subnormal_operands"] = bool((t[1:2] * 1.0).view(np.uint64)[0] == np.uint64(1))       # DAZ
+    checks["round_to_nearest_up"] = bool((t[2:3] + t[3:4])[0] == 1.0)                # round-up: > 1
+    checks["round_to_nearest_down"] = bool((-t[2:3] - t[3:4])[0] == -1.0)            # round-down
+    checks["ties_to_even"] = bool((t[2:3] + t[4:5])[0] == 1.0)
+    # a BLAS dot product whose exact result needs the full 53-bit significand
+    a = np.full(64, 1.0 + 2.0 ** -40)
+    b = np.zeros(64)
+    b[0] = 1.0
+    checks["blas_full_precision"] = bool(np.dot(a, b) == 1.0 + 2.0 ** -40)
+    M = np.zeros((4, 4))
+    M[0, 0] = 1.0 + 2.0 ** -40
+    checks["gemm_full_precision"] = bool((M @ np.eye(4))[0, 0] == 1.0 + 2.0 ** -40)
+    ok = all(checks.values())
+    return {"standard_model_hypotheses_hold": ok, "checks": checks,
+            "failed": [k for k, v in checks.items() if not v]}
+
+
 def safe_sqrt_upper(x: float) -> float:
     return math.sqrt(max(x, 0.0)) * _GUARD
 

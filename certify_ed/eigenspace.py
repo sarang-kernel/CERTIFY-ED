@@ -120,7 +120,7 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
 
 def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: str,
                             lattice: Optional[float] = None, S_norm: Optional[float] = None,
-                            commutation_certified: bool = False) -> dict:
+                            commutation_certified: bool = False, allowed_values=None) -> dict:
     """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0)."""
     Xg = X[:, ec.members]
     M = Xg.conj().T @ (S @ Xg)
@@ -139,7 +139,17 @@ def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: s
     bound = up(2 * ec.sin_theta ** 2 * S_norm + (2 * kappa + kappa ** 2) * (1 + eta) * S_norm + rnd)
     rec = {"estimates": est.tolist(), "bound": float(bound),
            "commutation_certified": bool(commutation_certified)}
-    if commutation_certified and lattice:
+    if commutation_certified and allowed_values is not None:
+        av = np.asarray(allowed_values, dtype=float)
+        idx = np.argmin(np.abs(est[:, None] - av[None, :]), axis=1)
+        snapped = av[idx]
+        half_gap = np.min(np.diff(np.sort(av))) / 2 if av.size > 1 else np.inf
+        if bound < half_gap and np.all(np.abs(snapped - est) <= bound):
+            rec["certified_values"] = snapped.tolist()
+            rec["status"] = "CERTIFIED"
+        else:
+            rec["status"] = "INCONCLUSIVE"
+    elif commutation_certified and lattice:
         snapped = np.round(est / lattice) * lattice
         if bound < lattice / 2 and np.all(np.abs(snapped - est) <= bound):
             rec["certified_values"] = snapped.tolist()
