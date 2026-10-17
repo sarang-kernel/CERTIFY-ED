@@ -797,7 +797,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "no clusters among the claimed pairs",
                                     {}, [], time.time() - t0))
         else:
-            st = "CERTIFIED" if n_ok == len(groups) else ("INCONCLUSIVE" if n_ok < len(groups) else "CERTIFIED")
+            st = "CERTIFIED" if n_ok == len(groups) else "INCONCLUSIVE"
             statements.append(_stmt("S4.eigenspaces", st,
                                     f"{n_ok}/{len(groups)} clusters certified at projector level",
                                     {"clusters": eig_records}, ["Davis-Kahan sin(theta) theorem; Ostrowski's theorem"],
