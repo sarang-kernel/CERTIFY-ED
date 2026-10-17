@@ -219,3 +219,32 @@ def test_builder_shift_positive_for_nonempty_spec():
     spec = ce.heisenberg_chain(6, J2=0.3)                 # 0.3 is not dyadic: rounding is possible
     b = CERT._builder_shift(spec, None)
     assert b > 0
+
+
+# ------------------------------------------------ run 3 (e6_mutation_20261017_112726) survivors
+def test_check_semidefinite_lower_bound_reports_lambda_min_only_when_definite():
+    from certify_ed.checker import check_semidefinite_lower_bound
+    rng = np.random.default_rng(9)
+    B = rng.standard_normal((20, 20))
+    A = B @ B.T + 0.5 * np.eye(20)
+    r = check_semidefinite_lower_bound(A)
+    assert r["nu"] == 0 and r["lambda_min_lower"] <= la.eigvalsh(A)[0]
+    r2 = check_semidefinite_lower_bound(A - 3 * np.eye(20) * la.eigvalsh(A)[1])
+    assert r2["nu"] >= 1 and "lambda_min_lower" not in r2
+
+
+@needs_quspin
+def test_sector_producer_hermiticity_reported_as_zero():
+    from quspin.basis import spin_basis_1d
+    from quspin.operators import hamiltonian
+    N = 8
+    spec = ce.heisenberg_chain(N)
+    b = spin_basis_1d(N, Nup=N // 2, kblock=0, pauli=0)
+    H = hamiltonian(spec.to_quspin_static(), [], basis=b, dtype=np.float64,
+                    check_symm=False, check_herm=False, check_pcon=False).tocsr()
+    w, V = la.eigh(H.toarray())
+    c = ce.certify(ce.Claim(w[:1], V[:, :1], operator=H, kind="lowest",
+                            sector_isometry=sp.csr_matrix(b.get_proj(np.float64))), spec)
+    s1 = _stmt(c, "S1.model_fidelity")
+    assert s1["status"] == "CERTIFIED", s1
+    assert s1["evidence"]["hermiticity_max_abs"] == 0.0

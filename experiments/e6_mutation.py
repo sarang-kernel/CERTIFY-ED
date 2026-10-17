@@ -21,7 +21,8 @@ from concurrent.futures import ThreadPoolExecutor
 from harness import Run, ROOT
 
 TARGETS = ["construct.py", "enclosure.py", "inertia.py", "eigenspace.py", "sectors.py", "compose.py",
-           "fp.py", "localops.py", "spec.py", "basis.py", "su2.py", "checker.py", "certify.py"]
+           "fp.py", "localops.py", "spec.py", "basis.py", "su2.py", "checker.py", "certify.py",
+           "exact_sectors.py"]
 
 BINSWAP = {ast.Add: ast.Sub, ast.Sub: ast.Add, ast.Mult: ast.Div, ast.Div: ast.Mult,
            ast.FloorDiv: ast.Mult, ast.Mod: ast.FloorDiv, ast.Pow: ast.Mult}
