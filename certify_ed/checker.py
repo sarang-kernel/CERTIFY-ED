@@ -83,7 +83,7 @@ def check_semidefinite_lower_bound(A: np.ndarray, prec: int = 128):
     return out
 
 
-def residual_inf_norm_exact(A: np.ndarray, lu: np.ndarray, d: np.ndarray, pL: int = 52, pD: int = 20,
+def residual_inf_norm_exact(A: np.ndarray, lu: np.ndarray, d: np.ndarray, pL: int = 52, pD=None,
                             rows_per_block: int = 256):
     """Exact (integer) version for large matrices with integer-valued A.
 
@@ -96,16 +96,20 @@ def residual_inf_norm_exact(A: np.ndarray, lu: np.ndarray, d: np.ndarray, pL: in
     if not np.all(A == np.rint(A)):
         raise ValueError("A must be integer-valued")
     n = A.shape[0]
-    if np.max(np.abs(lu)) >= 2.0 ** (62 - pL) or np.max(np.abs(d)) >= 2.0 ** (62 - pD):
+    if pD is None:      # round D at relative 2^-52 of its largest entry
+        dmax = float(np.max(np.abs(d))) or 1.0
+        pD = int(52 - np.ceil(np.log2(dmax)))
+    if np.max(np.abs(lu)) >= 2.0 ** (62 - pL) or np.max(np.abs(d)) > 2.0 ** (52 - pD):
         raise ValueError("factor entries too large for the chosen grids")
     Li = np.rint(np.ldexp(lu, pL)).astype(np.int64)
     Di = np.rint(np.ldexp(d, pD)).astype(np.int64)
     Dt = np.ldexp(Di.astype(np.float64), -pD)            # exact (|Di| < 2^53 checked below)
     if np.max(np.abs(Di)) >= 2 ** 53:
         raise ValueError("D grid too fine")
+    from fractions import Fraction
     LT = flint.fmpz_mat(Li.T.tolist())
     Df = flint.fmpz_mat(Di.tolist())
-    scale = 2 ** (2 * pL + pD)
+    scale = 2 ** (2 * pL + pD) if 2 * pL + pD >= 0 else Fraction(1, 2 ** -(2 * pL + pD))
     worst = 0
     for r0 in range(0, n, rows_per_block):
         r1 = min(n, r0 + rows_per_block)
