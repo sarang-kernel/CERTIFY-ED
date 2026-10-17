@@ -71,6 +71,58 @@ def reduced_perm(g, slots, sigma=None, flip=False):
     return np.array(perm)
 
 
+
+def ldl_inertia_lean(M, rows_per_block=256):
+    """Memory-lean version of pw_general.ldl_inertia_exact for an object ndarray M of Python ints
+    (symmetric). Same guarantee: (#negative pivots, #positive pivots, bound on ||Lt Dt Lt^T - M||_inf),
+    the residual computed exactly in integer arithmetic, block of rows by block of rows."""
+    import scipy.linalg as la
+    from certify_ed.checker import negative_count_exact
+    n = M.shape[0]
+    maxbits = max(abs(int(x)).bit_length() for x in M.ravel())
+    s_down = max(0, maxbits - 900)
+    if s_down:
+        Af = np.array([[float(int(x) >> s_down) if x >= 0 else -float((-int(x)) >> s_down) for x in row]
+                       for row in M])
+    else:
+        Af = M.astype(float)
+    lu, d, perm = la.ldl(Af, lower=True, hermitian=True, overwrite_a=True)
+    del Af
+    assert np.all(np.diag(lu[perm]) == 1.0)
+    pL = 52
+    pD = int(52 - np.ceil(np.log2(float(np.max(np.abs(d))))))
+    Li = np.rint(np.ldexp(lu, pL)).astype(np.int64)
+    del lu
+    Di = np.rint(np.ldexp(d, pD)).astype(np.int64)
+    del d
+    neg, amb = negative_count_exact(np.ldexp(Di.astype(np.float64), -pD))
+    assert not amb
+    sh = 2 * pL + pD - s_down
+    LT = flint.fmpz_mat(Li.T.tolist())
+    Dm = flint.fmpz_mat(Di.tolist())
+    del Di
+    two = flint.fmpz(2)
+    worst = 0
+    for r0 in range(0, n, rows_per_block):
+        r1 = min(n, r0 + rows_per_block)
+        Lb = flint.fmpz_mat(Li[r0:r1].tolist())
+        Pb = (Lb * Dm) * LT                      # 2^sh (Lt 2^s_down Dt Lt^T)[rows]
+        Ab = flint.fmpz_mat([[int(x) for x in row] for row in M[r0:r1]])
+        if sh >= 0:
+            Eb = Pb - Ab * (two ** sh)
+        else:
+            Eb = Pb * (two ** (-sh)) - Ab
+        ents = Eb.entries()
+        for i in range(r1 - r0):
+            sm = 0
+            for x in ents[i * n:(i + 1) * n]:
+                sm += abs(int(x))
+            worst = max(worst, sm)
+        del Pb, Eb, Ab, Lb, ents
+    den = Fraction(2) ** sh if sh >= 0 else Fraction(1)
+    return neg, n - neg, Fraction(worst) / den
+
+
 def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log=print):
     t0 = time.time()
     rL, rC, rR = (reduced_region(g, X) for X in (L, C, R))
@@ -148,6 +200,16 @@ def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log
                   all((a["P"]["i"][b], a["P"]["R"][r]) in ia for (b, r) in ra[:50])]
         if any(a["flip"] for a in G_here):
             assert all((a["P"]["i"][b], a["P"]["R"][r]) in ia for a in G_here for (b, r) in ra)
+        partner = None
+        flips = [a for a in acts if a["flip"] and not any(a["mask"][i] for i in range(len(a["mask"]) - 1))]
+        if flips and not any(a["flip"] for a in G_here):
+            fa = flips[0]
+            b0, r0 = ra[0]
+            img = (int(fa["P"]["i"][b0]), int(fa["P"]["R"][r0]))
+            partner = next(k2 for k2, v in labA.items() if img in set(v))
+            # the flip maps the whole block onto the partner block (A and B sides)
+            assert {(int(fa["P"]["i"][b]), int(fa["P"]["R"][r])) for (b, r) in ra} == set(labA[partner])
+            assert {(int(fa["P"]["L"][l]), int(fa["P"]["j"][d])) for (l, d) in cb} == set(labB.get(partner, []))
         # characters: sign vector on the generator masks
         gen_used = sorted({i for a in G_here for i, m in enumerate(a["mask"]) if m})
         chars = list(itertools.product((1, -1), repeat=len(gen_used)))
@@ -189,7 +251,7 @@ def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log
                     Bvecs.append(vec)
             out.append((ch, Avecs, Bvecs))
         assert sum(len(x[1]) for x in out) == len(ra) and sum(len(x[2]) for x in out) == len(cb)
-        return ra, cb, out
+        return ra, cb, out, partner
 
     def padded(vecs, base_idx):
         m = max(len(v) for v in vecs)
@@ -200,7 +262,7 @@ def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log
         return idx, cf
 
     plans = {key: block_bases(key) for key in sorted(labA)}
-    sizes = sorted((len(A) + len(B) for (_, _, o) in plans.values() for (_, A, B) in o), reverse=True)
+    sizes = sorted((len(A) + len(B) for (_, _, o, pt) in plans.values() if pt is None or pt > -1 for (_, A, B) in o), reverse=True)
     log(f"  largest symmetry-adapted bordered blocks {sizes[:4]} (unreduced max "
         f"{max(len(labA[k]) + len(labB.get(k, [])) for k in labA)})  [{time.time()-t0:.0f}s]")
     out = {"pencil_size": fi * nR, "unit_cosines_at_least": int(n_unit), "group_order": len(acts),
@@ -208,7 +270,15 @@ def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log
     for t in thresholds:
         p, q = t.numerator, t.denominator
         pos_total, beta = 0, Fraction(0)
-        for key, (ra, cb, chars) in plans.items():
+        done = {}
+        for key, (ra, cb, chars, partner) in plans.items():
+            if partner is not None and partner in done:
+                # the spin flip maps this block's bordered matrix onto the partner's by a signed
+                # permutation (equivariance verified exactly above): same inertia, same residual bound
+                pos_total += done[partner]
+                done[key] = done[partner]
+                continue
+            pos_block = 0
             bsA = np.array([x[0] for x in ra]); rsA = np.array([x[1] for x in ra])
             if cb:
                 lsB = np.array([x[0] for x in cb]); dsB = np.array([x[1] for x in cb])
@@ -240,14 +310,21 @@ def certify_eta_sym(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log
                             l2, d2 = lsB[ib_[:, s2]], dsB[ib_[:, s2]]
                             Cs = sum(Z[l2[None, :], c, b1[:, None]] * Y[c, r1[:, None], d2[None, :]] for c in range(nC))
                             Cm += np.outer(ca_[:, s1], cb_[:, s2]) * Cs
-                    M = np.block([[-p * GA, q * Cm], [q * Cm.T, -q * GB]])
+                    M = np.empty((nA + nB, nA + nB), dtype=object)
+                    M[:nA, :nA] = -p * GA; del GA
+                    M[nA:, nA:] = -q * GB; del GB
+                    M[:nA, nA:] = q * Cm
+                    M[nA:, :nA] = M[:nA, nA:].T; del Cm
                 else:
                     M = -p * GA
-                Mf = flint.fmpz_mat([[int(x) for x in row] for row in M.tolist()])
+                neg, pos, bE = ldl_inertia_lean(M)
                 del M
-                neg, pos, bE = ldl_inertia_exact(Mf)
                 pos_total += pos
+                pos_block += pos
                 beta = max(beta, bE / q)
+                log(f"    block {key} chi {ch}: size {pos + neg}, {pos} positive pivots, "
+                    f"||E|| <= {float(bE / q):.2e}  [{time.time()-t0:.0f}s]")
+            done[key] = pos_block
         tprime = (1 + beta / mu) * (t + beta / nu)
         ok = pos_total <= n_unit
         out["thresholds"][str(t)] = {"positive": pos_total, "beta": float(beta), "t_prime": float(tprime),
