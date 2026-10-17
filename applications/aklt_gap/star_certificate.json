@@ -9,11 +9,11 @@
  "U_rank": 32,
  "Gi_kernel_count": {
   "negative": 16,
-  "bound_E": 9.18e-09
+  "bound_E": 9.176168227044754e-09
  },
  "Gj_kernel_count": {
   "negative": 16,
-  "bound_E": 2.01e-08
+  "bound_E": 2.0097583606391723e-08
  },
  "lambda_min_GA_lower": 341172.0,
  "pencil": {
@@ -34,5 +34,5 @@
  },
  "eta_upper": 0.11104503590948028,
  "criterion_holds": true,
- "seconds": 63.14581656455994
+ "seconds": 682.5998141765594
 }
