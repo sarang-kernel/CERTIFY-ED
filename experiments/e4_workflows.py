@@ -66,7 +66,7 @@ def w1_sectors(run, N=16, J2=0.3, n_low=12):
     res = certify_low_energy(spec, secs, E_cut)
     t_cert = time.time() - t0
     labels = []
-    for nup, k, b, H, w, Y in blocks:
+    for nup, k, _b, _H, w, _Y in blocks:
         for e in w[w < E_cut]:
             labels.append((float(e), nup - N / 2, k))
     labels.sort()

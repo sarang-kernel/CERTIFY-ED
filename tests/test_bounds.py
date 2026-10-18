@@ -6,7 +6,7 @@ import scipy.sparse as sp
 
 from certify_ed.enclosure import OperatorAdapter, enclose, kato_temple, residuals
 from certify_ed.inertia import inertia
-from certify_ed.fp import exact_dot, U
+from certify_ed.fp import exact_dot
 from certify_ed.corroborate import jacobi_eigvalsh
 from certify_ed.construct import SpecOperator, build_bitwise
 from certify_ed import spec as S

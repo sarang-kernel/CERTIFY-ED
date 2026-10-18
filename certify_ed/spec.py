@@ -98,7 +98,7 @@ class ModelSpec:
             bad = set(t.op) - allowed
             if bad:
                 raise ValueError(f"letters {sorted(bad)} not valid for {self.local.kind} space")
-            for c, s in t.couplings:
+            for _c, s in t.couplings:
                 if len(s) != len(t.op):
                     raise ValueError(f"term {t.op!r}: coupling {s} has wrong number of sites")
                 if any(not (0 <= i < self.n_sites) for i in s):

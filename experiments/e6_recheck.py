@@ -3,6 +3,7 @@
 usage: python3 e6_recheck.py RUN_DIR [workers] [module:site ...]
 Writes RUN_DIR/recheck.json. The mutation sites must refer to the same source as the original run
 (checked by hashing the target modules)."""
+from pathlib import Path
 import json
 import os
 import shutil
@@ -19,13 +20,13 @@ def main():
     run = sys.argv[1]
     workers = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     only = set(sys.argv[3:])
-    d = json.load(open(os.path.join(run, "data.json")))
+    d = json.loads(Path(run, "data.json").read_text())
     surv = [m for m in d["mutants"] if m["status"] == "survived"]
     if only:
         surv = [m for m in surv if f"{m['module']}:{m['site']}" in only]
     pkg = os.path.join(ROOT, "certify_ed")
     for mod, n in d["sites_per_module"].items():
-        src = open(os.path.join(pkg, mod)).read()
+        src = Path(pkg, mod).read_text()
         assert len(mutation_sites(ast.parse(src))) == n, f"{mod} changed since the run"
     def work(m):
         tmp = tempfile.mkdtemp(prefix="e6r_")
@@ -38,7 +39,7 @@ def main():
             path = os.path.join(tmp, "certify_ed", m["module"])
             new, desc, line = apply_mutation(open(path).read(), m["site"])
             assert line == m["line"], (m, line)
-            open(path, "w").write(new)
+            Path(path).write_text(new)
             status, first, secs = run_tests(tmp, 900)
             r = dict(m, recheck=status, recheck_first_failure=first, recheck_seconds=secs)
             print(f"{m['module']}:{m['line']} {m['mutation']}: {status} {first or ''}", flush=True)
@@ -48,7 +49,7 @@ def main():
     with ThreadPoolExecutor(workers) as ex:
         res = list(ex.map(work, surv))
     out = os.path.join(run, "recheck.json")
-    old = json.load(open(out)) if os.path.exists(out) else {}
+    old = json.loads(Path(out).read_text()) if os.path.exists(out) else {}
     for r in res:
         old[f"{r['module']}:{r['site']}"] = r
     json.dump(old, open(out, "w"), indent=1)

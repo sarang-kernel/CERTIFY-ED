@@ -1,10 +1,11 @@
 """Classify surviving mutants of E6 by what the mutated line does (rules below), and list the ones that
 need human inspection. Output: results/<latest e6>/classification.json"""
+from pathlib import Path
 import ast, glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 run = sorted(glob.glob(os.path.join(ROOT, "experiments/results/e6_mutation_*")))[-1 if len(sys.argv) < 2 else int(sys.argv[1])]
-d = json.load(open(os.path.join(run, "data.json")))
+d = json.loads(Path(run, "data.json").read_text())
 
 ROUNDING = re.compile(r"gamma|gamma_dot|\bU\b|\bup\(|_GUARD|1e-1[0-9]|\* *U\b|safe_sqrt_upper|norm2_lower|inf_norm_upper|fro_upper")
 TIMING = re.compile(r"time\.time|\[:\d+\]|f\"|f'|msg|note|summary|reason")
@@ -24,7 +25,7 @@ for m in d["mutants"]:
     if m["status"] != "survived":
         continue
     path = os.path.join(ROOT, "certify_ed", m["module"])
-    src = open(path).read().splitlines()[m["line"] - 1]
+    src = Path(path).read_text().splitlines()[m["line"] - 1]
     mut = m["mutation"]
     if TIMING.search(src) and not ROUNDING.search(src):
         cat = "no effect on statements (timing, messages)"

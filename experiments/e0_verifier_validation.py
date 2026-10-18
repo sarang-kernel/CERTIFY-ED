@@ -163,7 +163,7 @@ def part_c(run, rng):
     for name, mk, N in LOCALS:
         local = mk()
         n_ok_kron, n_ok_qs, worst_kron, worst_qs, n = 0, 0, 0.0, 0.0, 0
-        for rep in range(40):
+        for _rep in range(40):
             if local.kind == "spin" and local.spin != "1/2":
                 spec = random_spec_letters(local, N, rng, ["+", "-", "z"])
             else:

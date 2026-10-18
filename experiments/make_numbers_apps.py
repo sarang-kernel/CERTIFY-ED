@@ -16,10 +16,18 @@ macro = lambda k, v: M.__setitem__(k, str(v))
 check = lambda c, s: CHECKS.append((bool(c), s))
 
 
+ENVS = {}
+
+
 def latest(prefix):
     c = sorted(d for d in glob.glob(os.path.join(RES, prefix + "_2*")) if os.path.isdir(d))
     if not c:
         return None
+    try:
+        with open(os.path.join(c[-1], "environment.json")) as f:
+            ENVS[prefix] = json.load(f)
+    except OSError:
+        ENVS[prefix] = {}
     with open(os.path.join(c[-1], "data.json")) as f:
         return json.load(f)
 
@@ -75,6 +83,8 @@ else:
     macro("CrownOnePublished", f"{p['published_bound']:.6f}")
     macro("CrownOneMargin", f"{p['margin']:.1e}")
     check(p["contradiction"], "spin-1 printed couplings: certified eigenvalue below the published bound")
+    if "no_floating_point_assumption" in p:
+        check(p["no_floating_point_assumption"], "spin-1 printed-coupling eigenvalue certified in exact arithmetic")
     macro("CrownOneLandscapeMin", f"{e9['spin1_landscape']['classes'][0]['energy']:.7f}")
     if "spin_half" in e9:
         macro("CrownHalfBound", e9["spin_half"]["lower_bound_rounded_down"])
@@ -118,6 +128,14 @@ else:
         ratios = [r["symveig_median_halfwidth"] / r["certify_median_halfwidth"] for r in big]
         macro("EeightMedianRatioMin", f"{min(ratios):.0f}")
         macro("EeightMedianRatioMax", f"{max(ratios):.0f}")
+
+# ---------------------------------------------------------------- provenance
+_src = {k: (e.get("source_hash"), e.get("source_dirty")) for k, e in ENVS.items()}
+if _src:
+    check(len({h for h, _ in _src.values()}) == 1 and None not in {h for h, _ in _src.values()},
+          f"E7-E10 ran with the same computational source ({sorted({str(h) for h, _ in _src.values()})})")
+    check(not any(d for _, d in _src.values()), "E7-E10 ran without uncommitted changes to certify_ed/ or experiments/")
+    macro("SourceHash", next(iter(_src.values()))[0])
 
 with open(os.path.join(MS, "numbers_apps.tex"), "w") as f:
     for k, v in sorted(M.items()):

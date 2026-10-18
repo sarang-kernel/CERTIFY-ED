@@ -1,7 +1,6 @@
 """Re-check a claim with no floating-point assumption (S6), for a spin-1 chain (irrational matrix
 elements; exact through the scaled basis), and certify a k = 0 ground state of a longer chain through
 exact symmetry sectors."""
-import numpy as np
 import scipy.linalg as la
 
 import certify_ed as ce

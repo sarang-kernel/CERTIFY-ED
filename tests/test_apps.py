@@ -3,7 +3,6 @@ import json
 from fractions import Fraction
 
 import numpy as np
-import pytest
 import scipy.linalg as la
 
 import certify_ed as ce
@@ -86,3 +85,56 @@ def test_cli_certify_with_exact_recheck(tmp_path):
     st = {s["id"]: s["status"] for s in cert.statements}
     assert st["S2.eigenpairs"] == "CERTIFIED" and st["S3.completeness"] == "CERTIFIED"
     assert st["S6.exact_recheck"] == "CERTIFIED"
+
+
+# ------------------------------------------------------------------ geometry of every AKLT lattice
+@needs_flint
+def test_aklt_lattice_geometries_reproduce_published_eta():
+    """Every reconstructed subgraph geometry reproduces Pomata & Wei's floating-point eta to 1e-9
+    (decorated square: about 6 minutes, covered by E10)."""
+    from certify_ed.apps.aklt import LATTICES, eta_float
+    for name in ("star", "square_octagon_par", "square_octagon_perp", "cross", "decorated_honeycomb"):
+        g, L, C, R = LATTICES[name][0]()
+        assert not (set(L) & set(C) or set(C) & set(R) or set(L) & set(R)), name
+        deg = [0] * len(g.z)
+        for u, v in g.edges:
+            deg[u] += 1; deg[v] += 1
+        assert all(d <= z for d, z in zip(deg, g.z)), name
+        assert abs(eta_float(g, L, C, R)["eta"] - LATTICES[name][2]) < 1e-9, name
+
+
+@needs_flint
+def test_aklt_decorated_square_mirror_is_an_automorphism():
+    from certify_ed.apps.aklt import lattices
+    g, L, C, R = lattices.decorated_square()
+    p = lattices.decorated_square_reflection(g)
+    E = {frozenset(e) for e in g.edges}
+    assert all(frozenset((p[u], p[v])) in E for u, v in g.edges)
+    assert [sorted(p[x] for x in X) for X in (L, C, R)] == [L, C, R]
+
+
+# ------------------------------------------------------------------ pyrochlore S = 1 tools
+def test_pyrochlore_spin1_all_singlet_block_is_the_ring():
+    from certify_ed.apps.pyrochlore.spin_one import config_hamiltonian
+    c1, c3 = 0.053466, 0.082726
+    c17 = (1 - 2 * c1 - 8 * c3) / 2
+    H, _ = config_hamiltonian(2, (0,) * 6, c1, c3, c17)
+    ring = ce.build_bitwise(ce.spin1_heisenberg_chain(6)).toarray()
+    e_block = la.eigvalsh(H.toarray())[0]
+    e_ring = la.eigvalsh(ring)[0]
+    assert abs(e_block - (-12 * c1 + c17 * e_ring)) < 1e-12
+
+
+def test_pyrochlore_canonical_class_is_dihedral_invariant():
+    from certify_ed.apps.pyrochlore.spin_one import canonical
+    cfg = (0, 2, 4, 4, 0, 2)
+    rots = [tuple(cfg[(i + r) % 6] for i in range(6)) for r in range(6)]
+    assert len({canonical(c) for c in rots + [c[::-1] for c in rots]}) == 1
+
+
+@needs_flint
+def test_pyrochlore_spin1_printed_check_is_exact():
+    from certify_ed.apps.pyrochlore.spin_one import printed_coupling_check
+    r = printed_coupling_check()
+    assert r["no_floating_point_assumption"] and r["exact_recheck"] == "CERTIFIED"
+    assert r["E0_radius_exact"] <= r["E0_radius_standard_model"]

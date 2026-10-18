@@ -21,6 +21,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
 MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("CERTIFY_RESULTS", os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")), "paper"))
 RES = os.environ.get("CERTIFY_RESULTS", os.path.join(HERE, "results"))
 os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
@@ -87,14 +88,28 @@ commits = {r[2].get("git_commit") for r in runs.values()}
 env0 = runs["e0_verifier_validation"][2]
 
 
+def _same_source(c1, c2):
+    """No computational difference between two commits in certify_ed/ and experiments/ (the command line
+    and test helpers excluded: they cannot change a number)."""
+    from certify_ed.provenance import NON_COMPUTATIONAL
+    excl = [f":(exclude){f}" for f in NON_COMPUTATIONAL]
+    p = subprocess.run(["git", "diff", "--quiet", c1, c2, "--", "certify_ed", "experiments", *excl], cwd=ROOT)
+    return p.returncode == 0
+
+
 def _tree(commit, path="certify_ed"):
     out = subprocess.run(["git", "rev-parse", f"{commit}:{path}"], cwd=ROOT, capture_output=True, text=True)
     return out.stdout.strip() or None
 
 
-trees = {_tree(c) for c in commits if c}
-check(len(trees) == 1 and None not in trees,
-      f"all experiments ran with the same certify_ed source tree (commits {sorted(c[:7] for c in commits if c)})")
+_c = sorted(c for c in commits if c)
+trees = {_tree(c) for c in _c}
+_hashes = {r[2].get("source_hash") for r in runs.values() if r[2].get("source_hash")}
+check(bool(_c) and len(commits) == len(_c) and all(_same_source(_c[0], c) for c in _c[1:])
+      and len(_hashes) <= 1,
+      f"all experiments ran with the same computational source (commits {[c[:7] for c in _c]})")
+check(not any(r[2].get("source_dirty") for r in runs.values()),
+      "no experiment ran with uncommitted changes to certify_ed/ or experiments/")
 macro("GitCommit", ", ".join(sorted(c[:7] for c in commits if c)))
 macro("GitTree", (sorted(t for t in trees if t) or ["unknown"])[0][:10])
 _dates = {k: r[2]["started"][:10] for k, r in runs.items()}
@@ -430,9 +445,9 @@ c22 = k22.get("certifier_without_S3") or {}
 macro("CkTwentyTwoDim", thin(k22["producer"]["dim"]))
 macro("CkTwentyTwoSone", f"{stmt_time(c22, 'S1.model_fidelity'):.0f}" if "statements" in c22 else "?")
 macro("CkTwentyTwoMem", f"{c22.get('maxrss_mb', float('nan')):.0f}")
-all_s1 = [stmt_time(c, "S1.model_fidelity") for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
-          if s1_ok(c)]
-check(max(all_s1) <= stmt_time(c22, "S1.model_fidelity") + 1e-9, "E2: the N=22 momentum block has the largest S1 time")
+_s1_rows = [(stmt_time(c, "S1.model_fidelity"), r) for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
+            if s1_ok(c)]
+check(max(_s1_rows, key=lambda x: x[0])[1] is k22, "E2: the N=22 momentum block has the largest S1 time")
 k24 = next(r for r in rows2 if fam(r) == "chain-k0" and r["cfg"]["N"] == 24)
 check(s_status(k24["certifier"], "S1.model_fidelity") == "NOT_CHECKED"
       and "memory" in k24["certifier"]["statements"]["S1.model_fidelity"]["summary"],
@@ -724,7 +739,7 @@ with open(os.path.join(MS, "tables", "e5.tex"), "w") as f:
         return ", ".join(f"{n} {abbrev.get(k, k)}" for k, n in sorted(cnt.items())) or "---"
 
     for label, rs in ((f"correct ({lev[3][1]} of {lev[3][1]} members)", corr),
-                      (f"incorrect (fewer members)", trunc)):
+                      ("incorrect (fewer members)", trunc)):
         f.write(f"{label} & {len(rs)} & {sum(r['P1_flag'] for r in rs)} & {sum(r['P2_flag'] for r in rs)} & "
                 f"{stat_cell(rs, 'P3_statuses')} & {stat_cell(rs, 'P3k_S3')} \\\\\n")
     f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")

@@ -1,6 +1,16 @@
 name: tests
 on: [push, pull_request]
 jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff build
+      - run: ruff check .
+      - run: python -m build --wheel
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -23,7 +33,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e .[all]
-      - run: python run.py --no-tests --skip E0,E7
+      - run: python run.py --no-tests --skip E0,E7 --jobs 2
       - uses: actions/upload-artifact@v4
         with:
           name: quick-run

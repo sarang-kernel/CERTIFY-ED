@@ -94,7 +94,7 @@ def certify_lattice(name, thresholds=None, check_geometry=True, log=print):
     out = certify_eta(g, L, C, R, ths, sigmas=sym(g) if sym else (), log=log)
     rec.update(out)
     best = None
-    for key, v in out["thresholds"].items():
+    for _key, v in out["thresholds"].items():
         if v["certified"]:
             num, den = (int(x) for x in v["t_prime_exact"].split("/"))
             tp = Fraction(num, den)

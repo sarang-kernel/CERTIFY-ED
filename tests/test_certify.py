@@ -1,6 +1,6 @@
 """End-to-end statements on realistic claims, including injected failures."""
+from pathlib import Path
 import json
-import os
 
 import numpy as np
 import pytest
@@ -210,9 +210,9 @@ def test_certificate_roundtrip_and_tamper(tmp_path, heis10):
     p = c.save(str(tmp_path / "cert"))
     c2 = Certificate.load(p)
     assert c2.verify_integrity()["ok"]
-    body = json.load(open(p))
+    body = json.loads(Path(p).read_text())
     body["claim"]["eigenvalues"][0] += 1e-9
-    open(p, "w").write(json.dumps(body))
+    Path(p).write_text(json.dumps(body))
     with pytest.raises(ValueError):
         Certificate.load(p)
     # sidecar tamper
@@ -393,8 +393,7 @@ def test_large_stored_matrix_is_compared_matrix_free(heis10):
     assert s1["status"] == "CERTIFIED" and "probe" in s1["evidence"]
     assert status(c, "S2.eigenpairs") == "CERTIFIED"
     assert "spec operator" in (c.body.get("operator_note") or "")
-    # a stored matrix with a wrong bond fails the probe comparison
-    bad = ce.heisenberg_chain(10)
+    # a stored matrix with a wrong diagonal entry fails the probe comparison
     Hb = H.tolil(copy=True)
     Hb[0, 0] += 0.5
     c2 = ce.certify(ce.Claim(w[:2], V[:, :2], operator=Hb.tocsr(), kind="lowest"), spec,

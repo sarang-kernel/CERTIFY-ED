@@ -37,7 +37,7 @@ def test_probe_detects_fast_math_library(tmp_path):
 
 
 def test_certificate_downgrades_under_ftz(monkeypatch):
-    import numpy as np, scipy.linalg as la
+    import scipy.linalg as la
     import certify_ed as ce
     cmod = sys.modules["certify_ed.certify"]
     spec = ce.heisenberg_chain(8)

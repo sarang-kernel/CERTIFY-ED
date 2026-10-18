@@ -3,7 +3,6 @@ import os
 import subprocess
 import sys
 
-import pytest
 
 from conftest import needs_flint, needs_quspin
 

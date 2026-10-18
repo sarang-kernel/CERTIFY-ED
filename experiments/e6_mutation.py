@@ -7,6 +7,7 @@ equivalent mutants (changes with no observable effect); they are listed for insp
 
 usage: python3 e6_mutation.py [n_mutants] [workers]
 """
+from pathlib import Path
 import ast
 import os
 import random
@@ -121,7 +122,7 @@ def main():
         pool = []
         counts = {}
         for f in TARGETS:
-            src = open(os.path.join(pkg, f)).read()
+            src = Path(pkg, f).read_text()
             n = len(mutation_sites(ast.parse(src)))
             counts[f] = n
             pool += [(f, i) for i in range(n)]
@@ -149,7 +150,7 @@ def main():
             k, (f, i) = job
             d = copies[k % workers]
             path = os.path.join(d, "certify_ed", f)
-            orig = open(os.path.join(pkg, f)).read()
+            orig = Path(pkg, f).read_text()
             mutated, desc, line = apply_mutation(orig, i)
             with open(path, "w") as fh:
                 fh.write(mutated)

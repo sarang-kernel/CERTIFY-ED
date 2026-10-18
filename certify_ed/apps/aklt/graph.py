@@ -94,7 +94,7 @@ def region_map(g: Graph, region):
                 else:
                     downs[pos[u]] += 1
                     sign = -sign
-            for (kind, a, site), bd in zip(bslots, bdown):
+            for (_kind, _a, site), bd in zip(bslots, bdown):
                 downs[pos[site]] += bd
             amp = sign
             for i, k in enumerate(downs):
@@ -162,7 +162,7 @@ def reduced_region(g: Graph, X):
                 else:
                     dn[pos[u]] += 1
                     sign = -sign
-            for (kind, a, site), bd in zip(slots, bdown):
+            for (_kind, _a, site), bd in zip(slots, bdown):
                 dn[pos[site]] += bd
             amp = sign
             for i, k in enumerate(dn):

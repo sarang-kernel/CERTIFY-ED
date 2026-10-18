@@ -13,7 +13,6 @@ import datetime as _dt
 import json
 import os
 import platform
-import subprocess
 import sys
 import time
 
@@ -24,12 +23,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
 
-def _git_commit():
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
-                                       stderr=subprocess.DEVNULL).decode().strip()
-    except Exception:
-        return None
+from certify_ed.provenance import source_fingerprint  # noqa: E402
 
 
 def _jsonable(x):
@@ -53,7 +47,7 @@ class Run:
         np.random.seed(self.seed)
         env = {"experiment": self.name, "seed": self.seed, "python": sys.version,
                "platform": platform.platform(), "processor": platform.processor(),
-               "cpu_count": os.cpu_count(), "numpy": np.__version__, "git_commit": _git_commit(),
+               "cpu_count": os.cpu_count(), "numpy": np.__version__, **source_fingerprint(),
                "started": _dt.datetime.now().isoformat(timespec="seconds")}
         import scipy
         env["scipy"] = scipy.__version__

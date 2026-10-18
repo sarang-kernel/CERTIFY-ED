@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,8 @@ name = "certify-ed"
 version = "3.0.0"
 description = "Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and exact re-checks, with applications to published proofs"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [
     { name = "Sarang Vehale", email = "sarangvehale2@gmail.com" },
@@ -17,7 +18,6 @@ keywords = ["exact diagonalization", "verified computing", "eigenvalue enclosure
             "quantum many-body", "certificates"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
@@ -29,6 +29,7 @@ quspin = ["quspin>=1.0"]               # importers, label audits, QuSpin cross-c
 hdf5 = ["h5py>=3.0"]
 plots = ["matplotlib>=3.5"]
 test = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "pytest-cov", "ruff", "build"]
 all = ["python-flint>=0.6", "quspin>=1.0", "h5py>=3.0", "matplotlib>=3.5", "pytest>=7.0"]
 
 [project.scripts]
@@ -44,3 +45,11 @@ include = ["certify_ed*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = ["ignore::UserWarning"]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E9", "F", "B"]
+ignore = ["B905", "B028", "E731", "E741"]

@@ -1,6 +1,5 @@
 """Exact sector re-check (certify_ed.exact_sectors)."""
 import numpy as np
-import pytest
 import scipy.linalg as la
 
 import certify_ed as ce
@@ -53,7 +52,6 @@ def test_wrong_sector_vector_is_not_certified():
 
 
 def test_complex_momenta_square_lattice_full_block():
-    Lx = Ly = 2
     spec = ce.heisenberg_square(4, 2)              # 8 sites; translations of order 4 and 2
     n = spec.n_sites
     st = ce.u1_state_set(spec, n // 2)

@@ -1,6 +1,4 @@
-import numpy as np
 import scipy.linalg as la
-import scipy.sparse.linalg as spla
 
 import certify_ed as ce
 from certify_ed.su2 import su2_structural

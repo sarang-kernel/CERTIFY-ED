@@ -1,9 +1,11 @@
-__pycache__/
-*.pyc
 *.egg-info/
+*.pyc
+.coverage
+.pytest_cache/
+__pycache__/
 build/
 dist/
-.pytest_cache/
 experiments/results/
+htmlcov/
 legacy/v1/results/
 results/

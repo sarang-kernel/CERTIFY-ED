@@ -5,8 +5,8 @@
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
     certify-ed list                                  the experiments and what they establish
     certify-ed test [PYTEST ARGS...]                 the test suite (repository checkout)
-    certify-ed reproduce [--full] [--only E0,E9] [--skip E2] [--with-mutation] [--out DIR]
-                                                     tests + experiments + numbers into one run dir
+    certify-ed reproduce [--full] [--only E0,E9] [--skip E2] [--with-mutation] [--jobs N]
+                         [--out DIR [--resume]]      tests + experiments + numbers into one run dir
     certify-ed numbers [--run DIR] [--manuscript DIR]
 
 `python run.py` in the repository is `certify-ed reproduce` (quick mode; `--full` for everything).
@@ -40,13 +40,13 @@ EXPERIMENTS = {
     "E10": ("e10_aklt.py", ["quick"], ["full"], (2, 75), "Pomata-Wei AKLT gap criteria in exact arithmetic"),
 }
 OPT_IN = {"E6"}
+# timing or memory is part of what these measure: never run them next to another experiment
+EXCLUSIVE = {"E2", "E6", "E8"}
 NEEDS = {"E0": ["flint", "quspin"], "E1": ["quspin"], "E3": ["flint"], "E4": ["quspin"], "E5": ["quspin"],
          "E7": ["flint"], "E9": ["flint"], "E10": ["flint"]}
 
 
-def repo_root():
-    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return here if os.path.isdir(os.path.join(here, "experiments")) else None
+from .provenance import repo_root, _git, source_fingerprint  # noqa: E402
 
 
 def _have(mod):
@@ -55,13 +55,6 @@ def _have(mod):
         return True
     except Exception:
         return False
-
-
-def _git(root, *args):
-    try:
-        return subprocess.check_output(["git", *args], cwd=root, stderr=subprocess.DEVNULL).decode().strip()
-    except Exception:
-        return None
 
 
 def environment():
@@ -126,7 +119,7 @@ def cmd_spectrum(a):
 
 def cmd_list(a):
     print(f"{'name':5s} {'quick (min)':>12s} {'full (min)':>11s}  purpose")
-    for k, (script, q, f, (mq, mf), purpose) in EXPERIMENTS.items():
+    for k, (_script, q, _f, (mq, mf), purpose) in EXPERIMENTS.items():
         quick = "opt-in" if k in OPT_IN else (str(mq) if q is not None else "-")
         print(f"{k:5s} {quick:>12s} {mf:11d}  {purpose}")
     return 0
@@ -153,18 +146,23 @@ def cmd_test(a):
     return code
 
 
-def _run_experiment(root, name, args, out, log):
+def _run_experiment(root, name, args, out):
+    """Run one experiment script with one BLAS thread; its records are the new directories of `out`
+    whose name starts with the script's experiment number (safe when experiments run concurrently)."""
     script = EXPERIMENTS[name][0]
     env = dict(os.environ, CERTIFY_RESULTS=out, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                MKL_NUM_THREADS="1", NUMBA_NUM_THREADS="1", PYTHONPATH=root)
-    before = set(os.listdir(out))
+    prefix = name.lower() + "_"
+    before = {d for d in os.listdir(out) if d.startswith(prefix)}
+    fp = source_fingerprint(root)
     t = time.time()
     with open(os.path.join(out, f"{name}.log"), "w") as f:
         p = subprocess.run([sys.executable, script, *args], cwd=os.path.join(root, "experiments"),
                            stdout=f, stderr=subprocess.STDOUT, env=env)
-    new = sorted(set(os.listdir(out)) - before - {f"{name}.log"})
+    new = sorted(d for d in os.listdir(out) if d.startswith(prefix) and d not in before
+                 and os.path.isdir(os.path.join(out, d)))
     return {"script": script, "args": args, "returncode": p.returncode, "seconds": round(time.time() - t, 1),
-            "records": new, "log": f"{name}.log"}
+            "records": new, "log": f"{name}.log", "status": "ok" if p.returncode == 0 else "failed", **fp}
 
 
 def _numbers(root, run_dir, manuscript, log):
@@ -199,6 +197,7 @@ def cmd_reproduce(a):
     os.makedirs(out, exist_ok=True)
     manifest = {"mode": mode, "started": _dt.datetime.now().isoformat(timespec="seconds"),
                 "git_commit": _git(root, "rev-parse", "HEAD"), "git_dirty": bool(_git(root, "status", "--porcelain")),
+                "source": source_fingerprint(root),
                 "environment": environment(), "steps": {}}
     path = os.path.join(out, "manifest.json")
     if os.path.exists(path):                     # resume / extend an earlier run in the same directory
@@ -235,7 +234,13 @@ def cmd_reproduce(a):
         log(f"tests: {tail} ({secs:.0f}s)")
         save()
     names = [n.strip().upper() for n in a.only.split(",")] if a.only else list(EXPERIMENTS)
+    unknown = [n for n in names if n not in EXPERIMENTS]
+    if unknown:
+        log(f"unknown experiment(s): {', '.join(unknown)}")
+        return 2
     skip = {n.strip().upper() for n in a.skip.split(",")} if a.skip else set()
+    current = source_fingerprint(root)
+    todo = []
     for name in names:
         script, qargs, fargs, (mq, mf), purpose = EXPERIMENTS[name]
         if name in skip or (name in OPT_IN and not a.with_mutation and not a.only):
@@ -248,16 +253,39 @@ def cmd_reproduce(a):
         if missing:
             manifest["steps"][name] = {"status": "skipped", "reason": f"needs {', '.join(missing)}"}
             log(f"{name}: skipped (needs {', '.join(missing)})")
-            save()
             continue
-        log(f"{name} ({purpose}; about {mf if mode == 'full' else mq} min) ...")
-        r = _run_experiment(root, name, args, out, log)
-        r["status"] = "ok" if r["returncode"] == 0 else "failed"
-        r["git_commit"] = _git(root, "rev-parse", "HEAD")
-        r["git_dirty"] = bool(_git(root, "status", "--porcelain"))
+        prev = manifest["steps"].get(name, {})
+        if (a.resume and prev.get("status") == "ok" and prev.get("args") == args
+                and prev.get("source_hash") == current["source_hash"] and not prev.get("source_dirty")
+                and not current["source_dirty"]):
+            log(f"{name}: kept from the earlier run (same computational source {current['source_hash']})")
+            continue
+        todo.append((name, args, mf if mode == "full" else mq, purpose))
+    save()
+
+    def finish(name, r):
         manifest["steps"][name] = r
         log(f"{name}: {r['status']} in {r['seconds']:.0f}s -> {', '.join(r['records']) or 'no record'}")
         save()
+
+    parallel = [t for t in todo if t[0] not in EXCLUSIVE]
+    exclusive = [t for t in todo if t[0] in EXCLUSIVE]
+    jobs = max(1, int(a.jobs or 1))
+    if jobs > 1 and len(parallel) > 1:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        log(f"running {len(parallel)} experiments on {jobs} workers, then {len(exclusive)} alone")
+        with ThreadPoolExecutor(jobs) as ex:
+            futs = {}
+            for name, args, mins, purpose in sorted(parallel, key=lambda t: -t[2]):   # longest first
+                log(f"{name} ({purpose}; about {mins} min) started")
+                futs[ex.submit(_run_experiment, root, name, args, out)] = name
+            for fu in as_completed(futs):
+                finish(futs[fu], fu.result())
+    else:
+        exclusive = parallel + exclusive
+    for name, args, mins, purpose in exclusive:
+        log(f"{name} ({purpose}; about {mins} min) ...")
+        finish(name, _run_experiment(root, name, args, out))
     if not a.no_numbers:
         ms = os.path.abspath(a.manuscript or os.path.join(out, "paper"))
         manifest["steps"]["numbers"] = _numbers(root, out, ms, log)
@@ -277,6 +305,9 @@ def _summary(out, m):
              f"* commit `{m['git_commit']}`{' (with uncommitted changes)' if m['git_dirty'] else ''}",
              *[f"* extended at {e['at']} from commit `{e['git_commit']}`" for e in m.get("extended", [])],
              f"* started {m['started']}, finished {m.get('finished')}",
+             f"* computational source (certify_ed/ + experiments/, see certify_ed.provenance): "
+             f"{', '.join(sorted({v.get('source_hash') for v in m['steps'].values() if isinstance(v, dict) and v.get('source_hash')})) or 'n/a'}"
+             f"{' (UNCOMMITTED CHANGES in some step)' if any(isinstance(v, dict) and v.get('source_dirty') for v in m['steps'].values()) else ''}",
              f"* floating-point standard model holds: "
              f"{m['environment']['float_environment']['standard_model_hypotheses_hold']}", "",
              "| step | status | seconds | records |", "|---|---|---|---|"]
@@ -326,6 +357,10 @@ def main(argv=None):
     r.add_argument("--with-mutation", action="store_true", help="include E6 (mutation analysis)")
     r.add_argument("--no-tests", action="store_true"); r.add_argument("--no-numbers", action="store_true")
     r.add_argument("--out", help="run directory; an existing one of the same mode is extended (commits recorded per step)")
+    r.add_argument("--resume", action="store_true",
+                   help="with --out: keep steps that already succeeded with the same computational source")
+    r.add_argument("--jobs", type=int, default=1,
+                   help="experiments to run at once (E2, E6, E8 always run alone); one BLAS thread each")
     r.add_argument("--manuscript"); r.set_defaults(fn=cmd_reproduce)
     n = sub.add_parser("numbers", help="regenerate numbers and tables from a run directory")
     n.add_argument("--run"); n.add_argument("--manuscript"); n.set_defaults(fn=cmd_numbers)

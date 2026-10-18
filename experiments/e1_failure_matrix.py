@@ -199,7 +199,6 @@ def main():
         # ---------------------------------------------------------- F4 missing Jordan-Wigner sign at the PBC bond
         specF = ce.spinless_fermion_chain(N, t=1.0, V=1.0, boundary="periodic")
         bF = spinless_fermion_basis_1d(N, Nf=N // 2)
-        HF = qs_H(specF.to_quspin_static(), bF).tocsr()
         # producer treats the wrap-around hopping bosonically (hard-core bosons): no string sign
         specB = ce.ModelSpec.from_static(N, ce.LocalSpace.spin_space("1/2", "pauli_pm1"),
                                          [["+-", [[-1.0, i, (i + 1) % N] for i in range(N)]],

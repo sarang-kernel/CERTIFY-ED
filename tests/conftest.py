@@ -2,14 +2,11 @@ import os
 import sys
 import warnings
 
-import numpy as np
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 warnings.filterwarnings("ignore", category=UserWarning)
 
-from certify_ed.localops import LocalSpace
-from certify_ed.spec import ModelSpec
 
 try:
     import quspin  # noqa: F401

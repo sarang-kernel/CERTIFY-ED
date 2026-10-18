@@ -115,9 +115,13 @@ def landscape(S2, c1, c3, classes=None):
     return out
 
 
-def printed_coupling_check(c1=PRINTED["c1"], c3=PRINTED["c3"], published=PRINTED["published_bound"]):
-    """Rigorous: the all-singlet configuration has eigenvalue -12 c1 + c17 E0(ring), with E0 enclosed by
-    certify(); returns its certified upper bound and whether it lies below the published bound."""
+def printed_coupling_check(c1=PRINTED["c1"], c3=PRINTED["c3"], published=PRINTED["published_bound"],
+                           exact=True):
+    """Rigorous: the all-singlet configuration has eigenvalue -12 c1 + c17 E0(ring). E0 is enclosed by
+    certify() (S2 + S3, standard floating-point model) and, with exact=True and python-flint, again by
+    exact_recheck_lowest (integer arithmetic only, scaled spin-1 basis); the bound used is the exact one
+    when available. Returns the certified upper bound on that eigenvalue and whether it lies below the
+    published bound."""
     import scipy.linalg as la
     from ...certify import Claim, certify
     from ...construct import build_bitwise
@@ -132,8 +136,21 @@ def printed_coupling_check(c1=PRINTED["c1"], c3=PRINTED["c3"], published=PRINTED
     assert st["S2.eigenpairs"]["status"] == "CERTIFIED" and st["S3.completeness"]["status"] == "CERTIFIED"
     ev = st["S2.eigenpairs"]["evidence"]
     rad = Fraction(ev["max_radius"]) + Fraction(ev["model_shift"])
+    out = {"E0_radius_standard_model": float(rad)}
+    if exact:
+        try:
+            from ...checker import exact_recheck_lowest
+            r = exact_recheck_lowest(spec, w[:1], V[:, :1], next_hint=w[1])
+            out["exact_recheck"] = r["status"]
+            if r["status"] == "CERTIFIED":
+                rad = Fraction(r["radii"][0])
+                out["E0_radius_exact"] = float(rad)
+        except ImportError:
+            out["exact_recheck"] = "NOT_CHECKED (python-flint missing)"
     E0 = Fraction(float(w[0]))
     val_hi = -12 * c1 + c17 * (E0 + rad if c17 > 0 else E0 - rad)
-    return {"c1": str(c1), "c3": str(c3), "c17": str(c17), "E0_ring": float(w[0]), "E0_radius": float(rad),
-            "eigenvalue_upper": float(val_hi), "published_bound": float(pub),
-            "contradiction": bool(val_hi < pub), "margin": float(pub - val_hi)}
+    out.update({"c1": str(c1), "c3": str(c3), "c17": str(c17), "E0_ring": float(w[0]), "E0_radius": float(rad),
+                "eigenvalue_upper": float(val_hi), "published_bound": float(pub),
+                "contradiction": bool(val_hi < pub), "margin": float(pub - val_hi),
+                "no_floating_point_assumption": out.get("exact_recheck") == "CERTIFIED"})
+    return out

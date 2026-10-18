@@ -337,7 +337,7 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     for j, g in enumerate(pts):
         cum += comps[j][2]
         tot, dmax, fail = 0, Fraction(0), False
-        for qn, m, (Are, Aim, D) in mats:
+        for _qn, _m, (Are, Aim, D) in mats:
             nu, delta = _count_sector_below(Are, Aim, D, g, den)
             if nu is None:
                 fail = True; break

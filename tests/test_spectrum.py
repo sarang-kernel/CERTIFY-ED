@@ -4,7 +4,6 @@ Includes the five synthetic classes of symveig's test suite and the two countere
 import numpy as np
 import pytest
 import scipy.linalg as la
-import scipy.sparse as sp
 
 import certify_ed as ce
 from certify_ed.spectrum import enclose_spectrum

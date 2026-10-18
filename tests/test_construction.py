@@ -1,9 +1,8 @@
 """The two reference builders must agree exactly, and must agree with QuSpin."""
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
-from certify_ed.construct import (build_bitwise, build_kron, cross_construct, matrix_difference,
+from certify_ed.construct import (build_bitwise, cross_construct, matrix_difference,
                                   SpecOperator)
 from certify_ed.invariants import spec_invariants, matrix_invariants, compare_invariants
 from certify_ed.localops import LocalSpace

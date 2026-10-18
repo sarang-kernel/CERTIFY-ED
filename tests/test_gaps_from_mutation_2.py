@@ -6,7 +6,6 @@ import sys
 from fractions import Fraction
 
 import numpy as np
-import pytest
 import scipy.linalg as la
 import scipy.sparse as sp
 
