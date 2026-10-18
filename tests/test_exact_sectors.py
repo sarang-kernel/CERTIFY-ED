@@ -79,3 +79,17 @@ def test_non_symmetry_rejected():
     w, V = la.eigh(ce.build_bitwise(spec, st).toarray())
     r = exact_recheck_sector_lowest(spec, st, [translation(spec)], {0: 0}, w[:1], V[:, :1], next_hint=w[1])
     assert r["status"] == "FAILED" and "not a symmetry" in r["reason"]
+
+
+def test_spin1_chain_k0_sector_with_flip_and_reflection():
+    """Scaled-basis weights binom(2, k) are flip-symmetric, so the spin flip stays an exact symmetry."""
+    spec = ce.spin1_heisenberg_chain(6)
+    st = ce.u1_state_set(spec, 6)                    # total digit sum 6 <-> S^z = 0
+    H = ce.build_bitwise(spec, st)
+    T = translation(spec)
+    V0 = cyclic_isometry(st, T, 0)
+    w, Y = la.eigh((V0.conj().T @ H @ V0).toarray())
+    r = exact_recheck_sector_lowest(spec, st, [T, reflection(spec), spin_flip(spec)], {0: 0}, w[:2],
+                                    (V0 @ Y[:, :2]).real, next_hint=w[2])
+    assert r["status"] == "CERTIFIED", r
+    assert sum(s["dim"] for s in r["sectors"]) == r["dim_fixed"] == V0.shape[1]

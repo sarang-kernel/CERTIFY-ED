@@ -16,6 +16,9 @@ Statements (ids are stable and appear in certificates):
                       projector error, certified observables, quantum numbers
   S5.corroboration    optional recomputation with algorithmically distinct
                       solvers, with their shared components declared
+  S6.exact_recheck    optional (Options.exact_recheck): S2 radii and the S3 count of a
+                      'lowest' claim re-derived in integer arithmetic, with no
+                      floating-point assumption (checker.exact_recheck_lowest)
 
 Every statement records its evidence, its assumptions and its cost in seconds.
 """
@@ -93,6 +96,8 @@ class Options:
     corroborate: Sequence[str] = ()
     store_eigenvectors: bool = False
     probe_vectors: int = 3
+    exact_recheck: bool = False              # S6: re-derive S2 radii and S3 count in exact arithmetic
+    exact_max_dim: int = 4000
     seed: int = 12345
 
 
@@ -519,6 +524,37 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
 # main entry point
 # ---------------------------------------------------------------------------
 
+def _exact_statement(claim, spec, mu, X, opts, statements, t0):
+    """S6: the claim re-derived in exact arithmetic (checker.exact_recheck_lowest)."""
+    sid = "S6.exact_recheck"
+    if spec is None:
+        return _stmt(sid, "NOT_CHECKED", "needs a model specification", {}, [], time.time() - t0)
+    if claim.kind != "lowest" or X is None:
+        return _stmt(sid, "NOT_CHECKED", "implemented for 'lowest' claims with eigenvectors", {}, [], time.time() - t0)
+    if claim.sector_isometry is not None:
+        return _stmt(sid, "NOT_CHECKED", "symmetry-adapted claims: use exact_recheck_sector_lowest", {}, [],
+                     time.time() - t0)
+    n = X.shape[0]
+    if n > opts.exact_max_dim:
+        return _stmt(sid, "NOT_CHECKED", f"dimension {n} above exact_max_dim {opts.exact_max_dim}", {}, [],
+                     time.time() - t0)
+    from .checker import exact_recheck_lowest
+    s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
+    hint = (s3 or {}).get("evidence", {}).get("next_eigenvalue_estimate")
+    try:
+        r = exact_recheck_lowest(spec, mu, X, claim.states, next_hint=hint, max_dim=opts.exact_max_dim)
+    except ImportError:
+        return _stmt(sid, "NOT_CHECKED", "python-flint not installed", {}, [], time.time() - t0)
+    st = r["status"] if r["status"] in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") else "INCONCLUSIVE"
+    summ = {"CERTIFIED": f"{mu.size} lowest eigenvalues re-derived in exact arithmetic (max radius "
+                         f"{max(r['radii']):.2e}); no floating-point assumption",
+            "FAILED": "exact inertia counts contradict the claim",
+            "INCONCLUSIVE": "exact re-check could not separate the claimed values from the rest",
+            "NOT_CHECKED": r.get("reason", "not checked")}[st]
+    return _stmt(sid, st, summ, r, ["Krylov-Bogolyubov; Sylvester's law of inertia; Weyl's inequality"],
+                 time.time() - t0)
+
+
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     opts = options or Options()
     t_start = time.time()
@@ -810,6 +846,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         cor = corroborate(op, mu, enc, list(opts.corroborate))
         statements.append(_stmt("S5.corroboration", cor["status"], cor["summary"], cor, [], time.time() - t0))
 
+    # ---------------- S6 exact re-check (no floating-point assumption)
+    if opts.exact_recheck:
+        t0 = time.time()
+        statements.append(_exact_statement(claim, spec, mu, X, opts, statements, t0))
+
     # ---------------- assemble
     subject = {"description": (spec.name if spec else "operator supplied without spec"),
                "spec": spec.to_dict() if spec else None,
@@ -831,7 +872,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         "that the model specification is the Hamiltonian the authors intend (only producer operator == spec is checked)",
         "correctness of the producer's code in general (only this result is checked)",
     ]
-    if enc is not None and enc.rigorous:
+    s6_ok = any(s["id"] == "S6.exact_recheck" and s["status"] == "CERTIFIED" for s in statements)
+    if enc is not None and enc.rigorous and not s6_ok:
         not_verified.append("interval-arithmetic proof: bounds rely on the standard floating-point model (see 'arithmetic')")
     if claim.kind == "subset":
         not_verified.append("completeness: no claim that other eigenvalues are absent")
@@ -844,7 +886,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         why = ("the floating-point environment of this process violates the standard model "
                f"(failed probes: {', '.join(fp_probe['failed'])}); bounds computed under it are not certified")
         for s in statements:
-            if s["status"] == "CERTIFIED":
+            if s["status"] == "CERTIFIED" and s["id"] != "S6.exact_recheck":   # S6 uses no floating point
                 s["status"] = "INCONCLUSIVE"
                 s["summary"] = why + "; would otherwise be: " + s["summary"]
         not_verified.append("bounds: " + why)

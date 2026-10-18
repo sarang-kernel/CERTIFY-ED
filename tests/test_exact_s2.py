@@ -10,10 +10,8 @@ from certify_ed.spec import ModelSpec
 
 
 def _dense(ex, n):
-    R, C, RE, IM, den = ex
-    H = np.zeros((n, n), dtype=complex)
-    H[R, C] = [complex(float(a) / den, float(b) / den) for a, b in zip(RE, IM)]
-    return H
+    from certify_ed.checker import exact_dense
+    return exact_dense(ex)
 
 
 @pytest.mark.parametrize("make", [lambda: ce.heisenberg_chain(8, J2=0.3, Delta=0.7),
@@ -81,9 +79,30 @@ def test_non_hermitian_spec_detected():
     assert r["hermitian"] is False
 
 
-def test_irrational_local_elements_rejected():
-    with pytest.raises(ValueError):
-        exact_matrix(ce.spin1_heisenberg_chain(3))
+@pytest.mark.parametrize("make", [lambda: ce.spin1_heisenberg_chain(5),
+                                  lambda: ce.bose_hubbard_chain(4, n_max=3),
+                                  lambda: ModelSpec.from_static(4, __import__("certify_ed").LocalSpace.spin_space("3/2"),
+                                      [["+-", [[0.5, i, (i + 1) % 4] for i in range(4)]],
+                                       ["-+", [[0.5, i, (i + 1) % 4] for i in range(4)]],
+                                       ["zz", [[1.0, i, (i + 1) % 4] for i in range(4)]],
+                                       ["x", [[0.3, i] for i in range(4)]]])])
+def test_higher_spin_and_bosons_exact(make):
+    """Spin >= 1 and bosons have irrational matrix elements; in the scaled basis D^-1 H D they are
+    rational, and the exact layer certifies their spectra."""
+    spec = make()
+    H = ce.build_bitwise(spec).toarray()
+    ex = exact_matrix(spec)
+    assert np.abs(_dense(ex, H.shape[0]) - H).max() <= 1e-13 * max(1.0, np.abs(H).max())
+    from certify_ed.checker import is_hermitian_exact
+    assert is_hermitian_exact(ex)
+    w, V = la.eigh(H)
+    k = 1
+    while w[k] - w[k - 1] < 1e-8:
+        k += 1
+    from certify_ed.checker import exact_recheck_lowest
+    r = exact_recheck_lowest(spec, w[:k], V[:, :k], next_hint=w[k])
+    assert r["status"] == "CERTIFIED", r
+    assert max(r["radii"]) < 1e-12
 
 
 def _gap_k(w, kmin):
@@ -126,3 +145,24 @@ def test_exact_recheck_lowest_detects_truncated_multiplet():
     from certify_ed.checker import exact_recheck_lowest
     r = exact_recheck_lowest(spec, w[:k], V[:, :k], st, next_hint=w[k])
     assert r["status"] != "CERTIFIED", r
+
+
+def test_certify_with_s6_exact_recheck():
+    spec = ce.spin1_heisenberg_chain(6)
+    st = ce.u1_state_set(spec, 6)
+    H = ce.build_bitwise(spec, st)
+    w, V = la.eigh(H.toarray())
+    k = 1
+    while w[k] - w[k - 1] < 1e-8:
+        k += 1
+    c = ce.certify(ce.Claim(w[:k], V[:, :k], operator=H, kind="lowest", states=st), spec,
+                   ce.Options(exact_recheck=True))
+    s6 = [s for s in c.statements if s["id"] == "S6.exact_recheck"][0]
+    assert s6["status"] == "CERTIFIED", s6
+    assert not any("standard floating-point model" in x for x in c.body["not_verified"])
+    # a claim that skips a level fails S6 as well
+    sel = [0, 2] if w[1] - w[0] > 1e-8 else [0, 3]
+    c2 = ce.certify(ce.Claim(w[sel], V[:, sel], operator=H, kind="lowest", states=st), spec,
+                    ce.Options(exact_recheck=True))
+    s6b = [s for s in c2.statements if s["id"] == "S6.exact_recheck"][0]
+    assert s6b["status"] in ("FAILED", "INCONCLUSIVE")

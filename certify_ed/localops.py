@@ -201,6 +201,89 @@ class LocalSpace:
             return [(0, k.astype(complex))]
         raise KeyError(letter)
 
+    # ------------------------------------------------------- exact (scaled) form
+    def exact_weights(self) -> List[int]:
+        """Integer weights w_k = d_k^2 of the diagonal scaling D = diag(d_k) in which every letter has
+        rational matrix elements: spin S: binom(2S, k) (symmetric under the flip k <-> q-1-k);
+        boson: k!; fermion: 1. All weights are >= 1."""
+        from math import comb, factorial
+        if self.kind == "spin":
+            twoS = self.q - 1
+            return [comb(twoS, k) for k in range(self.q)]
+        if self.kind == "boson":
+            return [factorial(k) for k in range(self.q)]
+        return [1] * self.q
+
+    def _exact_amp2(self, delta: int) -> List[Fraction]:
+        """Exact squares of the shift amplitudes <k+delta|S^+ or S^-|k> (spin) or <k+delta|b^+-|k>
+        (boson), unscaled; zero where the target digit is out of range."""
+        q = self.q
+        out = []
+        for k in range(q):
+            if not (0 <= k + delta < q):
+                out.append(Fraction(0)); continue
+            if self.kind == "spin":
+                S = Fraction(self.spin); m = k - S
+                out.append(S * (S + 1) - m * (m + delta))
+            elif self.kind == "boson":
+                out.append(Fraction(k + 1) if delta > 0 else Fraction(k))
+            else:
+                out.append(Fraction(1))
+        return out
+
+    def exact_scaled_components(self, letter: str):
+        """Exact shift components of D^-1 o D: [(delta, [(re, im) Fractions per digit k])], where
+        entry k is <k+delta|D^-1 o D|k>. With the weights of exact_weights every entry is rational
+        (spin: S^+ -> k+1, S^- -> 2S-k+1; boson: b^+ -> 1, b -> k). Raises ValueError if a scaled
+        element is irrational (cannot happen for the spaces defined here)."""
+        from math import isqrt
+        q = self.q
+        w = self.exact_weights()
+        Z = Fraction(0)
+
+        def sqrt_rational(f: Fraction) -> Fraction:
+            a, b = f.numerator, f.denominator
+            ra, rb = isqrt(a), isqrt(b)
+            if ra * ra != a or rb * rb != b:
+                raise ValueError(f"scaled element sqrt({f}) is irrational")
+            return Fraction(ra, rb)
+
+        def scaled(delta):
+            a2 = self._exact_amp2(delta)
+            return [sqrt_rational(a2[k] * w[k] / w[k + delta]) if a2[k] != 0 else Z for k in range(q)]
+
+        if letter == "I":
+            return [(0, [(Fraction(1), Z)] * q)]
+        if self.kind == "fermion":
+            comps = self.shift_components(letter)       # all rational for fermions
+            return [(d, [(Fraction(float(a.real)), Fraction(float(a.imag))) for a in amp]) for d, amp in comps]
+        if self.kind == "spin":
+            S = Fraction(self.spin)
+            pm = Fraction(2) if self.convention == "pauli" else Fraction(1)
+            xyz = Fraction(2) if self.convention in ("pauli", "pauli_pm1") else Fraction(1)
+            up_, dn = scaled(+1), scaled(-1)
+            if letter == "z":
+                return [(0, [(xyz * (k - S), Z) for k in range(q)])]
+            if letter == "+":
+                return [(+1, [(pm * v, Z) for v in up_])]
+            if letter == "-":
+                return [(-1, [(pm * v, Z) for v in dn])]
+            if letter == "x":
+                h = xyz / 2
+                return [(+1, [(h * v, Z) for v in up_]), (-1, [(h * v, Z) for v in dn])]
+            if letter == "y":
+                h = xyz / 2
+                return [(+1, [(Z, -h * v) for v in up_]), (-1, [(Z, h * v) for v in dn])]
+            raise KeyError(letter)
+        # boson
+        if letter == "+":
+            return [(+1, [(v, Z) for v in scaled(+1)])]
+        if letter == "-":
+            return [(-1, [(v, Z) for v in scaled(-1)])]
+        if letter == "n":
+            return [(0, [(Fraction(k), Z) for k in range(q)])]
+        raise KeyError(letter)
+
     def jw_letter(self, letter: str) -> bool:
         """Whether this letter carries a Jordan-Wigner string."""
         return self.kind == "fermion" and letter in ("+", "-")

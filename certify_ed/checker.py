@@ -144,47 +144,45 @@ def check_semidefinite_exact(A: np.ndarray):
     return out
 
 
-# --------------------------------------------------------------------------- exact S2 re-check
-def _exact_rational(v, max_den=1 << 12):
-    """Exact Fraction of a binary64 value if it is a rational with a small denominator, else None
-    (irrational local matrix elements such as sqrt(2) are rejected)."""
-    from fractions import Fraction
-    f = Fraction(float(v))
-    return f if f.denominator <= max_den else None
+# --------------------------------------------------------------------------- exact re-check layer
+from collections import namedtuple
+
+ExactMatrix = namedtuple("ExactMatrix", "rows cols re im den weights")
+ExactMatrix.__doc__ = """The declared model in exact form. K = (re + i im) / den is the scaled matrix D^-1 H D with
+D = diag(sqrt(weights)) (weights: positive integers, one per basis state, constant on symmetry orbits).
+W K with W = diag(weights) equals D H D: Hermitian, integer after scaling by den. For q = 2 spaces all
+weights are 1 and K = H."""
 
 
-def exact_matrix(spec, states=None):
-    """The declared model as an exact matrix: H = (Re + i Im) / den with integer entries.
+def exact_matrix(spec, states=None) -> ExactMatrix:
+    """The declared model as an exact matrix (see ExactMatrix).
 
-    Couplings are the binary64 numbers in the spec, taken exactly. Local matrix elements must be
-    rationals (true for every q = 2 space: spin-1/2 in all conventions, fermions; and for boson
-    occupation operators n). Spaces with irrational elements (spin >= 1 raising operators,
-    boson b^dagger) raise ValueError. Returns (rows, cols, re, im, den) with Python-int object arrays,
-    duplicates summed, entries sorted by (row, col)."""
+    Couplings are the binary64 numbers in the spec, taken exactly. Local operators are taken in the
+    scaled basis of LocalSpace.exact_weights, where every matrix element is rational, so every local
+    space (spin-S in all conventions, fermions, bosons) is covered. Entries are Python ints in object
+    arrays, duplicates summed, sorted by (row, col)."""
     import itertools
-    from fractions import Fraction
     from math import lcm
     from .construct import full_state_set, _popcount
     st = states if states is not None else full_state_set(spec)
     s0 = st.states_in_order()
     n = st.size
     N, q, local = spec.n_sites, spec.q, spec.local
+    lw = local.exact_weights()
+    weights = np.ones(n, dtype=object)
+    for site in range(N):
+        digit = (s0 // q ** (N - 1 - site)) % q
+        weights = weights * np.array(lw, dtype=object)[digit]
     col_idx = np.arange(n)
-    groups = []                     # (rows, cols, re_int, im_int, Fraction scale)
+    groups = []
     for term in spec.terms:
-        comps = [local.shift_components(letter) for letter in term.op]
-        # exact components: per component, (delta, num_re, num_im, den)
         ex = []
-        for comp in comps:
+        for letter in term.op:
             row = []
-            for delta, ampvec in comp:
-                fr = [_exact_rational(np.real(a)) for a in ampvec]
-                fi = [_exact_rational(np.imag(a)) for a in ampvec]
-                if any(x is None for x in fr + fi):
-                    raise ValueError(f"local operator {term.op!r} has irrational matrix elements")
-                d = lcm(*[x.denominator for x in fr + fi])
-                row.append((delta, np.array([int(x * d) for x in fr], dtype=object),
-                            np.array([int(x * d) for x in fi], dtype=object), d))
+            for delta, vals in local.exact_scaled_components(letter):
+                d = lcm(*[x.denominator for v in vals for x in v])
+                row.append((delta, np.array([int(v[0] * d) for v in vals], dtype=object),
+                            np.array([int(v[1] * d) for v in vals], dtype=object), d))
             ex.append(row)
         for c, sites in term.couplings:
             cr, ci = Fraction(float(np.real(c))), Fraction(float(np.imag(c)))
@@ -202,10 +200,7 @@ def exact_matrix(spec, states=None):
                     valid = (new >= 0) & (new < q)
                     fr_, fi_ = nr[digit], ni[digit]
                     if local.jw_letter(letter):
-                        if local.jw_string == "higher":
-                            side = s & ((1 << (N - 1 - site)) - 1)
-                        else:
-                            side = s >> (N - site)
+                        side = s & ((1 << (N - 1 - site)) - 1) if local.jw_string == "higher" else s >> (N - site)
                         sgn = np.where(_popcount(side) % 2 == 1, -1, 1).astype(object)
                         fr_, fi_ = fr_ * sgn, fi_ * sgn
                     are, aim = are * fr_ - aim * fi_, are * fi_ + aim * fr_
@@ -216,18 +211,16 @@ def exact_matrix(spec, states=None):
                 if not np.any(m):
                     continue
                 r, found = st.index_of(s[m])
-                # coefficient (cr + i ci) / dprod
-                re = are[m][found]; im = aim[m][found]
-                groups.append((r[found], col_idx[m][found], re, im, cr / dprod, ci / dprod))
+                groups.append((r[found], col_idx[m][found], are[m][found], aim[m][found], cr / dprod, ci / dprod))
     if not groups:
         z = np.zeros(0, dtype=object)
-        return np.zeros(0, np.int64), np.zeros(0, np.int64), z, z, 1
+        return ExactMatrix(np.zeros(0, np.int64), np.zeros(0, np.int64), z, z, 1, weights)
     den = 1
     for g in groups:
         den = lcm(den, g[4].denominator, g[5].denominator)
     R, C, RE, IM = [], [], [], []
     for r, c, re, im, kr, ki in groups:
-        ar, ai = int(kr * den), int(ki * den)       # (ar + i ai) (re + i im)
+        ar, ai = int(kr * den), int(ki * den)
         R.append(r); C.append(c)
         RE.append(re * ar - im * ai); IM.append(re * ai + im * ar)
     R = np.concatenate(R).astype(np.int64); C = np.concatenate(C).astype(np.int64)
@@ -239,7 +232,23 @@ def exact_matrix(spec, states=None):
     RE = np.add.reduceat(RE, starts); IM = np.add.reduceat(IM, starts)
     R, C = R[starts], C[starts]
     keep = (RE != 0) | (IM != 0)
-    return R[keep], C[keep], RE[keep], IM[keep], den
+    return ExactMatrix(R[keep], C[keep], RE[keep], IM[keep], den, weights)
+
+
+def exact_dense(ex: ExactMatrix) -> np.ndarray:
+    """Floating-point H = D K D^-1 (for comparisons and tests only)."""
+    n = ex.weights.size
+    d = np.sqrt(np.array([float(w) for w in ex.weights]))
+    H = np.zeros((n, n), dtype=complex)
+    H[ex.rows, ex.cols] = [complex(float(a) / ex.den, float(b) / ex.den) for a, b in zip(ex.re, ex.im)]
+    return (d[:, None] * H) / d[None, :]
+
+
+def is_hermitian_exact(ex: ExactMatrix) -> bool:
+    """W K Hermitian, checked exactly: w_r K_rc == conj(w_c K_cr) for every stored entry."""
+    w = ex.weights
+    ent = {(int(r), int(c)): (a * w[r], b * w[r]) for r, c, a, b in zip(ex.rows, ex.cols, ex.re, ex.im)}
+    return all(ent.get((c, r), (0, 0)) == (a, -b) for (r, c), (a, b) in ent.items())
 
 
 def _float_vector_to_int(x):
@@ -254,116 +263,187 @@ def _float_vector_to_int(x):
     E = min([int(e[z].min()) for e, z in zip(exps, nz) if np.any(z)] + [0])
     outs = []
     for mm, e in zip(mants, exps):
-        o = np.array([int(a) << int(b - E) if a != 0 else 0 for a, b in zip(mm.tolist(), e.tolist())], dtype=object)
-        outs.append(o)
+        outs.append(np.array([int(a) << int(b - E) if a != 0 else 0 for a, b in zip(mm.tolist(), e.tolist())],
+                             dtype=object))
     return outs[0], outs[1], E
+
+
+def scaled_test_vector(ex: ExactMatrix, x):
+    """y = fl(x / sqrt(w)): the test vector is then x' = D y, which equals x up to rounding. Any y gives
+    a valid Krylov-Bogolyubov interval; this choice makes x' the claimed vector to about one ulp."""
+    if all(int(w) == 1 for w in ex.weights):
+        return np.asarray(x)
+    d = np.sqrt(np.array([float(w) for w in ex.weights]))
+    return np.asarray(x) / d
+
+
+def radius_exact(ex: ExactMatrix, yr, yi, lam) -> Fraction:
+    """Exact upper bound (a dyadic Fraction) on ||H x' - lam x'|| / ||x'|| for x' = D y, y = (yr + i yi)
+    in integer form: with K y = (KR + i KI)/den, ||D (K y - lam y)||^2 = sum_r w_r |(K y - lam y)_r|^2
+    and ||x'||^2 = sum_r w_r |y_r|^2, all rational."""
+    from math import isqrt
+    n = yr.size
+    w = ex.weights
+    kr = np.zeros(n, dtype=object); ki = np.zeros(n, dtype=object)
+    C, R = ex.cols, ex.rows
+    np.add.at(kr, R, ex.re * yr[C] - ex.im * yi[C]); np.add.at(ki, R, ex.re * yi[C] + ex.im * yr[C])
+    L = Fraction(float(lam)); a, b = L.numerator, L.denominator
+    rr = kr * b - yr * (a * ex.den); ri = ki * b - yi * (a * ex.den)       # = b den (K y - lam y)
+    num2 = int(np.sum(w * (rr * rr + ri * ri)))
+    x2 = int(np.sum(w * (yr * yr + yi * yi)))
+    if num2 == 0:
+        return Fraction(0)
+    D2 = (b * ex.den) ** 2 * x2
+    k = 80
+    return Fraction(isqrt((num2 << (2 * k)) // D2 + 1) + 1, 1 << k)
+
+
+def _round_up_float(q: Fraction) -> float:
+    f = float(q)
+    if Fraction(f) < q:
+        f = float(np.nextafter(f, np.inf))
+    return f
 
 
 def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
     """Residual radii of claimed eigenpairs against the declared model, in exact arithmetic.
 
-    For each claimed (lam_i, x_i): rho_i = ||H x_i - lam_i x_i|| / ||x_i|| is computed exactly and
-    rounded up to a float; for Hermitian H there is an eigenvalue in [lam_i - rho_i, lam_i + rho_i]
-    (Krylov-Bogolyubov). The Hermiticity of the exact matrix is checked exactly. No floating-point
-    assumption is involved. Returns dict(radii, hermitian, den, nnz)."""
-    from fractions import Fraction
-    from math import isqrt
-    R, C, RE, IM, den = exact if exact is not None else exact_matrix(spec, states)
-    n = X.shape[0]
-    # exact Hermiticity: entry (r, c) equals conj of entry (c, r)
-    fwd = {(int(r), int(c)): (a, b) for r, c, a, b in zip(R, C, RE, IM)}
-    herm = all(fwd.get((c, r), (0, 0)) == (a, -b) for (r, c), (a, b) in fwd.items())
-    radii = []
+    For each claimed (lam_i, x_i) the radius rho_i of the Krylov-Bogolyubov interval [lam_i - rho_i,
+    lam_i + rho_i] of the test vector x_i' = D fl(x_i / d) (= x_i up to one rounding) is computed exactly
+    and rounded up; for Hermitian H the interval contains an eigenvalue. Hermiticity of the declared
+    model is checked exactly. No floating-point assumption is involved."""
+    ex = exact if exact is not None else exact_matrix(spec, states)
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
+    radii = []
     for i, lam_i in enumerate(np.atleast_1d(lam)):
-        xr, xi, E = _float_vector_to_int(X[:, i])
-        # y = den * 2^-E * H x  (Gaussian integers)
-        yr = np.zeros(n, dtype=object); yi = np.zeros(n, dtype=object)
-        pr = RE * xr[C] - IM * xi[C]
-        pi = RE * xi[C] + IM * xr[C]
-        np.add.at(yr, R, pr); np.add.at(yi, R, pi)
-        L = Fraction(float(lam_i))
-        a, b = L.numerator, L.denominator
-        # b den 2^-E r = b y - a den x
-        rr = yr * b - xr * (a * den)
-        ri = yi * b - xi * (a * den)
-        num2 = int(np.sum(rr * rr + ri * ri))            # (b den)^2 2^-2E ||r||^2
-        x2 = int(np.sum(xr * xr + xi * xi))              # 2^-2E ||x||^2
-        # rho^2 = num2 / ((b den)^2 x2); upper bound via integer square roots
-        if num2 == 0:
-            radii.append(0.0)
-            continue
-        D2 = (b * den) ** 2 * x2
-        # rho <= ceil(sqrt(num2 * 2^(2k) / D2)) / 2^k
-        k = 80
-        t = (num2 << (2 * k)) // D2 + 1
-        s = isqrt(t) + 1
-        q = Fraction(s, 1 << k)
-        f = float(q)
-        if Fraction(f) < q:
-            f = float(np.nextafter(f, np.inf))
-        radii.append(f)
-    return {"radii": radii, "hermitian": bool(herm), "den": int(den), "nnz": int(len(R))}
+        yr, yi, _ = _float_vector_to_int(scaled_test_vector(ex, X[:, i]))
+        radii.append(_round_up_float(radius_exact(ex, yr, yi, lam_i)))
+    return {"radii": radii, "hermitian": is_hermitian_exact(ex), "den": int(ex.den), "nnz": int(len(ex.rows))}
 
 
-def inertia_exact_int(A):
-    """A: flint.fmpz_mat (symmetric, integer). Floating-point LDL^T of A, residual re-checked exactly.
-    Returns (n_negative_pivots, bound on ||Lt Dt Lt^T - A||_inf as a Fraction).
-    Consequence (Weyl): #(eig A < -beta) <= n_negative <= #(eig A < beta)."""
+def inertia_exact(M, rows_per_block: int = 256):
+    """Inertia of an exact symmetric integer matrix M (object ndarray of Python ints, or flint.fmpz_mat).
+
+    A floating-point LDL^T proposes factors; they are moved to dyadic grids (Lt = rint(L 2^52)/2^52,
+    Dt with 52 bits relative to its largest entry) and the residual Lt Dt Lt^T - M is computed exactly
+    with FLINT integers, block of rows by block of rows (memory O(n^2) small integers).
+    Returns (n_negative, n_positive, beta) with beta >= ||Lt Dt Lt^T - M||_inf (a Fraction), or
+    (None, None, None) when a pivot sign is ambiguous. Consequences (Sylvester + Weyl):
+        #(eig M < -beta) <= n_negative,   #(eig M > beta) <= n_positive."""
     import flint
     import scipy.linalg as la
-    from fractions import Fraction
-    n = A.nrows()
-    ent = [int(x) for x in A.entries()]
-    maxbits = max([abs(x).bit_length() for x in ent] + [1])
+    if not isinstance(M, np.ndarray):
+        n = M.nrows()
+        M = np.array([int(x) for x in M.entries()], dtype=object).reshape(n, n)
+    n = M.shape[0]
+    maxbits = max([abs(int(x)).bit_length() for x in M.ravel()] + [1])
     s_down = max(0, maxbits - 900)
-    Af = np.array([float(x >> s_down) if x >= 0 else -float((-x) >> s_down) for x in ent]).reshape(n, n)
-    del ent
-    lu, d, perm = la.ldl(Af, lower=True, hermitian=True)
+    if s_down:
+        Af = np.array([[float(int(x) >> s_down) if x >= 0 else -float((-int(x)) >> s_down) for x in row]
+                       for row in M])
+    else:
+        Af = M.astype(float)
+    lu, d, perm = la.ldl(Af, lower=True, hermitian=True, overwrite_a=True)
+    del Af
     if not np.all(np.diag(lu[perm]) == 1.0):
         raise ValueError("LDL factor not unit triangular after permutation")
     pL = 52
     dmax = float(np.max(np.abs(d))) or 1.0
     pD = int(52 - np.ceil(np.log2(dmax)))
     Li = np.rint(np.ldexp(lu, pL)).astype(np.int64)
+    del lu
     Di = np.rint(np.ldexp(d, pD)).astype(np.int64)
+    del d
     neg, amb = negative_count_exact(np.ldexp(Di.astype(np.float64), -pD))
     if amb:
-        return None, None
+        return None, None, None
     sh = 2 * pL + pD - s_down
-    L = flint.fmpz_mat(Li.tolist()); Dm = flint.fmpz_mat(Di.tolist())
-    P = (L * Dm) * L.transpose()
-    if sh >= 0:
-        E = P - A * (flint.fmpz(2) ** sh); den = Fraction(2) ** sh
-    else:
-        E = P * (flint.fmpz(2) ** (-sh)) - A; den = Fraction(1)
-    ents = E.entries()
-    worst = max(sum(abs(int(x)) for x in ents[i * n:(i + 1) * n]) for i in range(n))
-    return neg, Fraction(worst) / den
+    LT = flint.fmpz_mat(Li.T.tolist())
+    Dm = flint.fmpz_mat(Di.tolist())
+    del Di
+    two = flint.fmpz(2)
+    worst = 0
+    for r0 in range(0, n, rows_per_block):
+        r1 = min(n, r0 + rows_per_block)
+        Pb = (flint.fmpz_mat(Li[r0:r1].tolist()) * Dm) * LT
+        Ab = flint.fmpz_mat([[int(x) for x in row] for row in M[r0:r1]])
+        Eb = Pb - Ab * (two ** sh) if sh >= 0 else Pb * (two ** (-sh)) - Ab
+        ents = Eb.entries()
+        for i in range(r1 - r0):
+            worst = max(worst, sum(abs(int(x)) for x in ents[i * n:(i + 1) * n]))
+    den = Fraction(2) ** sh if sh >= 0 else Fraction(1)
+    return neg, n - neg, Fraction(worst) / den
+
+
+def inertia_exact_int(A):
+    """Backwards-compatible form of inertia_exact: returns (n_negative, beta)."""
+    neg, pos, beta = inertia_exact(A)
+    return neg, beta
+
+
+def _weighted_shift_matrix(ex: ExactMatrix, g: Fraction, n: int):
+    """Integer symmetric M = b (W K den) - a den W for g = a/b; M = den D (b H - a) D."""
+    a, b = g.numerator, g.denominator
+    M = np.zeros((n, n), dtype=object); M[:] = 0
+    w = ex.weights
+    for r, c, v in zip(ex.rows.tolist(), ex.cols.tolist(), ex.re.tolist()):
+        M[r, c] += b * w[r] * v
+    for i in range(n):
+        M[i, i] -= a * ex.den * w[i]
+    return M
+
+
+def _components(lam, radii):
+    order = np.argsort(lam)
+    comps = []
+    for i in order:
+        lo, hi = Fraction(float(lam[i])) - radii[i], Fraction(float(lam[i])) + radii[i]
+        if comps and lo <= comps[-1][1]:
+            comps[-1][1] = max(comps[-1][1], hi); comps[-1][2] += 1
+        else:
+            comps.append([lo, hi, 1])
+    return comps
+
+
+def _separation_points(comps, next_hint):
+    top = comps[-1][1]
+    if next_hint is None or not np.isfinite(next_hint) or Fraction(float(next_hint)) <= top:
+        next_hint = float(top) + max(1e-6, 1e-6 * abs(float(top)))
+    pts = [(comps[j][1] + comps[j + 1][0]) / 2 for j in range(len(comps) - 1)]
+    pts.append((top + Fraction(float(next_hint))) / 2)
+    return [p.limit_denominator(1 << 40) if p.denominator > (1 << 40) else p for p in pts]
+
+
+def _status(counts, ok):
+    if ok:
+        return "CERTIFIED"
+    if any(c.get("count") is not None and c["count"] > c["claimed_below"] and c["separated"] for c in counts):
+        return "FAILED"
+    return "INCONCLUSIVE"
 
 
 def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000):
     """Independent re-check, in exact arithmetic only, of a claim 'these are the k lowest eigenpairs
-    of the declared model' (q = 2 spaces; see exact_matrix).
+    of the declared model' (any local space; see exact_matrix).
 
     1. Exact residual radii r_i (Krylov-Bogolyubov): an eigenvalue lies in I_i = [lam_i - r_i, lam_i + r_i].
     2. The intervals are merged into connected components. At a dyadic point g between consecutive
        components and at a point sigma above the last one (placed using `next_hint`, a floating-point
        estimate of the next eigenvalue; only a hint), the number of eigenvalues below is counted by the
-       exact inertia of b den H - a den I (g = a/b), with residual bound beta:
+       exact inertia of M = den D (b H - a) D (g = a/b), a congruence of b H - a with D >= I:
        #(eig < g - delta) <= nu <= #(eig < g + delta), delta = beta / (b den).
     3. CERTIFIED when every component lies strictly between its separation points widened by delta and
        every count equals the number of claimed values below that point. Then component j contains
-       exactly m_j eigenvalues, so the claim lists the k lowest eigenvalues with multiplicity, each within
+       exactly m_j eigenvalues: the claim lists the k lowest eigenvalues with multiplicity, each within
        its radius. No floating-point assumption is used anywhere."""
-    import flint
-    from fractions import Fraction
     lam = np.atleast_1d(np.asarray(lam, dtype=float))
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X[:, None]
     ex = exact_matrix(spec, states)
-    R, C, RE, IM, den = ex
-    if np.any(IM != 0):
+    if np.any(ex.im != 0):
         return {"status": "NOT_CHECKED", "reason": "complex model: exact inertia implemented for real matrices"}
     n = X.shape[0]
     if n > max_dim:
@@ -371,39 +451,20 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
     rad = exact_eigenpair_radii(spec, lam, X, states, ex)
     if not rad["hermitian"]:
         return {"status": "FAILED", "reason": "declared model is not Hermitian", **rad}
-    r = np.array(rad["radii"])
-    order = np.argsort(lam)
-    lo = [Fraction(float(lam[i])) - Fraction(float(r[i])) for i in order]
-    hi = [Fraction(float(lam[i])) + Fraction(float(r[i])) for i in order]
-    comps = []                                      # [lo, hi, count]
-    for a, b in zip(lo, hi):
-        if comps and a <= comps[-1][1]:
-            comps[-1][1] = max(comps[-1][1], b); comps[-1][2] += 1
-        else:
-            comps.append([a, b, 1])
-    top = comps[-1][1]
-    if next_hint is None or not np.isfinite(next_hint) or Fraction(float(next_hint)) <= top:
-        next_hint = float(top) + max(1e-6, 1e-6 * abs(float(top)))
-    pts = [(comps[j][1] + comps[j + 1][0]) / 2 for j in range(len(comps) - 1)]
-    pts.append((top + Fraction(float(next_hint))) / 2)
-    Hint = flint.fmpz_mat(n, n)
-    for i, j, v in zip(R.tolist(), C.tolist(), RE.tolist()):
-        Hint[i, j] = v
+    radii = [Fraction(r) for r in rad["radii"]]
+    comps = _components(lam, radii)
+    pts = _separation_points(comps, next_hint)
     counts, ok, cum = [], True, 0
     for j, g in enumerate(pts):
-        g = Fraction(g).limit_denominator(1 << 60) if Fraction(g).denominator > (1 << 60) else Fraction(g)
-        a, b = g.numerator, g.denominator
-        A = Hint * b - flint.fmpz_mat(n, n, [a * den if i == k else 0 for i in range(n) for k in range(n)])
-        nu, beta = inertia_exact_int(A)
         cum += comps[j][2]
+        nu, pos, beta = inertia_exact(_weighted_shift_matrix(ex, g, n))
         if nu is None:
             counts.append({"point": float(g), "count": None}); ok = False; continue
-        delta = beta / (b * den)
-        sep_ok = comps[j][1] < g - delta and (j + 1 >= len(comps) or comps[j + 1][0] > g + delta)
+        delta = beta / (g.denominator * ex.den)
+        sep = comps[j][1] < g - delta and (j + 1 >= len(comps) or comps[j + 1][0] > g + delta)
         counts.append({"point": float(g), "count": nu, "claimed_below": cum, "delta": float(delta),
-                       "separated": bool(sep_ok)})
-        ok &= (nu == cum) and sep_ok
-    status = "CERTIFIED" if ok else ("FAILED" if any(c.get("count") is not None and c["count"] > c["claimed_below"]
-                                                     and c["separated"] for c in counts) else "INCONCLUSIVE")
-    return {"status": status, "radii": rad["radii"], "components": [[float(a), float(b), m] for a, b, m in comps],
-            "counts": counts, "den": int(den), "no_floating_point_assumption": True}
+                       "separated": bool(sep)})
+        ok &= (nu == cum) and sep
+    return {"status": _status(counts, ok), "radii": rad["radii"],
+            "components": [[float(a), float(b), m] for a, b, m in comps], "counts": counts,
+            "den": int(ex.den), "no_floating_point_assumption": True}
