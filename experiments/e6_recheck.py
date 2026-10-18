@@ -3,7 +3,11 @@
 usage: python3 e6_recheck.py RUN_DIR [workers] [module:site ...]
 Writes RUN_DIR/recheck.json. The mutation sites must refer to the same source as the original run
 (checked by hashing the target modules)."""
-import hashlib, json, os, shutil, sys, tempfile
+import json
+import os
+import shutil
+import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple
+from typing import Callable, Tuple
 
 import numpy as np
 import scipy.sparse as sp
@@ -164,6 +164,7 @@ def cyclic_isometry(states: StateSet, g: CyclicSymmetry, j: int,
 
 
 def sector_matrix(H: sp.spmatrix, V: sp.spmatrix) -> sp.csr_matrix:
+    """Sector block V^H H V of an isometry V."""
     Hs = (V.conj().T @ H @ V).tocsr()
     Hs.sum_duplicates()
     return Hs

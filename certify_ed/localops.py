@@ -29,9 +29,9 @@ same semantics.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from fractions import Fraction
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 

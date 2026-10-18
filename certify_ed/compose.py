@@ -24,7 +24,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 import scipy.sparse as sp

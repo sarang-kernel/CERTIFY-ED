@@ -56,7 +56,6 @@ def spec_invariants(spec: ModelSpec) -> Dict[str, float]:
             p *= np.trace(m)
         tr += p
     fro2 = 0j
-    local_tr = {}
     for a in range(T):
         ca, fa = items[a]
         for b in range(T):

@@ -12,7 +12,7 @@ Proposition 1 of the paper applies to S_tot^2 without a numerical commutation ch
 """
 from collections import defaultdict
 from fractions import Fraction
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 

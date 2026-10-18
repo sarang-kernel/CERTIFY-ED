@@ -20,12 +20,12 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass
 from functools import reduce
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, gamma
+from .fp import gamma
 from .spec import ModelSpec
 
 
@@ -62,6 +62,7 @@ def _finalize(H: sp.spmatrix, spec: ModelSpec) -> sp.csr_matrix:
 # ---------------------------------------------------------------------------
 
 def build_kron(spec: ModelSpec) -> sp.csr_matrix:
+    """Reference matrix from Kronecker products of the dense local matrices (independent of build_bitwise)."""
     N, q, local = spec.n_sites, spec.q, spec.local
     I = sp.identity(q, dtype=complex, format="csr")
     P = sp.csr_matrix(local.local_parity()) if local.is_fermionic else None
@@ -125,6 +126,7 @@ class StateSet:
 
 
 def full_state_set(spec: ModelSpec) -> StateSet:
+    """All basis states of the spec (integer encoding, site 0 most significant)."""
     return StateSet(np.arange(spec.dim, dtype=np.int64), spec.state_order, "full")
 
 

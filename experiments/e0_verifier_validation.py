@@ -8,7 +8,6 @@
     operator-string Hamiltonians for every supported local space
 """
 
-import sys
 import time
 import warnings
 
@@ -17,7 +16,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 warnings.filterwarnings("ignore")
-from harness import Run, ROOT
+from harness import Run
 
 from certify_ed.testing import LOCALS, random_spec  # noqa: E402
 

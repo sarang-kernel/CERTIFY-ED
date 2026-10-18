@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "CERTIFY-ED: producer-independent certificates for exact-diagonalization results"
-version: "2.0.0.dev0"
-date-released: 2026-10-04
+title: "CERTIFY-ED: certificates for exact-diagonalization results"
+version: "3.0.0"
+date-released: 2026-10-18
 license: MIT
 repository-code: "https://github.com/sarang-kernel/CERTIFY-ED"
 identifiers:
@@ -16,3 +16,24 @@ authors:
   - family-names: "Goel"
     given-names: "Ritu"
     orcid: "https://orcid.org/0000-0002-5597-3091"
+references:
+  - type: article
+    title: "CERTIFY-ED: A multi-layer verification framework for exact diagonalization of quantum many-body systems"
+    authors:
+      - family-names: "Vehale"
+        given-names: "Sarang"
+      - family-names: "Goel"
+        given-names: "Ritu"
+    identifiers:
+      - type: other
+        value: "arXiv:2605.11787"
+  - type: article
+    title: "symveig: Verified eigenvalue enclosures for symmetry-decomposed Hermitian matrices"
+    authors:
+      - family-names: "Vehale"
+        given-names: "Sarang"
+      - family-names: "Goel"
+        given-names: "Ritu"
+    identifiers:
+      - type: other
+        value: "arXiv:2606.16217"

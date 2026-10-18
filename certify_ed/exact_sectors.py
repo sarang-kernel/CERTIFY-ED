@@ -133,8 +133,6 @@ def orbit_columns(group: "FiniteGroup", chi):
         rep = np.minimum(rep, idx)
     reps = np.unique(rep)
     cols = [dict() for _ in reps]
-    pos = {int(r): k for k, r in enumerate(reps)}
-    rlist = reps.tolist()
     for ((idx, ph), _), (cr, ci) in zip(group.elements_, chi):
         cr, ci = cr, -ci                         # conj(chi)
         tgt = idx[reps]; p = ph[reps]
@@ -152,7 +150,7 @@ def orbit_columns(group: "FiniteGroup", chi):
 def sector_integer_matrix(ex, cols):
     """(Re, Im, D): V^H (W K den) V as Gaussian-integer arrays (object), V the orbit-sum columns, and
     D = diag(V^H W V). W K den = den D H D (exact_matrix), so this is the congruence of den H by D V."""
-    R, C, RE, IM, den = ex.rows, ex.cols, ex.re, ex.im, ex.den
+    R, C, RE, IM = ex.rows, ex.cols, ex.re, ex.im
     wts = ex.weights
     n_cols = len(cols)
     owner = {}
@@ -186,7 +184,6 @@ def sector_integer_matrix(ex, cols):
 
 
 def _count_sector_below(Are, Aim, D, g: Fraction, den: int):
-    import flint
     m = Are.shape[0]
     a, b = g.numerator, g.denominator
     Mre = Are * b
@@ -300,7 +297,6 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     add up to the dimension of the fixed subspace), so non-abelian groups are allowed as long as every
     irrep met is one-dimensional with Gaussian character values (e.g. translations at k = 0 or pi with
     reflection and spin flip). X: claimed vectors in the coordinates of `states`."""
-    import itertools
     from .checker import _float_vector_to_int, scaled_test_vector, radius_exact, _components, _separation_points, _status
     ex = exact_matrix(spec, states)
     den = ex.den

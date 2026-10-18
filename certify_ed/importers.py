@@ -15,14 +15,14 @@ Supported producers
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 import numpy as np
 import scipy.sparse as sp
 
 from .certify import Claim
 from .construct import StateSet
-from .spec import ModelSpec, spec_from_quspin
+from .spec import spec_from_quspin
 
 
 def _quspin_symmetry_blocks(basis) -> dict:
@@ -65,6 +65,7 @@ def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None
 
 def claim_from_arrays(eigenvalues, eigenvectors=None, operator=None, kind="subset",
                       window=None, producer=None, **kw) -> Claim:
+    """Claim from in-memory arrays (eigenvalues, optional eigenvectors and operator)."""
     return Claim(eigenvalues, eigenvectors, operator=operator, kind=kind, window=window,
                  producer=producer or {"name": "arrays"}, **kw)
 
@@ -84,6 +85,7 @@ def claim_from_npz(path: str, kind="subset", window=None, **kw) -> Claim:
 
 
 def claim_from_hdf5(path: str, kind="subset", window=None, **kw) -> Claim:
+    """HDF5 with datasets eigenvalues [, eigenvectors] [, group H with data/indices/indptr/shape]."""
     import h5py
     with h5py.File(path, "r") as f:
         ev = f["eigenvalues"][...]

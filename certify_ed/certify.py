@@ -28,14 +28,14 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import scipy.sparse as sp
 
 from .certificate_v2 import Certificate, environment_record, matrix_sha256, array_sha256
-from .construct import (StateSet, build_bitwise, build_kron, cross_construct, full_state_set,
-                        matrix_difference, product_tolerance, SpecOperator)
+from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
+                        product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
@@ -556,6 +556,7 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 
 
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
+    """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
     t_start = time.time()
     statements = []

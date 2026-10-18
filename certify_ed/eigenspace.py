@@ -36,7 +36,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, gamma_dot, up, fro_upper, inf_norm_upper
+from .fp import U, gamma_dot, up, inf_norm_upper
 
 
 # ---------------------------------------------------------------------------

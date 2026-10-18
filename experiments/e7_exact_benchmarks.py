@@ -22,8 +22,6 @@ from certify_ed.exact_sectors import exact_recheck_sector_lowest, site_permutati
 
 def square_translations(spec, Lx, Ly):
     site = lambda x, y: (y % Ly) * Lx + (x % Lx)
-    tx = [site(x + 1, y) for y in range(Ly) for x in range(Lx)]
-    ty = [site(x, y + 1) for y in range(Ly) for x in range(Lx)]
     # perm[i] = image of site i, sites enumerated i = y*Lx + x
     px = [0] * (Lx * Ly); py = [0] * (Lx * Ly)
     for y in range(Ly):

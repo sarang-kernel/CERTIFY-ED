@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import numpy as np
-import scipy.sparse as sp
 
 from ..spectrum import enclose_spectrum
 

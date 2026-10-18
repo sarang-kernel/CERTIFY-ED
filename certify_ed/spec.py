@@ -27,7 +27,6 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Sequence, Tuple
 
-import numpy as np
 
 from .localops import LocalSpace
 
@@ -251,6 +250,7 @@ def tfim_chain(N: int, J: float = 1.0, h: float = 1.0, boundary: str = "periodic
 
 def heisenberg_square(Lx: int, Ly: int, J: float = 1.0, J2: float = 0.0,
                       boundary: str = "periodic") -> ModelSpec:
+    """H = J sum_<ij> S_i.S_j (+ J2 on next-nearest neighbours) on an Lx x Ly square lattice, sites y*Lx + x."""
     local = LocalSpace.spin_space("1/2", "spin")
     N = Lx * Ly
     idx = lambda x, y: (x % Lx) + Lx * (y % Ly)
@@ -291,6 +291,7 @@ def spinless_fermion_chain(N: int, t: float = 1.0, V: float = 0.0, mu: float = 0
 
 def bose_hubbard_chain(N: int, n_max: int, t: float = 1.0, U: float = 1.0,
                        boundary: str = "open") -> ModelSpec:
+    """H = -t sum (b+_i b_j + h.c.) + U/2 sum n_i (n_i - 1), bosons with cutoff n_max."""
     local = LocalSpace.boson_space(n_max)
     bonds = _bonds_1d(N, 1, boundary)
     static = [["+-", [[-t, i, j] for i, j in bonds]], ["-+", [[-t, i, j] for i, j in bonds]],
@@ -301,6 +302,7 @@ def bose_hubbard_chain(N: int, n_max: int, t: float = 1.0, U: float = 1.0,
 
 def spin1_heisenberg_chain(N: int, J: float = 1.0, D: float = 0.0,
                            boundary: str = "periodic") -> ModelSpec:
+    """Spin-1 chain H = J sum S_i.S_{i+1} + D sum (S^z_i)^2."""
     local = LocalSpace.spin_space("1", "spin")
     bonds = _bonds_1d(N, 1, boundary)
     static = [["+-", [[0.5 * J, i, j] for i, j in bonds]], ["-+", [[0.5 * J, i, j] for i, j in bonds]],

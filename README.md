@@ -1,40 +1,42 @@
 # CERTIFY-ED
 
-**Producer-independent certificates for exact-diagonalization (ED) results.**
+**Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and
+exact re-checks, with applications to published proofs.**
 
-CERTIFY-ED checks a result produced by any ED code (QuSpin, XDiag, HΦ, your own) against a
-declared model and returns a *certificate*: a machine-readable list of statements, each marked
-`CERTIFIED`, `FAILED` (with a diagnosis), `INCONCLUSIVE` (with the reason) or `NOT_CHECKED`
-(with the reason). It does not diagonalize anything for you and it never calls your code.
+CERTIFY-ED checks a result produced by any ED code (QuSpin, XDiag, HΦ, your own) against a declared
+model. It returns a *certificate*: a machine-readable list of statements, each marked `CERTIFIED`,
+`FAILED` (with a diagnosis), `INCONCLUSIVE` (with the reason) or `NOT_CHECKED` (with the reason). It
+never calls your code. Since 3.0 it also contains the whole-spectrum enclosure of the former
+**symveig** package, an **exact re-check layer** that uses no floating-point assumption, and two
+**applications** to numerical lemmas in published rigorous proofs.
 
 | Statement | What it says when CERTIFIED |
 |---|---|
 | **S1** model fidelity | your matrix (or symmetry block) is the matrix of the declared model, built independently; on failure, a least-squares fit names the terms whose coefficients differ |
 | **S2** enclosures | each claimed eigenvalue lies within a stated radius of a *distinct* eigenvalue of the declared model |
 | **S3** completeness | no eigenvalue below the top claimed one is missing; certified lower bound on the next one |
-| **S4** eigenspaces | for degenerate levels: projector error, basis-independent observables tr(PO), certified quantum numbers |
+| **S4** eigenspaces | for degenerate levels: projector error, basis-independent observables tr(PO), certified quantum numbers (total spin, momentum) |
 | **S5** corroboration | (optional) independent solvers reproduce the values; their shared components are recorded |
+| **S6** exact re-check | (optional) S2 and S3 of a 'lowest' claim re-derived in integer arithmetic, with no floating-point assumption |
 
-`certify_low_energy` assembles certified symmetry-block results into a certified statement
-about the low-energy spectrum of the full Hilbert space.
-
-The bounds come from residual, Kato–Temple, Davis–Kahan and Sylvester-inertia arguments with
-explicit floating-point error terms (standard model, IEEE binary64). They are tested against
-ball arithmetic (Arb). The manuscript in preparation describes the mathematics and the
-experiments; `experiments/` regenerates every number in it.
+S1–S5 are rigorous under the IEEE 754 standard model. A run-time probe checks that model on every
+run (rounding mode, no flush-to-zero, full-precision BLAS), and certificates are downgraded when it
+fails. S6 and the `exact_*` functions do not rely on that model at all: floating point only
+*proposes* factorizations, and integer arithmetic (FLINT) checks them.
 
 ## Install
 
 ```bash
-pip install -e .                 # numpy, scipy
-pip install -e .[validation]     # QuSpin importer and examples
-pip install -e .[rigorous,hdf5]  # python-flint (Arb) reference checks, HDF5 import/export
-pip install -e .[dev]            # pytest
+pip install -e .            # numpy, scipy: S1-S5, whole-spectrum enclosure
+pip install -e .[exact]     # python-flint: S6, exact re-checks, Arb references, applications
+pip install -e .[all]       # + QuSpin, h5py, matplotlib, pytest
 ```
 
-Tested with Python 3.11, NumPy 2.4, SciPy 1.17, QuSpin 1.0.1.
+Tested with Python 3.11, NumPy 2.4, SciPy 1.17, python-flint 0.9, QuSpin 1.0.1.
 
-## Certify a QuSpin result
+## Use
+
+**Certify a QuSpin result**
 
 ```python
 import numpy as np, certify_ed as ce
@@ -42,7 +44,7 @@ from quspin.basis import spin_basis_1d
 from quspin.operators import hamiltonian
 
 L = 16
-spec = ce.heisenberg_chain(L, J2=0.3)                 # the model you intend
+spec = ce.heisenberg_chain(L, J2=0.3)                 # the model you intend, written independently
 static = spec.to_quspin_static()
 basis = spin_basis_1d(L, Nup=L // 2, kblock=0, pauli=0)
 H = hamiltonian(static, [], basis=basis, dtype=np.float64)
@@ -54,66 +56,102 @@ print(cert.summary())
 cert.save("result.json")                              # + result.arrays.npz, hashed
 ```
 
-Write the specification independently of the producer's input (as above) so that S1 can catch
-input errors. A reader re-checks the file with `ce.CertificateV2.load("result.json", verify=True)`.
+A reader re-checks the file with `ce.Certificate.load("result.json", verify=True)`. Other producers
+export to NPZ/HDF5 (`ce.export_npz`, `ce.claim_from_npz`, `ce.claim_from_hdf5`). A matrix-free
+producer passes a `LinearOperator`.
 
-## Other producers
+**Re-check with no floating-point assumption** (any local space: spin-S, fermions, bosons)
 
-Export eigenvalues, eigenvectors and the sparse matrix (CSR triplet) to NPZ or HDF5 and use
-`claim_from_npz` / `claim_from_hdf5`; pass `states=` (a fixed-particle-number basis) or
-`sector_isometry=` (an n × d sparse isometry) if you worked in a symmetry block. For a
-matrix-free producer pass a `scipy.sparse.linalg.LinearOperator`; S1 then compares it with the
-model on random vectors (probabilistic), and S2–S4 are evaluated with CERTIFY-ED's reference
-operator.
+```python
+cert = ce.certify(claim, spec, ce.Options(exact_recheck=True))      # adds S6
+r = ce.exact_recheck_lowest(spec, E[:k], V[:, :k], states)            # dense blocks up to ~4000
+r = ce.exact_recheck_sector_lowest(spec, states, [ce.translation(spec), ce.reflection(spec),
+                                   ce.spin_flip(spec)], {0: 0}, E[:k], X)   # momentum k = 0, any size that blocks
+```
 
-## Model specifications
+**Enclose a whole spectrum** (the former symveig; counts certified, conservation checked exactly)
 
-`ModelSpec` uses QuSpin's `static` operator-string format. Local spaces: spin S (three
-conventions for S = 1/2), spinless fermions (Jordan–Wigner string on higher-index sites as in
-QuSpin, or on lower-index sites), bosons with a cutoff. Factories: `heisenberg_chain`,
-`tfim_chain`, `heisenberg_square`, `spinless_fermion_chain`, `bose_hubbard_chain`,
-`spin1_heisenberg_chain`, or `ModelSpec.from_static(N, local_space, static)`.
+```python
+enc = ce.enclose_spectrum(H, S_diag=Sz)              # sector by sector; never diagonalises H as a whole
+enc.complete, enc.max_halfwidth, enc.intervals[0]
+from certify_ed.compat.symveig import enclose_global, enclose_sectors   # symveig 1.0.0 API
+```
 
-## Limits (read these)
+**Command line**
 
-* **Completeness (S3)** needs a sparse LDLᵀ factorization. Its fill-in limits S3 to blocks of
-  dimension ~10⁴ on a workstation (4×4 Heisenberg S^z=0: 31 s, 1.9 GB). Larger blocks get
-  `NOT_CHECKED`, never an uncertified count.
-* **Model fidelity (S1)** for momentum blocks is audited in the parent U(1) block (N times
-  larger). Black-box operators are checked probabilistically.
-* Bounds assume the standard floating-point model (no Strassen-type BLAS, no reduced-precision
-  modes). They are not interval arithmetic.
-* Hermitian, time-independent operator-string Hamiltonians only; single process (no MPI);
-  native importer for QuSpin only.
+```bash
+certify-ed env                                  # float environment probe and versions
+certify-ed certify claim.npz --spec spec.json --kind lowest --exact
+certify-ed spectrum matrix.npz --sectors Sz     # whole-spectrum enclosure
+certify-ed list                                 # experiments E0-E10
+```
+
+## Applications (`certify_ed.apps`)
+
+* **`apps.pyrochlore`**: Kránitz & Penc's Anderson-type bound for the pyrochlore Heisenberg
+  antiferromagnet (arXiv:2601.07800).
+  - S = 1/2: λ_min of the 18-site crown cluster is ≥ −0.550158313, certified in exact arithmetic.
+  - S = 1: at the printed couplings, the cluster has an eigenvalue ≤ −1.6380246, below the published
+    bound −1.632985. This is certified.
+* **`apps.aklt`**: Pomata & Wei's spectral-gap criteria for 2D AKLT models (arXiv:1911.01410). η is
+  bounded in exact arithmetic for the star, square-octagon, cross, decorated-honeycomb and
+  decorated-square lattices, and all five criteria hold. The kernel lemma (ground space = VBS
+  states) is confirmed exactly where the size allows.
+
+See `docs/applications.md`.
+
+## Reproduce the paper
+
+```bash
+python run.py              # quick: tests + E0, E1, E3, E7, E8, E9, E10 at reduced size (~15 min, one core)
+python run.py --full       # every experiment at paper size (several hours; ~5 GB peak memory)
+python run.py --only E10   # one experiment
+```
+
+Each run writes `results/run_<mode>_<timestamp>/`. It contains `manifest.json` (commit, environment,
+float probe, per-step status and time), `SUMMARY.md`, logs, one record per experiment
+(`data.json`, `environment.json`, `run.log`) and `paper/` (numbers, tables and checks of every
+statement the text makes about them). See `docs/reproducibility.md`, which includes how to compare
+two machines.
+
+## Limits
+
+* **S3 completeness** needs a sparse LDLᵀ factorization (floating-point path) or a dense exact one
+  (exact path). On a workstation this reaches blocks of about 10⁴ (floating point) or a few thousand
+  per symmetry block (exact). Larger blocks get `NOT_CHECKED`, never an uncertified count.
+* **Exact sectors** need one-dimensional characters with values in {±1, ±i}: momenta 0 and π on
+  any lattice, all momenta on lattices of side 1, 2 or 4, reflections and spin flip.
+* Hermitian, time-independent operator-string Hamiltonians; single process; native importer for
+  QuSpin only.
+* The proofs in `docs/theory.md` marked UNVERIFIED have not yet been re-derived by a second person.
 
 ## Layout
 
 ```
 certify_ed/
-  spec.py, localops.py      model specification, local spaces and conventions
-  construct.py, basis.py    two independent reference builders, matrix-free operator, sectors
-  enclosure.py, fp.py       S2 bounds, floating-point error model, error-free inner products
-  inertia.py                S3 inertia counts with backward-error bounds
-  eigenspace.py, sectors.py S4 bounds, sector audits, U(1) restriction
-  compose.py                certified global spectrum from symmetry blocks
-  certify.py                orchestration: certify(claim, spec, options)
-  certificate_v2.py         certificate format (canonical JSON + hashed NPZ, HDF5 export)
-  importers.py              QuSpin, NPZ, HDF5
-  corroborate.py, rigorous.py  S5 solvers (incl. Jacobi); Arb reference used in tests
-tests/v2/                   tests of the verification core
-experiments/                E0–E5 of the paper, run_all.sh, make_numbers.py
-```
-
-The v1 modules (`hamiltonian.py`, `oracles.py`, `certificates.py`, `validators/`) remain for
-backward compatibility; they are code-verification utilities, not part of the certification
-described above.
-
-## Tests
-
-```bash
-pytest tests/ -q
+  spec.py, localops.py       model specification, local spaces (exact scaled forms included)
+  construct.py, basis.py     two independent reference builders, matrix-free operator, sectors
+  enclosure.py, fp.py        S2 bounds, floating-point error model and run-time probe
+  inertia.py                 S3 inertia counts with backward-error bounds
+  eigenspace.py, sectors.py  S4, sector and label audits;  su2.py total spin
+  compose.py                 certified global spectrum from symmetry blocks
+  certify.py                 certify(claim, spec, options): S1-S6
+  certificate_v2.py          certificate format (canonical JSON + hashed NPZ, HDF5)
+  importers.py               QuSpin, NPZ, HDF5
+  spectrum.py                whole-spectrum enclosure (former symveig)
+  checker.py, exact_sectors.py   exact re-check layer (FLINT integers)
+  corroborate.py, rigorous.py    S5 solvers; Arb references
+  apps/aklt, apps/pyrochlore     applications to published proofs
+  compat/symveig.py          symveig 1.0.0 API
+  cli.py, testing.py         command line; shared test helpers
+tests/                       334 tests
+experiments/                 E0-E10, harness, make_numbers*.py
+docs/                        theory, reproducibility, applications, symveig audit, API notes
+legacy/                      CERTIFY-ED v1, symveig 1.0.0, first application scripts (not installed)
+run.py                       reproduce everything
 ```
 
 ## License and citation
 
-MIT (see `LICENSE`). Citation metadata: `CITATION.cff`.
+MIT (see `LICENSE`). Citation metadata: `CITATION.cff`. Preprints: CERTIFY-ED v1, arXiv:2605.11787;
+symveig, arXiv:2606.16217. A combined paper is in preparation.

@@ -7,4 +7,6 @@
   an eigenvalue below the published bound (six-ring energy enclosed by CERTIFY-ED).
 * spin_one.landscape: floating-point lowest energy of each of the 92 pair-spin classes (estimates).
 """
-from .model import PAIRS, HEX, TET_HEX, C3_SITES, bonds, spec_for, symmetry_generators  # noqa: F401
+from .model import PAIRS, HEX, TET_HEX, C3_SITES, bonds, spec_for, symmetry_generators
+
+__all__ = ["PAIRS", "HEX", "TET_HEX", "C3_SITES", "bonds", "spec_for", "symmetry_generators"]

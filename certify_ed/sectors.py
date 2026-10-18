@@ -25,8 +25,8 @@ sum_s ||H_s||_F^2 = ||H||_F^2 (computed from the spec, see invariants.py).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import List, Optional
 
 import numpy as np
 import scipy.sparse as sp

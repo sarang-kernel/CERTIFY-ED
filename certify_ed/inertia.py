@@ -43,7 +43,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from .fp import U, gamma, gamma_dot, up, fro_upper
+from .fp import U, gamma_dot, up, fro_upper
 
 
 @dataclass

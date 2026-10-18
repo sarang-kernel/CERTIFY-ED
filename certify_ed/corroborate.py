@@ -15,7 +15,7 @@ shared Householder tridiagonalisation DSYTRD in LAPACK's ?SYEVD and ?SYEVR).
 from __future__ import annotations
 
 import time
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import scipy.linalg as la

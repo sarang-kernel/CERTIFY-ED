@@ -32,8 +32,8 @@ Used to sharpen isolated enclosures once inertia counts certify isolation.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import List, Optional, Sequence
 
 import numpy as np
 import scipy.sparse as sp

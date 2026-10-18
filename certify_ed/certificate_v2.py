@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import hashlib
-import io
 import json
 import os
 import platform
@@ -128,6 +127,9 @@ def environment_record() -> dict:
 
 
 class Certificate:
+    """A certificate: body (statements, evidence, claim, subject, environment) and arrays, with
+    canonical-JSON hashing for integrity (save/load/verify_integrity, HDF5 export)."""
+
     def __init__(self, body: Dict[str, Any], arrays: Optional[Dict[str, np.ndarray]] = None):
         self.body = body
         self.arrays = arrays or {}

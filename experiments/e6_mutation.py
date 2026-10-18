@@ -8,7 +8,6 @@ equivalent mutants (changes with no observable effect); they are listed for insp
 usage: python3 e6_mutation.py [n_mutants] [workers]
 """
 import ast
-import json
 import os
 import random
 import shutil

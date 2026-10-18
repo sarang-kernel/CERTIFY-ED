@@ -22,21 +22,22 @@ import sys
 import time
 
 # ------------------------------------------------------------------------------------ registry
-# name: (script, quick args or None to skip in quick mode, full args, minutes (full, one core), purpose)
+# name: (script, quick args or None to skip in quick mode, full args, (minutes quick, minutes full) on one
+#        core, purpose)
 EXPERIMENTS = {
-    "E0": ("e0_verifier_validation.py", [], [], 5, "verifier vs Arb balls, exact counts, QuSpin construction"),
-    "E1": ("e1_failure_matrix.py", [], [], 1, "planted errors: which statement catches which failure"),
-    "E2": ("e2_cost.py", None, [], 21, "cost and memory of S2/S3 against problem size"),
-    "E3": ("e3_tightness.py", [], [], 1, "radii against Arb reference enclosures"),
-    "E4": ("e4_workflows.py", None, ["W1", "W2", "W3", "W4", "N=20"], 5,
+    "E0": ("e0_verifier_validation.py", [], [], (5, 5), "verifier vs Arb balls, exact counts, QuSpin construction"),
+    "E1": ("e1_failure_matrix.py", [], [], (1, 1), "planted errors: which statement catches which failure"),
+    "E2": ("e2_cost.py", None, [], (0, 21), "cost and memory of S2/S3 against problem size"),
+    "E3": ("e3_tightness.py", [], [], (1, 1), "radii against Arb reference enclosures"),
+    "E4": ("e4_workflows.py", None, ["W1", "W2", "W3", "W4", "N=20"], (0, 5),
            "workflows: global spectra from sectors, multiplets, matrix-free, benchmark values"),
-    "E5": ("e5_arpack_multiplet.py", None, ["12"], 27, "unplanted error: ARPACK misses a multiplet member"),
-    "E6": ("e6_mutation.py", None, ["64", "2"], 15, "mutation analysis of the certifier (opt-in)"),
-    "E7": ("e7_exact_benchmarks.py", ["square_J2=0"], [], 12,
+    "E5": ("e5_arpack_multiplet.py", None, ["12"], (0, 27), "unplanted error: ARPACK misses a multiplet member"),
+    "E6": ("e6_mutation.py", None, ["64", "2"], (0, 15), "mutation analysis of the certifier (opt-in)"),
+    "E7": ("e7_exact_benchmarks.py", ["square_J2=0"], [], (2, 12),
            "benchmark E0 values re-derived with no floating-point assumption"),
-    "E8": ("e8_symveig_comparison.py", [], [], 2, "symveig 1.0.0 vs certify_ed.spectrum on symveig's benchmarks"),
-    "E9": ("e9_pyrochlore.py", ["quick"], ["full"], 25, "pyrochlore crown: certified S=1/2 bound; S=1 findings"),
-    "E10": ("e10_aklt.py", ["quick"], ["full"], 70, "Pomata-Wei AKLT gap criteria in exact arithmetic"),
+    "E8": ("e8_symveig_comparison.py", [], [], (2, 2), "symveig 1.0.0 vs certify_ed.spectrum on symveig's benchmarks"),
+    "E9": ("e9_pyrochlore.py", ["quick"], ["full"], (1, 25), "pyrochlore crown: certified S=1/2 bound; S=1 findings"),
+    "E10": ("e10_aklt.py", ["quick"], ["full"], (2, 75), "Pomata-Wei AKLT gap criteria in exact arithmetic"),
 }
 OPT_IN = {"E6"}
 NEEDS = {"E0": ["flint", "quspin"], "E1": ["quspin"], "E3": ["flint"], "E4": ["quspin"], "E5": ["quspin"],
@@ -124,10 +125,10 @@ def cmd_spectrum(a):
 
 
 def cmd_list(a):
-    print(f"{'name':5s} {'quick':6s} {'~min':>5s}  purpose")
-    for k, (script, q, f, minutes, purpose) in EXPERIMENTS.items():
-        quick = "opt-in" if k in OPT_IN else ("yes" if q is not None else "no")
-        print(f"{k:5s} {quick:6s} {minutes:5d}  {purpose}")
+    print(f"{'name':5s} {'quick (min)':>12s} {'full (min)':>11s}  purpose")
+    for k, (script, q, f, (mq, mf), purpose) in EXPERIMENTS.items():
+        quick = "opt-in" if k in OPT_IN else (str(mq) if q is not None else "-")
+        print(f"{k:5s} {quick:>12s} {mf:11d}  {purpose}")
     return 0
 
 
@@ -200,6 +201,15 @@ def cmd_reproduce(a):
                 "git_commit": _git(root, "rev-parse", "HEAD"), "git_dirty": bool(_git(root, "status", "--porcelain")),
                 "environment": environment(), "steps": {}}
     path = os.path.join(out, "manifest.json")
+    if os.path.exists(path):                     # resume / extend an earlier run in the same directory
+        with open(path) as f:
+            prev = json.load(f)
+        if prev.get("mode") != mode or prev.get("git_commit") != manifest["git_commit"]:
+            print(f"{out} holds a run with mode {prev.get('mode')} at commit {prev.get('git_commit')}; "
+                  "use a new --out")
+            return 2
+        manifest["steps"] = prev.get("steps", {})
+        manifest["started"] = prev.get("started", manifest["started"])
 
     def save():
         with open(path, "w") as f:
@@ -224,7 +234,7 @@ def cmd_reproduce(a):
     names = [n.strip().upper() for n in a.only.split(",")] if a.only else list(EXPERIMENTS)
     skip = {n.strip().upper() for n in a.skip.split(",")} if a.skip else set()
     for name in names:
-        script, qargs, fargs, minutes, purpose = EXPERIMENTS[name]
+        script, qargs, fargs, (mq, mf), purpose = EXPERIMENTS[name]
         if name in skip or (name in OPT_IN and not a.with_mutation and not a.only):
             continue
         args = fargs if mode == "full" else qargs
@@ -237,7 +247,7 @@ def cmd_reproduce(a):
             log(f"{name}: skipped (needs {', '.join(missing)})")
             save()
             continue
-        log(f"{name} ({purpose}; about {minutes if mode == 'full' else max(1, minutes // 5)} min) ...")
+        log(f"{name} ({purpose}; about {mf if mode == 'full' else mq} min) ...")
         r = _run_experiment(root, name, args, out, log)
         r["status"] = "ok" if r["returncode"] == 0 else "failed"
         manifest["steps"][name] = r
@@ -308,7 +318,8 @@ def main(argv=None):
     r.add_argument("--skip", help="comma-separated experiment names to skip")
     r.add_argument("--with-mutation", action="store_true", help="include E6 (mutation analysis)")
     r.add_argument("--no-tests", action="store_true"); r.add_argument("--no-numbers", action="store_true")
-    r.add_argument("--out"); r.add_argument("--manuscript"); r.set_defaults(fn=cmd_reproduce)
+    r.add_argument("--out", help="run directory; an existing one (same mode and commit) is extended")
+    r.add_argument("--manuscript"); r.set_defaults(fn=cmd_reproduce)
     n = sub.add_parser("numbers", help="regenerate numbers and tables from a run directory")
     n.add_argument("--run"); n.add_argument("--manuscript"); n.set_defaults(fn=cmd_numbers)
     a = p.parse_args(argv)

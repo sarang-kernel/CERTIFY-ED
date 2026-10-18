@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-from harness import Run, HERE, ROOT
+from harness import Run, ROOT
 
 PRODUCER = r'''
 import sys, json, time, resource, warnings

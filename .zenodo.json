@@ -1,0 +1,16 @@
+{
+  "title": "CERTIFY-ED: certificates for exact-diagonalization results",
+  "upload_type": "software",
+  "version": "3.0.0",
+  "license": "MIT",
+  "creators": [
+    {"name": "Vehale, Sarang", "affiliation": "National Forensic Sciences University, Delhi", "orcid": "0009-0001-5911-9503"},
+    {"name": "Goel, Ritu", "affiliation": "Vivekananda Institute of Professional Studies - Technical Campus, Delhi", "orcid": "0000-0002-5597-3091"}
+  ],
+  "description": "Certificates for exact-diagonalization results: rigorous eigenvalue enclosures, completeness counts, eigenspace and label statements, an exact re-check layer without floating-point assumptions, whole-spectrum enclosure by symmetry sectors (formerly symveig), and applications to published rigorous bounds (pyrochlore crown cluster, AKLT spectral-gap criteria).",
+  "keywords": ["exact diagonalization", "verified computing", "eigenvalue enclosure", "quantum many-body", "certificates"],
+  "related_identifiers": [
+    {"identifier": "arXiv:2605.11787", "relation": "isSupplementTo", "scheme": "arxiv"},
+    {"identifier": "arXiv:2606.16217", "relation": "isSupplementTo", "scheme": "arxiv"}
+  ]
+}
