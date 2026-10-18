@@ -15,8 +15,8 @@ Claimed vectors are projected onto the claimed sector exactly (integer arithmeti
 radius is computed, so Krylov-Bogolyubov applies to H restricted to the sector.
 """
 from fractions import Fraction
-from math import isqrt, lcm
-from typing import Dict, List, Optional, Sequence
+from math import lcm
+from typing import Dict, Sequence
 
 import numpy as np
 
@@ -223,6 +223,68 @@ def check_commutes(ex, group: "FiniteGroup"):
     return True, None
 
 
+def sector_matrices(ex, group, gens, fixed, log=None):
+    """Integer congruence blocks for every 1D irrep with the fixed quantum numbers (others summed over).
+    Returns (list of (quantum numbers, dim, (Re, Im, D))), dimension covered)."""
+    import itertools
+    fixed_ids = sorted(fixed)
+    free = [i for i in range(len(gens)) if i not in fixed]
+    mats, dim_sum = [], 0
+    for js_free in itertools.product(*[range(gens[i].order) for i in free]):
+        vals = [None] * len(gens)
+        for i in fixed_ids:
+            vals[i] = _unit(gens[i].order, fixed[i])
+        for i, j in zip(free, js_free):
+            vals[i] = _unit(gens[i].order, j)
+        if any(v is None for v in vals):
+            continue
+        chi = group.character(vals)
+        if chi is None:
+            continue
+        cols = orbit_columns(group, chi)
+        if not cols:
+            continue
+        dim_sum += len(cols)
+        qn = {gens[i].name: (fixed[i] if i in fixed else dict(zip(free, js_free))[i]) for i in range(len(gens))}
+        mats.append((qn, len(cols), sector_integer_matrix(ex, cols)))
+        if log:
+            log(f"    sector {qn}: dim {len(cols)}")
+    return mats, dim_sum
+
+
+def exact_count_below(spec, states, gens, fixed, points, log=None):
+    """Exact counts of eigenvalues of H below each point g (Fractions), restricted to the subspace with
+    the fixed quantum numbers and summed over all other 1D irreps (decomposition completeness checked).
+    Returns a list of {point, count, delta}: #(eig < g - delta) <= count <= #(eig < g + delta).
+    A count of 0 proves lambda_min >= g - delta. No floating-point assumption."""
+    ex = exact_matrix(spec, states)
+    group = FiniteGroup(gens, states)
+    okc, bad = check_commutes(ex, group)
+    if not okc:
+        raise ValueError(f"{bad} is not a symmetry of the declared model")
+    fixed_ids = sorted(fixed)
+    sub = FiniteGroup([gens[i] for i in fixed_ids], states)
+    chi_sub = sub.character([_unit(gens[i].order, fixed[i]) for i in fixed_ids])
+    dim_fixed = len(orbit_columns(sub, chi_sub))
+    mats, dim_sum = sector_matrices(ex, group, gens, fixed, log)
+    if dim_sum != dim_fixed:
+        raise ValueError(f"1D Gaussian irreps cover {dim_sum} of {dim_fixed} dimensions")
+    out = []
+    for g in points:
+        g = Fraction(g)
+        tot, dmax = 0, Fraction(0)
+        for qn, m, (Are, Aim, D) in mats:
+            nu, delta = _count_sector_below(Are, Aim, D, g, ex.den)
+            if nu is None:
+                tot = None; break
+            tot += nu; dmax = max(dmax, delta)
+            if log:
+                log(f"    sector {qn} (dim {m}): {nu} below {float(g):.12g}, delta {float(delta):.2e}")
+        out.append({"point": g, "count": tot, "delta": dmax})
+    return out, {"sectors": [{"quantum_numbers": qn, "dim": m} for qn, m, _ in mats], "dim": dim_fixed,
+                 "group_order": group.order, "den": int(ex.den)}
+
+
 def _unit(n, j):
     """exp(2 pi i j / n) as a Gaussian unit, or None."""
     if (4 * j) % n:
@@ -272,27 +334,7 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
         radii.append(radius_exact(ex, pr, pi_, lam[i]))
     comps = _components(lam, radii)
     pts = _separation_points(comps, next_hint)
-    free = [i for i in range(len(gens)) if i not in fixed]
-    mats, dim_sum = [], 0
-    for js_free in itertools.product(*[range(gens[i].order) for i in free]):
-        vals = [None] * len(gens)
-        for i in fixed_ids:
-            vals[i] = _unit(gens[i].order, fixed[i])
-        for i, j in zip(free, js_free):
-            vals[i] = _unit(gens[i].order, j)
-        if any(v is None for v in vals):
-            continue
-        chi = group.character(vals)
-        if chi is None:
-            continue
-        cols = orbit_columns(group, chi)
-        if not cols:
-            continue
-        dim_sum += len(cols)
-        qn = {gens[i].name: (fixed[i] if i in fixed else dict(zip(free, js_free))[i]) for i in range(len(gens))}
-        mats.append((qn, len(cols), sector_integer_matrix(ex, cols)))
-        if log:
-            log(f"    sector {qn}: dim {len(cols)}")
+    mats, dim_sum = sector_matrices(ex, group, gens, fixed, log)
     if dim_sum != dim_fixed:
         return {"status": "NOT_CHECKED", "reason": f"1D Gaussian irreps cover {dim_sum} of {dim_fixed} dimensions"}
     counts, ok, cum = [], True, 0
