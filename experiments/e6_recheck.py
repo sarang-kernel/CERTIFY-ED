@@ -32,12 +32,13 @@ def main():
         tmp = tempfile.mkdtemp(prefix="e6r_")
         try:
             shutil.copytree(os.path.join(ROOT, "certify_ed"), os.path.join(tmp, "certify_ed"))
-            shutil.copytree(os.path.join(ROOT, "tests"), os.path.join(tmp, "tests"))
+            for sub in ("tests", "examples"):
+                shutil.copytree(os.path.join(ROOT, sub), os.path.join(tmp, sub), ignore=shutil.ignore_patterns("__pycache__"))
             for extra in ("pyproject.toml", "setup.cfg", "pytest.ini", "conftest.py"):
                 if os.path.exists(os.path.join(ROOT, extra)):
                     shutil.copy(os.path.join(ROOT, extra), tmp)
             path = os.path.join(tmp, "certify_ed", m["module"])
-            new, desc, line = apply_mutation(open(path).read(), m["site"])
+            new, desc, line = apply_mutation(Path(path).read_text(), m["site"])
             assert line == m["line"], (m, line)
             Path(path).write_text(new)
             status, first, secs = run_tests(tmp, 900)

@@ -22,7 +22,7 @@ from harness import Run, ROOT
 
 TARGETS = ["construct.py", "enclosure.py", "inertia.py", "eigenspace.py", "sectors.py", "compose.py",
            "fp.py", "localops.py", "spec.py", "basis.py", "su2.py", "checker.py", "certify.py",
-           "exact_sectors.py"]
+           "exact_sectors.py", "spectrum.py"]
 
 BINSWAP = {ast.Add: ast.Sub, ast.Sub: ast.Add, ast.Mult: ast.Div, ast.Div: ast.Mult,
            ast.FloorDiv: ast.Mult, ast.Mod: ast.FloorDiv, ast.Pow: ast.Mult}
@@ -134,8 +134,9 @@ def main():
         for w in range(workers):
             d = tempfile.mkdtemp(prefix=f"mut{w}_")
             shutil.copytree(os.path.join(ROOT, "certify_ed"), os.path.join(d, "certify_ed"))
-            shutil.copytree(os.path.join(ROOT, "tests"), os.path.join(d, "tests"),
-                            ignore=shutil.ignore_patterns("__pycache__"))
+            for sub in ("tests", "examples"):           # the suite runs the examples too
+                shutil.copytree(os.path.join(ROOT, sub), os.path.join(d, sub),
+                                ignore=shutil.ignore_patterns("__pycache__"))
             copies.append(d)
         # baseline: unmutated (unparsed) sources must pass
         base_status, base_first, base_t = run_tests(copies[0], 900)
