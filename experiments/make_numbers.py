@@ -142,7 +142,7 @@ def n_tests(path):
 
 
 macro("NtestsTotal", str(n_tests("tests")))
-macro("NtestsVtwo", str(n_tests("tests/v2")))
+macro("NtestsVtwo", str(n_tests("tests")))
 
 # ============================================================== E0
 _, e0, _ = runs["e0_verifier_validation"]

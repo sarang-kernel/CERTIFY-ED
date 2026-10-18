@@ -19,8 +19,7 @@ import scipy.sparse as sp
 warnings.filterwarnings("ignore")
 from harness import Run, ROOT
 
-sys.path.insert(0, ROOT + "/tests/v2")
-from conftest import LOCALS, random_spec  # noqa: E402
+from certify_ed.testing import LOCALS, random_spec  # noqa: E402
 
 from certify_ed.construct import build_bitwise, build_kron, matrix_difference  # noqa: E402
 from certify_ed.enclosure import OperatorAdapter, enclose  # noqa: E402

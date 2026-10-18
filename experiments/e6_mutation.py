@@ -105,7 +105,7 @@ def run_tests(workdir, timeout):
     t = time.time()
     try:
         p = subprocess.run([sys.executable, "-m", "pytest", "-x", "-q", "-p", "no:cacheprovider",
-                            "tests/v2"], cwd=workdir, capture_output=True, text=True, timeout=timeout,
+                            "tests"], cwd=workdir, capture_output=True, text=True, timeout=timeout,
                            env=dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1"))
     except subprocess.TimeoutExpired:
         return "timeout", None, time.time() - t

@@ -1,31 +1,9 @@
-import os
-import sys
-import warnings
-
+"""Helpers shared by the test suite and the experiments: the local spaces exercised everywhere and a
+random Hermitian operator-string model generator."""
 import numpy as np
-import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-warnings.filterwarnings("ignore", category=UserWarning)
-
-from certify_ed.localops import LocalSpace
-from certify_ed.spec import ModelSpec
-
-try:
-    import quspin  # noqa: F401
-    HAVE_QUSPIN = True
-except Exception:
-    HAVE_QUSPIN = False
-
-try:
-    import flint  # noqa: F401
-    HAVE_FLINT = True
-except Exception:
-    HAVE_FLINT = False
-
-needs_quspin = pytest.mark.skipif(not HAVE_QUSPIN, reason="QuSpin not installed")
-needs_flint = pytest.mark.skipif(not HAVE_FLINT, reason="python-flint not installed")
-
+from .localops import LocalSpace
+from .spec import ModelSpec
 
 LOCALS = [
     ("spin1/2-spin", lambda: LocalSpace.spin_space("1/2", "spin"), 7),
@@ -53,7 +31,6 @@ def random_spec(local: LocalSpace, N: int, rng, n_terms: int = 6, max_len: int =
             c = complex(c, float(rng.normal()))
         static.append([op, [[c] + sites]])
         if hermitian:
-            # adjoint string: reversed order, each letter adjointed, conjugated coefficient
             op_adj = "".join(adj.get(l, l) for l in op[::-1])
             static.append([op_adj, [[np.conj(c)] + sites[::-1]]])
     return ModelSpec.from_static(N, local, static)

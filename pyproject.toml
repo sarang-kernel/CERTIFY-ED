@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "certify-ed"
+version = "3.0.0"
+description = "Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and exact re-checks, with applications to published proofs"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Sarang Vehale", email = "sarangvehale2@gmail.com" },
+    { name = "Ritu Goel" },
+]
+keywords = ["exact diagonalization", "verified computing", "eigenvalue enclosure", "interval arithmetic",
+            "quantum many-body", "certificates"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = ["numpy>=1.22", "scipy>=1.8"]
+
+[project.optional-dependencies]
+exact = ["python-flint>=0.6"]          # exact re-check layer, Arb references, applications
+quspin = ["quspin>=1.0"]               # importers, label audits, QuSpin cross-checks
+hdf5 = ["h5py>=3.0"]
+plots = ["matplotlib>=3.5"]
+test = ["pytest>=7.0"]
+all = ["python-flint>=0.6", "quspin>=1.0", "h5py>=3.0", "matplotlib>=3.5", "pytest>=7.0"]
+
+[project.scripts]
+certify-ed = "certify_ed.cli:main"
+
+[project.urls]
+Preprint-v1 = "https://arxiv.org/abs/2605.11787"
+Preprint-symveig = "https://arxiv.org/abs/2606.16217"
+
+[tool.setuptools.packages.find]
+include = ["certify_ed*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::UserWarning"]
