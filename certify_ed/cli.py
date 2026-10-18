@@ -26,19 +26,19 @@ import time
 # name: (script, quick args or None to skip in quick mode, full args, (minutes quick, minutes full) on one
 #        core, purpose)
 EXPERIMENTS = {
-    "E0": ("e0_verifier_validation.py", [], [], (5, 5), "verifier vs Arb balls, exact counts, QuSpin construction"),
+    "E0": ("e0_verifier_validation.py", [], [], (4, 4), "verifier vs Arb balls, exact counts, QuSpin construction"),
     "E1": ("e1_failure_matrix.py", [], [], (1, 1), "planted errors: which statement catches which failure"),
-    "E2": ("e2_cost.py", None, [], (0, 21), "cost and memory of S2/S3 against problem size"),
+    "E2": ("e2_cost.py", None, [], (0, 22), "cost and memory of S2/S3 against problem size"),
     "E3": ("e3_tightness.py", [], [], (1, 1), "radii against Arb reference enclosures"),
-    "E4": ("e4_workflows.py", None, ["W1", "W2", "W3", "W4", "N=20"], (0, 5),
+    "E4": ("e4_workflows.py", None, ["W1", "W2", "W3", "W4", "N=20"], (0, 6),
            "workflows: global spectra from sectors, multiplets, matrix-free, benchmark values"),
-    "E5": ("e5_arpack_multiplet.py", None, ["12"], (0, 27), "unplanted error: ARPACK misses a multiplet member"),
-    "E6": ("e6_mutation.py", None, ["64", "2"], (0, 15), "mutation analysis of the certifier (opt-in)"),
-    "E7": ("e7_exact_benchmarks.py", ["square_J2=0"], [], (2, 12),
+    "E5": ("e5_arpack_multiplet.py", None, ["12"], (0, 38), "unplanted error: ARPACK misses a multiplet member"),
+    "E6": ("e6_mutation.py", None, ["64", "2"], (0, 19), "mutation analysis of the certifier (opt-in)"),
+    "E7": ("e7_exact_benchmarks.py", ["square_J2=0"], [], (2, 11),
            "benchmark E0 values re-derived with no floating-point assumption"),
-    "E8": ("e8_symveig_comparison.py", [], [], (2, 2), "symveig 1.0.0 vs certify_ed.spectrum on symveig's benchmarks"),
-    "E9": ("e9_pyrochlore.py", ["quick"], ["full"], (1, 25), "pyrochlore crown: certified S=1/2 bound; S=1 findings"),
-    "E10": ("e10_aklt.py", ["quick"], ["full"], (2, 75), "Pomata-Wei AKLT gap criteria in exact arithmetic"),
+    "E8": ("e8_symveig_comparison.py", [], [], (3, 3), "symveig 1.0.0 vs certify_ed.spectrum on symveig's benchmarks"),
+    "E9": ("e9_pyrochlore.py", ["quick"], ["full"], (1, 17), "pyrochlore crown: certified S=1/2 bound; S=1 findings"),
+    "E10": ("e10_aklt.py", ["quick"], ["full"], (2, 40), "Pomata-Wei AKLT gap criteria in exact arithmetic"),
 }
 OPT_IN = {"E6"}
 # timing or memory is part of what these measure: never run them next to another experiment
@@ -222,11 +222,15 @@ def cmd_reproduce(a):
         with open(path, "w") as f:
             json.dump(manifest, f, indent=1, default=str)
 
-    def log(msg):
+    import threading
+    _lock = threading.Lock()
+
+    def log(msg):                                # called from worker threads with --jobs
         line = f"[{_dt.datetime.now().strftime('%H:%M:%S')}] {msg}"
-        print(line, flush=True)
-        with open(os.path.join(out, "run.log"), "a") as f:
-            f.write(line + "\n")
+        with _lock:
+            print(line, flush=True)
+            with open(os.path.join(out, "run.log"), "a") as f:
+                f.write(line + "\n")
 
     log(f"certify-ed reproduce ({mode}); output {out}")
     if not manifest["environment"]["float_environment"]["standard_model_hypotheses_hold"]:

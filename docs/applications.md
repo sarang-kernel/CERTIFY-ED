@@ -38,7 +38,7 @@ arithmetic.
 | square-octagon | 4η⊥ + 2η∥ < 1 | 0.1589663310 / 0.1061446858 | 0.1589685504 / 0.1061461257 (sum 0.84817) | yes | lemma + exact check (8 sites) | `"square_octagon_perp"`, `"square_octagon_par"` |
 | cross [4.6.12] | η < 1/3 | 0.1997384500 | 0.1997398311 | yes | lemma (12 sites, 16.7M states: not checked separately) | `"cross"` |
 | decorated honeycomb (n=1) | η < 1/4 | 0.1530329085 | 0.1530359435 | yes | lemma + exact check (both Γ, 9 sites) | `"decorated_honeycomb"` |
-| decorated square (n=1) | η < 1/4 | 0.2203543174 | 0.2203633381 | yes | lemma (12 sites, 4.1M states) | `"decorated_square"` (mirror × spin flip; largest exact block 4034) |
+| decorated square (n=1) | η < 1/4 | 0.2203543174 | 0.2203633377 | yes | lemma (12 sites, 4.1M states) | `"decorated_square"` (mirror × spin flip; largest exact block 4034) |
 | honeycomb | η < 1/6 (Method III) | 0.1445124916 | not attempted | — | — | see below |
 
 Negative control: on the decorated honeycomb, the same code at t = 0.0234 < η² (η = 0.15297) finds

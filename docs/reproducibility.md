@@ -56,17 +56,20 @@ make_numbers*.log  every check of a statement in the text, with pass/fail
 
 | | content | quick | full (one core) |
 |---|---|---|---|
-| E0 | verifier vs Arb balls, exact eigenvalue counts, QuSpin construction | same | ~5 min |
+| E0 | verifier vs Arb balls, exact eigenvalue counts, QuSpin construction | same | ~4 min |
 | E1 | planted errors: which statement catches which failure | same | ~1 min |
-| E2 | cost and memory of S2/S3 against size | skipped | ~21 min |
+| E2 | cost and memory of S2/S3 against size | skipped | ~22 min |
 | E3 | tightness of radii against Arb | same | ~1 min |
-| E4 | workflows: global spectrum from sectors, multiplets, matrix-free, benchmark values | skipped | ~5 min |
-| E5 | unplanted error: ARPACK misses a multiplet member | skipped | ~27 min |
-| E6 | mutation analysis (opt-in) | opt-in | ~15 min (64 mutants) |
-| E7 | benchmark E0 values with no floating-point assumption | 4×4 Heisenberg | ~12 min (four systems) |
-| E8 | symveig 1.0.0 vs `certify_ed.spectrum` | same | ~2 min |
-| E9 | pyrochlore crown | S = 1 parts | + exact S = 1/2 certificate and the full S = 1 landscape (~25 min) |
-| E10 | AKLT criteria | five lattices, star kernel | + decorated square (~45 min) and kernel checks (~25 min) |
+| E4 | workflows: global spectrum from sectors, multiplets, matrix-free, benchmark values | skipped | ~6 min |
+| E5 | unplanted error: ARPACK misses a multiplet member | skipped | ~38 min |
+| E6 | mutation analysis (opt-in) | opt-in | ~19 min (64 mutants, two workers) |
+| E7 | benchmark E0 values with no floating-point assumption | 4×4 Heisenberg | ~11 min (four systems) |
+| E8 | symveig 1.0.0 vs `certify_ed.spectrum` | same | ~3 min |
+| E9 | pyrochlore crown | S = 1 parts | + exact S = 1/2 certificate and the full S = 1 landscape (~17 min) |
+| E10 | AKLT criteria | five lattices, star kernel | + decorated square (~17 min) and kernel checks (~20 min); ~40 min in all |
+
+Measured on the 2-core reference machine (run `results/run_full_final`, 2026-10-18): 2.7 h of
+experiment time in all (E6 included). With `--jobs 2` the wall time was 1 h 46 min.
 
 ## Comparing two machines (two-stack replication)
 

@@ -38,9 +38,11 @@ One package for the combined CERTIFY-ED / symveig paper.
   - unknown experiment names are rejected.
 - `apps.pyrochlore.spin_one.printed_coupling_check` also re-derives the six-ring energy in exact
   arithmetic (scaled spin-1 basis). The S = 1 contradiction now needs no floating-point assumption.
-- Tests (349) for every AKLT lattice geometry, the spin-1 pair-spin tools, the sector-decomposition
+- Tests (356) for every AKLT lattice geometry, the spin-1 pair-spin tools, the sector-decomposition
   audits (coverage, orthogonality, trace moments, certified spectral shift) and the driver
-  (parallel jobs, resume, numbers on partial runs).
+  (parallel jobs, resume, numbers on partial runs), and for six gaps found by mutation analysis of the
+  final tree (internal builder-disagreement path, 1-D eigenvectors, dense non-Hermitian producers,
+  fermionic translation sign, float-model caveat, square-lattice default).
 - Tooling: `ruff check .` is clean (configuration in `pyproject.toml`). CI runs lint, builds the
   wheel, runs the suite on Python 3.10–3.12 and does a quick reproduction. SPDX license metadata.
 

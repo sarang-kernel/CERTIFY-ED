@@ -106,9 +106,9 @@ See `docs/applications.md`.
 ## Reproduce the paper
 
 ```bash
-python run.py              # quick: tests + E0, E1, E3, E7, E8, E9, E10 at reduced size (~15 min, one core)
-python run.py --full       # every experiment at paper size (about 3.5 h on one core; ~5 GB peak memory)
-python run.py --full --jobs 4   # the same with four experiments at a time (about N x 2.5 GB)
+python run.py              # quick: tests + E0, E1, E3, E7, E8, E9, E10 at reduced size (~12 min; 8 min with --jobs 2)
+python run.py --full       # every experiment at paper size (about 2.7 h on one core; ~5 GB peak memory)
+python run.py --full --jobs 2   # two at a time: 1 h 46 min on a 2-core machine (about 2.5 GB per job)
 python run.py --only E10   # one experiment
 python run.py --full --out results/run_full_X --resume   # finish an interrupted run, keeping finished steps
 ```
@@ -151,7 +151,7 @@ certify_ed/
   compat/symveig.py          symveig 1.0.0 API
   cli.py, provenance.py      command line and reproduction driver; source fingerprints
   testing.py                 shared test helpers
-tests/                       349 tests (pytest; `ruff check .` is clean)
+tests/                       356 tests (pytest; `ruff check .` is clean)
 examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes
