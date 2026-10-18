@@ -16,7 +16,7 @@ python run.py --full           # every experiment at paper size
 | `--only E0,E9` / `--skip E2` | select experiments |
 | `--with-mutation` | add E6 (mutation analysis; about 15 min for 64 mutants on two workers) |
 | `--no-tests`, `--no-numbers` | skip the test suite or the numbers step |
-| `--out DIR` | run directory (default `results/run_<mode>_<timestamp>/`) |
+| `--out DIR` | run directory (default `results/run_<mode>_<timestamp>/`); an existing run directory of the same mode is extended, with the commit recorded per step |
 | `--manuscript DIR` | where numbers and tables go (default `<run dir>/paper/`) |
 
 Experiments run one after another, each single-threaded (`OMP_NUM_THREADS=1` and the like). That is

@@ -204,12 +204,15 @@ def cmd_reproduce(a):
     if os.path.exists(path):                     # resume / extend an earlier run in the same directory
         with open(path) as f:
             prev = json.load(f)
-        if prev.get("mode") != mode or prev.get("git_commit") != manifest["git_commit"]:
-            print(f"{out} holds a run with mode {prev.get('mode')} at commit {prev.get('git_commit')}; "
-                  "use a new --out")
+        if prev.get("mode") != mode:
+            print(f"{out} holds a run in mode {prev.get('mode')}; use a new --out")
             return 2
         manifest["steps"] = prev.get("steps", {})
         manifest["started"] = prev.get("started", manifest["started"])
+        manifest["extended"] = prev.get("extended", []) + [{
+            "at": _dt.datetime.now().isoformat(timespec="seconds"),
+            "git_commit": manifest["git_commit"], "git_dirty": manifest["git_dirty"]}]
+        manifest["git_commit"], manifest["git_dirty"] = prev.get("git_commit"), prev.get("git_dirty")
 
     def save():
         with open(path, "w") as f:
@@ -250,6 +253,8 @@ def cmd_reproduce(a):
         log(f"{name} ({purpose}; about {mf if mode == 'full' else mq} min) ...")
         r = _run_experiment(root, name, args, out, log)
         r["status"] = "ok" if r["returncode"] == 0 else "failed"
+        r["git_commit"] = _git(root, "rev-parse", "HEAD")
+        r["git_dirty"] = bool(_git(root, "status", "--porcelain"))
         manifest["steps"][name] = r
         log(f"{name}: {r['status']} in {r['seconds']:.0f}s -> {', '.join(r['records']) or 'no record'}")
         save()
@@ -269,6 +274,7 @@ def cmd_reproduce(a):
 def _summary(out, m):
     lines = [f"# certify-ed reproduce ({m['mode']})", "",
              f"* commit `{m['git_commit']}`{' (with uncommitted changes)' if m['git_dirty'] else ''}",
+             *[f"* extended at {e['at']} from commit `{e['git_commit']}`" for e in m.get("extended", [])],
              f"* started {m['started']}, finished {m.get('finished')}",
              f"* floating-point standard model holds: "
              f"{m['environment']['float_environment']['standard_model_hypotheses_hold']}", "",
@@ -318,7 +324,7 @@ def main(argv=None):
     r.add_argument("--skip", help="comma-separated experiment names to skip")
     r.add_argument("--with-mutation", action="store_true", help="include E6 (mutation analysis)")
     r.add_argument("--no-tests", action="store_true"); r.add_argument("--no-numbers", action="store_true")
-    r.add_argument("--out", help="run directory; an existing one (same mode and commit) is extended")
+    r.add_argument("--out", help="run directory; an existing one of the same mode is extended (commits recorded per step)")
     r.add_argument("--manuscript"); r.set_defaults(fn=cmd_reproduce)
     n = sub.add_parser("numbers", help="regenerate numbers and tables from a run directory")
     n.add_argument("--run"); n.add_argument("--manuscript"); n.set_defaults(fn=cmd_numbers)
