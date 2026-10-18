@@ -13,8 +13,8 @@ c1 = n1/10⁷ and c3 = n3/10⁷, and c17 is fixed by the embedding constraint
 
 | Spin | Result | Status | Code |
 |---|---|---|---|
-| 1/2 | λ_min(H_crown) ≥ −0.550158313 at n1/n3 = 381414/817957 (published −0.550158(2)) | certified, exact arithmetic (Z₂⁷ blocks, largest 3890) | `apps.pyrochlore.spin_half.certify_crown` |
-| 1 | at the printed couplings (c1 = 0.053466, c3 = 0.082726) the all-singlet sector has eigenvalue ≤ −1.6380246 < −1.632985 (published bound); margin 5.0e-3 | certified in exact arithmetic (six-ring energy re-derived in the scaled spin-1 basis; radius 7.4e-15) | `apps.pyrochlore.spin_one.printed_coupling_check` |
+| 1/2 | λ_min(H_crown) ≥ −0.55015831338… at n1/n3 = 381414/817957 (published −0.550158(2); λ_min ≈ −0.5501582979) | certified, exact arithmetic (Z₂⁷ blocks, largest 3890) | `apps.pyrochlore.spin_half.certify_crown` |
+| 1 | at the printed couplings (c1 = 0.053466, c3 = 0.082726) the all-singlet sector has eigenvalue ≤ −1.6380246 < −1.632985 (published bound); margin 5.0e-3 | certified in exact arithmetic (six-ring energy re-derived in the scaled spin-1 basis; radius below 1e-14) | `apps.pyrochlore.spin_one.printed_coupling_check` |
 | 1 | re-optimised max-min over all 92 pair-spin classes ≈ −1.6343596 | floating-point estimate (the competitive all-S̃=2 class has 1.1M states) | `apps.pyrochlore.spin_one.landscape` |
 
 The S = 1 discrepancy may come from an unprinted coupling (c5). The authors should be asked before

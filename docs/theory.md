@@ -125,7 +125,8 @@ Pyrochlore crown, S = 1/2 (`apps/pyrochlore/spin_half.py`):
 - Kránitz & Penc's argument gives e_GS ≥ λ_min(H_crown). That argument is taken from the paper.
 - We use K·H with integer couplings, K = 8·10⁷, which satisfies the embedding constraint exactly.
 - SU(2): every multiplet has an S^z = 0 member.
-- Z₂⁷ blocks (128 characters) and exact counts (§7) give λ_min ≥ −0.550158313.
+- Z₂⁷ blocks (128 characters) and exact counts (§7) give λ_min ≥ −0.55015831338… (E9; the 10-17
+  standard-model certificate gave −0.550158313; λ_min ≈ −0.5501582979).
 
 Pyrochlore crown, S = 1 (`spin_one.py`):
 - The outer-pair spins S̃ are conserved, so the all-singlet block equals −12c₁ + c₁₇·H_ring(spin 1, 6

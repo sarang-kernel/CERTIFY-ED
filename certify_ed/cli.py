@@ -179,9 +179,13 @@ def _numbers(root, run_dir, manuscript, log):
                 continue
         p = subprocess.run([sys.executable, script, manuscript], cwd=os.path.join(root, "experiments"),
                            capture_output=True, text=True, env=env)
-        checks = [l for l in p.stdout.splitlines() if "checks pass" in l or l.startswith("CHECK FAILED")]
+        lines = p.stdout.splitlines()
+        n_ok = sum(1 for l in lines if l.startswith("ok "))
+        failed = [l for l in lines if l.startswith("CHECK FAILED")]
+        skipped = [l for l in lines if l.startswith("skipped ")]
+        checks = [f"{n_ok}/{n_ok + len(failed)} checks pass"] + failed[:5] + skipped[:5]
         out[script] = {"status": "ok" if p.returncode == 0 else "failed", "returncode": p.returncode,
-                       "checks": checks[-5:]}
+                       "checks": checks}
         with open(os.path.join(run_dir, script.replace(".py", ".log")), "w") as f:
             f.write(p.stdout + p.stderr)
     return out
@@ -336,6 +340,15 @@ def cmd_numbers(a):
     ms = os.path.abspath(a.manuscript or os.path.join(run_dir, "paper"))
     res = _numbers(root, run_dir, ms, print)
     print(json.dumps(res, indent=1))
+    mpath = os.path.join(run_dir, "manifest.json")
+    if os.path.exists(mpath):                    # a reproduce run directory: record the new numbers step
+        with open(mpath) as f:
+            manifest = json.load(f)
+        manifest["steps"]["numbers"] = res
+        manifest.setdefault("numbers_regenerated", []).append(_dt.datetime.now().isoformat(timespec="seconds"))
+        with open(mpath, "w") as f:
+            json.dump(manifest, f, indent=1, default=str)
+        _summary(run_dir, manifest)
     return 0 if all(r.get("status") != "failed" for r in res.values()) else 1
 
 
