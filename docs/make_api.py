@@ -49,6 +49,9 @@ lines += ["## Applications", "", entry("apps.aklt.certify_lattice", aklt.certify
 lines += ["## symveig compatibility", ""] + [entry(f"compat.symveig.{n}", getattr(symveig, n))
                                           for n in ("enclose_global", "enclose_sectors", "summary_stats")] + [""]
 import certify_ed.cli as _cli  # noqa: E402
+import certify_ed.provenance as _prov  # noqa: E402
 lines += ["## Command line", "", "```", _cli.__doc__.strip(), "```", ""]
+lines += ["## Provenance", "", entry("provenance.source_fingerprint", _prov.source_fingerprint),
+          f"  Files outside the fingerprint: {', '.join(_prov.NON_COMPUTATIONAL)}", ""]
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "api.md"), "w") as f:
     f.write("\n".join(lines))

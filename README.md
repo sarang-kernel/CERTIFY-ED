@@ -106,15 +106,18 @@ See `docs/applications.md`.
 
 ```bash
 python run.py              # quick: tests + E0, E1, E3, E7, E8, E9, E10 at reduced size (~15 min, one core)
-python run.py --full       # every experiment at paper size (several hours; ~5 GB peak memory)
+python run.py --full       # every experiment at paper size (about 3.5 h on one core; ~5 GB peak memory)
+python run.py --full --jobs 4   # the same with four experiments at a time (about N x 2.5 GB)
 python run.py --only E10   # one experiment
+python run.py --full --out results/run_full_X --resume   # finish an interrupted run, keeping finished steps
 ```
 
 Each run writes `results/run_<mode>_<timestamp>/`. It contains `manifest.json` (commit, environment,
 float probe, per-step status and time), `SUMMARY.md`, logs, one record per experiment
 (`data.json`, `environment.json`, `run.log`) and `paper/` (numbers, tables and checks of every
-statement the text makes about them). See `docs/reproducibility.md`, which includes how to compare
-two machines.
+statement the text makes about them). Every record carries a fingerprint of the code that produced
+it, and the numbers step refuses to mix records from different computational sources. See
+`docs/reproducibility.md`, which includes how to compare two machines.
 
 ## Limits
 
@@ -145,8 +148,9 @@ certify_ed/
   corroborate.py, rigorous.py    S5 solvers; Arb references
   apps/aklt, apps/pyrochlore     applications to published proofs
   compat/symveig.py          symveig 1.0.0 API
-  cli.py, testing.py         command line; shared test helpers
-tests/                       338 tests
+  cli.py, provenance.py      command line and reproduction driver; source fingerprints
+  testing.py                 shared test helpers
+tests/                       349 tests (pytest; `ruff check .` is clean)
 examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes

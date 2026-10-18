@@ -24,6 +24,8 @@ def _git(root, *args):
 
 
 def source_fingerprint(root=None):
+    """Fingerprint of the computational source: {'git_commit', 'source_hash', 'source_dirty'} (all None
+    outside a git checkout). Two records with equal source_hash and source_dirty False ran the same code."""
     root = root or repo_root()
     if root is None:
         return {"git_commit": None, "source_hash": None, "source_dirty": None}

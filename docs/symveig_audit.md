@@ -1,7 +1,7 @@
 # symveig 1.0.0 and its CPC manuscript: audit and merge into CERTIFY-ED (v0.1, 2026-10-18)
 
 Inputs: `symveig-1.0.0.zip` (package), `symveig-manuscript.zip` (elsarticle source), `symveig_cpc.pdf`
-(18 pp.). Unpacked in `/home/claude/work/symveig/`. Status: findings are reproducible. The scripts are
+(18 pp.); the package is kept unchanged in `legacy/symveig_1_0_0/`. Status: findings are reproducible. The scripts are
 `experiments/e8_symveig_comparison.py` and `tests/test_spectrum.py`, and the snippets
 quoted below.
 

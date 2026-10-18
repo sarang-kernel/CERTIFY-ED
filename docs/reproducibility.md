@@ -6,6 +6,7 @@
 pip install -e .[all]          # numpy, scipy, python-flint, quspin, h5py, matplotlib, pytest
 python run.py                  # quick mode
 python run.py --full           # every experiment at paper size
+python run.py --full --jobs 4  # the same, four experiments at a time (E2, E6, E8 still run alone)
 ```
 
 `run.py` is `certify-ed reproduce`. Options:
@@ -16,17 +17,33 @@ python run.py --full           # every experiment at paper size
 | `--only E0,E9` / `--skip E2` | select experiments |
 | `--with-mutation` | add E6 (mutation analysis; about 15 min for 64 mutants on two workers) |
 | `--no-tests`, `--no-numbers` | skip the test suite or the numbers step |
-| `--out DIR` | run directory (default `results/run_<mode>_<timestamp>/`); an existing run directory of the same mode is extended, with the commit recorded per step |
+| `--out DIR` | run directory (default `results/run_<mode>_<timestamp>/`); an existing run directory of the same mode is extended, with the commit and source fingerprint recorded per step |
+| `--resume` | with `--out`: keep every step that already succeeded with the same computational source (see Provenance) |
+| `--jobs N` | run up to N experiments at once, longest first; E2, E6 and E8 (timing or memory is what they measure) always run alone afterwards |
 | `--manuscript DIR` | where numbers and tables go (default `<run dir>/paper/`) |
 
-Experiments run one after another, each single-threaded (`OMP_NUM_THREADS=1` and the like). That is
-needed for the timing experiment E2 and keeps memory below about 5 GB. An experiment whose optional
-dependency is missing is skipped and recorded as such, never silently dropped.
+Each experiment runs single-threaded (`OMP_NUM_THREADS=1` and the like). By default they run one
+after another; `--jobs N` runs N at a time, which needs about N × 2.5 GB of memory. An experiment
+whose optional dependency is missing is skipped and recorded as such, never silently dropped.
+
+## Provenance
+
+Every record (`environment.json`) and every step of `manifest.json` carries a *source fingerprint*
+(`certify_ed.provenance.source_fingerprint`):
+
+* `git_commit`;
+* `source_hash`: a hash of the git blobs of `certify_ed/` and `experiments/`, leaving out the files
+  that cannot change a number (the command line, the test helpers and the provenance module itself);
+* `source_dirty`: whether those paths had uncommitted changes.
+
+The numbers scripts check that all records they read share one `source_hash` with
+`source_dirty = false`. Commits that differ only in documentation, tests or the command line
+therefore still count as one computation. `--resume` relies on the same rule to keep earlier steps.
 
 ## What a run directory contains
 
 ```
-manifest.json      commit, dirty flag, environment (versions, CPU, float probe), per-step status/time/records
+manifest.json      commit, source fingerprint, environment (versions, CPU, float probe), per-step status/time/records/fingerprint
 SUMMARY.md         the same as a table
 run.log            driver log;   tests.log   pytest output
 E<k>.log           stdout of each experiment
@@ -53,7 +70,8 @@ make_numbers*.log  every check of a statement in the text, with pass/fail
 
 ## Comparing two machines (two-stack replication)
 
-1. On each machine, check out the same commit and run `python run.py --full`.
+1. On each machine, check out the same commit and run `python run.py --full` (add `--jobs N` on a
+   machine with N free cores and N × 2.5 GB of memory).
 2. Compare `manifest.json → environment` (library versions, BLAS, float probe) between the two.
 3. Compare the records. Certified values must agree exactly when a step is deterministic (exact
    arithmetic: E7, E9, E10, S6) and within their certified radii otherwise. Timings and memory

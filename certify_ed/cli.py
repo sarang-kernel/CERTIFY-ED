@@ -10,8 +10,9 @@
     certify-ed numbers [--run DIR] [--manuscript DIR]
 
 `python run.py` in the repository is `certify-ed reproduce` (quick mode; `--full` for everything).
-A run directory holds manifest.json (commit, environment, per-step status and time, record paths),
-SUMMARY.md, the test log, one sub-directory per experiment record, and the generated numbers.
+A run directory holds manifest.json (commit, source fingerprint, environment, per-step status, time,
+record paths and fingerprint), SUMMARY.md, the test log, one sub-directory per experiment record, and
+the generated numbers. `--jobs N` runs experiments in parallel; `--resume` keeps finished steps.
 """
 import argparse
 import datetime as _dt
@@ -276,9 +277,12 @@ def cmd_reproduce(a):
         log(f"running {len(parallel)} experiments on {jobs} workers, then {len(exclusive)} alone")
         with ThreadPoolExecutor(jobs) as ex:
             futs = {}
-            for name, args, mins, purpose in sorted(parallel, key=lambda t: -t[2]):   # longest first
+
+            def job(name, args, mins, purpose):
                 log(f"{name} ({purpose}; about {mins} min) started")
-                futs[ex.submit(_run_experiment, root, name, args, out)] = name
+                return _run_experiment(root, name, args, out)
+            for name, args, mins, purpose in sorted(parallel, key=lambda t: -t[2]):   # longest first
+                futs[ex.submit(job, name, args, mins, purpose)] = name
             for fu in as_completed(futs):
                 finish(futs[fu], fu.result())
     else:
