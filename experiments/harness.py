@@ -42,7 +42,7 @@ class Run:
         self.name = name
         self.seed = seed
         ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-        base = outdir or os.path.join(HERE, "results")
+        base = outdir or os.environ.get("CERTIFY_RESULTS") or os.path.join(HERE, "results")
         self.dir = os.path.join(base, f"{name}_{ts}")
         os.makedirs(os.path.join(self.dir, "figures"), exist_ok=True)
         self.data = {}
@@ -76,6 +76,11 @@ class Run:
             env["memory_GiB"] = round(kb / 2 ** 20, 1)
         except Exception:
             pass
+        try:
+            from certify_ed.fp import probe_float_environment
+            env["float_environment"] = probe_float_environment()
+        except Exception as e:
+            env["float_environment"] = f"probe failed: {e}"
         env["threads_env"] = {k: os.environ.get(k) for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
                                                             "MKL_NUM_THREADS")}
         with open(os.path.join(self.dir, "environment.json"), "w") as f:

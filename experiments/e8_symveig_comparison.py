@@ -6,7 +6,7 @@ each is complete with certified counts, wall-clock times, and the largest distan
 reference eigenvalue (independent full eigvalsh) to the nearest enclosure (> 0 means the reference lies
 outside; for tight enclosures this measures the reference's own error, not a failure of the enclosure).
 
-usage: python3 e8_symveig_comparison.py [SYMVEIG_SRC]   (default: ../../../symveig/code/symveig-1.0.0)
+usage: python3 e8_symveig_comparison.py [SYMVEIG_SRC]   (default: ../legacy/symveig_1_0_0)
 """
 import os
 import sys
@@ -18,7 +18,7 @@ import scipy.linalg as la
 from harness import Run
 
 SRC = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else
-                      os.path.join(os.path.dirname(__file__), "..", "..", "..", "symveig", "code", "symveig-1.0.0"))
+                      os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "legacy", "symveig_1_0_0"))
 sys.path.insert(0, SRC)
 from symveig import enclose_sectors                                      # noqa: E402
 from symveig.models import heisenberg_1d, j1j2_heisenberg_1d, heisenberg_2d  # noqa: E402
