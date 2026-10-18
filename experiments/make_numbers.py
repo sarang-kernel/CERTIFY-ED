@@ -1,6 +1,6 @@
 """Generate every number, table and figure of the manuscript from the experiment records.
 
-Usage: python3 make_numbers.py [MANUSCRIPT_DIR]   (default: ../../../ms_v2)
+Usage: python3 make_numbers.py [MANUSCRIPT_DIR]   (default: <results dir>/paper; `certify-ed numbers` and run.py pass it)
 
 Reads the most recent results/<experiment>_<timestamp>/data.json of each experiment and writes
   MANUSCRIPT_DIR/numbers.tex          one macro per number used in the text
@@ -21,7 +21,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "..", "..", "ms_v2"))
+MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("CERTIFY_RESULTS", os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")), "paper"))
 RES = os.environ.get("CERTIFY_RESULTS", os.path.join(HERE, "results"))
 os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
 os.makedirs(os.path.join(MS, "figures"), exist_ok=True)

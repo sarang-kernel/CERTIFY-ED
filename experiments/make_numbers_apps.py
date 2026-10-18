@@ -3,12 +3,12 @@ records (CERTIFY_RESULTS or experiments/results). Writes MANUSCRIPT_DIR/numbers_
 MANUSCRIPT_DIR/tables/apps_{aklt,e7,e8}.tex and checks the statements the text makes. Sections whose
 record is missing are skipped and reported.
 
-usage: python3 make_numbers_apps.py [MANUSCRIPT_DIR]   (default: ../../../ms_v2)"""
+usage: python3 make_numbers_apps.py [MANUSCRIPT_DIR]   (default: <results dir>/paper; `certify-ed numbers` and run.py pass it)"""
 import glob, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "..", "..", "ms_v2"))
+MS = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("CERTIFY_RESULTS", os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")), "paper"))
 RES = os.environ.get("CERTIFY_RESULTS", os.path.join(HERE, "results"))
 os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
 M, CHECKS = {}, []

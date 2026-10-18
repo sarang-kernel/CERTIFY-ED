@@ -77,6 +77,8 @@ enc.complete, enc.max_halfwidth, enc.intervals[0]
 from certify_ed.compat.symveig import enclose_global, enclose_sectors   # symveig 1.0.0 API
 ```
 
+Runnable versions of these snippets are in `examples/`.
+
 **Command line**
 
 ```bash
@@ -144,7 +146,8 @@ certify_ed/
   apps/aklt, apps/pyrochlore     applications to published proofs
   compat/symveig.py          symveig 1.0.0 API
   cli.py, testing.py         command line; shared test helpers
-tests/                       334 tests
+tests/                       338 tests
+examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes
 legacy/                      CERTIFY-ED v1, symveig 1.0.0, first application scripts (not installed)

@@ -267,6 +267,7 @@ def cmd_reproduce(a):
     _summary(out, manifest)
     bad = [k for k, v in manifest["steps"].items()
            if (isinstance(v, dict) and (v.get("status") == "failed" or v.get("returncode", 0) not in (0, None)))]
+    bad += [s for s, r in manifest["steps"].get("numbers", {}).items() if r.get("status") == "failed"]
     log(f"done; {'all steps ok' if not bad else 'FAILED: ' + ', '.join(bad)}; see {os.path.join(out, 'SUMMARY.md')}")
     return 1 if bad else 0
 
