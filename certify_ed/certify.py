@@ -547,8 +547,16 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     except ImportError:
         return _stmt(sid, "NOT_CHECKED", "python-flint not installed", {}, [], time.time() - t0)
     st = r["status"] if r["status"] in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") else "INCONCLUSIVE"
-    summ = {"CERTIFIED": f"{mu.size} lowest eigenvalues re-derived in exact arithmetic (max radius "
-                         f"{max(r['radii']):.2e}); no floating-point assumption",
+    if st == "CERTIFIED":
+        lv = [e for e in r["enclosures"] if e["kind"] != "residual interval"]
+        ok_txt = (f"{mu.size} lowest eigenvalues re-derived in exact arithmetic: "
+                  f"{mu.size - sum(e['eigenvalue_indices'][1] - e['eigenvalue_indices'][0] + 1 for e in lv)} "
+                  f"within their residual radii (max {max(r['radii']):.2e})")
+        if lv:
+            ok_txt += (f", {len(lv)} multiplet(s) located by exact counts (widest level enclosure "
+                       f"{max(e['upper'] - e['lower'] for e in lv):.2e})")
+        ok_txt += f"; next eigenvalue >= {r['next_lower_bound']:.10g}; no floating-point assumption"
+    summ = {"CERTIFIED": ok_txt if st == "CERTIFIED" else "",
             "FAILED": "exact inertia counts contradict the claim",
             "INCONCLUSIVE": "exact re-check could not separate the claimed values from the rest",
             "NOT_CHECKED": r.get("reason", "not checked")}[st]

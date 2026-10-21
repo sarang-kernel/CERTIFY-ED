@@ -297,7 +297,8 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     add up to the dimension of the fixed subspace), so non-abelian groups are allowed as long as every
     irrep met is one-dimensional with Gaussian character values (e.g. translations at k = 0 or pi with
     reflection and spin flip). X: claimed vectors in the coordinates of `states`."""
-    from .checker import _float_vector_to_int, scaled_test_vector, radius_exact, _components, _separation_points, _status
+    from .checker import (_float_vector_to_int, scaled_test_vector, radius_exact, _components, certify_by_counts,
+                          _float_out, _round_up_float)
     ex = exact_matrix(spec, states)
     den = ex.den
     group = FiniteGroup(gens, states)
@@ -329,26 +330,21 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
             np.add.at(pi_, idx, (xr * ci + xi * cr) * pho)
         radii.append(radius_exact(ex, pr, pi_, lam[i]))
     comps = _components(lam, radii)
-    pts = _separation_points(comps, next_hint)
     mats, dim_sum = sector_matrices(ex, group, gens, fixed, log)
     if dim_sum != dim_fixed:
         return {"status": "NOT_CHECKED", "reason": f"1D Gaussian irreps cover {dim_sum} of {dim_fixed} dimensions"}
-    counts, ok, cum = [], True, 0
-    for j, g in enumerate(pts):
-        cum += comps[j][2]
-        tot, dmax, fail = 0, Fraction(0), False
+    def count_at(g):
+        tot, dmax = 0, Fraction(0)
         for _qn, _m, (Are, Aim, D) in mats:
             nu, delta = _count_sector_below(Are, Aim, D, g, den)
             if nu is None:
-                fail = True; break
+                return None, None
             tot += nu; dmax = max(dmax, delta)
-        if fail:
-            counts.append({"point": float(g), "count": None}); ok = False; continue
-        sep = comps[j][1] < g - dmax and (j + 1 >= len(comps) or comps[j + 1][0] > g + dmax)
-        counts.append({"point": float(g), "count": tot, "claimed_below": cum, "delta": float(dmax),
-                       "separated": bool(sep)})
-        ok &= (tot == cum) and sep
-    return {"status": _status(counts, ok), "radii": [float(r) for r in radii],
-            "components": [[float(a), float(b), m] for a, b, m in comps], "counts": counts,
+        return tot, dmax
+    status, enclosures, next_lower, counts = certify_by_counts(comps, next_hint, count_at)
+    return {"status": status, "radii": [_round_up_float(r) for r in radii], "enclosures": enclosures,
+            "next_lower_bound": next_lower,
+            "components": [[_float_out(a, False), _float_out(b, True), m] for a, b, m in comps],
+            "counts": [{k: v for k, v in c.items() if not k.endswith("_exact")} for c in counts],
             "sectors": [{"quantum_numbers": qn, "dim": m} for qn, m, _ in mats], "dim_fixed": dim_fixed,
             "group_order": group.order, "den": int(den), "no_floating_point_assumption": True}

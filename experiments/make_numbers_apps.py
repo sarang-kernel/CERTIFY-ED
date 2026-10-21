@@ -80,6 +80,7 @@ else:
             macro(f"Eta{key}", f"{lat[name]['eta_upper']:.10f}")
     if "decorated_square" in lat:
         macro("DecSquareLargestBlock", lat["decorated_square"]["largest_block"])
+        macro("DecSquareMinutes", f"{lat['decorated_square']['seconds'] / 60:.0f}")
     gaps = [lat[n]["eta_upper"] - lat[n]["eta_published"] for n in label if n in lat]
     macro("AKLTMaxExcess", f"{max(gaps):.0e}")
     cvs = [crit_value(n) for n in label if n in lat and crit_value(n) is not None]
@@ -126,6 +127,9 @@ else:
                     f"{r['exact_radius']:.1e} & {r['exact_check_seconds']:.0f}\\\\\n")
             check(r["status"] == "CERTIFIED", f"E7 {r['system']} certified")
         f.write("\\bottomrule\n\\end{tabular}\n")
+    ts7 = [r["exact_check_seconds"] for r in e7["E7"]]
+    macro("EsevenMinSeconds", f"{min(ts7):.0f}")
+    macro("EsevenMaxSeconds", f"{max(ts7):.0f}")
 
 # ---------------------------------------------------------------- symveig comparison (E8)
 e8 = latest("e8_symveig_comparison")

@@ -347,7 +347,9 @@ def inertia_exact(M, rows_per_block: int = 256):
         Af = M.astype(float)
     lu, d, perm = la.ldl(Af, lower=True, hermitian=True, overwrite_a=True)
     del Af
-    if not np.all(np.diag(lu[perm]) == 1.0):
+    if not np.all(np.diag(lu[perm]) == 1.0) or np.any(np.triu(lu[perm], 1)):
+        # Sylvester's law needs an invertible factor: unit lower triangular after the row permutation
+        # (then the rounded Lt is too, since rint keeps exact 0 and 1 * 2^52)
         raise ValueError("LDL factor not unit triangular after permutation")
     pL = 52
     dmax = float(np.max(np.abs(d))) or 1.0
@@ -407,20 +409,135 @@ def _components(lam, radii):
     return comps
 
 
-def _separation_points(comps, next_hint):
+def _float_out(x: Fraction, up: bool) -> float:
+    """A float on the safe side of the rational x (rounded to nearest, then one step outward)."""
+    return float(np.nextafter(float(x), np.inf if up else -np.inf))
+
+
+def _plan_points(comps, next_hint):
+    """Points at which eigenvalues are counted, each with the number of claimed values below it.
+
+    Every gap between components gets a point, and so does the region above the last one. A component
+    holding m >= 2 claimed values (a multiplet, or overlapping intervals) is bracketed tightly on both
+    sides, including below the first component: the residual intervals show only that each holds *an*
+    eigenvalue, not m distinct ones, so the m eigenvalues are located by the counts at the brackets."""
     top = comps[-1][1]
     if next_hint is None or not np.isfinite(next_hint) or Fraction(float(next_hint)) <= top:
         next_hint = float(top) + max(1e-6, 1e-6 * abs(float(top)))
-    pts = [(comps[j][1] + comps[j + 1][0]) / 2 for j in range(len(comps) - 1)]
-    pts.append((top + Fraction(float(next_hint))) / 2)
-    return [p.limit_denominator(1 << 40) if p.denominator > (1 << 40) else p for p in pts]
+    hint = Fraction(float(next_hint))
+    scale = max(Fraction(1), max(max(abs(c[0]), abs(c[1])) for c in comps))
+
+    def tight(lo, hi, gap):
+        return min(max(64 * (hi - lo), scale / 10 ** 11), gap / 4)
+
+    pts, below = [], 0
+    if comps[0][2] >= 2:
+        lo, hi, _ = comps[0]
+        pts.append((lo - max(64 * (hi - lo), scale / 10 ** 11), 0))
+    for j, (lo, hi, m) in enumerate(comps):
+        below += m
+        if j + 1 < len(comps):
+            nlo, nhi, nm = comps[j + 1]
+            gap = nlo - hi
+            if m >= 2:
+                pts.append((hi + tight(lo, hi, gap), below))
+            if nm >= 2:
+                pts.append((nlo - tight(nlo, nhi, gap), below))
+            if m < 2 and nm < 2:
+                pts.append(((hi + nlo) / 2, below))
+        else:
+            if m >= 2:
+                pts.append((hi + tight(lo, hi, hint - hi), below))
+            pts.append(((hi + hint) / 2, below))
+    return [(g.limit_denominator(1 << 40) if g.denominator > (1 << 40) else g, k) for g, k in pts]
 
 
-def _status(counts, ok):
+def _decide(comps, counts):
+    """Status and certified enclosures from the counts (each {'point', 'count', 'delta', 'claimed_below'}).
+
+    With #(eig < g - delta) <= nu <= #(eig < g + delta) at every point, nu equal to the number of claimed
+    values below the point, and no component meeting any window [g - delta, g + delta]:
+      * a component with one claimed value holds lambda_K (K = claimed values up to it) inside the claimed
+        interval: at least K-1 eigenvalues lie below the window under it, at most K below the window
+        above it, and the residual interval holds one;
+      * the sorted eigenvalues lambda_{K'+1..K} of a component with m >= 2 claimed values lie in
+        [a - delta_a, b + delta_b], a and b the bracketing points below and above it;
+      * lambda_{k+1} >= (top point) - delta."""
+    ok = True
+    for c in counts:
+        if c.get("count") is None:
+            ok = False
+            continue
+        g, d = c["point_exact"], c["delta_exact"]
+        c["separated"] = bool(all(hi < g - d or lo > g + d for lo, hi, _ in comps))
+        ok &= c["count"] == c["claimed_below"] and c["separated"]
+    if not ok:
+        return _status(counts, False, comps), None, None
+    enclosures, below = [], 0
+    for lo, hi, m in comps:
+        if m == 1:
+            elo, ehi, kind = lo, hi, "residual interval"
+        else:
+            a = max((c for c in counts if c["point_exact"] < lo), key=lambda c: c["point_exact"])
+            b = min((c for c in counts if c["point_exact"] > hi), key=lambda c: c["point_exact"])
+            elo, ehi = a["point_exact"] - a["delta_exact"], b["point_exact"] + b["delta_exact"]
+            kind = "level enclosure from counts"
+        enclosures.append({"eigenvalue_indices": [below + 1, below + m], "lower": _float_out(elo, False),
+                           "upper": _float_out(ehi, True), "kind": kind})
+        below += m
+    top = max(counts, key=lambda c: c["point_exact"])
+    return "CERTIFIED", enclosures, _float_out(top["point_exact"] - top["delta_exact"], False)
+
+
+def certify_by_counts(comps, next_hint, count_at):
+    """Plan the count points for the components, count, and decide (see _plan_points and _decide).
+
+    count_at(g) returns (nu, delta) with #(eig < g - delta) <= nu <= #(eig < g + delta), or (None, None).
+    If the only excess is above the top component, one more count just below that component tells a
+    level missing under the top claim (FAILED) from an unclaimed eigenvalue at or above it (INCONCLUSIVE),
+    as the floating-point S3 does. Returns (status, enclosures, next_lower_bound, counts)."""
+    def record(g, below):
+        nu, delta = count_at(g)
+        if nu is None:
+            return {"point": float(g), "count": None, "claimed_below": below}
+        return {"point": float(g), "count": nu, "claimed_below": below, "delta": _float_out(delta, True),
+                "point_exact": g, "delta_exact": Fraction(delta)}
+
+    counts = [record(g, below) for g, below in _plan_points(comps, next_hint)]
+    status, enclosures, next_lower = _decide(comps, counts)
+    lo_top = comps[-1][0]
+    top_excess = any(c.get("count") is not None and c["count"] > c["claimed_below"] and c["point_exact"] > lo_top
+                     for c in counts)
+    if status == "INCONCLUSIVE" and top_excess and comps[-1][2] == 1:
+        prev_hi = comps[-2][1] if len(comps) > 1 else None
+        scale = max(Fraction(1), abs(lo_top))
+        margin = max(64 * (comps[-1][1] - lo_top), scale / 10 ** 11)
+        if prev_hi is not None:
+            margin = min(margin, (lo_top - prev_hi) / 4)
+        g = lo_top - margin
+        g = g.limit_denominator(1 << 40) if g.denominator > (1 << 40) else g
+        w = record(g, sum(m for _, _, m in comps[:-1]))
+        w["witness_below_top"] = True
+        if w.get("count") is not None:
+            gd, dd = w["point_exact"], w["delta_exact"]
+            w["separated"] = bool(all(hi < gd - dd or lo > gd + dd for lo, hi, _ in comps))
+            if w["separated"] and w["count"] > w["claimed_below"]:
+                status = "FAILED"
+        counts.append(w)
+    return status, enclosures, next_lower, counts
+
+
+def _status(counts, ok, comps=None):
+    """FAILED only when an unclaimed eigenvalue lies below a claimed one: an excess count at a separated
+    point that has a claimed component above it. An excess only above the top component may be the rest
+    of a multiplet that the claim cuts ('the k lowest' is then ill-posed, not false): INCONCLUSIVE."""
     if ok:
         return "CERTIFIED"
-    if any(c.get("count") is not None and c["count"] > c["claimed_below"] and c["separated"] for c in counts):
-        return "FAILED"
+    top = max(c[0] for c in comps) if comps else None
+    for c in counts:
+        if c.get("count") is not None and c["count"] > c["claimed_below"] and c.get("separated"):
+            if top is None or c["point_exact"] < top:
+                return "FAILED"
     return "INCONCLUSIVE"
 
 
@@ -434,10 +551,12 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
        estimate of the next eigenvalue; only a hint), the number of eigenvalues below is counted by the
        exact inertia of M = den D (b H - a) D (g = a/b), a congruence of b H - a with D >= I:
        #(eig < g - delta) <= nu <= #(eig < g + delta), delta = beta / (b den).
-    3. CERTIFIED when every component lies strictly between its separation points widened by delta and
-       every count equals the number of claimed values below that point. Then component j contains
-       exactly m_j eigenvalues: the claim lists the k lowest eigenvalues with multiplicity, each within
-       its radius. No floating-point assumption is used anywhere."""
+    3. CERTIFIED when no component meets any window [g - delta, g + delta] and every count equals the
+       number of claimed values below its point. Then (see _decide) a component with one claimed value
+       holds lambda_K within the claimed radius, and the eigenvalues of a component with m >= 2 claimed
+       values lie in its 'level enclosure' between the bracketing points: per-vector residuals do not
+       show m *distinct* eigenvalues, so the counts locate them. 'enclosures' lists both kinds; the
+       next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere."""
     lam = np.atleast_1d(np.asarray(lam, dtype=float))
     X = np.asarray(X)
     if X.ndim == 1:
@@ -453,18 +572,11 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
         return {"status": "FAILED", "reason": "declared model is not Hermitian", **rad}
     radii = [Fraction(r) for r in rad["radii"]]
     comps = _components(lam, radii)
-    pts = _separation_points(comps, next_hint)
-    counts, ok, cum = [], True, 0
-    for j, g in enumerate(pts):
-        cum += comps[j][2]
-        nu, pos, beta = inertia_exact(_weighted_shift_matrix(ex, g, n))
-        if nu is None:
-            counts.append({"point": float(g), "count": None}); ok = False; continue
-        delta = beta / (g.denominator * ex.den)
-        sep = comps[j][1] < g - delta and (j + 1 >= len(comps) or comps[j + 1][0] > g + delta)
-        counts.append({"point": float(g), "count": nu, "claimed_below": cum, "delta": float(delta),
-                       "separated": bool(sep)})
-        ok &= (nu == cum) and sep
-    return {"status": _status(counts, ok), "radii": rad["radii"],
-            "components": [[float(a), float(b), m] for a, b, m in comps], "counts": counts,
+    def count_at(g):
+        nu, _pos, beta = inertia_exact(_weighted_shift_matrix(ex, g, n))
+        return (None, None) if nu is None else (nu, Fraction(beta) / (g.denominator * ex.den))
+    status, enclosures, next_lower, counts = certify_by_counts(comps, next_hint, count_at)
+    return {"status": status, "radii": rad["radii"], "enclosures": enclosures, "next_lower_bound": next_lower,
+            "components": [[_float_out(a, False), _float_out(b, True), m] for a, b, m in comps],
+            "counts": [{k: v for k, v in c.items() if not k.endswith("_exact")} for c in counts],
             "den": int(ex.den), "no_floating_point_assumption": True}

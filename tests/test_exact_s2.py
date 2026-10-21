@@ -166,3 +166,39 @@ def test_certify_with_s6_exact_recheck():
                     ce.Options(exact_recheck=True))
     s6b = [s for s in c2.statements if s["id"] == "S6.exact_recheck"][0]
     assert s6b["status"] in ("FAILED", "INCONCLUSIVE")
+
+
+def test_exact_recheck_duplicated_vector_does_not_hide_a_missing_ground_state():
+    """Two copies of the first-excited vector claimed as 'the two lowest': both residual intervals hold
+    the same eigenvalue, and a count above them alone (two eigenvalues below) would agree with the claim.
+    The bracketing count below the two-value component finds the ground state. (Found 2026-10-21 while
+    writing the proof of the exact re-check; the earlier code certified this claim.)"""
+    spec = ce.heisenberg_chain(8, J2=0.3, Delta=0.7)
+    st = ce.u1_state_set(spec, 4)
+    w, V = la.eigh(ce.build_bitwise(spec, st).toarray())
+    j = next(i for i in range(1, len(w) - 1) if w[i] - w[i - 1] > 1e-6 and w[i + 1] - w[i] > 1e-6)
+    from certify_ed.checker import exact_recheck_lowest
+    lam = np.array([w[j], w[j]])
+    X = np.column_stack([V[:, j], V[:, j]])
+    r = exact_recheck_lowest(spec, lam, X, st, next_hint=w[j + 1])
+    assert r["status"] == "FAILED", r
+    if j == 1:   # the configuration in which the earlier rule (one count above) was fooled
+        above = [c for c in r["counts"] if c["point"] > w[j]]
+        assert above and above[0]["count"] == 2
+
+
+def test_exact_recheck_multiplet_gets_a_level_enclosure():
+    spec = ce.heisenberg_chain(10, J2=0.3)
+    st = ce.u1_state_set(spec, 5)
+    w, V = la.eigh(ce.build_bitwise(spec, st).toarray())
+    k = _gap_k(w, 4)                    # ends after the doublet at index 3-4
+    assert k == 5 and w[4] - w[3] < 1e-8
+    from certify_ed.checker import exact_recheck_lowest
+    r = exact_recheck_lowest(spec, w[:k], V[:, :k], st, next_hint=w[k])
+    assert r["status"] == "CERTIFIED", r
+    kinds = {e["kind"] for e in r["enclosures"]}
+    for e in r["enclosures"]:
+        i0, i1 = e["eigenvalue_indices"]
+        assert all(e["lower"] <= w[i - 1] <= e["upper"] for i in range(i0, i1 + 1))
+    assert "level enclosure from counts" in kinds and "residual interval" in kinds
+    assert r["next_lower_bound"] <= w[k]
