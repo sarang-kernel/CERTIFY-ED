@@ -16,6 +16,16 @@ R = A X - X Lambda. Put delta = 1 - sqrt(1 - eta),
 where Qhat is the orthonormal polar factor of X. Then there is an injective
 map i -> j(i) with |lambda_{j(i)} - mu_i| <= eps for i = 1..g.
 
+Theorem 2' (sharper cluster radius; docs/theory.md section 2, UNVERIFIED, D-12).
+Under the same hypotheses, with spread(Lambda) = max(mu) - min(mu),
+    eps* = ||R||_2 / sqrt(1 - eta) + ||X^* R||_2 / (1 - eta) + delta spread(Lambda) / sqrt(1 - eta)
+also admits such an injection (Kahan's theorem for Qhat^* A Qhat, then Weyl for
+Qhat^* A Qhat - Lambda). The cluster radius used is min(eps, eps*).
+
+Each cluster member keeps its Theorem-1 radius as its *existence radius*; the
+cluster radius is the one under which the members are matched to distinct
+eigenvalues and the one used by every indexed statement downstream.
+
 Disjoint groups therefore certify distinct eigenvalues; overlapping groups are
 merged and re-bounded until the enlarged intervals of different groups are
 disjoint. When vectors are missing or too far from orthonormal (eta >= 1),
@@ -40,7 +50,7 @@ import scipy.sparse as sp
 
 from .fp import (U, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
                  inf_norm_upper, max_nnz_per_row, safe_sqrt_upper, exact_dot, exact_gram,
-                 sub_down, add_up)
+                 sub_down, add_up, sub_up)
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -175,6 +185,7 @@ class Group:
     eta: Optional[float] = None  # orthonormality defect bound (cluster)
     rho: Optional[float] = None  # ||Rhat||_2 bound (cluster)
     note: str = ""
+    bound: Optional[dict] = None # cluster: {'eps': Theorem 2, 'eps_star': Theorem 2', 'used': which is smaller}
 
     @property
     def size(self):
@@ -184,12 +195,19 @@ class Group:
 @dataclass
 class EnclosureSet:
     mu: np.ndarray               # claimed values
-    radius: np.ndarray           # per-pair certified radius
+    radius: np.ndarray           # per-pair certified radius (cluster radius for cluster members: the
+    #                              radius of the distinct matching, used by every indexed statement)
     group_of: np.ndarray         # group index per pair
     groups: List[Group]
     residual: ResidualReport
     rigorous: bool
     all_distinct: bool
+    existence_radius: Optional[np.ndarray] = None   # per-pair Theorem-1 radius: an eigenvalue lies within
+    #                              it of the claimed value (<= radius); None only for legacy construction
+
+    def __post_init__(self):
+        if self.existence_radius is None:
+            self.existence_radius = np.array(self.radius, dtype=float, copy=True)
 
     def interval(self, i):
         """(lower, upper): bounds on the exact endpoints mu_i -/+ r_i (rounded outward)."""
@@ -202,6 +220,7 @@ class EnclosureSet:
             out.append({"index": int(i), "claimed": float(self.mu[i]), "radius": float(self.radius[i]),
                         "lower": float(sub_down(self.mu[i], self.radius[i])),
                         "upper": float(add_up(self.mu[i], self.radius[i])),
+                        "existence_radius": float(self.existence_radius[i]),
                         "group": int(self.group_of[i]), "group_size": g.size,
                         "method": g.method, "distinct": bool(g.distinct),
                         "residual_computed": float(self.residual.computed[i]),
@@ -211,7 +230,9 @@ class EnclosureSet:
 
 def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray,
                    res: ResidualReport, idx: Sequence[int]):
-    """Theorem 2 radius for the group idx. Returns (eps, eta, rho) or None."""
+    """Cluster radius for the group idx: min of the Theorem 2 radius eps and the Theorem 2' radius
+    eps* = ||R||/sqrt(1-eta) + ||X^H R||/(1-eta) + delta*spread(mu)/sqrt(1-eta) (docs/theory.md).
+    Returns (radius, eta, rho, {'eps', 'eps_star', 'used'}) or None when eta >= 1 or ||A|| is unknown."""
     Xg = X[:, idx]
     n, g = Xg.shape
     cplx = np.iscomplexobj(Xg)
@@ -239,11 +260,19 @@ def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray,
     XR = Xg.conj().T @ Rc
     xnorm = math.sqrt(1.0 + eta)
     Rerr = safe_sqrt_upper(float(sum(norm2_upper(res.E[:, j]) ** 2 for j in idx)))
-    w = (fro_upper(XR) + gd * fro_upper(Xg) * fro_upper(Rc) + xnorm * Rerr
-         + xnorm * (Hn + lam_n) * delta + delta * rho)
+    # ||X^* R_exact||_2 <= ||fl(X^* Rc)||_F + rounding of that product + ||X|| ||R_exact - Rc||
+    XR_bound = up(fro_upper(XR) + gd * fro_upper(Xg) * fro_upper(Rc) + xnorm * Rerr)
+    w = XR_bound + xnorm * (Hn + lam_n) * delta + delta * rho
     w = min(up(w), rho)
     eps = up(0.5 * (w + math.sqrt(w * w + 4.0 * rho * rho)))
-    return eps, eta, rho
+    # Theorem 2' (IMP-13): every factor an upper bound; up() covers the few roundings of each product
+    inv_sqrt = up(1.0 / math.sqrt(1.0 - eta))
+    inv = up(1.0 / (1.0 - eta))
+    mu_g = mu[list(idx)]
+    spread = up(float(sub_up(float(np.max(mu_g)), float(np.min(mu_g)))))
+    eps_star = up(Rg_fro * inv_sqrt + XR_bound * inv + delta * spread * inv_sqrt)
+    used = "eps_star" if eps_star < eps else "eps"
+    return min(eps, eps_star), eta, rho, {"eps": float(eps), "eps_star": float(eps_star), "used": used}
 
 
 def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarray]) -> EnclosureSet:
@@ -294,11 +323,11 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
                     mk[-1] = "existence-only"
                     mm[-1] = None
                 else:
-                    eps, eta, rho = cb
+                    eps, eta, rho, info = cb
                     merged[-1] = newg
                     mr[-1] = eps
                     mk[-1] = "cluster"
-                    mm[-1] = (eta, rho)
+                    mm[-1] = (eta, rho, info)
                 changed = True
             else:
                 merged.append(g); mr.append(r); mk.append(kd); mm.append(me)
@@ -320,7 +349,8 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
             final_radius[i] = ri
         group_objs.append(Group(members, float(max(rads)), distinct, kd if res.rigorous else "estimate",
                                 eta=None if me is None else float(me[0]),
-                                rho=None if me is None else float(me[1])))
+                                rho=None if me is None else float(me[1]),
+                                bound=None if me is None else me[2]))
     # safety net: a group may claim distinct eigenvalues only if its union interval is
     # disjoint from every other group's union interval
     if len(group_objs) > 1:
@@ -336,7 +366,9 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
                 group_objs[gi].distinct = False
                 group_objs[gi].note = "union interval overlaps another group"
     all_distinct = all(g.distinct for g in group_objs)
-    return EnclosureSet(mu, final_radius, group_of, group_objs, res, res.rigorous, all_distinct)
+    # existence radius: Theorem 1 per member (never larger than the cluster radius; min() guards rounding)
+    existence = np.minimum(np.asarray(radius, dtype=float), final_radius)
+    return EnclosureSet(mu, final_radius, group_of, group_objs, res, res.rigorous, all_distinct, existence)
 
 
 def cluster_groups(enc: EnclosureSet, cluster_tol: float) -> List[List[int]]:

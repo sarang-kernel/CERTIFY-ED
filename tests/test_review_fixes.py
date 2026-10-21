@@ -144,3 +144,110 @@ def test_imp23_zero_eigenvector_in_lowest_claim_is_inconclusive_not_a_crash(heis
     s = _st(c)
     assert s["S2.eigenpairs"] != "CERTIFIED" and s["S3.completeness"] == "INCONCLUSIVE"
     assert _stmt(c, "S3.completeness")["evidence"]["pairs_without_enclosure"] == [1]
+
+
+# ------------------------------------------------------------------ IMP-13: sharper cluster radius (Theorem 2') and S2 status
+def _degenerate_pair(heis6):
+    spec, H, w, V = heis6
+    k = int(np.argmax(np.abs(np.diff(w)) < 1e-10))
+    return spec, H, w, V, k
+
+
+def test_imp13_valid_nonorthogonal_degenerate_vectors_certified(heis6):
+    """Two exact eigenvectors of one degenerate level with overlap 1/2 (eta ~ 0.71): Theorem 2' gives a cluster
+    radius of the order of the residual where Theorem 2 gave ~5; the claim is CERTIFIED (was FAILED)."""
+    spec, H, w, V, k = _degenerate_pair(heis6)
+    X = np.column_stack([V[:, k], 0.5 * V[:, k] + np.sqrt(0.75) * V[:, k + 1]])
+    c = ce.certify(ce.Claim(np.array([w[k], w[k + 1]]), X, operator=H, kind="subset"), spec)
+    s2 = _stmt(c, "S2.eigenpairs")
+    assert s2["status"] == "CERTIFIED", s2["summary"]
+    g = s2["evidence"]["groups"][0]
+    assert g["bound"]["used"] == "eps_star" and g["bound"]["eps_star"] < 1e-12 < g["bound"]["eps"]
+    assert s2["evidence"]["max_radius"] < 1e-12
+
+
+def test_imp13_cluster_radius_is_min_of_both_bounds(heis6):
+    spec, H, w, V = heis6
+    enc = ce.enclose(ce.OperatorAdapter(H), w, V)
+    assert enc.all_distinct
+    for g in enc.groups:
+        if g.bound is not None:
+            assert g.radius == min(g.bound["eps"], g.bound["eps_star"])
+            assert g.bound["eps_star"] >= 0 and g.bound["eps"] >= 0
+    assert np.all(enc.existence_radius <= enc.radius)
+    recs = enc.to_records()
+    assert all("existence_radius" in r for r in recs)
+
+
+def test_imp13_theorem2_prime_radius_contains_distinct_eigenvalues():
+    """Random Hermitian matrices, perturbed non-orthonormal vectors of a near-degenerate cluster: g distinct
+    eigenvalues lie within the cluster radius of the claimed values (bottleneck matching)."""
+    import itertools
+    rng = np.random.default_rng(11)
+    viol = 0
+    for _ in range(60):
+        n, g = 7, 3
+        A = rng.normal(size=(n, n)); A = (A + A.T) / 2
+        w, V = la.eigh(A)
+        w[1:g] = w[0] + rng.choice([0.0, 1e-6, 1e-3]) * rng.normal(size=g - 1)
+        A = V @ np.diag(w) @ V.T; A = (A + A.T) / 2
+        w, V = la.eigh(A)
+        C = np.eye(g) + rng.choice([1e-2, 0.2, 0.4]) * rng.normal(size=(g, g))
+        X = V[:, :g] @ C
+        X /= np.linalg.norm(X, axis=0)
+        mu = w[:g] + rng.choice([0.0, 1e-7, 1e-4]) * rng.normal(size=g)
+        enc = ce.enclose(ce.OperatorAdapter(A), mu, X)
+        for grp in enc.groups:
+            if not grp.distinct or grp.size < 2:
+                continue
+            best = min(max(abs(mu[m] - w[j]) for m, j in zip(grp.members, inj))
+                       for inj in itertools.permutations(range(n), grp.size))
+            viol += best > grp.radius
+    assert viol == 0
+
+
+def test_imp13_inconclusive_not_failed_when_only_the_defect_misses_the_target(heis6):
+    """Existence radii within the target, cluster radius beyond it (overlap 1/2 and a 6e-8 offset): S2 is
+    INCONCLUSIVE with the diagnosis, not FAILED."""
+    spec, H, w, V, k = _degenerate_pair(heis6)
+    X = np.column_stack([V[:, k], 0.5 * V[:, k] + np.sqrt(0.75) * V[:, k + 1]])
+    mu = np.array([w[k], w[k + 1] + 6e-8])
+    c = ce.certify(ce.Claim(mu, X, operator=H, kind="subset", accuracy_target=1e-7), spec)
+    s2 = _stmt(c, "S2.eigenpairs")
+    assert s2["status"] == "INCONCLUSIVE", s2["summary"]
+    assert "orthonormality defect" in s2["evidence"]["diagnosis"]
+    assert s2["evidence"]["max_existence_radius"] <= 1e-7 < s2["evidence"]["max_radius"]
+    # an inaccurate claim (existence radius beyond the target) is still FAILED
+    mu = np.array([w[k], w[k + 1] + 3e-7])
+    c = ce.certify(ce.Claim(mu, X, operator=H, kind="subset", accuracy_target=1e-7), spec)
+    assert _st(c)["S2.eigenpairs"] == "FAILED"
+
+
+def test_imp12_compose_uses_rho_for_square_W():
+    """compose.certify_low_energy: eps_decomposition = rho + builder shift (Weyl for the square W), no longer
+    (1 + sqrt 5)/2 * rho; the certified statement still holds."""
+    from certify_ed.compose import SectorResult, certify_low_energy
+    from certify_ed.construct import full_state_set
+    spec = ce.heisenberg_chain(6)
+    H = ce.build_bitwise(spec)
+    wf = la.eigvalsh(H.toarray())
+    E_cut = float((wf[4] + wf[5]) / 2)
+    full = full_state_set(spec)
+    secs = []
+    for nup in range(spec.n_sites + 1):
+        st = ce.u1_state_set(spec, nup)
+        idx, found = full.index_of(st.states_in_order())
+        Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
+        Hs = (Vs.T @ H @ Vs).tocsr()
+        ws, Ys = la.eigh(Hs.toarray())
+        sel = np.where(ws < E_cut)[0]
+        secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
+    res = certify_low_energy(spec, secs, E_cut)
+    assert res["status"] == "CERTIFIED"
+    eta = res["eta"]
+    delta = 1 - math.sqrt(1 - eta)
+    # eps is at most rho + builder shift with a rounding guard, well below the golden-ratio form
+    assert res["eps_decomposition"] <= 1.001 * (res["invariance_total"] + 20 * delta + res["builder_shift"]) + 1e-300
+    K = res["K"]
+    assert np.max(np.abs(np.array(res["lowest"]) - wf[:K])) <= res["radius"]
+    assert res["next_lower_bound"] <= wf[K]

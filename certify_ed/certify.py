@@ -664,8 +664,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         enc = enclose(adapter, mu, X)
         ev = {"n_pairs": int(mu.size), "max_radius": float(enc.radius.max()),
               "median_radius": float(np.median(enc.radius)),
+              "max_existence_radius": float(enc.existence_radius.max()),
               "groups": [{"members": g.members, "method": g.method, "radius": g.radius,
-                          "distinct": g.distinct} for g in enc.groups if g.size > 1],
+                          "distinct": g.distinct, "eta": g.eta, "bound": g.bound}
+                         for g in enc.groups if g.size > 1],
               "rigorous": enc.rigorous, "sector_lift_shift": eps_shift if audit is not None else None,
               "model_shift": model_shift,
               "radius_refers_to": ("declared model (spec)" if model_shift > 0 or (spec is not None and
@@ -691,10 +693,22 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             target, tsrc = float(claim.accuracy_target), "stated by producer"
         ev["accuracy_target"] = {"value": target, "source": tsrc}
         if st == "CERTIFIED" and not (enc.radius.max() + eps_shift <= target):   # fail-safe for NaN (IMP-22)
-            st = "FAILED"
             worst = int(np.argmax(enc.radius))
-            summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
-                    f"accuracy target {target:.1e} [{tsrc}]")
+            if enc.existence_radius.max() + eps_shift <= target:
+                # IMP-13: the claim is accurate (every Theorem-1 interval meets the target) but the vectors
+                # are too far from orthonormal to certify distinct eigenvalues at that accuracy
+                g = enc.groups[enc.group_of[worst]]
+                st = "INCONCLUSIVE"
+                summ = (f"each claimed value has an eigenvalue within its Theorem-1 radius (max "
+                        f"{enc.existence_radius.max() + eps_shift:.2e}, within the accuracy target {target:.1e} "
+                        f"[{tsrc}]), but the cluster radius {enc.radius.max() + eps_shift:.2e} (pair {worst}, "
+                        f"orthonormality defect eta = {g.eta:.2e}) exceeds it: the pairs are matched to "
+                        f"distinct eigenvalues only within the cluster radius")
+                ev["diagnosis"] = "accuracy target missed only through the orthonormality defect of the cluster"
+            else:
+                st = "FAILED"
+                summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
+                        f"accuracy target {target:.1e} [{tsrc}]")
         statements.append(_stmt("S2.eigenpairs", st, summ, ev,
                                 ["standard floating-point model (see 'arithmetic')"] if enc.rigorous else [],
                                 time.time() - t0))
@@ -814,14 +828,17 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 rec.update(status="INCONCLUSIVE", reason="cluster vectors too far from orthonormal")
                 eig_records.append(rec)
                 continue
-            eps, eta, rho = cb
+            eps, eta, rho, _bound = cb
             if eps_s3 > 0:
                 # statements refer to the declared model: replacing the operator used for the bounds by
                 # H_spec changes the residual by at most shift*||X|| <= shift*sqrt(1+eta), ||A|| by at most
                 # shift, hence rho by at most (sqrt(1+eta) + delta) * shift < 2.5 * shift, and w by at most
-                # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift
+                # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift.
+                # eps* (Theorem 2') grows by at most (sqrt((1+eta)/(1-eta)) + (1+eta)/(1-eta)) * shift
+                # (||R|| by sqrt(1+eta) shift, ||X^H R|| by (1+eta) shift); min(eps, eps*) by the larger factor
+                lip = max(3.5, math.sqrt((1 + eta) / (1 - eta)) + (1 + eta) / (1 - eta))
                 rho = up(rho + 2.5 * eps_s3)
-                eps = up(eps + 3.5 * eps_s3)
+                eps = up(eps + lip * eps_s3)
             rad_m = add_up(rad, eps_s3)
             JL = min(sub_down(a_, eps), min(sub_down(enc.mu[i], rad_m[i]) for i in C))
             JU = max(add_up(b_, eps), max(add_up(enc.mu[i], rad_m[i]) for i in C))
@@ -941,6 +958,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     arrays = {"eigenvalues": mu}
     if enc is not None:
         arrays["radius"] = enc.radius + (eps_shift if np.isfinite(eps_shift) else 0.0)
+        arrays["existence_radius"] = enc.existence_radius + (eps_shift if np.isfinite(eps_shift) else 0.0)
         arrays["residual_bound"] = enc.residual.upper
     if opts.store_eigenvectors and X is not None:
         arrays["eigenvectors"] = X

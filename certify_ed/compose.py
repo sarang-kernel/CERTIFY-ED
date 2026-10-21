@@ -11,7 +11,8 @@ double-counted sector, Lanczos missing a state inside one block).
 
 Statement (proof in the paper's appendix). Let W = [V_1 ... V_m] (n x n),
 eta = ||W^*W - I||_2 < 1, D = ||H W - W B||_2 with B = diag(H_1..H_m), and
-eps from Theorem 2 with (X, M) = (W, B). Suppose in every sector the claimed
+eps = rho = D + (||H|| + ||B||)(1 - sqrt(1 - eta)) (Weyl for the square W; see
+docs/theory.md, Theorem 8 note). Suppose in every sector the claimed
 eigenvalues below the cut are certified distinct with radius <= r and inertia
 certifies that H_s has no further eigenvalue below E_cut - beta_s. Let
 c_(1) <= ... <= c_(K) be the pooled claimed values. Then the K lowest
@@ -149,9 +150,12 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         summary = (f"highest claimed value {max(pooled):.10g} (+{rmax:.1e}) is not below "
                    f"E_cut - max beta = {E_cut - beta_max:.10g}")
     if status == "CERTIFIED":
+        # W is square here (covered == n), so its polar factor is unitary: Qhat^H H Qhat - B = Qhat^H Rhat
+        # with ||Rhat|| <= D + (||H|| + ||B||) delta = rho, and Weyl pairs the sorted eigenvalues within
+        # rho (docs/theory.md, Theorem 8 note; was (1 + sqrt 5)/2 rho before 3.1.0, review IMP-12/IMP-20)
         delta = up(1 - math.sqrt(1 - eta)) + 4 * U
         rho = up(D + (Hn + Bn) * delta)
-        eps = up(0.5 * (rho + math.sqrt(5.0) * rho) + m_build)
+        eps = up(rho + m_build)
         pooled = np.sort(np.asarray(pooled))
         K = int(pooled.size)
         out.update(eps_decomposition=eps, builder_shift=m_build, max_sector_radius=rmax, K=K,

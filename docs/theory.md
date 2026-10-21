@@ -36,8 +36,43 @@ polar factor of X, w ≥ ‖Q̂^H(AQ̂ − Q̂Λ)‖ and ε = (w + √(w² + 4ρ
 indices i_j with |λ_{i_j} − μ_j| ≤ ε. For orthonormal Ritz pairs this reduces to Kahan's theorem,
 ε = ‖R‖. **UNVERIFIED** in this form.
 
-Groups whose Theorem 1 intervals overlap get Theorem 2. If η ≥ 1, the group keeps existence only and
+**Theorem 2′ (sharper cluster radius; since 3.1.0, review finding IMP-13).** Under the hypotheses of
+Theorem 2 (η < 1; Λ Hermitian, in the implementation Λ = diag(μ) real), with δ = 1 − √(1 − η) and
+spread(Λ) = λ_max(Λ) − λ_min(Λ), there are g distinct indices i_j with
+
+    |λ_{i_j} − μ_j| ≤ ε* := ‖R‖/√(1 − η) + ‖X^H R‖/(1 − η) + δ·spread(Λ)/√(1 − η).
+
+`enclosure._cluster_bound` computes both ε and ε* (each term an upper bound, guarded with `fp.up`) and
+uses min(ε, ε*) as the cluster radius. For exact eigenvectors of one degenerate level ε* is of the
+order of the residual, where ε is dominated by (‖A‖ + ‖Λ‖)δ.
+**[UNVERIFIED — re-derivation pending, D-12].** Numerical evidence: 15 876 random cases with 0
+violations (`thm2_checks.py`, review of 2026-10-21).
+
+*Proof sketch.* Polar decomposition X = Q̂M with M = (X^H X)^{1/2}; the eigenvalues of M lie in
+[√(1−η), √(1+η)], so ‖M − I‖ ≤ 1 − √(1−η) = δ and ‖M⁻¹‖ ≤ (1−η)^{−1/2}.
+(i) *Kahan.* H′ := Q̂^H A Q̂ is Hermitian. From AX = R + XΛ, A Q̂ = R M⁻¹ + Q̂ M Λ M⁻¹, hence
+(I − Q̂Q̂^H) A Q̂ = (I − Q̂Q̂^H) R M⁻¹ and ‖A Q̂ − Q̂ H′‖ ≤ ‖R‖/√(1−η). Kahan's theorem (Parlett 1998,
+Thm 11.5.1; valid for any Hermitian H′, not only diagonal) matches the eigenvalues θ_1 ≤ … ≤ θ_g of H′
+to g *distinct* eigenvalues of A within ‖R‖/√(1−η).
+(ii) *Weyl.* Using Q̂^H = M⁻¹X^H, H′ − Λ = M⁻¹ X^H R M⁻¹ + (MΛM⁻¹ − Λ), and MΛM⁻¹ − Λ = [M, Λ]M⁻¹ =
+[M − I, Λ − cI] M⁻¹ for any scalar c; with c the midpoint of the spectrum of Λ, ‖Λ − cI‖ = spread/2, so
+‖H′ − Λ‖ ≤ ‖X^H R‖/(1−η) + δ·spread/√(1−η). H′ − Λ is Hermitian, so Weyl's inequality pairs the sorted
+eigenvalues of H′ and Λ within this bound.
+(iii) Composing the two matchings gives distinct eigenvalues of A within ε* of the eigenvalues of Λ. ∎
+
+Groups whose Theorem 1 intervals overlap get Theorem 2 / 2′. If η ≥ 1, the group keeps existence only and
 S2 is INCONCLUSIVE.
+
+**What each radius certifies (since 3.1.0).** A cluster member i carries two radii. Its *existence
+radius* is the Theorem 1 radius r_i (an eigenvalue lies within r_i of μ_i). The *cluster radius* ε is the
+one under which the members are matched to *distinct* eigenvalues; it is also the radius used by every
+indexed statement (S3's "λ_K lies within … of μ_K", Theorem 8, Proposition 9), because the matching of
+Theorem 2 need not be the one that puts the eigenvalue of r_i's interval at the sorted position of μ_i.
+The accuracy presumption of S2 is therefore applied in two steps: if ε meets the target, S2 is
+CERTIFIED; if only the existence radii meet it, the claim is accurate but its vectors are too far from
+orthonormal to certify the count at that accuracy, and S2 is INCONCLUSIVE with that diagnosis (a correct
+claim with valid non-orthogonal eigenvectors of a degenerate level was FAILED before 3.1.0, IMP-13);
+if an existence radius misses the target, S2 is FAILED.
 
 **Theorem 3 (Kato–Temple).** With ‖x‖ = 1, θ = x^H A x, r = ‖Ax − θx‖, and (α, β) containing exactly one
 eigenvalue λ: θ − r²/(β − θ) ≤ λ ≤ θ + r²/(θ − α). The isolating interval comes from S3, and the
@@ -69,6 +104,13 @@ through the Casimir (`su2.py`). Momentum labels are audited through ‖GV − λ
 **Theorem 8 (assembly).** Let V₁…V_m be sector isometries with Σd_s = n, W = [V₁ ⋯ V_m] and B = ⊕H_s,
 with η = ‖W^H W − I‖ < 1. Let every sector's claims below E_cut be certified and counted. Then the pooled
 claimed values match λ₁…λ_K within r + ε, and λ_{K+1} ≥ E_cut − max β_s − ε (`compose.py`).
+
+*ε for a square W (since 3.1.0, review IMP-12/IMP-20).* Because Σd_s = n is checked first, W is square
+and its polar factor Q̂ is unitary. With R̂ = AQ̂ − Q̂B = (AW − WB) + A(Q̂ − W) − (Q̂ − W)B and
+‖Q̂ − W‖ = ‖I − M‖ ≤ δ, ‖R̂‖ ≤ ‖AW − WB‖ + (‖A‖ + ‖B‖)δ = ρ. Q̂^H A Q̂ − B = Q̂^H R̂ is Hermitian and
+Q̂^H A Q̂ has the spectrum of A, so Weyl's inequality pairs the sorted eigenvalues of A and B within ρ.
+`compose.py` therefore uses ε = ρ (+ the builder shift) where it used (1 + √5)/2 · ρ before.
+**[UNVERIFIED — re-derivation pending, D-12]** (a one-line consequence of Weyl, but new in the project).
 
 ## 6. Whole-spectrum enclosure (`spectrum.py`, formerly symveig)
 
