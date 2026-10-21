@@ -1,5 +1,40 @@
 # Changelog
 
+## [Unreleased] - 2026-10-21 (3.1.0 candidate; `__version__` stays 3.0.0 until the next full run)
+
+Two soundness fixes, both found while writing the proofs for the manuscript scaffold (`ms_v3`), and
+sharper application bounds.
+
+### Fixed
+- **Exact 'k lowest' re-check (S6, `exact_recheck_lowest`, `exact_recheck_sector_lowest`).** A component
+  of overlapping residual intervals with m ≥ 2 claimed values was taken to hold m eigenvalues
+  whenever one count above it agreed. Residual intervals give *an* eigenvalue each, not distinct
+  ones: two copies of the first-excited vector, claimed as "the two lowest", were certified although
+  the ground state is missing. Such components are now bracketed by counts on both sides, and their
+  eigenvalues are certified inside the bracket ("level enclosure"). Single-value components keep
+  their residual interval: the counts on the two sides pin the index. Results carry `enclosures`
+  and `next_lower_bound`. FAILED now means an unclaimed eigenvalue lies under a claimed one; a cut
+  multiplet is INCONCLUSIVE (it was FAILED). `checker.certify_by_counts` is shared by both routines.
+- **Outward rounding of reported endpoints.** μ − r, μ + r, σ ∓ β, separations and cut comparisons
+  are formed with `fp.sub_down` / `fp.add_up` (one ulp outward). Round-to-nearest could place an
+  endpoint half an ulp inside the exact interval. This affects enclosures and their records,
+  cluster merging, S3 margins and gaps, Kato–Temple, S4 separations, sector assembly and
+  whole-spectrum intervals.
+- `inertia_exact` checks that the permuted LDLᵀ factor is exactly unit lower triangular.
+
+### Changed
+- AKLT: thresholds are placed just above the floating-point η² (margins 1e-9, 1e-7, 1e-5). The
+  certified η now agrees with the published values to about 1e-10 (it was about 2e-6). Reported η and
+  the square-octagon sum are floats rounded upward from the exact rationals.
+- Pyrochlore S = 1/2 crown: a ladder of shifts (relative margins 1e-10, 1e-9, 2e-8). The certified bound
+  is λ_min ≥ −0.550158299 (it was −0.550158314), within 1e-9 of the Lanczos value.
+- Provenance: the post-processing scripts left the computational fingerprint; the test suite has its
+  own `tests_hash`, and `--resume` re-runs E6 when the tests changed. E6 is classified
+  automatically after it runs.
+- `make_numbers_apps.py`: E6 table, E8 width-scaling figure (`fig_widths.pdf`), criterion values for
+  AKLT, run-manifest table, tighter statement checks.
+- Tests: 363.
+
 ## [3.0.0] - 2026-10-18
 
 One package for the combined CERTIFY-ED / symveig paper.

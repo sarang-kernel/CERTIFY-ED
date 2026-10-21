@@ -1,7 +1,7 @@
 # Theory
 
-What each statement of CERTIFY-ED rests on. Proofs of §1–§5 are in Appendix A of the manuscript
-(`ms_v2/sections/appA_proofs.tex`). §6–§8 cover the material added in 3.0. Results that are not
+What each statement of CERTIFY-ED rests on. Proofs are in the appendices of the manuscript scaffold
+(`ms_v3`: Appendix A for §1–§6, Appendix B for §7, Appendix C for §8). Results that are not
 textbook material are marked **UNVERIFIED** until a second person has re-derived them (project rule
 D-12).
 
@@ -17,6 +17,12 @@ fail for Strassen-type products, reduced-precision BLAS, flush-to-zero/denormals
 non-default rounding. `fp.probe_float_environment` tests these properties on every run and downgrades
 CERTIFIED statements when one fails. Two quantities are computed more accurately: Gram entries and
 Rayleigh quotients use error-free products and exactly rounded sums, so each has error ≤ 2u|·|.
+
+**Endpoints are rounded outward (since 3.1).** The certified statement |λ − μ| ≤ r is about the stored
+numbers μ and r. An endpoint μ − r computed with round-to-nearest can land half an ulp *inside* the
+exact interval: for example, 1 − 2⁻⁶⁰ rounds to 1.0. Every endpoint, shift margin (σ ∓ β), separation
+and cut comparison is therefore formed with `fp.sub_down` / `fp.add_up`, which step one ulp outward.
+The exact layer does not need this.
 
 ## 2. Enclosures (S2)
 
@@ -79,8 +85,10 @@ claimed values match λ₁…λ_K within r + ε, and λ_{K+1} ≥ E_cut − max 
 4. Intervals from different sectors that overlap are merged, and their counts add.
 
 Why sectors tighten worst-case bounds: a bound of the form γ₄ₙ‖A‖_F‖x‖ grows with the dimension
-(h ≈ 6 u d ‖A‖_F, symveig's Figure 1). A |A||x| bound with row-width γ factors does not. Experiment
-E8 measures both.
+(h ≈ 6 u d ‖A‖_F, symveig's Figure 1). The rounding term of a |A||x| bound with row-width γ factors
+does not, so what remains is mostly the eigensolver's own residual. Experiment E8 measures both. The
+widths still grow with d, but more slowly: the fitted median growth is about d^1.45 for symveig against d^0.97
+(run of 2026-10-18; `fig_widths.pdf`).
 
 ## 7. Exact layer (S6, `checker.py`, `exact_sectors.py`) — **UNVERIFIED**
 
@@ -104,10 +112,21 @@ congruent to b·den(H − g). A floating-point LDL^T proposes factors, and they 
 The residual LtDtLt^T − M is computed exactly with FLINT, block of rows by block of rows, giving β.
 Because D ≥ I, Lemma 4 gives #{λ < g − δ} ≤ ν ≤ #{λ < g + δ} with δ = β/(b·den).
 
-**Exact 'k lowest' (S6).** Merge the exact radii into components. Count at a separation point
-between consecutive components and above the last. The claim is certified when each count equals
-the number of claimed values below it and every component lies strictly between its points widened
-by δ. Each component then holds exactly its count, and nothing else lies below the top.
+**Exact 'k lowest' (S6; Proposition 13 in ms_v3; corrected in 3.1).** Merge the exact radii into
+components C_1 < … < C_m, with m_j claimed values in C_j and K_j = m_1 + … + m_j. Count at one point
+in every gap and one above C_m. Each component with m_j ≥ 2 is also bracketed by a point just below and
+a point just above it, including below C_1. If every count equals the number of claimed values below
+its point, and no component meets any window [g − δ, g + δ], then:
+- for m_j = 1, λ_{K_j} ∈ C_j. The counts on the two sides pin the index, so no distinctness is needed;
+- for m_j ≥ 2, λ_{K_{j−1}+1..K_j} lie in the bracket [a_j − δ, b_j + δ] (a "level enclosure");
+- λ_{k+1} ≥ g_top − δ.
+
+The per-vector residual intervals give *an* eigenvalue each, not distinct ones. Before 3.1 a single
+count above a multi-value component was taken to mean that the component held all its claimed
+eigenvalues. Two copies of the first-excited vector claimed as "the two lowest" were then certified,
+although the ground state is missing (now a test). FAILED is reported only when an unclaimed
+eigenvalue lies under a claimed one. An excess above the top component triggers one count just
+below it; a cut multiplet is INCONCLUSIVE.
 
 **Exact sectors.** Symmetry generators are site permutations and the spin flip, with ±1 phases, and
 they must preserve the weights; commutation with K and weight invariance are checked exactly. For a

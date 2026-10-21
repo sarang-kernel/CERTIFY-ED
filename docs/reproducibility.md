@@ -33,12 +33,19 @@ Every record (`environment.json`) and every step of `manifest.json` carries a *s
 
 * `git_commit`;
 * `source_hash`: a hash of the git blobs of `certify_ed/` and `experiments/`, leaving out the files
-  that cannot change a number (the command line, the test helpers and the provenance module itself);
-* `source_dirty`: whether those paths had uncommitted changes.
+  that cannot change a number (the command line, the test helpers, the provenance module itself,
+  and the post-processing scripts `make_numbers*.py`, `e6_classify.py`, `e6_recheck.py`, which only
+  read records);
+* `source_dirty`: whether those paths had uncommitted changes;
+* `tests_hash`, `tests_dirty`: the same for `tests/`. The test suite never changes a computed number,
+  but it decides the mutation score, so E6 is tied to it.
 
 The numbers scripts check that all records they read share one `source_hash` with
-`source_dirty = false`. Commits that differ only in documentation, tests or the command line
-therefore still count as one computation. `--resume` relies on the same rule to keep earlier steps.
+`source_dirty = false`, and that E6 ran against committed tests. Commits that differ only in
+documentation, tests, post-processing or the command line therefore still count as one computation.
+`--resume` relies on the same rule to keep earlier steps, and it also re-runs E6 when `tests_hash`
+changed. After E6 the driver runs `e6_classify.py` on the new record. The hand inspection of the
+survivors that need it (`inspection.json`) remains a separate step.
 
 ## What a run directory contains
 
