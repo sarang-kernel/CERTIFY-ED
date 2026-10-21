@@ -3,10 +3,11 @@
 `source_fingerprint` identifies the code that can change a recorded number: the git blobs of
 certify_ed/ and experiments/ without the files listed in NON_COMPUTATIONAL (the command line, test
 helpers, this module, and the post-processing scripts that only read records), plus a flag for
-uncommitted changes to those paths. The numbers step records its own commit. Two records with the same `source_hash`
-and `source_dirty = False` ran the same computational code, even if the commits differ. The test suite
-is fingerprinted separately (`tests_hash`, `tests_dirty`): it never changes a computed number, but the
-mutation analysis (E6) measures it."""
+uncommitted changes to those paths (content only: the executable bit is ignored). The numbers step
+records its own commit and the blob hashes of the number scripts (`numbers_fingerprint`). Two records
+with the same `source_hash` and `source_dirty = False` ran the same computational code, even if the
+commits differ. The test suite is fingerprinted separately (`tests_hash`, `tests_dirty`): it never
+changes a computed number, but the mutation analysis (E6) measures it."""
 import hashlib
 import os
 import subprocess
@@ -23,8 +24,11 @@ def repo_root():
 
 
 def _git(root, *args):
+    """git with core.filemode=false: a lost executable bit (Windows checkouts, some copies) is not a content
+    change and must not mark the computational source as dirty (review IMP-05 / SS-02)."""
     try:
-        return subprocess.check_output(["git", *args], cwd=root, stderr=subprocess.DEVNULL).decode().strip()
+        return subprocess.check_output(["git", "-c", "core.filemode=false", *args], cwd=root,
+                                       stderr=subprocess.DEVNULL).decode().strip()
     except Exception:
         return None
 
@@ -47,3 +51,29 @@ def source_fingerprint(root=None):
             "source_dirty": bool(dirty) if dirty is not None else None,
             "tests_hash": hashlib.sha256(tfiles.encode()).hexdigest()[:16] if tfiles is not None else None,
             "tests_dirty": bool(tdirty) if tdirty is not None else None}
+
+
+NUMBER_SCRIPTS = ("experiments/make_numbers.py", "experiments/make_numbers_apps.py")
+
+
+def numbers_fingerprint(root=None):
+    """Provenance of the post-processing step (review IMP-06): the commit, the git blob hash of each number
+    script as committed, the sha256 of its working-tree content (line endings normalised), whether it is
+    modified, and the fingerprint of the computational source and the tests at that time."""
+    root = root or repo_root()
+    out = {"git_commit": None, "scripts": {}, **({} if root is None else source_fingerprint(root))}
+    if root is None:
+        return out
+    out["git_commit"] = _git(root, "rev-parse", "HEAD")
+    for rel in NUMBER_SCRIPTS:
+        ls = _git(root, "ls-files", "-s", "--", rel)
+        blob = ls.split()[1] if ls else None
+        path = os.path.join(root, *rel.split("/"))
+        try:
+            with open(path, "rb") as f:
+                sha = hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()
+        except OSError:
+            sha = None
+        st = _git(root, "status", "--porcelain", "--", rel)
+        out["scripts"][rel] = {"blob": blob, "sha256": sha, "modified": bool(st) if st is not None else None}
+    return out

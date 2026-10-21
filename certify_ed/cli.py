@@ -45,8 +45,8 @@ OPT_IN = {"E6"}
 EXCLUSIVE = {"E2", "E6", "E8"}
 # experiments whose result depends on the test suite (the mutation score): --resume also needs equal tests
 TEST_DEPENDENT = {"E6"}
-NEEDS = {"E0": ["flint", "quspin"], "E1": ["quspin"], "E3": ["flint"], "E4": ["quspin"], "E5": ["quspin"],
-         "E7": ["flint"], "E9": ["flint"], "E10": ["flint"]}
+NEEDS = {"E0": ["flint", "quspin"], "E1": ["quspin"], "E3": ["flint", "quspin"], "E4": ["quspin"], "E5": ["quspin"],
+         "E7": ["flint"], "E9": ["flint"], "E10": ["flint"]}   # E3 part (d) imports quspin (SS-04)
 
 
 from .provenance import repo_root, _git, source_fingerprint  # noqa: E402
@@ -69,8 +69,23 @@ def environment():
            "scipy": scipy.__version__, "platform": sys.platform}
     for mod in ("flint", "quspin", "h5py", "matplotlib", "mpmath"):
         env[mod] = getattr(__import__(mod), "__version__", "installed") if _have(mod) else "not installed"
+    env["flint_c_library"] = flint_c_version()            # MS-N12: the FLINT C library, not python-flint
     env["float_environment"] = probe_float_environment()
+    env.update({k: v for k, v in source_fingerprint().items() if k in ("git_commit", "source_hash", "source_dirty")})
     return env
+
+
+def flint_c_version():
+    """Version of the FLINT C library behind python-flint (MS-N12), or 'unknown' / 'not installed'."""
+    try:
+        import flint
+    except Exception:
+        return "not installed"
+    for attr in ("__FLINT_VERSION__", "flint_version", "FLINT_VERSION"):
+        v = getattr(flint, attr, None)
+        if v:
+            return str(v)
+    return "unknown"
 
 
 # ------------------------------------------------------------------------------------ commands
@@ -169,9 +184,11 @@ def _run_experiment(root, name, args, out):
 
 
 def _numbers(root, run_dir, manuscript, log):
-    """Application numbers always; the full manuscript numbers when E0-E5 records are present."""
+    """Application numbers always; the full manuscript numbers when E0-E5 records are present. The step
+    records its own provenance (commit, blob hashes of the number scripts, source and tests hashes; IMP-06)."""
+    from .provenance import numbers_fingerprint
     env = dict(os.environ, CERTIFY_RESULTS=run_dir, PYTHONPATH=root)
-    out = {}
+    out = {"provenance": numbers_fingerprint(root)}
     for script in ("make_numbers_apps.py", "make_numbers.py"):
         if script == "make_numbers.py":
             have = {d.split("_")[0] for d in os.listdir(run_dir)}
@@ -317,7 +334,8 @@ def cmd_reproduce(a):
     _summary(out, manifest)
     bad = [k for k, v in manifest["steps"].items()
            if (isinstance(v, dict) and (v.get("status") == "failed" or v.get("returncode", 0) not in (0, None)))]
-    bad += [s for s, r in manifest["steps"].get("numbers", {}).items() if r.get("status") == "failed"]
+    bad += [s for s, r in manifest["steps"].get("numbers", {}).items()
+            if isinstance(r, dict) and r.get("status") == "failed"]
     log(f"done; {'all steps ok' if not bad else 'FAILED: ' + ', '.join(bad)}; see {os.path.join(out, 'SUMMARY.md')}")
     return 1 if bad else 0
 
@@ -336,6 +354,10 @@ def _summary(out, m):
     for k, v in m["steps"].items():
         if k == "numbers":
             for s, r in v.items():
+                if s == "provenance":
+                    blobs = ", ".join(f"{os.path.basename(p)} {d.get('blob')}" for p, d in r.get("scripts", {}).items())
+                    lines.append(f"| numbers (provenance) | commit `{r.get('git_commit')}` | | {blobs} |")
+                    continue
                 lines.append(f"| {s} | {r.get('status')} | | {'; '.join(r.get('checks', [])) or r.get('reason', '')} |")
             continue
         status = v.get("status", "ok" if v.get("returncode") == 0 else "failed")
@@ -363,7 +385,7 @@ def cmd_numbers(a):
         with open(mpath, "w") as f:
             json.dump(manifest, f, indent=1, default=str)
         _summary(run_dir, manifest)
-    return 0 if all(r.get("status") != "failed" for r in res.values()) else 1
+    return 0 if all(r.get("status") != "failed" for k, r in res.items() if k != "provenance") else 1
 
 
 def main(argv=None):

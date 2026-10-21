@@ -56,6 +56,13 @@ class Run:
                 env[mod] = __import__(mod).__version__
             except Exception:
                 env[mod] = "not installed"
+        try:                                   # MS-N12: the FLINT C library behind python-flint
+            import flint as _flint
+            env["flint_c_library"] = str(getattr(_flint, "__FLINT_VERSION__", "unknown"))
+        except Exception:
+            env["flint_c_library"] = "not installed"
+        from certify_ed import __version__ as _v
+        env["certify_ed"] = _v
         try:
             from threadpoolctl import threadpool_info
             env["blas"] = [{k: d.get(k) for k in ("internal_api", "version", "num_threads")}
@@ -99,9 +106,14 @@ class Run:
     def fig_path(self, name: str) -> str:
         return os.path.join(self.dir, "figures", name)
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc, tb):
         self.data["_elapsed_seconds"] = time.time() - self.t0
-        self.save()
-        self.log(f"=== finished in {time.time() - self.t0:.1f}s")
+        if exc_type is not None:               # SS-04: an exception is logged as aborted, not finished
+            self.data["_aborted"] = f"{exc_type.__name__}: {' '.join(str(exc).split())[:200]}"
+            self.save()
+            self.log(f"=== ABORTED after {time.time() - self.t0:.1f}s: {self.data['_aborted']}")
+        else:
+            self.save()
+            self.log(f"=== finished in {time.time() - self.t0:.1f}s")
         self._log.close()
         return False

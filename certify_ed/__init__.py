@@ -9,7 +9,7 @@ arithmetic with no floating-point assumption. `enclose_spectrum` encloses a whol
 sector (the former symveig package). Applications to published proofs live in `certify_ed.apps`.
 """
 
-__version__ = "3.0.0"
+__version__ = "3.1.0.dev0"
 __author__ = "Sarang Vehale, Ritu Goel"
 
 from .localops import LocalSpace

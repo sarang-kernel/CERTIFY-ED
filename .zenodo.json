@@ -1,7 +1,7 @@
 {
   "title": "CERTIFY-ED: certificates for exact-diagonalization results",
   "upload_type": "software",
-  "version": "3.0.0",
+  "version": "3.1.0.dev0",
   "license": "MIT",
   "creators": [
     {"name": "Vehale, Sarang", "affiliation": "National Forensic Sciences University, Delhi", "orcid": "0009-0001-5911-9503"},

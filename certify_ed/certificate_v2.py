@@ -123,6 +123,22 @@ def environment_record() -> dict:
         env["certify_ed"] = __version__
     except Exception:
         pass
+    # IMP-26: records of different code states all said '3.0.0'; the computational source hash (and the
+    # commit, when run from a checkout) distinguishes them. None outside a repository.
+    try:
+        from .provenance import source_fingerprint
+        fp = source_fingerprint()
+        env["source_hash"] = fp.get("source_hash")
+        env["source_dirty"] = fp.get("source_dirty")
+        env["git_commit"] = fp.get("git_commit")
+    except Exception:
+        env["source_hash"] = None
+    try:
+        import flint
+        env["python_flint"] = getattr(flint, "__version__", "installed")
+        env["flint_c_library"] = str(getattr(flint, "__FLINT_VERSION__", "unknown"))
+    except Exception:
+        pass
     return env
 
 

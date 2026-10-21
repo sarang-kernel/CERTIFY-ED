@@ -17,11 +17,10 @@ import scipy.sparse as sp
 import certify_ed as ce
 from certify_ed.basis import translation, cyclic_isometry
 from certify_ed.checker import exact_recheck_lowest
-from certify_ed.exact_sectors import exact_recheck_sector_lowest, site_permutation
+from certify_ed.exact_sectors import exact_recheck_sector_lowest
 from certify_ed.spectrum import enclose_spectrum
 from certify_ed.compose import SectorResult, certify_low_energy
 from certify_ed.construct import full_state_set
-from certify_ed.testing import random_spec
 from certify_ed.localops import LocalSpace
 from certify_ed.spec import ModelSpec
 

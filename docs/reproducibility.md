@@ -47,6 +47,30 @@ documentation, tests, post-processing or the command line therefore still count 
 changed. After E6 the driver runs `e6_classify.py` on the new record. The hand inspection of the
 survivors that need it (`inspection.json`) remains a separate step.
 
+Since 3.1.0 (review of 2026-10-21):
+
+* git is called with `core.filemode=false`, so a lost executable bit (Windows checkouts and some
+  copies) does not count as an uncommitted change (IMP-05 / SS-02).
+* The numbers step records its own provenance in `manifest.steps.numbers.provenance`: the commit, the
+  git blob hash and content hash of `make_numbers.py` and `make_numbers_apps.py`, whether either is
+  modified, and the source and tests hashes at that time (IMP-06). The commit of the number scripts
+  that produced a set of macros can therefore be read from the run directory.
+* `\NtestsTotal`, `\NtestsPassed`, `\NtestsSkipped` come from the run's own tests step
+  (`manifest.steps.tests.summary`), never from a collection on the machine that regenerates the
+  numbers (IMP-07 / MS-N02).
+* The post-run files of an E6 record (`classification.json`, `recheck.json`, `inspection.json`) must
+  carry a provenance stamp (`source_hash`, `tests_hash`); `e6_classify.py` and `e6_recheck.py` write it,
+  the hand-written `inspection.json` must include one, and `make_numbers_apps.py` reports CHECK FAILED
+  without it (MS-N03). Records of 3.0.0 runs therefore fail these three checks when regenerated with
+  3.1.0 scripts; that is intended.
+* `environment.json` and every certificate record the FLINT C-library version (`flint_c_library`),
+  the `certify_ed` version and the `source_hash` (IMP-26, MS-N12).
+* An experiment that raises writes `_aborted` into `data.json` and "ABORTED" into its log (SS-04).
+
+Platform notes: 37 of the 3.0.0 tests needed QuSpin (35) or gcc/glibc (2). The two floating-point
+probe tests now run on Windows as well (through `ucrtbase` `fesetround`); only the `-ffast-math`
+shared-library test still needs gcc on Linux/macOS.
+
 ## What a run directory contains
 
 ```
