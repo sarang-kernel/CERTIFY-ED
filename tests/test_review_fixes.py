@@ -251,3 +251,79 @@ def test_imp12_compose_uses_rho_for_square_W():
     K = res["K"]
     assert np.max(np.abs(np.array(res["lowest"]) - wf[:K])) <= res["radius"]
     assert res["next_lower_bound"] <= wf[K]
+
+
+# ------------------------------------------------------------------ IMP-08: inward rounding of the certified window
+def test_imp08_certified_window_endpoints_inside_exact_range():
+    from fractions import Fraction
+    rng = np.random.default_rng(7)
+    N = 6
+    from certify_ed.localops import LocalSpace
+    from certify_ed.spec import ModelSpec
+    static = [["zz", [[float(rng.normal()), i, (i + 1) % N] for i in range(N)]],
+              ["x", [[float(rng.normal()), i] for i in range(N)]],
+              ["z", [[float(0.3 * rng.normal()), i] for i in range(N)]]]
+    spec = ModelSpec.from_static(N, LocalSpace.spin_space("1/2", "spin"), static)
+    H = ce.build_bitwise(spec)
+    w, V = la.eigh(H.toarray())
+    n_cert, bad = 0, []
+    for t in np.linspace(0.11, 0.89, 15):
+        a = float(w[0] + t * (w[1] - w[0]))
+        b = float(w[2] + t * (w[3] - w[2]))
+        c = ce.certify(ce.Claim(w[1:3], V[:, 1:3], operator=H, kind="window", window=(a, b)), spec)
+        if _st(c)["S3.completeness"] != "CERTIFIED":
+            continue
+        n_cert += 1
+        ev = _stmt(c, "S3.completeness")["evidence"]
+        lo, hi = ev["certified_window"]
+        if Fraction(lo) < Fraction(a) + Fraction(ev["beta_a"]) or Fraction(hi) > Fraction(b) - Fraction(ev["beta_b"]):
+            bad.append((a, b, lo, hi))
+        for k in c.body["kato_temple"]:
+            assert k["isolation_interval"][0] >= lo and k["isolation_interval"][1] <= hi
+    assert n_cert > 0 and not bad
+
+
+# ------------------------------------------------------------------ IMP-14: triangularity of the dense LDL factor
+def test_imp14_inertia_dense_rejects_a_non_triangular_factor(monkeypatch):
+    import certify_ed.inertia as im
+    A = np.diag([1.0, 2.0, -3.0])
+    assert im.inertia_dense(A, 0.0).negative == 1
+    real_ldl = im.la.ldl
+
+    def bad_ldl(S, **kw):
+        lu, d, perm = real_ldl(S, **kw)
+        lu = lu.copy()
+        lu[0, 2] = 0.5                     # an entry above the diagonal: not a triangular factor
+        return lu, d, perm
+    monkeypatch.setattr(im.la, "ldl", bad_ldl)
+    r = im.inertia_dense(A, 0.0)
+    assert not r.conclusive and "not lower triangular" in r.note
+
+
+# ------------------------------------------------------------------ IMP-20: compose records symmetrised producer blocks
+def test_imp20_compose_records_symmetrised_blocks():
+    from certify_ed.compose import SectorResult, certify_low_energy
+    from certify_ed.construct import full_state_set
+    spec = ce.heisenberg_chain(4)
+    H = ce.build_bitwise(spec)
+    wf = la.eigvalsh(H.toarray())
+    E_cut = float((wf[2] + wf[3]) / 2)
+    full = full_state_set(spec)
+    secs = []
+    for nup in range(spec.n_sites + 1):
+        st = ce.u1_state_set(spec, nup)
+        idx, found = full.index_of(st.states_in_order())
+        Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
+        Hs = (Vs.T @ H @ Vs).tolil()
+        if nup == 2:
+            Hs[0, 1] = Hs[0, 1] + 1e-13        # a producer block that is not exactly Hermitian
+        Hs = Hs.tocsr()
+        Hh = ((Hs + Hs.conj().T) / 2).toarray()
+        ws, Ys = la.eigh(Hh)
+        sel = np.where(ws < E_cut)[0]
+        secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
+    res = certify_low_energy(spec, secs, E_cut)
+    assert res["symmetrised_blocks"] == ["nup=2"]
+    rec = next(p for p in res["sectors"] if p["label"] == "nup=2")
+    assert rec["hermitian_part"]["max_abs_asymmetry"] > 0
+    assert all(p["hermitian_part"] is None for p in res["sectors"] if p["label"] != "nup=2")

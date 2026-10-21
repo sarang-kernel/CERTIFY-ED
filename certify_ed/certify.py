@@ -513,8 +513,11 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
     ev.update({"count_from_inertia": int(n), "claimed_certified_inside": c_in,
                "claimed_touching": c_all, "beta_a": ba, "beta_b": bb})
     if c_in is not None and n == c_in:
-        ev["certified_window"] = [a + ba, b - bb]
-        return "CERTIFIED", ev, (a + ba, b - bb)
+        # inward rounding of the certified window (IMP-08): the exact a + beta_a and b - beta_b may be rounded
+        # the unsafe way by round-to-nearest; the same window feeds Kato-Temple and the S4 separations
+        lo_w, hi_w = float(add_up(a, ba)), float(sub_down(b, bb))
+        ev["certified_window"] = [lo_w, hi_w]
+        return "CERTIFIED", ev, (lo_w, hi_w)
     if n > c_all:
         ev["missing_at_least"] = int(n - c_all)
         return "FAILED", ev, None

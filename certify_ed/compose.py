@@ -60,10 +60,16 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     pooled, rmax, beta_max = [], 0.0, 0.0
     Bn = 0.0
     m_build = 0.0     # rounding of CERTIFY-ED's own reference blocks (statements refer to the exact spec)
+    symmetrised = []
     for s in sectors:
         Hs = sp.csr_matrix(s.H)
         asym = abs(Hs - Hs.conj().T)
+        herm_note = None
         if asym.nnz and asym.max() > 0:
+            # IMP-20: record it, as certify() does with 'hermitian_part'; the statement concerns the Hermitian part
+            herm_note = {"max_abs_asymmetry": float(asym.max()),
+                         "note": "producer block not exactly Hermitian; the statement concerns its Hermitian part"}
+            symmetrised.append(s.label)
             Hs = ((Hs + Hs.conj().T) / 2).tocsr()
         Bn = max(Bn, inf_norm_upper(Hs))
         red = restrict_to_u1(spec, s.V, cache) if H is None else None
@@ -80,7 +86,8 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         m_build = max(m_build, cache["_builder_shift"][key])
         aud = audit_sector(Ha, Va, Hs, label=s.label)
         rec = {"label": s.label, "dim": int(Hs.shape[0]), "isometry_defect": aud.isometry_defect,
-               "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed}
+               "invariance_defect": aud.invariance_defect, "audit_passed": aud.passed,
+               "hermitian_part": herm_note}
         if label_symmetries:
             from .sectors import audit_label
             rec["label_audit"] = {g: audit_label(spec, s.V, g, cache) for g in label_symmetries}
@@ -126,7 +133,8 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     eta = up(fro_upper(G) + gamma_dot(wmax, cplx) * fro_upper(W) ** 2)
     D = up(math.sqrt(sum(p["invariance_defect"] ** 2 for p in per)))
     out = {"n": n, "covered_dim": covered, "n_sectors": len(sectors), "eta": eta,
-           "invariance_total": D, "E_cut": E_cut, "sectors": per}
+           "invariance_total": D, "E_cut": E_cut, "sectors": per,
+           "symmetrised_blocks": symmetrised}
     status, summary = "CERTIFIED", ""
     bad_audit = [p["label"] for p in per if not p["audit_passed"]]
     if bad_audit:

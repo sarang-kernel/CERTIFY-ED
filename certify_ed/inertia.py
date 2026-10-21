@@ -106,11 +106,15 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     S = A - sigma * np.eye(n)
     lu, d, perm = la.ldl(S, lower=True, hermitian=True)
     neg, amb = _count_block_diagonal(d)
-    # unit-diagonal check of the triangular factor
+    # Sylvester's law needs an invertible factor: unit lower triangular after the row permutation
+    # (unit diagonal AND zero strict upper triangle, as checker.inertia_exact checks; IMP-14)
     Lt = lu[perm]
     if not np.all(np.diag(Lt) == 1.0):
         return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman",
                              time.time() - t0, False, "triangular factor lacks unit diagonal")
+    if np.any(np.triu(Lt, 1) != 0):
+        return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman",
+                             time.time() - t0, False, "factor not lower triangular after permutation")
     R = lu @ d @ lu.conj().T - S
     # rounding in forming lu d lu^H (two products, inner length <= n) and S
     absprod = np.abs(lu) @ np.abs(d) @ np.abs(lu).T
