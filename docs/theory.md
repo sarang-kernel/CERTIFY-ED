@@ -162,3 +162,115 @@ AKLT (`apps/aklt`):
   t′ = (1 + β/μ)(t + β/ν).
 - The number of unit cosines is bounded below by a mod-p rank of the union VBS states.
 - Symmetry blocking is an exact congruence (`apps/aklt/eta.py` docstring).
+
+## 9. Statements added in 3.1 (written before their code, rule D-46) — **UNVERIFIED**
+
+Every result in this section is marked **[UNVERIFIED – re-derivation pending, D-12]**. The code in
+`degeneracy.py`, `correlations.py`, `ivl.py` and `thermo.py` implements exactly the statements below;
+the tests check the implementation against the statements, not the other way round.
+
+### 9.1 Degeneracy count (S8, `degeneracy.py`)
+
+Setting: a cluster C of g claimed pairs whose enclosures are certified distinct (Theorem 2), with
+level enclosure J = [J_L, J_U] containing all g enclosures. Two inertia counts (Lemma 4) at shifts
+σ_lo < J_L and σ_hi > J_U give ν_lo, β_lo and ν_hi, β_hi.
+
+**Proposition 14 (bracketing count).** Put I_in = (σ_lo + β_lo, σ_hi − β_hi) and
+I_out = [σ_lo − β_lo, σ_hi + β_hi]. Then
+
+  #{λ ∈ I_in} ≤ ν_hi − ν_lo ≤ #{λ ∈ I_out}.
+
+If J ⊂ I_in and ν_hi − ν_lo = g, then I_in contains exactly g eigenvalues, and they are the g distinct
+eigenvalues matched to C by Theorem 2. If ν_hi − ν_lo > g, at least one further eigenvalue lies in
+I_out, and the degeneracy of the level is INCONCLUSIVE.
+
+*Proof.* Lemma 4 gives #{λ < σ_hi − β_hi} ≤ ν_hi ≤ #{λ ≤ σ_hi + β_hi} and
+#{λ < σ_lo − β_lo} ≤ ν_lo ≤ #{λ ≤ σ_lo + β_lo}. Subtracting the upper bound on ν_lo from the lower bound
+on ν_hi gives ν_hi − ν_lo ≥ #{λ < σ_hi − β_hi} − #{λ ≤ σ_lo + β_lo} = #{λ ∈ I_in}; subtracting the other
+way gives ν_hi − ν_lo ≤ #{λ ∈ I_out}. If J ⊂ I_in, the g distinct eigenvalues of Theorem 2 lie in I_in,
+so #{λ ∈ I_in} ≥ g; with ν_hi − ν_lo = g the first inequality gives #{λ ∈ I_in} ≤ g. ∎
+
+The certified statement is "exactly g eigenvalues in I_in" (a count in an interval of stated width),
+never "g exactly equal eigenvalues": exact equality is not decidable in floating point and is left to
+the exact layer. Shifts are moved outward (at most three retries, as in S3) when a backward error β is
+not smaller than the distance from the shift to J. All endpoint arithmetic uses `fp.add_up`/`sub_down`.
+When the operator used for the counts differs from the declared model by at most ε (S1 model shift),
+ε is added to β_lo and β_hi, as in S3.
+
+### 9.2 Linear combinations of certified observables (S4 extension, `correlations.py`)
+
+**Proposition 15 (summed bounds).** Let P be the spectral projector of a certified cluster
+(Theorem 6) and O_1 … O_m Hermitian operators with certified values v_k = tr(X^H O_k X) and bounds
+b_k ≥ |tr(P O_k) − v_k| (Theorem 6, including the rounding term of `certify_observable`). For complex
+coefficients a_1 … a_m,
+
+  | Σ_k a_k tr(P O_k) − Σ_k a_k v_k | ≤ Σ_k |a_k| b_k.
+
+*Proof.* Triangle inequality termwise. ∎ The sum Σ|a_k| b_k is formed with `fp.add_up` after rounding
+each product |a_k| b_k upward; the computed value Σ a_k v_k carries its own rounding, bounded by
+γ_{m+1} Σ |a_k||v_k| (standard model), which is added to the bound.
+
+Uses:
+
+* **Batch of observables.** m independent Theorem 6 records; no new mathematics.
+* **Two-point functions.** For site operators O_i, O_j acting on different sites, O_i O_j is Hermitian
+  when O_i and O_j are Hermitian (they commute). C_ij = tr(P O_i O_j) is then a Theorem 6 observable
+  with O = O_i O_j; for i = j, O = O_i². For a single eigenvector (g = 1) tr(P O) is the expectation
+  value; for g > 1 it is the trace over the level (basis independent, D-14), and the per-state
+  average is tr(P O)/g with bound b/g.
+* **Static structure factor.** S(q) = (1/N) Σ_{i,j} e^{iq·(r_i − r_j)} C_ij is Proposition 15 with
+  a_ij = e^{iq·(r_i−r_j)}/N, so |a_ij| = 1/N and the bound is (1/N) Σ_ij b_ij. The real part is reported;
+  S(q) is real when C_ij = C_ji, which holds for commuting Hermitian site operators. Only the pairs i ≤ j
+  are computed; C_ji = C_ij is used for the rest (exact for commuting Hermitian O_i, O_j).
+
+### 9.3 Thermodynamics from a complete whole-spectrum enclosure (S7, `thermo.py`)
+
+**Hypothesis (H).** Intervals [l_k, h_k] with counts c_k, k = 1 … m, Σ c_k = n, such that every
+eigenvalue of A lies in some interval and interval k contains exactly c_k eigenvalues (counted with
+multiplicity). This is the `complete = True` output of Proposition 9 (`spectrum.py`); without it no
+thermodynamic statement is made. k_B = 1, T > 0, β = 1/T.
+
+Write E_0 = min_k l_k and e = E − E_0 ≥ 0 for every eigenvalue, so each eigenvalue in interval k has
+e ∈ [a_k, b_k] with a_k = l_k − E_0 ≥ 0 and b_k = h_k − E_0.
+
+**Proposition 16 (interval bounds).** Under (H), with the shifted Boltzmann weight intervals
+W_k = c_k · [exp(−β b_k), exp(−β a_k)] (exp is decreasing, so the ends are correct) and interval
+arithmetic (+, ×, ÷ on intervals; Z > 0):
+
+  Z̃ = Σ_k W_k ∋ Z e^{βE_0},         Z = Σ_i e^{−βE_i},
+  F = −T ln Z = E_0 − T ln Z̃,
+  ⟨e⟩ ∈ (Σ_k W_k [a_k, b_k]) / Z̃,   U = ⟨E⟩ = E_0 + ⟨e⟩,
+  Var(E) = ⟨e²⟩ − ⟨e⟩² ∈ (Σ_k W_k [a_k², b_k²]) / Z̃ − ⟨e⟩²,  intersected with [0, ∞),
+  C = β² Var(E).
+
+*Proof.* Each eigenvalue E_i of interval k contributes e^{−βE_i} = e^{−βE_0} e^{−βe_i} with
+e_i ∈ [a_k, b_k], so its weight lies in e^{−βE_0}·[exp(−βb_k), exp(−βa_k)]; summing the c_k members of
+interval k and then over k gives Z e^{βE_0} ∈ Σ_k W_k. The same termwise argument gives
+Σ_i e_i e^{−βe_i} ∈ Σ_k W_k [a_k, b_k] and Σ_i e_i² e^{−βe_i} ∈ Σ_k W_k [a_k², b_k²] (a_k ≥ 0, so
+e ↦ e² is monotone on the interval). ⟨e⟩ and ⟨e²⟩ are the quotients by Z e^{βE_0}; the quotient of
+enclosures encloses the quotient. Var(E) = Var(e) ≥ 0 and C = β² Var(E) are the textbook identities.
+F follows from Z = e^{−βE_0} Z̃ and monotonicity of ln. ∎
+
+The bound on Var(E) and C can be loose: the quotient and the difference ⟨e²⟩ − ⟨e⟩² are formed with
+intervals that ignore the correlation between numerator and denominator, so the width of the C
+interval is not of the order of the eigenvalue widths but of β² (b_k − a_k) times the energy scale,
+summed. The certificate states this. When every interval is a single point up to rounding (widths of
+order 1e−13 in units of ‖A‖), the loss is negligible at moderate β; at very large β (T → 0) the
+enclosure of C remains correct but may be wide.
+
+**Lemma 17 (dyadic enclosures of exp and ln, `ivl.py`).** All arithmetic in Proposition 16 is done on
+intervals whose ends are dyadic rationals p·2^{−P} (P = 192 bits), with every operation rounded outward
+(floor for lower ends, ceiling for upper ends). For x ≥ 0 the enclosure of exp(x) is obtained from the
+Taylor polynomial of degree N at t = x/2^s ≤ 1/2 with remainder 0 ≤ R ≤ t^{N+1}/(N+1)! · 1/(1 − t/(N+2)),
+followed by s squarings (monotone on [1, ∞)); exp(−x) = 1/exp(x) with outward division. For z > 0 write
+z = 2^k·m with m ∈ [1, 2) and ln z = k ln 2 + 2 atanh(u), u = (m − 1)/(m + 1) ∈ [0, 1/3); the series
+2 Σ_{j≤N} u^{2j+1}/(2j+1) has remainder 0 ≤ R ≤ 2u^{2N+3}/((2N+3)(1 − u²)); ln 2 = 2 atanh(1/3) likewise.
+Each enclosure is rounded outward to the dyadic grid at every step. Conversion of a dyadic end to
+binary64 rounds outward (`ivl.to_float_down/up`). No floating-point operation enters S7 except this
+final conversion and the reading of the input floats l_k, h_k, which are taken as the exact binary64
+values they are.
+
+*Proof.* Standard Taylor remainders for exp (alternating-free, all terms positive) and for atanh on
+[0, 1/3); outward dyadic rounding preserves enclosure at each step; squaring and division of
+positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
+P bits; the enclosures are therefore not the tightest possible, only correct.)
