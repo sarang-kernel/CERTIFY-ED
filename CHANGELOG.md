@@ -74,6 +74,14 @@ of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 - `tests/test_adversarial.py`: the 14 attack cases of the review (7 failed on the reviewed HEAD).
 - `tests/test_review_fixes.py`: one or more regression tests per finding above.
 
+### Added (E9 named sectors, branch feat/e9-named-sectors; changes the computational source hash)
+- `e9_pyrochlore.py` step S1N: the lowest eigenvalue of the two pair-spin sectors Kranitz & Penc name,
+  S~ = (0,0,0,2,0,2) and (0,2,2,0,2,2), at the printed couplings (S^z = 0 block, ARPACK, floating point),
+  recorded under `spin1_printed.named_sectors`; `make_numbers_apps.py` emits `\CrownOneNamedSectorA/B`
+  from it (review B3-2) and checks that both reproduce the published value to 1e-5 and lie above the
+  certified all-singlet eigenvalue. `tests/test_e9_named_sectors.py`. To be merged after the candidate
+  run at source e707838f6852d474 has finished (the step adds about half a minute to E9).
+
 ### Added (manuscript v4 macros, branch feat/v4-macros; post-processing only, source hash unchanged)
 - `make_numbers.py` / `make_numbers_apps.py` emit every macro the v4 scaffold used from its hand-written
   `generated/numbers_todo.tex`, each with a comment naming the record and field it comes from:
