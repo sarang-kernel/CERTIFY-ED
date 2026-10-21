@@ -136,9 +136,18 @@ def _tree(commit, path="certify_ed"):
 _c = sorted(c for c in commits if c)
 trees = {_tree(c) for c in _c}
 _hashes = {r[2].get("source_hash") for r in runs.values() if r[2].get("source_hash")}
-check(bool(_c) and len(commits) == len(_c) and all(_same_source(_c[0], c) for c in _c[1:])
-      and len(_hashes) <= 1,
-      f"all experiments ran with the same computational source (commits {[c[:7] for c in _c]})")
+_known = all(subprocess.run(["git", "cat-file", "-e", f"{c}^{{commit}}"], cwd=ROOT, capture_output=True).returncode == 0
+             for c in _c)
+if _known:
+    check(bool(_c) and len(commits) == len(_c) and all(_same_source(_c[0], c) for c in _c[1:])
+          and len(_hashes) <= 1,
+          f"all experiments ran with the same computational source (commits {[c[:7] for c in _c]})")
+else:
+    # the recorded commits are not in this repository (rewritten history, or a checkout of an archive): the
+    # computational source hash of the records is the evidence (certify_ed.provenance)
+    check(bool(_c) and len(commits) == len(_c) and len(_hashes) == 1 and all(r[2].get("source_hash") for r in runs.values()),
+          f"all experiments ran with the same computational source (source_hash {sorted(_hashes)}; recorded commits "
+          f"{[c[:7] for c in _c]} are not in this repository)")
 check(not any(r[2].get("source_dirty") for r in runs.values()),
       "no experiment ran with uncommitted changes to certify_ed/ or experiments/")
 macro("GitCommit", ", ".join(sorted(c[:7] for c in commits if c)))
@@ -162,6 +171,9 @@ macro("PyVersion", env0["python"].split()[0])
 macro("NumpyVersion", env0["numpy"])
 macro("ScipyVersion", env0["scipy"])
 macro("QuspinVersion", env0.get("quspin", "?"))
+macro("PythonFlintVersion", str(env0.get("flint", "?")))
+macro("FlintCVersion", str(env0.get("flint_c_library", "unknown")))     # MS-N12: the FLINT C library
+macro("CertifyEdVersion", str(env0.get("certify_ed", "unknown")))
 QUEUE_A = ("e2_cost", "e4_workflows_W1W2W3W4", "e5_arpack_multiplet")
 el_B = sum(runs[k][1].get("_elapsed_seconds", 0) for k in runs if k not in QUEUE_A)
 el_A = sum(runs[k][1].get("_elapsed_seconds", 0) for k in QUEUE_A)
@@ -178,17 +190,33 @@ macro("LOCcore", thin(round(loc, -2)))
 macro("NcoreModules", str(len(core)))
 
 
-def n_tests(path):
-    out = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q", path], cwd=ROOT,
-                         capture_output=True, text=True).stdout
-    for line in out.splitlines()[::-1]:
-        if "tests collected" in line or "test collected" in line:
-            return int(line.split()[0])
-    return int(sum(1 for line in out.splitlines() if "::" in line))
+def run_test_counts():
+    """Test counts of the RUN (manifest steps.tests.summary, e.g. '363 passed, 2 skipped, 1 warning in 79s'),
+    not of a live collection on the regeneration host (IMP-07 / MS-N02). None when RES is not a run directory."""
+    import re
+    man = os.path.join(RES, "manifest.json")
+    if not os.path.exists(man):
+        return None
+    with open(man) as f:
+        summary = json.load(f).get("steps", {}).get("tests", {}).get("summary", "")
+    counts = {k: int(v) for v, k in re.findall(r"(\d+) (passed|failed|skipped|error|errors|xfailed|xpassed)", summary)}
+    if not counts:
+        return None
+    return {"summary": summary, "passed": counts.get("passed", 0), "failed": counts.get("failed", 0) + counts.get("error", 0) + counts.get("errors", 0),
+            "skipped": counts.get("skipped", 0), "total": sum(counts.values())}
 
 
-macro("NtestsTotal", str(n_tests("tests")))
-macro("NtestsVtwo", str(n_tests("tests")))
+_tc = run_test_counts()
+if _tc is None:
+    for k in ("NtestsTotal", "NtestsVtwo", "NtestsPassed", "NtestsSkipped"):
+        macro(k, "?")
+    check(False, "tests: the run directory records the test-suite outcome (manifest steps.tests)")
+else:
+    macro("NtestsTotal", str(_tc["total"]))           # tests the run executed (passed + failed + skipped)
+    macro("NtestsVtwo", str(_tc["total"]))
+    macro("NtestsPassed", str(_tc["passed"]))
+    macro("NtestsSkipped", str(_tc["skipped"]))
+    check(_tc["failed"] == 0, f"tests: the run's test suite passed ({_tc['summary'].split(' in ')[0]})")
 
 # ============================================================== E0
 _, e0, _ = runs["e0_verifier_validation"]
@@ -202,6 +230,8 @@ macro("VaViol", "no" if viol_a == 0 else str(viol_a))
 macro("VaRatioMedian", f"{a['bound_over_arb_residual']['median']:.2f}")
 macro("VaRatioMax", f"{a['bound_over_arb_residual']['max']:.0f}")
 macro("VaNoRef", str(a.get("reference_unavailable", 0)))
+# MS-N13: 'matrices' counts the cases with an Arb reference; the ones without a reference are excluded from the pairs
+macro("VaMatricesGenerated", str(a["matrices"] + a.get("reference_unavailable", 0)))
 macro("VaBallW", sci(a.get("arb_ball_max_width", float("nan"))))
 check(viol_a == 0, "E0(a): no enclosure violations")
 macro("VbMatrices", str(b["matrices"]))
@@ -377,13 +407,21 @@ check(all(r["kt_contains"] and r["radius_contains"] for r in sw), "E3(a): all in
 macro("TaKTDecades", str(int(math.floor(math.log10(errs.max() / errs.min())))))
 macro("TaKTRatioMax", f"{np.max(kt / errs):.0f}")
 bb = e3["b_float_vs_arb"]["ratio_bound_over_arb"]
-macro("TbRatioMin", f"{min(bb):.1f}")
-macro("TbRatioMax", f"{max(bb):.1f}")
+macro("TbN", str(len(bb)))                                   # MS-N13: the ratios come from n pairs
+macro("TbRatioMin", dec_dir(min(bb), 1, False))              # range rounded outward
+macro("TbRatioMax", dec_dir(max(bb), 1, True))
+check(all(float(dec_dir(min(bb), 1, False)) <= x <= float(dec_dir(max(bb), 1, True)) for x in bb),
+      "E3(b): the printed ratio range contains every ratio")
 cg = e3["c_gap"]
 uniq = {(r["model"], r["k"]): r for r in cg}
 macro("TcCases", str(len(uniq)))
-check(all(abs(r["fraction_of_gap_certified"] - 0.9) < 1e-6 and r["n_factorizations"] == 1 for r in uniq.values()),
-      "E3(c): certified gap = 0.9 true gap with one factorization in all cases")
+macro("TcCasesRecorded", str(len(cg)))
+# MS-N07: 0.9 is the fraction of the estimated gap at which the first shift is placed (a parameter of the
+# probe order, Options.gap_fractions[0]), not a tightness result; the macro says so
+_fracs = sorted({round(r["fraction_of_gap_certified"], 6) for r in uniq.values()})
+macro("TcShiftFraction", f"{_fracs[0]:g}" if len(_fracs) == 1 else ", ".join(f"{x:g}" for x in _fracs))
+check(len(_fracs) == 1 and all(r["n_factorizations"] == 1 for r in uniq.values()),
+      f"E3(c): the shift at {_fracs[0]:g} of the estimated gap was certified with one factorization in all cases")
 dc = e3["d_compose"]
 macro("TdSectors", str(dc["n_sectors"]))
 macro("TdRadius", sci_dir(dc["radius"]))
@@ -442,6 +480,22 @@ def s1_ok(c):
     return c is not None and "statements" in c and s_status(c, "S1.model_fidelity") != "NOT_CHECKED"
 
 
+def table_cert(r):
+    """The certificate whose S1/S2 times Table e2 prints for row r: the first run when it has statements,
+    else the run without S3. Text macros take their numbers from the same source (MS-N04 / MS-N05)."""
+    c = r.get("certifier") or {}
+    return c if "statements" in c else (r.get("certifier_without_S3") or {})
+
+
+def table_mem_cert(r):
+    """The certificate whose peak memory Table e2 prints: the run without S3 when S3 did not fit."""
+    c = r.get("certifier") or {}
+    cw = r.get("certifier_without_S3") or {}
+    if "statements" in c:
+        return cw if (s_status(c, "S3.completeness") == "NOT_CHECKED" and "statements" in cw) else c
+    return cw
+
+
 ok_rows = [r for r in rows2 if "error" not in r.get("certifier", {"error": 1})]
 check(len(ok_rows) == len(rows2), "E2: every certifier run produced a certificate (no crash)")
 s3_ok = [r for r in ok_rows if r["certifier"]["statements"]["S3.completeness"]["status"] == "CERTIFIED"]
@@ -451,6 +505,14 @@ macro("CmaxFeasibleDim", thin(dmax))
 macro("CmaxFeasibleDimRounded", "\\ensuremath{10^4}")
 macro("CfillAtMax", sci(max(x for x in rmax["certifier"]["fill_nnz"] if x), 1))
 macro("CnnzAtMax", sci(rmax["producer"]["nnz"], 1))
+# MS-N06: S3 feasibility is set by nnz and fill, not by d: name the blocks of dimension <= dmax whose S3 did not fit
+_s3_notfit = [r for r in ok_rows if r["certifier"]["statements"]["S3.completeness"]["status"] == "NOT_CHECKED"
+              and r["producer"]["dim"] <= dmax]
+macro("CnotFitAtOrBelowMaxDim", str(len(_s3_notfit)))
+macro("CnotFitNnzMin", sci(min(r["producer"]["nnz"] for r in _s3_notfit), 1) if _s3_notfit else "---")
+macro("CnotFitDim", ", ".join(thin(r["producer"]["dim"]) for r in _s3_notfit) if _s3_notfit else "---")
+check(all(r["producer"]["nnz"] > rmax["producer"]["nnz"] for r in _s3_notfit),
+      "E2: every block of dimension <= CmaxFeasibleDim whose S3 did not fit has more nonzeros than the largest certified block")
 macro("CSthreeAtMax", f"{rmax['certifier']['statements']['S3.completeness']['seconds']:.0f}")
 macro("CsolveAtMax", f"{rmax['producer']['t_solve']:.1f}")
 s2_times = []
@@ -459,23 +521,29 @@ for r in rows2:
         c = r.get(key)
         if c and "statements" in c:
             s2_times.append((stmt_time(c, "S2.eigenpairs"), r["producer"]["t_solve"] + r["producer"]["t_build"]))
-macro("CStwoMax", f"{max(t for t, _ in s2_times):.2f}")
+# the text macro is the largest S2 cell of the table (same source as the table, MS-N05); the check covers both runs
+_s2_table = [stmt_time(table_cert(r), "S2.eigenpairs") for r in rows2 if "statements" in table_cert(r)]
+macro("CStwoMax", f"{max(_s2_table):.2f}")
 check(all(t <= p for t, p in s2_times), "E2: S2 costs less than the producer (build + solve) everywhere")
 u1 = [r for r in rows2 if fam(r) == "chain-u1"]
 s1u1 = []
 for r in u1:
-    c = r["certifier"]
+    c = table_cert(r)
     if s1_ok(c):
         s1u1.append((stmt_time(c, "S1.model_fidelity"), r["producer"]["dim"], r["producer"]["t_build"]))
+# MS-N04: 'at most' is the maximum over all S^z rows of the table, not the time of the largest block
+t1max = max(t for t, _, _ in s1u1)
 t1, d1, b1 = max(s1u1, key=lambda x: x[1])
-macro("CSoneUoneMax", f"{t1:.2f}")
+macro("CSoneUoneMax", f"{t1max:.2f}")
 macro("CSoneUoneMaxDim", thin(d1))
+macro("CSoneUoneAtMaxDim", f"{t1:.2f}")
+check(all(t <= float(f"{t1max:.2f}") + 5e-3 for t, _, _ in s1u1), "E2: CSoneUoneMax is the largest S1 time of the S^z rows")
 check(all(t <= 1.5 * bld + 0.1 for t, _, bld in s1u1), "E2: S1 for U(1) blocks costs about the producer's build")
 k22 = next(r for r in rows2 if fam(r) == "chain-k0" and r["cfg"]["N"] == 22)
-c22 = k22.get("certifier_without_S3") or {}
+c22 = table_cert(k22)
 macro("CkTwentyTwoDim", thin(k22["producer"]["dim"]))
 macro("CkTwentyTwoSone", f"{stmt_time(c22, 'S1.model_fidelity'):.0f}" if "statements" in c22 else "?")
-macro("CkTwentyTwoMem", f"{c22.get('maxrss_mb', float('nan')):.0f}")
+macro("CkTwentyTwoMem", f"{table_mem_cert(k22).get('maxrss_mb', float('nan')):.0f}")
 _s1_rows = [(stmt_time(c, "S1.model_fidelity"), r) for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
             if s1_ok(c)]
 check(max(_s1_rows, key=lambda x: x[0])[1] is k22, "E2: the N=22 momentum block has the largest S1 time")
