@@ -697,10 +697,13 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         ev["accuracy_target"] = {"value": target, "source": tsrc}
         if st == "CERTIFIED" and not (enc.radius.max() + eps_shift <= target):   # fail-safe for NaN (IMP-22)
             worst = int(np.argmax(enc.radius))
-            if enc.existence_radius.max() + eps_shift <= target:
+            g = enc.groups[enc.group_of[worst]]
+            if not np.isfinite(enc.radius.max() + eps_shift):
+                st = "INCONCLUSIVE"
+                summ = f"certified radius of pair {worst} is not finite: no accuracy statement"
+            elif enc.existence_radius.max() + eps_shift <= target and g.eta is not None:
                 # IMP-13: the claim is accurate (every Theorem-1 interval meets the target) but the vectors
                 # are too far from orthonormal to certify distinct eigenvalues at that accuracy
-                g = enc.groups[enc.group_of[worst]]
                 st = "INCONCLUSIVE"
                 summ = (f"each claimed value has an eigenvalue within its Theorem-1 radius (max "
                         f"{enc.existence_radius.max() + eps_shift:.2e}, within the accuracy target {target:.1e} "
