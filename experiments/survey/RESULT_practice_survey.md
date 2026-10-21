@@ -105,7 +105,7 @@ Median number of distinct quantity labels per paper: 3.0.
 | named code | 15 | 22 | [14, 34] |
 | in-house | 9 | 13 | [7, 24] |
 
-Named codes credited (first-named, analysis set): QuSpin (3), SciPy (1), public code repository (1), NumPy (1), LAPACK (zgeev) (1), ALPS (1), ALPS (Algorithms (1), PETSc (1), Quspin (1), ARPACK (1), Expokit.jl (1), Sunny.jl (1), DiagHam (1).
+Named codes credited (first-named, analysis set, labels normalised by case and with parentheticals and co-named libraries dropped; the verbatim free-text values are in survey_coded.csv): QuSpin (4), ALPS (2), SciPy (1), public code repository (1), NumPy (1), LAPACK (1), PETSc (1), ARPACK (1), Expokit.jl (1), Sunny.jl (1), DiagHam (1); total 15.
 Largest Hilbert-space / block dimension stated explicitly: 16/67.
 
 **Eigenvectors needed for a reported quantity** (analysis set, n = 67; Wilson 95 % interval in brackets)
@@ -133,7 +133,7 @@ Largest Hilbert-space / block dimension stated explicitly: 16/67.
 
 ## 4. Hand check (seed 20261022, n = 12 papers re-coded by the reviewing session from the extracted text)
 
-Agreement between the model first pass and the hand coding. Single-valued fields: exact match. Multi-label fields:
+Agreement between the final model coding (pass 2, after the pre-registered prompt revision) and the hand coding; the pass-1 figures are given below the table. Single-valued fields: exact match. Multi-label fields:
 mean Jaccard index between label sets (1 when both empty); the label-wise presence/absence agreement is given in the
 last column for comparison. The pre-registered threshold is 80 %.
 

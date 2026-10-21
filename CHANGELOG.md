@@ -92,7 +92,7 @@ of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
   the run contains, as `\todo{reason}` (nothing is substituted); empty when every macro has a record.
 - `make_numbers.py` checks that no macro is defined twice across the generated files; the environment
   macros that both scripts know are written by `make_numbers_apps.py` with `\providecommand` (before this,
-  `\FlintCVersion`, `\PythonFlintVersion` and `\CertifyEdVersion` were defined twice and LaTeX stopped).
+  `\FlintCVersion`, `\PythonFlintVersion` and `\CertifyEdVersion` were defined twice, which would have stopped LaTeX with "command already defined"; found by the duplicate-macro check, no LaTeX build was run).
 - `tests/test_make_numbers_helpers.py`: the helpers behind these macros (code-line counter, pytest collection
   parser, duplicate detection, P1-or-P2 verdicts, E10 log and symveig-audit parsers,
   pending-file writer).

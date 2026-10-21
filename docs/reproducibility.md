@@ -67,6 +67,10 @@ Since 3.1.0 (review of 2026-10-21):
   the `certify_ed` version and the `source_hash` (IMP-26, MS-N12).
 * An experiment that raises writes `_aborted` into `data.json` and "ABORTED" into its log (SS-04).
 
+Platform notes: 37 of the 3.0.0 tests needed QuSpin (35) or gcc/glibc (2). The two floating-point
+probe tests now run on Windows as well (through `ucrtbase` `fesetround`); only the `-ffast-math`
+shared-library test still needs gcc on Linux/macOS.
+
 ### The manuscript's macros (v4)
 
 `certify-ed numbers --run DIR --manuscript MS` writes three macro files into `MS/`, and the
@@ -107,10 +111,6 @@ Rules that the two scripts follow (so that the manuscript builds from `certify-e
   read from the E10 record's `run.log`, the only place the 3.1.0 harness writes it; `\SymveigPtwoOutside`
   is read from `docs/symveig_audit.md` (the project's audit of symveig 1.0.0; the E8 record compares
   conserving models only). Both comments say so.
-
-Platform notes: 37 of the 3.0.0 tests needed QuSpin (35) or gcc/glibc (2). The two floating-point
-probe tests now run on Windows as well (through `ucrtbase` `fesetround`); only the `-ffast-math`
-shared-library test still needs gcc on Linux/macOS.
 
 ## What a run directory contains
 
