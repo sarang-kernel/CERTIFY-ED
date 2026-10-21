@@ -15,7 +15,11 @@ import subprocess
 NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/provenance.py",
                      # post-processing: they read records and write tables, they never produce a record
                      "experiments/make_numbers.py", "experiments/make_numbers_apps.py",
-                     "experiments/e6_classify.py", "experiments/e6_recheck.py")
+                     "experiments/e6_classify.py", "experiments/e6_recheck.py",
+                     # manuscript tables from documents, not from records: the survey dataset and its
+                     # generators, and the scope-matrix generator (3.1.0)
+                     "experiments/make_survey_table.py", "experiments/make_scope_table.py",
+                     "experiments/survey")
 
 
 def repo_root():
