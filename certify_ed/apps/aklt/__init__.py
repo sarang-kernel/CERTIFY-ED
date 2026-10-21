@@ -78,10 +78,24 @@ def eta_float(g, L, C, R):
     return {"unit_cosines": n1, "eta": float(np.sqrt(max(w[n1], 0.0))) if n1 < len(w) else 0.0}
 
 
+MARGINS = (1e-9, 1e-7, 1e-5)      # relative distance of the threshold above the floating-point eta^2
+
+
+def _threshold_above(eta, margin):
+    """Rational t >= eta^2 (1 + margin), rounded up on a 1e-14 grid."""
+    from math import ceil
+    return Fraction(ceil(eta * eta * (1 + margin) * 10 ** 14), 10 ** 14)
+
+
 def certify_lattice(name, thresholds=None, check_geometry=True, log=print):
     """Exact eta certificate for one lattice of LATTICES. Returns a JSON-ready record including the
-    floating-point reproduction, the certified bound sqrt(t') at the sharp threshold, and whether the
-    criterion eta < 1/z holds (decided exactly on t' < 1/z^2)."""
+    floating-point reproduction, the certified bound sqrt(t') at the best certified threshold, and
+    whether the criterion eta < 1/z holds (decided exactly on t' < 1/z^2).
+
+    Thresholds: given explicitly, or (default) placed a relative 1e-9 above the floating-point eta^2,
+    widening to 1e-7 and 1e-5 only if the tighter one cannot be certified; without the geometry check
+    the fixed threshold of LATTICES is used. The floating-point value only *places* the threshold;
+    the certificate does not depend on it being accurate."""
     build, sym, paper, t_sharp, z = LATTICES[name]
     g, L, C, R = build()
     rec = {"lattice": name, "eta_published": paper}
@@ -90,9 +104,21 @@ def certify_lattice(name, thresholds=None, check_geometry=True, log=print):
         rec["eta_float"] = ef["eta"]
         rec["unit_cosines_float"] = ef["unit_cosines"]
         log(f"  {name}: floating-point eta {ef['eta']:.10f} (published {paper:.10f})")
-    ths = list(thresholds) if thresholds is not None else [t_sharp]
-    out = certify_eta(g, L, C, R, ths, sigmas=sym(g) if sym else (), log=log)
+    if thresholds is not None:
+        ladder = [list(thresholds)]
+    elif check_geometry:
+        ladder = [[_threshold_above(rec["eta_float"], m)] for m in MARGINS]
+    else:
+        ladder = [[t_sharp]]
+    out, tried = None, []
+    for ths in ladder:
+        out = certify_eta(g, L, C, R, ths, sigmas=sym(g) if sym else (), log=log)
+        tried += [str(t) for t in ths]
+        if any(v["certified"] for v in out["thresholds"].values()):
+            break
+        log(f"  {name}: not certified at {[str(t) for t in ths]}; widening the threshold")
     rec.update(out)
+    rec["thresholds_tried"] = tried
     best = None
     for _key, v in out["thresholds"].items():
         if v["certified"]:

@@ -3,7 +3,7 @@
 A local space fixes (i) the local dimension q, (ii) the meaning of each digit
 0..q-1 of the integer encoding of basis states, and (iii) the matrix of every
 operator letter. The conventions below reproduce QuSpin 1.0 exactly
-(verified in tests/v2/test_construction.py and experiments/e0_verifier_validation.py):
+(verified in tests/test_construction.py and experiments/e0_verifier_validation.py):
 
   spin S          digit k  <->  m = k - S          letters I x y z + -
       convention "spin"     : S^a operators (QuSpin pauli=0)

@@ -43,6 +43,8 @@ EXPERIMENTS = {
 OPT_IN = {"E6"}
 # timing or memory is part of what these measure: never run them next to another experiment
 EXCLUSIVE = {"E2", "E6", "E8"}
+# experiments whose result depends on the test suite (the mutation score): --resume also needs equal tests
+TEST_DEPENDENT = {"E6"}
 NEEDS = {"E0": ["flint", "quspin"], "E1": ["quspin"], "E3": ["flint"], "E4": ["quspin"], "E5": ["quspin"],
          "E7": ["flint"], "E9": ["flint"], "E10": ["flint"]}
 
@@ -266,13 +268,21 @@ def cmd_reproduce(a):
         prev = manifest["steps"].get(name, {})
         if (a.resume and prev.get("status") == "ok" and prev.get("args") == args
                 and prev.get("source_hash") == current["source_hash"] and not prev.get("source_dirty")
-                and not current["source_dirty"]):
+                and not current["source_dirty"]
+                and (name not in TEST_DEPENDENT or (prev.get("tests_hash") == current["tests_hash"]
+                                                    and not prev.get("tests_dirty") and not current["tests_dirty"]))):
             log(f"{name}: kept from the earlier run (same computational source {current['source_hash']})")
             continue
         todo.append((name, args, mf if mode == "full" else mq, purpose))
     save()
 
     def finish(name, r):
+        if name == "E6" and r["status"] == "ok":
+            # rule-based classification of the survivors (the human inspection stays a separate step)
+            for rec in r["records"]:
+                subprocess.run([sys.executable, "e6_classify.py", os.path.join(out, rec)],
+                               cwd=os.path.join(root, "experiments"), stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, env=dict(os.environ, PYTHONPATH=root))
         manifest["steps"][name] = r
         log(f"{name}: {r['status']} in {r['seconds']:.0f}s -> {', '.join(r['records']) or 'no record'}")
         save()

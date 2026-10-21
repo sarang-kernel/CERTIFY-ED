@@ -138,3 +138,15 @@ def test_pyrochlore_spin1_printed_check_is_exact():
     r = printed_coupling_check()
     assert r["no_floating_point_assumption"] and r["exact_recheck"] == "CERTIFIED"
     assert r["E0_radius_exact"] <= r["E0_radius_standard_model"]
+
+
+@needs_flint
+def test_aklt_default_threshold_is_sharp():
+    """The default threshold sits a relative 1e-9 above the floating-point eta^2: the certified bound
+    agrees with the published eta to the 10th decimal."""
+    from certify_ed.apps.aklt import certify_lattice, _threshold_above
+    r = certify_lattice("star", log=lambda s: None)
+    assert r["eta_float"] <= r["eta_upper"] < r["eta_float"] + 1e-9
+    assert abs(r["eta_upper"] - r["eta_published"]) < 2e-10
+    t = _threshold_above(0.1, 1e-9)
+    assert float(t) >= 0.01 * (1 + 1e-9)

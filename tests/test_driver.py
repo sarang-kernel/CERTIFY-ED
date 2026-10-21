@@ -19,6 +19,11 @@ def test_source_fingerprint_ignores_the_command_line():
     assert fp["source_hash"] and len(fp["source_hash"]) == 16
     from certify_ed.provenance import NON_COMPUTATIONAL
     assert "certify_ed/cli.py" in NON_COMPUTATIONAL
+    # post-processing scripts only read records
+    assert "experiments/make_numbers_apps.py" in NON_COMPUTATIONAL
+    # the test suite is fingerprinted separately (it decides the mutation score, not any number)
+    assert fp["tests_hash"] and len(fp["tests_hash"]) == 16 and fp["tests_hash"] != fp["source_hash"]
+    assert isinstance(fp["tests_dirty"], bool)
 
 
 @needs_repo

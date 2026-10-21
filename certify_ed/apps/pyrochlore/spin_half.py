@@ -34,21 +34,33 @@ def estimate_e0(n1, n3, seed=12345):
     return float(spla.eigsh(H, k=1, which="SA", tol=0, v0=v0, return_eigenvectors=False)[0]), st
 
 
-def certify_crown(n1=PUBLISHED["n1"], n3=PUBLISHED["n3"], margin_rel=2e-8, log=print):
+def certify_crown(n1=PUBLISHED["n1"], n3=PUBLISHED["n3"], margins_rel=(1e-10, 1e-9, 2e-8), log=print):
+    """Exact lower bound on lambda_min(H_crown). The shift g is placed a relative margin below the
+    Lanczos estimate on a fine dyadic grid (2^-20 in K H units); if an eigenvalue is counted below it,
+    the next, larger margin is tried. The estimate only places g: the bound g - delta is certified by
+    the exact counts whatever its accuracy."""
     t0 = time.time()
     e0, st = estimate_e0(n1, n3)
     spec_K, (c1, c3, c17) = spec_for(n1, n3, scale=K_SCALE)
-    g = Fraction(int(np.floor((e0 - margin_rel * abs(e0)) * K_SCALE)))       # in K H units
     gens = symmetry_generators(spec_K)
-    res, info = exact_count_below(spec_K, st, gens, {}, [g], log=None)
-    r = res[0]
+    grid = 2 ** 20
+    r = info = g = None
+    tried = []
+    for m in margins_rel:
+        g = Fraction(int(np.floor((e0 - m * abs(e0)) * K_SCALE * grid)), grid)      # in K H units
+        res, info = exact_count_below(spec_K, st, gens, {}, [g], log=None)
+        r = res[0]
+        tried.append({"margin_rel": m, "shift": str(g / K_SCALE), "count": r["count"]})
+        if r["count"] == 0:
+            break
+        log(f"  crown S=1/2: {r['count']} eigenvalue(s) counted below the shift at margin {m}; widening")
     if r["count"] != 0:
-        raise RuntimeError(f"exact count below the shift is {r['count']}, expected 0")
+        raise RuntimeError(f"exact count below the shift is {r['count']} at every margin, expected 0")
     lb = (g - r["delta"]) / K_SCALE
     rec = {"n1": n1, "n3": n3, "c1": str(c1), "c3": str(c3), "c17": str(c17), "K": K_SCALE,
            "dim_Sz0": int(st.size), "n_sectors": len(info["sectors"]),
            "largest_sector": max(s["dim"] for s in info["sectors"]), "e0_estimate": e0,
-           "shift": str(g / K_SCALE), "delta": float(r["delta"] / K_SCALE),
+           "shift": str(g / K_SCALE), "shifts_tried": tried, "delta": float(r["delta"] / K_SCALE),
            "lower_bound": float(lb), "lower_bound_rounded_down": float(np.floor(float(lb) * 1e9) / 1e9),
            "lower_bound_exact": f"{lb.numerator}/{lb.denominator}", "no_floating_point_assumption": True,
            "seconds": time.time() - t0}

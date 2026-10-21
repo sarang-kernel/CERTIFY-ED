@@ -245,7 +245,7 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     leak = delta / ((1 - iso) * sep) if iso < 1 else np.inf
     # QuSpin's block index q: eigenvalue exp(-2 pi i q/n) of its translation, which maps site i to
     # i-1; with CERTIFY-ED's T (site i -> i+1) that is exp(+2 pi i q / n), i.e. q = k (checked against
-    # QuSpin blocks in tests/v2/test_label_audit.py)
+    # QuSpin blocks in tests/test_label_audit.py)
     q_quspin = k
     return {"symmetry": symmetry, "order": n, "eigenvalue": [lam.real, lam.imag],
             "j_physics": k, "quspin_q": q_quspin, "defect_upper": float(delta),
