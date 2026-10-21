@@ -296,7 +296,8 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     are summed over their 1D characters; the decomposition is checked to be complete (sector dimensions
     add up to the dimension of the fixed subspace), so non-abelian groups are allowed as long as every
     irrep met is one-dimensional with Gaussian character values (e.g. translations at k = 0 or pi with
-    reflection and spin flip). X: claimed vectors in the coordinates of `states`."""
+    reflection and spin flip). X: claimed vectors in the coordinates of `states`; each must have a nonzero
+    exact projection onto the fixed sector (Theorem 1 hypothesis), otherwise the result is INCONCLUSIVE."""
     from .checker import (_float_vector_to_int, scaled_test_vector, radius_exact, _components, certify_by_counts,
                           _float_out, _round_up_float)
     ex = exact_matrix(spec, states)
@@ -328,7 +329,13 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
             pho = ph.astype(object)
             np.add.at(pr, idx, (xr * cr - xi * ci) * pho)
             np.add.at(pi_, idx, (xr * ci + xi * cr) * pho)
-        radii.append(radius_exact(ex, pr, pi_, lam[i]))
+        r = radius_exact(ex, pr, pi_, lam[i])
+        if r is None:
+            # the exact projection of the claimed vector onto the fixed sector is zero (e.g. a vector
+            # from another sector): Krylov-Bogolyubov needs x != 0 (IMP-18)
+            return {"status": "INCONCLUSIVE", "reason": f"claimed vector {i} has zero exact projection onto "
+                    "the claimed sector: no Krylov-Bogolyubov interval (needs x != 0)", "zero_test_vectors": [i]}
+        radii.append(r)
     comps = _components(lam, radii)
     mats, dim_sum = sector_matrices(ex, group, gens, fixed, log)
     if dim_sum != dim_fixed:

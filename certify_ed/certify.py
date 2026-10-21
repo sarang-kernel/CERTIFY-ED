@@ -558,7 +558,7 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
         ok_txt += f"; next eigenvalue >= {r['next_lower_bound']:.10g}; no floating-point assumption"
     summ = {"CERTIFIED": ok_txt if st == "CERTIFIED" else "",
             "FAILED": "exact inertia counts contradict the claim",
-            "INCONCLUSIVE": "exact re-check could not separate the claimed values from the rest",
+            "INCONCLUSIVE": r.get("reason", "exact re-check could not separate the claimed values from the rest"),
             "NOT_CHECKED": r.get("reason", "not checked")}[st]
     return _stmt(sid, st, summ, r, ["Krylov-Bogolyubov; Sylvester's law of inertia; Weyl's inequality"],
                  time.time() - t0)

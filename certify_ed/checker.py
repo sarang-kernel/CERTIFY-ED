@@ -277,10 +277,15 @@ def scaled_test_vector(ex: ExactMatrix, x):
     return np.asarray(x) / d
 
 
-def radius_exact(ex: ExactMatrix, yr, yi, lam) -> Fraction:
+def radius_exact(ex: ExactMatrix, yr, yi, lam):
     """Exact upper bound (a dyadic Fraction) on ||H x' - lam x'|| / ||x'|| for x' = D y, y = (yr + i yi)
     in integer form: with K y = (KR + i KI)/den, ||D (K y - lam y)||^2 = sum_r w_r |(K y - lam y)_r|^2
-    and ||x'||^2 = sum_r w_r |y_r|^2, all rational."""
+    and ||x'||^2 = sum_r w_r |y_r|^2, all rational.
+
+    Hypothesis (Krylov-Bogolyubov, Theorem 1): the test vector is nonzero, ||x'||^2 > 0. For a zero test
+    vector (a zero claimed vector, or a vector whose exact projection onto the claimed sector vanishes) no
+    interval exists: the function returns None and every caller reports INCONCLUSIVE (review of
+    2026-10-21, IMP-18: the earlier code returned the point interval, radius 0, for such a vector)."""
     from math import isqrt
     n = yr.size
     w = ex.weights
@@ -291,6 +296,8 @@ def radius_exact(ex: ExactMatrix, yr, yi, lam) -> Fraction:
     rr = kr * b - yr * (a * ex.den); ri = ki * b - yi * (a * ex.den)       # = b den (K y - lam y)
     num2 = int(np.sum(w * (rr * rr + ri * ri)))
     x2 = int(np.sum(w * (yr * yr + yi * yi)))
+    if x2 == 0:
+        return None
     if num2 == 0:
         return Fraction(0)
     D2 = (b * ex.den) ** 2 * x2
@@ -310,17 +317,22 @@ def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
 
     For each claimed (lam_i, x_i) the radius rho_i of the Krylov-Bogolyubov interval [lam_i - rho_i,
     lam_i + rho_i] of the test vector x_i' = D fl(x_i / d) (= x_i up to one rounding) is computed exactly
-    and rounded up; for Hermitian H the interval contains an eigenvalue. Hermiticity of the declared
-    model is checked exactly. No floating-point assumption is involved."""
+    and rounded up; for Hermitian H and x_i' != 0 the interval contains an eigenvalue. A zero test vector
+    has no interval: its radius is reported as inf and its index is listed under 'zero_test_vectors'.
+    Hermiticity of the declared model is checked exactly. No floating-point assumption is involved."""
     ex = exact if exact is not None else exact_matrix(spec, states)
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
-    radii = []
+    radii, zero = [], []
     for i, lam_i in enumerate(np.atleast_1d(lam)):
         yr, yi, _ = _float_vector_to_int(scaled_test_vector(ex, X[:, i]))
-        radii.append(_round_up_float(radius_exact(ex, yr, yi, lam_i)))
-    return {"radii": radii, "hermitian": is_hermitian_exact(ex), "den": int(ex.den), "nnz": int(len(ex.rows))}
+        r = radius_exact(ex, yr, yi, lam_i)
+        if r is None:
+            zero.append(int(i))
+        radii.append(float("inf") if r is None else _round_up_float(r))
+    return {"radii": radii, "hermitian": is_hermitian_exact(ex), "den": int(ex.den), "nnz": int(len(ex.rows)),
+            "zero_test_vectors": zero}
 
 
 def inertia_exact(M, rows_per_block: int = 256):
@@ -545,7 +557,8 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
     """Independent re-check, in exact arithmetic only, of a claim 'these are the k lowest eigenpairs
     of the declared model' (any local space; see exact_matrix).
 
-    1. Exact residual radii r_i (Krylov-Bogolyubov): an eigenvalue lies in I_i = [lam_i - r_i, lam_i + r_i].
+    1. Exact residual radii r_i (Krylov-Bogolyubov, hypothesis x_i' != 0): an eigenvalue lies in
+       I_i = [lam_i - r_i, lam_i + r_i]. A zero test vector makes the result INCONCLUSIVE.
     2. The intervals are merged into connected components. At a dyadic point g between consecutive
        components and at a point sigma above the last one (placed using `next_hint`, a floating-point
        estimate of the next eigenvalue; only a hint), the number of eigenvalues below is counted by the
@@ -570,6 +583,9 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
     rad = exact_eigenpair_radii(spec, lam, X, states, ex)
     if not rad["hermitian"]:
         return {"status": "FAILED", "reason": "declared model is not Hermitian", **rad}
+    if rad["zero_test_vectors"]:
+        return {"status": "INCONCLUSIVE", "reason": f"zero test vector for claimed pair(s) {rad['zero_test_vectors']}: "
+                "the Krylov-Bogolyubov interval needs x != 0 (IMP-18)", **rad}
     radii = [Fraction(r) for r in rad["radii"]]
     comps = _components(lam, radii)
     def count_at(g):
