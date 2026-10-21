@@ -81,6 +81,34 @@ def _sector_blocks(H, S_diag, atol):
     return out
 
 
+def intervals_from_enclosure(enc, shift: float = 0.0) -> List[SpectrumInterval]:
+    """One SpectrumInterval per enclosure group (outward-rounded ends; `shift` widens every radius, e.g. by
+    the S1 model shift so that the intervals refer to the declared model)."""
+    out = []
+    for g in enc.groups:
+        lo = min(sub_down(enc.mu[i], add_up(enc.radius[i], shift)) for i in g.members)
+        hi = max(add_up(enc.mu[i], add_up(enc.radius[i], shift)) for i in g.members)
+        out.append(SpectrumInterval(float(lo), float(hi), g.size, bool(g.distinct), g.method))
+    return out
+
+
+def merge_intervals(ivs: List[SpectrumInterval], n: int) -> SpectrumEnclosure:
+    """Merge overlapping intervals (counts add when both parts are counted) and decide completeness:
+    every merged interval counted and the counts summing to n (Proposition 9)."""
+    ivs = sorted(ivs, key=lambda v: v.lo)
+    merged: List[SpectrumInterval] = []
+    for iv in ivs:
+        if merged and iv.lo <= merged[-1].hi:
+            m = merged[-1]
+            merged[-1] = SpectrumInterval(m.lo, max(m.hi, iv.hi), m.count + iv.count, m.counted and iv.counted,
+                                          "merged-across-sectors",
+                                          m.sectors + iv.sectors)
+        else:
+            merged.append(iv)
+    complete = all(v.counted for v in merged) and sum(v.count for v in merged) == n
+    return SpectrumEnclosure(merged, n, bool(complete), max(v.halfwidth for v in merged) if merged else 0.0, {})
+
+
 def _enclose_block(A, eig=None):
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if eig is None:
@@ -88,12 +116,7 @@ def _enclose_block(A, eig=None):
     else:
         mu, X = eig
     enc = enclose(OperatorAdapter(A if sp.issparse(A) else dense), mu, X)
-    out = []
-    for g in enc.groups:
-        lo = min(sub_down(enc.mu[i], enc.radius[i]) for i in g.members)     # outward-rounded ends
-        hi = max(add_up(enc.mu[i], enc.radius[i]) for i in g.members)
-        out.append(SpectrumInterval(float(lo), float(hi), g.size, bool(g.distinct), g.method))
-    return out, enc
+    return intervals_from_enclosure(enc), enc
 
 
 def enclose_spectrum(H, S_diag=None, eigh_result=None, atol: float = 1e-12) -> SpectrumEnclosure:
@@ -125,14 +148,6 @@ def enclose_spectrum(H, S_diag=None, eigh_result=None, atol: float = 1e-12) -> S
             dims[s] = int(idx.size)
     # merge overlaps across sectors: eigenvalues of different sectors are distinct eigenvalues of H,
     # so counts add when both parts are counted
-    ivs.sort(key=lambda v: v.lo)
-    merged: List[SpectrumInterval] = []
-    for iv in ivs:
-        if merged and iv.lo <= merged[-1].hi:
-            m = merged[-1]
-            merged[-1] = SpectrumInterval(m.lo, max(m.hi, iv.hi), m.count + iv.count, m.counted and iv.counted,
-                                          "merged-across-sectors", m.sectors + iv.sectors)
-        else:
-            merged.append(iv)
-    complete = all(v.counted for v in merged) and sum(v.count for v in merged) == n
-    return SpectrumEnclosure(merged, n, bool(complete), max(v.halfwidth for v in merged), dims)
+    res = merge_intervals(ivs, n)
+    res.sector_dims = dims
+    return res

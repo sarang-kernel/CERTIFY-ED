@@ -19,8 +19,15 @@ Statements (ids are stable and appear in certificates):
   S6.exact_recheck    optional (Options.exact_recheck): S2 radii and the S3 count of a
                       'lowest' claim re-derived in integer arithmetic, with no
                       floating-point assumption (checker.exact_recheck_lowest)
+  S7.thermodynamics   whole-spectrum claims with Options.temperatures: interval bounds on
+                      Z, F, U, C from the complete enclosure (thermo.py, Prop 16; UNVERIFIED)
+  S8.degeneracy       number of eigenvalues in each cluster by bracketing inertia counts
+                      (degeneracy.py, Prop 14; UNVERIFIED)
 
-Every statement records its evidence, its assumptions and its cost in seconds.
+Every statement records its evidence, its assumptions and its cost in seconds. Which statements run is
+decided by `presets.resolve_selection` (Options.preset / only / skip) and by the budget (Options.
+budget_seconds / budget_mb); a statement that does not run is NOT_CHECKED with a reason code, and the
+certificate's `scope` block lists the decision (scope.py, docs/presets.md, docs/SCOPE_MATRIX.md).
 """
 
 from __future__ import annotations
@@ -42,6 +49,8 @@ from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cl
 from .fp import U, add_up, float_env_record, inf_norm_upper, probe_float_environment, sub_down, up
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
+from .presets import STATEMENTS, preset_options, resolve_selection
+from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
 from .spec import ModelSpec
 
@@ -99,16 +108,60 @@ class Options:
     exact_recheck: bool = False              # S6: re-derive S2 radii and S3 count in exact arithmetic
     exact_max_dim: int = 4000
     seed: int = 12345
+    # ---- scope (3.1): selection, presets, budgets; see presets.py / scope.py
+    preset: Optional[str] = None             # name in presets.PRESETS; sets the statement list
+    only: Optional[Sequence[str]] = None     # restrict to these statements (dependencies are added)
+    skip: Sequence[str] = ()                 # remove these statements
+    narrowing_reason: str = ""               # the user's reason, copied into the scope block
+    budget_seconds: Optional[float] = None   # statements not started within this wall time are NOT_CHECKED
+    budget_mb: Optional[float] = None        # statements whose estimated memory exceeds this are NOT_CHECKED
+    # ---- new statements (3.1, UNVERIFIED)
+    temperatures: Sequence[float] = ()       # S7 for whole-spectrum claims
+    whole_spectrum: bool = False             # record the Prop 9 interval list in the certificate (kind 'all')
+    correlations: Dict[str, Any] = field(default_factory=dict)
+    #   name -> {"letter": "z", "sites": [...], "positions": [[x, y], ...] (optional), "q": [[...], ...] (optional)}
+    degeneracy: bool = True                  # S8 for the S4 clusters
+
+    @classmethod
+    def from_preset(cls, name: str, **overrides) -> "Options":
+        """Options with a preset's values (presets.PRESETS[name]['options']), then the overrides."""
+        kw = preset_options(name)
+        kw.update(overrides)
+        return cls(**kw)
 
 
 DEFAULT_REL_ACCURACY = 1e-8
 
 
-def _stmt(sid, status, summary, evidence=None, assumptions=None, seconds=0.0):
+def _stmt(sid, status, summary, evidence=None, assumptions=None, seconds=0.0, reason_code=None):
     assert status in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") or \
         (sid == "S5.corroboration" and status == "CORROBORATED")
-    return {"id": sid, "status": status, "summary": summary, "evidence": evidence or {},
+    ev = dict(evidence or {})
+    if reason_code is not None:
+        ev["reason_code"] = reason_code
+    return {"id": sid, "status": status, "summary": summary, "evidence": ev,
             "assumptions": assumptions or [], "seconds": round(float(seconds), 6)}
+
+
+def _gate(sel, budget, short, estimate_mb=None, what=""):
+    """None when the statement may run; else a NOT_CHECKED statement with its reason code."""
+    sid = STATEMENTS[short]["id"]
+    nar = sel.narrowing_of(short)
+    if nar is not None:
+        code = "DEPENDENCY_NARROWED" if nar["by"] == "dependency" else "NARROWED_BY_USER"
+        return _stmt(sid, "NOT_CHECKED", f"not selected ({nar['by']}: {nar['reason']})", {"narrowed": nar},
+                     reason_code=code)
+    ok, note = budget.time_left(sid)
+    if not ok:
+        return _stmt(sid, "NOT_CHECKED", note, {"budget": budget.to_dict()}, reason_code="BUDGET_TIME")
+    ok, note = budget.memory_ok(sid, estimate_mb, what)
+    if not ok:
+        return _stmt(sid, "NOT_CHECKED", note, {"estimate_mb": estimate_mb}, reason_code="BUDGET_MEMORY")
+    return None
+
+
+def _mb(n_entries: float, bytes_per: float) -> float:
+    return float(n_entries) * bytes_per / 2 ** 20
 
 
 def _subspace_shift(iso: float, inv: float, H_norm: float, M_norm: float) -> Optional[float]:
@@ -529,23 +582,29 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     """S6: the claim re-derived in exact arithmetic (checker.exact_recheck_lowest)."""
     sid = "S6.exact_recheck"
     if spec is None:
-        return _stmt(sid, "NOT_CHECKED", "needs a model specification", {}, [], time.time() - t0)
-    if claim.kind != "lowest" or X is None:
-        return _stmt(sid, "NOT_CHECKED", "implemented for 'lowest' claims with eigenvectors", {}, [], time.time() - t0)
+        return _stmt(sid, "NOT_CHECKED", "needs a model specification", {}, [], time.time() - t0,
+                     reason_code="NEEDS_SPEC")
+    if X is None:
+        return _stmt(sid, "NOT_CHECKED", "eigenvalue-only claim: the exact re-check needs eigenvectors", {}, [],
+                     time.time() - t0, reason_code="NEEDS_EIGENVECTORS")
+    if claim.kind != "lowest":
+        return _stmt(sid, "NOT_CHECKED", f"implemented for 'lowest' claims (this claim: {claim.kind!r})", {}, [],
+                     time.time() - t0, reason_code="UNSUPPORTED_CLAIM")
     if claim.sector_isometry is not None:
         return _stmt(sid, "NOT_CHECKED", "symmetry-adapted claims: use exact_recheck_sector_lowest", {}, [],
-                     time.time() - t0)
+                     time.time() - t0, reason_code="UNSUPPORTED_CLAIM")
     n = X.shape[0]
     if n > opts.exact_max_dim:
         return _stmt(sid, "NOT_CHECKED", f"dimension {n} above exact_max_dim {opts.exact_max_dim}", {}, [],
-                     time.time() - t0)
+                     time.time() - t0, reason_code="SIZE_LIMIT")
     from .checker import exact_recheck_lowest
     s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
     hint = (s3 or {}).get("evidence", {}).get("next_eigenvalue_estimate")
     try:
         r = exact_recheck_lowest(spec, mu, X, claim.states, next_hint=hint, max_dim=opts.exact_max_dim)
     except ImportError:
-        return _stmt(sid, "NOT_CHECKED", "python-flint not installed", {}, [], time.time() - t0)
+        return _stmt(sid, "NOT_CHECKED", "python-flint not installed", {}, [], time.time() - t0,
+                     reason_code="NEEDS_DEPENDENCY")
     st = r["status"] if r["status"] in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") else "INCONCLUSIVE"
     if st == "CERTIFIED":
         lv = [e for e in r["enclosures"] if e["kind"] != "residual interval"]
@@ -573,11 +632,28 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     X = None if claim.eigenvectors is None else np.asarray(claim.eigenvectors)
     if X is not None and X.ndim == 1:
         X = X[:, None]
+    if not np.all(np.isfinite(mu)) or (X is not None and not np.all(np.isfinite(X))):
+        raise ValueError("claimed eigenvalues/eigenvectors contain non-finite entries (NaN/inf); nothing can be "
+                         "certified about them (IMP-21)")
+    sel = resolve_selection(opts.preset, opts.only, opts.skip, opts.narrowing_reason,
+                            corroborate=bool(opts.corroborate), exact_recheck=bool(opts.exact_recheck),
+                            temperatures=bool(len(opts.temperatures)), degeneracy=bool(opts.degeneracy))
+    budget = Budget(opts.budget_seconds, opts.budget_mb, t_start)
+    is_cplx_claim = (X is not None and np.iscomplexobj(X)) or (spec is not None and not spec.is_real())
+    n_claim = (claim.states.size if claim.states is not None else
+               (claim.sector_isometry.shape[1] if claim.sector_isometry is not None else
+                (spec.dim if spec is not None else (claim.operator.shape[0] if claim.operator is not None else 0))))
 
     # ---------------- S1
     H_full_ref, audit = None, None
     Href = None
-    if spec is not None and opts.model_fidelity:
+    s1_gate = _gate(sel, budget, "S1",
+                    estimate_mb=(_mb((claim.states.size if claim.states is not None else spec.dim) * max(1, spec.n_terms)
+                                     * 2, 32) if spec is not None else None),
+                    what="reference matrix from the spec (estimate: dim x terms x 2 entries)")
+    if s1_gate is not None and spec is not None:
+        statements.append(s1_gate)
+    elif spec is not None and opts.model_fidelity:
         t_s1 = time.time()
         try:
             s1, Href_or_full, audit = check_model_fidelity(claim, spec, opts)
@@ -594,7 +670,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             Href = Href_or_full
     else:
         statements.append(_stmt("S1.model_fidelity", "NOT_CHECKED",
-                                "no model specification supplied" if spec is None else "disabled"))
+                                "no model specification supplied" if spec is None else "disabled",
+                                reason_code="NEEDS_SPEC" if spec is None else "NARROWED_BY_USER"))
 
     s1_status = statements[0]["status"]
     s1_probe = "probe" in statements[0].get("evidence", {})
@@ -644,9 +721,13 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # ---------------- S2
     t0 = time.time()
     enc = None
-    if X is None:
+    s2_gate = _gate(sel, budget, "S2")
+    if s2_gate is not None:
+        statements.append(s2_gate)
+    elif X is None:
         statements.append(_stmt("S2.eigenpairs", "NOT_CHECKED",
-                                "eigenvalue-only claim: no vectors to bound (see S3 for counts)"))
+                                "eigenvalue-only claim: no vectors to bound (see S3 for counts)",
+                                reason_code="NEEDS_EIGENVECTORS"))
     else:
         enc = enclose(adapter, mu, X)
         ev = {"n_pairs": int(mu.size), "max_radius": float(enc.radius.max()),
@@ -693,7 +774,14 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # S3/S4 concern the declared model when S1 certified the producer's matrix (model shift added);
     # for a symmetry sector they concern the producer's sector block (see compose.py for the lift)
     eps_s3 = model_shift if audit is None else 0.0
-    if claim.kind == "all":
+    n_op = int(adapter.shape[0])
+    s3_est = _mb(n_op * n_op, (16 if is_cplx_claim else 8) * 2) if (inertia_op is not None and
+                                                                     (opts.inertia_method == "dense" or n_op <= 4096)) else None
+    s3_gate = _gate(sel, budget, "S3", estimate_mb=s3_est if claim.kind in ("lowest", "window") else None,
+                    what="dense LDL^T factorization (estimate: 2 n^2 entries)")
+    if s3_gate is not None:
+        statements.append(s3_gate)
+    elif claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",
                                     f"{mu.size} distinct certified eigenvalues = dimension: spectrum complete",
@@ -705,17 +793,21 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                     {"n_claimed": int(mu.size), "dimension": int(adapter.shape[0])}))
     elif claim.kind in ("lowest", "window"):
         if not opts.inertia:
-            statements.append(_stmt("S3.completeness", "NOT_CHECKED", "inertia counting disabled"))
+            statements.append(_stmt("S3.completeness", "NOT_CHECKED", "inertia counting disabled",
+                                    reason_code="NARROWED_BY_USER"))
         elif inertia_op is None:
             statements.append(_stmt("S3.completeness", "NOT_CHECKED",
-                                    "no stored matrix to factorize (matrix-free producer without spec)"))
+                                    "no stored matrix to factorize (matrix-free producer without spec)",
+                                    reason_code="NEEDS_MATRIX"))
         elif inertia_op.shape[0] > opts.inertia_max_dim:
             statements.append(_stmt("S3.completeness", "NOT_CHECKED",
                                     f"factorization skipped: dimension {inertia_op.shape[0]} > inertia_max_dim "
-                                    f"{opts.inertia_max_dim}", {"dimension": int(inertia_op.shape[0])}))
+                                    f"{opts.inertia_max_dim}", {"dimension": int(inertia_op.shape[0])},
+                                    reason_code="SIZE_LIMIT"))
         elif enc is None:
             statements.append(_stmt("S3.completeness", "NOT_CHECKED",
-                                    "eigenvalue-only claim: completeness needs certified intervals"))
+                                    "eigenvalue-only claim: completeness needs certified intervals",
+                                    reason_code="NEEDS_EIGENVECTORS"))
         else:
             if claim.kind == "lowest":
                 st, ev, window = _certify_lowest(inertia_op, np.sort(mu), enc, opts, eps_s3)
@@ -740,7 +832,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                      "bounded backward error; standard floating-point model"],
                                     time.time() - t0))
     else:
-        statements.append(_stmt("S3.completeness", "NOT_CHECKED", "claim kind 'subset' makes no completeness claim"))
+        statements.append(_stmt("S3.completeness", "NOT_CHECKED", "claim kind 'subset' makes no completeness claim",
+                                reason_code="NO_COMPLETENESS_CLAIM"))
 
     # ---------------- Kato-Temple sharpening for isolated pairs (Theorem 3)
     kt = []
@@ -770,11 +863,17 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # ---------------- S4 eigenspaces
     t0 = time.time()
     eig_records = []
-    if enc is None or opts.eigenspaces == "none":
-        statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "not requested or no eigenvectors"))
+    s4_gate = _gate(sel, budget, "S4")
+    s4_clusters = []
+    if s4_gate is not None:
+        statements.append(s4_gate)
+    elif enc is None or opts.eigenspaces == "none":
+        statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "not requested or no eigenvectors",
+                                reason_code="NEEDS_EIGENVECTORS" if enc is None else "NARROWED_BY_USER"))
     elif window is None:
         statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED",
-                                "requires a certified complete window (S3) to bound separations"))
+                                "requires a certified complete window (S3) to bound separations",
+                                reason_code="NEEDS_WHOLE_SPECTRUM"))
     else:
         clusters = cluster_groups(enc, opts.cluster_tol)
         groups = [c for c in clusters if (len(c) > 1 or opts.eigenspaces == "all")]
@@ -823,6 +922,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             for name, O in opts.observables.items():
                 certify_observable(ec, X, O, name)
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
+            corr_recs = _correlations(ec, X, spec, claim, opts, rec)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":
                     _total_spin(ec, X, name, spec, claim, rec)
@@ -839,11 +939,14 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             r = ec.to_dict()
             r["splitting"] = rec["splitting"]
             r["status"] = "CERTIFIED"
+            if corr_recs:
+                r["correlations"] = corr_recs
             n_ok += 1
             eig_records.append(r)
+            s4_clusters.append(C)
         if not groups:
             statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "no clusters among the claimed pairs",
-                                    {}, [], time.time() - t0))
+                                    {}, [], time.time() - t0, reason_code="NO_CLUSTERS"))
         else:
             st = "CERTIFIED" if n_ok == len(groups) else "INCONCLUSIVE"
             statements.append(_stmt("S4.eigenspaces", st,
@@ -852,16 +955,100 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                     time.time() - t0))
 
     # ---------------- S5 corroboration
-    if opts.corroborate:
-        from .corroborate import corroborate
-        t0 = time.time()
-        cor = corroborate(op, mu, enc, list(opts.corroborate))
-        statements.append(_stmt("S5.corroboration", cor["status"], cor["summary"], cor, [], time.time() - t0))
+    if sel.wants("S5") or opts.corroborate:
+        s5_gate = _gate(sel, budget, "S5")
+        if s5_gate is not None:
+            statements.append(s5_gate)
+        elif not opts.corroborate:
+            statements.append(_stmt("S5.corroboration", "NOT_CHECKED", "no corroborating solvers named "
+                                    "(Options.corroborate)", reason_code="NEEDS_DEPENDENCY"))
+        else:
+            from .corroborate import corroborate
+            t0 = time.time()
+            cor = corroborate(op, mu, enc, list(opts.corroborate))
+            statements.append(_stmt("S5.corroboration", cor["status"], cor["summary"], cor, [], time.time() - t0))
 
     # ---------------- S6 exact re-check (no floating-point assumption)
-    if opts.exact_recheck:
-        t0 = time.time()
-        statements.append(_exact_statement(claim, spec, mu, X, opts, statements, t0))
+    if sel.wants("S6") or opts.exact_recheck:
+        n6 = X.shape[0] if X is not None else n_claim
+        s6_gate = _gate(sel, budget, "S6", estimate_mb=_mb(n6 * n6, 48) if n6 else None,
+                        what="exact integer matrix and residual (estimate: n^2 x 48 bytes)")
+        if s6_gate is not None:
+            statements.append(s6_gate)
+        else:
+            t0 = time.time()
+            statements.append(_exact_statement(claim, spec, mu, X, opts, statements, t0))
+
+    # ---------------- S7 thermodynamics from a complete whole-spectrum enclosure (Prop 16, UNVERIFIED)
+    spectrum_record = None
+    if (sel.wants("S7") or opts.whole_spectrum) and claim.kind == "all" and enc is not None and window is not None:
+        from .spectrum import intervals_from_enclosure, merge_intervals
+        se = merge_intervals(intervals_from_enclosure(enc, eps_s3 if audit is None else 0.0), int(adapter.shape[0]))
+        spectrum_record = {"complete": se.complete, "n_intervals": len(se.intervals), "max_halfwidth": se.max_halfwidth,
+                           "intervals": [{"lo": iv.lo, "hi": iv.hi, "count": iv.count, "counted": iv.counted,
+                                          "method": iv.method} for iv in se.intervals]}
+    if sel.wants("S7"):
+        s7_gate = _gate(sel, budget, "S7")
+        if s7_gate is not None:
+            statements.append(s7_gate)
+        elif claim.kind != "all" or spectrum_record is None or not spectrum_record["complete"]:
+            statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED",
+                                    "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3)",
+                                    reason_code="NEEDS_WHOLE_SPECTRUM"))
+        elif not len(opts.temperatures):
+            statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED", "no temperatures given (Options.temperatures)",
+                                    reason_code="NEEDS_TEMPERATURES"))
+        else:
+            from .thermo import thermodynamics
+            t0 = time.time()
+            try:
+                th = thermodynamics(spectrum_record["intervals"], opts.temperatures, dimension=int(adapter.shape[0]))
+                st7 = "CERTIFIED"
+                summ7 = (f"Z, F, U, C enclosed at {len(th['rows'])} temperature(s) from {th['n_intervals']} counted "
+                         f"intervals; max C width {max(r['C'][1] - r['C'][0] for r in th['rows']):.2e}")
+            except (ValueError, ZeroDivisionError, OverflowError) as e:
+                th, st7, summ7 = {"error": str(e)}, "INCONCLUSIVE", f"thermodynamic intervals not formed: {e}"
+            statements.append(_stmt("S7.thermodynamics", st7, summ7, th,
+                                    ["complete whole-spectrum enclosure (Prop 9) for the operator the S2/S3 "
+                                     "statements refer to; k_B = 1; dyadic interval arithmetic with outward rounding "
+                                     "(Lemma 17); Proposition 16 [UNVERIFIED - re-derivation pending, D-12]"],
+                                    time.time() - t0))
+
+    # ---------------- S8 degeneracy counts by bracketing inertia (Prop 14, UNVERIFIED)
+    if sel.wants("S8"):
+        s8_gate = _gate(sel, budget, "S8", estimate_mb=s3_est, what="dense LDL^T factorizations (estimate: 2 n^2 entries)")
+        if s8_gate is not None:
+            statements.append(s8_gate)
+        elif enc is None:
+            statements.append(_stmt("S8.degeneracy", "NOT_CHECKED", "eigenvalue-only claim: no clusters to count",
+                                    reason_code="NEEDS_EIGENVECTORS"))
+        elif inertia_op is None:
+            statements.append(_stmt("S8.degeneracy", "NOT_CHECKED",
+                                    "no stored matrix to factorize (matrix-free producer without spec)",
+                                    reason_code="NEEDS_MATRIX"))
+        elif inertia_op.shape[0] > opts.inertia_max_dim:
+            statements.append(_stmt("S8.degeneracy", "NOT_CHECKED",
+                                    f"factorization skipped: dimension {inertia_op.shape[0]} > inertia_max_dim "
+                                    f"{opts.inertia_max_dim}", reason_code="SIZE_LIMIT"))
+        else:
+            from .degeneracy import degeneracy_counts
+            t0 = time.time()
+            cl = [c for c in cluster_groups(enc, opts.cluster_tol) if len(c) > 1 or opts.eigenspaces == "all"]
+            if not cl:
+                statements.append(_stmt("S8.degeneracy", "NOT_CHECKED", "no clusters among the claimed pairs", {}, [],
+                                        time.time() - t0, reason_code="NO_CLUSTERS"))
+            else:
+                recs = degeneracy_counts(inertia_op, enc, cl, method=opts.inertia_method, eps_shift=eps_s3)
+                n_cert = sum(1 for r in recs if r["status"] == "CERTIFIED")
+                n_fail = sum(1 for r in recs if r["status"] == "FAILED")
+                st8 = "CERTIFIED" if n_cert == len(recs) else ("FAILED" if n_fail else "INCONCLUSIVE")
+                statements.append(_stmt("S8.degeneracy", st8,
+                                        f"{n_cert}/{len(recs)} clusters: eigenvalue count in the level enclosure certified "
+                                        f"by bracketing inertia counts" + (f"; degeneracies {[r.get('degeneracy') for r in recs]}"
+                                                                           if st8 == "CERTIFIED" else ""),
+                                        {"clusters": recs},
+                                        ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
+                                         "[UNVERIFIED - re-derivation pending, D-12]"], time.time() - t0))
 
     # ---------------- assemble
     subject = {"description": (spec.name if spec else "operator supplied without spec"),
@@ -910,8 +1097,19 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "arithmetic": arithmetic, "environment": environment_record(),
             "hermitian_part": herm_note,
             "operator_note": op_note,
-            "scope": ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
-                      "include the certified shift to the full operator") if audit is not None else "operator",
+            "spectrum_enclosure": spectrum_record,
+            "scope": build_scope_block(
+                sel, statements, budget,
+                {"preset": opts.preset, "only": None if opts.only is None else list(opts.only), "skip": list(opts.skip),
+                 "budget_seconds": opts.budget_seconds, "budget_mb": opts.budget_mb,
+                 "temperatures": [float(t) for t in opts.temperatures], "eigenspaces": opts.eigenspaces,
+                 "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
+                 "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
+                 "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy)},
+                ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
+                 "include the certified shift to the full operator") if audit is not None else "operator",
+                requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
+                           "has_matrix": is_matrix(op)}),
             "not_verified": not_verified,
             "timing": {"total_seconds": time.time() - t_start}}
     arrays = {"eigenvalues": mu}
@@ -942,3 +1140,32 @@ def _total_spin(ec, X, name, spec, claim, rec):
     r["commutation_checked_on"] = "structural SU(2) invariance of the specification: " + why
     if "certified_values" in r:
         r["total_spin"] = [float((-1 + np.sqrt(1 + 4 * v)) / 2) for v in r["certified_values"]]
+
+
+def _correlations(ec, X, spec, claim, opts, rec):
+    """S4 extension: two-point functions and structure factors requested in Options.correlations
+    (correlations.py, Proposition 15). Records are returned for the cluster; errors become INCONCLUSIVE
+    records rather than exceptions."""
+    if not opts.correlations:
+        return {}
+    out = {}
+    if spec is None or claim.sector_isometry is not None:
+        for name in opts.correlations:
+            out[name] = {"status": "NOT_CHECKED", "reason": "needs a specification and a computational-basis claim",
+                         "reason_code": "NEEDS_SPEC" if spec is None else "UNSUPPORTED_CLAIM"}
+        return out
+    from .correlations import certify_correlations, structure_factor
+    for name, req in opts.correlations.items():
+        try:
+            letter = req.get("letter", "z")
+            sites = list(req.get("sites", range(spec.n_sites)))
+            cr = certify_correlations(ec, X, spec, letter, sites, states=claim.states, name=name)
+            cr["status"] = "CERTIFIED"
+            if req.get("q") is not None:
+                pos = req.get("positions") or [[float(i)] for i in sites]
+                cr["structure_factor"] = structure_factor(cr, pos, req["q"], n_sites=req.get("n_sites"))
+            out[name] = cr
+        except ValueError as e:
+            out[name] = {"status": "INCONCLUSIVE", "reason": str(e)}
+    return out
+
