@@ -151,7 +151,7 @@ certify_ed/
   compat/symveig.py          symveig 1.0.0 API
   cli.py, provenance.py      command line and reproduction driver; source fingerprints
   testing.py                 shared test helpers
-tests/                       363 tests (pytest; `ruff check .` is clean)
+tests/                       370 tests (pytest; `ruff check .` is clean)
 examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes

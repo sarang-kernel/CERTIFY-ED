@@ -34,7 +34,9 @@ sharper application bounds.
   automatically after it runs.
 - `make_numbers_apps.py`: E6 table, E8 width-scaling figure (`fig_widths.pdf`), criterion values for
   AKLT, run-manifest table, tighter statement checks.
-- Tests: 363.
+- Tests: 370. The last 7 close the 8 test gaps found by the mutation analysis of the final run: 2×2 pivots
+  with det > 0, the Dekker splitter, exact residuals with huge entries, the round-up probe, the SU(2) check in mixed
+  Pauli letters, the sector compression diagnostic and the TFIM bonds.
 
 ## [3.0.0] - 2026-10-18
 
