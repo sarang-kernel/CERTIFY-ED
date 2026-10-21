@@ -149,15 +149,19 @@ def probe_float_environment() -> dict:
 
     Shared libraries compiled with -ffast-math can switch on flush-to-zero (FTZ) and
     denormals-are-zero (DAZ) for the whole process when they are imported (documented for thousands
-    of PyPI binaries); a directed rounding mode or a reduced-precision BLAS also break the model.
-    The probes use NumPy arrays so that nothing is constant-folded."""
-    t = np.array([2.0 ** -1022, 2.0 ** -1074, 1.0, 2.0 ** -60, 2.0 ** -53], dtype=np.float64)
+    of PyPI binaries); a directed rounding mode (toward +inf, -inf or zero) or a reduced-precision BLAS
+    also break the model. The probes use NumPy arrays so that nothing is constant-folded."""
+    t = np.array([2.0 ** -1022, 2.0 ** -1074, 1.0, 2.0 ** -60, 2.0 ** -53, 3.0 * 2.0 ** -54], dtype=np.float64)
     checks = {}
     # compare bit patterns: under DAZ a comparison with a subnormal treats it as zero
     checks["gradual_underflow"] = bool((t[0:1] / 2.0).view(np.uint64)[0] == np.uint64(1 << 51))  # FTZ
     checks["subnormal_operands"] = bool((t[1:2] * 1.0).view(np.uint64)[0] == np.uint64(1))       # DAZ
     checks["round_to_nearest_up"] = bool((t[2:3] + t[3:4])[0] == 1.0)                # round-up: > 1
     checks["round_to_nearest_down"] = bool((-t[2:3] - t[3:4])[0] == -1.0)            # round-down
+    # round-toward-zero passes both tests above (IMP-24): 1 + 3*2^-54 = 1 + 0.75 ulp must round to 1 + 2^-52
+    # (toward zero or down: 1), and its mirror -1 - 3*2^-54 to -1 - 2^-52 (toward zero or up: -1)
+    checks["round_to_nearest_not_toward_zero_pos"] = bool((t[2:3] + t[5:6])[0] == 1.0 + 2.0 ** -52)
+    checks["round_to_nearest_not_toward_zero_neg"] = bool((-t[2:3] - t[5:6])[0] == -1.0 - 2.0 ** -52)
     checks["ties_to_even"] = bool((t[2:3] + t[4:5])[0] == 1.0)
     # a BLAS dot product whose exact result needs the full 53-bit significand
     a = np.full(64, 1.0 + 2.0 ** -40)

@@ -101,17 +101,18 @@ def test_sector_audit_reports_a_small_compression_defect_for_a_correct_sector():
     assert not bad.passed and bad.compression_defect > 1.0
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="uses glibc fesetround through ctypes")
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="uses fesetround through ctypes (glibc or ucrtbase)")
 def test_probe_detects_round_up_mode():
     """fp.probe_float_environment under the directed rounding mode 'toward +inf': the
-    round_to_nearest_up probe must fail (mutant fp.py:159 made it pass by testing 1 - 2^-60)."""
+    round_to_nearest_up probe must fail (mutant fp.py:159 made it pass by testing 1 - 2^-60).
+    Runs on glibc (libm.so.6, FE_UPWARD 0x800) and on Windows (ucrtbase, FE_UPWARD 0x200; IMP-24)."""
+    lib, fe_upward = ("libm.so.6", 0x800) if sys.platform == "linux" else ("ucrtbase.dll", 0x200)
     code = textwrap.dedent(f"""
         import ctypes, json, sys
         sys.path.insert(0, {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))!r})
         from certify_ed.fp import probe_float_environment
-        libm = ctypes.CDLL("libm.so.6")
-        FE_UPWARD = 0x800
-        assert libm.fesetround(FE_UPWARD) == 0
+        libm = ctypes.CDLL({lib!r})
+        assert libm.fesetround({fe_upward}) == 0
         r = probe_float_environment()
         libm.fesetround(0)
         print(json.dumps([r["standard_model_hypotheses_hold"], r["failed"]]))
