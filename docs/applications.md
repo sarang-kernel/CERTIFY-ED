@@ -13,7 +13,7 @@ c1 = n1/10⁷ and c3 = n3/10⁷, and c17 is fixed by the embedding constraint
 
 | Spin | Result | Status | Code |
 |---|---|---|---|
-| 1/2 | λ_min(H_crown) ≥ −0.55015831338… at n1/n3 = 381414/817957 (published −0.550158(2); λ_min ≈ −0.5501582979) | certified, exact arithmetic (Z₂⁷ blocks, largest 3890) | `apps.pyrochlore.spin_half.certify_crown` |
+| 1/2 | λ_min(H_crown) ≥ −0.550158299 (exact rational bound −0.55015829882…) at n1/n3 = 381414/817957 (published −0.550158(2); λ_min ≈ −0.5501582979) | certified, exact arithmetic (Z₂⁷ blocks, largest 3890) | `apps.pyrochlore.spin_half.certify_crown` |
 | 1 | at the printed couplings (c1 = 0.053466, c3 = 0.082726) the all-singlet sector has eigenvalue ≤ −1.6380246 < −1.632985 (published bound); margin 5.0e-3 | certified in exact arithmetic (six-ring energy re-derived in the scaled spin-1 basis; radius below 1e-14) | `apps.pyrochlore.spin_one.printed_coupling_check` |
 | 1 | re-optimised max-min over all 92 pair-spin classes ≈ −1.6343596 | floating-point estimate (the competitive all-S̃=2 class has 1.1M states) | `apps.pyrochlore.spin_one.landscape` |
 
@@ -34,11 +34,11 @@ arithmetic.
 
 | Lattice | Criterion | η (paper) | Certified upper bound | Holds | Kernel equality | `certify_lattice(...)` |
 |---|---|---|---|---|---|---|
-| star [3.12.12] | η < 1/4 | 0.1110430220 | 0.1110450359 | yes | lemma + exact check (6 sites) | `"star"` |
-| square-octagon | 4η⊥ + 2η∥ < 1 | 0.1589663310 / 0.1061446858 | 0.1589685504 / 0.1061461257 (sum 0.84817) | yes | lemma + exact check (8 sites) | `"square_octagon_perp"`, `"square_octagon_par"` |
-| cross [4.6.12] | η < 1/3 | 0.1997384500 | 0.1997398311 | yes | lemma (12 sites, 16.7M states: not checked separately) | `"cross"` |
-| decorated honeycomb (n=1) | η < 1/4 | 0.1530329085 | 0.1530359435 | yes | lemma + exact check (both Γ, 9 sites) | `"decorated_honeycomb"` |
-| decorated square (n=1) | η < 1/4 | 0.2203543174 | 0.2203633377 | yes | lemma (12 sites, 4.1M states) | `"decorated_square"` (mirror × spin flip; largest exact block 4034) |
+| star [3.12.12] | η < 1/4 | 0.1110430220 | 0.1110430221 | yes | lemma + exact check (6 sites) | `"star"` |
+| square-octagon | 4η⊥ + 2η∥ < 1 | 0.1589663310 / 0.1061446858 | 0.1589663312 / 0.1061446859 (sum 0.84816) | yes | lemma + exact check (8 sites) | `"square_octagon_perp"`, `"square_octagon_par"` |
+| cross [4.6.12] | η < 1/3 | 0.1997384500 | 0.1997384508 | yes | lemma (12 sites, 16.7M states: not checked separately) | `"cross"` |
+| decorated honeycomb (n=1) | η < 1/4 | 0.1530329085 | 0.1530329086 | yes | lemma + exact check (both Γ, 9 sites) | `"decorated_honeycomb"` |
+| decorated square (n=1) | η < 1/4 | 0.2203543174 | 0.2203543194 | yes | lemma (12 sites, 4.1M states) | `"decorated_square"` (mirror × spin flip; largest exact block 4034) |
 | honeycomb | η < 1/6 (Method III) | 0.1445124916 | not attempted | — | — | see below |
 
 Negative control: on the decorated honeycomb, the same code at t = 0.0234 < η² (η = 0.15297) finds
@@ -69,11 +69,12 @@ is false.
 
 No step depends on the floating-point model.
 
-The criterion is established at a sharp threshold t just above the floating-point η² (t′ − t ≤ 8e-10).
-The runs at t = 1/z̃² in the certificate files are redundant. Their t′ exceeds 1/z̃² by a few 1e-8, so
-they do not by themselves prove the strict inequality. Their "certified" flag only records the
-eigenvalue count. The floating-point factorizations only propose factors,
-and an exact computation checks them.
+Bounds are from results/run_full_20261021 and are rounded up at the 10th decimal. Each criterion is established at a sharp threshold t = η_float²(1 + 1e-9), with fallbacks 1e-7 and 1e-5 that were not needed. The certified η then exceeds the published η by 2e-11 to 2e-9; on the cross and the decorated square most of the excess is the factorization term t′ − t.
+The criterion itself is decided by comparing the certified t′ with 1/z̃² exactly, in rationals. The older
+certificate files in `legacy/applications_2026-10-17` also contain runs at t = 1/z̃². Their t′ exceeds
+1/z̃² by a few 1e-8, so those runs do not by themselves prove the strict inequality. Their "certified"
+flag only records the eigenvalue count. In every run the floating-point factorizations only propose
+factors, and an exact computation checks them.
 
 ### Not attempted: honeycomb (Method III)
 Its V has dimension 2²⁶ (paper, Table I). The final gap bound 0.00266 also uses three further

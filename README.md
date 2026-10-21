@@ -92,8 +92,8 @@ certify-ed list                                 # experiments E0-E10
 
 * **`apps.pyrochlore`**: Kránitz & Penc's Anderson-type bound for the pyrochlore Heisenberg
   antiferromagnet (arXiv:2601.07800).
-  - S = 1/2: λ_min of the 18-site crown cluster is ≥ −0.550158314 (the exact rational bound is
-    −0.55015831338…), certified in exact arithmetic; the cluster's λ_min itself is ≈ −0.5501582979.
+  - S = 1/2: λ_min of the 18-site crown cluster is ≥ −0.550158299 (the exact rational bound is
+    −0.55015829882…), certified in exact arithmetic; the cluster's λ_min itself is ≈ −0.5501582979.
   - S = 1: at the printed couplings, the cluster has an eigenvalue ≤ −1.6380246, below the published
     bound −1.632985. This is certified.
 * **`apps.aklt`**: Pomata & Wei's spectral-gap criteria for 2D AKLT models (arXiv:1911.01410). η is

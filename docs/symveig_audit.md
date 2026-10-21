@@ -20,7 +20,7 @@ reproduce here (for example, sector h_max 2.77e-11 at L = 12, PBC).
 | P2 | `enclose_sectors(H, S_diag)` "verifies each sector" | It never checks that H conserves S. It slices out the blocks and encloses them. With a small staggered transverse field (0.05) on the L = 6 Heisenberg chain, 58 of 64 true eigenvalues lie outside every "verified" enclosure, and the reported ground-state interval [−2.80277564, −2.80277564] excludes the true −2.86389024. | `test_non_conserved_quantity_rejected` |
 | P3 | Validation: "every reference eigenvalue … computed by an independent LAPACK call is contained" (§4.1) | For the global path the reference is the same `eigh` result whose eigenvalues are the interval midpoints (`benchmark.py`: `ref = mu_global`), so containment is automatic. The sector-path check is genuine. A float reference is also only accurate to ~n u‖A‖, which is *wider* than tight enclosures (E8 shows offsets up to 9e-15). Containment against a float reference passes here only because symveig's bounds are loose. | `benchmark.py` l. 58–93; `tests/test_spectrum.py::_contained` |
 | P4 | "to our knowledge, the first such tool in the scientific-Python stack"; "existing verified eigensolvers … require MATLAB and the commercial INTLAB toolbox" | Too strong. Arb, via python-flint (`acb_mat.eig`, Rump's algorithm), gives rigorous eigenvalue enclosures in Python. In our test it fails to isolate degenerate lattice spectra: Heisenberg L = 8 and 10 S_z = 0 sectors fail even at 256 bits with `multiple=True`. That is the defensible version of the gap. | snippet in session 2026-10-18 |
-| P5 | Sector path "tighter by 3–9×" | True for symveig's own bound, but it is an artefact of the γ₄ₙ‖A‖_F form: the bound grows with dimension while the true error does not. On the same sectors, a |A||x| bound with row-width γ factors (CERTIFY-ED) gives median half-widths 11–28× smaller at L = 12. The "133× speedup" is the standard O(n³) → Σd_s³ gain of block diagonalisation, measured against a complex-arithmetic `eigh` of a real matrix. | E8 |
+| P5 | Sector path "tighter by 3–9×" | True for symveig's own bound, but it is an artefact of the γ₄ₙ‖A‖_F form: the bound grows with dimension while the true error does not. On the same sectors, a |A||x| bound with row-width γ factors (CERTIFY-ED) gives median half-widths 11–29× smaller at L = 12 (run of 10-21). The "133× speedup" is the standard O(n³) → Σd_s³ gain of block diagonalisation, measured against a complex-arithmetic `eigh` of a real matrix. | E8 |
 | P6 | Tier 2 (Rump–Lange Lemma 6.1, opt-in) | Unverified. The gap is taken from midpoints, the formula "ρ + 2ρ²/gap + spread" is not the lemma as stated in the paper, and orthonormality is assumed (`g_orth = k γ_n`), not checked. Off by default, but it is shipped. Recommend removing it, or marking it UNVERIFIED. | `certify_eig._cluster_tighten` |
 | P7 | No check of the floating-point environment | FTZ/DAZ, rounding mode and reduced-precision BLAS would silently void the γ bounds. CERTIFY-ED's run-time probe covers this. | — |
 | P8 | Minor | Hermitian symmetrisation 0.5(H + H^H) is applied silently, so the enclosure refers to the symmetrised matrix. Model builders use complex128 for real models. The manuscript still contains placeholders (REPLACE_WITH_EMAIL, REPLACE_WITH_USER). | — |
@@ -36,9 +36,11 @@ reproduce here (for example, sector h_max 2.77e-11 at L = 12, PBC).
 
   Tests: `tests/test_spectrum.py` (9: symveig's synthetic classes plus both counterexamples).
 * **E8.** symveig against certify_ed on symveig's 17 benchmark configurations, with the same
-  matrices. Every certify_ed enclosure is complete (counts certified). Median half-widths are 11–28×
-  smaller at L = 12; max half-widths are 1.7–12× smaller at L = 12, comparable at L ≤ 6. certify_ed
-  is 1.4–4.3× slower at L = 12 (|A||x| products and Gram matrices).
+  matrices. Every certify_ed enclosure is complete (counts certified). In the run of 2026-10-21, at
+  L = 12 (d = 4096): median half-widths are 11–29× smaller; max half-widths are 1.3–12× smaller; and
+  certify_ed takes 0.9–2.3× symveig's time (|A||x| products and Gram matrices). At d ≤ 64, the max
+  half-widths can be up to 3× larger, because cluster intervals carry the count guarantee. (Run of
+  10-18: median 11–28×; the earlier "max 1.7–12×, 1.4–4.3× slower" came from the first E8 run, 10-18 13:32.)
 * **Contributions of symveig to keep in the paper:**
   1. the plain statement that sector decomposition shrinks *dimension-dependent* rounding bounds;
   2. the observation that the form of the rounding bound decides how widths scale (γ₄ₙ‖A‖_F gives

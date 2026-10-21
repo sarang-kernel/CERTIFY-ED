@@ -24,8 +24,9 @@ sharper application bounds.
 
 ### Changed
 - AKLT: thresholds are placed just above the floating-point η² (margins 1e-9, 1e-7, 1e-5). The
-  certified η now agrees with the published values to about 1e-10 (it was about 2e-6). Reported η and
-  the square-octagon sum are floats rounded upward from the exact rationals.
+  certified η now exceeds the published values by 2e-11 to 2e-9 (it was about 2e-6). On the cross
+  and the decorated square, the remaining excess comes from the factorization term t′ − t (β/μ, β/ν).
+  Reported η and the square-octagon sum are floats rounded upward from the exact rationals.
 - Pyrochlore S = 1/2 crown: a ladder of shifts (relative margins 1e-10, 1e-9, 2e-8). The certified bound
   is λ_min ≥ −0.550158299 (it was −0.550158314), within 1e-9 of the Lanczos value.
 - Provenance: the post-processing scripts left the computational fingerprint; the test suite has its

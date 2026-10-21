@@ -4,7 +4,9 @@ MANUSCRIPT_DIR/tables/apps_{aklt,e6,e7,e8}.tex and MANUSCRIPT_DIR/figures/fig_wi
 record is missing are skipped and reported.
 
 usage: python3 make_numbers_apps.py [MANUSCRIPT_DIR]   (default: <results dir>/paper; `certify-ed numbers` and run.py pass it)"""
-import glob, json, os, sys
+import glob, json, math, os, sys
+
+import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -14,6 +16,37 @@ os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
 M, CHECKS = {}, []
 macro = lambda k, v: M.__setitem__(k, str(v))
 check = lambda c, s: CHECKS.append((bool(c), s))
+
+
+def dec_dir(x, d, up):
+    """x with d decimals, rounded toward +inf (up=True) or -inf, computed exactly: for printing bounds."""
+    from fractions import Fraction as _F
+    q = _F(x) * 10 ** d
+    n = math.ceil(q) if up else math.floor(q)
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    return f"{sign}{n // 10 ** d}.{n % 10 ** d:0{d}d}" if d > 0 else f"{sign}{n}"
+
+
+def sci_dir(x, digits=1, up=True):
+    """Like sci(), with the mantissa rounded toward +inf (up) or -inf, exactly: for printing bounds."""
+    from fractions import Fraction as _F
+    if x is None or not np.isfinite(x):
+        return "\\ensuremath{\\infty}"
+    if x == 0:
+        return "0"
+    e = int(math.floor(math.log10(abs(x))))
+    for _ in range(2):
+        q = _F(x) / _F(10) ** e * 10 ** digits
+        n = math.ceil(q) if up else math.floor(q)
+        if abs(n) >= 10 ** (digits + 1):
+            e += 1
+            continue
+        break
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    ms = f"{sign}{n // 10 ** digits}.{n % 10 ** digits:0{digits}d}" if digits > 0 else f"{sign}{n}"
+    return ms if e == 0 else f"\\ensuremath{{{ms}\\times10^{{{e}}}}}"
 
 
 ENVS = {}
@@ -61,11 +94,13 @@ else:
             r = lat[name]
             cv = crit_value(name)
             f.write(f"{label[name]} & {crit[name]} & {r['eta_published']:.10f} & {r['eta_float']:.10f} & "
-                    f"{r['eta_upper']:.10f} & {'' if cv is None else f'{cv:.5f}'}\\\\\n")
+                    f"{dec_dir(r['eta_upper'], 10, True)} & {'' if cv is None else dec_dir(cv, 5, True)}\\\\\n")
             # published values have 10 decimals (rounding error <= 5e-11)
             check(r["eta_upper"] >= r["eta_published"] - 5e-11, f"AKLT {name}: bound not below the published value")
-            check(r["eta_upper"] - r["eta_published"] < 2e-10,
-                  f"AKLT {name}: certified bound agrees with the published value to the 10th decimal (within 2 units)")
+            # the excess is the published rounding (<= 5e-11), the threshold margin (1e-9 relative on eta^2) and
+            # the factorization term (t' - t, from beta/mu and beta/nu), which dominates on the largest lattices
+            check(r["eta_upper"] - r["eta_published"] < 5e-9,
+                  f"AKLT {name}: certified bound exceeds the published value by less than 5e-9")
             check(r["eta_upper"] >= r["eta_float"], f"AKLT {name}: certified bound above our floating-point eta")
             check(abs(r["eta_float"] - r["eta_published"]) < 1e-8, f"AKLT {name}: geometry reproduces published eta")
             if r.get("criterion_holds") is not None:
@@ -73,19 +108,19 @@ else:
         f.write("\\bottomrule\n\\end{tabular}\n")
     if "square_octagon" in e10:
         check(e10["square_octagon"]["criterion_holds"], "square-octagon: 4 eta_perp + 2 eta_par < 1")
-        macro("SOsum", f"{e10['square_octagon']['sum_upper']:.5f}")
+        macro("SOsum", dec_dir(e10['square_octagon']['sum_upper'], 5, True))
     for key, name in (("Star", "star"), ("Cross", "cross"), ("DecHoney", "decorated_honeycomb"),
                       ("DecSquare", "decorated_square")):
         if name in lat:
-            macro(f"Eta{key}", f"{lat[name]['eta_upper']:.10f}")
+            macro(f"Eta{key}", dec_dir(lat[name]['eta_upper'], 10, True))
     if "decorated_square" in lat:
         macro("DecSquareLargestBlock", lat["decorated_square"]["largest_block"])
         macro("DecSquareMinutes", f"{lat['decorated_square']['seconds'] / 60:.0f}")
     gaps = [lat[n]["eta_upper"] - lat[n]["eta_published"] for n in label if n in lat]
-    macro("AKLTMaxExcess", f"{max(gaps):.0e}")
+    macro("AKLTMaxExcess", sci_dir(max(gaps), 0, True))
     cvs = [crit_value(n) for n in label if n in lat and crit_value(n) is not None]
-    macro("AKLTCritMin", f"{min(cvs):.2f}")
-    macro("AKLTCritMax", f"{max(cvs):.2f}")
+    macro("AKLTCritMin", dec_dir(min(cvs), 2, True))
+    macro("AKLTCritMax", dec_dir(max(cvs), 2, True))
     check(max(cvs) < 1, "AKLT: every criterion value is below 1")
     for name, ks in e10.get("kernel", {}).items():
         check(all(k["kernel_equals_vbs_range"] for k in ks), f"kernel lemma confirmed exactly for {name}")
@@ -96,9 +131,9 @@ if e9 is None:
     SKIPPED.append("E9 (pyrochlore)")
 else:
     p = e9["spin1_printed"]
-    macro("CrownOneEig", f"{p['eigenvalue_upper']:.7f}")
+    macro("CrownOneEig", dec_dir(p['eigenvalue_upper'], 7, True))           # an upper bound: rounded up
     macro("CrownOnePublished", f"{p['published_bound']:.6f}")
-    macro("CrownOneMargin", f"{p['margin']:.1e}")
+    macro("CrownOneMargin", sci_dir(p['margin'], 1, False))                 # a lower bound: rounded down
     check(p["contradiction"], "spin-1 printed couplings: certified eigenvalue below the published bound")
     if "no_floating_point_assumption" in p:
         check(p["no_floating_point_assumption"], "spin-1 printed-coupling eigenvalue certified in exact arithmetic")
@@ -124,7 +159,7 @@ else:
                 "System & block dim & sectors & $E_0$ & exact radius & time (s)\\\\\n\\midrule\n")
         for r in e7["E7"]:
             f.write(f"{r['system']} & {r['block_dim']} & {len(r['sectors'])} & {r['E0']:.12f} & "
-                    f"{r['exact_radius']:.1e} & {r['exact_check_seconds']:.0f}\\\\\n")
+                    f"{sci_dir(r['exact_radius'])} & {r['exact_check_seconds']:.0f}\\\\\n")
             check(r["status"] == "CERTIFIED", f"E7 {r['system']} certified")
         f.write("\\bottomrule\n\\end{tabular}\n")
     ts7 = [r["exact_check_seconds"] for r in e7["E7"]]

@@ -68,6 +68,37 @@ def sci(x, digits=1):
     return f"\\ensuremath{{{ms}\\times10^{{{e}}}}}"
 
 
+def dec_dir(x, d, up):
+    """x with d decimals, rounded toward +inf (up=True) or -inf, computed exactly: for printing bounds."""
+    from fractions import Fraction as _F
+    q = _F(x) * 10 ** d
+    n = math.ceil(q) if up else math.floor(q)
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    return f"{sign}{n // 10 ** d}.{n % 10 ** d:0{d}d}" if d > 0 else f"{sign}{n}"
+
+
+def sci_dir(x, digits=1, up=True):
+    """Like sci(), with the mantissa rounded toward +inf (up) or -inf, exactly: for printing bounds."""
+    from fractions import Fraction as _F
+    if x is None or not np.isfinite(x):
+        return "\\ensuremath{\\infty}"
+    if x == 0:
+        return "0"
+    e = int(math.floor(math.log10(abs(x))))
+    for _ in range(2):
+        q = _F(x) / _F(10) ** e * 10 ** digits
+        n = math.ceil(q) if up else math.floor(q)
+        if abs(n) >= 10 ** (digits + 1):
+            e += 1
+            continue
+        break
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    ms = f"{sign}{n // 10 ** digits}.{n % 10 ** digits:0{digits}d}" if digits > 0 else f"{sign}{n}"
+    return ms if e == 0 else f"\\ensuremath{{{ms}\\times10^{{{e}}}}}"
+
+
 def thin(n):
     """Integer with thin-space thousands separators (math-safe)."""
     s = f"{int(n):,}".replace(",", "\\,")
@@ -247,7 +278,7 @@ check(f1.get("fit_term") == ["zz", [7, 8]], f"E1 F1: fit names zz on (7,8) (got 
 macro("FnFtwoScale", f"{f2['scale_factor']:.3f}" if f2.get("scale_factor") else "4.000")
 check(f3.get("fit_relative_residual") is not None and f3["fit_relative_residual"] > 1e-8,
       f"E1 F3: difference not expressible as coefficient changes (residual {f3.get('fit_relative_residual')})")
-macro("FnFtwelveBound", sci(f12["bound"]) if f12.get("bound") else "?")
+macro("FnFtwelveBound", sci_dir(f12["bound"]) if f12.get("bound") else "?")
 macro("FnFtwelveSpread", f"{f12['spread']:.3f}" if f12.get("spread") else "?")
 _words = {2: "twofold", 3: "threefold", 4: "fourfold"}
 macro("FnFtwelveMult", _words.get(f12.get("multiplicity"), f"{f12.get('multiplicity')}-fold"))
@@ -300,11 +331,11 @@ def diag_cell(r):
     if k == "F8":
         import re
         m = re.search(r"radius ([0-9.e+-]+)", r["P3_detail"])
-        return f"radius {sci(float(m.group(1)))} $>$ target" if m else ""
+        return f"radius {sci_dir(float(m.group(1)))} $>$ target" if m else ""
     if k == "F9":
         import re
         m = re.search(r"radius ([0-9.e+-]+)", r["P3_detail"])
-        return f"radius {sci(float(m.group(1)))}" if m else ""
+        return f"radius {sci_dir(float(m.group(1)))}" if m else ""
     if k in ("F10a", "F10b"):
         return "sector audit fails"
     if k in ("F11a", "F11b"):
@@ -312,7 +343,7 @@ def diag_cell(r):
         m = re.search(r"cover (\d+) of (\d+)", r["P3_detail"])
         return f"sectors cover {m.group(1)} of {m.group(2)}" if m else ""
     if k == "F12":
-        return f"$\\tr(PO)\\pm${sci(f12['bound'])}; spread {f12['spread']:.3f}"
+        return f"$\\tr(PO)\\pm${sci_dir(f12['bound'])}; spread {f12['spread']:.3f}"
     return ""
 
 
@@ -355,7 +386,7 @@ check(all(abs(r["fraction_of_gap_certified"] - 0.9) < 1e-6 and r["n_factorizatio
       "E3(c): certified gap = 0.9 true gap with one factorization in all cases")
 dc = e3["d_compose"]
 macro("TdSectors", str(dc["n_sectors"]))
-macro("TdRadius", sci(dc["radius"]))
+macro("TdRadius", sci_dir(dc["radius"]))
 macro("TdActual", sci(dc["actual_max_error"]))
 macro("TdLooseExp", str(int(round(math.log10(dc["radius"] / dc["actual_max_error"])))))
 check(dc["status"] == "CERTIFIED" and dc["actual_max_error"] <= dc["radius"] and dc["true_next"] >= dc["next_lower_bound"],
@@ -605,16 +636,16 @@ macro("WoneBlocks", str(w1["n_blocks"]))
 macro("WoneProd", f"{w1['producer_seconds']:.0f}")
 macro("WoneCert", f"{w1['certify_seconds']:.0f}")
 macro("WoneK", str(w1["K"]))
-macro("WoneRadius", sci(w1["radius"]))
-macro("WoneNext", f"{w1['next_lower_bound']:.9f}")
+macro("WoneRadius", sci_dir(w1["radius"]))
+macro("WoneNext", dec_dir(w1["next_lower_bound"], 9, up=False))
 check(w1["status"] == "CERTIFIED" and w1["sector_status_counts"]["COMPLETE"] == w1["n_blocks"],
       "W1: certified, all blocks complete")
 Nw = w1["N"]
 with open(os.path.join(MS, "tables", "w1.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{The " + str(w1["K"]) + " lowest eigenvalues of the "
             f"$J_1$--$J_2$ ring, $N={Nw}$, $J_2={w1['J2']:g}$, certified from {w1['n_blocks']} symmetry blocks "
-            f"(Section~\\ref{{sec:w1}}). Common radius {sci(w1['radius'])}; the next eigenvalue is at least "
-            f"${w1['next_lower_bound']:.9f}$. Momentum $k$ in units of $2\\pi/N$.}}\n\\label{{tab:w1}}\n\\small\n"
+            f"(Section~\\ref{{sec:w1}}). Common radius {sci_dir(w1['radius'])}; the next eigenvalue is at least "
+            f"${dec_dir(w1['next_lower_bound'], 9, up=False)}$. Momentum $k$ in units of $2\\pi/N$.}}\n\\label{{tab:w1}}\n\\small\n"
             "\\begin{tabular}{@{}r r r r@{}}\n\\toprule\n$j$ & $E_j$ & $S^z$ & $k$ \\\\\n\\midrule\n")
     for j, (e, sz, k) in enumerate(w1["levels"][: w1["K"]]):
         f.write(f"{j + 1} & ${e:.10f}$ & ${sz:+.0f}$ & {k} \\\\\n".replace("$+0$", "$0$"))
@@ -623,12 +654,12 @@ cl = w2["clusters"][0]
 qn = cl["quantum_numbers"]["Sz_total"]
 check(qn["status"] == "CERTIFIED" and all(v == "CERTIFIED" for v in w2["statuses"].values()), "W2: all certified")
 macro("WtwoQN", ",".join(f"{v:.0f}" for v in qn["certified_values"]))
-macro("WtwoQNBound", sci(qn["bound"]))
+macro("WtwoQNBound", sci_dir(qn["bound"]))
 o1, o2 = cl["observables"]["Sz_0 Sz_1"], cl["observables"]["Sz_0"]
 macro("WtwoObs", f"{o1['value']:.12f}")
-macro("WtwoObsBound", sci(o1["bound"]))
+macro("WtwoObsBound", sci_dir(o1["bound"]))
 macro("WtwoObsSz", sci(o2["value"]))
-macro("WtwoObsSzBound", sci(o2["bound"]))
+macro("WtwoObsSzBound", sci_dir(o2["bound"]))
 sp_ = o1.get("per_vector_spread_under_rotation", {})
 macro("WtwoSpreadMin", f"{sp_.get('min', float('nan')):.2f}")
 macro("WtwoSpreadMax", f"{sp_.get('max', float('nan')):.2f}")
@@ -647,7 +678,7 @@ with open(os.path.join(MS, "tables", "w2_summary.txt"), "w") as f:
     f.write("\n".join(wrapped) + "\n")
 macro("WthreeProd", f"{w3['producer_seconds']:.0f}")
 macro("WthreeCert", f"{w3['certify_seconds']:.0f}")
-macro("WthreeRadius", sci(w3["max_radius"]))
+macro("WthreeRadius", sci_dir(w3["max_radius"]))
 import re
 m = re.search(r"max rel\. diff ([0-9.e+-]+)", w3["summaries"]["S1.model_fidelity"])
 macro("WthreeProbe", sci(float(m.group(1))) if m else "?")
@@ -666,8 +697,8 @@ with open(os.path.join(MS, "tables", "w4.tex"), "w") as f:
              2: "Heisenberg $4\\times4$ ($S^z{=}0$)", 3: "$J_1$--$J_2$ $4\\times4$, $J_2=\\frac12$ ($S^z{=}0$)"}
     for i, r in enumerate(w4):
         s3 = r["statuses"]["S3.completeness"]
-        gap = f"{r['gap_lower_bound']:.4f}" if r.get("gap_lower_bound") else "---"
-        f.write(f"{names[i]} & {thin(r['dim'])} & ${r['E0']:.12f}$ & {sci(r['radius'])} & "
+        gap = dec_dir(r["gap_lower_bound"], 4, up=False) if r.get("gap_lower_bound") else "---"
+        f.write(f"{names[i]} & {thin(r['dim'])} & ${r['E0']:.12f}$ & {sci_dir(r['radius'])} & "
                 f"\\st{{{s3.replace('_', chr(92) + '_')}}} & {gap} \\\\\n")
     f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 mg = w4[1]
