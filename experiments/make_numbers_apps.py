@@ -53,8 +53,8 @@ else:
             return e10["square_octagon"]["sum_upper"]
         return r["criterion_z"] * r["eta_upper"] if r.get("criterion_z") else None
     with open(os.path.join(MS, "tables", "apps_aklt.tex"), "w") as f:
-        f.write("\\begin{tabular}{@{}l l r r r r@{}}\n\\toprule\nLattice & criterion & $\\eta$ (published) & "
-                "$\\eta$ (our float) & certified upper bound & criterion value (certified)\\\\\n\\midrule\n")
+        f.write("\\begin{tabular}{@{}l l r r r r@{}}\n\\toprule\nLattice & criterion & $\\eta$ published & "
+                "$\\eta$ our float & $\\eta$ certified $\\le$ & criterion value\\\\\n\\midrule\n")
         for name in label:
             if name not in lat:
                 continue
@@ -120,8 +120,8 @@ if e7 is None:
     SKIPPED.append("E7 (exact benchmarks)")
 else:
     with open(os.path.join(MS, "tables", "apps_e7.tex"), "w") as f:
-        f.write("\\begin{tabular}{@{}l r r r r r@{}}\n\\toprule\nSystem & block dim & sectors & $E_0$ & exact radius "
-                "& time (s)\\\\\n\\midrule\n")
+        f.write("\\begin{tabular}{@{}>{\\raggedright\\arraybackslash}p{0.34\\textwidth} r r r r r@{}}\n\\toprule\n"
+                "System & block dim & sectors & $E_0$ & exact radius & time (s)\\\\\n\\midrule\n")
         for r in e7["E7"]:
             f.write(f"{r['system']} & {r['block_dim']} & {len(r['sectors'])} & {r['E0']:.12f} & "
                     f"{r['exact_radius']:.1e} & {r['exact_check_seconds']:.0f}\\\\\n")
@@ -256,6 +256,30 @@ else:
             for v, n in sorted(verdicts.items(), key=lambda kv: -kv[1]):
                 f.write(f"\\qquad verdict: {v} & {n}\\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
+
+# ---------------------------------------------------------------- run manifest (when RES is a run directory)
+_man = os.path.join(RES, "manifest.json")
+if os.path.exists(_man):
+    with open(_man) as f:
+        man = json.load(f)
+    order = [k for k in ("tests", "E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10") if k in man["steps"]]
+    with open(os.path.join(MS, "tables", "run_manifest.tex"), "w") as f:
+        f.write("\\begin{tabular}{@{}l l r l l@{}}\n\\toprule\nStep & script & minutes & status & source\\\\\n\\midrule\n")
+        for k in order:
+            st = man["steps"][k]
+            script = st.get("script", "pytest").replace("_", "\\_")
+            mins = st.get("seconds", 0) / 60
+            src = st.get("source_hash") or "---"
+            status = st.get("status") or ("ok" if st.get("returncode") == 0 else "failed")
+            f.write(f"{k} & \\texttt{{{script}}} & {mins:.0f} & {status} & \\texttt{{{src}}}\\\\\n")
+        f.write("\\bottomrule\n\\end{tabular}\n")
+    exp = [man["steps"][k] for k in order if k != "tests"]
+    macro("RunStepMinutes", f"{sum(st.get('seconds', 0) for st in exp) / 60:.0f}")
+    check(all(st.get("status") == "ok" for st in exp), "run manifest: every experiment step ok")
+    srcs = {st.get("source_hash") for st in exp}
+    check(len(srcs) == 1 and None not in srcs, f"run manifest: every step ran at one computational source {sorted(map(str, srcs))}")
+    if "tests" in man["steps"]:
+        macro("RunTestsSummary", man["steps"]["tests"].get("summary", "").split(" in ")[0].replace(",", ";"))
 
 # ---------------------------------------------------------------- provenance
 _src = {k: (e.get("source_hash"), e.get("source_dirty")) for k, e in ENVS.items()}
