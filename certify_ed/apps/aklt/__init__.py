@@ -14,7 +14,7 @@ from math import isqrt
 import numpy as np
 
 from . import lattices
-from .eta import certify_eta
+from .eta import _sqrt_up, certify_eta
 from .graph import reduced_region, union_coords
 
 # name: (builder, symmetries builder or None, published eta, sharp threshold t (just above eta^2),
@@ -126,7 +126,7 @@ def certify_lattice(name, thresholds=None, check_geometry=True, log=print):
             tp = Fraction(num, den)
             if best is None or tp < best:
                 best = tp
-    rec["eta_upper"] = None if best is None else float(best) ** 0.5
+    rec["eta_upper"] = None if best is None else _sqrt_up(best)        # a float >= sqrt(t')
     rec["eta_upper_squared_exact"] = None if best is None else f"{best.numerator}/{best.denominator}"
     rec["criterion_z"] = z
     rec["criterion_holds"] = None if (z is None or best is None) else bool(best < Fraction(1, z * z))
@@ -141,4 +141,4 @@ def square_octagon_criterion(rec_par, rec_perp):
         return Fraction(isqrt(num * den) + 1, den)
     ep, epar = sqrt_up(rec_perp["eta_upper_squared_exact"]), sqrt_up(rec_par["eta_upper_squared_exact"])
     total = 4 * ep + 2 * epar
-    return {"sum_upper": float(total), "criterion_holds": bool(total < 1)}
+    return {"sum_upper": float(np.nextafter(float(total), np.inf)), "criterion_holds": bool(total < 1)}

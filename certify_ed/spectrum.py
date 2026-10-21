@@ -29,6 +29,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 from .enclosure import OperatorAdapter, enclose
+from .fp import add_up, sub_down
 
 
 @dataclass
@@ -89,8 +90,8 @@ def _enclose_block(A, eig=None):
     enc = enclose(OperatorAdapter(A if sp.issparse(A) else dense), mu, X)
     out = []
     for g in enc.groups:
-        lo = min(enc.mu[i] - enc.radius[i] for i in g.members)
-        hi = max(enc.mu[i] + enc.radius[i] for i in g.members)
+        lo = min(sub_down(enc.mu[i], enc.radius[i]) for i in g.members)     # outward-rounded ends
+        hi = max(add_up(enc.mu[i], enc.radius[i]) for i in g.members)
         out.append(SpectrumInterval(float(lo), float(hi), g.size, bool(g.distinct), g.method))
     return out, enc
 

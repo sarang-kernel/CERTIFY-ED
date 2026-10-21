@@ -31,7 +31,7 @@ import scipy.sparse as sp
 
 from .construct import build_bitwise
 from .enclosure import OperatorAdapter, enclose
-from .fp import U, fro_upper, gamma_dot, inf_norm_upper, up
+from .fp import U, add_up, fro_upper, gamma_dot, inf_norm_upper, sub_down, up
 from .inertia import inertia as inertia_count
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
@@ -95,7 +95,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         if mu_below.size:
             sel = np.where(mu < E_cut)[0]
             enc = enclose(OperatorAdapter(Hs), mu[sel], np.asarray(s.eigenvectors)[:, sel])
-            inside = bool(np.all(enc.mu + enc.radius < E_cut - r.beta))
+            inside = bool(np.all(add_up(enc.mu, enc.radius) < sub_down(E_cut, r.beta)))
             distinct = enc.all_distinct
             rad = float(enc.radius.max())
         else:
@@ -142,7 +142,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         bad = [p["label"] for p in per if p.get("status") != "COMPLETE"]
         status = "FAILED" if any(p.get("status") == "MISSING" for p in per) else "INCONCLUSIVE"
         summary = f"sectors not certified complete below the cut: {bad[:8]}"
-    if status == "CERTIFIED" and pooled and max(pooled) + rmax >= E_cut - beta_max:
+    if status == "CERTIFIED" and pooled and add_up(max(pooled), rmax) >= sub_down(E_cut, beta_max):
         # an unclaimed eigenvalue of one block could lie in [E_cut - beta_max, E_cut - beta_s) below a
         # claimed value of another block; the pooled list is then not provably the K lowest
         status = "INCONCLUSIVE"
@@ -155,8 +155,8 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         pooled = np.sort(np.asarray(pooled))
         K = int(pooled.size)
         out.update(eps_decomposition=eps, builder_shift=m_build, max_sector_radius=rmax, K=K,
-                   lowest=pooled.tolist(), radius=rmax + eps,
-                   next_lower_bound=E_cut - beta_max - eps)
+                   lowest=pooled.tolist(), radius=float(add_up(rmax, eps)),
+                   next_lower_bound=float(sub_down(sub_down(E_cut, beta_max), eps)))
         summary = (f"the {K} lowest eigenvalues of H equal the pooled sector values within "
                    f"{rmax + eps:.2e}; the next eigenvalue is >= {E_cut - beta_max - eps:.10g}")
     out.update(status=status, summary=summary, seconds=time.time() - t0)

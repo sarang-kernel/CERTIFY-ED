@@ -39,7 +39,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import (U, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
-                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper, exact_dot, exact_gram)
+                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper, exact_dot, exact_gram,
+                 sub_down, add_up)
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -191,15 +192,16 @@ class EnclosureSet:
     all_distinct: bool
 
     def interval(self, i):
-        return (self.mu[i] - self.radius[i], self.mu[i] + self.radius[i])
+        """(lower, upper): bounds on the exact endpoints mu_i -/+ r_i (rounded outward)."""
+        return (float(sub_down(self.mu[i], self.radius[i])), float(add_up(self.mu[i], self.radius[i])))
 
     def to_records(self) -> List[dict]:
         out = []
         for i in range(self.mu.size):
             g = self.groups[self.group_of[i]]
             out.append({"index": int(i), "claimed": float(self.mu[i]), "radius": float(self.radius[i]),
-                        "lower": float(self.mu[i] - self.radius[i]),
-                        "upper": float(self.mu[i] + self.radius[i]),
+                        "lower": float(sub_down(self.mu[i], self.radius[i])),
+                        "upper": float(add_up(self.mu[i], self.radius[i])),
                         "group": int(self.group_of[i]), "group_size": g.size,
                         "method": g.method, "distinct": bool(g.distinct),
                         "residual_computed": float(self.residual.computed[i]),
@@ -265,9 +267,9 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
     meta = [None] * len(groups)
 
     def overlaps(ga, ra, gb, rb):
-        hi_a = max(mu[i] for i in ga) + ra
-        lo_b = min(mu[i] for i in gb) - rb
-        return hi_a >= lo_b
+        hi_a = add_up(max(mu[i] for i in ga), ra)
+        lo_b = sub_down(min(mu[i] for i in gb), rb)
+        return hi_a >= lo_b          # outward-rounded ends: touching intervals are merged
 
     changed = True
     while changed:
@@ -313,8 +315,8 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
     # safety net: a group may claim distinct eigenvalues only if its union interval is
     # disjoint from every other group's union interval
     if len(group_objs) > 1:
-        L = np.array([min(mu[i] - final_radius[i] for i in g.members) for g in group_objs])
-        Uu = np.array([max(mu[i] + final_radius[i] for i in g.members) for g in group_objs])
+        L = np.array([min(sub_down(mu[i], final_radius[i]) for i in g.members) for g in group_objs])
+        Uu = np.array([max(add_up(mu[i], final_radius[i]) for i in g.members) for g in group_objs])
         order_g = np.argsort(L, kind="stable")
         Ls, Us = L[order_g], Uu[order_g]
         prefmax = np.maximum.accumulate(np.r_[-np.inf, Us[:-1]])
@@ -399,10 +401,11 @@ def kato_temple(adapter: OperatorAdapter, x: np.ndarray, alpha: float, beta: flo
     th_lo, th_hi, th, r_hat = ri
     # r = ||Ax - theta x|| <= ||Ax - th x|| + |theta - th| (unit-norm normalisation in rel_bound)
     r = up(r_hat + max(th_hi - th, th - th_lo))
-    if not (alpha < th_lo - r and th_hi + r < beta):
+    if not (alpha < sub_down(th_lo, r) and add_up(th_hi, r) < beta):
         return None
-    lower = th_lo - r * r / (beta - th_lo)
-    upper = th_hi + r * r / (th_hi - alpha)
+    r2 = np.nextafter(r * r, np.inf)
+    lower = float(sub_down(th_lo, np.nextafter(r2 / sub_down(beta, th_lo), np.inf)))
+    upper = float(add_up(th_hi, np.nextafter(r2 / sub_down(th_hi, alpha), np.inf)))
     lower -= abs(lower) * 8 * U
     upper += abs(upper) * 8 * U
     return float(lower), float(upper), float(th), float(r)

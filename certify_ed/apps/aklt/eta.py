@@ -34,6 +34,13 @@ import numpy as np
 import flint
 
 from ...checker import inertia_exact
+
+
+def _sqrt_up(x: Fraction) -> float:
+    """A float >= sqrt(x) for a non-negative rational x (float() and math.sqrt round to nearest, so one
+    step up after each bounds the exact value)."""
+    import math
+    return float(np.nextafter(math.sqrt(float(np.nextafter(float(x), np.inf))), np.inf))
 from .graph import (Graph, slot_reduction, reduced_region, union_coords, gram_of_coords, rank_mod_p_lower,
                     lambda_min_lower)
 
@@ -289,7 +296,7 @@ def certify_eta(g: Graph, L, C, R, thresholds, sigmas=(), use_flip=True, log=pri
         ok = pos_total <= n_unit
         out["thresholds"][str(t)] = {"positive": pos_total, "beta": float(beta), "t_prime": float(tprime),
                                      "t_prime_exact": f"{tprime.numerator}/{tprime.denominator}", "certified": ok,
-                                     "eta_upper": float(tprime) ** 0.5}
+                                     "eta_upper": _sqrt_up(tprime)}
         log(f"  t = {float(t):.6f}: {pos_total} positive pivots (need <= {n_unit}); beta = {float(beta):.2e}; "
             f"t' = {float(tprime):.10f}; eta <= {float(tprime) ** 0.5:.10f}: {ok}  [{time.time()-t0:.0f}s]")
     out["seconds"] = time.time() - t0

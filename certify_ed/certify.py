@@ -39,7 +39,7 @@ from .construct import (StateSet, build_bitwise, cross_construct, full_state_set
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
-from .fp import U, float_env_record, inf_norm_upper, probe_float_environment, up
+from .fp import U, add_up, float_env_record, inf_norm_upper, probe_float_environment, sub_down, up
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .sectors import audit_sector, restrict_to_u1
@@ -341,9 +341,9 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     (typical cost of a FAILED statement: two factorizations).
     """
     k = mu_sorted.size
-    rad = enc.radius[np.argsort(enc.mu, kind="stable")] + eps_shift
-    hi = mu_sorted + rad
-    lo = mu_sorted - rad
+    rad = add_up(enc.radius[np.argsort(enc.mu, kind="stable")], eps_shift)
+    hi = add_up(mu_sorted, rad)
+    lo = sub_down(mu_sorted, rad)
     hi_k = float(hi.max())
     counts = []
     scale = max(1.0, float(np.max(np.abs(mu_sorted))))
@@ -383,9 +383,9 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
 
         Eigenvalues <= s_low + beta number at least nu; claimed enclosures reaching below s_low + beta
         number c; if nu > c, at least nu - c eigenvalues below the top enclosure are unclaimed."""
-        if r_low.conclusive and r_low.beta + eps_shift < lo_top - s_low:
-            bl = r_low.beta + eps_shift
-            return int(r_low.negative - np.sum(lo <= s_low + bl))
+        if r_low.conclusive and add_up(r_low.beta, eps_shift) < sub_down(lo_top, s_low):
+            bl = add_up(r_low.beta, eps_shift)
+            return int(r_low.negative - np.sum(lo <= add_up(s_low, bl)))
         return None
 
     for idx, sigma in enumerate(sigmas):
@@ -406,12 +406,13 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
         if not r.conclusive:
             last_reason = f"factorization at sigma={sigma:.10g} inconclusive ({r.note})"
             continue
-        beta = r.beta + eps_shift
-        if r.negative == k and distinct and hi_k < sigma - beta:
+        beta = float(add_up(r.beta, eps_shift))
+        s_minus_b = float(sub_down(sigma, beta))
+        if r.negative == k and distinct and hi_k < s_minus_b:
             # exactly k eigenvalues below sigma - beta, and they are the claimed ones
-            ev.update(top_shift=sigma, beta_effective=beta, next_eigenvalue_lower_bound=sigma - beta,
-                      certified_window=["-inf", sigma - beta], gap_lower_bound=(sigma - beta) - hi_k)
-            return "CERTIFIED", ev, (float("-inf"), sigma - beta)
+            ev.update(top_shift=sigma, beta_effective=beta, next_eigenvalue_lower_bound=s_minus_b,
+                      certified_window=["-inf", s_minus_b], gap_lower_bound=float(sub_down(s_minus_b, hi_k)))
+            return "CERTIFIED", ev, (float("-inf"), s_minus_b)
         if r.negative == k and distinct:
             last_reason = (f"factorization backward error ({beta:.2e}) too large relative to the "
                            f"margin above the highest claimed value")
@@ -426,7 +427,7 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
             return "FAILED", ev, None
     if r is None or not r.conclusive:
         return "INCONCLUSIVE", dict(ev, reason=last_reason or "no conclusive inertia count"), None
-    beta = r.beta + eps_shift
+    beta = float(add_up(r.beta, eps_shift))
     ev.update(top_shift=sigma, beta_effective=beta)
     if r.negative == k and not distinct:
         return "INCONCLUSIVE", dict(ev, reason="claimed pairs not all certified distinct (S2); "
@@ -441,21 +442,21 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     s_low, r_low = _below_top()
     miss = _missing_below(s_low, r_low)
     if miss is not None:
-        bl = r_low.beta + eps_shift
+        bl = float(add_up(r_low.beta, eps_shift))
         if miss > 0:
             ev["missing_below_top_claim_at_least"] = miss
             ev["witness_shift"] = s_low
             return "FAILED", ev, None
-        c_lt = int(np.sum(hi < s_low - bl))
+        c_lt = int(np.sum(hi < sub_down(s_low, bl)))
         if distinct and r_low.negative == c_lt:
-            ev["complete_below"] = s_low - bl
+            ev["complete_below"] = float(sub_down(s_low, bl))
     if r.negative > k:
         ev["unclaimed_near_top"] = int(r.negative - k)
         if "complete_below" in ev:
             n_top_claimed = int(np.sum(lo > ev["complete_below"]))
             ev["top_multiplet"] = {"claimed": n_top_claimed,
                                    "at_least": int(r.negative - r_low.negative),
-                                   "interval": [ev["complete_below"], sigma + beta]}
+                                   "interval": [ev["complete_below"], float(add_up(sigma, beta))]}
             ev["reason"] = (f"the claim is complete below {ev['complete_below']:.10g}, but the highest "
                             f"claimed level is a (quasi-)degenerate multiplet of at least "
                             f"{r.negative - r_low.negative} eigenvalues within "
@@ -501,12 +502,12 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
         return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {rb.note}"), None
     if not (ra.conclusive and rb.conclusive):
         return "INCONCLUSIVE", dict(ev, reason="inertia inconclusive at a window edge"), None
-    ba, bb = ra.beta + eps_shift, rb.beta + eps_shift
+    ba, bb = add_up(ra.beta, eps_shift), add_up(rb.beta, eps_shift)
     n = rb.negative - ra.negative
-    lo = enc.mu - enc.radius - eps_shift
-    hi = enc.mu + enc.radius + eps_shift
-    inside = (lo > a + ba) & (hi < b - bb)
-    touching = (hi >= a - ba) & (lo <= b + bb)
+    lo = sub_down(enc.mu, add_up(enc.radius, eps_shift))
+    hi = add_up(enc.mu, add_up(enc.radius, eps_shift))
+    inside = (lo > add_up(a, ba)) & (hi < sub_down(b, bb))
+    touching = (hi >= sub_down(a, ba)) & (lo <= add_up(b, bb))
     c_in = int(np.sum(inside)) if enc.all_distinct else None
     c_all = int(np.sum(touching))
     ev.update({"count_from_inertia": int(n), "claimed_certified_inside": c_in,
@@ -745,14 +746,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             j_hi = order[pos + 1] if pos + 1 < len(order) else None
             # isolation interval for the operator in `adapter`; the S3 window refers to the declared
             # model, so it is shrunk by the model shift
-            alpha = (enc.mu[j_lo] + enc.radius[j_lo]) if j_lo is not None else window[0] + eps_s3
-            beta_ = (enc.mu[j_hi] - enc.radius[j_hi]) if j_hi is not None else window[1] - eps_s3
+            alpha = float(add_up(enc.mu[j_lo], enc.radius[j_lo]) if j_lo is not None else add_up(window[0], eps_s3))
+            beta_ = float(sub_down(enc.mu[j_hi], enc.radius[j_hi]) if j_hi is not None
+                          else sub_down(window[1], eps_s3))
             if not np.isfinite(beta_):
                 continue
             res = kato_temple(adapter, X[:, i], alpha, beta_)
             if res is not None:
                 lower, upper, th, r = res
-                lower, upper = lower - eps_s3, upper + eps_s3      # refer to the declared model
+                lower, upper = float(sub_down(lower, eps_s3)), float(add_up(upper, eps_s3))   # declared model
                 if upper - lower < 2 * float(enc.radius[i]):
                     kt.append({"index": int(i), "lower": lower, "upper": upper,
                                "width": upper - lower, "residual_width": 2 * float(enc.radius[i]),
@@ -788,21 +790,22 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift
                 rho = up(rho + 2.5 * eps_s3)
                 eps = up(eps + 3.5 * eps_s3)
-            rad_m = rad + eps_s3
-            JL = min(a_ - eps, min(enc.mu[i] - rad_m[i] for i in C))
-            JU = max(b_ + eps, max(enc.mu[i] + rad_m[i] for i in C))
+            rad_m = add_up(rad, eps_s3)
+            JL = min(sub_down(a_, eps), min(sub_down(enc.mu[i], rad_m[i]) for i in C))
+            JU = max(add_up(b_, eps), max(add_up(enc.mu[i], rad_m[i]) for i in C))
             others = [i for i in range(enc.mu.size) if i not in Cset]
-            clash = [i for i in others if not (enc.mu[i] + rad_m[i] < JL or enc.mu[i] - rad_m[i] > JU)]
+            clash = [i for i in others if not (add_up(enc.mu[i], rad_m[i]) < JL
+                                               or sub_down(enc.mu[i], rad_m[i]) > JU)]
             if clash or not (JL > window[0] and JU < window[1]):
                 rec.update(status="INCONCLUSIVE",
                            reason="cluster interval overlaps other claimed pairs or the window edge")
                 eig_records.append(rec)
                 continue
-            U_below = max([enc.mu[i] + rad_m[i] for i in others if enc.mu[i] < a_] + [window[0]])
-            L_above = min([enc.mu[i] - rad_m[i] for i in others if enc.mu[i] > b_] + [window[1]])
+            U_below = max([add_up(enc.mu[i], rad_m[i]) for i in others if enc.mu[i] < a_] + [window[0]])
+            L_above = min([sub_down(enc.mu[i], rad_m[i]) for i in others if enc.mu[i] > b_] + [window[1]])
             # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
             # of the claimed values, to the remaining eigenvalues
-            sep = min(a_ - U_below, L_above - b_) - eps
+            sep = float(sub_down(min(sub_down(a_, U_below), sub_down(L_above, b_)), eps))
             rec["separation_lower_bound"] = float(sep)
             ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep)
             if ec is None:

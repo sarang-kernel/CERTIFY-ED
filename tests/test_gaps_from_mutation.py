@@ -142,7 +142,11 @@ def test_next_eigenvalue_lower_bound_is_below_shift_and_truth():
     c = ce.certify(ce.Claim(w[:1], V[:, :1], operator=H, kind="lowest", states=st), spec)
     ev = [s for s in c.statements if s["id"] == "S3.completeness"][0]["evidence"]
     assert ev["next_eigenvalue_lower_bound"] < ev["top_shift"]
-    assert ev["next_eigenvalue_lower_bound"] == ev["top_shift"] - ev["beta_effective"]
+    # sigma - beta rounded downward (one step below the round-to-nearest difference)
+    from fractions import Fraction
+    from certify_ed.fp import sub_down
+    assert ev["next_eigenvalue_lower_bound"] == float(sub_down(ev["top_shift"], ev["beta_effective"]))
+    assert Fraction(ev["next_eigenvalue_lower_bound"]) <= Fraction(ev["top_shift"]) - Fraction(ev["beta_effective"])
     assert ev["next_eigenvalue_lower_bound"] <= w[1]
 
 

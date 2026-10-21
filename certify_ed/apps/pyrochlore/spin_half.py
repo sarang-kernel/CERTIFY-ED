@@ -12,6 +12,7 @@ Rigour chain:
   5. e_GS >= lambda_min(H) >= (g - delta) / K.
 No floating-point assumption: a Lanczos estimate only places g.
 """
+import math
 import time
 from fractions import Fraction
 
@@ -61,7 +62,10 @@ def certify_crown(n1=PUBLISHED["n1"], n3=PUBLISHED["n3"], margins_rel=(1e-10, 1e
            "dim_Sz0": int(st.size), "n_sectors": len(info["sectors"]),
            "largest_sector": max(s["dim"] for s in info["sectors"]), "e0_estimate": e0,
            "shift": str(g / K_SCALE), "shifts_tried": tried, "delta": float(r["delta"] / K_SCALE),
-           "lower_bound": float(lb), "lower_bound_rounded_down": float(np.floor(float(lb) * 1e9) / 1e9),
+           # floats on the safe side of the exact rational bound: one step down after rounding to
+           # nearest; the 9-decimal value is floor(lb * 1e9) / 1e9 computed exactly
+           "lower_bound": float(np.nextafter(float(lb), -np.inf)),
+           "lower_bound_rounded_down": float(Fraction(math.floor(lb * 10 ** 9), 10 ** 9)),
            "lower_bound_exact": f"{lb.numerator}/{lb.denominator}", "no_floating_point_assumption": True,
            "seconds": time.time() - t0}
     log(f"  crown S=1/2 n1={n1} n3={n3}: e0 estimate {e0:.12f}; certified lambda_min >= {float(lb):.12f} "

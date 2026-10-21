@@ -49,6 +49,30 @@ def gamma_dot(n: int, complex_arith: bool) -> float:
     return 2.0 * gamma(n + 4) if complex_arith else gamma(n)
 
 
+# Directed rounding of one addition or subtraction. Under round-to-nearest the computed a +/- b is within
+# half an ulp of the exact value, so one step outward (nextafter) bounds the exact value. Interval
+# endpoints (mu - r, mu + r), shifts (sigma - beta) and separations are formed with these, so that a
+# reported endpoint is on the safe side of the exact one and comparisons between endpoints are conservative.
+def sub_down(a, b):
+    """Lower bound on the exact a - b (elementwise for arrays)."""
+    return np.nextafter(np.subtract(a, b), -np.inf)
+
+
+def add_up(a, b):
+    """Upper bound on the exact a + b (elementwise for arrays)."""
+    return np.nextafter(np.add(a, b), np.inf)
+
+
+def sub_up(a, b):
+    """Upper bound on the exact a - b."""
+    return np.nextafter(np.subtract(a, b), np.inf)
+
+
+def add_down(a, b):
+    """Lower bound on the exact a + b."""
+    return np.nextafter(np.add(a, b), -np.inf)
+
+
 def up(x: float) -> float:
     """Guarded upper bound for a non-negative computed quantity."""
     return float(x) * _GUARD + 0.0
