@@ -11,6 +11,8 @@ Supported producers
     datasets 'eigenvalues', optional 'eigenvectors', optional CSR triplet
     'H/data', 'H/indices', 'H/indptr', 'H/shape'.
   * scipy LinearOperator / callable matvec: matrix-free producers.
+  * Any file format and the producer bundle directory (certify_ed.io; docs/producer_bundle.md):
+    claim_from_file, claim_from_bundle.
 """
 
 from __future__ import annotations
@@ -109,3 +111,32 @@ def export_npz(path: str, eigenvalues, eigenvectors=None, H=None) -> str:
         d.update(H_data=H.data, H_indices=H.indices, H_indptr=H.indptr, H_shape=np.array(H.shape))
     np.savez(path, **d)
     return path
+
+def claim_from_file(eigenvalues: str, eigenvectors: str = None, operator: str = None, basis: str = None,
+                    kind: str = "subset", window=None, keys: dict = None, allow_code: bool = False, **kw) -> Claim:
+    """Claim from separate files in any supported format (certify_ed.io.formats): .npy .npz .h5 .csv .tsv
+    .txt .dat .json .mtx (operator also .py with allow_code=True). This is `dd if=` for single files; a
+    directory of such files is a producer bundle (claim_from_bundle)."""
+    from .io.formats import read_array, read_basis, read_operator
+    keys = keys or {}
+    ev = np.asarray(read_array(eigenvalues, keys.get("eigenvalues"), "eigenvalues"), dtype=float)
+    X = None if eigenvectors is None else np.asarray(read_array(eigenvectors, keys.get("eigenvectors"), "eigenvectors"))
+    op = None if operator is None else read_operator(operator, keys.get("operator"), allow_code=allow_code)
+    states, iso = None, None
+    if basis is not None:
+        kind_b, B = read_basis(basis, keys.get("basis"))
+        if kind_b == "states":
+            states = StateSet(np.sort(B), kw.pop("state_order", "descending"), label="producer basis")
+        else:
+            iso = B
+    return Claim(ev, X, operator=op, kind=kind, window=window, states=states, sector_isometry=iso,
+                 producer={"name": "files", "eigenvalues": eigenvalues, "eigenvectors": eigenvectors,
+                           "operator": operator, "basis": basis}, **kw)
+
+
+def claim_from_bundle(path: str, allow_code: bool = False, kind: str = None, window=None):
+    """(Claim, ModelSpec | None, meta) from a producer bundle directory (docs/producer_bundle.md)."""
+    from .io.bundle import read_bundle
+    b = read_bundle(path, allow_code=allow_code, kind=kind, window=window)
+    return b.claim, b.spec, b.meta
+

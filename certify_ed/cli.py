@@ -2,6 +2,10 @@
 
     certify-ed env                                   floating-point environment and versions
     certify-ed certify CLAIM.npz --spec SPEC.json [--kind lowest] [--exact] [-o CERT]
+    certify-ed certify --from BUNDLE_DIR [--preset NAME] [--only S1,S2] [--skip S3]
+                       [--budget-seconds S] [--budget-mb MB] [--reason TEXT] [--temperatures T1,T2]
+    certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
+    certify-ed presets                               the presets and statements table (docs/presets.md)
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
     certify-ed list                                  the experiments and what they establish
     certify-ed test [PYTEST ARGS...]                 the test suite (repository checkout)
@@ -94,21 +98,87 @@ def cmd_env(a):
     return 0
 
 
+def _options_from_args(a):
+    from .certify import Options
+    from .presets import parse_statement_list
+    kw = {}
+    if getattr(a, "exact", False):
+        kw["exact_recheck"] = True
+    if getattr(a, "only", None):
+        kw["only"] = parse_statement_list(a.only)
+    if getattr(a, "skip", None):
+        kw["skip"] = parse_statement_list(a.skip)
+    if getattr(a, "reason", None):
+        kw["narrowing_reason"] = a.reason
+    if getattr(a, "budget_seconds", None) is not None:
+        kw["budget_seconds"] = float(a.budget_seconds)
+    if getattr(a, "budget_mb", None) is not None:
+        kw["budget_mb"] = float(a.budget_mb)
+    if getattr(a, "temperatures", None):
+        kw["temperatures"] = [float(t) for t in a.temperatures.replace(";", ",").split(",") if t.strip()]
+    if getattr(a, "preset", None):
+        return Options.from_preset(a.preset, **kw)
+    return Options(**kw)
+
+
+def _meta_defaults(a, meta):
+    """Scope fields the bundle's meta.json suggests, used where the command line says nothing."""
+    for key in ("preset", "only", "skip", "budget_seconds", "budget_mb"):
+        if getattr(a, key, None) in (None, "", False) and meta.get(key) not in (None, ""):
+            val = meta[key]
+            setattr(a, key, ",".join(val) if isinstance(val, list) else val)
+    if not getattr(a, "temperatures", None) and meta.get("temperatures"):
+        a.temperatures = ",".join(str(t) for t in meta["temperatures"])
+
+
 def cmd_certify(a):
-    from .certify import Options, certify
-    from .importers import claim_from_npz
+    from .certify import certify
     from .spec import ModelSpec
     spec = None
     if a.spec:
         with open(a.spec) as f:
             spec = ModelSpec.from_dict(json.load(f))
-    claim = claim_from_npz(a.claim, kind=a.kind)
-    cert = certify(claim, spec, Options(exact_recheck=a.exact))
-    out = cert.save(a.output or os.path.splitext(a.claim)[0] + ".certificate")
-    for s in cert.statements:
-        print(f"{s['id']:22s} {s['status']:13s} {s['summary']}")
+    src = getattr(a, "from_bundle", None) or getattr(a, "bundle", None)
+    window = None
+    if getattr(a, "window", None):
+        lo, hi = a.window.split(",")
+        window = (float(lo), float(hi))
+    if src:
+        from .importers import claim_from_bundle
+        claim, bspec, meta = claim_from_bundle(src, allow_code=bool(getattr(a, "allow_code", False)),
+                                               kind=a.kind if a.kind != "auto" else None, window=window)
+        spec = spec or bspec
+        _meta_defaults(a, meta)
+        default_out = os.path.join(src, "certificate")
+    else:
+        if not a.claim:
+            print("give a claim file (.npz/.h5/...) or --from BUNDLE_DIR")
+            return 2
+        from .importers import claim_from_file, claim_from_npz
+        kind = "subset" if a.kind == "auto" else a.kind
+        if a.claim.lower().endswith(".npz") and not getattr(a, "operator", None):
+            claim = claim_from_npz(a.claim, kind=kind, window=window)
+        else:
+            claim = claim_from_file(a.claim, getattr(a, "eigenvectors", None), getattr(a, "operator", None),
+                                    getattr(a, "basis", None), kind=kind, window=window,
+                                    allow_code=bool(getattr(a, "allow_code", False)))
+        default_out = os.path.splitext(a.claim)[0] + ".certificate"
+    opts = _options_from_args(a)
+    cert = certify(claim, spec, opts)
+    out = cert.save(a.output or default_out)
+    for s_ in cert.statements:
+        print(f"{s_['id']:22s} {s_['status']:13s} {s_['summary']}")
+    sc = cert.body["scope"]
+    print(f"scope: preset {sc['preset'] or '-'}; narrowed: "
+          f"{', '.join(x['id'].split('.')[0] + ' (' + x['by'] + ')' for x in sc['narrowed']) or 'none'}")
     print(f"certificate: {out}")
-    return 0 if all(s["status"] != "FAILED" for s in cert.statements) else 1
+    return 0 if all(s_["status"] != "FAILED" for s_ in cert.statements) else 1
+
+
+def cmd_presets(a):
+    from .presets import format_presets
+    print(format_presets(markdown=bool(a.markdown)))
+    return 0
 
 
 def cmd_spectrum(a):
@@ -392,11 +462,43 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="certify-ed", description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("env", help="floating-point environment probe and versions").set_defaults(fn=cmd_env)
-    c = sub.add_parser("certify", help="certify a claim stored in an .npz file")
-    c.add_argument("claim"); c.add_argument("--spec", help="model specification (JSON, ModelSpec.to_dict)")
-    c.add_argument("--kind", default="subset", choices=["subset", "lowest", "window", "all"])
-    c.add_argument("--exact", action="store_true", help="add S6: exact re-check (needs python-flint)")
-    c.add_argument("-o", "--output"); c.set_defaults(fn=cmd_certify)
+    scope_flags = []
+
+    def add_scope_flags(cp):
+        cp.add_argument("--spec", help="model specification (JSON, ModelSpec.to_dict); overrides the bundle's spec.json")
+        cp.add_argument("--kind", default="auto", choices=["auto", "subset", "lowest", "window", "all"],
+                        help="completeness claim (auto: the bundle's meta.json, else subset)")
+        cp.add_argument("--window", help="a,b for --kind window")
+        cp.add_argument("--exact", action="store_true", help="add S6: exact re-check (needs python-flint)")
+        cp.add_argument("--preset", help="named statement set and options (certify-ed presets)")
+        cp.add_argument("--only", help="comma-separated statements to run, e.g. S1,S2 (dependencies are added)")
+        cp.add_argument("--skip", help="comma-separated statements to leave out, e.g. S3")
+        cp.add_argument("--reason", help="why the scope was narrowed; recorded in the certificate")
+        cp.add_argument("--budget-seconds", type=float, dest="budget_seconds",
+                        help="statements not started within this wall time become NOT CHECKED (reason BUDGET)")
+        cp.add_argument("--budget-mb", type=float, dest="budget_mb",
+                        help="statements whose estimated memory exceeds this become NOT CHECKED (reason BUDGET)")
+        cp.add_argument("--temperatures", help="comma-separated T for S7 (whole-spectrum claims, k_B = 1)")
+        cp.add_argument("--allow-code", action="store_true", dest="allow_code",
+                        help="allow operator.py (matrix-free producer code) to be executed")
+        cp.add_argument("-o", "--output")
+        scope_flags.append(cp)
+
+    c = sub.add_parser("certify", help="certify a claim: a file (.npz/.h5/.csv/...) or --from BUNDLE_DIR")
+    c.add_argument("claim", nargs="?", help="eigenvalue file (any format; .npz may hold vectors and H too)")
+    c.add_argument("--from", dest="from_bundle", help="producer bundle directory (docs/producer_bundle.md)")
+    c.add_argument("--eigenvectors", help="eigenvector file (with a separate eigenvalue file)")
+    c.add_argument("--operator", help="operator file (with a separate eigenvalue file)")
+    c.add_argument("--basis", help="basis file: state list or isometry")
+    add_scope_flags(c)
+    c.set_defaults(fn=cmd_certify)
+    i = sub.add_parser("import", help="certify a producer bundle directory (same as certify --from)")
+    i.add_argument("bundle")
+    add_scope_flags(i)
+    i.set_defaults(fn=cmd_certify, claim=None)
+    pr = sub.add_parser("presets", help="the presets and statements table")
+    pr.add_argument("--markdown", action="store_true")
+    pr.set_defaults(fn=cmd_presets)
     s = sub.add_parser("spectrum", help="verified enclosure of a whole spectrum (.npz with H)")
     s.add_argument("matrix"); s.add_argument("--sectors", help="key of a conserved diagonal in the .npz")
     s.add_argument("-o", "--output"); s.add_argument("--show", type=int, default=10); s.set_defaults(fn=cmd_spectrum)

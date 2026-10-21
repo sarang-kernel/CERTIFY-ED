@@ -74,6 +74,30 @@ of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 - `tests/test_adversarial.py`: the 14 attack cases of the review (7 failed on the reviewed HEAD).
 - `tests/test_review_fixes.py`: one or more regression tests per finding above.
 
+### Added (scope framework, branch feat/scope-framework)
+- **Universal producer import** (`certify_ed.io`, `docs/producer_bundle.md`): eigenvalues, eigenvectors,
+  operators and sector bases from .npy, .npz (dense, `save_npz`, CSR/COO triplets), HDF5, CSV/TSV/text,
+  JSON and Matrix Market; matrix-free operators from a Python file (opt-in `--allow-code`); the
+  *producer bundle* directory convention (`eigenvalues.*`, `eigenvectors.*`, `operator.*`, `basis.*`,
+  `spec.json`, `meta.json`) so that any code is certified by writing files; `claim_from_file`,
+  `claim_from_bundle`, `write_bundle`; non-finite input is rejected at the door (review IMP-21).
+  `certify-ed certify --from DIR` / `certify-ed import DIR`.
+- **Statement selection and presets** (`presets.py`, `docs/presets.md`): `Options.preset / only / skip /
+  narrowing_reason / budget_seconds / budget_mb`; presets `lab-minimal`, `benchmark`, `proof-lemma`,
+  `whole-spectrum`, `labels`, `full` as data; `certify-ed presets`. Budgets turn statements into
+  NOT_CHECKED (reason `BUDGET_TIME` / `BUDGET_MEMORY`), never into exceptions.
+- **Scope block** (`scope.py`, `docs/SCOPE_MATRIX.md`): every certificate (schema 2.1) carries `scope`
+  with the preset, the statements in scope, the narrowed statements with the user's reason, and the
+  out-of-scope quantities with reason codes; `Certificate.summary()` prints it.
+- **New statements, all UNVERIFIED (D-12) with proofs written before the code (D-46, `docs/theory.md` §9):**
+  `S7.thermodynamics` (Prop 16: interval bounds on Z, F, U, C from a complete whole-spectrum enclosure,
+  dyadic interval arithmetic with enclosed exp/ln, `ivl.py`, `thermo.py`); S4 extensions (Prop 15:
+  batches of observables, two-point functions, static structure factors, `correlations.py`,
+  `Options.correlations`); `S8.degeneracy` (Prop 14: number of eigenvalues in each cluster by bracketing
+  inertia counts, `degeneracy.py`). `spectrum.intervals_from_enclosure` / `merge_intervals` expose the
+  Prop 9 interval list, recorded as `spectrum_enclosure` for whole-spectrum claims.
+- Tests: 58 (import round trips), 18 (presets/scope), 8 (S7), 8 (S4 extensions), 8 (S8).
+
 ### Fixed
 - **Exact 'k lowest' re-check (S6, `exact_recheck_lowest`, `exact_recheck_sector_lowest`).** A component
   of overlapping residual intervals with m ≥ 2 claimed values was taken to hold m eigenvalues

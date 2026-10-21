@@ -17,6 +17,10 @@ Options(store_eigenvectors=True)) with an operator and a specification that the
 checker supplies; it is the only check that does not trust the producer of the
 certificate. `Certificate.load(verify=True)` checks integrity only.
 
+Since schema 2.1 the body carries a mandatory `scope` section (certify_ed.scope): the preset, the statements
+in scope, the statements the user narrowed out with the reason, and the quantities out of scope with a
+reason code (docs/SCOPE_MATRIX.md). Optional `spectrum_enclosure` holds the Prop 9 interval list.
+
 Status vocabulary for statements:
   CERTIFIED     the statement holds, with the stated assumptions
   FAILED        the statement is refuted (e.g. matrix differs from spec,
@@ -44,8 +48,10 @@ import scipy.sparse as sp
 
 from .spec import canonical_json
 
-CERT_SCHEMA = "certify-ed/certificate/2.0"
+CERT_SCHEMA = "certify-ed/certificate/2.1"
 STATUSES = ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED")
+STATEMENT_IDS = ("S1.model_fidelity", "S2.eigenpairs", "S3.completeness", "S4.eigenspaces", "S5.corroboration",
+                 "S6.exact_recheck", "S7.thermodynamics", "S8.degeneracy")
 
 
 def array_sha256(a: np.ndarray) -> str:
@@ -167,6 +173,18 @@ class Certificate:
                  f"  claim   : {self.body.get('claim', {}).get('description', '')}"]
         for s in self.statements:
             lines.append(f"  [{s['status']:>12s}] {s['id']}: {s.get('summary', '')}")
+        sc = self.body.get("scope")
+        if isinstance(sc, dict):
+            lines.append(f"  scope   : preset {sc.get('preset') or '-'}; in scope "
+                         f"{', '.join(x['id'].split('.')[0] for x in sc.get('in_scope', [])) or '-'}")
+            nar = sc.get("narrowed", [])
+            if nar:
+                lines.append("  narrowed: " + "; ".join(f"{x['id'].split('.')[0]} ({x['by']}: {x['reason']})" for x in nar))
+            out = [x for x in sc.get("out_of_scope", []) if x["quantity"] in STATEMENT_IDS]
+            if out:
+                lines.append("  not checked: " + "; ".join(f"{x['quantity'].split('.')[0]} [{x['reason_code']}]" for x in out))
+            lines.append(f"  out of scope: {sum(1 for x in sc.get('out_of_scope', []) if x['quantity'] not in STATEMENT_IDS)} "
+                         f"quantities with reason codes (see scope.out_of_scope, docs/SCOPE_MATRIX.md)")
         ns = self.body.get("not_verified", [])
         if ns:
             lines.append("  not verified:")
