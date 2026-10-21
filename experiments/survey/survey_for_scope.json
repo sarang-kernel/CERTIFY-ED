@@ -1,0 +1,264 @@
+{
+ "source": "survey_coded.csv (analysis set: uses_ed=yes, research, hermitian-quantum)",
+ "n": 67,
+ "quantities": {
+  "ground energy": {
+   "k": 38,
+   "fraction": 0.5671641791044776,
+   "wilson95": [
+    0.44808736490792916,
+    0.6789568850245825
+   ]
+  },
+  "gaps": {
+   "k": 8,
+   "fraction": 0.11940298507462686,
+   "wilson95": [
+    0.061762325335044804,
+    0.2183202583807222
+   ]
+  },
+  "excited levels": {
+   "k": 42,
+   "fraction": 0.6268656716417911,
+   "wilson95": [
+    0.5071540719064641,
+    0.7328184001882802
+   ]
+  },
+  "degeneracies": {
+   "k": 4,
+   "fraction": 0.05970149253731343,
+   "wilson95": [
+    0.023459351139819028,
+    0.14369501041371535
+   ]
+  },
+  "quantum numbers/labels": {
+   "k": 2,
+   "fraction": 0.029850746268656716,
+   "wilson95": [
+    0.008224694838897963,
+    0.10246555563352011
+   ]
+  },
+  "correlation functions": {
+   "k": 28,
+   "fraction": 0.417910447761194,
+   "wilson95": [
+    0.30742300955672297,
+    0.5373006849702071
+   ]
+  },
+  "structure factor": {
+   "k": 6,
+   "fraction": 0.08955223880597014,
+   "wilson95": [
+    0.04169095063798864,
+    0.18192752199666207
+   ]
+  },
+  "order parameter": {
+   "k": 25,
+   "fraction": 0.373134328358209,
+   "wilson95": [
+    0.2671815998117198,
+    0.49284592809353583
+   ]
+  },
+  "entanglement entropy/spectrum": {
+   "k": 9,
+   "fraction": 0.13432835820895522,
+   "wilson95": [
+    0.07231091664295486,
+    0.23600372261337027
+   ]
+  },
+  "fidelity/susceptibility": {
+   "k": 1,
+   "fraction": 0.014925373134328358,
+   "wilson95": [
+    0.0026395717340788882,
+    0.07981862319778105
+   ]
+  },
+  "thermodynamics (full spectrum)": {
+   "k": 2,
+   "fraction": 0.029850746268656716,
+   "wilson95": [
+    0.008224694838897963,
+    0.10246555563352011
+   ]
+  },
+  "dynamical response/spectral function": {
+   "k": 10,
+   "fraction": 0.14925373134328357,
+   "wilson95": [
+    0.08314273433779819,
+    0.2534039604590851
+   ]
+  },
+  "time evolution": {
+   "k": 3,
+   "fraction": 0.04477611940298507,
+   "wilson95": [
+    0.015343975122038639,
+    0.12357833089093759
+   ]
+  },
+  "level statistics": {
+   "k": 3,
+   "fraction": 0.04477611940298507,
+   "wilson95": [
+    0.015343975122038639,
+    0.12357833089093759
+   ]
+  },
+  "finite-size extrapolation": {
+   "k": 10,
+   "fraction": 0.14925373134328357,
+   "wilson95": [
+    0.08314273433779819,
+    0.2534039604590851
+   ]
+  },
+  "other": {
+   "k": 29,
+   "fraction": 0.43283582089552236,
+   "wilson95": [
+    0.3210431149754174,
+    0.5519126350920708
+   ]
+  }
+ },
+ "evidence": {
+  "residual or convergence tolerance stated": {
+   "k": 3,
+   "fraction": 0.04477611940298507,
+   "wilson95": [
+    0.015343975122038639,
+    0.12357833089093759
+   ]
+  },
+  "comparison with another code": {
+   "k": 38,
+   "fraction": 0.5671641791044776,
+   "wilson95": [
+    0.44808736490792916,
+    0.6789568850245825
+   ]
+  },
+  "comparison with literature value": {
+   "k": 7,
+   "fraction": 0.1044776119402985,
+   "wilson95": [
+    0.05153769768782859,
+    0.20031283048738022
+   ]
+  },
+  "comparison with analytic limit": {
+   "k": 34,
+   "fraction": 0.5074626865671642,
+   "wilson95": [
+    0.3906377464811486,
+    0.6234782812891306
+   ]
+  },
+  "symmetry/sum-rule check": {
+   "k": 13,
+   "fraction": 0.19402985074626866,
+   "wilson95": [
+    0.1170517391641159,
+    0.3041911222544419
+   ]
+  },
+  "none stated": {
+   "k": 12,
+   "fraction": 0.1791044776119403,
+   "wilson95": [
+    0.10553591339881956,
+    0.28747489247918
+   ]
+  }
+ },
+ "use": {
+  "benchmark anchor for another method": {
+   "k": 29,
+   "fraction": 0.43283582089552236,
+   "wilson95": [
+    0.3210431149754174,
+    0.5519126350920708
+   ]
+  },
+  "lemma in a rigorous argument": {
+   "k": 0,
+   "fraction": 0.0,
+   "wilson95": [
+    0.0,
+    0.05422613939130178
+   ]
+  },
+  "standalone physics result": {
+   "k": 55,
+   "fraction": 0.8208955223880597,
+   "wilson95": [
+    0.7125251075208199,
+    0.8944640866011804
+   ]
+  }
+ },
+ "sectors": {
+  "translation": {
+   "k": 19,
+   "fraction": 0.2835820895522388
+  },
+  "point group": {
+   "k": 1,
+   "fraction": 0.014925373134328358
+  },
+  "U(1)": {
+   "k": 24,
+   "fraction": 0.3582089552238806
+  },
+  "SU(2)": {
+   "k": 6,
+   "fraction": 0.08955223880597014
+  },
+  "parity": {
+   "k": 4,
+   "fraction": 0.05970149253731343
+  },
+  "none": {
+   "k": 0,
+   "fraction": 0.0
+  },
+  "not stated": {
+   "k": 40,
+   "fraction": 0.5970149253731343
+  }
+ },
+ "method": {
+  "full diagonalization": 0.40298507462686567,
+  "not stated": 0.3880597014925373,
+  "Lanczos-Arnoldi": 0.1791044776119403,
+  "shift-invert": 0.014925373134328358,
+  "other": 0.014925373134328358
+ },
+ "eigenvectors_used_yes": 0.8656716417910447,
+ "handcheck_agreement": {
+  "uses_ed": 0.9166666666666666,
+  "paper_type": 1.0,
+  "problem_class": 0.9166666666666666,
+  "producer_category": 0.6666666666666666,
+  "method": 0.5,
+  "eigenvectors_used": 0.75,
+  "precision_stated": 0.75,
+  "data_available": 0.75,
+  "max_dim_stated": 1.0,
+  "sectors": 0.4861111111111111,
+  "quantities": 0.5206168831168831,
+  "evidence": 0.38888888888888884,
+  "use": 0.6666666666666666
+ },
+ "pilot": false
+}
