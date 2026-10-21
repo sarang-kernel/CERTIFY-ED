@@ -525,13 +525,14 @@ for r in rows2:
 _s2_table = [stmt_time(table_cert(r), "S2.eigenpairs") for r in rows2 if "statements" in table_cert(r)]
 macro("CStwoMax", f"{max(_s2_table):.2f}")
 check(all(t <= p for t, p in s2_times), "E2: S2 costs less than the producer (build + solve) everywhere")
-u1 = [r for r in rows2 if fam(r) == "chain-u1"]
+u1 = [r for r in rows2 if r["cfg"]["block"] == "u1"]          # every S^z block of the table: chains and 4x4 squares
 s1u1 = []
 for r in u1:
     c = table_cert(r)
     if s1_ok(c):
         s1u1.append((stmt_time(c, "S1.model_fidelity"), r["producer"]["dim"], r["producer"]["t_build"]))
-# MS-N04: 'at most' is the maximum over all S^z rows of the table, not the time of the largest block
+# MS-N04: 'at most' is the maximum over all S^z rows of the table (including the 4x4 blocks), not the time of
+# the largest block; both are printed
 t1max = max(t for t, _, _ in s1u1)
 t1, d1, b1 = max(s1u1, key=lambda x: x[1])
 macro("CSoneUoneMax", f"{t1max:.2f}")
