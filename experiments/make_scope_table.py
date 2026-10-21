@@ -46,7 +46,8 @@ def parse_rows(md):
     for line in md.splitlines():
         if not line.startswith("|") or set(line.strip()) <= set("|-: "):
             continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        protected = line.replace("\\|", "\x00")  # escaped pipes inside a cell (e.g. a norm) are not separators
+        cells = [c.strip().replace("\x00", "|") for c in protected.strip().strip("|").split("|")]
         if len(cells) < 4 or cells[0].lower().startswith("quantity labs"):
             continue
         rows.append(cells)
@@ -65,6 +66,7 @@ def main(root, gen_dir, survey_json=None):
            "Reported quantity & Statement(s) & Default & Out of scope (reason code) & Survey \\% \\\\",
            "\\midrule"]
     n_rows = 0
+    prev_codes, prev_caveat = [], False
     for cells in rows:
         quantity = re.sub(r"\*+", "", cells[0]).strip()
         states, out_scope = cells[1], cells[3]
@@ -72,19 +74,31 @@ def main(root, gen_dir, survey_json=None):
         stmts = [] if nothing else sorted(set(STMT.findall(states)), key=lambda s: int(s[1]))
         skip = {"UNVERIFIED", "INCONCLUSIVE", "CERTIFIED", "FAILED", "NOT", "HDF"}
         codes = sorted((set(CODE.findall(states)) | set(CODE.findall(out_scope))) - skip)
+        cell = out_scope.strip().lower()
+        # 'as above' inherits the previous row's restriction; any other non-empty cell is a documented
+        # caveat even when it names no reason code (the prose of docs/SCOPE_MATRIX.md carries it)
+        inherits = cell.startswith("as above")
+        if inherits:
+            codes = sorted(set(codes) | set(prev_codes))
+        caveat = (bool(cell) and cell not in ("--", "-", "nothing", "none")) or (inherits and prev_caveat)
         if nothing:
             default = "out of scope"
-        elif codes:
+        elif codes or caveat:
             default = "partly"
         else:
             default = "in scope"
+        reason = ", ".join(codes)
+        if caveat:
+            reason = (reason + "; " if reason else "") + "see matrix"
+        prev_codes, prev_caveat = codes, caveat
+
         frac = "--"
         if survey:
             key = next((v for k, v in SURVEY_KEY.items() if quantity.lower().startswith(k)), None)
             if key and key in survey.get("quantities", {}):
                 frac = f"{100 * survey['quantities'][key]['fraction']:.0f}"
         out.append(f"{tex_escape(quantity)} & {', '.join(stmts) or '--'} & {default} & "
-                   f"{tex_escape(', '.join(codes)) or '--'} & {frac} \\\\")
+                   f"{tex_escape(reason) or '--'} & {frac} \\\\")
         n_rows += 1
     out = [escape_underscores(o) if "&" in o and "tabular" not in o else o for o in out]
     out += ["\\bottomrule", "\\end{tabular}"]
