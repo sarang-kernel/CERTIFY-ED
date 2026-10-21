@@ -7,7 +7,9 @@ and compared. Statuses, booleans, integers and strings must be identical; floats
 relative tolerance (default 1e-9) and reported with their relative difference. Timing fields (names
 containing 'seconds', 'time', 'elapsed') and float-derived certified bounds (beta, delta, radii, exact
 rationals of bounds; see STACK_DEPENDENT) are compared with the looser tolerance STACK_RTOL and reported
-with their relative difference; beyond that tolerance they are mismatches like any other field. The
+with their relative difference; beyond that tolerance they are mismatches like any other field. Descriptive
+floating-point statistics (FP_STATISTIC: residual ratios, slopes, slowdowns of E8) are reported with their
+relative difference and never decide the exit code. The
 two-stack rule asks that the same statements be certified; the bounds themselves may differ in their
 last digits and, for factorization residuals, by a few per cent (review SS-19). The script prints a
 one-line summary per experiment and writes every leaf to the CSV.
@@ -25,6 +27,12 @@ TIMING = ("seconds", "time", "elapsed", "started", "finished")
 STACK_RTOL = 0.10
 STACK_DEPENDENT = ("beta", "delta", "radius", "t_prime", "_exact", "bound_exact", "eta_upper", "lower_bound",
                    "eigenvalue_upper", "margin", "half_width", "halfwidth", "width")
+# descriptive floating-point statistics of residual norms (E8: the ratio of symveig's to certify_ed's largest
+# half-width per model, the fitted slopes and slowdowns): quotients of two LAPACK-dependent residuals, neither a
+# statement nor a certified bound. They are reported with their relative difference and never decide the exit
+# code; the manuscript marks them run-stack (SS-19). The statements of the same record (complete, counted claims,
+# reference_outside) stay strict.
+FP_STATISTIC = ("ratio", "slope", "slowdown")
 
 
 def flatten(o, prefix=""):
@@ -64,6 +72,13 @@ def classify(k, a, b, rtol):
     kl = k.lower()
     if any(t in kl for t in TIMING):
         return "timing", ""
+    if any(t in kl for t in FP_STATISTIC) and not any(t in kl for t in ("status", "count")):
+        try:
+            fa, fb = _num(a), _num(b)
+            rel = abs(fa - fb) / max(abs(fa), abs(fb), 1e-300)
+            return ("same" if fa == fb else "fp-statistic"), f"{rel:.3e}"
+        except (TypeError, ValueError):
+            pass
     if any(t in kl for t in STACK_DEPENDENT) and not any(t in kl for t in ("status", "rounded", "count")):
         try:
             fa, fb = _num(a), _num(b)
@@ -93,7 +108,7 @@ def main(run_a, run_b, out_csv, rtol=1e-9):
     rows = []
     for exp in common:
         da, db = dict(flatten(ra[exp][1])), dict(flatten(rb[exp][1]))
-        counts = {"same": 0, "float-differs": 0, "stack-dependent": 0, "MISMATCH": 0, "timing": 0, "missing": 0}
+        counts = {"same": 0, "float-differs": 0, "stack-dependent": 0, "fp-statistic": 0, "MISMATCH": 0, "timing": 0, "missing": 0}
         for k in sorted(set(da) | set(db)):
             if k not in da or k not in db:
                 counts["missing"] += 1

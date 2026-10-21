@@ -142,17 +142,34 @@ def main(ref, cand, cmp_csv, out):
     r8, _ = rec(ref, "e8_"); c8, _ = rec(cand, "e8_")
     if r8 and c8:
         w("## E8 — comparison with symveig\n")
-        w(f"Reference record keys: {sorted(k for k in r8 if not k.startswith('_'))}; elapsed {fmt(r8.get('_elapsed_seconds'))} s (ref) / "
-          f"{fmt(c8.get('_elapsed_seconds'))} s (cand). Statements and counts are compared leaf by leaf below (compare_runs.py).\n")
+        w(f"{len(r8['E8'])} benchmark models; elapsed {fmt(r8.get('_elapsed_seconds'))} s (ref) / {fmt(c8.get('_elapsed_seconds'))} s (cand).\n")
+        w("| model | L | dim | complete ref / cand | counted claims ref / cand | reference outside ref / cand | max half-width symveig / certify_ed (ref) | (cand) | ratio ref / cand |")
+        w("|---|---:|---:|---|---|---|---|---|---|")
+        for a, b in zip(r8["E8"], c8["E8"]):
+            w(f"| {a.get('model')} | {a.get('L')} | {a.get('dim')} | {a.get('certify_complete')} / {b.get('certify_complete')} | "
+              f"{a.get('symveig_counted_claims')} / {b.get('symveig_counted_claims')} | {fmt(a.get('symveig_reference_outside'))}, {fmt(a.get('certify_reference_outside'))} / "
+              f"{fmt(b.get('symveig_reference_outside'))}, {fmt(b.get('certify_reference_outside'))} | {a.get('symveig_max_halfwidth'):.2e} / {a.get('certify_max_halfwidth'):.2e} | "
+              f"{b.get('symveig_max_halfwidth'):.2e} / {b.get('certify_max_halfwidth'):.2e} | {fmt(a.get('ratio'))} / {fmt(b.get('ratio'))} |")
+        w("")
+        w("The half-widths are LAPACK residual norms and the ratio is their quotient: run-stack statistics (SS-19), reported, not compared by tolerance.\n")
+        so_a = [a["model"] + f" L={a['L']}" for a in r8["E8"] if a.get("symveig_reference_outside", 0) > 0]
+        so_b = [a["model"] + f" L={a['L']}" for a in c8["E8"] if a.get("symveig_reference_outside", 0) > 0]
+        co_a = [a["model"] + f" L={a['L']}" for a in r8["E8"] if a.get("certify_reference_outside", 0) > 0]
+        co_b = [a["model"] + f" L={a['L']}" for a in c8["E8"] if a.get("certify_reference_outside", 0) > 0]
+        w(f"Models where symveig's intervals exclude the reference eigenvalue: {len(so_a)} (ref: {', '.join(so_a) or 'none'}) / "
+          f"{len(so_b)} (cand: {', '.join(so_b) or 'none'}); where certify_ed's do: {len(co_a)} (ref) / {len(co_b)} (cand). "
+          "Whether a residual-only interval misses the reference is itself stack-dependent; the record reports the distance, "
+          "and the statements compared strictly are completeness and the counted claims.\n")
     # ---- comparison summary
     w("## Record-by-record comparison (experiments/compare_runs.py)\n")
-    w("| experiment | leaves | same | float within 1e-9 | stack-dependent (within STACK_RTOL) | max rel. diff of stack-dependent | timing | missing | MISMATCH |")
-    w("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+    w("| experiment | leaves | same | float within 1e-9 | stack-dependent (within STACK_RTOL) | max rel. diff of stack-dependent | fp statistics (E8 ratios) | max rel. diff of fp statistics | timing | missing | MISMATCH |")
+    w("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     for e, rs in sorted(by_exp.items()):
         cls = [r["class"] for r in rs]
         sd = [float(r["rel_diff"]) for r in rs if r["class"].startswith("stack") and r["rel_diff"] not in ("", None)]
+        fs = [float(r["rel_diff"]) for r in rs if r["class"] == "fp-statistic" and r["rel_diff"]]
         w(f"| {e} | {len(rs)} | {cls.count('same')} | {cls.count('float-differs')} | {sum(c.startswith('stack') for c in cls)} | "
-          f"{(max(sd) if sd else 0):.3e} | {cls.count('timing')} | {cls.count('missing')} | {cls.count('MISMATCH')} |")
+          f"{(max(sd) if sd else 0):.3e} | {cls.count('fp-statistic')} | {(max(fs) if fs else 0):.3e} | {cls.count('timing')} | {cls.count('missing')} | {cls.count('MISMATCH')} |")
     w("")
     mism = [r for r in rows if r["class"] == "MISMATCH"]
     if mism:
@@ -161,8 +178,22 @@ def main(ref, cand, cmp_csv, out):
             w(f"* {r['experiment']} `{r['path']}`: {r['value_A'][:80]} vs {r['value_B'][:80]}")
         w("")
     else:
-        w("No MISMATCH leaf: every statement, count, pivot sign, status and string agrees; only timings and the "
-          "stack-dependent bounds (within their tolerance) differ.\n")
+        w("No MISMATCH leaf: every statement, count, pivot sign, status and string agrees; only timings, the "
+          "stack-dependent bounds (within their tolerance) and the E8 residual statistics differ.\n")
+    num = mc["steps"].get("numbers")
+    if num:
+        w("## Numbers step of the candidate run\n")
+        for script, res in num.items():
+            if script == "provenance":
+                continue
+            if res.get("status") == "skipped":
+                w(f"* `{script}`: skipped — {res.get('reason')}")
+            else:
+                w(f"* `{script}`: returncode {res.get('returncode')}; " + "; ".join(str(c) for c in res.get("checks", [])))
+        w("")
+        w("The failed manifest checks are the ones expected of a reproduction made while the branch was being integrated "
+          "(a skipped step, several per-step hashes, one dirty step; see Steps above) and would fail the 3.1.0 evidence run, "
+          "which is their purpose.\n")
     w("## Not run here\n")
     w("E0–E6 (and E3) need QuSpin, which does not install on this stack (quspin 1.0.1 requires the PyPI package "
       "`importlib`, which cannot be installed on Python 3.12); they are left to the reference stack. The candidate run "
