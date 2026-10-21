@@ -3,9 +3,9 @@ REVIEW_CERTIFY-ED_2026-10-21). Each test names the finding it closes; the attack
 are in test_adversarial.py."""
 import math
 import os
+import shutil
 import subprocess
 import sys
-import textwrap
 
 import numpy as np
 import pytest
@@ -327,3 +327,183 @@ def test_imp20_compose_records_symmetrised_blocks():
     rec = next(p for p in res["sectors"] if p["label"] == "nup=2")
     assert rec["hermitian_part"]["max_abs_asymmetry"] > 0
     assert all(p["hermitian_part"] is None for p in res["sectors"] if p["label"] != "nup=2")
+
+
+# ------------------------------------------------------------------ IMP-05 / SS-02: dirtiness ignores the executable bit
+def _git(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def _git_scratch(tmp_path):
+    """A directory git can work in: tmp_path, or (sandboxes whose temp dir git cannot stat) one next to the repo."""
+    import tempfile
+    if subprocess.run(["git", "init", "-q"], cwd=tmp_path, capture_output=True).returncode == 0:
+        shutil.rmtree(tmp_path / ".git")
+        return tmp_path, None
+    base = tempfile.mkdtemp(prefix="gitscratch_", dir=os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__))))
+    return base, base
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+def test_imp05_source_fingerprint_ignores_lost_executable_bit(tmp_path):
+    from certify_ed.provenance import source_fingerprint
+    from pathlib import Path
+    base, cleanup = _git_scratch(tmp_path)
+    try:
+        _imp05_body(Path(base) / "r", source_fingerprint)
+    finally:
+        if cleanup:
+            shutil.rmtree(cleanup, ignore_errors=True)
+
+
+def _imp05_body(root, source_fingerprint):
+    (root / "experiments").mkdir(parents=True)
+    (root / "certify_ed").mkdir()
+    (root / "experiments" / "run_all.sh").write_text("#!/bin/sh\necho hi\n")
+    (root / "certify_ed" / "x.py").write_text("x = 1\n")
+    _git(root, "init", "-q")
+    _git(root, "config", "user.email", "t@example.org")
+    _git(root, "config", "user.name", "t")
+    _git(root, "config", "core.filemode", "true")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-q", "-m", "a")
+    # the committed mode says executable, the working tree (or a Windows copy) does not: content unchanged
+    _git(root, "update-index", "--chmod=+x", "experiments/run_all.sh")
+    _git(root, "commit", "-q", "-m", "b")
+    try:
+        os.chmod(root / "experiments" / "run_all.sh", 0o644)
+    except OSError:
+        pass
+    plain = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True).stdout
+    fp = source_fingerprint(str(root))
+    assert fp["source_dirty"] is False, (plain, fp)
+    (root / "certify_ed" / "x.py").write_text("x = 2\n")
+    assert source_fingerprint(str(root))["source_dirty"] is True
+
+
+# ------------------------------------------------------------------ IMP-06: the numbers step records its provenance
+def test_imp06_numbers_fingerprint_records_commit_and_script_blobs():
+    from certify_ed.provenance import numbers_fingerprint, repo_root, NUMBER_SCRIPTS
+    if repo_root() is None or not os.path.isdir(os.path.join(repo_root(), ".git")):
+        pytest.skip("needs a git checkout")
+    fp = numbers_fingerprint()
+    assert fp["git_commit"] and len(fp["git_commit"]) == 40
+    for rel in NUMBER_SCRIPTS:
+        s = fp["scripts"][rel]
+        assert s["blob"] and len(s["blob"]) == 40 and s["sha256"] and len(s["sha256"]) == 64
+        assert s["modified"] in (True, False)
+    assert fp["source_hash"] and fp["tests_hash"]
+
+
+# ------------------------------------------------------------------ IMP-26: version and source hash in every certificate
+def test_imp26_version_and_source_hash(heis6):
+    import re
+    assert ce.__version__ == "3.1.0.dev0"
+    root = os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__)))
+    with open(os.path.join(root, "pyproject.toml")) as f:
+        assert re.search(r'^version = "3\.1\.0\.dev0"', f.read(), re.M)
+    spec, H, w, V = heis6
+    c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec)
+    env = c.body["environment"]
+    assert env["certify_ed"] == "3.1.0.dev0"
+    assert "source_hash" in env and "git_commit" in env
+    from certify_ed.provenance import source_fingerprint
+    assert env["source_hash"] == source_fingerprint()["source_hash"]
+
+
+# ------------------------------------------------------------------ SS-04: E3 needs QuSpin; the harness logs an abort
+def test_ss04_needs_e3_includes_quspin():
+    from certify_ed.cli import NEEDS
+    assert "quspin" in NEEDS["E3"] and "flint" in NEEDS["E3"]
+
+
+def test_ss04_harness_logs_aborted_on_exception(tmp_path):
+    root = os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__)))
+    sys.path.insert(0, os.path.join(root, "experiments"))
+    try:
+        from harness import Run
+    finally:
+        sys.path.pop(0)
+    with pytest.raises(RuntimeError):
+        with Run("unit_abort", outdir=str(tmp_path)) as run:
+            run.record("x", 1)
+            raise RuntimeError("boom")
+    log = open(os.path.join(run.dir, "run.log")).read()
+    assert "ABORTED" in log and "finished" not in log
+    import json
+    d = json.load(open(os.path.join(run.dir, "data.json")))
+    assert d["_aborted"].startswith("RuntimeError") and d["x"] == 1
+    with Run("unit_ok", outdir=str(tmp_path)) as run:
+        run.record("x", 1)
+    assert "finished" in open(os.path.join(run.dir, "run.log")).read()
+    env = json.load(open(os.path.join(run.dir, "environment.json")))
+    assert "flint_c_library" in env and env["certify_ed"] == ce.__version__      # MS-N12
+
+
+# ------------------------------------------------------------------ MS-N12: FLINT C-library version
+def test_msn12_flint_c_version_recorded():
+    from certify_ed.cli import flint_c_version, environment
+    from certify_ed.certificate_v2 import environment_record
+    pytest.importorskip("flint")
+    v = flint_c_version()
+    assert v not in ("not installed",) and (v == "unknown" or v[0].isdigit())
+    assert environment()["flint_c_library"] == v
+    assert environment_record()["flint_c_library"] == v
+
+
+# ------------------------------------------------------------------ MS-N03: provenance stamps of the E6 post-run files
+def test_msn03_recheck_stamp_has_hashes():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__)))
+    sys.path.insert(0, os.path.join(root, "experiments"))
+    try:
+        from e6_recheck import provenance_stamp
+    finally:
+        sys.path.pop(0)
+    st = provenance_stamp()
+    assert set(st) >= {"git_commit", "source_hash", "tests_hash", "written"}
+
+
+# ------------------------------------------------------------------ number scripts: helpers (IMP-07, IMP-27, IMP-28)
+def _script_functions(name, *funcs):
+    """Load selected top-level functions of an experiments/ script without running it."""
+    import ast
+    root = os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__)))
+    src = open(os.path.join(root, "experiments", name)).read()
+    tree = ast.parse(src)
+    keep = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.Import, ast.ImportFrom))
+            and (not isinstance(n, ast.FunctionDef) or n.name in funcs)]
+    ns = {}
+    exec(compile(ast.Module(body=keep, type_ignores=[]), name, "exec"), ns)
+    return ns
+
+
+def test_imp27_printed_excess_equals_checked_value():
+    ns = _script_functions("make_numbers_apps.py", "sci_dir", "sci_dir_value", "_sci_dir_parts", "dec_dir")
+    from fractions import Fraction
+    for x in (1.9073e-9, 2.3386e-11, 4.9e-9, 5.0e-9, 9.96e-10):
+        s, v = ns["sci_dir"](x, 0, True), ns["sci_dir_value"](x, 0, True)
+        assert Fraction(x) <= v                       # the printed bound is an upper bound
+        m, e = s.replace("\\ensuremath{", "").rstrip("}").split("\\times10^{")
+        assert Fraction(m) * Fraction(10) ** int(e) == v
+
+
+def test_imp28_range_rounded_outward():
+    ns = _script_functions("make_numbers_apps.py", "dec_dir")
+    cvs = [0.44417208809354597, 0.84816, 0.59922, 0.61214, 0.8814172772291874]
+    lo, hi = ns["dec_dir"](min(cvs), 2, False), ns["dec_dir"](max(cvs), 2, True)
+    assert (lo, hi) == ("0.44", "0.89")
+    assert all(float(lo) <= v <= float(hi) for v in cvs)
+
+
+def test_imp07_test_counts_come_from_the_run_manifest(tmp_path, monkeypatch):
+    import json
+    ns = _script_functions("make_numbers.py", "run_test_counts")
+    (tmp_path / "manifest.json").write_text(json.dumps(
+        {"steps": {"tests": {"summary": "363 passed, 2 skipped, 1 warning in 79.43s (0:01:19)"}}}))
+    ns["RES"] = str(tmp_path)
+    ns["os"], ns["json"] = os, json
+    tc = ns["run_test_counts"]()
+    assert tc == {"summary": "363 passed, 2 skipped, 1 warning in 79.43s (0:01:19)", "passed": 363, "failed": 0,
+                  "skipped": 2, "total": 365}
+    ns["RES"] = str(tmp_path / "nowhere")
+    assert ns["run_test_counts"]() is None

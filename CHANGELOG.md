@@ -1,9 +1,78 @@
 # Changelog
 
-## [Unreleased] - 2026-10-21 (3.1.0 candidate; `__version__` stays 3.0.0 until the next full run)
+## [3.1.0] - 2026-10-21
 
-Two soundness fixes, both found while writing the proofs for the manuscript scaffold (`ms_v3`), and
-sharper application bounds.
+`__version__` = 3.1.0.dev0 until the final run of this version is recorded. Two soundness fixes found
+while writing the proofs for the manuscript scaffold (`ms_v3`), sharper application bounds, and the
+fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: second stack; MS-Nxx:
+manuscript check). The computational source hash changes with this release, so the records of the run
+of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
+
+### Fixed (review of 2026-10-21)
+- **IMP-18 (critical).** `checker.radius_exact` returned radius 0 for a zero test vector, so a wrong
+  eigenvalue claimed with a zero vector (or, in `exact_recheck_sector_lowest`, with a vector from another
+  sector whose exact projection vanishes) was CERTIFIED "with no floating-point assumption". The function
+  now returns None for ‖x′‖ = 0 and `exact_recheck_lowest`, `exact_recheck_sector_lowest` and S6 report
+  INCONCLUSIVE; the hypothesis x ≠ 0 is stated in the docstrings.
+- **IMP-21, IMP-22 (critical).** A NaN claimed eigenvalue passed every comparison: `certify()` reported S2
+  and S3 CERTIFIED for a full-spectrum claim and `enclose_spectrum` returned `complete=True` with an
+  eigenvalue in no interval. `enclose()` and `enclose_spectrum()` refuse non-finite claims (ValueError);
+  `certify()` and the exact re-checks report S2/S3/S6 INCONCLUSIVE; the accuracy comparison is written
+  fail-safe (`not (radius <= target)`); a group with a non-finite radius is never 'distinct'. A zero
+  claimed vector no longer crashes S3 (IMP-23): INCONCLUSIVE with the pair named.
+- **IMP-13 (major).** A correct claim with valid but non-orthogonal eigenvectors of a degenerate level was
+  S2 FAILED (cluster radius 4.9 against a target 4.5e-8). Theorem 2′ (`docs/theory.md`, UNVERIFIED, D-12)
+  gives the cluster radius ε* = ‖R‖/√(1−η) + ‖XᴴR‖/(1−η) + δ·spread(Λ)/√(1−η); `_cluster_bound` uses
+  min(ε, ε*) and records both. Every cluster member keeps its Theorem-1 radius as `existence_radius`
+  (records, arrays); the cluster radius remains the radius of the distinct matching and of every
+  indexed statement. When only the cluster radius misses the accuracy target, S2 is INCONCLUSIVE with
+  the diagnosis, not FAILED. The review's case is now CERTIFIED (radius 8e-14).
+- **IMP-12 / IMP-20.** `compose.certify_low_energy` uses ε = ρ (Weyl for the square W) instead of
+  (1+√5)/2·ρ, and records symmetrised producer blocks (`hermitian_part` per sector, `symmetrised_blocks`).
+- **IMP-08.** The certified window of S3 'window' claims is rounded inward (`add_up(a, β_a)`,
+  `sub_down(b, β_b)`); the same window feeds Kato–Temple and the S4 separations.
+- **IMP-14.** `inertia_dense` checks that the permuted LDLᵀ factor is lower triangular, as
+  `inertia_exact` does.
+- **IMP-24.** `fp.probe_float_environment` detects round-toward-zero (1 + 3·2⁻⁵⁴ must give 1 + 2⁻⁵²,
+  and the mirror). The rounding-mode tests run on Windows through `ucrtbase` as well as on glibc.
+- **IMP-05 / SS-02.** Provenance calls git with `core.filemode=false`: a lost executable bit (Windows
+  checkouts) no longer marks the computational source as dirty.
+- **IMP-06.** The numbers step records its provenance (`provenance.numbers_fingerprint`: commit, blob
+  hashes of `make_numbers*.py`, source and tests hashes) in `manifest.steps.numbers.provenance`.
+- **IMP-07 / MS-N02.** `\NtestsTotal`, `\NtestsVtwo` (and new `\NtestsPassed`, `\NtestsSkipped`) come
+  from the run's tests step (`manifest.steps.tests.summary`), not from a live collection.
+- **IMP-26.** `__version__` = 3.1.0.dev0 (pyproject, `.zenodo.json`); every certificate's `environment`
+  carries `source_hash`, `source_dirty`, `git_commit`, `python_flint` and `flint_c_library`.
+- **SS-04.** `cli.NEEDS["E3"]` includes QuSpin (part d imports it); `experiments/harness.Run` logs
+  "ABORTED" and records `_aborted` when the experiment raises, instead of "finished".
+- **MS-N12.** The FLINT C-library version (`flint.__FLINT_VERSION__`) is recorded in
+  `environment.json`, `certify-ed env` and certificates; macros `\FlintCVersion`, `\PythonFlintVersion`,
+  `\CertifyEdVersion`.
+- **MS-N03.** `e6_recheck.py` (`_provenance`) and `e6_classify.py` (`provenance`) stamp their outputs with
+  the commit, `source_hash` and `tests_hash`; `make_numbers_apps.py` requires the stamps on
+  `classification.json`, `recheck.json` and `inspection.json` (CHECK FAILED otherwise), checks that they
+  refer to the E6 run's source, and that every "test added, mutant now killed" verdict has a recheck
+  entry (`\MutRecheckKilled`, `\MutRecheckTestsHash`).
+- **IMP-28 / MS-N01.** `\AKLTCritMin` is rounded down (0.44, was 0.45); a check verifies that the
+  printed range contains every criterion value.
+- **IMP-27 / SS-15.** The AKLT agreement check tests exactly the printed `\AKLTMaxExcess` (the fixed
+  5e-9 threshold is gone).
+- **MS-N04 / MS-N05.** E2 text macros (`\CSoneUoneMax`, `\CStwoMax`, `\CkTwentyTwoSone`,
+  `\CkTwentyTwoMem`) come from the same run as the table cells; `\CSoneUoneMax` is the maximum over
+  all S^z rows (new `\CSoneUoneAtMaxDim` for the largest block).
+- **MS-N06.** S3 feasibility is stated through nnz/fill: `\CnotFitAtOrBelowMaxDim`, `\CnotFitDim`,
+  `\CnotFitNnzMin` and a check that every block of dimension ≤ `\CmaxFeasibleDim` whose S3 did not fit
+  has more nonzeros than the largest certified block.
+- **MS-N07.** `\TcShiftFraction` names the 0.9 of E3(c) as the shift-placement fraction; the check says so;
+  `\TcCasesRecorded` keeps the count of recorded rows (one duplicate) next to `\TcCases`.
+- **MS-N13.** `\VaMatricesGenerated` (matrices with and without an Arb reference) next to `\VaMatrices`
+  and `\VaNoRef`; `\TbN` gives n for the E3(b) ratios, whose range is now rounded outward.
+- Statement check "same computational source" falls back to the records' `source_hash` when the
+  recorded commits are not in the repository (rewritten history).
+
+### Added (review of 2026-10-21)
+- `tests/test_adversarial.py`: the 14 attack cases of the review (7 failed on the reviewed HEAD).
+- `tests/test_review_fixes.py`: one or more regression tests per finding above.
 
 ### Fixed
 - **Exact 'k lowest' re-check (S6, `exact_recheck_lowest`, `exact_recheck_sector_lowest`).** A component
@@ -34,9 +103,11 @@ sharper application bounds.
   automatically after it runs.
 - `make_numbers_apps.py`: E6 table, E8 width-scaling figure (`fig_widths.pdf`), criterion values for
   AKLT, run-manifest table, tighter statement checks.
-- Tests: 370. The last 7 close the 8 test gaps found by the mutation analysis of the final run: 2×2 pivots
-  with det > 0, the Dekker splitter, exact residuals with huge entries, the round-up probe, the SU(2) check in mixed
-  Pauli letters, the sector compression diagnostic and the TFIM bonds.
+- Tests: 370 before the review fixes; 7 of them close the 8 test gaps found by the mutation analysis of
+  the run of 2026-10-21: 2×2 pivots with det > 0, the Dekker splitter, exact residuals with huge entries,
+  the round-up probe, the SU(2) check in mixed Pauli letters, the sector compression diagnostic and the
+  TFIM bonds. The review fixes add `test_adversarial.py` (14) and `test_review_fixes.py` (see the
+  README for the current count).
 
 ## [3.0.0] - 2026-10-18
 
