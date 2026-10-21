@@ -18,6 +18,8 @@ never calls your code. Since 3.0 it also contains the whole-spectrum enclosure o
 | **S4** eigenspaces | for degenerate levels: projector error, basis-independent observables tr(PO), certified quantum numbers (total spin, momentum) |
 | **S5** corroboration | (optional) independent solvers reproduce the values; their shared components are recorded |
 | **S6** exact re-check | (optional) S2 and S3 of a 'lowest' claim re-derived in integer arithmetic, with no floating-point assumption |
+| **S7** thermodynamics | (whole-spectrum claims, `--temperatures`) interval bounds on Z, F, U and C from the complete enclosure; UNVERIFIED (D-12), see `docs/theory.md` §9 |
+| **S8** degeneracy | number of eigenvalues in each cluster, certified by bracketing inertia counts; UNVERIFIED (D-12) |
 
 S1–S5 are rigorous under the IEEE 754 standard model. A run-time probe checks that model on every
 run (rounding mode, no flush-to-zero, full-precision BLAS), and certificates are downgraded when it
@@ -35,6 +37,21 @@ pip install -e .[all]       # + QuSpin, h5py, matplotlib, pytest
 Tested with Python 3.11, NumPy 2.4, SciPy 1.17, python-flint 0.9, QuSpin 1.0.1.
 
 ## Use
+
+**Certify files written by any code (the `dd if=` route)**
+
+Write a directory with `eigenvalues.*`, optionally `eigenvectors.*`, `operator.*`, `basis.*`, `spec.json`
+and `meta.json` in any of npy / npz / HDF5 / CSV / text / JSON / Matrix Market (`docs/producer_bundle.md`), then
+
+```bash
+certify-ed certify --from my_run                       # everything that fits the inputs
+certify-ed certify --from my_run --preset lab-minimal  # S1 + S2 only; `certify-ed presets` lists the presets
+certify-ed certify --from my_run --only S1,S2,S3 --budget-seconds 600 --reason "vectors of excited states not stored"
+```
+
+Every certificate carries a `scope` block: the statements in scope, the ones narrowed (with the reason) and
+the quantities out of scope with a reason code (`docs/presets.md`, `docs/SCOPE_MATRIX.md`).
+
 
 **Certify a QuSpin result**
 

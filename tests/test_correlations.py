@@ -8,8 +8,8 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 import certify_ed as ce
-from certify_ed.correlations import (certify_correlations, certify_observables_batch, combine_certified,
-                                     site_operator, structure_factor)
+from certify_ed.correlations import (certify_observables_batch, combine_certified, site_operator,
+                                     structure_factor)
 from certify_ed.eigenspace import EigenspaceCertificate
 
 
