@@ -256,6 +256,14 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
+    # IMP-21/IMP-22: NaN compares False everywhere, so a non-finite claimed value would pass every
+    # overlap and accuracy test; refuse it at the entry
+    if not np.all(np.isfinite(mu)):
+        raise ValueError("claimed eigenvalues must be finite (found NaN/inf at indices "
+                         f"{np.nonzero(~np.isfinite(mu))[0].tolist()[:8]})")
+    if not np.all(np.isfinite(X)):
+        raise ValueError("claimed eigenvectors must be finite (non-finite entries in columns "
+                         f"{np.nonzero(~np.all(np.isfinite(X), axis=0))[0].tolist()[:8]})")
     order = np.argsort(mu, kind="stable")
     res = residuals(adapter, mu, X)
     radius = res.rel_bound.copy() if res.rigorous else res.rel_estimate.copy()
@@ -301,11 +309,12 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X: Optional[np.ndarra
     final_radius = np.zeros(k)
     for gi, (g, r, kd, me) in enumerate(zip(groups, rad_of_group, kinds, meta)):
         members = sorted(g, key=lambda i: mu[i])
-        distinct = kd in ("single", "cluster") and res.rigorous
         if kd == "existence-only":
             rads = [float(radius[i]) for i in members]
         else:
             rads = [float(r)] * len(members)
+        # a non-finite radius (zero vector) encloses nothing and never counts as a distinct match
+        distinct = kd in ("single", "cluster") and res.rigorous and all(math.isfinite(x) for x in rads)
         for i, ri in zip(members, rads):
             group_of[i] = gi
             final_radius[i] = ri

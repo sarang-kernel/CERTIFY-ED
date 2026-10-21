@@ -104,9 +104,16 @@ def enclose_spectrum(H, S_diag=None, eigh_result=None, atol: float = 1e-12) -> S
     eigh_result: optional (mu, X) for the whole matrix (no sectors), e.g. a producer's result; it is
     verified, not trusted."""
     n = H.shape[0]
+    if not np.all(np.isfinite(H.data if sp.issparse(H) else H)):
+        raise ValueError("H must have finite entries")
     if (sp.issparse(H) and abs(H - H.conj().T).max() != 0) or (not sp.issparse(H) and not np.array_equal(H, np.conj(H).T)):
         raise ValueError("H must be exactly Hermitian (no symmetrisation is applied: the enclosure refers "
                          "to the matrix as given)")
+    if eigh_result is not None:
+        # IMP-21: a NaN claimed value gave a [nan, nan] interval that counted towards a 'complete' enclosure
+        mu_in, X_in = eigh_result
+        if not (np.all(np.isfinite(mu_in)) and np.all(np.isfinite(X_in))):
+            raise ValueError("eigh_result must be finite (NaN/inf claimed eigenvalues or vectors)")
     if S_diag is None:
         ivs, _ = _enclose_block(H, eigh_result)
         dims = {None: n}

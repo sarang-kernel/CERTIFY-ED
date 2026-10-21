@@ -574,6 +574,8 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
+    if not (np.all(np.isfinite(lam)) and np.all(np.isfinite(X))):
+        return {"status": "INCONCLUSIVE", "reason": "claim contains non-finite values"}
     ex = exact_matrix(spec, states)
     if np.any(ex.im != 0):
         return {"status": "NOT_CHECKED", "reason": "complex model: exact inertia implemented for real matrices"}

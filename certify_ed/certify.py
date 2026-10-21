@@ -532,6 +532,8 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
         return _stmt(sid, "NOT_CHECKED", "needs a model specification", {}, [], time.time() - t0)
     if claim.kind != "lowest" or X is None:
         return _stmt(sid, "NOT_CHECKED", "implemented for 'lowest' claims with eigenvectors", {}, [], time.time() - t0)
+    if not (np.all(np.isfinite(mu)) and np.all(np.isfinite(X))):
+        return _stmt(sid, "INCONCLUSIVE", "claim contains non-finite values", {}, [], time.time() - t0)
     if claim.sector_isometry is not None:
         return _stmt(sid, "NOT_CHECKED", "symmetry-adapted claims: use exact_recheck_sector_lowest", {}, [],
                      time.time() - t0)
@@ -644,7 +646,18 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # ---------------- S2
     t0 = time.time()
     enc = None
-    if X is None:
+    bad_mu = np.nonzero(~np.isfinite(mu))[0].tolist()
+    bad_x = [] if X is None else np.nonzero(~np.all(np.isfinite(X), axis=0))[0].tolist()
+    nonfinite = bool(bad_mu or bad_x)
+    if nonfinite:
+        # IMP-21/IMP-22: NaN passes every comparison written as 'radius > target'; such a claim gets no
+        # enclosure at all and no statement that depends on one can be CERTIFIED
+        statements.append(_stmt("S2.eigenpairs", "INCONCLUSIVE",
+                                f"claim contains non-finite values (eigenvalue indices {bad_mu[:8]}, eigenvector "
+                                f"columns {bad_x[:8]}): no enclosure can be formed",
+                                {"non_finite_eigenvalues": bad_mu, "non_finite_eigenvector_columns": bad_x},
+                                [], time.time() - t0))
+    elif X is None:
         statements.append(_stmt("S2.eigenpairs", "NOT_CHECKED",
                                 "eigenvalue-only claim: no vectors to bound (see S3 for counts)"))
     else:
@@ -677,7 +690,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         else:
             target, tsrc = float(claim.accuracy_target), "stated by producer"
         ev["accuracy_target"] = {"value": target, "source": tsrc}
-        if st == "CERTIFIED" and enc.radius.max() + eps_shift > target:
+        if st == "CERTIFIED" and not (enc.radius.max() + eps_shift <= target):   # fail-safe for NaN (IMP-22)
             st = "FAILED"
             worst = int(np.argmax(enc.radius))
             summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
@@ -693,7 +706,18 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # S3/S4 concern the declared model when S1 certified the producer's matrix (model shift added);
     # for a symmetry sector they concern the producer's sector block (see compose.py for the lift)
     eps_s3 = model_shift if audit is None else 0.0
-    if claim.kind == "all":
+    if nonfinite:
+        statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
+                                "claim contains non-finite values: counts cannot be matched to the claimed set",
+                                {"n_claimed": int(mu.size)}))
+    elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
+        # a zero claimed vector has an infinite Theorem-1 radius: there is no enclosure to count against
+        # (the shift sigma = inf would otherwise crash the factorization, IMP-23)
+        statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
+                                "some claimed pair has no finite enclosure (zero eigenvector): "
+                                "counts cannot be matched to the claimed set",
+                                {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]}))
+    elif claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",
                                     f"{mu.size} distinct certified eigenvalues = dimension: spectrum complete",

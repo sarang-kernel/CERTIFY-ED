@@ -310,6 +310,8 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
+    if not (np.all(np.isfinite(lam)) and np.all(np.isfinite(X))):
+        return {"status": "INCONCLUSIVE", "reason": "claim contains non-finite values"}
     # subgroup of the fixed generators and its character: exact projection of the claimed vectors
     fixed_ids = sorted(fixed)
     sub = FiniteGroup([gens[i] for i in fixed_ids], states)
