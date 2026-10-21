@@ -6,9 +6,10 @@ For every experiment present in both runs, the two data.json files are flattened
 and compared. Statuses, booleans, integers and strings must be identical; floats are compared with a
 relative tolerance (default 1e-9) and reported with their relative difference. Timing fields (names
 containing 'seconds', 'time', 'elapsed') and float-derived certified bounds (beta, delta, radii, exact
-rationals of bounds; see STACK_DEPENDENT) are listed with their difference but never counted as
-mismatches: the two-stack rule asks that the same statements be certified, not that the last digits of
-a bound agree (review SS-19). The script prints a
+rationals of bounds; see STACK_DEPENDENT) are compared with the looser tolerance STACK_RTOL and reported
+with their relative difference; beyond that tolerance they are mismatches like any other field. The
+two-stack rule asks that the same statements be certified; the bounds themselves may differ in their
+last digits and, for factorization residuals, by a few per cent (review SS-19). The script prints a
 one-line summary per experiment and writes every leaf to the CSV.
 """
 import csv
@@ -18,8 +19,10 @@ import sys
 
 TIMING = ("seconds", "time", "elapsed", "started", "finished")
 # certified bounds that are computed from floating-point proposals (factor residuals, Weyl margins, exact
-# radii): valid on each stack, but not bit-identical across stacks (review SS-19). They are reported with
-# their relative difference under their own class and never counted as mismatches.
+# radii): valid on each stack, but not bit-identical across stacks (review SS-19). They are compared with
+# their own, looser tolerance STACK_RTOL (default 10 %: the factorization residual beta differed by up to
+# 6 % between the Linux run and the Windows replication); beyond it they are MISMATCH like any other field.
+STACK_RTOL = 0.10
 STACK_DEPENDENT = ("beta", "delta", "radius", "t_prime", "_exact", "bound_exact", "eta_upper", "lower_bound",
                    "eigenvalue_upper", "margin", "half_width", "halfwidth", "width")
 
@@ -65,7 +68,9 @@ def classify(k, a, b, rtol):
         try:
             fa, fb = _num(a), _num(b)
             rel = abs(fa - fb) / max(1.0, abs(fa))
-            return ("same" if fa == fb else "stack-dependent"), f"{rel:.3e}"
+            if fa == fb:
+                return "same", "0"
+            return ("stack-dependent" if rel <= STACK_RTOL else "MISMATCH"), f"{rel:.3e}"
         except (TypeError, ValueError):
             pass
     if isinstance(a, bool) or isinstance(b, bool) or isinstance(a, str) or isinstance(b, str) or a is None or b is None:
