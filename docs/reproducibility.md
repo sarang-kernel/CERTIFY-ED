@@ -67,6 +67,47 @@ Since 3.1.0 (review of 2026-10-21):
   the `certify_ed` version and the `source_hash` (IMP-26, MS-N12).
 * An experiment that raises writes `_aborted` into `data.json` and "ABORTED" into its log (SS-04).
 
+### The manuscript's macros (v4)
+
+`certify-ed numbers --run DIR --manuscript MS` writes three macro files into `MS/`, and the
+manuscript inputs all three:
+
+* `numbers.tex` (`make_numbers.py`, E0–E5 records, the run manifest and the repository);
+* `numbers_apps.tex` (`make_numbers_apps.py`, E6–E10 records, the manifest and the repository);
+* `numbers_todo.tex` (`make_numbers_apps.py`): the macros the text uses whose value **no record of this
+  run contains**, each defined as `\todo{reason}`. The file is generated like the other two and is never
+  edited by hand; when every macro has a record it holds a comment only. `make_numbers_apps.py` prints
+  one `pending` line per entry.
+
+Rules that the two scripts follow (so that the manuscript builds from `certify-ed numbers` alone):
+
+* **One definition per macro.** `make_numbers.py` runs last and reports `CHECK FAILED` if a macro is
+  defined by `\newcommand` in two files of `MS/`. The environment macros (`\FlintCVersion`,
+  `\FlintLibVersion`, `\PythonFlintVersion`, `\CertifyEdVersion`) are owned by `make_numbers.py` (E0
+  record); `make_numbers_apps.py` writes them with `\providecommand`, which only takes effect in a quick
+  run without `numbers.tex`.
+* **Every macro names its source.** A macro added since 3.1.0 carries a LaTeX comment after its
+  definition naming the record and field (or the repository file, or the paper) its value comes from.
+  Values typed from the literature (`\CrownHalfReducedPaper`, `\CrownHalfHeadlinePaper`) are marked
+  `literature:` in that comment.
+* **Nothing is substituted.** A number the text needs that the run did not record goes to
+  `numbers_todo.tex`; the scripts never fill it from another coupling, another run or an earlier
+  document. Examples: `\CrownOneNamedSectorA/B` (the two pair-spin sectors named by Kranitz & Penc at
+  the printed couplings) need `spin1_printed.named_sectors` in the E9 record; `\MutGapsClosedStamped`
+  needs stamped `inspection.json` and `recheck.json` (MS-N03); `\CrownHalfHeadlineFloat` needs a
+  nine-coupling floating-point step that E9 does not have yet.
+* **Code facts come from the checkout.** `\ExactCheckerLines` (code lines of `certify_ed/checker.py` +
+  `exact_sectors.py` without blanks, comments and docstrings, from the token stream) and
+  `\NtestsAddedAfterRun` are computed from the repository that regenerates the numbers.
+  `\NtestsAddedAfterRun` is `0` by identity when the run's `tests_hash` equals the repository's;
+  otherwise it is `pytest --collect-only` on the checkout minus the run's count, a live collection on the
+  regenerating host, on which a module skipped at import (`tests/test_label_audit.py` without QuSpin)
+  is not counted. The comment in `numbers.tex` says which case applied.
+* **Numbers that live only in a log.** `\DecSquareNoSymDim` (the unreduced decorated-square block) is
+  read from the E10 record's `run.log`, the only place the 3.1.0 harness writes it; `\SymveigPtwoOutside`
+  is read from `docs/symveig_audit.md` (the project's audit of symveig 1.0.0; the E8 record compares
+  conserving models only). Both comments say so.
+
 Platform notes: 37 of the 3.0.0 tests needed QuSpin (35) or gcc/glibc (2). The two floating-point
 probe tests now run on Windows as well (through `ucrtbase` `fesetround`); only the `-ffast-math`
 shared-library test still needs gcc on Linux/macOS.

@@ -74,6 +74,29 @@ of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 - `tests/test_adversarial.py`: the 14 attack cases of the review (7 failed on the reviewed HEAD).
 - `tests/test_review_fixes.py`: one or more regression tests per finding above.
 
+### Added (manuscript v4 macros, branch feat/v4-macros; post-processing only, source hash unchanged)
+- `make_numbers.py` / `make_numbers_apps.py` emit every macro the v4 scaffold used from its hand-written
+  `generated/numbers_todo.tex`, each with a comment naming the record and field it comes from:
+  `\AKLTCritMinDown`, `\AKLTMaxExcessObserved`, `\AKLTExcessCheck` (the check's own threshold, RA-23),
+  `\TbRatioMinDown`, `\TbRatioMaxUp`, `\TbPairs`, `\TcCasesUnique` (MS-N13, MS-N07), `\CSoneSzMaxTable`,
+  `\CkTwentyTwoSoneTable`, `\CnnzSquareJtwoNotChecked` (MS-N04/05/06), `\NtestsRun`,
+  `\NtestsAddedAfterRun` (MS-N02), `\FnPoneOrPtwo`, `\FnBothMissed`, `\FnBothMissedList` and the
+  "P1 or P2" column of Table e1 (MS-H02), `\CrownOneRingEzero`, `\CrownOneRingRadiusExact`,
+  `\CrownOneRingRadiusFP` (RA-09), `\CrownOneMinClassDim`, `\CrownOneBigClassDim`,
+  `\CrownOneBigClassAbove` (MS-N09), `\SourceHashNew` (IMP-26), `\FlintLibVersion` (MS-N12),
+  `\ExactCheckerLines` (+ per-file, MS-N11), `\DecSquareNoSymDim` (from the E10 run.log),
+  `\SymveigPtwoOutside` (from docs/symveig_audit.md, RA-32), the literature values
+  `\CrownHalfReducedPaper`, `\CrownHalfHeadlinePaper` (marked as such, B2-4/RA-21) and, when the record
+  carries them, `\MutGapsClosedStamped` (MS-N03) and `\CrownOneNamedSectorA/B` (B3-2).
+- `generated/numbers_todo.tex` is now written by `make_numbers_apps.py`: the macros whose value no record of
+  the run contains, as `\todo{reason}` (nothing is substituted); empty when every macro has a record.
+- `make_numbers.py` checks that no macro is defined twice across the generated files; the environment
+  macros that both scripts know are written by `make_numbers_apps.py` with `\providecommand` (before this,
+  `\FlintCVersion`, `\PythonFlintVersion` and `\CertifyEdVersion` were defined twice and LaTeX stopped).
+- `tests/test_make_numbers_helpers.py`: the helpers behind these macros (code-line counter, pytest collection
+  parser, duplicate detection, P1-or-P2 verdicts, E10 log and symveig-audit parsers,
+  pending-file writer).
+
 ### Added (scope framework, branch feat/scope-framework)
 - **Universal producer import** (`certify_ed.io`, `docs/producer_bundle.md`): eigenvalues, eigenvectors,
   operators and sector bases from .npy, .npz (dense, `save_npz`, CSR/COO triplets), HDF5, CSV/TSV/text,
