@@ -28,6 +28,7 @@ os.makedirs(os.path.join(MS, "tables"), exist_ok=True)
 os.makedirs(os.path.join(MS, "figures"), exist_ok=True)
 
 MACROS = {}
+NOTES = {}      # macro name -> provenance note, written as a LaTeX comment after the definition
 CHECKS = []
 
 
@@ -43,12 +44,72 @@ def latest(prefix):
     return d, data, env
 
 
-def macro(name, value):
+def macro(name, value, note=None):
+    """Define \\name as value. `note` names the record or field the value comes from; it is written as a
+    LaTeX comment after the definition (v4: every macro of the manuscript carries its source)."""
     MACROS[name] = str(value)
+    if note:
+        NOTES[name] = " ".join(str(note).split())
 
 
 def check(cond, statement):
     CHECKS.append((bool(cond), statement))
+
+
+def code_lines(path):
+    """Lines of a Python file that carry code: not blank, not a comment, not part of a docstring (a
+    docstring is the string-constant first statement of a module, class or function). Counted from the
+    token stream, so a statement or string continuing over several lines counts every line it occupies
+    (MS-N11)."""
+    import ast
+    import io
+    import tokenize
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+    doc = set()
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and node.body:
+            first = node.body[0]
+            if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
+                doc.update(range(first.lineno, first.end_lineno + 1))
+    skip = {tokenize.COMMENT, tokenize.NEWLINE, tokenize.NL, tokenize.INDENT, tokenize.DEDENT, tokenize.ENCODING,
+            tokenize.ENDMARKER}
+    lines = set()
+    for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+        if tok.type in skip:
+            continue
+        lines.update(ln for ln in range(tok.start[0], tok.end[0] + 1) if ln not in doc)
+    return len(lines)
+
+
+def parse_collected(stdout):
+    """Number of tests in the output of `pytest --collect-only -q` ('510 tests collected in 14s',
+    '3/5 tests collected (2 deselected)', '1 test collected'); None if the line is missing."""
+    import re
+    m = re.search(r"(\d+)(?:/\d+)? tests? collected", stdout or "")
+    return int(m.group(1)) if m else None
+
+
+def duplicate_macros(tex_files):
+    """Macro names defined by \\newcommand in more than one of the files (LaTeX stops on the second
+    definition); \\providecommand does not count, that is how a file defines a fallback."""
+    import re
+    where = {}
+    for path in tex_files:
+        with open(path, encoding="utf-8") as f:
+            for name in re.findall(r"\\newcommand\{\\([A-Za-z]+)\}", f.read()):
+                where.setdefault(name, []).append(os.path.basename(path))
+    return {k: v for k, v in sorted(where.items()) if len(v) > 1}
+
+
+def flagged_by_either(row):
+    """A result flagged by P1 or P2 (review MS-H02); None when neither practice applies (F12: P2 n/a)."""
+    p1, p2 = row["P1_residual_only"], row["P2_recomputation"]
+    if p1 is None and p2 is None:
+        return None
+    if p2 is None and p1:
+        return None
+    return (p1 is False) or (p2 is False)
 
 
 def sci(x, digits=1):
@@ -173,6 +234,9 @@ macro("ScipyVersion", env0["scipy"])
 macro("QuspinVersion", env0.get("quspin", "?"))
 macro("PythonFlintVersion", str(env0.get("flint", "?")))
 macro("FlintCVersion", str(env0.get("flint_c_library", "unknown")))     # MS-N12: the FLINT C library
+# MS-N12: the name the v4 text uses for the same number; 'unknown' when the harness did not record it (runs before 3.1.0)
+macro("FlintLibVersion", str(env0.get("flint_c_library", "unknown")),
+      note="E0 environment.json flint_c_library (FLINT C library behind python-flint); 'unknown' if not recorded")
 macro("CertifyEdVersion", str(env0.get("certify_ed", "unknown")))
 QUEUE_A = ("e2_cost", "e4_workflows_W1W2W3W4", "e5_arpack_multiplet")
 el_B = sum(runs[k][1].get("_elapsed_seconds", 0) for k in runs if k not in QUEUE_A)
@@ -188,6 +252,15 @@ for p in core:
         loc += sum(1 for line in f if line.strip() and not line.strip().startswith("#"))
 macro("LOCcore", thin(round(loc, -2)))
 macro("NcoreModules", str(len(core)))
+# MS-N11: size of the exact layer, code lines only (no blanks, comments or docstrings), counted from the
+# token stream of the repository that regenerates the numbers (a code fact, not a run record)
+_exact_files = ("checker.py", "exact_sectors.py")
+_exact_lines = {f: code_lines(os.path.join(ROOT, "certify_ed", f)) for f in _exact_files}
+macro("ExactCheckerLines", thin(sum(_exact_lines.values())),
+      note="code lines of certify_ed/checker.py + exact_sectors.py (" + " + ".join(f"{f} {n}" for f, n in _exact_lines.items())
+      + "), counted by code_lines() in this repository checkout")
+macro("ExactCheckerLinesChecker", thin(_exact_lines["checker.py"]), note="code lines of certify_ed/checker.py")
+macro("ExactCheckerLinesSectors", thin(_exact_lines["exact_sectors.py"]), note="code lines of certify_ed/exact_sectors.py")
 
 
 def run_test_counts():
@@ -206,9 +279,34 @@ def run_test_counts():
             "skipped": counts.get("skipped", 0), "total": sum(counts.values())}
 
 
+def run_tests_hash():
+    """tests_hash the run recorded (manifest source.tests_hash, else the E0 environment); None if absent."""
+    man = os.path.join(RES, "manifest.json")
+    if os.path.exists(man):
+        with open(man) as f:
+            h = (json.load(f).get("source") or {}).get("tests_hash")
+        if h:
+            return h
+    return env0.get("tests_hash")
+
+
+def repo_test_count():
+    """Tests the repository's suite contains now: `pytest --collect-only -q` in ROOT (a live collection; a
+    module skipped at import, e.g. tests/test_label_audit.py without QuSpin, is not counted, so the number
+    can be smaller than on the run host). None if pytest is unavailable or the summary line is missing."""
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONSAFEPATH"}
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    try:
+        p = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", "tests"],
+                           cwd=ROOT, capture_output=True, text=True, env=env, timeout=600)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return parse_collected(p.stdout)
+
+
 _tc = run_test_counts()
 if _tc is None:
-    for k in ("NtestsTotal", "NtestsVtwo", "NtestsPassed", "NtestsSkipped"):
+    for k in ("NtestsTotal", "NtestsVtwo", "NtestsPassed", "NtestsSkipped", "NtestsRun", "NtestsAddedAfterRun"):
         macro(k, "?")
     check(False, "tests: the run directory records the test-suite outcome (manifest steps.tests)")
 else:
@@ -216,7 +314,26 @@ else:
     macro("NtestsVtwo", str(_tc["total"]))
     macro("NtestsPassed", str(_tc["passed"]))
     macro("NtestsSkipped", str(_tc["skipped"]))
+    macro("NtestsRun", str(_tc["passed"]), note="manifest steps.tests.summary: tests passed in the evidence run (MS-N02 / RA-01)")
     check(_tc["failed"] == 0, f"tests: the run's test suite passed ({_tc['summary'].split(' in ')[0]})")
+    # MS-N02: tests added to the repository after the evidence run. Zero by identity when the run's tests_hash
+    # is the repository's (no collection needed); otherwise the repository's suite is collected live and the
+    # run's count subtracted, which depends on what the regeneration host can import (see repo_test_count)
+    from certify_ed.provenance import source_fingerprint
+    _fp_now = source_fingerprint(ROOT)
+    _h_run = run_tests_hash()
+    if _h_run and _h_run == _fp_now.get("tests_hash") and not _fp_now.get("tests_dirty"):
+        macro("NtestsAddedAfterRun", "0", note=f"the run's tests_hash {_h_run} is the repository's: no test was added after the run")
+    else:
+        _n_now = repo_test_count()
+        if _n_now is None:
+            macro("NtestsAddedAfterRun", "?", note="the repository's suite could not be collected on this host")
+            check(False, "tests: the repository's test suite can be collected to count the tests added after the run")
+        else:
+            macro("NtestsAddedAfterRun", str(_n_now - _tc["total"]),
+                  note=f"pytest --collect-only on this checkout ({_n_now} tests; tests_hash {_fp_now.get('tests_hash')}) minus the "
+                       f"run's {_tc['total']} (tests_hash {_h_run}); a live collection on the regeneration host, modules "
+                       f"skipped at import are not counted")
 
 # ============================================================== E0
 _, e0, _ = runs["e0_verifier_validation"]
@@ -289,6 +406,15 @@ macro("FnPtwoMissed", str(n_err - n_p2))
 macro("FnPthreeFailed", str(n_p3_failed))
 macro("FnN", str(e1["settings"]["N"]))
 macro("FnNsectors", "10")
+# MS-H02: the two standard practices together (what Referee 1 proposed) and the errors that escape both
+_either = [r for r in err_rows if flagged_by_either(r)]
+_both_missed = [r for r in err_rows if not flagged_by_either(r)]
+macro("FnPoneOrPtwo", str(len(_either)), note="E1 data.json rows: wrong results with P1_residual_only false or P2_recomputation false")
+macro("FnBothMissed", str(len(_both_missed)), note="E1 data.json rows: wrong results flagged by neither P1 nor P2")
+macro("FnBothMissedList", ", ".join(r["case"].split()[0] for r in _both_missed), note="E1 data.json: the cases missed by both practices")
+check(len(_either) + len(_both_missed) == n_err, "E1: every wrong result is either flagged by P1 or P2 or missed by both")
+check(len(_either) == len({r["case"] for r in err_rows if r["P1_residual_only"] is False} | {r["case"] for r in err_rows if r["P2_recomputation"] is False}),
+      "E1: FnPoneOrPtwo is the size of the union of the P1 and P2 flag sets")
 check(n_p3 == n_err, f"E1: CERTIFY-ED flags all erroneous results ({n_p3}/{n_err})")
 r0 = rows[0]
 check(r0["P3_certify_ed"] == "all CERTIFIED" and r0["P1_residual_only"] and r0["P2_recomputation"],
@@ -384,15 +510,17 @@ def pf(v):
 with open(os.path.join(MS, "tables", "e1.tex"), "w") as f:
     f.write("\\begin{table}[t]\n\\centering\n\\caption{Fifteen results checked by three practices "
             "(Section~\\ref{sec:e1}). P1: residual check with the producer's matrix; P2: recomputation with "
-            "QuSpin from the intended model; P3: \\pkg{}. ``flag'' means the practice reports a problem; "
+            "QuSpin from the intended model; P3: \\pkg{}. ``P1 or P2'': flagged by at least one of the two "
+            "standard practices (review MS-H02). ``flag'' means the practice reports a problem; "
             "``pass'' means it does not. Thirteen results (F1--F11b) are wrong; F0 is correct; F12 is a "
             "correct result whose single-vector observable is basis dependent.}\n\\label{tab:e1}\n"
-            "\\footnotesize\n\\begin{tabular}{@{}l >{\\raggedright\\arraybackslash}p{0.36\\textwidth} c c l >{\\raggedright\\arraybackslash}p{0.25\\textwidth}@{}}\n\\toprule\n"
-            "Case & Mechanism & P1 & P2 & P3 & P3 diagnosis \\\\\n\\midrule\n")
+            "\\footnotesize\n\\begin{tabular}{@{}l >{\\raggedright\\arraybackslash}p{0.33\\textwidth} c c c l >{\\raggedright\\arraybackslash}p{0.25\\textwidth}@{}}\n\\toprule\n"
+            "Case & Mechanism & P1 & P2 & P1 or P2 & P3 & P3 diagnosis \\\\\n\\midrule\n")
     for r in rows:
         k = r["case"].split()[0]
+        _e = flagged_by_either(r)
         f.write(f"{k} & {short[k][0]} & {pf(r['P1_residual_only'])} & {pf(r['P2_recomputation'])} & "
-                f"{p3_cell(r)} & {diag_cell(r)} \\\\\n")
+                f"{'n/a' if _e is None else pf(not _e)} & {p3_cell(r)} & {diag_cell(r)} \\\\\n")
         if k in ("F0", "F4", "F9", "F11b"):
             f.write("\\addlinespace\n")
     f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
@@ -412,10 +540,15 @@ macro("TbRatioMin", dec_dir(min(bb), 1, False))              # range rounded out
 macro("TbRatioMax", dec_dir(max(bb), 1, True))
 check(all(float(dec_dir(min(bb), 1, False)) <= x <= float(dec_dir(max(bb), 1, True)) for x in bb),
       "E3(b): the printed ratio range contains every ratio")
+# MS-N13: the names the v4 text uses for the outward-rounded range and the number of pairs behind it
+macro("TbRatioMinDown", dec_dir(min(bb), 1, False), note="E3 b_float_vs_arb.ratio_bound_over_arb minimum, rounded down")
+macro("TbRatioMaxUp", dec_dir(max(bb), 1, True), note="E3 b_float_vs_arb.ratio_bound_over_arb maximum, rounded up")
+macro("TbPairs", str(len(bb)), note="E3 b_float_vs_arb: number of eigenpairs compared with Arb")
 cg = e3["c_gap"]
 uniq = {(r["model"], r["k"]): r for r in cg}
 macro("TcCases", str(len(uniq)))
 macro("TcCasesRecorded", str(len(cg)))
+macro("TcCasesUnique", str(len(uniq)), note="E3 c_gap: distinct (model, k) cases; the record may hold a duplicated row (MS-N07)")
 # MS-N07: 0.9 is the fraction of the estimated gap at which the first shift is placed (a parameter of the
 # probe order, Options.gap_fractions[0]), not a tightness result; the macro says so
 _fracs = sorted({round(r["fraction_of_gap_certified"], 6) for r in uniq.values()})
@@ -538,12 +671,27 @@ t1, d1, b1 = max(s1u1, key=lambda x: x[1])
 macro("CSoneUoneMax", f"{t1max:.2f}")
 macro("CSoneUoneMaxDim", thin(d1))
 macro("CSoneUoneAtMaxDim", f"{t1:.2f}")
+macro("CSoneSzMaxTable", f"{t1max:.2f}",
+      note="E2 data.json: largest S1.model_fidelity seconds over the S^z rows of Table e2, from the certificate the table prints (MS-N04)")
+# MS-N06: the 4x4 J2 block of the largest certified dimension whose S3 exceeded the memory cap
+_sq_j2_notfit = [r for r in ok_rows if fam(r) == "square" and r["cfg"].get("J2")
+                 and r["certifier"]["statements"]["S3.completeness"]["status"] == "NOT_CHECKED"]
+if _sq_j2_notfit:
+    _sqj = max(_sq_j2_notfit, key=lambda r: r["producer"]["dim"])
+    macro("CnnzSquareJtwoNotChecked", sci(_sqj["producer"]["nnz"], 1),
+          note=f"E2 data.json producer.nnz of the 4x4 J2={_sqj['cfg']['J2']:g} S^z=0 block (d={_sqj['producer']['dim']}) with S3 NOT_CHECKED")
+    check(_sqj["producer"]["dim"] == dmax,
+          "E2: the 4x4 J2 block whose S3 did not fit has the dimension of the largest block with S3 certified (CmaxFeasibleDim)")
+else:
+    macro("CnnzSquareJtwoNotChecked", "---", note="E2: no 4x4 J2 block with S3 NOT_CHECKED in this run")
 check(all(t <= float(f"{t1max:.2f}") + 5e-3 for t, _, _ in s1u1), "E2: CSoneUoneMax is the largest S1 time of the S^z rows")
 check(all(t <= 1.5 * bld + 0.1 for t, _, bld in s1u1), "E2: S1 for U(1) blocks costs about the producer's build")
 k22 = next(r for r in rows2 if fam(r) == "chain-k0" and r["cfg"]["N"] == 22)
 c22 = table_cert(k22)
 macro("CkTwentyTwoDim", thin(k22["producer"]["dim"]))
 macro("CkTwentyTwoSone", f"{stmt_time(c22, 'S1.model_fidelity'):.0f}" if "statements" in c22 else "?")
+macro("CkTwentyTwoSoneTable", f"{stmt_time(c22, 'S1.model_fidelity'):.1f}" if "statements" in c22 else "?",
+      note="E2 data.json: S1.model_fidelity seconds of the chain N=22 (S^z=0, k=0) row, from the certificate Table e2 prints (MS-N05)")
 macro("CkTwentyTwoMem", f"{table_mem_cert(k22).get('maxrss_mb', float('nan')):.0f}")
 _s1_rows = [(stmt_time(c, "S1.model_fidelity"), r) for r in rows2 for c in (r.get("certifier"), r.get("certifier_without_S3"))
             if s1_ok(c)]
@@ -848,8 +996,14 @@ with open(os.path.join(MS, "tables", "e5.tex"), "w") as f:
 with open(os.path.join(MS, "numbers.tex"), "w") as f:
     f.write("% generated by experiments/make_numbers.py -- do not edit\n")
     for k in sorted(MACROS):
-        f.write(f"\\newcommand{{\\{k}}}{{{MACROS[k]}}}\n")
+        f.write(f"\\newcommand{{\\{k}}}{{{MACROS[k]}}}" + (f"  % {NOTES[k]}" if k in NOTES else "") + "\n")
 print(f"wrote {len(MACROS)} macros to {os.path.join(MS, 'numbers.tex')}")
+# the manuscript inputs every generated/*.tex: a macro defined twice stops LaTeX ('command already defined');
+# make_numbers_apps.py runs first (`certify-ed numbers`), so its files are present here
+_dups = duplicate_macros(sorted(glob.glob(os.path.join(MS, "*.tex"))))
+_dup_txt = ", ".join(k + " in " + "/".join(v) for k, v in _dups.items())
+check(not _dups, "numbers: no macro is defined by \\newcommand in two generated files"
+      + (f" (duplicates: {_dup_txt})" if _dups else ""))
 bad = [s for ok, s in CHECKS if not ok]
 for ok, s in CHECKS:
     print(("ok           " if ok else "CHECK FAILED ") + s)
