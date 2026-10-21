@@ -28,13 +28,10 @@ def dec_dir(x, d, up):
     return f"{sign}{n // 10 ** d}.{n % 10 ** d:0{d}d}" if d > 0 else f"{sign}{n}"
 
 
-def sci_dir(x, digits=1, up=True):
-    """Like sci(), with the mantissa rounded toward +inf (up) or -inf, exactly: for printing bounds."""
-    from fractions import Fraction as _F
-    if x is None or not np.isfinite(x):
-        return "\\ensuremath{\\infty}"
-    if x == 0:
-        return "0"
+from fractions import Fraction as _F
+
+
+def _sci_dir_parts(x, digits, up):
     e = int(math.floor(math.log10(abs(x))))
     for _ in range(2):
         q = _F(x) / _F(10) ** e * 10 ** digits
@@ -43,10 +40,28 @@ def sci_dir(x, digits=1, up=True):
             e += 1
             continue
         break
+    return n, e
+
+
+def sci_dir(x, digits=1, up=True):
+    """Like sci(), with the mantissa rounded toward +inf (up) or -inf, exactly: for printing bounds."""
+    if x is None or not np.isfinite(x):
+        return "\\ensuremath{\\infty}"
+    if x == 0:
+        return "0"
+    n, e = _sci_dir_parts(x, digits, up)
     sign = "-" if n < 0 else ""
     n = abs(n)
     ms = f"{sign}{n // 10 ** digits}.{n % 10 ** digits:0{digits}d}" if digits > 0 else f"{sign}{n}"
     return ms if e == 0 else f"\\ensuremath{{{ms}\\times10^{{{e}}}}}"
+
+
+def sci_dir_value(x, digits=1, up=True):
+    """The exact rational value that sci_dir(x, digits, up) prints (for checks against the printed number)."""
+    if x == 0:
+        return _F(0)
+    n, e = _sci_dir_parts(x, digits, up)
+    return _F(n, 10 ** digits) * _F(10) ** e
 
 
 ENVS = {}
@@ -98,9 +113,8 @@ else:
             # published values have 10 decimals (rounding error <= 5e-11)
             check(r["eta_upper"] >= r["eta_published"] - 5e-11, f"AKLT {name}: bound not below the published value")
             # the excess is the published rounding (<= 5e-11), the threshold margin (1e-9 relative on eta^2) and
-            # the factorization term (t' - t, from beta/mu and beta/nu), which dominates on the largest lattices
-            check(r["eta_upper"] - r["eta_published"] < 5e-9,
-                  f"AKLT {name}: certified bound exceeds the published value by less than 5e-9")
+            # the factorization term (t' - t, from beta/mu and beta/nu), which dominates on the largest lattices;
+            # the statement check tests exactly the printed \AKLTMaxExcess (IMP-27 / SS-15), see below
             check(r["eta_upper"] >= r["eta_float"], f"AKLT {name}: certified bound above our floating-point eta")
             check(abs(r["eta_float"] - r["eta_published"]) < 1e-8, f"AKLT {name}: geometry reproduces published eta")
             if r.get("criterion_holds") is not None:
@@ -117,10 +131,17 @@ else:
         macro("DecSquareLargestBlock", lat["decorated_square"]["largest_block"])
         macro("DecSquareMinutes", f"{lat['decorated_square']['seconds'] / 60:.0f}")
     gaps = [lat[n]["eta_upper"] - lat[n]["eta_published"] for n in label if n in lat]
-    macro("AKLTMaxExcess", sci_dir(max(gaps), 0, True))
+    _excess_txt, _excess_val = sci_dir(max(gaps), 0, True), sci_dir_value(max(gaps), 0, True)
+    macro("AKLTMaxExcess", _excess_txt)
+    # IMP-27 / SS-15: the check tests what the text prints, not a separate threshold
+    check(all(_F(g) <= _excess_val for g in gaps),
+          f"AKLT: certified bounds exceed the published eta by at most the printed AKLTMaxExcess ({float(_excess_val):.0e})")
     cvs = [crit_value(n) for n in label if n in lat and crit_value(n) is not None]
-    macro("AKLTCritMin", dec_dir(min(cvs), 2, True))
+    # IMP-28 / MS-N01: the lower end of a range is rounded DOWN, the upper end up, so the range contains every value
+    macro("AKLTCritMin", dec_dir(min(cvs), 2, False))
     macro("AKLTCritMax", dec_dir(max(cvs), 2, True))
+    check(all(_F(dec_dir(min(cvs), 2, False)) <= _F(v) <= _F(dec_dir(max(cvs), 2, True)) for v in cvs),
+          "AKLT: the printed range AKLTCritMin-AKLTCritMax contains every criterion value")
     check(max(cvs) < 1, "AKLT: every criterion value is below 1")
     for name, ks in e10.get("kernel", {}).items():
         check(all(k["kernel_equals_vbs_range"] for k in ks), f"kernel lemma confirmed exactly for {name}")
@@ -258,6 +279,17 @@ else:
         check(not env6["tests_dirty"], "E6 ran against the committed test suite (no uncommitted test changes)")
     cls_path = os.path.join(e6dir, "classification.json")
     insp_path = os.path.join(e6dir, "inspection.json")
+    rck_path = os.path.join(e6dir, "recheck.json")
+
+    def stamped(obj, what, key="provenance"):
+        """MS-N03: post-run files in the E6 record must say which source and test suite they refer to."""
+        pv = obj.get(key) or {}
+        check(bool(pv.get("source_hash")) and bool(pv.get("tests_hash")),
+              f"E6 {what} carries a provenance stamp (source_hash, tests_hash)")
+        if pv.get("source_hash") and env6.get("source_hash"):
+            check(pv["source_hash"] == env6["source_hash"],
+                  f"E6 {what} refers to the computational source of the E6 run ({env6['source_hash']})")
+        return pv
     cats = {}
     if os.path.exists(cls_path):
         with open(cls_path) as f:
@@ -265,8 +297,17 @@ else:
         check(cls["run"] == os.path.basename(e6dir), "E6 classification belongs to this run")
         check(sum(cls["survivor_categories"].values()) == sm["survived"], "E6: every survivor is classified")
         cats = dict(cls["survivor_categories"])
+        stamped(cls, "classification.json")
     else:
         SKIPPED.append("E6 classification (run e6_classify.py)")
+    rechecked = {}
+    if os.path.exists(rck_path):
+        with open(rck_path) as f:
+            rck = json.load(f)
+        pv = stamped(rck, "recheck.json", key="_provenance")
+        rechecked = {k: v for k, v in rck.items() if not k.startswith("_")}
+        macro("MutRecheckTestsHash", pv.get("tests_hash", "unknown"))
+        macro("MutRecheckKilled", sum(1 for v in rechecked.values() if v.get("recheck") not in (None, "survived")))
     verdicts = {}
     if os.path.exists(insp_path):
         with open(insp_path) as f:
@@ -274,6 +315,11 @@ else:
         verdicts = insp["summary"]
         check(insp["inspected"] == cats.get("needs inspection", -1),
               "E6: every survivor that needed inspection has a recorded verdict")
+        stamped(insp, "inspection.json")
+        closed = verdicts.get("test added, mutant now killed", 0)
+        if closed:
+            check(bool(rechecked) and closed <= sum(1 for v in rechecked.values() if v.get("recheck") not in (None, "survived")),
+                  "E6: every 'test added, mutant now killed' verdict is backed by a recheck.json entry")
     elif cats.get("needs inspection"):
         SKIPPED.append(f"E6 inspection ({cats['needs inspection']} survivors await a human verdict)")
     macro("MutNeedInspection", cats.get("needs inspection", 0))
@@ -315,6 +361,15 @@ if os.path.exists(_man):
     check(len(srcs) == 1 and None not in srcs, f"run manifest: every step ran at one computational source {sorted(map(str, srcs))}")
     if "tests" in man["steps"]:
         macro("RunTestsSummary", man["steps"]["tests"].get("summary", "").split(" in ")[0].replace(",", ";"))
+
+# ---------------------------------------------------------------- environment (MS-N12)
+_flint_c = sorted({str(e.get("flint_c_library")) for e in ENVS.values() if e.get("flint_c_library")})
+_flint_py = sorted({str(e.get("flint")) for e in ENVS.values() if e.get("flint") and e.get("flint") != "not installed"})
+macro("FlintCVersion", ", ".join(_flint_c) if _flint_c else "unknown")
+macro("PythonFlintVersion", ", ".join(_flint_py) if _flint_py else "unknown")
+check(len(_flint_c) <= 1 and len(_flint_py) <= 1, "E6-E10 ran with one python-flint / FLINT version")
+_cert_v = sorted({str(e.get("certify_ed")) for e in ENVS.values() if e.get("certify_ed")})
+macro("CertifyEdVersion", ", ".join(_cert_v) if _cert_v else "unknown")
 
 # ---------------------------------------------------------------- provenance
 _src = {k: (e.get("source_hash"), e.get("source_dirty")) for k, e in ENVS.items()}

@@ -1,8 +1,9 @@
 """Re-run surviving mutants of an E6 run against the current test suite.
 
 usage: python3 e6_recheck.py RUN_DIR [workers] [module:site ...]
-Writes RUN_DIR/recheck.json. The mutation sites must refer to the same source as the original run
-(checked by hashing the target modules)."""
+Writes RUN_DIR/recheck.json, stamped (key "_provenance") with the commit, source_hash and tests_hash of the
+tree the re-check ran against (MS-N03); make_numbers_apps.py validates the stamp. The mutation sites must
+refer to the same source as the original run (checked by hashing the target modules)."""
 from pathlib import Path
 import json
 import os
@@ -14,6 +15,15 @@ from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from e6_mutation import apply_mutation, run_tests, ROOT, mutation_sites
 import ast
+import datetime as _dt
+
+sys.path.insert(0, ROOT)
+from certify_ed.provenance import source_fingerprint  # noqa: E402
+
+
+def provenance_stamp(root=ROOT):
+    """{'git_commit', 'source_hash', 'source_dirty', 'tests_hash', 'tests_dirty', 'written'} of the tree now."""
+    return dict(source_fingerprint(root), written=_dt.datetime.now().isoformat(timespec="seconds"))
 
 
 def main():
@@ -53,6 +63,7 @@ def main():
     old = json.loads(Path(out).read_text()) if os.path.exists(out) else {}
     for r in res:
         old[f"{r['module']}:{r['site']}"] = r
+    old["_provenance"] = provenance_stamp()
     json.dump(old, open(out, "w"), indent=1)
     k = sum(r["recheck"] != "survived" for r in res)
     print(f"{k}/{len(res)} previously surviving mutants now killed")

@@ -1,5 +1,6 @@
 """Classify surviving mutants of E6 by what the mutated line does (rules below), and list the ones that
-need human inspection. Output: <run>/classification.json
+need human inspection. Output: <run>/classification.json, stamped with the source_hash and tests_hash of
+the tree it read (key "provenance", MS-N03; validated by make_numbers_apps.py).
 
 usage: python3 e6_classify.py [RUN_DIR | INDEX]   (default: the latest e6_mutation_* record under
 CERTIFY_RESULTS or experiments/results; the driver runs this after E6)"""
@@ -55,7 +56,10 @@ for m in d["mutants"]:
     counts[cat] = counts.get(cat, 0) + 1
     rows.append({"module": m["module"], "line": m["line"], "function": func_of(path, m["line"]),
                  "mutation": mut, "category": cat, "source": src.strip()})
-out = {"run": os.path.basename(run), "summary": d["summary"], "survivor_categories": counts, "survivors": rows}
+import datetime as _dt  # noqa: E402
+out = {"run": os.path.basename(run), "summary": d["summary"], "survivor_categories": counts, "survivors": rows,
+       # MS-N03: the tree whose lines were classified
+       "provenance": dict(_cur, written=_dt.datetime.now().isoformat(timespec="seconds"))}
 json.dump(out, open(os.path.join(run, "classification.json"), "w"), indent=1)
 print(json.dumps(counts, indent=1))
 for r in rows:
