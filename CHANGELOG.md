@@ -8,6 +8,15 @@ fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: se
 manuscript check). The computational source hash changes with this release, so the records of the run
 of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 
+### Candidate run and integration (2026-10-22)
+- `release/3.1.0` at `v3.1.0-candidate`: fix track + scope framework + survey/scope generators + v4 macro emission +
+  `compare_runs.py` + `make_result_candidate.py` + E9 named-sector step. Full suite on the Windows integration stack
+  (Python 3.12.15, numpy 2.5.4, scipy 1.18.1, python-flint 0.8.0): 502 passed, 31 skipped (30 need QuSpin, 1 needs gcc);
+  ruff clean. Computational source `1d4e33529dfce716`.
+- `results/run_candidate_20261021` (E7, E9, E10, E8 with the pre-merge source `e707838f6852d474`) reproduces every statement
+  of `run_full_20261021`; see `RESULT_candidate_run.md`. The 3.1.0 evidence run (all experiments, tests enabled, one
+  commit, no edits in flight) is still to be made on the reference stack.
+
 ### Fixed (review of 2026-10-21)
 - **IMP-18 (critical).** `checker.radius_exact` returned radius 0 for a zero test vector, so a wrong
   eigenvalue claimed with a zero vector (or, in `exact_recheck_sector_lowest`, with a vector from another
