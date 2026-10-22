@@ -242,8 +242,44 @@ class Certificate:
             if k not in self.arrays or array_sha256(self.arrays[k]) != h:
                 rep["arrays_ok"] = False
                 rep["bad_arrays"].append(k)
-        rep["ok"] = rep["body_hash_ok"] and rep["arrays_ok"]
+        sc = self.verify_scope()
+        rep["scope_ok"], rep["scope_problems"] = sc["ok"], sc["problems"]
+        rep["ok"] = rep["body_hash_ok"] and rep["arrays_ok"] and sc["ok"] is not False
         return rep
+
+    def verify_scope(self) -> dict:
+        """Check the scope block (INT-02): every statement id is accounted for exactly once (in scope, narrowed, or
+        out of scope), reason codes are known, every statement in scope is present, a narrowed statement that is
+        present is NOT_CHECKED, and no statement appears outside the scope lists. A narrowed statement may never be
+        silently absent from the scope block. Returns {'ok': True | False | None, 'problems': [...]}; None for a
+        certificate written before the scope block existed (schema < 2.1)."""
+        from .scope import REASON_CODES
+        sc = self.body.get("scope")
+        if sc is None:
+            return {"ok": None, "problems": ["no scope block (certificate written before schema 2.1)"]}
+        problems = []
+        ids_in = [x.get("id") for x in sc.get("in_scope", [])]
+        ids_nar = [x.get("id") for x in sc.get("narrowed", [])]
+        ids_out = [x.get("quantity") for x in sc.get("out_of_scope", []) if x.get("quantity") in STATEMENT_IDS]
+        listed = ids_in + ids_nar + ids_out
+        for sid in STATEMENT_IDS:
+            n = listed.count(sid)
+            if n != 1:
+                problems.append(f"{sid}: listed {n} times in the scope block (must be exactly once)")
+        for x in sc.get("narrowed", []) + sc.get("out_of_scope", []):
+            if x.get("reason_code") not in REASON_CODES:
+                problems.append(f"{x.get('id') or x.get('quantity')}: unknown reason code {x.get('reason_code')!r}")
+        present = {s["id"]: s for s in self.statements}
+        for sid in ids_in:
+            if sid not in present:
+                problems.append(f"{sid}: in scope but absent from the statements")
+        for sid in ids_nar:
+            if sid in present and present[sid].get("status") != "NOT_CHECKED":
+                problems.append(f"{sid}: narrowed but reported {present[sid].get('status')}")
+        for sid in present:
+            if sid not in listed:
+                problems.append(f"{sid}: reported but not accounted for in the scope block")
+        return {"ok": not problems, "problems": problems}
 
     def export_hdf5(self, path: str) -> str:
         """Optional HDF5 export (eigenvalues, residual bounds, radii, statements as JSON attribute)."""

@@ -1158,8 +1158,14 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "timing": {"total_seconds": time.time() - t_start}}
     arrays = {"eigenvalues": mu}
     if enc is not None:
-        arrays["radius"] = enc.radius + (eps_shift if np.isfinite(eps_shift) else 0.0)
-        arrays["existence_radius"] = enc.existence_radius + (eps_shift if np.isfinite(eps_shift) else 0.0)
+        # INT-03: the exported radii are rounded upward like the statements' (add_up), never to nearest
+        _shift = eps_shift if np.isfinite(eps_shift) else 0.0
+        if _shift == 0.0:                         # adding zero is exact
+            arrays["radius"] = np.array(enc.radius, dtype=float)
+            arrays["existence_radius"] = np.array(enc.existence_radius, dtype=float)
+        else:
+            arrays["radius"] = np.asarray(add_up(enc.radius, _shift), dtype=float)
+            arrays["existence_radius"] = np.asarray(add_up(enc.existence_radius, _shift), dtype=float)
         arrays["residual_bound"] = enc.residual.upper
     if opts.store_eigenvectors and X is not None:
         arrays["eigenvectors"] = X

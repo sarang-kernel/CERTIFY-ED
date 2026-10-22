@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased] (branch `fix/3.1.1`)
+
+Two of the known issues of 3.1.0, fixed without touching what any statement asserts. Not released: under D-44 a version
+the paper cites needs its own full run.
+
+- **INT-02.** `Certificate.verify_scope()` checks the scope block: every statement id exactly once (in scope, narrowed,
+  or out of scope), known reason codes, every statement in scope present, a narrowed statement that is present is
+  `NOT_CHECKED`, nothing reported outside the scope lists; `None` for certificates written before the scope block.
+  `verify_integrity()` reports `scope_ok`/`scope_problems` and fails on `False`, so `Certificate.load()` refuses such a
+  certificate even when its body hash was recomputed.
+- **INT-03.** The exported `radius` and `existence_radius` arrays add the model shift with upward rounding (`add_up`), as
+  the statements do; without a shift the radii are exported unchanged. The builder's rounding bound makes the shift
+  nonzero for almost every certificate, so this changes almost every exported radius by at most one ulp.
+- Tests: `tests/test_fix_3_1_1.py` (12; including a writer that drops a statement and recomputes the hash).
+  Full suite 556 passed, 1 skipped; ruff clean.
+
 ## [3.1.0] - 2026-10-22
 
 `__version__` = 3.1.0 (tag `v3.1.0`; evidence run `results/run_full_20261022`, made from the tagged commit on the
