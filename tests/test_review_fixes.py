@@ -398,14 +398,15 @@ def test_imp06_numbers_fingerprint_records_commit_and_script_blobs():
 # ------------------------------------------------------------------ IMP-26: version and source hash in every certificate
 def test_imp26_version_and_source_hash(heis6):
     import re
-    assert ce.__version__ == "3.1.0.dev0"
     root = os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__)))
     with open(os.path.join(root, "pyproject.toml")) as f:
-        assert re.search(r'^version = "3\.1\.0\.dev0"', f.read(), re.M)
+        m = re.search(r'^version = "([^"]+)"', f.read(), re.M)
+    assert m and m.group(1) == ce.__version__          # one version, in pyproject and the package
+    assert re.match(r"^3\.1\.", ce.__version__)
     spec, H, w, V = heis6
     c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec)
     env = c.body["environment"]
-    assert env["certify_ed"] == "3.1.0.dev0"
+    assert env["certify_ed"] == ce.__version__
     assert "source_hash" in env and "git_commit" in env
     from certify_ed.provenance import source_fingerprint
     assert env["source_hash"] == source_fingerprint()["source_hash"]

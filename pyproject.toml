@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "certify-ed"
-version = "3.1.0.dev0"
+version = "3.1.0"
 description = "Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and exact re-checks, with applications to published proofs"
 readme = "README.md"
 license = "MIT"

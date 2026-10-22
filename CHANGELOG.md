@@ -1,8 +1,9 @@
 # Changelog
 
-## [3.1.0] - 2026-10-21
+## [3.1.0] - 2026-10-22
 
-`__version__` = 3.1.0.dev0 until the final run of this version is recorded. Two soundness fixes found
+`__version__` = 3.1.0 (tag `v3.1.0`; evidence run `results/run_full_20261022`, made from the tagged commit on the
+Windows workstation with the reference library versions, D-54). Two soundness fixes found
 while writing the proofs for the manuscript scaffold (`ms_v3`), sharper application bounds, and the
 fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: second stack; MS-Nxx:
 manuscript check). The computational source hash changes with this release, so the records of the run

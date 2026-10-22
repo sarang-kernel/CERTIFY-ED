@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "CERTIFY-ED: certificates for exact-diagonalization results"
-version: "3.0.0"
-date-released: 2026-10-18
+version: "3.1.0"
+date-released: 2026-10-22
 license: MIT
 repository-code: "https://github.com/sarang-kernel/CERTIFY-ED"
 identifiers:
