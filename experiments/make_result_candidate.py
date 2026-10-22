@@ -1,6 +1,6 @@
 """Write RESULT_candidate_run.md: what a reproduction run re-derived, next to the reference run.
 
-Usage: python experiments/make_result_candidate.py <reference_run_dir> <candidate_run_dir> <compare.csv> <out.md>
+Usage: python experiments/make_result_candidate.py <reference_run_dir> <candidate_run_dir> <compare.csv> <out.md> [title]
 
 Reads the two manifests, the E7/E9/E10/E8 records of both runs and the CSV written by compare_runs.py, and
 writes a short document: per experiment the statements (statuses, counts, booleans) and the headline numbers
@@ -34,7 +34,7 @@ def fmt(x):
     return str(x)
 
 
-def main(ref, cand, cmp_csv, out):
+def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re-derived"):
     mr, mc = manifest(ref), manifest(cand)
     rows = list(csv.DictReader(open(cmp_csv, encoding="utf-8")))
     by_exp = {}
@@ -42,7 +42,7 @@ def main(ref, cand, cmp_csv, out):
         by_exp.setdefault(r["experiment"], []).append(r)
     L = []
     w = L.append
-    w("# Candidate reproduction run: what was re-derived\n")
+    w(f"# {title}\n")
     w(f"Reference run `{os.path.basename(ref)}`: code {mr.get('source', {}).get('source_hash')} "
       f"(commit {str(mr.get('git_commit'))[:7]}), platform {mr['environment'].get('platform', '?')}, "
       f"python {mr['environment'].get('python', '?')}, flint C library {mr['environment'].get('flint_c_library', 'not recorded by 3.0.0')}.\n")
@@ -160,6 +160,27 @@ def main(ref, cand, cmp_csv, out):
           f"{len(so_b)} (cand: {', '.join(so_b) or 'none'}); where certify_ed's do: {len(co_a)} (ref) / {len(co_b)} (cand). "
           "Whether a residual-only interval misses the reference is itself stack-dependent; the record reports the distance, "
           "and the statements compared strictly are completeness and the counted claims.\n")
+    # ---- E2
+    r2, _ = rec(ref, "e2_"); c2, _ = rec(cand, "e2_")
+    if r2 and c2:
+        w("## E2 — cost and memory of certification (each child capped at the same memory)\n")
+        w("| point | dim | S3 ref / cand | certify s ref / cand | peak MiB ref / cand | cap mechanism (cand) |")
+        w("|---|---:|---|---|---|---|")
+
+        def s3(row):
+            c = row.get("certifier", {})
+            return c.get("statements", {}).get("S3.completeness", {}).get("status", "error" if "error" in c else "-")
+        same = 0
+        for a, b in zip(r2.get("rows", []), c2.get("rows", [])):
+            ca, cb = a.get("certifier", {}), b.get("certifier", {})
+            same += s3(a) == s3(b)
+            def f1(x):
+                return f"{x:.1f}" if isinstance(x, (int, float)) else str(x)
+            w(f"| {a['label']} | {a.get('producer', {}).get('dim', '')} | {s3(a)} / {s3(b)} | {f1(ca.get('total', ''))} / "
+              f"{f1(cb.get('total', ''))} | {f1(ca.get('maxrss_mb', ''))} / {f1(cb.get('maxrss_mb', ''))} | {cb.get('memory_cap', '')} |")
+        w("")
+        w(f"S3 outcome identical on {same} of {len(r2.get('rows', []))} points. NOT_CHECKED means the inertia count did not fit "
+          "under the cap; the certificate says so and S1+S2 are measured alone.\n")
     # ---- comparison summary
     w("## Record-by-record comparison (experiments/compare_runs.py)\n")
     w("| experiment | leaves | same | float within 1e-9 | stack-dependent (within STACK_RTOL) | max rel. diff of stack-dependent | fp statistics (E8 ratios) | max rel. diff of fp statistics | timing | missing | MISMATCH |")
@@ -194,15 +215,17 @@ def main(ref, cand, cmp_csv, out):
         w("The failed manifest checks are the ones expected of a reproduction made while the branch was being integrated "
           "(a skipped step, several per-step hashes, one dirty step; see Steps above) and would fail the 3.1.0 evidence run, "
           "which is their purpose.\n")
-    w("## Not run here\n")
-    w("E0–E6 (and E3) need QuSpin, which does not install on this stack (quspin 1.0.1 requires the PyPI package "
-      "`importlib`, which cannot be installed on Python 3.12); they are left to the reference stack. The candidate run "
-      "is a two-stack reproduction of the statements, not the 3.1.0 evidence run: the evidence run must be made from "
-      "the tagged 3.1.0 commit with the test step enabled (`python run.py --full --out results/run_<id>`).\n")
+    w("## Coverage\n")
+    missing = [k for k in ("E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10")
+               if mc["steps"].get(k, {}).get("status") != "ok"]
+    if missing:
+        w(f"Steps of the reference run not reproduced here: {', '.join(missing)} (see the step table for the reason).\n")
+    else:
+        w("Every experiment of the reference run (E0–E10) was reproduced.\n")
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(L))
     print(out, len(L), "lines")
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:6])

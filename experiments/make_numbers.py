@@ -922,7 +922,27 @@ with open(os.path.join(MS, "tables", "w4.tex"), "w") as f:
     f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 mg = w4[1]
 check(abs(mg["E0"] - (-7.5)) <= mg["radius"], f"W4: Majumdar-Ghosh E0=-7.5 within radius (E0={mg['E0']!r})")
-check(w4[3]["statuses"]["S3.completeness"] == "NOT_CHECKED", "W4: 4x4 J2=0.5 completeness not checked")
+# 4x4 J2=0.5: whether the S3 factorization fits under the memory cap depends on what the cap counts (RLIMIT_AS on
+# POSIX counts address space, a Windows job object counts committed memory; E4 settings.memory_cap names it):
+# NOT_CHECKED on the Linux run of 2026-10-21, CERTIFIED on the Windows run of 2026-10-22. The check is that
+# the record is consistent either way, and the manuscript reads the status from the macro (run-stack).
+_sq = w4[3]
+_st3 = _sq["statuses"]["S3.completeness"]
+macro("WfourSquareSthree", "\\st{" + _st3.replace("_", "\\_") + "}",
+      note="E4 W4 J1-J2 4x4 J2=0.5 statuses['S3.completeness'] (run-stack: depends on what the memory cap counts)")
+macro("WfourCapMechanism", tex_escape(str(e4.get("settings", {}).get("memory_cap", "RLIMIT_AS"))),
+      note="E4 settings.memory_cap (records before 3.1.0: RLIMIT_AS)")
+if _st3 == "NOT_CHECKED":
+    _why = (_sq.get("s3_note") or "").lower()
+    check("memory" in _why or "factorization could not be completed" in _why,
+          f"W4: 4x4 J2=0.5 S3 not checked, and only for memory ({_why[:80]!r})")
+    macro("WfourSquareGap", "--", note="E4 W4 4x4 J2=0.5: no gap bound (S3 not checked)")
+else:
+    _g = _sq.get("gap_lower_bound")
+    check(_st3 == "CERTIFIED" and _g is not None and 0 < _g <= _sq["estimated_gap"],
+          f"W4: 4x4 J2=0.5 S3 certified with 0 < gap bound <= estimated gap ({_g!r} vs {_sq['estimated_gap']!r})")
+    macro("WfourSquareGap", f"{math.floor(_g * 1e4) / 1e4:.4f}",
+          note="E4 W4 4x4 J2=0.5 gap_lower_bound rounded down to 4 decimals")
 
 # ============================================================== E5
 _, e5, _ = runs["e5_arpack_multiplet"]
