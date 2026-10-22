@@ -8,6 +8,7 @@ of both runs, the stack-dependent bounds with their relative difference, and the
 are copied from the records, never typed. Post-processing only (excluded from the computational source).
 """
 import csv
+from collections import Counter
 import glob
 import json
 import os
@@ -56,7 +57,8 @@ def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re
     for k, v in mc["steps"].items():
         if k == "numbers":
             continue
-        w(f"| {k} | {v.get('status')}{' (' + v.get('reason', '') + ')' if v.get('reason') else ''} | "
+        st = v.get("status") or ("ok" if v.get("returncode") == 0 else "failed") + (f": {v['summary']}" if v.get("summary") else "")
+        w(f"| {k} | {st}{' (' + v.get('reason', '') + ')' if v.get('reason') else ''} | "
           f"{fmt(v.get('seconds', ''))} | {v.get('source_hash', '')} |")
     w("")
     srcs = {v.get("source_hash") for k, v in mc["steps"].items() if v.get("status") == "ok"}
@@ -105,9 +107,11 @@ def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re
             w(f"S = 1 landscape (floating point) at c1 = {fmt(la['couplings']['c1'])}, c3 = {fmt(la['couplings']['c3'])}: "
               f"{len(la['classes'])} / {len(lb['classes'])} classes; lowest class {ma['pair_spins2']} at {fmt(ma['energy'])} (ref) / "
               f"{mb['pair_spins2']} at {fmt(mb['energy'])} (cand).\n")
-        for extra in ("named_sectors", "named_sector_energies"):
-            if extra in c9 and extra not in r9:
-                w(f"Candidate-only record `{extra}` (feat/e9-named-sectors): `{json.dumps(c9[extra])[:400]}`\n")
+        ns = c9.get("spin1_printed", {}).get("named_sectors")
+        if ns:
+            w("S = 1 at the printed couplings, the two pair-spin sectors the paper names (floating point; new in 3.1.0): "
+              + "; ".join(f"{s['pair_spins']} (dim {s['dim']}, multiplicity {s['multiplicity']}): {s['energy']:.7f}" for s in ns)
+              + f". Both lie above the all-singlet bound {pb['eigenvalue_upper']:.10f}.\n")
     # ---- E10
     r10, _ = rec(ref, "e10_"); c10, _ = rec(cand, "e10_")
     if r10 and c10:
@@ -181,17 +185,64 @@ def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re
         w("")
         w(f"S3 outcome identical on {same} of {len(r2.get('rows', []))} points. NOT_CHECKED means the inertia count did not fit "
           "under the cap; the certificate says so and S1+S2 are measured alone.\n")
+    # ---- E5 and E6: records drawn from what the stack produced, compared by their invariants
+    r5, _ = rec(ref, "e5_"); c5, _ = rec(cand, "e5_")
+    if r5 and c5:
+        def inv5(d):
+            rows = d.get("rows", [])
+            bad = [r for r in rows if r.get("correct") is False
+                   and "CERTIFIED" in (r.get("P3_statuses", {}).get("S3.completeness"), r.get("P3k_S3"))]
+            p3 = sorted(Counter(r.get("P3_statuses", {}).get("S3.completeness") for r in rows).items())
+            p3k = sorted(Counter(r.get("P3k_S3") for r in rows).items())
+            return len(rows), sum(r.get("correct") is False for r in rows), len(bad), p3, p3k
+        a, b = inv5(r5), inv5(c5)
+        w("## E5 — ARPACK misses a multiplet member (rows depend on the stack; invariants)\n")
+        w("Which seeds make ARPACK miss a member of the fourfold level depends on the floating-point stack, so rows are "
+          "not compared one by one. What must hold on every stack is that no incorrect result is certified.\n")
+        w("| | ref | cand |\n|---|---|---|")
+        for lab, i in (("ARPACK runs", 0), ("incorrect results (a member missed)", 1),
+                       ("incorrect results certified (must be 0)", 2), ("S3 of the full claim", 3), ("S3 of the k lowest", 4)):
+            w(f"| {lab} | {a[i]} | {b[i]} |")
+        w("")
+    r6, _ = rec(ref, "e6_"); c6, _ = rec(cand, "e6_")
+    if r6 and c6:
+        w("## E6 — mutation analysis (a sample of the code that ran)\n")
+        w("| | ref | cand |\n|---|---|---|")
+        for lab, f in (("mutation sites", lambda d: sum(d.get("sites_per_module", {}).values())),
+                       ("copy given to the mutants", lambda d: (d.get("copy") or {}).get("source", "certify_ed/, tests/, examples/")),
+                       ("baseline", lambda d: f"{d.get('baseline', {}).get('status')} in {d.get('baseline', {}).get('seconds', 0):.0f} s"),
+                       ("mutants", lambda d: d.get("summary", {}).get("n")), ("killed", lambda d: d.get("summary", {}).get("killed")),
+                       ("timeouts", lambda d: d.get("summary", {}).get("timeouts")),
+                       ("survived", lambda d: d.get("summary", {}).get("survived")),
+                       ("score", lambda d: f"{d.get('summary', {}).get('score', 0):.3f}")):
+            w(f"| {lab} | {f(r6)} | {f(c6)} |")
+        w("")
+        w("The two samples are drawn from different code (the mutation sites differ), so the scores describe two test "
+          "suites against two codes; survivors await the human verdict of MS-N03 (e6_classify / e6_recheck).\n")
     # ---- comparison summary
     w("## Record-by-record comparison (experiments/compare_runs.py)\n")
-    w("| experiment | leaves | same | float within 1e-9 | stack-dependent (within STACK_RTOL) | max rel. diff of stack-dependent | fp statistics (E8 ratios) | max rel. diff of fp statistics | timing | missing | MISMATCH |")
-    w("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    w("| experiment | leaves | same | float within 1e-9 | stack-dependent (within STACK_RTOL) | max rel. diff of stack-dependent | fp statistics | max rel. diff of fp statistics | prose with run-stack digits | extended | sample-dependent | explained | timing | missing | MISMATCH |")
+    w("|---|" + "---:|" * 14)
     for e, rs in sorted(by_exp.items()):
         cls = [r["class"] for r in rs]
         sd = [float(r["rel_diff"]) for r in rs if r["class"].startswith("stack") and r["rel_diff"] not in ("", None)]
         fs = [float(r["rel_diff"]) for r in rs if r["class"] == "fp-statistic" and r["rel_diff"]]
         w(f"| {e} | {len(rs)} | {cls.count('same')} | {cls.count('float-differs')} | {sum(c.startswith('stack') for c in cls)} | "
-          f"{(max(sd) if sd else 0):.3e} | {cls.count('fp-statistic')} | {(max(fs) if fs else 0):.3e} | {cls.count('timing')} | {cls.count('missing')} | {cls.count('MISMATCH')} |")
+          f"{(max(sd) if sd else 0):.3e} | {cls.count('fp-statistic')} | {(max(fs) if fs else 0):.3e} | {cls.count('text-numbers')} | "
+          f"{cls.count('extended')} | {cls.count('sample-dependent')} | {cls.count('explained')} | {cls.count('timing')} | "
+          f"{cls.count('missing')} | {cls.count('MISMATCH')} |")
     w("")
+    expl = [r for r in rows if r["class"] == "explained"]
+    if expl:
+        w("Explained differences (experiments/compare_runs.py EXPLAINED):\n")
+        for note, n in Counter((r["experiment"], r.get("note", "")) for r in expl).items():
+            w(f"* {note[0]} ({n} leaves): {note[1]}")
+        w("")
+    miss = [r for r in rows if r["class"] == "missing"]
+    if miss:
+        by = Counter((r["experiment"], "candidate only" if r["value_A"] == "<missing>" else "reference only") for r in miss)
+        w("Fields present in one record only (fields added or removed between the versions): "
+          + "; ".join(f"{e} {n} ({side})" for (e, side), n in sorted(by.items())) + ".\n")
     mism = [r for r in rows if r["class"] == "MISMATCH"]
     if mism:
         w("MISMATCH leaves:\n")
@@ -199,11 +250,15 @@ def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re
             w(f"* {r['experiment']} `{r['path']}`: {r['value_A'][:80]} vs {r['value_B'][:80]}")
         w("")
     else:
-        w("No MISMATCH leaf: every statement, count, pivot sign, status and string agrees; only timings, the "
-          "stack-dependent bounds (within their tolerance) and the E8 residual statistics differ.\n")
+        w("No MISMATCH leaf: every status, count, pivot sign and statement string agrees; what differs is in one of the "
+          "named classes above (timings, run-stack digits and bounds, sampled records compared by their invariants, "
+          "fields added in the newer version, and the explained differences listed).\n")
     num = mc["steps"].get("numbers")
     if num:
         w("## Numbers step of the candidate run\n")
+        if mc.get("numbers_regenerated"):
+            w(f"Numbers regenerated after the run ({', '.join(mc['numbers_regenerated'])}); the list below is the latest "
+              f"regeneration, with the provenance of the number scripts at commit {num.get('provenance', {}).get('git_commit', '?')[:7]}.\n")
         for script, res in num.items():
             if script == "provenance":
                 continue
@@ -212,9 +267,11 @@ def main(ref, cand, cmp_csv, out, title="Candidate reproduction run: what was re
             else:
                 w(f"* `{script}`: returncode {res.get('returncode')}; " + "; ".join(str(c) for c in res.get("checks", [])))
         w("")
-        w("The failed manifest checks are the ones expected of a reproduction made while the branch was being integrated "
-          "(a skipped step, several per-step hashes, one dirty step; see Steps above) and would fail the 3.1.0 evidence run, "
-          "which is their purpose.\n")
+        failed = [s for s, res in num.items() if s != "provenance" and res.get("status") == "failed"]
+        if failed:
+            w("Failed number checks: " + ", ".join(failed) + ". In a reproduction made while the branch was being "
+              "integrated they are expected (a skipped step, several per-step hashes, one dirty step; see Steps above); "
+              "in an evidence run each one must be explained.\n")
     w("## Coverage\n")
     missing = [k for k in ("E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10")
                if mc["steps"].get(k, {}).get("status") != "ok"]

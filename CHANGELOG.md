@@ -9,6 +9,23 @@ fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: se
 manuscript check). The computational source hash changes with this release, so the records of the run
 of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 
+### Evidence run of 3.1.0 (2026-10-22)
+- `results/run_full_20261022`: tag `v3.1.0` (`e860a83`), computational source `acbef11af991c860` for every step, no step
+  dirty; Windows workstation, Python 3.11.17, numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0
+  (FLINT 3.6.0), QuSpin 1.0.1 (the library versions of the Linux 3.0.0 run). Tests: 541 passed, 1 skipped, 1 warning.
+  E0–E10 ok. Numbers: 61/61 and 45/45 checks, after one change to `make_numbers.py` (`55c2ef9`): the W4 check
+  asserted the Linux outcome for the 4×4 J2 = 0.5 completeness (NOT_CHECKED); here S3 is CERTIFIED (gap ≥ 0.2870)
+  because a job object counts committed memory where RLIMIT_AS counts address space. E6: 38 of 64 mutants killed;
+  15 survivors await the human verdict of MS-N03 (`results/run_full_20261022/E6_inspection_worksheet.md`).
+- Two stacks: against `run_full_20261021` (Linux, 3.0.0) `compare_runs.py` finds no MISMATCH leaf
+  (`RESULT_evidence_run_3.1.0.md`). With the library versions pinned, the E9 exact lower bound and every E10
+  factorization residual are bit-identical across the two operating systems (the up-to-6 % differences of the
+  candidate run came from library versions); E7 exact radii still differ (ratios 0.25–1.47).
+- `compare_runs.py`: named classes for prose with run-stack digits (floating-point numbers only; counts stay strict),
+  records extended by a newer version, records drawn from the stack (E5 ARPACK rows, E6 mutant samples; compared by
+  their invariants in the RESULT document), explained differences (`EXPLAINED`, with reasons), and timing/memory
+  leaves; negative controls in `tests/test_compare_runs.py`.
+
 ### Windows portability (2026-10-22, found by the first attempt of the evidence run)
 The first full run on the Windows workstation (`results/run_full_20261022_attempt1`, kept with an ATTEMPT_NOTE)
 failed in four places that the Linux runs never exercised. None touched a certified statement.

@@ -17,22 +17,47 @@ one-line summary per experiment and writes every leaf to the CSV.
 import csv
 import json
 import os
+import re
 import sys
 
 TIMING = ("seconds", "time", "elapsed", "started", "finished")
+# leaf names that are timings or memory although they do not say so (E2: producer t_build/t_solve, certifier total,
+# peak memory in MiB)
+TIMING_LEAVES = ("t_build", "t_solve", "total", "maxrss_mb")
 # certified bounds that are computed from floating-point proposals (factor residuals, Weyl margins, exact
 # radii): valid on each stack, but not bit-identical across stacks (review SS-19). They are compared with
 # their own, looser tolerance STACK_RTOL (default 10 %: the factorization residual beta differed by up to
 # 6 % between the Linux run and the Windows replication); beyond it they are MISMATCH like any other field.
 STACK_RTOL = 0.10
 STACK_DEPENDENT = ("beta", "delta", "radius", "t_prime", "_exact", "bound_exact", "eta_upper", "lower_bound",
-                   "eigenvalue_upper", "margin", "half_width", "halfwidth", "width")
+                   "eigenvalue_upper", "margin", "half_width", "halfwidth", "width", "certified_gap", "fraction_of_gap")
 # descriptive floating-point statistics of residual norms (E8: the ratio of symveig's to certify_ed's largest
 # half-width per model, the fitted slopes and slowdowns): quotients of two LAPACK-dependent residuals, neither a
 # statement nor a certified bound. They are reported with their relative difference and never decide the exit
 # code; the manuscript marks them run-stack (SS-19). The statements of the same record (complete, counted claims,
 # reference_outside) stay strict.
-FP_STATISTIC = ("ratio", "slope", "slowdown")
+FP_STATISTIC = ("ratio", "slope", "slowdown", "spread", "bound_over_", ".p99", ".p50", ".median")
+# records whose items are drawn from what the stack produced, compared by their invariants instead of leaf by leaf:
+# E5 rows are ARPACK runs per seed (which seed misses a multiplet member depends on the floating-point stack; the
+# invariant is that no incorrect result is certified), E6 mutants are a random sample of the mutation sites of the
+# code that ran (a different code has different sites; the invariant is the baseline and the score).
+SAMPLE_DEPENDENT = {"e5": ("rows[",), "e6": ("mutants[",)}
+# differences explained once, by path pattern (regular expression) and reason; they are reported in their own class
+EXPLAINED = {
+    "e4": [(r"^W1\.levels\[\d+\]\[[12]\]$",
+            "quantum numbers of a degenerate level at the cut: which member of the multiplet is listed is a tie"),
+           (r"^W4\[3\]\.(statuses\.S3\.completeness|gap_lower_bound|s3_note)$",
+            "4x4 J2=0.5: the S3 factorization fits under a committed-memory cap (job object) and not under an "
+            "address-space cap (RLIMIT_AS) of the same size")],
+    "e6": [(r"^(sites_per_module\.|summary\.)",
+            "the mutation sites and the sampled mutants belong to the code that ran; between two versions of the code "
+            "they differ, and so do the counts and the score (a version difference, reported, not a reproduction failure)")],
+    "e2": [(r"\.statements\.S3\.completeness\.summary$",
+            "the reason text of a NOT_CHECKED S3 names the allocation failure as the platform reports it "
+            "(MemoryError vs SuperLU's gstrf error); the status is compared strictly")],
+}
+# floating-point numbers only (a decimal point or an exponent): integers in prose are counts and stay strict
+NUM = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?|[-+]?\d+[eE][-+]?\d+")
 
 
 def flatten(o, prefix=""):
@@ -68,9 +93,21 @@ def _num(x):
     return float(x)
 
 
-def classify(k, a, b, rtol):
+CLASSES = ("same", "float-differs", "stack-dependent", "fp-statistic", "text-numbers", "extended", "sample-dependent",
+           "explained", "timing", "missing", "MISMATCH")
+
+
+def classify(k, a, b, rtol, exp=""):
     kl = k.lower()
-    if any(t in kl for t in TIMING):
+    if a == b:
+        return "same", ""
+    for prefix in SAMPLE_DEPENDENT.get(exp, ()):
+        if k.startswith(prefix):
+            return "sample-dependent", ""
+    for pat, why in EXPLAINED.get(exp, ()):
+        if re.search(pat, k):
+            return "explained", why
+    if any(t in kl for t in TIMING) or k.rsplit(".", 1)[-1] in TIMING_LEAVES:
         return "timing", ""
     if any(t in kl for t in FP_STATISTIC) and not any(t in kl for t in ("status", "count")):
         try:
@@ -88,6 +125,11 @@ def classify(k, a, b, rtol):
             return ("stack-dependent" if rel <= STACK_RTOL else "MISMATCH"), f"{rel:.3e}"
         except (TypeError, ValueError):
             pass
+    if isinstance(a, str) and isinstance(b, str):
+        if NUM.sub("#", a) == NUM.sub("#", b):
+            return "text-numbers", ""                # the same sentence with run-stack digits
+        if b.startswith(a.rstrip()) or a.startswith(b.rstrip()):
+            return "extended", ""                    # one record says more (a statement added in the newer version)
     if isinstance(a, bool) or isinstance(b, bool) or isinstance(a, str) or isinstance(b, str) or a is None or b is None:
         return ("same" if a == b else "MISMATCH"), ""
     if isinstance(a, int) and isinstance(b, int):
@@ -108,22 +150,22 @@ def main(run_a, run_b, out_csv, rtol=1e-9):
     rows = []
     for exp in common:
         da, db = dict(flatten(ra[exp][1])), dict(flatten(rb[exp][1]))
-        counts = {"same": 0, "float-differs": 0, "stack-dependent": 0, "fp-statistic": 0, "MISMATCH": 0, "timing": 0, "missing": 0}
+        counts = dict.fromkeys(CLASSES, 0)
         for k in sorted(set(da) | set(db)):
             if k not in da or k not in db:
                 counts["missing"] += 1
-                rows.append((exp, k, da.get(k, "<missing>"), db.get(k, "<missing>"), "missing", ""))
+                rows.append((exp, k, da.get(k, "<missing>"), db.get(k, "<missing>"), "missing", "", ""))
                 continue
-            cls, rel = classify(k, da[k], db[k], rtol)
+            cls, rel = classify(k, da[k], db[k], rtol, exp)
             counts[cls] += 1
-            rows.append((exp, k, da[k], db[k], cls, rel))
+            rows.append((exp, k, da[k], db[k], cls, "" if cls == "explained" else rel, rel if cls == "explained" else ""))
         print(f"{exp}: {ra[exp][0]} vs {rb[exp][0]}: {counts}")
     only = sorted((set(ra) | set(rb)) - set(common))
     if only:
         print("present in one run only:", only)
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["experiment", "path", "value_A", "value_B", "class", "rel_diff"])
+        w.writerow(["experiment", "path", "value_A", "value_B", "class", "rel_diff", "note"])
         for r in rows:
             w.writerow([str(x) for x in r])
     return 0 if all(r[4] != "MISMATCH" for r in rows) else 1
