@@ -1,5 +1,8 @@
 """E2: cost of certification relative to the solve it certifies (time and peak memory).
 
+Each child is memory-capped (MEM_CAP_BYTES): RLIMIT_AS on POSIX, a job object on Windows (experiments/portable.py);
+the mechanism is recorded per data point as memory_cap.
+
 Each data point runs two fresh processes:
   producer  : QuSpin builds the basis and H and computes the lowest eigenpairs (eigsh);
               the result is written to an .npz file
@@ -15,15 +18,20 @@ import subprocess
 import sys
 import time
 
+import portable
 from harness import Run, ROOT
 
 PRODUCER = r'''
-import sys, json, time, resource, warnings
+import sys, json, time, os, warnings
 warnings.filterwarnings("ignore")
 import numpy as np, scipy.sparse as sp
 from quspin.basis import spin_basis_1d, spin_basis_general
 from quspin.operators import hamiltonian
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "experiments"))
+import portable
+_CAP = (portable.cap_memory(int(os.environ["CERTIFY_ED_MEM_CAP"])) if os.environ.get("CERTIFY_ED_MEM_CAP")
+        else "RLIMIT_AS (preexec_fn)")
 import certify_ed as ce
 cfg = json.loads(sys.argv[1])
 t0 = time.time()
@@ -48,7 +56,7 @@ t_solve = time.time() - t1
 order = np.argsort(w); w, V = w[order], V[:, order]
 Hc = H.tocsr()
 out = {"t_build": t_build, "t_solve": t_solve, "dim": int(basis.Ns), "nnz": int(Hc.nnz),
-       "maxrss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024}
+       "maxrss_mb": portable.peak_rss_mb(), "memory_cap": _CAP}
 d = dict(H_data=Hc.data, H_indices=Hc.indices, H_indptr=Hc.indptr, H_shape=np.array(Hc.shape), w=w, V=V,
          static=json.dumps(static), states=np.asarray(basis.states, dtype=np.int64))
 if cfg["block"] == "k0":
@@ -59,10 +67,14 @@ print("RESULT" + json.dumps(out))
 '''.replace("ROOT", repr(ROOT))
 
 CERTIFIER = r'''
-import sys, json, time, resource, warnings
+import sys, json, time, os, warnings
 warnings.filterwarnings("ignore")
 import numpy as np, scipy.sparse as sp
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "experiments"))
+import portable
+_CAP = (portable.cap_memory(int(os.environ["CERTIFY_ED_MEM_CAP"])) if os.environ.get("CERTIFY_ED_MEM_CAP")
+        else "RLIMIT_AS (preexec_fn)")
 import certify_ed as ce
 from certify_ed.construct import StateSet
 cfg = json.loads(sys.argv[1])
@@ -93,7 +105,7 @@ fill = [c.get("fill_nnz") for c in s3.get("counts", [])]
 out = {"total": tot, "statements": st, "k_claimed": int(k), "fill_nnz": fill,
        "gap_lower_bound": s3.get("gap_lower_bound"), "true_gap_estimate": float(w[k] - w[k - 1]) if k < len(w) else None,
        "max_radius": float(cert.arrays["radius"].max()),
-       "maxrss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024}
+       "maxrss_mb": portable.peak_rss_mb(), "memory_cap": _CAP}
 print("RESULT" + json.dumps(out))
 '''.replace("ROOT", repr(ROOT))
 
@@ -102,18 +114,16 @@ MEM_CAP_BYTES = int(4.5 * 2 ** 30)   # each child process is capped; exceeding i
 THREADS = "1"                         # single-threaded BLAS for producer and certifier alike
 
 
-def _limit():
-    import resource
-    resource.setrlimit(resource.RLIMIT_AS, (MEM_CAP_BYTES, MEM_CAP_BYTES))
-
-
 def run_child(code, cfg, timeout):
     t = time.time()
     env = dict(os.environ, OMP_NUM_THREADS=THREADS, OPENBLAS_NUM_THREADS=THREADS, MKL_NUM_THREADS=THREADS,
                NUMBA_NUM_THREADS=THREADS)
+    pre = portable.posix_preexec(MEM_CAP_BYTES)     # POSIX: RLIMIT_AS before exec, as before
+    if pre is None:                                  # Windows: the child caps itself (job object)
+        env["CERTIFY_ED_MEM_CAP"] = str(MEM_CAP_BYTES)
     try:
         p = subprocess.run([sys.executable, "-c", code, json.dumps(cfg)], capture_output=True, text=True,
-                           timeout=timeout, env=env, preexec_fn=_limit)
+                           timeout=timeout, env=env, preexec_fn=pre)
     except subprocess.TimeoutExpired:
         return {"error": f"timeout after {timeout}s"}, time.time() - t
     for line in p.stdout.splitlines():

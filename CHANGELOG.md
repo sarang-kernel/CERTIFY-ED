@@ -9,6 +9,23 @@ fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: se
 manuscript check). The computational source hash changes with this release, so the records of the run
 of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 
+### Windows portability (2026-10-22, found by the first attempt of the evidence run)
+The first full run on the Windows workstation (`results/run_full_20261022_attempt1`, kept with an ATTEMPT_NOTE)
+failed in four places that the Linux runs never exercised. None touched a certified statement.
+- **Matrix-free importer.** scipy 1.17's `LinearOperator.matmat` calls the producer's `matvec` with (n, 1)
+  columns, which a function written for vectors broadcasts to (n, n). `certify_ed/io/formats.py` now always calls
+  the producer's `matvec`/`rmatvec` with a vector of shape (n,), checks that n numbers come back (FormatError
+  naming the file otherwise) and builds `matmat` column by column. Test: `test_matrix_free_matvec_is_called_with_vectors_and_checked`.
+- **E2, E4: memory cap and peak memory.** `resource` and `preexec_fn` do not exist on Windows. New
+  `experiments/portable.py`: RLIMIT_AS on POSIX (unchanged), a job object with a per-process memory limit on
+  Windows; peak working set on Windows; CPU model and RAM from the registry and GlobalMemoryStatusEx (the harness
+  recorded neither on Windows, and `make_numbers.py` read /proc unguarded). E2 rows and E4 settings record the cap
+  mechanism (`memory_cap`). Tests: `tests/test_portable.py` (a capped child must raise MemoryError).
+- **E6: the mutants face the shipped suite.** The mutation harness copied only `certify_ed/`, `tests/`,
+  `examples/`; six 3.1.0 tests read `pyproject.toml` or `experiments/` (so the baseline failed on every platform) and
+  25 tests skipped in the copy against 1 in the repository. The copy is now every tracked file (`git ls-files`).
+  `tests/test_driver.py`'s `needs_repo` also requires a git checkout, as `test_imp06` already did.
+
 ### Candidate run and integration (2026-10-22)
 - `release/3.1.0` at `v3.1.0-candidate`: fix track + scope framework + survey/scope generators + v4 macro emission +
   `compare_runs.py` + `make_result_candidate.py` + E9 named-sector step. Full suite on the Windows integration stack

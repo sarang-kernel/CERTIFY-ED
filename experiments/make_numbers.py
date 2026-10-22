@@ -218,15 +218,17 @@ _main_date = max(set(_dates.values()), key=list(_dates.values()).count)
 _other = sorted((d, f"E{k[1]}") for k, d in _dates.items() if d != _main_date)
 macro("RunDate", _main_date + (" (" + "; ".join(f"{e} on {d}" for d, e in _other) + ")" if _other else ""))
 cpu = env0.get("cpu_model")
-if not cpu:
-    with open("/proc/cpuinfo") as f:
-        cpu = next((l.split(":", 1)[1].strip() for l in f if l.startswith("model name")), "x86-64 CPU")
+if not cpu:                          # records written before the platform layer: probe this machine
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import portable
+    cpu = portable.cpu_model() or "x86-64 CPU"
 cpu = cpu.replace("(R)", "").replace("(TM)", "").replace("  ", " ")
 macro("MachineCPU", tex_escape(cpu))
 mem = env0.get("memory_GiB")
 if mem is None:
-    with open("/proc/meminfo") as f:
-        mem = round(next(int(l.split()[1]) for l in f if l.startswith("MemTotal")) / 2 ** 20, 1)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import portable
+    mem = portable.memory_gib()
 macro("MachineRAM", f"{mem:.1f}")
 macro("PyVersion", env0["python"].split()[0])
 macro("NumpyVersion", env0["numpy"])

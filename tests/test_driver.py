@@ -9,8 +9,9 @@ from certify_ed.provenance import repo_root, source_fingerprint
 from conftest import needs_flint, needs_quspin
 
 ROOT = repo_root()
-needs_repo = pytest.mark.skipif(ROOT is None or not os.path.isdir(os.path.join(ROOT or "", "experiments")),
-                                reason="needs a repository checkout")
+needs_repo = pytest.mark.skipif(ROOT is None or not os.path.isdir(os.path.join(ROOT or "", "experiments"))
+                                or not os.path.exists(os.path.join(ROOT or "", ".git")),
+                                reason="needs a repository checkout (git)")
 
 
 @needs_repo

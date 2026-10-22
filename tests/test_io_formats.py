@@ -289,3 +289,18 @@ def test_bundle_format_preference(tmp_path):
     assert np.array_equal(b.claim.eigenvalues, [1.0, 2.0])
     assert b.claim.producer["files"]["eigenvalues"] == "eigenvalues.npy"
     assert os.path.basename(b.files["eigenvalues"]) == "eigenvalues.npy"
+
+
+def test_matrix_free_matvec_is_called_with_vectors_and_checked(tmp_path):
+    # a producer function written for 1-D vectors must not be broadcast by (n, 1) columns (scipy 1.17
+    # LinearOperator.matmat), and a wrong output length is a FormatError naming the file
+    p = tmp_path / "operator.py"
+    p.write_text("import numpy as np\ndim = 3\n_d = np.array([1.0, 2.0, 3.0])\n"
+                 "def matvec(x):\n    assert x.shape == (3,), x.shape\n    return _d * x\n")
+    op = read_operator(str(p), allow_code=True)
+    assert np.array_equal(op.matmat(np.eye(3)), np.diag([1.0, 2.0, 3.0]))
+    q = tmp_path / "bad.py"
+    q.write_text("import numpy as np\ndim = 3\ndef matvec(x):\n    return np.ones(4)\n")
+    bad = read_operator(str(q), allow_code=True)
+    with pytest.raises(FormatError, match="returned shape"):
+        bad.matvec(np.ones(3))

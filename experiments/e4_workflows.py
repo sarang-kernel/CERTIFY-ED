@@ -192,15 +192,15 @@ MEM_CAP_GIB = 5.0
 
 
 def main():
-    import resource
     import sys
+    import portable
     cap = int(MEM_CAP_GIB * 2 ** 30)
-    resource.setrlimit(resource.RLIMIT_AS, (cap, cap))
+    mem_cap = portable.cap_memory(cap)          # RLIMIT_AS on POSIX, a job object on Windows
     parts = [a for a in sys.argv[1:] if not a.startswith("N=")] or ["W1", "W2", "W3", "W4"]
     n3 = [int(a[2:]) for a in sys.argv[1:] if a.startswith("N=")]
     fns = {"W1": w1_sectors, "W2": w2_multiplet, "W3": w3_matrix_free, "W4": w4_benchmarks}
     with Run("e4_workflows_" + "".join(parts)) as run:
-        run.record("settings", {"memory_cap_GiB": MEM_CAP_GIB, "threads": 1})
+        run.record("settings", {"memory_cap_GiB": MEM_CAP_GIB, "memory_cap": mem_cap, "threads": 1})
         for p in parts:
             if p == "W3" and n3:
                 w3_matrix_free(run, N=n3[0])

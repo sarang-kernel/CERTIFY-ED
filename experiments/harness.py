@@ -69,14 +69,11 @@ class Run:
                            for d in threadpool_info()]
         except Exception:
             pass
-        try:
-            with open("/proc/cpuinfo") as f:
-                env["cpu_model"] = next((l.split(":", 1)[1].strip() for l in f if l.startswith("model name")), None)
-            with open("/proc/meminfo") as f:
-                kb = next(int(l.split()[1]) for l in f if l.startswith("MemTotal"))
-            env["memory_GiB"] = round(kb / 2 ** 20, 1)
-        except Exception:
-            pass
+        if os.path.dirname(os.path.abspath(__file__)) not in sys.path:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import portable                         # /proc on Linux, registry and GlobalMemoryStatusEx on Windows
+        env["cpu_model"] = portable.cpu_model()
+        env["memory_GiB"] = portable.memory_gib()
         try:
             from certify_ed.fp import probe_float_environment
             env["float_environment"] = probe_float_environment()

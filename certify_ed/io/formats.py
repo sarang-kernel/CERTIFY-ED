@@ -356,7 +356,25 @@ def _load_callable(path: str):
         raise FormatError(f"{path}: define matvec(x) and shape (or dim), or operator()")
     n = int(getattr(mod, "dim", None) or mod.shape[0])
     dtype = np.dtype(getattr(mod, "dtype", float))
-    return LinearOperator((n, n), matvec=mod.matvec, rmatvec=getattr(mod, "rmatvec", mod.matvec), dtype=dtype)
+    mv = _vector_call(mod.matvec, n, path, "matvec")
+    rmv = _vector_call(getattr(mod, "rmatvec", mod.matvec), n, path, "rmatvec")
+
+    def mm(X):                                   # one 1-D call per column, whatever scipy's own matmat does
+        X = np.asarray(X)
+        return np.column_stack([mv(X[:, j]) for j in range(X.shape[1])]) if X.shape[1] else np.zeros((n, 0), dtype)
+    return LinearOperator((n, n), matvec=mv, rmatvec=rmv, matmat=mm, dtype=dtype)
+
+
+def _vector_call(f, n: int, path: str, name: str):
+    """The producer's matvec is a function of a vector: always call it with shape (n,) and check that it
+    returns n numbers. scipy's LinearOperator passes (n, 1) columns in some versions (1.17), which a
+    function written for vectors broadcasts to an (n, n) array."""
+    def call(x):
+        y = np.asarray(f(np.asarray(x).reshape(n)))
+        if y.size != n or y.ndim > 2 or (y.ndim == 2 and 1 not in y.shape):
+            raise FormatError(f"{path}: {name}(x) returned shape {y.shape} for a vector of length {n}")
+        return y.reshape(n)
+    return call
 
 
 def write_operator(path: str, A, key: str = "H") -> str:

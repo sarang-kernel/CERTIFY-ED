@@ -101,6 +101,18 @@ def apply_mutation(source, index):
     return ast.unparse(tree), desc, line
 
 
+def _tracked_files():
+    """Files git tracks in ROOT (relative paths), or [] when git is unavailable."""
+    try:
+        out = subprocess.run(["git", "-c", "core.quotepath=off", "ls-files", "-z"], cwd=ROOT, capture_output=True,
+                             timeout=120)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if out.returncode:
+        return []
+    return [p for p in out.stdout.decode("utf-8").split("\0") if p and os.path.isfile(os.path.join(ROOT, p))]
+
+
 def run_tests(workdir, timeout):
     t = time.time()
     try:
@@ -129,14 +141,23 @@ def main():
         sample = rng.sample(pool, min(n_mut, len(pool)))
         run.log(f"{len(pool)} mutation sites in {len(TARGETS)} modules; sampling {len(sample)}")
         run.record("sites_per_module", counts)
-        # one private copy of the repository per worker
+        # one private copy of the repository per worker: every tracked file (the suite reads pyproject.toml,
+        # experiments/ and docs/ as well as certify_ed/, tests/ and examples/; a copy without them fails or
+        # skips tests and measures a weaker suite than the one shipped)
+        tracked = _tracked_files()
+        run.record("copy", {"files": len(tracked), "source": "git ls-files" if tracked else "fallback directories"})
         copies = []
         for w in range(workers):
             d = tempfile.mkdtemp(prefix=f"mut{w}_")
-            shutil.copytree(os.path.join(ROOT, "certify_ed"), os.path.join(d, "certify_ed"))
-            for sub in ("tests", "examples"):           # the suite runs the examples too
-                shutil.copytree(os.path.join(ROOT, sub), os.path.join(d, sub),
-                                ignore=shutil.ignore_patterns("__pycache__"))
+            if tracked:
+                for rel in tracked:
+                    os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)
+                    shutil.copy2(os.path.join(ROOT, rel), os.path.join(d, rel))
+            else:
+                for sub in ("certify_ed", "tests", "examples", "experiments", "docs"):
+                    shutil.copytree(os.path.join(ROOT, sub), os.path.join(d, sub),
+                                    ignore=shutil.ignore_patterns("__pycache__", "results"))
+                shutil.copy2(os.path.join(ROOT, "pyproject.toml"), d)
             copies.append(d)
         # baseline: unmutated (unparsed) sources must pass
         base_status, base_first, base_t = run_tests(copies[0], 900)
