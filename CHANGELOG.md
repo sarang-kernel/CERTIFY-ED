@@ -9,6 +9,19 @@ fixes of the independent review of 2026-10-21 (ids IMP-xx: code audit; SS-xx: se
 manuscript check). The computational source hash changes with this release, so the records of the run
 of 2026-10-21 (source 7fb63586baf7ea6f) are superseded by the next full run.
 
+### Known issues of 3.1.0 (found while filling the manuscript's evidence pointers, 2026-10-22)
+- **INT-01.** The no-underflow hypothesis of the floating-point statements is assumed, not enforced: `fp.py` probes
+  gradual underflow and denormals-are-zero, but no input check rejects operands or radii below 2^-900 (the
+  manuscript said it did). Needs a design decision (reject, rescale, or state the hypothesis as the user's).
+- **INT-02.** No validator rejects a certificate whose scope block omits a statement: `verify_integrity` checks the
+  hashes only, and the completeness check of the scope block exists only as a test helper. Fixed on `fix/3.1.1`.
+- **INT-03.** The exported `radius` and `existence_radius` arrays are `enc.radius + eps_shift` in round-to-nearest
+  (`certify.py` 1161-1162) and can understate the sum by half an ulp; the statements themselves use `add_up`.
+  Fixed on `fix/3.1.1`.
+- **INT-04.** Appendix A's accounting of the Theorem 1 radius (k <= 6 roundings, factor 1 + 8u, model shift
+  multiplied in) does not describe the code (three roundings, factor 1 + 4u, model shift added with upward
+  rounding). The code's bound is sound; the text is to be rewritten (D-16).
+
 ### Evidence run of 3.1.0 (2026-10-22)
 - `results/run_full_20261022`: tag `v3.1.0` (`e860a83`), computational source `acbef11af991c860` for every step, no step
   dirty; Windows workstation, Python 3.11.17, numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0
