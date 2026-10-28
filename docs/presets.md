@@ -11,11 +11,13 @@ out of scope (`docs/SCOPE_MATRIX.md`).
 certify-ed certify --from RUN --preset benchmark
 certify-ed certify --from RUN --only S1,S2 --reason "vectors not stored for the excited states"
 certify-ed certify --from RUN --skip S3 --budget-seconds 600 --budget-mb 4000
+certify-ed certify --from RUN --budget auto --progress   # budget from the cost model; one line per statement
 certify-ed presets                       # this table
 ```
 
 In Python: `Options.from_preset("benchmark", budget_seconds=600)`, or `Options(only=["S1", "S2"])`,
-`Options(skip=["S3"], narrowing_reason="...")`.
+`Options(skip=["S3"], narrowing_reason="...")`; the same keywords go through the one-call API,
+`certify_ed.quick(H, w, V, spec, preset="benchmark", budget_seconds="auto", progress=True)`.
 
 ## Presets (data: `certify_ed.presets.PRESETS`)
 
@@ -52,6 +54,21 @@ In Python: `Options.from_preset("benchmark", budget_seconds=600)`, or `Options(o
   S1 reference build `dim x terms x 2 entries x 32 B`, S3/S8 dense factorization `2 n^2` entries (only when
   the dense path would be used), S6 `48 n^2` bytes. A factorization that fails for memory at run time is
   also NOT_CHECKED (`resource_failure`), not an exception.
+* **`budget_seconds="auto"` / `--budget auto`** (3.2) sets the time budget from an advisory cost model
+  (`certify_ed.cost`): wall seconds of S1+S2+S3 against the dimension, fitted to the E2 records of the 3.1.0
+  evidence run (chain U(1) blocks 924/3432/12870: 0.7/2.9/65.5 s; k = 0 blocks 810/2704/9252: 0.9/2.7/17.8 s;
+  4x4 square 12870: 175.4 s; 8-core Windows machine, one BLAS thread). The budget is `max(60 s, 5 x estimate)`
+  over the upper envelope of the fitted rows; it is always finite and is enforced exactly like a number given
+  by the user (`BUDGET_TIME`). The estimate never changes a status; `scope.options.budget_auto` records how it
+  was derived. On the small fixtures the auto budget gives the same statuses as no budget
+  (`tests/test_cost.py`).
+* **`Options(progress=True)` / `--progress`** prints one line per statement (status, summary, wall time since
+  `certify()` began) to stderr as each statement finishes; `progress=callable` receives the line instead.
+  `timing.per_statement` in the certificate holds the seconds of every statement.
+* **Every INCONCLUSIVE or NOT_CHECKED statement carries `evidence.next_action`** (3.2): a concrete instruction
+  derived from the reason code and the summary (`certify_ed.diagnostics`): more eigenpairs so the top cluster is
+  separated, eigenvectors for a 'lowest' claim, a larger budget or dimension limit, `kind='window'` for interior
+  eigenvalues, `pip install 'certify-ed[exact]'` for the exact statements. It is advice; it changes nothing.
 * **Narrowing does not change what is said about a statement still in scope.** The same claim with
   `--skip S3` gives the same S1 and S2 records (tested in `tests/test_presets_scope.py`).
 * The bundle's `meta.json` may suggest `preset`, `only`, `skip`, `budget_seconds`, `budget_mb`,
@@ -74,7 +91,8 @@ Used in `statements[].evidence.reason_code` and in `scope.out_of_scope[].reason_
 | `NEEDS_MATRIX` | the operator is matrix-free and no stored reference matrix exists |
 | `NEEDS_WHOLE_SPECTRUM` | the claim is not a complete whole-spectrum claim (kind 'all', S3 certified) |
 | `NEEDS_TEMPERATURES` | no temperatures were given |
-| `NEEDS_DEPENDENCY` | an optional dependency (python-flint, h5py, a corroborating solver) is missing |
+| `NEEDS_DEPENDENCY` | an input the statement needs was not named (a corroborating solver, h5py for a file) |
+| `MISSING_DEPENDENCY` | an optional package is not installed (python-flint for the exact statements, QuSpin for its importer); the evidence names the extra to install |
 | `NEEDS_OBSERVABLES` | no observables, correlations or structure factors were requested |
 | `NO_COMPLETENESS_CLAIM` | the claim is a 'subset' claim: nothing is said about other eigenvalues |
 | `NO_CLUSTERS` | no (quasi-)degenerate clusters among the claimed pairs |

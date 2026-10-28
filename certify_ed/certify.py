@@ -606,6 +606,15 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
 # main entry point
 # ---------------------------------------------------------------------------
 
+def _have_flint() -> bool:
+    """Whether python-flint can be imported now (checked at call time so a test can simulate its absence)."""
+    try:
+        import flint  # noqa: F401
+    except Exception:
+        return False
+    return True
+
+
 def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     """S6: the claim re-derived in exact arithmetic (checker.exact_recheck_lowest)."""
     sid = "S6.exact_recheck"
@@ -627,14 +636,19 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     if n > opts.exact_max_dim:
         return _stmt(sid, "NOT_CHECKED", f"dimension {n} above exact_max_dim {opts.exact_max_dim}", {}, [],
                      time.time() - t0, reason_code="SIZE_LIMIT")
+    if not _have_flint():
+        return _stmt(sid, "NOT_CHECKED", "python-flint not installed (pip install 'certify-ed[exact]')",
+                     {"missing": "python-flint", "extra": "certify-ed[exact]"}, [], time.time() - t0,
+                     reason_code="MISSING_DEPENDENCY")
     from .checker import exact_recheck_lowest
     s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
     hint = (s3 or {}).get("evidence", {}).get("next_eigenvalue_estimate")
     try:
         r = exact_recheck_lowest(spec, mu, X, claim.states, next_hint=hint, max_dim=opts.exact_max_dim)
-    except ImportError:
-        return _stmt(sid, "NOT_CHECKED", "python-flint not installed", {}, [], time.time() - t0,
-                     reason_code="NEEDS_DEPENDENCY")
+    except ImportError as e:
+        return _stmt(sid, "NOT_CHECKED", f"python-flint not installed ({' '.join(str(e).split())[:120]})",
+                     {"missing": "python-flint", "extra": "certify-ed[exact]"}, [], time.time() - t0,
+                     reason_code="MISSING_DEPENDENCY")
     st = r["status"] if r["status"] in ("CERTIFIED", "FAILED", "INCONCLUSIVE", "NOT_CHECKED") else "INCONCLUSIVE"
     if st == "CERTIFIED":
         lv = [e for e in r["enclosures"] if e["kind"] != "residual interval"]

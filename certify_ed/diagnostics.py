@@ -57,6 +57,10 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
     "UNSUPPORTED_MODEL": "restrict the statement to the model class it handles (see docs/SCOPE_MATRIX.md)",
     "NOT_IMPLEMENTED": "not available in this version (docs/SCOPE_MATRIX.md names the mathematics needed)",
     "NOT_APPLICABLE": "the statement does not apply to this input; see docs/SCOPE_MATRIX.md",
+    "OUT_OF_SCOPE_DYNAMICS": ("no statement of certify-ed covers dynamics; cite the per-eigenpair certificate and report "
+                              "the dynamical quantity as uncertified (docs/SCOPE_MATRIX.md)"),
+    "OUT_OF_SCOPE_EXTRAPOLATION": ("certify each finite size separately and cite the certificates by hash; the "
+                                   "extrapolation itself is not a statement about any finite matrix"),
 }
 
 _GENERIC = {
@@ -103,6 +107,9 @@ def _inconclusive(stmt: dict, ctx: dict) -> str:
             return REORTHO
         return TIGHTEN
     if sid == "S3.completeness":
+        if "full-spectrum claim" in text:
+            return ("claim all eigenpairs (count = dimension) with orthonormal vectors, or use kind='lowest' for a "
+                    "partial spectrum")
         if "not all certified distinct" in text or "not all distinct eigenpairs" in text:
             return REORTHO
         if "multiplet" in text or "unclaimed eigenvalue lies within" in text or "could not be classified" in text:
@@ -118,9 +125,6 @@ def _inconclusive(stmt: dict, ctx: dict) -> str:
         if "counts could not be matched" in text or ctx.get("kind") == "window":
             return ("supply orthonormal eigenvectors for every eigenvalue in the window, or widen the window so every "
                     "claimed enclosure lies strictly inside it")
-        if "full-spectrum claim" in text:
-            return ("claim all eigenpairs (count = dimension) with orthonormal vectors, or use kind='lowest' for a "
-                    "partial spectrum")
         return MORE_PAIRS
     if sid == "S4.eigenspaces":
         reasons = " ".join(_cluster_reasons(stmt))
