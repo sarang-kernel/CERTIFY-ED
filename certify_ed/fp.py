@@ -29,6 +29,13 @@ import scipy.sparse as sp
 U = 2.0 ** -53          # unit roundoff for binary64
 _GUARD = 1.0 + 8 * U    # relative guard applied to computed upper bounds
 
+# No-underflow hypothesis (INT-01, enforced since 3.2.0.dev0 unless Options(underflow_check=False)): every
+# nonzero operand, radius and residual bound of the floating-point statements has magnitude >= 2^-900. The
+# standard model fl(a op b) = (a op b)(1 + delta) does not hold for results in the subnormal range
+# (below 2^-1022), where the absolute rounding error is bounded but the relative one is not; the margin
+# between 2^-900 and 2^-1022 is what the hypothesis leaves for the intermediate quantities of the bounds.
+UNDERFLOW_THRESHOLD = 2.0 ** -900
+
 
 def gamma(n: float) -> float:
     """gamma_n = n u / (1 - n u) (Higham 2002, Lemma 3.1)."""
@@ -129,6 +136,66 @@ def is_complex(*arrays) -> bool:
     return any(np.iscomplexobj(a.data if sp.issparse(a) else a) for a in arrays)
 
 
+def tiny_nonzero(a, threshold: float = UNDERFLOW_THRESHOLD, max_indices: int = 8):
+    """Nonzero entries of magnitude below `threshold` in a stored array (the no-underflow hypothesis).
+
+    Complex data are scanned component by component (the real and imaginary parts are the operands of
+    the arithmetic). Exact zeros are not reported; non-finite entries are not this function's concern.
+    Returns None when nothing is found, else {'count', 'first_indices', 'min_magnitude'} with the flat
+    indices (component index for complex data) of the first few offenders.
+    """
+    if a is None:
+        return None
+    if sp.issparse(a):
+        a = a.data
+    arr = np.asarray(a)
+    if arr.size == 0 or arr.dtype.kind not in "fc":
+        return None
+    comp = np.ascontiguousarray(arr).view(arr.real.dtype).ravel() if arr.dtype.kind == "c" else arr.ravel()
+    mag = np.abs(comp)
+    with np.errstate(invalid="ignore"):
+        hit = (mag > 0) & (mag < threshold)
+    if not hit.any():
+        return None
+    idx = np.nonzero(hit)[0]
+    return {"count": int(idx.size), "first_indices": idx[:max_indices].tolist(),
+            "min_magnitude": float(mag[idx].min())}
+
+
+def min_nonzero_magnitude(a):
+    """Smallest nonzero |entry| (component-wise for complex data); None when there is none."""
+    if a is None:
+        return None
+    if sp.issparse(a):
+        a = a.data
+    arr = np.asarray(a)
+    if arr.size == 0 or arr.dtype.kind not in "fc":
+        return None
+    comp = np.ascontiguousarray(arr).view(arr.real.dtype).ravel() if arr.dtype.kind == "c" else arr.ravel()
+    mag = np.abs(comp)
+    mag = mag[(mag > 0) & np.isfinite(mag)]
+    return float(mag.min()) if mag.size else None
+
+
+def underflow_scan(parts, threshold: float = UNDERFLOW_THRESHOLD):
+    """Scan named arrays for the no-underflow hypothesis -> list of findings.
+
+    `parts` holds (name, array) or (name, array, threshold) tuples; the default threshold is
+    UNDERFLOW_THRESHOLD. Each finding is tiny_nonzero(array) plus the name under 'where' and the threshold used; an empty list
+    means every nonzero magnitude is at or above its threshold (the hypothesis holds for what was scanned).
+    """
+    out = []
+    for part in parts:
+        name, arr = part[0], part[1]
+        thr = part[2] if len(part) > 2 else threshold
+        f = tiny_nonzero(arr, thr)
+        if f is not None:
+            f["where"] = name
+            f["threshold"] = float(thr)
+            out.append(f)
+    return out
+
+
 def float_env_record() -> dict:
     """Description of the arithmetic model assumed by float64 bounds."""
     return {
@@ -136,7 +203,8 @@ def float_env_record() -> dict:
         "unit_roundoff": U,
         "model": "standard model fl(a op b)=(a op b)(1+d), |d|<=u (Higham 2002, Eq. 2.4)",
         "assumptions": [
-            "no underflow/overflow in the computations used for bounds",
+            "no underflow/overflow in the computations used for bounds (nonzero operands, radii and residual "
+            "bounds of magnitude >= 2^-900; see 'underflow_check')",
             "BLAS and sparse kernels satisfy gamma_n inner-product bounds in any summation order",
             "no reduced-precision matrix-multiply modes (e.g. TF32) and no Strassen-type BLAS",
         ],

@@ -46,6 +46,7 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
 | `OUT_OF_SCOPE_DYNAMICS` | dynamical response and time evolution are not statements about eigenpairs of one matrix |
 | `OUT_OF_SCOPE_EXTRAPOLATION` | extrapolations and phase boundaries are not statements about any finite matrix |
 | `NOT_APPLICABLE` | the statement does not apply to this input |
+| `UNDERFLOW_RISK` | (since 3.2.0.dev0) a nonzero operand, radius or residual bound has magnitude below 2^-900: the no-underflow hypothesis of the floating-point model is not established for this input, so S2 and the statements that rest on it are INCONCLUSIVE; `Options(underflow_check=False)` assumes the hypothesis instead and records that |
 
 ## How to read a certificate against this table
 

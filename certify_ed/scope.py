@@ -36,6 +36,9 @@ REASON_CODES: Dict[str, str] = {
     "OUT_OF_SCOPE_DYNAMICS": "dynamical response and time evolution are not statements about eigenpairs of one matrix",
     "OUT_OF_SCOPE_EXTRAPOLATION": "finite-size extrapolation and phase boundaries are not statements about any finite matrix",
     "NOT_APPLICABLE": "the statement does not apply to this input",
+    "UNDERFLOW_RISK": ("a nonzero operand, radius or residual bound has magnitude below 2^-900: the no-underflow "
+                       "hypothesis of the floating-point model is not established for this input "
+                       "(Options(underflow_check=False) assumes it instead)"),
 }
 
 # standing quantities labs report that no statement of this version certifies (docs/SCOPE_MATRIX.md)

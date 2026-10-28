@@ -1,9 +1,63 @@
 # Changelog
 
-## [Unreleased] (branch `fix/3.1.1`)
+## [3.2.0.dev0] (unreleased; branch `dev/3.2-known-issues`)
 
-Two of the known issues of 3.1.0, fixed without touching what any statement asserts. Not released: under D-44 a version
-the paper cites needs its own full run.
+`__version__` = 3.2.0.dev0. The computational source changes (certify.py, fp.py, scope.py), so records made
+with it are not comparable by `source_hash` with the 3.1.0 evidence run; no statement that 3.1.0 certified
+becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
+under the new reason code below.
+
+### INT-01: the no-underflow hypothesis is enforced (E-06; design decision D-57, conservative option)
+- The standard model behind every floating-point bound assumes no underflow: nonzero operands, radii and
+  residual bounds of magnitude at least 2^-900 (`fp.UNDERFLOW_THRESHOLD`). 3.1.0 stated this and probed
+  flush-to-zero, but never looked at the input. `certify()` now scans, before S2, the claimed eigenvalues,
+  the eigenvector entries, the operator's stored entries (sparse data array; for a spec or matrix-free
+  operator the norm bound and one matvec on a seeded random probe) and the model shift, and after the
+  enclosure the radii, existence radii, residual bounds and residual norms. Exact zeros are fine.
+- Any finding makes S2 INCONCLUSIVE with the new reason code `UNDERFLOW_RISK` (evidence: where, first
+  indices, minimal magnitude, threshold; the summary keeps what the status would otherwise have been), and
+  S3, S4, S7, S8 INCONCLUSIVE with the same code, since each rests on the S2 enclosure. S1 and S6 (exact
+  arithmetic) are not affected. Statuses of inputs without a finding are identical to a run without the
+  check (test `test_standard_fixtures_unchanged_by_underflow_check`); the existing fixtures have none.
+- This is the conservative choice and it is reversible: `Options(underflow_check=False)` (CLI
+  `--assume-no-underflow`) skips the scan and records `underflow_check: false` in the certificate's
+  `scope.options` and `arithmetic.underflow_check.performed`; the certificate then carries the hypothesis
+  as the user's. Rescaling the input instead of rejecting it was not implemented (it would need a
+  statement about the rescaled operator). Alternatives remain open to Sarang (D-57).
+- `docs/theory.md` section 1 names the hypothesis and the enforcement; `docs/SCOPE_MATRIX.md` and
+  `scope.REASON_CODES` carry the code. Tests: `tests/test_underflow_check.py` (19: planted subnormal
+  eigenvector entry, planted 2^-950 dense and sparse matrix entries, a radius of 1e-274 from an exact
+  eigenpair of a 1e-258-scaled operator with eigenvectors of norm 1e125, tiny claimed eigenvalue,
+  matrix-free probe, spec operator probe, complex components, opt-out recorded, CLI flag, fixtures
+  unchanged, LAPACK numerical zeros not flagged, negative control: a finding never leaves S2 or a
+  dependent statement CERTIFIED).
+- **INT-05 (new known issue, found while implementing INT-01; needs a design decision).** The scan covers
+  the stored inputs and the reported outputs. The *intermediate* quantities of the Theorem 1 bound are not
+  covered by the hypothesis as stated, and routine inputs violate it there: `scipy.linalg.eigh` returns
+  eigenvector entries of order 1e-265 (numerical zeros of a symmetry sector; above 2^-900), for which the
+  residual vector R and the entrywise rounding bound E = gamma (|H||x| + |x||mu|) have entries of order
+  1e-278 (below 2^-900), and their squares in `np.linalg.norm` underflow to zero. The lost mass is tiny
+  compared with the guards (1 + 8u) of `fp.norm2_upper`, but saying so is a bound the theory does not
+  contain (D-12): either the hypothesis is strengthened to cover the intermediates (which would make
+  almost every LAPACK input INCONCLUSIVE), or the standard model is replaced by the underflow-tolerant
+  model fl(a op b) = (a op b)(1 + delta) + eta, |eta| <= u lambda (Higham 2002, eq. 2.6; Demmel 1984)
+  with an absolute term carried through `norm2_upper`, `residuals` and the Gram bounds. An early version
+  of this branch scanned R and E and flagged `test_wrong_bond_sign_is_localized`; it was withdrawn. Test
+  `test_lapack_eigenvectors_with_numerically_zero_entries_are_not_flagged` pins the observation.
+
+### INT-04: code-facing accounting of the Theorem 1 radius (documentation)
+- `docs/theory.md` section 2 now lists, line by line, how `enclosure.residuals` evaluates the Theorem 1
+  radius in floating point: three roundings each covered by a factor (1 + 4u), the norm bounds of
+  `fp.norm2_upper` / `fp.norm2_lower` with their (1 + gamma_{n+2}) and (1 + 8u) guards, and the model shift
+  added afterwards with `add_up`. The code's bound is unchanged. The manuscript's Appendix A (k <= 6
+  roundings, 1 + 8u, shift multiplied in) is to be rewritten from this list by Sarang (D-16).
+  Test `tests/test_theorem1_accounting.py` recomputes the radius of a fixed 3 x 3 case with `Fraction`
+  arithmetic and pins the code's value between the exact radius and the documented-factor evaluation.
+
+### Merged from `fix/3.1.1` (f441227)
+
+Two of the known issues of 3.1.0, fixed without touching what any statement asserts (merged with a merge commit;
+under D-44 a version the paper cites needs its own full run).
 
 - **INT-02.** `Certificate.verify_scope()` checks the scope block: every statement id exactly once (in scope, narrowed,
   or out of scope), known reason codes, every statement in scope present, a narrowed statement that is present is

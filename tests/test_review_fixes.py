@@ -402,7 +402,7 @@ def test_imp26_version_and_source_hash(heis6):
     with open(os.path.join(root, "pyproject.toml")) as f:
         m = re.search(r'^version = "([^"]+)"', f.read(), re.M)
     assert m and m.group(1) == ce.__version__          # one version, in pyproject and the package
-    assert re.match(r"^3\.1\.", ce.__version__)
+    assert re.match(r"^3\.(1|2)\.", ce.__version__)
     spec, H, w, V = heis6
     c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec)
     env = c.body["environment"]

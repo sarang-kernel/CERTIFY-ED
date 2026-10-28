@@ -116,6 +116,8 @@ def _options_from_args(a):
         kw["budget_mb"] = float(a.budget_mb)
     if getattr(a, "temperatures", None):
         kw["temperatures"] = [float(t) for t in a.temperatures.replace(";", ",").split(",") if t.strip()]
+    if getattr(a, "assume_no_underflow", False):
+        kw["underflow_check"] = False
     if getattr(a, "preset", None):
         return Options.from_preset(a.preset, **kw)
     return Options(**kw)
@@ -479,6 +481,8 @@ def main(argv=None):
         cp.add_argument("--budget-mb", type=float, dest="budget_mb",
                         help="statements whose estimated memory exceeds this become NOT CHECKED (reason BUDGET)")
         cp.add_argument("--temperatures", help="comma-separated T for S7 (whole-spectrum claims, k_B = 1)")
+        cp.add_argument("--assume-no-underflow", action="store_true", dest="assume_no_underflow",
+                        help="skip the no-underflow scan (Options(underflow_check=False)); recorded in the certificate")
         cp.add_argument("--allow-code", action="store_true", dest="allow_code",
                         help="allow operator.py (matrix-free producer code) to be executed")
         cp.add_argument("-o", "--output")

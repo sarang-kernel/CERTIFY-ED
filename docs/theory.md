@@ -15,7 +15,23 @@ value. The model is fl(a∘b) = (a∘b)(1+δ) with |δ| ≤ u = 2⁻⁵³, which
 length-m sums and products (Higham 2002). These bounds hold for any summation order and with FMA. They
 fail for Strassen-type products, reduced-precision BLAS, flush-to-zero/denormals-are-zero and
 non-default rounding. `fp.probe_float_environment` tests these properties on every run and downgrades
-CERTIFIED statements when one fails. Two quantities are computed more accurately: Gram entries and
+CERTIFIED statements when one fails.
+
+**No-underflow hypothesis (enforced since 3.2.0.dev0; INT-01).** The model fl(a∘b) = (a∘b)(1+δ) fails
+for results in the subnormal range, where the rounding error is absolute, not relative. The bounds
+therefore assume that every nonzero operand, radius and residual bound has magnitude at least 2⁻⁹⁰⁰
+(`fp.UNDERFLOW_THRESHOLD`). Until 3.1.0 this was stated and not checked. `certify()` now scans the
+claimed eigenvalues, the eigenvector entries, the operator's stored entries (for a spec or matrix-free
+operator: its norm bound and one matvec on a seeded random probe), the model shift and, after the
+enclosure, the radii, existence radii, residual bounds and residual norms. Exact zeros are allowed. Any
+finding makes S2 INCONCLUSIVE with
+reason code `UNDERFLOW_RISK`, and S3, S4, S7 and S8 INCONCLUSIVE with the same code, because each rests
+on the S2 enclosure; S1 and the exact layer (S6) are untouched. A user who prefers to assume the
+hypothesis can pass `Options(underflow_check=False)` (CLI `--assume-no-underflow`); the choice is
+recorded in the certificate's `scope.options.underflow_check` and `arithmetic.underflow_check`. The
+scan covers the stored inputs and the reported outputs of the enclosure, not the intermediate quantities
+of the bound (the residual vectors and the entrywise rounding bound E), for which routine LAPACK output
+violates the hypothesis as stated — see CHANGELOG 3.2.0.dev0, INT-05, an open design decision. Two quantities are computed more accurately: Gram entries and
 Rayleigh quotients use error-free products and exactly rounded sums, so each has error ≤ 2u|·|.
 
 **Endpoints are rounded outward (since 3.1).** The certified statement |λ − μ| ≤ r is about the stored

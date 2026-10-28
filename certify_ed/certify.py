@@ -46,7 +46,8 @@ from .construct import (StateSet, build_bitwise, cross_construct, full_state_set
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
-from .fp import U, add_up, float_env_record, inf_norm_upper, probe_float_environment, sub_down, up
+from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
+                 sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .presets import STATEMENTS, preset_options, resolve_selection
@@ -121,6 +122,10 @@ class Options:
     correlations: Dict[str, Any] = field(default_factory=dict)
     #   name -> {"letter": "z", "sites": [...], "positions": [[x, y], ...] (optional), "q": [[...], ...] (optional)}
     degeneracy: bool = True                  # S8 for the S4 clusters
+    # ---- no-underflow hypothesis (INT-01, 3.2.0.dev0): scan operands, radii and residual bounds for nonzero
+    # magnitudes below fp.UNDERFLOW_THRESHOLD; a finding makes S2 and its dependents INCONCLUSIVE
+    # (UNDERFLOW_RISK). False assumes the hypothesis; the choice is recorded in the scope block's options.
+    underflow_check: bool = True
 
     @classmethod
     def from_preset(cls, name: str, **overrides) -> "Options":
@@ -162,6 +167,46 @@ def _gate(sel, budget, short, estimate_mb=None, what=""):
 
 def _mb(n_entries: float, bytes_per: float) -> float:
     return float(n_entries) * bytes_per / 2 ** 20
+
+
+def _underflow_operands(mu, X, adapter, seed: int):
+    """The stored operands of the S2 bounds, for the no-underflow scan (fp.underflow_scan).
+
+    (name, array, threshold) tuples: the claimed eigenvalues and eigenvector entries; for a stored matrix
+    its entries (the sparse data array); for a spec or black-box operator the norm bound and the result of
+    one matvec on a fixed random probe (the only access to its entries; the probe uses the certificate's
+    seed). Intermediate quantities of the bounds (the residual vectors, the entrywise rounding bound) are
+    not scanned: the hypothesis is stated for the stored inputs and for the radii and residual bounds the
+    certificate reports, which are scanned after the enclosure (CHANGELOG 3.2.0.dev0, INT-05).
+    """
+    T = UNDERFLOW_THRESHOLD
+    parts = [("claim.eigenvalues", mu, T)]
+    if X is not None:
+        parts.append(("claim.eigenvectors", X, T))
+    if adapter.kind == "matrix":
+        parts.append(("operator.entries", adapter.A.data if sp.issparse(adapter.A) else adapter.A, T))
+    else:
+        nb = adapter.norm_upper()
+        if nb is not None:
+            parts.append(("operator.norm_bound", np.array([nb], dtype=float), T))
+        n = int(adapter.shape[0])
+        rng = np.random.default_rng(seed)
+        v = rng.standard_normal(n)
+        if adapter.complex:
+            v = v + 1j * rng.standard_normal(n)
+        try:
+            parts.append(("operator.probe_matvec", np.asarray(adapter.matvec(v)), T))
+        except Exception:      # a producer matvec that fails on a probe is reported by S1/S2 themselves
+            pass
+    return parts
+
+
+def _underflow_statement_note(findings):
+    where = ", ".join(f"{f['where']} (min {f['min_magnitude']:.2e}, {f['count']} entr{'y' if f['count'] == 1 else 'ies'})"
+                      for f in findings)
+    return (f"no-underflow hypothesis not established: nonzero magnitudes below 2^-900 in {where}; the "
+            "floating-point bounds assume operands and radii above 2^-900 (Options(underflow_check=False) "
+            "assumes it)")
 
 
 def _subspace_shift(iso: float, inv: float, H_norm: float, M_norm: float) -> Optional[float]:
@@ -727,6 +772,19 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     bad_mu = np.nonzero(~np.isfinite(mu))[0].tolist()
     bad_x = [] if X is None else np.nonzero(~np.all(np.isfinite(X), axis=0))[0].tolist()
     nonfinite = bool(bad_mu or bad_x)
+    # INT-01: the no-underflow hypothesis of the standard model (fp.UNDERFLOW_THRESHOLD) is checked on the
+    # operands before S2 and on the radii and residual bounds after the enclosure; a finding makes S2 and
+    # every statement that depends on it INCONCLUSIVE with reason code UNDERFLOW_RISK (never CERTIFIED)
+    uf_findings = []
+    uf_record = {"performed": bool(opts.underflow_check), "threshold": UNDERFLOW_THRESHOLD,
+                 "scanned": [], "findings": uf_findings}
+    if opts.underflow_check and not nonfinite:
+        parts = _underflow_operands(mu, X, adapter, opts.seed)
+        if eps_shift > 0 and np.isfinite(eps_shift):
+            parts.append(("model_shift", np.array([eps_shift], dtype=float), UNDERFLOW_THRESHOLD))
+        uf_record["scanned"] += [p[0] for p in parts]
+        uf_findings += underflow_scan(parts)
+    underflow = bool(uf_findings)
     if s2_gate is not None:
         statements.append(s2_gate)
     elif nonfinite:
@@ -793,9 +851,24 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 st = "FAILED"
                 summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
                         f"accuracy target {target:.1e} [{tsrc}]")
+        if opts.underflow_check:
+            # the radii and residual bounds are the reported quantities and the operands of every downstream
+            # comparison (endpoints, shifts, separations)
+            T = UNDERFLOW_THRESHOLD
+            post = [("enclosure.radius", enc.radius, T), ("enclosure.existence_radius", enc.existence_radius, T),
+                    ("enclosure.residual_bound", enc.residual.upper, T),
+                    ("enclosure.residual_norm", enc.residual.computed, T)]
+            uf_record["scanned"] += [p[0] for p in post]
+            uf_findings += underflow_scan(post)
+            underflow = bool(uf_findings)
+        code2 = None
+        if underflow:
+            st, code2 = "INCONCLUSIVE", "UNDERFLOW_RISK"
+            summ = _underflow_statement_note(uf_findings) + "; would otherwise be: " + summ
+            ev["underflow"] = {"threshold": UNDERFLOW_THRESHOLD, "findings": uf_findings}
         statements.append(_stmt("S2.eigenpairs", st, summ, ev,
                                 ["standard floating-point model (see 'arithmetic')"] if enc.rigorous else [],
-                                time.time() - t0))
+                                time.time() - t0, reason_code=code2))
 
     # ---------------- S3
     t0 = time.time()
@@ -815,6 +888,13 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
                                 "claim contains non-finite values: counts cannot be matched to the claimed set",
                                 {"n_claimed": int(mu.size)}))
+    elif underflow and enc is not None and claim.kind in ("lowest", "window", "all"):
+        statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
+                                "S2 inconclusive under UNDERFLOW_RISK: the enclosures and the factorization bounds "
+                                "rest on the no-underflow hypothesis, which is not established for this input; "
+                                "counts are not matched to the claimed set",
+                                {"n_claimed": int(mu.size), "underflow": {"findings": uf_findings}},
+                                reason_code="UNDERFLOW_RISK"))
     elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
         # a zero claimed vector has an infinite Theorem-1 radius: there is no enclosure to count against
         # (the shift sigma = inf would otherwise crash the factorization, IMP-23)
@@ -911,6 +991,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     elif enc is None or opts.eigenspaces == "none":
         statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "not requested or no eigenvectors",
                                 reason_code="NEEDS_EIGENVECTORS" if enc is None else "NARROWED_BY_USER"))
+    elif underflow:
+        statements.append(_stmt("S4.eigenspaces", "INCONCLUSIVE",
+                                "S2 inconclusive under UNDERFLOW_RISK: no certified separations or projector bounds",
+                                {"underflow": {"findings": uf_findings}}, reason_code="UNDERFLOW_RISK"))
     elif window is None:
         statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED",
                                 "requires a certified complete window (S3) to bound separations",
@@ -1035,6 +1119,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         s7_gate = _gate(sel, budget, "S7")
         if s7_gate is not None:
             statements.append(s7_gate)
+        elif underflow and claim.kind == "all" and enc is not None:
+            statements.append(_stmt("S7.thermodynamics", "INCONCLUSIVE",
+                                    "S2 inconclusive under UNDERFLOW_RISK: no complete enclosure to sum over",
+                                    {"underflow": {"findings": uf_findings}}, reason_code="UNDERFLOW_RISK"))
         elif claim.kind != "all" or spectrum_record is None or not spectrum_record["complete"]:
             statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED",
                                     "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3)",
@@ -1066,6 +1154,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         elif enc is None:
             statements.append(_stmt("S8.degeneracy", "NOT_CHECKED", "eigenvalue-only claim: no clusters to count",
                                     reason_code="NEEDS_EIGENVECTORS"))
+        elif underflow:
+            statements.append(_stmt("S8.degeneracy", "INCONCLUSIVE",
+                                    "S2 inconclusive under UNDERFLOW_RISK: no level enclosures to count against",
+                                    {"underflow": {"findings": uf_findings}}, reason_code="UNDERFLOW_RISK"))
         elif inertia_op is None:
             statements.append(_stmt("S8.degeneracy", "NOT_CHECKED",
                                     "no stored matrix to factorize (matrix-free producer without spec)",
@@ -1135,6 +1227,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         not_verified.append("bounds: " + why)
     arithmetic = float_env_record()
     arithmetic["runtime_probe"] = fp_probe
+    arithmetic["underflow_check"] = uf_record
     body = {"subject": subject, "claim": claim_rec, "statements": statements,
             "enclosures": enc.to_records() if enc is not None else [],
             "kato_temple": kt,
@@ -1149,7 +1242,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                  "temperatures": [float(t) for t in opts.temperatures], "eigenspaces": opts.eigenspaces,
                  "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
                  "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
-                 "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy)},
+                 "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy),
+                 "underflow_check": bool(opts.underflow_check)},
                 ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
                  "include the certified shift to the full operator") if audit is not None else "operator",
                 requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
