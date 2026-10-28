@@ -13,6 +13,8 @@ import os
 import subprocess
 
 NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/provenance.py",
+                     # schema validation and conformance: they read certificates and bundles, never write a number
+                     "certify_ed/schema.py", "certify_ed/conformance.py",
                      # post-processing: they read records and write tables, they never produce a record
                      "experiments/make_numbers.py", "experiments/make_numbers_apps.py",
                      "experiments/e6_classify.py", "experiments/e6_recheck.py",

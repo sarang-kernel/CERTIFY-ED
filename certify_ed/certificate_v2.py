@@ -218,7 +218,11 @@ class Certificate:
         return base + ".json"
 
     @staticmethod
-    def load(path: str, verify: bool = True) -> "Certificate":
+    def load(path: str, verify: bool = True, validate_schema: Optional[bool] = None) -> "Certificate":
+        """Load a certificate. `verify` checks the hashes. `validate_schema`: None validates the body against
+        schema/certificate-2.1.schema.json when the optional `jsonschema` package is installed (structural
+        checks only otherwise); True requires jsonschema (ImportError without it); False skips both. A body
+        that does not conform raises certify_ed.schema.SchemaValidationError (a ValueError)."""
         with open(path) as f:
             body = json.load(f)
         arrays = {}
@@ -231,7 +235,18 @@ class Certificate:
             rep = cert.verify_integrity()
             if not rep["ok"]:
                 raise ValueError(f"certificate integrity check failed: {rep}")
+        if validate_schema is not False:
+            from .schema import validate_certificate_body
+            validate_certificate_body(body, require=bool(validate_schema))
         return cert
+
+    def validate_schema(self, require: bool = False) -> Optional[bool]:
+        """Validate this certificate's body against the published JSON Schema (see `load`). A certificate
+        that has not been saved yet is validated as `save` would write it (schema and integrity added)."""
+        from .schema import validate_certificate_body
+        body = self.body if "integrity" in self.body else self._finalize_body(
+            (self.body.get("arrays") or {}).get("sidecar"))
+        return validate_certificate_body(body, require=require)
 
     def verify_integrity(self) -> dict:
         body = dict(self.body)

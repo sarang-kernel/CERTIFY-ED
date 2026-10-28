@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:certify-ed:schema:producer-bundle:1.0",
+  "title": "CERTIFY-ED producer bundle meta.json, schema 1.0",
+  "description": "meta.json of a producer bundle directory (docs/producer_bundle.md). Every field is optional; the directory must hold eigenvalues.<ext>. spec.json, when present, conforms to $defs/model_spec.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "certify-ed/producer-bundle/1.0"
+    },
+    "kind": {
+      "enum": [
+        "subset",
+        "lowest",
+        "window",
+        "all"
+      ]
+    },
+    "window": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "accuracy_target": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "description": {
+      "type": "string"
+    },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "keys": {
+      "type": "object",
+      "properties": {
+        "eigenvalues": {
+          "type": "string"
+        },
+        "eigenvectors": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string"
+        }
+      }
+    },
+    "complex_pairs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "eigenvectors_layout": {
+      "enum": [
+        "columns",
+        "rows"
+      ]
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "enum": [
+            "auto",
+            "coo",
+            "dense",
+            "csr"
+          ]
+        }
+      }
+    },
+    "operator_shape": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "one_based": {
+      "type": "boolean"
+    },
+    "state_order": {
+      "enum": [
+        "descending",
+        "ascending"
+      ]
+    },
+    "basis_label": {
+      "type": "string"
+    },
+    "temperatures": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "preset": {
+      "type": "string"
+    },
+    "only": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "skip": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "budget_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "budget_mb": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "if": {
+    "properties": {
+      "kind": {
+        "const": "window"
+      }
+    },
+    "required": [
+      "kind"
+    ]
+  },
+  "then": {
+    "required": [
+      "window"
+    ]
+  },
+  "$defs": {
+    "model_spec": {
+      "type": "object",
+      "required": [
+        "schema",
+        "n_sites",
+        "local_space",
+        "terms"
+      ],
+      "properties": {
+        "schema": {
+          "const": "certify-ed/model-spec/1.0"
+        },
+        "n_sites": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "local_space": {
+          "type": "object",
+          "required": [
+            "kind",
+            "q"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "spin",
+                "boson",
+                "fermion"
+              ]
+            },
+            "q": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "spin": {
+              "type": "string"
+            },
+            "convention": {
+              "type": "string"
+            },
+            "n_max": {
+              "type": "integer"
+            },
+            "jw_string": {
+              "type": "string"
+            }
+          }
+        },
+        "encoding": {
+          "type": "object",
+          "properties": {
+            "site_order": {
+              "type": "string"
+            },
+            "state_order": {
+              "enum": [
+                "descending",
+                "ascending"
+              ]
+            },
+            "base": {
+              "type": "integer",
+              "minimum": 2
+            }
+          }
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {
+                "type": "string",
+                "description": "operator letters, one per site"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "prefixItems": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    }
+                  ],
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "[coefficient (real, or [re, im]), site, site, ...]"
+                }
+              }
+            ]
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
