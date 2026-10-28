@@ -1,0 +1,11 @@
+# what the sdist carries beyond the package: the published schemas, the reference bundles, the docs and
+# the tests (so that `pip download certify-ed --no-binary` gives a checkable source archive)
+include LICENSE README.md CHANGELOG.md CITATION.cff requirements.txt pyproject.toml
+recursive-include schema *.json
+recursive-include conformance *.py *.md *.json *.csv *.txt *.npz
+recursive-include docs *.md *.py
+recursive-include tests *.py
+recursive-include examples *.py *.md
+global-exclude __pycache__ *.pyc
+prune results
+prune legacy

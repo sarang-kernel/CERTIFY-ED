@@ -1,0 +1,68 @@
+{% set name = "certify-ed" %}
+{% set version = "3.1.0" %}
+# sha256 of the sdist on PyPI for this version: `curl -sL <url> | sha256sum`; the value below is the sdist built
+# locally from the v3.1.0 tag and must be replaced by the PyPI one before submission to conda-forge/staged-recipes.
+{% set sha256 = "58b4f0b96d3195132fd858f0ed69dc39cc3cc4ad74141770117e67c6349a5017" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/certify_ed-{{ version }}.tar.gz
+  sha256: {{ sha256 }}
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - certify-ed = certify_ed.cli:main
+
+requirements:
+  host:
+    - python >=3.9
+    - pip
+    - setuptools >=77
+    - wheel
+  run:
+    - python >=3.9
+    - numpy >=1.22
+    - scipy >=1.8
+  run_constrained:
+    # optional layers; the package degrades to NOT_CHECKED (reason NEEDS_DEPENDENCY) without them
+    - python-flint >=0.6
+    - h5py >=3.0
+    - jsonschema >=4.18
+
+test:
+  imports:
+    - certify_ed
+    - certify_ed.schema
+  commands:
+    - certify-ed env
+    - certify-ed presets
+    - python -m certify_ed.schema --help
+  requires:
+    - pip
+
+about:
+  home: https://github.com/sarang-kernel/CERTIFY-ED
+  summary: "Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and exact re-checks"
+  description: |
+    CERTIFY-ED checks a claimed spectrum (eigenvalues, optionally eigenvectors, from any producer) against a
+    declared model and issues a certificate with statements S1-S8 (model fidelity, enclosures, completeness,
+    eigenspaces, corroboration, exact re-check, thermodynamics, degeneracy), each CERTIFIED / FAILED /
+    INCONCLUSIVE / NOT_CHECKED with evidence. Optional dependencies: python-flint (exact layer), h5py (HDF5
+    input and export), jsonschema (certificate schema validation). QuSpin is not on conda-forge in a form the
+    importers need (quspin-extensions, parallel-sparse-tools); install it with pip as docs/reproducibility.md
+    describes.
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  doc_url: https://github.com/sarang-kernel/CERTIFY-ED/tree/main/docs
+  dev_url: https://github.com/sarang-kernel/CERTIFY-ED
+
+extra:
+  recipe-maintainers:
+    - sarang-kernel

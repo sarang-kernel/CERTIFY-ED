@@ -1,0 +1,44 @@
+name: nightly-mutation
+# A 32-mutant sample of the E6 mutation analysis (experiments/e6_mutation.py): how many planted single-token
+# changes in the verification core the test suite kills. Informational: the job never fails on the score
+# (survivors are inspected by hand, experiments/e6_classify.py); it fails only when the experiment itself aborts.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      mutants:
+        description: number of mutants to sample
+        default: "32"
+      workers:
+        description: parallel workers
+        default: "2"
+
+jobs:
+  mutation-sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .[all]
+      - run: |
+          pip install quspin-extensions parallel-sparse-tools dill joblib numba numexpr six gmpy2
+          pip install quspin==1.0.1 --no-deps
+      - run: certify-ed env
+      - name: E6 sample
+        env:
+          CERTIFY_RESULTS: ${{ github.workspace }}/results
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+        run: python experiments/e6_mutation.py ${{ github.event.inputs.mutants || 32 }} ${{ github.event.inputs.workers || 2 }}
+      - name: Classify survivors
+        run: python experiments/e6_classify.py || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e6-mutation-sample-${{ github.run_id }}
+          path: results/
+          retention-days: 90
