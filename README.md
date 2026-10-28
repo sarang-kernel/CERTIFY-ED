@@ -69,9 +69,20 @@ E, V = H.eigsh(k=6, which="SA")
 
 claim, _ = ce.claim_from_quspin(H, basis, static, E, V, kind="lowest")
 cert = ce.certify(claim, spec)
-print(cert.summary())
+print(cert.summary())                       # one sentence; cert.report() is the full text
 cert.save("result.json")                              # + result.arrays.npz, hashed
 ```
+
+**One call from arrays** (any producer: a matrix `H`, eigenvalues `w`, eigenvectors `V`)
+
+```python
+cert = ce.quick(H, w[:4], V[:, :4], spec)            # kind="lowest"; preset=, budget_seconds="auto", progress=True, ...
+cert.summary()                                        # one sentence: what was certified and what was not
+cert                                                  # a table in Jupyter; every open statement carries evidence["next_action"]
+print(cert.methods_paragraph("latex"))                # methods paragraph, numbers as \newcommand macros, BibTeX
+```
+
+`certify-ed statement result.json` prints the same paragraph from a saved certificate.
 
 A reader re-checks the file with `ce.Certificate.load("result.json", verify=True)`. Other producers
 export to NPZ/HDF5 (`ce.export_npz`, `ce.claim_from_npz`, `ce.claim_from_hdf5`). A matrix-free

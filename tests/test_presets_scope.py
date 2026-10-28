@@ -134,7 +134,8 @@ def test_every_preset_yields_a_valid_certificate_with_scope(tmp_path, heis8, pre
     path = cert.save(str(tmp_path / f"{preset}.certificate"))
     loaded = Certificate.load(path)
     assert loaded.body["scope"]["preset"] == preset
-    assert "scope" in loaded.summary()
+    assert "scope" in loaded.report()
+    assert f"preset {preset}" in loaded.summary()        # the one-sentence summary names the preset
 
 
 def test_narrowing_never_changes_the_status_of_statements_still_in_scope(heis8):

@@ -37,7 +37,8 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
 | `DEFAULT_SELECTION` | not part of the default selection; switched on by its option, a preset or `--only` |
 | `DEPENDENCY_NARROWED` | the statement needs another statement that the user excluded |
 | `BUDGET_TIME`, `BUDGET_MEMORY` | the time budget was spent, or the memory estimate exceeds the budget |
-| `NEEDS_EIGENVECTORS`, `NEEDS_SPEC`, `NEEDS_MATRIX`, `NEEDS_WHOLE_SPECTRUM`, `NEEDS_TEMPERATURES`, `NEEDS_OBSERVABLES`, `NEEDS_DEPENDENCY` | an input the statement needs is missing |
+| `NEEDS_EIGENVECTORS`, `NEEDS_SPEC`, `NEEDS_MATRIX`, `NEEDS_WHOLE_SPECTRUM`, `NEEDS_TEMPERATURES`, `NEEDS_OBSERVABLES`, `NEEDS_DEPENDENCY` | an input the statement needs is missing (`NEEDS_DEPENDENCY`: a corroborating solver or a file library was not named) |
+| `MISSING_DEPENDENCY` | an optional package is not installed: python-flint for S6 and the other exact statements (`pip install 'certify-ed[exact]'`), QuSpin for `claim_from_quspin` (`certify-ed[quspin]`); the statement is NOT_CHECKED, the evidence names the package and the extra, and `evidence.next_action` says how to install it (3.2) |
 | `NO_COMPLETENESS_CLAIM` | a `subset` claim: nothing is said about other eigenvalues |
 | `NO_CLUSTERS` | no (quasi-)degenerate clusters among the claimed pairs |
 | `SIZE_LIMIT` | dimension above the configured limit (`inertia_max_dim`, `exact_max_dim`, ...) |
@@ -56,3 +57,7 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
    not run (missing inputs, budgets, limits) and the standing rows above, each with a code.
 3. Every statement id appears exactly once across the three lists. A quantity not in this table is not
    addressed by any statement; say so in the paper rather than inferring it from a certificate.
+4. Every statement that is INCONCLUSIVE or NOT_CHECKED carries `evidence.next_action` (3.2): one sentence
+   saying what would let the statement be decided (more eigenpairs, eigenvectors, a larger budget or limit, a
+   window claim, an optional package). It is advice derived from the reason code and the summary; it never
+   changes a status.

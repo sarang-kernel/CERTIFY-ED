@@ -33,6 +33,22 @@ def _quspin_symmetry_blocks(basis) -> dict:
     return {k: v for k, v in blocks.items() if v is not None}
 
 
+QUSPIN_HINT = ("QuSpin is not installed: install the extra with  pip install 'certify-ed[quspin]'  (or  pip install "
+               "quspin); without it use claim_from_arrays / claim_from_npz / claim_from_file with a ModelSpec")
+
+
+def require_quspin():
+    """Raise ImportError with an installation hint (not a bare traceback) when QuSpin is missing."""
+    try:
+        import quspin  # noqa: F401
+    except ImportError as e:
+        raise ImportError(QUSPIN_HINT) from e
+
+
+def _looks_like_quspin(obj) -> bool:
+    return "quspin" in type(obj).__module__.lower()
+
+
 def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None,
                       kind: str = "lowest", window=None, **claim_kw):
     """Build (Claim, ModelSpec) from QuSpin objects.
@@ -40,7 +56,14 @@ def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None
     The spec is rebuilt from `static` and the basis's local space; the matrix is
     NOT taken from QuSpin for reference purposes. QuSpin's matrix is the
     producer operator that gets compared with the reference.
+
+    Needs QuSpin only in the sense that `basis` and `H` are QuSpin objects: when the package is absent the
+    call raises ImportError with the name of the extra to install (QUSPIN_HINT) instead of failing inside.
     """
+    if not _looks_like_quspin(basis):
+        require_quspin()
+        if not hasattr(basis, "Ns"):
+            raise TypeError(f"basis must be a QuSpin basis object (got {type(basis).__name__})")
     spec = spec_from_quspin(static, basis)
     Hq = H.tocsr() if hasattr(H, "tocsr") else sp.csr_matrix(H)
     producer = {"name": "QuSpin", "basis": type(basis).__name__, "Ns": int(basis.Ns)}

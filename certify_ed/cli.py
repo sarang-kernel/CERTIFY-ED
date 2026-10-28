@@ -3,8 +3,10 @@
     certify-ed env                                   floating-point environment and versions
     certify-ed certify CLAIM.npz --spec SPEC.json [--kind lowest] [--exact] [-o CERT]
     certify-ed certify --from BUNDLE_DIR [--preset NAME] [--only S1,S2] [--skip S3]
-                       [--budget-seconds S] [--budget-mb MB] [--reason TEXT] [--temperatures T1,T2]
+                       [--budget-seconds S | --budget auto] [--budget-mb MB] [--reason TEXT]
+                       [--temperatures T1,T2] [--progress]
     certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
+    certify-ed statement CERT.json [--style latex] [-o FILE]   methods paragraph + BibTeX from a certificate
     certify-ed presets                               the presets and statements table (docs/presets.md)
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
     certify-ed list                                  the experiments and what they establish
@@ -112,6 +114,10 @@ def _options_from_args(a):
         kw["narrowing_reason"] = a.reason
     if getattr(a, "budget_seconds", None) is not None:
         kw["budget_seconds"] = float(a.budget_seconds)
+    if getattr(a, "budget", None):
+        kw["budget_seconds"] = "auto" if str(a.budget).strip().lower() == "auto" else float(a.budget)
+    if getattr(a, "progress", False):
+        kw["progress"] = True
     if getattr(a, "budget_mb", None) is not None:
         kw["budget_mb"] = float(a.budget_mb)
     if getattr(a, "temperatures", None):
@@ -175,6 +181,20 @@ def cmd_certify(a):
           f"{', '.join(x['id'].split('.')[0] + ' (' + x['by'] + ')' for x in sc['narrowed']) or 'none'}")
     print(f"certificate: {out}")
     return 0 if all(s_["status"] != "FAILED" for s_ in cert.statements) else 1
+
+
+def cmd_statement(a):
+    from .certificate_v2 import Certificate
+    from .report import methods_paragraph
+    cert = Certificate.load(a.certificate, verify=not a.no_verify)
+    text = methods_paragraph(cert, style=a.style)
+    if a.output:
+        with open(a.output, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"statement: {a.output}")
+    else:
+        print(text)
+    return 0
 
 
 def cmd_presets(a):
@@ -478,6 +498,8 @@ def main(argv=None):
         cp.add_argument("--reason", help="why the scope was narrowed; recorded in the certificate")
         cp.add_argument("--budget-seconds", type=float, dest="budget_seconds",
                         help="statements not started within this wall time become NOT CHECKED (reason BUDGET)")
+        cp.add_argument("--budget", help="time budget in seconds, or 'auto' for the E2 cost model (certify_ed.cost)")
+        cp.add_argument("--progress", action="store_true", help="one line per statement with elapsed time (stderr)")
         cp.add_argument("--budget-mb", type=float, dest="budget_mb",
                         help="statements whose estimated memory exceeds this become NOT CHECKED (reason BUDGET)")
         cp.add_argument("--temperatures", help="comma-separated T for S7 (whole-spectrum claims, k_B = 1)")
@@ -500,6 +522,12 @@ def main(argv=None):
     i.add_argument("bundle")
     add_scope_flags(i)
     i.set_defaults(fn=cmd_certify, claim=None)
+    st = sub.add_parser("statement", help="methods-section paragraph and BibTeX entry from a saved certificate")
+    st.add_argument("certificate", help="certificate JSON written by Certificate.save / certify-ed certify")
+    st.add_argument("--style", default="plain", choices=["plain", "latex"])
+    st.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
+    st.add_argument("-o", "--output")
+    st.set_defaults(fn=cmd_statement)
     pr = sub.add_parser("presets", help="the presets and statements table")
     pr.add_argument("--markdown", action="store_true")
     pr.set_defaults(fn=cmd_presets)
