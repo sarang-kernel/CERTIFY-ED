@@ -168,6 +168,7 @@ class Certificate:
         return None
 
     def statement(self, sid: str) -> Optional[dict]:
+        """The statement record with this id, or None."""
         for s in self.statements:
             if s["id"] == sid:
                 return s
@@ -230,6 +231,7 @@ class Certificate:
                  (s.get("evidence") or {}).get("next_action")) for s in self.statements]
 
     def _repr_markdown_(self) -> str:
+        """Markdown table (statement, status, one-line evidence with the next action) for notebooks."""
         lines = [f"**{self.summary()}**", "", "| statement | status | evidence |", "|---|---|---|"]
         for sid, st, summ, act in self._rows():
             cell = summ.replace("|", "\\|")
@@ -239,6 +241,7 @@ class Certificate:
         return "\n".join(lines)
 
     def _repr_html_(self) -> str:
+        """HTML table (statement, status, one-line evidence with the next action) for Jupyter."""
         import html as _html
         colour = {"CERTIFIED": "#2e7d32", "FAILED": "#c62828", "INCONCLUSIVE": "#ef6c00", "NOT_CHECKED": "#616161",
                   "CORROBORATED": "#1565c0"}

@@ -69,11 +69,14 @@ def estimate_seconds(dimension: int, model: str = "auto") -> float:
     return max(math.exp(a) * d ** b for a, b in rows)
 
 
-def auto_budget(dimension: int, model: str = "auto", factor: float = AUTO_FACTOR,
-                floor: float = AUTO_FLOOR_SECONDS) -> float:
-    """Default time budget: max(floor, factor * estimate_seconds(dimension, model)); always finite."""
+def auto_budget(dimension: int, model: str = "auto", factor: Optional[float] = None,
+                floor: Optional[float] = None) -> float:
+    """Default time budget: max(floor, factor * estimate_seconds(dimension, model)); always finite.
+    `factor` and `floor` default to AUTO_FACTOR and AUTO_FLOOR_SECONDS (read at call time)."""
     est = estimate_seconds(dimension, model)
-    return float(max(floor, factor * est))
+    f = AUTO_FACTOR if factor is None else factor
+    fl = AUTO_FLOOR_SECONDS if floor is None else floor
+    return float(max(fl, f * est))
 
 
 def resolve_budget_seconds(value, dimension: Optional[int]) -> Tuple[Optional[float], Optional[dict]]:
