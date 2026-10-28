@@ -9,3 +9,5 @@ experiments/results/
 htmlcov/
 legacy/v1/results/
 results/
+# mkdocs output (built locally, not committed)
+site/

@@ -19,7 +19,9 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      # manuscript tables from documents, not from records: the survey dataset and its
                      # generators, and the scope-matrix generator (3.1.0)
                      "experiments/make_survey_table.py", "experiments/make_scope_table.py",
-                     "experiments/compare_runs.py", "experiments/make_result_candidate.py", "experiments/survey")
+                     "experiments/compare_runs.py", "experiments/make_result_candidate.py", "experiments/survey",
+                     # documentation site tooling (3.2): the cookbook snippets only call the public API and print
+                     "docs/cookbook/snippets", "docs/make_api.py", "mkdocs.yml")
 
 
 def repo_root():

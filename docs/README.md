@@ -10,3 +10,12 @@
 | `producer_bundle.md` | the producer bundle directory and every input format (`certify-ed certify --from`) |
 | `presets.md` | presets, `--only`/`--skip`, budgets, reason codes and the scope block |
 | `SCOPE_MATRIX.md` | quantities labs report: what a certificate states, what is narrowable, what is out of scope and why |
+| `quickstart.md` | five minutes: install, one call, read the certificate, write the sentence |
+| `cookbook/` | one page per producer path (numpy arrays, `eigsh`, files, QuSpin, matrix-free, producer bundle); `snippets/` holds the scripts whose output is pasted, `snippets/run_all.py` re-runs them |
+| `what_certified_means.md` | statuses, hypotheses, what is not claimed, run-stack values, UNVERIFIED results |
+| `limitations.md` | sizes, budgets and memory caps, the exact layer, known issues |
+| `faq_inconclusive.md` | every INCONCLUSIVE summary and reason code with its next action |
+| `index.md` | the home page of the documentation site |
+
+The documentation site is built with `mkdocs build --strict` from `mkdocs.yml` in the repository root
+(`pip install -r docs/requirements-docs.txt`: mkdocs and the material theme). The built `site/` is not committed.
