@@ -32,6 +32,7 @@ fails. S6 and the `exact_*` functions do not rely on that model at all: floating
 pip install -e .            # numpy, scipy: S1-S5, whole-spectrum enclosure
 pip install -e .[exact]     # python-flint: S6, exact re-checks, Arb references, applications
 pip install -e .[all]       # + QuSpin, h5py, matplotlib, pytest
+pip install -e .[schema]    # jsonschema: validate certificates against schema/certificate-2.1.schema.json
 ```
 
 Tested with Python 3.11, NumPy 2.4, SciPy 1.17, python-flint 0.9, QuSpin 1.0.1.
@@ -172,6 +173,8 @@ tests/                       416 tests (410 without QuSpin; pytest; `ruff check 
 examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes
+schema/                      JSON Schema of the certificate (2.1) and of the producer bundle (1.0); docs/schema.md
+conformance/                 reference producer bundles and `certify-ed conform` (conformance/README.md)
 legacy/                      CERTIFY-ED v1, symveig 1.0.0, first application scripts (not installed)
 run.py                       reproduce everything
 ```

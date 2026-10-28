@@ -10,3 +10,5 @@
 | `producer_bundle.md` | the producer bundle directory and every input format (`certify-ed certify --from`) |
 | `presets.md` | presets, `--only`/`--skip`, budgets, reason codes and the scope block |
 | `SCOPE_MATRIX.md` | quantities labs report: what a certificate states, what is narrowable, what is out of scope and why |
+| `schema.md` | the certificate JSON Schema 2.1 and the producer-bundle schema 1.0 (`schema/`): field by field, stability promise, how a third-party writer conforms |
+| `SCHEMA_RFC_PROCESS.md` | how a change to the certificate format is proposed, reviewed and versioned |

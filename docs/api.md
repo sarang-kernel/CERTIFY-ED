@@ -179,4 +179,4 @@ the generated numbers. `--jobs N` runs experiments in parallel; `--resume` keeps
 
 * `provenance.source_fingerprint(root=None)`  
   Fingerprint of the computational source: {'git_commit', 'source_hash', 'source_dirty'} (all None outside a git checkout). Two records with equal source_hash and source_dirty False ran the same code.
-  Files outside the fingerprint: certify_ed/cli.py, certify_ed/testing.py, certify_ed/provenance.py, experiments/make_numbers.py, experiments/make_numbers_apps.py, experiments/e6_classify.py, experiments/e6_recheck.py
+  Files outside the fingerprint: certify_ed/cli.py, certify_ed/testing.py, certify_ed/provenance.py, certify_ed/schema.py, certify_ed/conformance.py, experiments/make_numbers.py, experiments/make_numbers_apps.py, experiments/e6_classify.py, experiments/e6_recheck.py, experiments/make_survey_table.py, experiments/make_scope_table.py, experiments/compare_runs.py, experiments/make_result_candidate.py, experiments/survey
