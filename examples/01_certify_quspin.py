@@ -14,5 +14,5 @@ E, V = H.eigsh(k=6, which="SA", v0=np.random.default_rng(1).standard_normal(basi
 order = np.argsort(E)
 claim, _ = ce.claim_from_quspin(H, basis, static, E[order], V[:, order], kind="lowest")
 cert = ce.certify(claim, spec)
-print(cert.summary())
+print(cert.summary())                       # one sentence; cert.report() is the full text
 cert.save("example_01_certificate.json")

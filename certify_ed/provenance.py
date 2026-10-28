@@ -13,6 +13,10 @@ import os
 import subprocess
 
 NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/provenance.py",
+                     # presentation and convenience (3.2): the one-call wrapper builds a Claim and Options and
+                     # calls certify(); report.py reads a certificate; diagnostics.py writes the next_action
+                     # text into statements; none of them can change a status, a bound or a count
+                     "certify_ed/api.py", "certify_ed/report.py", "certify_ed/diagnostics.py",
                      # post-processing: they read records and write tables, they never produce a record
                      "experiments/make_numbers.py", "experiments/make_numbers_apps.py",
                      "experiments/e6_classify.py", "experiments/e6_recheck.py",

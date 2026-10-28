@@ -33,6 +33,7 @@ certificate's `scope` block lists the decision (scope.py, docs/presets.md, docs/
 from __future__ import annotations
 
 import math
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Sequence, Tuple
@@ -41,6 +42,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from .certificate_v2 import Certificate, environment_record, matrix_sha256, array_sha256
+from .cost import resolve_budget_seconds
+from .diagnostics import annotate_next_actions
 from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
                         product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
@@ -113,7 +116,8 @@ class Options:
     only: Optional[Sequence[str]] = None     # restrict to these statements (dependencies are added)
     skip: Sequence[str] = ()                 # remove these statements
     narrowing_reason: str = ""               # the user's reason, copied into the scope block
-    budget_seconds: Optional[float] = None   # statements not started within this wall time are NOT_CHECKED
+    budget_seconds: Any = None               # statements not started within this wall time are NOT_CHECKED;
+    #   a number, None, or "auto" (default budget from the E2 cost model, certify_ed.cost; advisory)
     budget_mb: Optional[float] = None        # statements whose estimated memory exceeds this are NOT_CHECKED
     # ---- new statements (3.1, UNVERIFIED)
     temperatures: Sequence[float] = ()       # S7 for whole-spectrum claims
@@ -121,6 +125,8 @@ class Options:
     correlations: Dict[str, Any] = field(default_factory=dict)
     #   name -> {"letter": "z", "sites": [...], "positions": [[x, y], ...] (optional), "q": [[...], ...] (optional)}
     degeneracy: bool = True                  # S8 for the S4 clusters
+    # ---- feedback (3.2)
+    progress: Any = False                    # True: one line per statement on stderr; or a callable taking the line
 
     @classmethod
     def from_preset(cls, name: str, **overrides) -> "Options":
@@ -141,6 +147,25 @@ def _stmt(sid, status, summary, evidence=None, assumptions=None, seconds=0.0, re
         ev["reason_code"] = reason_code
     return {"id": sid, "status": status, "summary": summary, "evidence": ev,
             "assumptions": assumptions or [], "seconds": round(float(seconds), 6)}
+
+
+class _StatementLog(list):
+    """The statement list; with Options.progress it reports each statement as it is appended (status and
+    elapsed wall time). Presentation only: it changes nothing in the records."""
+
+    def __init__(self, progress, t_start):
+        super().__init__()
+        self._sink = (print if progress is True else progress) if progress else None
+        self._t0 = t_start
+
+    def append(self, stmt):
+        super().append(stmt)
+        if self._sink is not None:
+            line = f"[{time.time() - self._t0:8.2f} s] {stmt['id']:20s} {stmt['status']:13s} {stmt.get('summary', '')}"
+            if self._sink is print:
+                print(line, file=sys.stderr, flush=True)
+            else:
+                self._sink(line)
 
 
 def _gate(sel, budget, short, estimate_mb=None, what=""):
@@ -632,7 +657,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
     t_start = time.time()
-    statements = []
+    statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
     X = None if claim.eigenvectors is None else np.asarray(claim.eigenvectors)
     if X is not None and X.ndim == 1:
@@ -640,11 +665,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     sel = resolve_selection(opts.preset, opts.only, opts.skip, opts.narrowing_reason,
                             corroborate=bool(opts.corroborate), exact_recheck=bool(opts.exact_recheck),
                             temperatures=bool(len(opts.temperatures)), degeneracy=bool(opts.degeneracy))
-    budget = Budget(opts.budget_seconds, opts.budget_mb, t_start)
-    is_cplx_claim = (X is not None and np.iscomplexobj(X)) or (spec is not None and not spec.is_real())
     n_claim = (claim.states.size if claim.states is not None else
                (claim.sector_isometry.shape[1] if claim.sector_isometry is not None else
                 (spec.dim if spec is not None else (claim.operator.shape[0] if claim.operator is not None else 0))))
+    budget_seconds, budget_auto = resolve_budget_seconds(opts.budget_seconds, n_claim)
+    budget = Budget(budget_seconds, opts.budget_mb, t_start)
+    is_cplx_claim = (X is not None and np.iscomplexobj(X)) or (spec is not None and not spec.is_real())
 
     # ---------------- S1
     H_full_ref, audit = None, None
@@ -1135,7 +1161,9 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         not_verified.append("bounds: " + why)
     arithmetic = float_env_record()
     arithmetic["runtime_probe"] = fp_probe
-    body = {"subject": subject, "claim": claim_rec, "statements": statements,
+    annotate_next_actions(statements, {"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
+                                       "eigenspaces": opts.eigenspaces, "budget_seconds": budget_seconds})
+    body = {"subject": subject, "claim": claim_rec, "statements": list(statements),
             "enclosures": enc.to_records() if enc is not None else [],
             "kato_temple": kt,
             "arithmetic": arithmetic, "environment": environment_record(),
@@ -1145,7 +1173,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "scope": build_scope_block(
                 sel, statements, budget,
                 {"preset": opts.preset, "only": None if opts.only is None else list(opts.only), "skip": list(opts.skip),
-                 "budget_seconds": opts.budget_seconds, "budget_mb": opts.budget_mb,
+                 "budget_seconds": budget_seconds, "budget_mb": opts.budget_mb, "budget_auto": budget_auto,
                  "temperatures": [float(t) for t in opts.temperatures], "eigenspaces": opts.eigenspaces,
                  "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
                  "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
@@ -1155,7 +1183,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
                            "has_matrix": is_matrix(op)}),
             "not_verified": not_verified,
-            "timing": {"total_seconds": time.time() - t_start}}
+            "timing": {"total_seconds": time.time() - t_start,
+                       "per_statement": {s_["id"]: s_["seconds"] for s_ in statements}}}
     arrays = {"eigenvalues": mu}
     if enc is not None:
         arrays["radius"] = enc.radius + (eps_shift if np.isfinite(eps_shift) else 0.0)

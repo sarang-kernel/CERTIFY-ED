@@ -167,7 +167,100 @@ class Certificate:
                 return s["status"]
         return None
 
+    def statement(self, sid: str) -> Optional[dict]:
+        for s in self.statements:
+            if s["id"] == sid:
+                return s
+        return None
+
+    def counts_by_status(self) -> Dict[str, list]:
+        """status -> short ids ('S1', ...) of the statements with that status, in certificate order."""
+        out: Dict[str, list] = {}
+        for s in self.statements:
+            out.setdefault(s["status"], []).append(s["id"].split(".")[0])
+        return out
+
+    def max_radius(self) -> Optional[float]:
+        """Largest certified S2 radius (sidecar 'radius' when present, else S2 evidence); None without S2."""
+        r = self.arrays.get("radius")
+        if r is not None and len(r):
+            return float(np.max(r))
+        s2 = self.statement("S2.eigenpairs")
+        if s2 and "max_radius" in (s2.get("evidence") or {}):
+            return float(s2["evidence"]["max_radius"])
+        return None
+
     def summary(self) -> str:
+        """One sentence: what was certified and what was not (statement counts by status, the largest S2 radius,
+        whether completeness holds and with which gap). `report()` is the full multi-line text."""
+        from .report import round_decimal
+        by = self.counts_by_status()
+        n = len(self.statements)
+        parts = []
+        cert = by.get("CERTIFIED", [])
+        parts.append(f"{len(cert)} of {n} statements CERTIFIED" + (f" ({', '.join(cert)})" if cert else ""))
+        for st in ("FAILED", "INCONCLUSIVE", "NOT_CHECKED", "CORROBORATED"):
+            ids = by.get(st, [])
+            if ids:
+                parts.append(f"{len(ids)} {st} ({', '.join(ids)})")
+        head = ", ".join(parts)
+        tail = []
+        s2 = self.statement("S2.eigenpairs")
+        r = self.max_radius()
+        if s2 and s2["status"] == "CERTIFIED" and r is not None:
+            tail.append(f"max certified radius {round_decimal(r, 3, 'up')} (rounded up)")
+        s3 = self.statement("S3.completeness")
+        if s3 is not None:
+            ev = s3.get("evidence") or {}
+            if s3["status"] == "CERTIFIED":
+                g = ev.get("gap_lower_bound")
+                tail.append("completeness holds" + (f" with gap >= {round_decimal(g, 3, 'down')}" if g is not None else ""))
+            elif s3["status"] == "FAILED":
+                tail.append("completeness is refuted")
+            else:
+                tail.append(f"completeness {s3['status']}")
+        sc = self.body.get("scope")
+        if isinstance(sc, dict) and sc.get("preset"):
+            tail.append(f"preset {sc['preset']}")
+        sentence = head + ("; " + "; ".join(tail) if tail else "") + "."
+        return sentence[0].upper() + sentence[1:]
+
+    def _rows(self):
+        return [(s["id"], s["status"], " ".join(str(s.get("summary", "")).split()),
+                 (s.get("evidence") or {}).get("next_action")) for s in self.statements]
+
+    def _repr_markdown_(self) -> str:
+        lines = [f"**{self.summary()}**", "", "| statement | status | evidence |", "|---|---|---|"]
+        for sid, st, summ, act in self._rows():
+            cell = summ.replace("|", "\\|")
+            if act:
+                cell += f" *next: {act}*".replace("|", "\\|")
+            lines.append(f"| `{sid}` | {st} | {cell} |")
+        return "\n".join(lines)
+
+    def _repr_html_(self) -> str:
+        import html as _html
+        colour = {"CERTIFIED": "#2e7d32", "FAILED": "#c62828", "INCONCLUSIVE": "#ef6c00", "NOT_CHECKED": "#616161",
+                  "CORROBORATED": "#1565c0"}
+        rows = []
+        for sid, st, summ, act in self._rows():
+            cell = _html.escape(summ)
+            if act:
+                cell += f'<br><span style="color:#616161">next: {_html.escape(act)}</span>'
+            rows.append(f'<tr><td><code>{_html.escape(sid)}</code></td>'
+                        f'<td style="color:{colour.get(st, "#000")};font-weight:bold">{_html.escape(st)}</td>'
+                        f'<td>{cell}</td></tr>')
+        return (f'<div class="certify-ed"><p><b>{_html.escape(self.summary())}</b></p>'
+                '<table><thead><tr><th>statement</th><th>status</th><th>evidence</th></tr></thead>'
+                f'<tbody>{"".join(rows)}</tbody></table></div>')
+
+    def methods_paragraph(self, style: str = "plain") -> str:
+        """Methods-section paragraph with every number taken from this certificate (certify_ed.report)."""
+        from .report import methods_paragraph
+        return methods_paragraph(self, style=style)
+
+    def report(self) -> str:
+        """Full multi-line text: subject, claim, every statement with its summary, scope, not-verified list."""
         lines = [f"CERTIFY-ED certificate ({self.body.get('schema', CERT_SCHEMA)})",
                  f"  subject : {self.body.get('subject', {}).get('description', '')}",
                  f"  claim   : {self.body.get('claim', {}).get('description', '')}"]

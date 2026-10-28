@@ -24,6 +24,9 @@ from .enclosure import OperatorAdapter, enclose, kato_temple
 from .inertia import inertia as inertia_count
 from .certify import Claim, Options, certify
 from .certificate_v2 import Certificate
+from .api import quick
+from .report import methods_paragraph
+from .cost import estimate_seconds, auto_budget
 from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
                         claim_from_hdf5, export_npz, claim_from_file, claim_from_bundle)
 from .io import read_bundle, write_bundle
@@ -41,7 +44,8 @@ __all__ = [
     "build_bitwise", "build_kron", "cross_construct", "SpecOperator", "StateSet", "full_state_set",
     "u1_state_set", "magnetization_state_set", "translation", "spin_flip", "reflection",
     "cyclic_isometry", "sector_matrix", "OperatorAdapter", "enclose", "kato_temple", "inertia_count",
-    "Claim", "Options", "certify", "Certificate", "CertificateV2", "claim_from_quspin",
+    "Claim", "Options", "certify", "quick", "Certificate", "CertificateV2", "methods_paragraph",
+    "estimate_seconds", "auto_budget", "claim_from_quspin",
     "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz", "claim_from_file",
     "claim_from_bundle", "read_bundle", "write_bundle", "probe_float_environment",
     "enclose_spectrum", "SpectrumEnclosure", "SpectrumInterval", "exact_matrix",
