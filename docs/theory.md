@@ -46,6 +46,60 @@ The exact layer does not need this.
 
 This gives existence only: two copies of one vector satisfy it with the same eigenvalue.
 
+**Floating-point evaluation of the Theorem 1 radius (code-facing; `enclosure.residuals`, INT-04).** The
+manuscript's Appendix A is to be rewritten from this list (D-16); the code's bound is what is described
+here, not what the appendix said (k ≤ 6 roundings, factor 1 + 8u, shift multiplied in). Notation: A the
+stored matrix, x and μ the stored claim, w = `adapter.width` the largest number of nonzeros in a row of
+A, n the dimension, u = 2⁻⁵³, γ_m = mu/(1 − mu), g = `gamma_dot(w + 2)` (= γ_{w+2} for real data,
+2γ_{w+6} for complex data), ‖·‖ the Euclidean norm. Every operation below is round-to-nearest; "(1 + 4u)
+covers k roundings" means (1 − γ_k)(1 + 4u) ≥ 1, which holds for k ≤ 3 and for k = 4 only together with
+the slack named in that step. The lines are those of `enclosure.py` on this branch.
+
+1. *Residual vectors* (lines 149–152). R = fl(A x − fl(μ x)); each entry of fl(A x) is a BLAS or sparse
+   inner product of at most w terms (error ≤ γ_w (|A||x|)_i), the product μ x_i and the subtraction add
+   one rounding each. Hence |R_i − (Ax − μx)_i| ≤ γ_w (|A||x|)_i + u(1 + γ_w)(|A||x|)_i + (2u + u²)|μ x_i|,
+   which is ≤ E*_i := γ_{w+2} ((|A||x|)_i + |μ||x_i|) (Higham 2002, Lemma 3.1 and §3.1; the complex case
+   uses 2γ_{w+6}, which dominates Higham §3.6). The slack E*_i − |R_i − (Ax − μx)_i| is at least
+   (γ_{w+2} − γ_w − u − uγ_w)(|A||x|)_i + (γ_{w+2} − 2u − u²)|μ x_i| ≥ u (|A||x|)_i + u |μ x_i| up to O(u²),
+   a relative slack of order 1/(w + 2) of E*_i.
+2. *Bound on |A||x|* (lines 159–163). absHX = fl(|A||x|) is a sum of w non-negative products, so
+   (|A||x|)_i ≤ absHX_i/(1 − γ_w). The code divides by (1 − γ_{w+1}) instead (one extra u of slack) and
+   multiplies by (1 + 4u): `absHX_up = absHX / (1 − gw) * (1 + 4u)`, gw = `gamma(w + 1)`. Roundings in
+   this line: fl(1 − gw), the division, the product — three, covered by (1 + 4u). The two roundings inside
+   `gamma()` (fl(1 − mu), the division) change gw by a relative 2u, i.e. 1 − gw by a relative 2u·gw/(1 − gw),
+   which the γ_{w+1} slack absorbs. Result: absHX_up_i ≥ (|A||x|)_i.
+3. *Entrywise rounding bound* (line 164). `E = g * (absHX_up + |X| |μ|) * (1 + 4u)`. Roundings: the
+   product |x_i||μ|, the addition, the product with g, the product with (1 + 4u) — four — and two inside
+   `gamma_dot` (relative 2u in g). (1 + 4u) alone covers three; the remaining relative shortfall, about
+   2u + 16u², is absorbed by the slack of step 1 (E* exceeds the true entrywise error by a relative
+   ≥ 1/(w + 2) ≫ 2u). Result: E_i ≥ |R_i − (Ax − μx)_i|, so ‖Ax − μx‖ ≤ ‖R‖ + ‖E‖ (triangle inequality).
+4. *Norms* (line 165, `fp.norm2_upper`; line 155, `fp.norm2_lower`). For a stored vector v of length n,
+   s = fl(‖v‖) = fl(sqrt(fl(Σ v_j²))) satisfies ‖v‖ (1 − γ_n)^{1/2} (1 − u) ≤ s ≤ ‖v‖ (1 + γ_n)^{1/2} (1 + u).
+   `norm2_upper(v) = s · (1 + γ_{n+2}) · (1 + 8u)` and `norm2_lower(v) = max(0, s · (1 − γ_{n+2}) / (1 + 8u))`:
+   the factor (1 ± γ_{n+2}) undoes the BLAS error (γ_{n+2} ≥ γ_n/2 + u + O(u²)), and (1 + 8u) = `fp._GUARD`
+   covers the roundings of fl(1 ± γ_{n+2}), the product and the final product or division (three; the two
+   inside `gamma()` are absorbed by the slack of γ_{n+2} over γ_n/2 + u). Hence
+   `upper_i = fl(norm2_upper(R_i) + norm2_upper(E_i))` is ≥ (‖R_i‖ + ‖E_i‖)(1 − u) — the addition is the one
+   rounding of this line not covered on it — and `xl_i = norm2_lower(x_i)` ≤ ‖x_i‖. (The two norms per pair
+   are formed separately; the appendix's single factor on ‖R + E‖ does not correspond to a code line.)
+5. *Radius* (line 170). `rel = upper / xl * (1 + 4u)`: the division and the product, plus the addition of
+   step 4 — three roundings, covered by (1 + 4u). Result: rel_i ≥ (‖R_i‖ + ‖E_i‖)/‖x_i‖ ≥ ‖Ax_i − μ_i x_i‖/‖x_i‖,
+   the Theorem 1 radius for the stored numbers. `xl_i = 0` (a zero vector) gives rel_i = ∞.
+6. *Model shift* (certify.py; not part of `residuals`). When S1 certified the producer's matrix against the
+   spec with a shift bound σ (‖H_used − H_spec‖₂ ≤ σ), the radius that refers to the declared model is
+   `add_up(rel_i, σ)`, i.e. fl(rel_i + σ) stepped one ulp towards +∞ — an upper bound on the exact sum —
+   wherever the radius enters a statement: the S3 enclosures (`_certify_lowest`, `_certify_window`), the
+   S4 separations, the exported `radius` and `existence_radius` arrays (INT-03). The shift is *added*, not
+   multiplied in; no factor (1 + 8u) is applied to it. The comparison with the accuracy target in S2
+   uses round-to-nearest rel.max() + σ, since the target is a presumption, not a certified bound.
+
+In total the code applies three factors (1 + 4u) (steps 2, 3, 5), two guards (1 + γ_{n+2})(1 + 8u) and one
+guard (1 − γ_{n+2})/(1 + 8u) (step 4), and relies on the slack of γ_{w+1} over γ_w, of γ_{w+2} over the
+entrywise error, and of γ_{n+2} over γ_n/2 + u where a line has more roundings than its factor covers.
+Test `tests/test_theorem1_accounting.py` recomputes a fixed 3 × 3 case in exact rational arithmetic and
+pins, stage by stage, that each computed quantity is at least what it bounds and at most that value
+times the factors and rounding envelopes listed here.
+
 **Theorem 2 (clusters with non-orthonormal vectors).** Let X be n × g, Λ = diag(μ) real,
 R = AX − XΛ and η = ‖X^H X − I‖ < 1. Set δ = 1 − √(1 − η) and ρ = ‖R‖ + (‖A‖ + ‖Λ‖)δ. Let Q̂ be the
 polar factor of X, w ≥ ‖Q̂^H(AQ̂ − Q̂Λ)‖ and ε = (w + √(w² + 4ρ²))/2. Then there are g *distinct*
