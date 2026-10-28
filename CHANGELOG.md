@@ -1,5 +1,42 @@
 # Changelog
 
+## [Unreleased] - track/format-packaging (roadmap B-02, F-09, A-03, H-01, H-05, B-09, G-05, G-12)
+
+No statement, bound or number changes in this track; the version is bumped in the known-issues track.
+`certify_ed/schema.py` and `certify_ed/conformance.py` are listed in `provenance.NON_COMPUTATIONAL`.
+
+- **B-02.** Published JSON Schema (draft 2020-12) of the certificate body, `schema/certificate-2.1.schema.json`,
+  and of the producer bundle, `schema/producer-bundle-1.0.schema.json`, rendered from `certify_ed/schema.py`
+  (the enumerations are the code's; a test keeps the files in sync). `Certificate.load(validate_schema=None|True|False)`
+  validates when `jsonschema` is installed (extra `schema`) and otherwise runs the structural checks (every
+  statement id exactly once in the scope block, reason codes declared and known, in_scope statuses equal to the
+  statements); a non-conforming body raises `SchemaValidationError`. This also closes INT-02 independently of
+  `fix/3.1.1`. `docs/schema.md`: field by field, stability promise, how a third-party writer conforms.
+- **F-09.** `certify-ed conform DIR...` (`certify_ed/conformance.py`): bundle schema, import, certify, certificate
+  schema, expected statuses. Three reference bundles under `conformance/reference/` (dense text, npz, matrix-free)
+  with `expected.json`; `conformance/README.md` for third-party writers. Negative controls: unknown status,
+  unknown reason code, CORROBORATED outside S5, duplicated/missing scope entries, tampered files with a recomputed
+  hash, a bundle with a planted wrong eigenvalue.
+- **A-03.** Extras `exact`, `quspin`, `hdf5`, `plots`, `schema`, `all` (the union), `dev`; `MANIFEST.in` ships the
+  schemas, the reference bundles, docs and tests in the sdist. `python -m build` gives an sdist and a wheel; the
+  wheel installs into a fresh venv and `certify-ed env` runs. `packaging/conda-forge/meta.yaml` (noarch draft),
+  `packaging/RELEASE_CHECKLIST.md` (version bump, annotated tag, full run per D-44, checksums, sigstore, Zenodo
+  new version under 10.5281/zenodo.20066565, GitHub release; never a force-push).
+- **H-01.** `.github/workflows/ci.yml` replaces `tests.yml`: lint, build, schema sync; ubuntu/macos/windows x
+  Python 3.11/3.12 with `.[all]` and QuSpin 1.0.1 (`--no-deps` after its real dependencies; the wheel declares the
+  obsolete `importlib` backport; documented in `docs/reproducibility.md`), test log uploaded; `nightly-mutation.yml`
+  runs a 32-mutant E6 sample without a failure gate.
+- **H-05.** `containers/Dockerfile` and `containers/certify-ed.def` pin the 3.1.0 evidence-run stack (Python 3.11,
+  numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0, QuSpin 1.0.1, h5py, matplotlib, mpmath).
+- **B-09.** `packaging/SIGNING.md`: keyless sigstore signing and verification of release assets and `SHA256SUMS`.
+  The certificate schema reserves `environment.distribution_sha256`; 3.1 does not write it (the hash of an installed
+  distribution is not well defined; `source_hash` identifies the code from a checkout).
+- **G-05 / G-12.** `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `GOVERNANCE.md` (maintainers,
+  decisions, release cadence, deprecation policy: schema fields never removed within a major version),
+  `docs/SCHEMA_RFC_PROCESS.md`, issue templates (bug, feature, *I could not certify X* feeding `docs/SCOPE_MATRIX.md`),
+  `ROADMAP.md` summarising the scored expansion roadmap.
+- Tests: `tests/test_schema_conformance.py` (17), `tests/test_packaging.py` (7).
+
 ## [3.1.0] - 2026-10-22
 
 `__version__` = 3.1.0 (tag `v3.1.0`; evidence run `results/run_full_20261022`, made from the tagged commit on the
