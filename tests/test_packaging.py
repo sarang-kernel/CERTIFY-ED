@@ -66,6 +66,31 @@ def test_container_recipes_pin_the_evidence_stack(rel):
         assert re.search(r"\b" + pkg + r"\b", txt), (rel, pkg)
 
 
+GOVERNANCE_FILES = ("CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "GOVERNANCE.md", "ROADMAP.md", "docs/SCHEMA_RFC_PROCESS.md",
+                    ".github/ISSUE_TEMPLATE/bug.md", ".github/ISSUE_TEMPLATE/feature.md",
+                    ".github/ISSUE_TEMPLATE/could-not-certify.md", ".github/ISSUE_TEMPLATE/config.yml")
+
+
+def test_governance_files_exist_and_say_what_they_must():
+    for rel in GOVERNANCE_FILES:
+        assert os.path.exists(os.path.join(ROOT, rel)), rel
+    assert "Contributor Covenant" in _read("CODE_OF_CONDUCT.md") and "sarangvehale2@gmail.com" in _read("CODE_OF_CONDUCT.md")
+    c = _read("CONTRIBUTING.md")
+    assert "negative control" in c and "D-12" in c and "Co-Authored-By" in c
+    g = _read("GOVERNANCE.md")
+    assert "never removed" in g and "Deprecation" in g
+    icc = _read(".github/ISSUE_TEMPLATE/could-not-certify.md")
+    assert icc.startswith("---\nname: I could not certify X") and "SCOPE_MATRIX" in icc and "reason code" in icc
+    yaml = pytest.importorskip("yaml")
+    for rel in GOVERNANCE_FILES:
+        if rel.endswith(".md") and ".github" in rel:
+            front = _read(rel).split("---")[1]
+            assert {"name", "about"} <= set(yaml.safe_load(front)), rel
+    rm = _read("ROADMAP.md")
+    for item in ("B-02", "F-09", "A-03", "H-01", "H-05", "B-09", "G-05", "G-12", "B-01", "D-01"):
+        assert item in rm, item
+
+
 def test_reproducibility_doc_describes_the_quspin_install():
     assert QUSPIN_TRICK in _read("docs/reproducibility.md")
     assert QUSPIN_TRICK in _read("containers/README.md")

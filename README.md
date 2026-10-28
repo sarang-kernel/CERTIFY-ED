@@ -179,6 +179,13 @@ legacy/                      CERTIFY-ED v1, symveig 1.0.0, first application scr
 run.py                       reproduce everything
 ```
 
+## Contributing and governance
+
+`CONTRIBUTING.md` (the soundness rule: a negative control per status-affecting change; the mathematics
+rule D-12), `GOVERNANCE.md` (maintainers, decisions, release cadence, deprecation policy), `CODE_OF_CONDUCT.md`,
+`ROADMAP.md`, `docs/SCHEMA_RFC_PROCESS.md`; issue templates include *I could not certify X*, which feeds
+`docs/SCOPE_MATRIX.md`. Releases: `packaging/RELEASE_CHECKLIST.md`, `packaging/SIGNING.md`; containers: `containers/`.
+
 ## License and citation
 
 MIT (see `LICENSE`). Citation metadata: `CITATION.cff`. Preprints: CERTIFY-ED v1, arXiv:2605.11787;
