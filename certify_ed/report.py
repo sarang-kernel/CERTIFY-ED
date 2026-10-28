@@ -88,11 +88,22 @@ class _Numbers:
                              "note": note})
         return self._wrap(text)
 
+    def label(self, name: str, text: str, path: str) -> str:
+        """A non-numeric field quoted verbatim (e.g. the spin label '1/2'); recorded so the tests can remove it
+        before scanning for numbers and check it against the certificate path."""
+        self.entries.append({"name": name, "value": None, "text": str(text), "rounding": "label", "path": path,
+                             "note": ""})
+        return self._wrap_label(str(text))
+
+    def _wrap_label(self, text: str) -> str:
+        return _esc(text, self.style)
+
     def _wrap(self, text: str) -> str:
         return f"\\num{{{text}}}" if self.style == "latex" else text
 
     def macros(self) -> str:
-        return "\n".join(f"\\newcommand{{\\{e['name']}}}{{{self._wrap(e['text'])}}}" for e in self.entries)
+        return "\n".join(f"\\newcommand{{\\{e['name']}}}{{{self._wrap(e['text'])}}}" for e in self.entries
+                         if e["rounding"] != "label")
 
 
 def _esc(text: str, style: str) -> str:
@@ -130,7 +141,8 @@ def _model_sentence(cert, nums: _Numbers, style: str) -> str:
             pieces.append(f"{_esc(key, style)} {_esc(val, style)}")
     local = spec.get("local_space") or {}
     kind = local.get("kind")
-    kind_txt = f", {_esc(str(local.get('spin') or ''), style)} spins" if kind == "spin" and local.get("spin") else ""
+    kind_txt = (f", spin-{nums.label('certSpin', local['spin'], 'subject.spec.local_space.spin')} sites"
+                if kind == "spin" and local.get("spin") else "")
     return f"the model `{name}' with {n} sites{kind_txt}" + (f" ({', '.join(pieces)})" if pieces else "")
 
 
