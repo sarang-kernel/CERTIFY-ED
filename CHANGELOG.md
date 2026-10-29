@@ -120,6 +120,26 @@ No statement, bound or number changes in this track; the version is bumped in th
   `ROADMAP.md` summarising the scored expansion roadmap.
 - Tests: `tests/test_schema_conformance.py` (17), `tests/test_packaging.py` (7).
 
+### Viewer and corpus (roadmap A-08, B-07; track/viewer-corpus)
+- `certify-ed view CERT.json [-o CERT.html]` and `certify_ed.viewer.view_file` (A-08): one self-contained HTML
+  page per certificate (inline CSS, no scripts, no external resources): header (model, claim kind and k,
+  version, hashes, environment, floating-point probe, no-underflow scan), the statements in plain words
+  (status, summary, next action, key evidence), the scope block (in scope / narrowed with the user's reason /
+  not checked and out of scope with the reason code and its scope-matrix explanation), the enclosure table
+  (per pair: claimed value, radius and existence radius for the producer operator and, from the sidecar, with
+  the model shift; enclosure interval; cluster), the Kato-Temple intervals, the S3 gap and inertia data, the
+  S4/S8 cluster tables, S7 intervals, S6 exact data, the methods paragraph of `report.py`, and an integrity
+  footer (body hash stored and recomputed, array hashes, `verify_scope`, schema validation). Every number is
+  the certificate's value rounded by `report.round_decimal` in the safe direction (radii and error bounds up,
+  gap and separation bounds down, certified windows inward, enclosures outward; claimed values and counts
+  exact) and carries the exact value in `data-exact`. A tampered body, a modified or missing sidecar, or a
+  scope block that drops a statement produces a red INTEGRITY CHECK FAILED banner and exit code 1 (the page is
+  still written). User strings are HTML-escaped. `certify_ed/viewer.py` is in `provenance.NON_COMPUTATIONAL`.
+  Tests: `tests/test_viewer.py` (20: every schema fixture certificate renders with every statement id and
+  status; every displayed number checked against its exact value and direction; enclosure rows against the
+  body and the sidecar; tampered body / sidecar / scope block banners; `<script>` in the narrowing reason and
+  the claim description escaped; pre-2.1 certificate without scope block; CLI exit codes). `docs/viewer.md`.
+
 ## [3.1.0] - 2026-10-22
 
 `__version__` = 3.1.0 (tag `v3.1.0`; evidence run `results/run_full_20261022`, made from the tagged commit on the
