@@ -9,6 +9,7 @@
 | `symveig_audit.md` | audit of symveig 1.0.0 and what the merge changed |
 | `producer_bundle.md` | the producer bundle directory and every input format (`certify-ed certify --from`) |
 | `viewer.md` | the offline HTML certificate viewer (`certify-ed view`): sections, rounding directions, integrity banner |
+| `corpus.md` | the planted-error corpus (`corpus/`): error classes, the runner that scores any checker |
 | `presets.md` | presets, `--only`/`--skip`, budgets, reason codes and the scope block |
 | `SCOPE_MATRIX.md` | quantities labs report: what a certificate states, what is narrowable, what is out of scope and why |
 | `quickstart.md` | five minutes: install, one call, read the certificate, write the sentence |

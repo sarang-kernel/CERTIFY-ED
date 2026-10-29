@@ -1,0 +1,11 @@
+{
+ "schema": "certify-ed/producer-bundle/1.0",
+ "kind": "lowest",
+ "producer": {
+  "name": "certify-ed planted-error corpus",
+  "version": "1.0"
+ },
+ "description": "heisenberg_chain N=10: duplicated_vector",
+ "corpus_case": "heis10_duplicated_vector",
+ "accuracy_target": 1e-08
+}

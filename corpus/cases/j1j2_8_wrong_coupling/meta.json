@@ -1,0 +1,11 @@
+{
+ "schema": "certify-ed/producer-bundle/1.0",
+ "kind": "lowest",
+ "producer": {
+  "name": "certify-ed planted-error corpus",
+  "version": "1.0"
+ },
+ "description": "heisenberg_chain N=8: wrong_coupling",
+ "corpus_case": "j1j2_8_wrong_coupling",
+ "accuracy_target": 1e-08
+}

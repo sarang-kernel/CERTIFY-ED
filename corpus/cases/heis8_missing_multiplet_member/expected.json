@@ -1,0 +1,33 @@
+{
+ "case": "heis8_missing_multiplet_member",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "The claim 'the k lowest' stops inside a degenerate multiplet: members are missing.",
+ "error_class": "missing_multiplet_member",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity",
+  "S2.eigenpairs"
+ ],
+ "must_not_certify": [
+  "S3.completeness"
+ ],
+ "note": "'the k lowest eigenvalues' with k inside a degenerate level: the gap above the claim is zero and 2 member(s) of the top level are missing. S8 speaks only about clusters of claimed pairs; the single claimed member is not a cluster, so S8 may be certified for the other clusters or say that there are none",
+ "parameters": {
+  "claimed_members": 1,
+  "k": 2,
+  "multiplet": [
+   1,
+   4
+  ]
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

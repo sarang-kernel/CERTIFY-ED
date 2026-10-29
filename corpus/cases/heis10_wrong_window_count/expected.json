@@ -1,0 +1,34 @@
+{
+ "case": "heis10_wrong_window_count",
+ "claim_kind": "window",
+ "conditional": false,
+ "description": "A window claim lists the eigenvalues in (a, b) but one interior non-degenerate level is left out.",
+ "error_class": "wrong_window_count",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=10",
+ "must_certify": [
+  "S1.model_fidelity",
+  "S2.eigenpairs"
+ ],
+ "must_not_certify": [
+  "S3.completeness"
+ ],
+ "note": "the window holds 5 eigenvalues and the claim lists 4: completeness is false",
+ "parameters": {
+  "claimed": 4,
+  "dropped_pair": 0,
+  "eigenvalues_in_window": 5,
+  "window": [
+   -4.516446354492043,
+   -3.7695974354084436
+  ]
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

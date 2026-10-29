@@ -1,0 +1,33 @@
+{
+ "case": "heis8_subnormal_entries",
+ "claim_kind": "lowest",
+ "conditional": true,
+ "description": "A numerically zero eigenvector entry is replaced by the subnormal 1e-310: the no-underflow hypothesis of the standard floating-point model is not established for this input.",
+ "error_class": "subnormal_entries",
+ "may_certify": [
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs"
+ ],
+ "note": "the entry is below 2^-900, so the no-underflow hypothesis of the standard model is not established for this input; a checker whose floating-point model covers gradual underflow (Higham 2002, eq. 2.6) may certify (conditional case)",
+ "parameters": {
+  "entry": [
+   0,
+   0
+  ],
+  "k": 5,
+  "value": 1e-310
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

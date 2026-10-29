@@ -1,0 +1,34 @@
+{
+ "case": "heis8_unnormalised_cluster_member",
+ "claim_kind": "lowest",
+ "conditional": true,
+ "description": "One member of a degenerate multiplet is scaled by 1.7: the Gram matrix of the claimed cluster vectors is far from the identity.",
+ "error_class": "unnormalised_cluster_member",
+ "may_certify": [
+  "S3.completeness",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs",
+  "S4.eigenspaces"
+ ],
+ "note": "the Gram matrix of the claimed cluster vectors differs from the identity by 1.89 in norm: neither the distinctness of the cluster's eigenvalues (Theorem 2) nor the eigenspace statement (Theorem 3) can be certified for the vectors as claimed; a checker that re-orthonormalises before checking and records it may certify (conditional case)",
+ "parameters": {
+  "cluster": [
+   1,
+   4
+  ],
+  "k": 5,
+  "pair": 1,
+  "scale": 1.7
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}
