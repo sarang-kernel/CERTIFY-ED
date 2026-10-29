@@ -46,7 +46,7 @@ from .cost import resolve_budget_seconds
 from .diagnostics import annotate_next_actions
 from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
                         product_tolerance, SpecOperator)
-from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
+from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
 from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
@@ -1214,8 +1214,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 eig_records.append(rec)
                 continue
             for name, O in opts.observables.items():
-                certify_observable(ec, X, O, name)
-                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
+                # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
+                from .correlations import certify_observable_general
+                r_obs = certify_observable_general(ec, X, O, name)
+                O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
+                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
             corr_recs = _correlations(ec, X, spec, claim, opts, rec)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":

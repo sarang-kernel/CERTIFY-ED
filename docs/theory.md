@@ -352,6 +352,14 @@ Uses:
   S(q) is real when C_ij = C_ji, which holds for commuting Hermitian site operators. Only the pairs i ≤ j
   are computed; C_ji = C_ij is used for the rest (exact for commuting Hermitian O_i, O_j).
 
+* **Non-Hermitian operators (C-05, since 3.2.0.dev0).** For a non-Hermitian O (S⁺_i S⁻_j, or a user
+  observable) the classical decomposition O = H + iK with H = (O + Oᴴ)/2 and K = (O − Oᴴ)/(2i), both
+  Hermitian, gives tr(P O) = tr(P H) + i tr(P K); each trace is a Theorem 6 observable and the recombination
+  is Proposition 15 with coefficients 1 and i (bound b_H + b_K). The code forms H and K in floating point and
+  checks, entry by entry, that the sums are exact (Knuth's TwoSum error term is zero; the halving and the
+  multiplication by −i are exact), so that the statement refers to O itself; when a sum rounds, the record is
+  INCONCLUSIVE. For two-letter correlation requests C_ji = conj(C_ij) (tr(P Oᴴ) = conj tr(P O)).
+
 ### 9.3 Thermodynamics from a complete whole-spectrum enclosure (S7, `thermo.py`)
 
 **Hypothesis (H).** Intervals [l_k, h_k] with counts c_k, k = 1 … m, Σ c_k = n, such that every

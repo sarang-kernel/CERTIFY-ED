@@ -36,6 +36,16 @@ under the new reason code below.
   paired with an eigenvalue: S2, S4, S8 stay NOT_CHECKED and the summary says so. Six factorizations per
   window. Tests: `tests/test_vectorless_window.py` (count matches the dense spectrum at four windows, planted
   wrong counts FAILED both ways, edge on an eigenvalue INCONCLUSIVE, random-window negative control, gates).
+- **C-05 Hermitian decomposition.** `Options.observables` and `Options.correlations` accept non-Hermitian
+  operators: `correlations.certify_observable_general` splits O = H + iK (H = (O + O^H)/2, K = (O - O^H)/(2i)),
+  certifies tr(P H) and tr(P K) by Theorem 6 and records the recombination tr(P O) = tr(P H) + i tr(P K) with
+  bound b_H + b_K (Proposition 15); the record names both parts (`parts`, `definition`, `recombine`,
+  `value` = [re, im]). The parts are checked to be formed exactly in floating point (TwoSum); otherwise the
+  record is INCONCLUSIVE. Correlation requests take a two-letter string (`{"letter": "+-", ...}` for
+  S+_i S-_j, built as one two-site term from the spec; C_ji = conj(C_ij) in the structure factor). A
+  non-Hermitian observable used to reach `certify_observable` unchecked; `certify_observables_batch` used to
+  raise. Tests: `tests/test_hermitian_decomposition.py` against the exact N = 4 ring values (-1/3, 1/6, 1/2;
+  S(pi) = 4/3), with a rounded-parts negative control.
 
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls
