@@ -1,0 +1,30 @@
+{
+ "case": "tfim8_wrong_eigenvalue_1e-05",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One claimed eigenvalue is shifted by delta (1e-5, above the declared accuracy 1e-8; or, on the top pair, past the next level, so that the claimed set is no longer the k lowest); the vector is the true eigenvector.",
+ "error_class": "wrong_eigenvalue",
+ "may_certify": [
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "tfim_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs"
+ ],
+ "note": "the residual of pair 1 is 1e-5 in norm: no radius below the declared accuracy 1e-8 exists for the pair; a radius of 1e-5 would be true but does not meet the claim",
+ "parameters": {
+  "delta": 1e-05,
+  "k": 5,
+  "pair": 1
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

@@ -1,0 +1,15 @@
+{
+ "schema": "certify-ed/producer-bundle/1.0",
+ "kind": "window",
+ "window": [
+  -4.516446354492043,
+  -3.7695974354084436
+ ],
+ "producer": {
+  "name": "certify-ed planted-error corpus",
+  "version": "1.0"
+ },
+ "description": "heisenberg_chain N=10: wrong_window_count",
+ "corpus_case": "heis10_wrong_window_count",
+ "accuracy_target": 1e-08
+}

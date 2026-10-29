@@ -7,6 +7,7 @@
                        [--temperatures T1,T2] [--progress]
     certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
     certify-ed statement CERT.json [--style latex] [-o FILE]   methods paragraph + BibTeX from a certificate
+    certify-ed view CERT.json [-o CERT.html]         offline HTML page of a certificate (docs/viewer.md)
     certify-ed presets                               the presets and statements table (docs/presets.md)
     certify-ed plan CLAIM.npz [--spec SPEC.json] [--kind ...] [--preset ...]   predicted time and memory per statement
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
@@ -311,6 +312,19 @@ def cmd_extrapolate(a):
         with open(a.json, "w", encoding="utf-8") as f:
             json.dump(_jsonable({k: v for k, v in rep.items() if k != "markdown"}), f, indent=1)
     return 0
+def cmd_view(a):
+    """Offline HTML view of a saved certificate (certify_ed.viewer). The file is written even when the
+    integrity check fails (the page then opens with a failure banner); the exit code is 1 in that case."""
+    from .viewer import view_file
+    rep = view_file(a.certificate, a.output, max_pairs=a.max_pairs)
+    integ = rep["integrity"]
+    print(f"view: {rep['html']}")
+    print(f"integrity: {'ok' if integ['ok'] else 'FAILED'} (body hash {'ok' if integ['body_hash_ok'] else 'MISMATCH'}, "
+          f"arrays {'ok' if integ['arrays_ok'] else 'BAD: ' + ', '.join(integ['bad_arrays'])}, "
+          f"scope {'ok' if integ['scope_ok'] else 'n/a' if integ['scope_ok'] is None else 'PROBLEMS'})")
+    sch = rep["schema"]["ok"]
+    print(f"schema: {'ok' if sch else 'structural checks only' if sch is None else 'FAILED'}")
+    return 0 if integ["ok"] else 1
 
 
 def cmd_presets(a):
@@ -698,6 +712,12 @@ def main(argv=None):
     ex.add_argument("-o", "--output", help="write the Markdown report here (default: stdout)")
     ex.add_argument("--json", help="write the JSON record here")
     ex.set_defaults(fn=cmd_extrapolate)
+    vw = sub.add_parser("view", help="offline HTML page of a saved certificate (self-contained, no scripts)")
+    vw.add_argument("certificate", help="certificate JSON written by Certificate.save / certify-ed certify")
+    vw.add_argument("-o", "--output", help="HTML file (default: the certificate's stem + .html)")
+    vw.add_argument("--max-pairs", type=int, dest="max_pairs", default=None,
+                    help="show at most this many rows of the enclosure table (default: all)")
+    vw.set_defaults(fn=cmd_view)
     pr = sub.add_parser("presets", help="the presets and statements table")
     pr.add_argument("--markdown", action="store_true")
     pr.set_defaults(fn=cmd_presets)

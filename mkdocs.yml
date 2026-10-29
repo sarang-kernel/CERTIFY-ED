@@ -46,6 +46,8 @@ nav:
       - Scope matrix: SCOPE_MATRIX.md
       - Presets and scope: presets.md
       - Producer bundle format: producer_bundle.md
+      - Offline certificate viewer: viewer.md
+      - Planted-error corpus: corpus.md
       - API: api.md
       - Applications: applications.md
       - Reproducibility: reproducibility.md

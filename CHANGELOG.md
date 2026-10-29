@@ -284,6 +284,51 @@ No statement, bound or number changes in this track; the version is bumped in th
   `ROADMAP.md` summarising the scored expansion roadmap.
 - Tests: `tests/test_schema_conformance.py` (17), `tests/test_packaging.py` (7).
 
+### Viewer and corpus (roadmap A-08, B-07; track/viewer-corpus)
+- `certify-ed view CERT.json [-o CERT.html]` and `certify_ed.viewer.view_file` (A-08): one self-contained HTML
+  page per certificate (inline CSS, no scripts, no external resources): header (model, claim kind and k,
+  version, hashes, environment, floating-point probe, no-underflow scan), the statements in plain words
+  (status, summary, next action, key evidence), the scope block (in scope / narrowed with the user's reason /
+  not checked and out of scope with the reason code and its scope-matrix explanation), the enclosure table
+  (per pair: claimed value, radius and existence radius for the producer operator and, from the sidecar, with
+  the model shift; enclosure interval; cluster), the Kato-Temple intervals, the S3 gap and inertia data, the
+  S4/S8 cluster tables, S7 intervals, S6 exact data, the methods paragraph of `report.py`, and an integrity
+  footer (body hash stored and recomputed, array hashes, `verify_scope`, schema validation). Every number is
+  the certificate's value rounded by `report.round_decimal` in the safe direction (radii and error bounds up,
+  gap and separation bounds down, certified windows inward, enclosures outward; claimed values and counts
+  exact) and carries the exact value in `data-exact`. A tampered body, a modified or missing sidecar, or a
+  scope block that drops a statement produces a red INTEGRITY CHECK FAILED banner and exit code 1 (the page is
+  still written). User strings are HTML-escaped. `certify_ed/viewer.py` is in `provenance.NON_COMPUTATIONAL`.
+  Tests: `tests/test_viewer.py` (20: every schema fixture certificate renders with every statement id and
+  status; every displayed number checked against its exact value and direction; enclosure rows against the
+  body and the sidecar; tampered body / sidecar / scope block banners; `<script>` in the narrowing reason and
+  the claim description escaped; pre-2.1 certificate without scope block; CLI exit codes). `docs/viewer.md`.
+
+- Planted-error corpus `corpus/` (B-07): `corpus/make_corpus.py` writes 60 producer bundles (1.7 MB; Heisenberg chain
+  N = 8 and 10, J1-J2 chain N = 8 at J2 = 0.5, TFIM N = 8; dense `eigh` references, deterministic) with one planted
+  error each in fourteen classes (wrong eigenvalue by 1e-5 and past the next level, unnormalised isolated vector and
+  cluster member, swapped pairs, missing multiplet member, duplicated vector, wrong coupling, wrong matrix entry,
+  non-Hermitian producer matrix, NaN eigenvector entry and eigenvalue, mislabeled sector, subnormal entry, wrong
+  window count) plus one control per model, each with an `expected.json` naming the statements a correct checker
+  must not certify (derived from the statement definitions, not from a checker). `corpus/run_corpus.py` runs any
+  checker command on every case, reads a certificate or a flat `{statement: status}` result, and scores it
+  (detected / unsound / silent / refused / conditional / error; false and weak alarms on the controls) into
+  `results/<name>/report.md` and `report.json`. `corpus/README.md` describes every class, what a correct checker
+  must say, the scoring rules, the revision history of the expectations and how to submit a case.
+  Score of CERTIFY-ED 3.2.0.dev0 on the corpus (`corpus/results/certify-ed/`): detected 53 / missed 0 (unsound 0,
+  silent 0, error 0) / false alarms 0 (weak 0) of 53 planted cases, 7 controls clean; the 8 NaN cases are detected
+  by refusal at import. Disclosure: the first run, with `unnormalised_cluster_member` expecting only S4, scored
+  detected 49 / missed 4 (silent 4: S4 NOT_CHECKED behind an INCONCLUSIVE S3, S2 INCONCLUSIVE on distinctness);
+  the expectation was then revised to S2 and S4 (Theorem 2 and Theorem 3 share the near-orthonormality
+  hypothesis, as the case note already said) and both reports are committed
+  (`results/certify-ed_expectations-before-revision/`). No change was made to the certifier for the corpus.
+  Tests: `tests/test_corpus.py` (71: every committed case is a readable bundle with a consistent expectation,
+  index hashes, in-process determinism, the planted changes are present in the arrays, scorer verdicts, summary
+  counts, result reader, runner end to end with a checker that certifies everything (unsound) and one that
+  refuses, certify-ed on one planted case and its control, the committed report has no unsound case).
+  `docs/corpus.md`. `corpus/` is outside the computational source fingerprint (it is neither `certify_ed/` nor
+  `experiments/`); `experiments/e1_failure_matrix.py` is unchanged.
+
 ## [3.1.0] - 2026-10-22
 
 `__version__` = 3.1.0 (tag `v3.1.0`; evidence run `results/run_full_20261022`, made from the tagged commit on the

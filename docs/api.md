@@ -249,6 +249,7 @@ certify-ed command line: one entry point for using the package and for reproduci
                        [--temperatures T1,T2] [--progress]
     certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
     certify-ed statement CERT.json [--style latex] [-o FILE]   methods paragraph + BibTeX from a certificate
+    certify-ed view CERT.json [-o CERT.html]         offline HTML page of a certificate (docs/viewer.md)
     certify-ed presets                               the presets and statements table (docs/presets.md)
     certify-ed plan CLAIM.npz [--spec SPEC.json] [--kind ...] [--preset ...]   predicted time and memory per statement
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
@@ -268,4 +269,4 @@ the generated numbers. `--jobs N` runs experiments in parallel; `--resume` keeps
 
 * `provenance.source_fingerprint(root=None)`  
   Fingerprint of the computational source: {'git_commit', 'source_hash', 'source_dirty'} (all None outside a git checkout). Two records with equal source_hash and source_dirty False ran the same code.
-  Files outside the fingerprint: certify_ed/cli.py, certify_ed/testing.py, certify_ed/provenance.py, certify_ed/api.py, certify_ed/report.py, certify_ed/diagnostics.py, certify_ed/schema.py, certify_ed/conformance.py, certify_ed/recorder.py, certify_ed/integrations/__init__.py, certify_ed/integrations/quspin.py, certify_ed/integrations/pauli.py, certify_ed/extrapolation.py, experiments/make_numbers.py, experiments/make_numbers_apps.py, experiments/e6_classify.py, experiments/e6_recheck.py, experiments/make_survey_table.py, experiments/make_scope_table.py, experiments/compare_runs.py, experiments/make_result_candidate.py, experiments/survey, docs/cookbook/snippets, docs/make_api.py, mkdocs.yml
+  Files outside the fingerprint: certify_ed/cli.py, certify_ed/testing.py, certify_ed/provenance.py, certify_ed/api.py, certify_ed/report.py, certify_ed/diagnostics.py, certify_ed/viewer.py, certify_ed/schema.py, certify_ed/conformance.py, certify_ed/recorder.py, certify_ed/integrations/__init__.py, certify_ed/integrations/quspin.py, certify_ed/integrations/pauli.py, certify_ed/extrapolation.py, experiments/make_numbers.py, experiments/make_numbers_apps.py, experiments/e6_classify.py, experiments/e6_recheck.py, experiments/make_survey_table.py, experiments/make_scope_table.py, experiments/compare_runs.py, experiments/make_result_candidate.py, experiments/survey, docs/cookbook/snippets, docs/make_api.py, mkdocs.yml

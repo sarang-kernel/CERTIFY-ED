@@ -1,0 +1,27 @@
+{
+ "case": "tfim8_correct",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "Control: the k lowest eigenpairs of the declared model with k at a spectral gap. No error.",
+ "error_class": "correct",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "tfim_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity",
+  "S2.eigenpairs",
+  "S3.completeness"
+ ],
+ "must_not_certify": [],
+ "note": "k is the smallest k >= 4 at a gap; S4 and S8 are decidable when the lowest k contain a multiplet and have no clusters otherwise",
+ "parameters": {
+  "k": 5
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

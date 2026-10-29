@@ -1,0 +1,11 @@
+{
+ "schema": "certify-ed/producer-bundle/1.0",
+ "kind": "lowest",
+ "producer": {
+  "name": "certify-ed planted-error corpus",
+  "version": "1.0"
+ },
+ "description": "tfim_chain N=8: missing_multiplet_member",
+ "corpus_case": "tfim8_missing_multiplet_member",
+ "accuracy_target": 1e-08
+}

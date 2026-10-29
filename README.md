@@ -83,7 +83,11 @@ cert                                                  # a table in Jupyter; ever
 print(cert.methods_paragraph("latex"))                # methods paragraph, numbers as \newcommand macros, BibTeX
 ```
 
-`certify-ed statement result.json` prints the same paragraph from a saved certificate.
+`certify-ed statement result.json` prints the same paragraph from a saved certificate;
+`certify-ed view result.json` writes `result.html`, a self-contained page (no scripts, no network) with every
+statement in plain words, the scope block, the enclosure table and the integrity report (`docs/viewer.md`).
+`corpus/` is a planted-error corpus (60 cases, 14 error classes) with a runner that scores any checker
+(`corpus/README.md`).
 
 A reader re-checks the file with `ce.Certificate.load("result.json", verify=True)`. Other producers
 export to NPZ/HDF5 (`ce.export_npz`, `ce.claim_from_npz`, `ce.claim_from_hdf5`). A matrix-free

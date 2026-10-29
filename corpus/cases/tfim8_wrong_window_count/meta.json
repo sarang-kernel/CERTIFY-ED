@@ -1,0 +1,15 @@
+{
+ "schema": "certify-ed/producer-bundle/1.0",
+ "kind": "window",
+ "window": [
+  -10.252661790966014,
+  -8.52294525479131
+ ],
+ "producer": {
+  "name": "certify-ed planted-error corpus",
+  "version": "1.0"
+ },
+ "description": "tfim_chain N=8: wrong_window_count",
+ "corpus_case": "tfim8_wrong_window_count",
+ "accuracy_target": 1e-08
+}

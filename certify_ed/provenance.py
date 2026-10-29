@@ -17,6 +17,8 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      # calls certify(); report.py reads a certificate; diagnostics.py writes the next_action
                      # text into statements; none of them can change a status, a bound or a count
                      "certify_ed/api.py", "certify_ed/report.py", "certify_ed/diagnostics.py",
+                     # the offline HTML viewer renders a saved certificate (A-08)
+                     "certify_ed/viewer.py",
                      # schema validation and conformance: they read certificates and bundles, never write a number
                      "certify_ed/schema.py", "certify_ed/conformance.py",
                      # producer-side helpers (3.2): the record hook writes the producer's arrays unchanged into a
