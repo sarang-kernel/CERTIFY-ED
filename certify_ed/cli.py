@@ -1,13 +1,14 @@
 """certify-ed command line: one entry point for using the package and for reproducing the paper.
 
     certify-ed env                                   floating-point environment and versions
-    certify-ed certify CLAIM.npz --spec SPEC.json [--kind lowest] [--exact] [-o CERT]
+    certify-ed certify CLAIM.npz --spec SPEC.json [--kind lowest|window|all] [--window A B] [--exact] [-o CERT]
     certify-ed certify --from BUNDLE_DIR [--preset NAME] [--only S1,S2] [--skip S3]
                        [--budget-seconds S | --budget auto] [--budget-mb MB] [--reason TEXT]
                        [--temperatures T1,T2] [--progress]
     certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
     certify-ed statement CERT.json [--style latex] [-o FILE]   methods paragraph + BibTeX from a certificate
     certify-ed presets                               the presets and statements table (docs/presets.md)
+    certify-ed plan CLAIM.npz [--spec SPEC.json] [--kind ...] [--preset ...]   predicted time and memory per statement
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
     certify-ed list                                  the experiments and what they establish
     certify-ed test [PYTEST ARGS...]                 the test suite (repository checkout)
@@ -124,6 +125,10 @@ def _options_from_args(a):
         kw["temperatures"] = [float(t) for t in a.temperatures.replace(";", ",").split(",") if t.strip()]
     if getattr(a, "assume_no_underflow", False):
         kw["underflow_check"] = False
+    if getattr(a, "plan", False):
+        kw["plan"] = True
+    if getattr(a, "block_mb", None) is not None:
+        kw["block_mb"] = float(a.block_mb)
     if getattr(a, "preset", None):
         return Options.from_preset(a.preset, **kw)
     return Options(**kw)
@@ -149,8 +154,8 @@ def cmd_certify(a):
     src = getattr(a, "from_bundle", None) or getattr(a, "bundle", None)
     window = None
     if getattr(a, "window", None):
-        lo, hi = a.window.split(",")
-        window = (float(lo), float(hi))
+        from .certify import parse_window
+        window = parse_window(",".join(a.window) if isinstance(a.window, (list, tuple)) else a.window)
     if src:
         from .importers import claim_from_bundle
         claim, bspec, meta = claim_from_bundle(src, allow_code=bool(getattr(a, "allow_code", False)),
@@ -171,6 +176,9 @@ def cmd_certify(a):
                                     getattr(a, "basis", None), kind=kind, window=window,
                                     allow_code=bool(getattr(a, "allow_code", False)))
         default_out = os.path.splitext(a.claim)[0] + ".certificate"
+    if (claim.kind == "all" and not getattr(a, "preset", None) and not getattr(a, "only", None)
+            and not getattr(a, "skip", None)):
+        a.preset = "whole-spectrum"          # the whole-spectrum path (C-17), recorded in the scope block
     opts = _options_from_args(a)
     cert = certify(claim, spec, opts)
     out = cert.save(a.output or default_out)
@@ -181,6 +189,57 @@ def cmd_certify(a):
           f"{', '.join(x['id'].split('.')[0] + ' (' + x['by'] + ')' for x in sc['narrowed']) or 'none'}")
     print(f"certificate: {out}")
     return 0 if all(s_["status"] != "FAILED" for s_ in cert.statements) else 1
+
+
+def _claim_from_args(a):
+    """(claim, spec, default_out) from the certify/import/plan arguments (shared by cmd_certify and cmd_plan)."""
+    from .spec import ModelSpec
+    spec = None
+    if a.spec:
+        with open(a.spec) as f:
+            spec = ModelSpec.from_dict(json.load(f))
+    src = getattr(a, "from_bundle", None) or getattr(a, "bundle", None)
+    window = None
+    if getattr(a, "window", None):
+        from .certify import parse_window
+        window = parse_window(",".join(a.window) if isinstance(a.window, (list, tuple)) else a.window)
+    if src:
+        from .importers import claim_from_bundle
+        claim, bspec, meta = claim_from_bundle(src, allow_code=bool(getattr(a, "allow_code", False)),
+                                               kind=a.kind if a.kind != "auto" else None, window=window)
+        spec = spec or bspec
+        _meta_defaults(a, meta)
+        return claim, spec, os.path.join(src, "certificate")
+    if not a.claim:
+        return None, None, None
+    from .importers import claim_from_file, claim_from_npz
+    kind = "subset" if a.kind == "auto" else a.kind
+    if a.claim.lower().endswith(".npz") and not getattr(a, "operator", None):
+        claim = claim_from_npz(a.claim, kind=kind, window=window)
+    else:
+        claim = claim_from_file(a.claim, getattr(a, "eigenvectors", None), getattr(a, "operator", None),
+                                getattr(a, "basis", None), kind=kind, window=window,
+                                allow_code=bool(getattr(a, "allow_code", False)))
+    return claim, spec, os.path.splitext(a.claim)[0] + ".certificate"
+
+
+def cmd_plan(a):
+    """Print the predicted seconds and peak memory per statement (certify_ed.cost.plan_for_claim); nothing runs."""
+    from .cost import plan_for_claim
+    claim, spec, _ = _claim_from_args(a)
+    if claim is None:
+        print("give a claim file (.npz/.h5/...) or --from BUNDLE_DIR")
+        return 2
+    if claim.kind == "all" and not getattr(a, "preset", None) and not getattr(a, "only", None) and not getattr(a, "skip", None):
+        a.preset = "whole-spectrum"
+    opts = _options_from_args(a)
+    plan = plan_for_claim(claim, spec, opts)
+    print(plan.format())
+    if a.output:
+        with open(a.output, "w", encoding="utf-8") as f:
+            json.dump(plan.to_dict(), f, indent=1)
+        print(f"plan: {a.output}")
+    return 0
 
 
 def cmd_statement(a):
@@ -507,7 +566,9 @@ def main(argv=None):
         cp.add_argument("--spec", help="model specification (JSON, ModelSpec.to_dict); overrides the bundle's spec.json")
         cp.add_argument("--kind", default="auto", choices=["auto", "subset", "lowest", "window", "all"],
                         help="completeness claim (auto: the bundle's meta.json, else subset)")
-        cp.add_argument("--window", help="a,b for --kind window")
+        cp.add_argument("--window", nargs="+", metavar="A B",
+                        help="interior window for --kind window: two numbers 'a b' (or 'a,b'); the claim is that the "
+                             "file holds every eigenvalue in (a, b)")
         cp.add_argument("--exact", action="store_true", help="add S6: exact re-check (needs python-flint)")
         cp.add_argument("--preset", help="named statement set and options (certify-ed presets)")
         cp.add_argument("--only", help="comma-separated statements to run, e.g. S1,S2 (dependencies are added)")
@@ -524,6 +585,10 @@ def main(argv=None):
                         help="skip the no-underflow scan (Options(underflow_check=False)); recorded in the certificate")
         cp.add_argument("--allow-code", action="store_true", dest="allow_code",
                         help="allow operator.py (matrix-free producer code) to be executed")
+        cp.add_argument("--plan", action="store_true", help="print the predicted time and memory per statement first "
+                        "(certify_ed.cost; advisory) and record it in the certificate")
+        cp.add_argument("--block-mb", type=float, dest="block_mb",
+                        help="memory for one column block of the residuals (streamed or sparse-operator vectors)")
         cp.add_argument("-o", "--output")
         scope_flags.append(cp)
 
@@ -539,6 +604,12 @@ def main(argv=None):
     i.add_argument("bundle")
     add_scope_flags(i)
     i.set_defaults(fn=cmd_certify, claim=None)
+    pl = sub.add_parser("plan", help="predicted seconds and peak memory per statement, without running (certify_ed.cost)")
+    pl.add_argument("claim", nargs="?", help="eigenvalue file (any format; .npz may hold vectors and H too)")
+    pl.add_argument("--from", dest="from_bundle", help="producer bundle directory")
+    pl.add_argument("--eigenvectors"); pl.add_argument("--operator"); pl.add_argument("--basis")
+    add_scope_flags(pl)
+    pl.set_defaults(fn=cmd_plan)
     st = sub.add_parser("statement", help="methods-section paragraph and BibTeX entry from a saved certificate")
     st.add_argument("certificate", help="certificate JSON written by Certificate.save / certify-ed certify")
     st.add_argument("--style", default="plain", choices=["plain", "latex"])

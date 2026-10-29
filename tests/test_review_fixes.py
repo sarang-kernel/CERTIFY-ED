@@ -127,8 +127,8 @@ def test_imp22_accuracy_comparison_is_fail_safe(heis6, monkeypatch):
     spec, H, w, V = heis6
     real_enclose = cmod.enclose
 
-    def nan_enclose(adapter, mu, X):
-        enc = real_enclose(adapter, mu, X)
+    def nan_enclose(adapter, mu, X, **kw):
+        enc = real_enclose(adapter, mu, X, **kw)
         enc.radius[0] = np.nan
         return enc
     monkeypatch.setattr(cmod, "enclose", nan_enclose)

@@ -168,13 +168,21 @@ def inertia_sparse(A: sp.spmatrix, sigma: float) -> InertiaResult:
                          time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz))
 
 
-def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096) -> InertiaResult:
+def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget_mb: Optional[float] = None) -> InertiaResult:
     """Inertia count with backward-error bound. If the factorization cannot be completed for lack of
     memory (MemoryError) or SuperLU reports an internal failure (SystemError, which SciPy raises when
     SuperLU's allocation fails), the result is inconclusive with ``resource_failure=True``; the
-    certificate then reports completeness as NOT_CHECKED rather than failing."""
+    certificate then reports completeness as NOT_CHECKED rather than failing.
+
+    method='auto' (cost.recommend_inertia_method, D-08): dense for a dense matrix or a sparse one of dimension
+    <= 2500 (the 3.1 rule), except that a sparse matrix whose dense LDL^T would exceed `budget_mb` (or, without
+    a budget, the available physical memory) is factorized by SuperLU. The choice is recorded in the result's
+    `method`; it decides which path is tried, never what a count says."""
     if method == "auto":
-        method = "dense" if (not sp.issparse(A) or A.shape[0] <= dense_max and A.shape[0] <= 2500) else "sparse"
+        from .cost import recommend_inertia_method
+        method, _why = recommend_inertia_method(int(A.shape[0]), int(A.nnz) if sp.issparse(A) else None,
+                                                not sp.issparse(A), bool(np.iscomplexobj(A.data if sp.issparse(A) else A)),
+                                                budget_mb, dense_max=min(dense_max, 2500))
     t0 = time.time()
     try:
         if method == "dense":

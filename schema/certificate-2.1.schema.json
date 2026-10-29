@@ -82,6 +82,38 @@
         }
       ]
     },
+    "plan": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "schema",
+            "rows"
+          ],
+          "description": "advisory time and memory plan (certify_ed.cost.plan_for_claim) when Options(plan=True); never changes a status",
+          "properties": {
+            "schema": {
+              "const": "certify-ed/plan/1.0"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "statement",
+                  "runs",
+                  "seconds",
+                  "peak_mb"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
     "scope": {
       "$ref": "#/$defs/scope"
     },
@@ -160,6 +192,7 @@
         "BUDGET_TIME",
         "DEFAULT_SELECTION",
         "DEPENDENCY_NARROWED",
+        "MISSING_DEPENDENCY",
         "NARROWED_BY_USER",
         "NEEDS_DEPENDENCY",
         "NEEDS_EIGENVECTORS",
@@ -175,6 +208,7 @@
         "OUT_OF_SCOPE_DYNAMICS",
         "OUT_OF_SCOPE_EXTRAPOLATION",
         "SIZE_LIMIT",
+        "UNDERFLOW_RISK",
         "UNSUPPORTED_CLAIM",
         "UNSUPPORTED_MODEL"
       ],

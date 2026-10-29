@@ -20,19 +20,20 @@ from .inertia import inertia as inertia_count
 __all__ = ["degeneracy_counts"]
 
 
-def _count(A, sigma: float, method: str, cache: Dict[float, object]):
+def _count(A, sigma: float, method: str, cache: Dict[float, object], budget_mb=None):
     if sigma not in cache:
-        cache[sigma] = inertia_count(A, sigma, method=method)
+        cache[sigma] = inertia_count(A, sigma, method=method, budget_mb=budget_mb)
     return cache[sigma]
 
 
-def _probe(A, target: float, direction: int, margin: float, eps: float, method: str, cache: Dict[float, object]):
+def _probe(A, target: float, direction: int, margin: float, eps: float, method: str, cache: Dict[float, object],
+           budget_mb=None):
     """A conclusive count at a shift beyond `target` (direction -1: below, +1: above) whose effective backward
     error is smaller than its distance to `target`; up to four tries, moving the shift outward."""
     sigma = target + direction * margin
     r = None
     for _ in range(4):
-        r = _count(A, sigma, method, cache)
+        r = _count(A, sigma, method, cache, budget_mb)
         if r.resource_failure:
             return sigma, r
         beta = float(add_up(r.beta, eps))
@@ -44,7 +45,7 @@ def _probe(A, target: float, direction: int, margin: float, eps: float, method: 
 
 
 def degeneracy_counts(A, enc, clusters: Sequence[Sequence[int]], method: str = "auto", eps_shift: float = 0.0,
-                      margin_rel: float = 1e-8) -> List[dict]:
+                      margin_rel: float = 1e-8, budget_mb=None) -> List[dict]:
     """Proposition 14 for every cluster (lists of indices into enc.mu). Returns one record per cluster."""
     cache: Dict[float, object] = {}
     scale = max(1.0, float(np.max(np.abs(enc.mu)))) if enc.mu.size else 1.0
@@ -66,8 +67,8 @@ def degeneracy_counts(A, enc, clusters: Sequence[Sequence[int]], method: str = "
             out.append(rec)
             continue
         margin = max(margin_rel * scale, 16 * float(np.max(rad)))
-        s_lo, r_lo = _probe(A, JL, -1, margin, eps_shift, method, cache)
-        s_hi, r_hi = _probe(A, JU, +1, margin, eps_shift, method, cache)
+        s_lo, r_lo = _probe(A, JL, -1, margin, eps_shift, method, cache, budget_mb)
+        s_hi, r_hi = _probe(A, JU, +1, margin, eps_shift, method, cache, budget_mb)
         rec["counts"] = [r_lo.to_dict(), r_hi.to_dict()]
         if r_lo.resource_failure or r_hi.resource_failure:
             rec.update(status="NOT_CHECKED", reason="factorization not completed: " + (r_lo.note or r_hi.note))

@@ -136,30 +136,60 @@ def is_complex(*arrays) -> bool:
     return any(np.iscomplexobj(a.data if sp.issparse(a) else a) for a in arrays)
 
 
+def _scan_chunk(arr: np.ndarray, threshold: float):
+    """(flat component indices below threshold, their magnitudes) of one in-memory chunk, C order."""
+    comp = np.ascontiguousarray(arr).view(arr.real.dtype).ravel() if arr.dtype.kind == "c" else arr.ravel()
+    mag = np.abs(comp)
+    with np.errstate(invalid="ignore"):
+        hit = (mag > 0) & (mag < threshold)
+    idx = np.nonzero(hit)[0]
+    return idx, mag[idx]
+
+
+_SCAN_CHUNK_BYTES = 64 * 2 ** 20
+
+
 def tiny_nonzero(a, threshold: float = UNDERFLOW_THRESHOLD, max_indices: int = 8):
     """Nonzero entries of magnitude below `threshold` in a stored array (the no-underflow hypothesis).
 
     Complex data are scanned component by component (the real and imaginary parts are the operands of
     the arithmetic). Exact zeros are not reported; non-finite entries are not this function's concern.
     Returns None when nothing is found, else {'count', 'first_indices', 'min_magnitude'} with the flat
-    indices (component index for complex data) of the first few offenders.
+    indices (component index for complex data) of the first few offenders. A large 2-D array, a numpy
+    memmap or an on-disk column source (enclosure.StreamedColumns, h5py dataset) is scanned in row chunks
+    with the same C-order flat indices, so that no whole copy is made.
     """
     if a is None:
         return None
     if sp.issparse(a):
         a = a.data
-    arr = np.asarray(a)
-    if arr.size == 0 or arr.dtype.kind not in "fc":
+    shape = tuple(int(d) for d in getattr(a, "shape", ()))
+    dtype = np.dtype(getattr(a, "dtype", None) or np.asarray(a).dtype)
+    if dtype.kind not in "fc" or int(np.prod(shape, dtype=np.int64)) == 0:
         return None
-    comp = np.ascontiguousarray(arr).view(arr.real.dtype).ravel() if arr.dtype.kind == "c" else arr.ravel()
-    mag = np.abs(comp)
-    with np.errstate(invalid="ignore"):
-        hit = (mag > 0) & (mag < threshold)
-    if not hit.any():
+    in_memory = isinstance(a, np.ndarray) and not isinstance(a, np.memmap)
+    if len(shape) < 2 or (in_memory and a.nbytes <= _SCAN_CHUNK_BYTES):
+        arr = np.asarray(a)
+        idx, mags = _scan_chunk(arr, threshold)
+        if idx.size == 0:
+            return None
+        return {"count": int(idx.size), "first_indices": idx[:max_indices].tolist(),
+                "min_magnitude": float(mags.min())}
+    src = getattr(a, "source", a)
+    row_comp = int(np.prod(shape[1:], dtype=np.int64)) * (2 if dtype.kind == "c" else 1)
+    step = max(1, _SCAN_CHUNK_BYTES // max(1, row_comp * dtype.itemsize))
+    count, first, mn = 0, [], None
+    for r in range(0, shape[0], step):
+        idx, mags = _scan_chunk(np.asarray(src[r:r + step]), threshold)
+        if idx.size:
+            count += int(idx.size)
+            if len(first) < max_indices:
+                first += (idx[:max_indices - len(first)] + r * row_comp).tolist()
+            m = float(mags.min())
+            mn = m if mn is None else min(mn, m)
+    if count == 0:
         return None
-    idx = np.nonzero(hit)[0]
-    return {"count": int(idx.size), "first_indices": idx[:max_indices].tolist(),
-            "min_magnitude": float(mag[idx].min())}
+    return {"count": count, "first_indices": first, "min_magnitude": mn}
 
 
 def min_nonzero_magnitude(a):
@@ -268,11 +298,73 @@ def _two_product(a: np.ndarray, b: np.ndarray):
     return p, e
 
 
+EXACT_SUM_MIN_TERMS = 4096   # below this math.fsum is as fast as the vectorised cascade
+
+
+def _two_sum_seq(T: np.ndarray):
+    """Sequential floating-point sum of T with every rounding error recovered exactly: s_i = fl(s_{i-1} + t_i)
+    by cumsum, err_i = (s_{i-1} + t_i) - s_i by Knuth's TwoSum (exact in binary64, no overflow). Returns
+    (s_n, nonzero errors); s_n + sum(errors) == sum(T) exactly."""
+    s = np.cumsum(T)
+    a = np.concatenate(([0.0], s[:-1]))
+    bb = s - a
+    err = (a - (s - bb)) + (T - bb)
+    return float(s[-1]), err[err != 0.0]
+
+
+def exact_sum(terms, max_rounds: int = 6) -> float:
+    """The correctly rounded sum of a float array: the same value math.fsum returns.
+
+    Cascaded error-free summation (Ogita, Rump and Oishi 2005, SumK, with Knuth's TwoSum): after each round
+    the exact sum equals the round's float sum plus the exact sum of its recovered errors; after K rounds
+    sum(terms) = S_1 + ... + S_K + rho with |rho| <= sum |remaining errors| (bounded with an upward guard).
+    The S_k are folded with TwoSum into h + e exactly; when e together with every slack lies strictly
+    inside the rounding interval of h, the correctly rounded sum is h. Otherwise (a sum within the slack of
+    a rounding boundary, a zero result, non-finite input, or fewer than EXACT_SUM_MIN_TERMS terms) the value
+    is math.fsum's, so the result never depends on the path taken.
+    """
+    t = np.asarray(terms, dtype=float).ravel()
+    t = t[t != 0.0]
+    if t.size < EXACT_SUM_MIN_TERMS or not np.all(np.isfinite(t)):
+        return math.fsum(t.tolist())
+    S = []
+    T = t
+    for _ in range(max_rounds):
+        s, T = _two_sum_seq(T)
+        S.append(s)
+        if T.size == 0:
+            break
+    B = float(np.sum(np.abs(T))) * (1.0 + U * (T.size + 2)) * _GUARD if T.size else 0.0
+    h = S[0]
+    e1 = 0.0
+    if len(S) > 1:
+        hs = h + S[1]
+        bb = hs - h
+        e1 = (h - (hs - bb)) + (S[1] - bb)
+        h = hs
+    c, slack = e1, B
+    for s_ in S[2:]:
+        c = c + s_
+        slack += abs(c) * 2 * U
+    hs = h + c
+    bb = hs - h
+    e = (h - (hs - bb)) + (c - bb)
+    h = hs
+    if h == 0.0 or not math.isfinite(h):
+        return math.fsum(t.tolist())
+    up_gap = (np.nextafter(h, np.inf) - h) / 2.0
+    dn_gap = (h - np.nextafter(h, -np.inf)) / 2.0
+    if np.nextafter(e + slack, np.inf) < up_gap and np.nextafter(e - slack, -np.inf) > -dn_gap:
+        return h
+    return math.fsum(t.tolist())
+
+
 def exact_dot(x: np.ndarray, y: np.ndarray):
     """Return (s, err) with |s - x^H y| <= err, where s is the correctly rounded
-    value of the exact inner product (computed with TwoProduct and math.fsum).
+    value of the exact inner product (computed with TwoProduct and a correctly rounded
+    summation: exact_sum, which is math.fsum's value by construction).
 
-    err = 2u|s| per real component (fsum is correctly rounded; the factor 2
+    err = 2u|s| per real component (the summation is correctly rounded; the factor 2
     covers the conversion of the complex result). Underflow is excluded by the
     stated arithmetic assumptions.
     """
@@ -285,13 +377,13 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
         p2, e2 = _two_product(xi, yi)
         p3, e3 = _two_product(xr, yi)
         p4, e4 = _two_product(xi, yr)
-        re = math.fsum(np.concatenate([p1, e1, p2, e2]).tolist())
-        im = math.fsum(np.concatenate([p3, e3, -p4, -e4]).tolist())
+        re = exact_sum(np.concatenate([p1, e1, p2, e2]))
+        im = exact_sum(np.concatenate([p3, e3, -p4, -e4]))
         s = complex(re, im)
         err = 2 * U * (abs(re) + abs(im))
         return s, err
     p, e = _two_product(x.astype(float), y.astype(float))
-    s = math.fsum(np.concatenate([p, e]).tolist())
+    s = exact_sum(np.concatenate([p, e]))
     return s, 2 * U * abs(s)
 
 

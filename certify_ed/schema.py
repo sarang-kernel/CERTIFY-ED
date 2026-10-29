@@ -136,6 +136,12 @@ def _certificate_schema() -> dict:
                 "max_abs_asymmetry": num, "note": {"type": "string"}}}]},
             "operator_note": {"type": ["string", "null"]},
             "spectrum_enclosure": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/spectrum_enclosure"}]},
+            "plan": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["schema", "rows"],
+                               "description": "advisory time and memory plan (certify_ed.cost.plan_for_claim) when "
+                                              "Options(plan=True); never changes a status",
+                               "properties": {"schema": {"const": "certify-ed/plan/1.0"},
+                                              "rows": {"type": "array", "items": {"type": "object",
+                                                       "required": ["statement", "runs", "seconds", "peak_mb"]}}}}]},
             "scope": {"$ref": "#/$defs/scope"},
             "not_verified": {"type": "array", "items": {"type": "string"}},
             "timing": {"type": "object", "properties": {"total_seconds": {"type": "number", "minimum": 0}}},
