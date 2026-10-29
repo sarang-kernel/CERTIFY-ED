@@ -54,14 +54,31 @@ STATEMENT_IDS = ("S1.model_fidelity", "S2.eigenpairs", "S3.completeness", "S4.ei
                  "S6.exact_recheck", "S7.thermodynamics", "S8.degeneracy")
 
 
-def array_sha256(a: np.ndarray) -> str:
-    a = np.ascontiguousarray(a)
-    if a.dtype.byteorder == ">":
-        a = a.byteswap().view(a.dtype.newbyteorder("<"))
+_HASH_CHUNK_BYTES = 64 * 2 ** 20
+
+
+def array_sha256(a) -> str:
+    """SHA-256 of dtype, shape and the C-order bytes. Large or on-disk arrays (numpy memmap, HDF5 dataset,
+    enclosure.StreamedColumns) are hashed in row chunks: the same byte stream, never a whole second copy."""
+    shape = tuple(int(d) for d in a.shape)
+    dtype = np.dtype(a.dtype)
+    if dtype.byteorder == ">":
+        dtype = dtype.newbyteorder("<")
     h = hashlib.sha256()
-    h.update(a.dtype.str.encode())
-    h.update(json.dumps(list(a.shape)).encode())
-    h.update(a.tobytes(order="C"))
+    h.update(dtype.str.encode())
+    h.update(json.dumps(list(shape)).encode())
+    row_bytes = dtype.itemsize * int(np.prod(shape[1:], dtype=np.int64)) if len(shape) > 1 else dtype.itemsize
+    if isinstance(a, np.ndarray) and not isinstance(a, np.memmap) and a.nbytes <= _HASH_CHUNK_BYTES:
+        rows = [np.ascontiguousarray(a)]
+    else:
+        src = getattr(a, "source", a)
+        step = max(1, _HASH_CHUNK_BYTES // max(1, row_bytes))
+        rows = (np.ascontiguousarray(src[r:r + step]) for r in range(0, shape[0], step)) if shape else [np.ascontiguousarray(a)]
+    for blk in rows:
+        blk = np.asarray(blk)
+        if blk.dtype.byteorder == ">":
+            blk = blk.byteswap().view(blk.dtype.newbyteorder("<"))
+        h.update(blk.tobytes(order="C"))
     return h.hexdigest()
 
 

@@ -120,7 +120,8 @@ def read_bundle(path: str, allow_code: bool = False, kind: Optional[str] = None,
     kind = kind or meta.get("kind", "subset")
     window = window if window is not None else meta.get("window")
     if window is not None:
-        window = (float(window[0]), float(window[1]))
+        from ..certify import parse_window
+        window = parse_window(window)
     producer = dict(meta.get("producer", {}) or {})
     producer.setdefault("name", "producer bundle")
     producer["bundle"] = os.path.abspath(path)

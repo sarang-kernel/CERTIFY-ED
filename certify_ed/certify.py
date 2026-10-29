@@ -48,7 +48,8 @@ from .construct import (StateSet, build_bitwise, cross_construct, full_state_set
                         product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
-from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
+from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, _cluster_bound, cluster_groups,
+                        is_streamed, nonfinite_columns, read_columns)
 from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
                  sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
@@ -89,6 +90,41 @@ class Claim:
     producer: Dict[str, Any] = field(default_factory=dict)
     accuracy_target: Optional[float] = None   # None -> default 1e-8*max(1,||H||); inf -> no target
     description: str = ""
+
+    def __post_init__(self):
+        if self.kind not in CLAIM_KINDS:
+            raise ValueError(f"claim kind must be one of {', '.join(CLAIM_KINDS)} (got {self.kind!r})")
+        if self.window is not None:
+            self.window = parse_window(self.window)
+        if self.kind == "window" and self.window is None:
+            raise ValueError("a 'window' claim needs window=(a, b): the claim is that the eigenvalues are ALL "
+                             "eigenvalues in (a, b)")
+
+
+CLAIM_KINDS = ("subset", "lowest", "window", "all")
+
+
+def parse_window(value) -> Tuple[float, float]:
+    """(a, b) with a < b, both finite, from a pair, a list, or a string 'a,b' / 'a b' (C-14: the same rule for
+    every importer, the bundle's meta.json and the command line)."""
+    if isinstance(value, str):
+        parts = [p for p in value.replace(";", ",").replace(" ", ",").split(",") if p]
+    else:
+        try:
+            parts = list(value)
+        except TypeError:
+            raise ValueError(f"window must be a pair (a, b), got {value!r}") from None
+    if len(parts) != 2:
+        raise ValueError(f"window must be a pair (a, b), got {value!r}")
+    try:
+        a, b = float(parts[0]), float(parts[1])
+    except (TypeError, ValueError):
+        raise ValueError(f"window endpoints must be numbers, got {value!r}") from None
+    if not (math.isfinite(a) and math.isfinite(b)):
+        raise ValueError(f"window endpoints must be finite, got ({a}, {b}); a 'lowest' or 'all' claim needs no window")
+    if not a < b:
+        raise ValueError(f"window must satisfy a < b, got ({a}, {b})")
+    return (a, b)
 
 
 @dataclass
@@ -132,6 +168,14 @@ class Options:
     underflow_check: bool = True
     # ---- feedback (3.2)
     progress: Any = False                    # True: one line per statement on stderr; or a callable taking the line
+    # ---- streaming vectors (A-06, 3.2): claim.eigenvectors may be a numpy memmap or an h5py dataset; the residuals
+    # are then formed in column blocks of about block_mb megabytes of temporaries (None: budget_mb if given, else
+    # enclosure.DEFAULT_BLOCK_MB). The results do not depend on the block width (sparse/spec operators; a dense
+    # operator reads the vectors whole). Advisory for memory only: never changes a number.
+    block_mb: Optional[float] = None
+    # ---- planner (D-08, 3.2): print the predicted seconds and peak memory per statement (cost.plan_for_claim) before
+    # running, and record it under body["plan"]. Advisory: it never changes a status.
+    plan: bool = False
 
     @classmethod
     def from_preset(cls, name: str, **overrides) -> "Options":
@@ -192,6 +236,13 @@ def _gate(sel, budget, short, estimate_mb=None, what=""):
 
 def _mb(n_entries: float, bytes_per: float) -> float:
     return float(n_entries) * bytes_per / 2 ** 20
+
+
+def _kt_block(n: int, cplx: bool, block_mb: Optional[float]) -> int:
+    """Columns per Kato-Temple product block: three dense n x b temporaries within block_mb (enclosure.DEFAULT_BLOCK_MB)."""
+    from .enclosure import DEFAULT_BLOCK_MB
+    mb = DEFAULT_BLOCK_MB if block_mb is None else float(block_mb)
+    return int(max(1, (mb * 2 ** 20) // (max(1, n) * (16 if cplx else 8) * 3)))
 
 
 def _underflow_operands(mu, X, adapter, seed: int):
@@ -493,7 +544,7 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
         if not low_probe:
             s_low = lo_top - margin
             for _ in range(4):
-                r_low = inertia_count(A, s_low, method=opts.inertia_method)
+                r_low = inertia_count(A, s_low, method=opts.inertia_method, budget_mb=opts.budget_mb)
                 counts.append(r_low.to_dict())
                 if not r_low.conclusive or r_low.beta + eps_shift < lo_top - s_low:
                     break
@@ -514,7 +565,7 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
     for idx, sigma in enumerate(sigmas):
         tries = 0
         while True:
-            r = inertia_count(A, sigma, method=opts.inertia_method)
+            r = inertia_count(A, sigma, method=opts.inertia_method, budget_mb=opts.budget_mb)
             counts.append(r.to_dict())
             if r.resource_failure:
                 return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {r.note}"), None
@@ -615,11 +666,11 @@ def _estimate_next(A, k, seed=12345):
 
 
 def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
-    ra = inertia_count(A, a, method=opts.inertia_method)
+    ra = inertia_count(A, a, method=opts.inertia_method, budget_mb=opts.budget_mb)
     if ra.resource_failure:
         return "NOT_CHECKED", {"counts": [ra.to_dict()], "window": [a, b],
                                "reason": f"inertia count not attempted to completion: {ra.note}"}, None
-    rb = inertia_count(A, b, method=opts.inertia_method)
+    rb = inertia_count(A, b, method=opts.inertia_method, budget_mb=opts.budget_mb)
     ev = {"counts": [ra.to_dict(), rb.to_dict()], "window": [a, b]}
     if rb.resource_failure:
         return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {rb.note}"), None
@@ -757,8 +808,6 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     if claim.kind != "lowest":
         return _stmt(sid, "NOT_CHECKED", f"implemented for 'lowest' claims (this claim: {claim.kind!r})", {}, [],
                      time.time() - t0, reason_code="UNSUPPORTED_CLAIM")
-    if not (np.all(np.isfinite(mu)) and np.all(np.isfinite(X))):
-        return _stmt(sid, "INCONCLUSIVE", "claim contains non-finite values", {}, [], time.time() - t0)
     if claim.sector_isometry is not None:
         return _stmt(sid, "NOT_CHECKED", "symmetry-adapted claims: use exact_recheck_sector_lowest", {}, [],
                      time.time() - t0, reason_code="UNSUPPORTED_CLAIM")
@@ -766,6 +815,10 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
     if n > opts.exact_max_dim:
         return _stmt(sid, "NOT_CHECKED", f"dimension {n} above exact_max_dim {opts.exact_max_dim}", {}, [],
                      time.time() - t0, reason_code="SIZE_LIMIT")
+    if is_streamed(X):                 # within exact_max_dim: the exact layer works on in-memory arrays
+        X = read_columns(X, slice(0, int(X.shape[1])))
+    if not (np.all(np.isfinite(mu)) and np.all(np.isfinite(X))):
+        return _stmt(sid, "INCONCLUSIVE", "claim contains non-finite values", {}, [], time.time() - t0)
     if not _have_flint():
         return _stmt(sid, "NOT_CHECKED", "python-flint not installed (pip install 'certify-ed[exact]')",
                      {"missing": "python-flint", "extra": "certify-ed[exact]"}, [], time.time() - t0,
@@ -803,9 +856,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
-    X = None if claim.eigenvectors is None else np.asarray(claim.eigenvectors)
-    if X is not None and X.ndim == 1:
-        X = X[:, None]
+    X = claim.eigenvectors
+    streamed = X is not None and is_streamed(X)
+    if streamed and not isinstance(X, (np.memmap, StreamedColumns)):
+        X = StreamedColumns(X)                 # h5py dataset: numpy-style column indexing for every statement
+    if X is not None and not streamed:
+        X = np.asarray(X)
+        if X.ndim == 1:
+            X = X[:, None]
+    block_mb = opts.block_mb if opts.block_mb is not None else opts.budget_mb
     sel = resolve_selection(opts.preset, opts.only, opts.skip, opts.narrowing_reason,
                             corroborate=bool(opts.corroborate), exact_recheck=bool(opts.exact_recheck),
                             temperatures=bool(len(opts.temperatures)), degeneracy=bool(opts.degeneracy))
@@ -814,7 +873,28 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 (spec.dim if spec is not None else (claim.operator.shape[0] if claim.operator is not None else 0))))
     budget_seconds, budget_auto = resolve_budget_seconds(opts.budget_seconds, n_claim)
     budget = Budget(budget_seconds, opts.budget_mb, t_start)
-    is_cplx_claim = (X is not None and np.iscomplexobj(X)) or (spec is not None and not spec.is_real())
+    plan_record = None
+    if opts.plan:
+        from .cost import plan_for_claim
+        plan_ = plan_for_claim(claim, spec, opts)
+        plan_record = plan_.to_dict()
+        sink = (print if opts.progress is True else opts.progress) if opts.progress else print
+        for line in plan_.format().splitlines():
+            if sink is print:
+                print(line, file=sys.stderr, flush=True)
+            else:
+                sink(line)
+    # C-15: observables and correlations given as text, dictionaries or operator lists become sparse operators
+    # in the claim space before anything runs (an unreadable or non-Hermitian operator is an error here, not a
+    # statement); matrices pass through unchanged
+    from .operators import resolve_correlation_request, resolve_observables
+    if claim.sector_isometry is not None and any(not (sp.issparse(o) or isinstance(o, np.ndarray))
+                                                 for o in opts.observables.values()):
+        raise ValueError("observables given as text or operator lists need a computational-basis claim (states= or the "
+                         "full space); for a symmetry-adapted block pass the operator as a matrix in the block")
+    observables = resolve_observables(spec, opts.observables, claim.states)
+    correlations = {name: resolve_correlation_request(spec, name, req) for name, req in opts.correlations.items()}
+    is_cplx_claim = (X is not None and np.dtype(X.dtype).kind == "c") or (spec is not None and not spec.is_real())
 
     # ---------------- S1
     H_full_ref, audit = None, None
@@ -895,7 +975,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     enc = None
     s2_gate = _gate(sel, budget, "S2")
     bad_mu = np.nonzero(~np.isfinite(mu))[0].tolist()
-    bad_x = [] if X is None else np.nonzero(~np.all(np.isfinite(X), axis=0))[0].tolist()
+    bad_x = [] if X is None else nonfinite_columns(X, block_mb)
     nonfinite = bool(bad_mu or bad_x)
     # INT-01: the no-underflow hypothesis of the standard model (fp.UNDERFLOW_THRESHOLD) is checked on the
     # operands before S2 and on the radii and residual bounds after the enclosure; a finding makes S2 and
@@ -925,7 +1005,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                 "eigenvalue-only claim: no vectors to bound (see S3 for counts)",
                                 reason_code="NEEDS_EIGENVECTORS"))
     else:
-        enc = enclose(adapter, mu, X)
+        enc = enclose(adapter, mu, X, block_mb=block_mb)
         ev = {"n_pairs": int(mu.size), "max_radius": float(enc.radius.max()),
               "median_radius": float(np.median(enc.radius)),
               "max_existence_radius": float(enc.existence_radius.max()),
@@ -1003,10 +1083,21 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # for a symmetry sector they concern the producer's sector block (see compose.py for the lift)
     eps_s3 = model_shift if audit is None else 0.0
     n_op = int(adapter.shape[0])
-    s3_est = _mb(n_op * n_op, (16 if is_cplx_claim else 8) * 2) if (inertia_op is not None and
-                                                                     (opts.inertia_method == "dense" or n_op <= 4096)) else None
+    # memory estimate of the factorizations for the budget gate, for the path the planner would take (D-08):
+    # dense LDL^T (the 3.1 estimate of 2 n^2 entries) or SuperLU (cost.sparse_inertia_mb from the fill model)
+    s3_est = None
+    if inertia_op is not None:
+        from .cost import recommend_inertia_method, sparse_inertia_mb
+        _dense_op = not sp.issparse(inertia_op)
+        _meth = (recommend_inertia_method(n_op, None if _dense_op else int(inertia_op.nnz), _dense_op, is_cplx_claim,
+                                          opts.budget_mb)[0] if opts.inertia_method == "auto" else opts.inertia_method)
+        if _meth == "dense":
+            s3_est = _mb(n_op * n_op, (16 if is_cplx_claim else 8) * 2)
+        elif not _dense_op:
+            s3_est = sparse_inertia_mb(n_op, int(inertia_op.nnz), is_cplx_claim)
     s3_gate = _gate(sel, budget, "S3", estimate_mb=s3_est if claim.kind in ("lowest", "window") else None,
-                    what="dense LDL^T factorization (estimate: 2 n^2 entries)")
+                    what="dense LDL^T factorization (estimate: 2 n^2 entries)" if s3_est is not None and _meth == "dense"
+                    else "sparse LU factorization (estimate from the fill model, certify_ed.cost)")
     if s3_gate is not None:
         statements.append(s3_gate)
     elif nonfinite:
@@ -1127,26 +1218,40 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     if (enc is not None and window is not None and opts.kato_temple and enc.rigorous
             and enc.all_distinct and audit is None):
         order = np.argsort(enc.mu, kind="stable")
-        for pos, i in enumerate(order):
-            if enc.groups[enc.group_of[i]].size != 1:
-                continue
-            j_lo = order[pos - 1] if pos > 0 else None
-            j_hi = order[pos + 1] if pos + 1 < len(order) else None
-            # isolation interval for the operator in `adapter`; the S3 window refers to the declared
-            # model, so it is shrunk by the model shift
-            alpha = float(add_up(enc.mu[j_lo], enc.radius[j_lo]) if j_lo is not None else add_up(window[0], eps_s3))
-            beta_ = float(sub_down(enc.mu[j_hi], enc.radius[j_hi]) if j_hi is not None
-                          else sub_down(window[1], eps_s3))
-            if not np.isfinite(beta_):
-                continue
-            res = kato_temple(adapter, X[:, i], alpha, beta_)
-            if res is not None:
-                lower, upper, th, r = res
-                lower, upper = float(sub_down(lower, eps_s3)), float(add_up(upper, eps_s3))   # declared model
-                if upper - lower < 2 * float(enc.radius[i]):
-                    kt.append({"index": int(i), "lower": lower, "upper": upper,
-                               "width": upper - lower, "residual_width": 2 * float(enc.radius[i]),
-                               "isolation_interval": [float(alpha), float(beta_)]})
+        iso = [int(i) for i in order if enc.groups[enc.group_of[i]].size == 1]
+        # fl(H x) and |H| |x| for every isolated pair in one product each (C-17): a column of H X_iso is a valid
+        # floating-point evaluation of H x under the same standard-model bound as a single matvec; the Theorem-3
+        # interval is the same function of it (enclosure.rayleigh_interval). Formed in column blocks of the
+        # memory budget so that the whole-spectrum case does not hold a second n x k array.
+        pos_of = {i: p for p, i in enumerate(order)}
+        for a0 in range(0, len(iso), max(1, _kt_block(int(adapter.shape[0]), is_cplx_claim, block_mb))):
+            chunk = iso[a0:a0 + max(1, _kt_block(int(adapter.shape[0]), is_cplx_claim, block_mb))]
+            Xc = read_columns(X, chunk)
+            HXc = adapter.matvec(Xc)
+            AXc = adapter.abs_matvec(Xc)
+            if HXc.ndim == 1:
+                HXc, AXc = HXc[:, None], AXc[:, None]
+            for c, i in enumerate(chunk):
+                pos = pos_of[i]
+                j_lo = order[pos - 1] if pos > 0 else None
+                j_hi = order[pos + 1] if pos + 1 < len(order) else None
+                # isolation interval for the operator in `adapter`; the S3 window refers to the declared
+                # model, so it is shrunk by the model shift
+                alpha = float(add_up(enc.mu[j_lo], enc.radius[j_lo]) if j_lo is not None else add_up(window[0], eps_s3))
+                beta_ = float(sub_down(enc.mu[j_hi], enc.radius[j_hi]) if j_hi is not None
+                              else sub_down(window[1], eps_s3))
+                if not np.isfinite(beta_):
+                    continue
+                res = kato_temple(adapter, Xc[:, c], alpha, beta_, Ax=HXc[:, c], absAx=AXc[:, c])
+                if res is not None:
+                    lower, upper, th, r = res
+                    lower, upper = float(sub_down(lower, eps_s3)), float(add_up(upper, eps_s3))   # declared model
+                    if upper - lower < 2 * float(enc.radius[i]):
+                        kt.append({"index": int(i), "lower": lower, "upper": upper,
+                                   "width": upper - lower, "residual_width": 2 * float(enc.radius[i]),
+                                   "isolation_interval": [float(alpha), float(beta_)]})
+            del Xc, HXc, AXc
+        kt.sort(key=lambda r: r["index"])
     # ---------------- S4 eigenspaces
     t0 = time.time()
     eig_records = []
@@ -1194,16 +1299,21 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             rad_m = add_up(rad, eps_s3)
             JL = min(sub_down(a_, eps), min(sub_down(enc.mu[i], rad_m[i]) for i in C))
             JU = max(add_up(b_, eps), max(add_up(enc.mu[i], rad_m[i]) for i in C))
-            others = [i for i in range(enc.mu.size) if i not in Cset]
-            clash = [i for i in others if not (add_up(enc.mu[i], rad_m[i]) < JL
-                                               or sub_down(enc.mu[i], rad_m[i]) > JU)]
+            # the other claimed pairs' outward-rounded endpoints, as arrays (C-17: the per-pair Python loops of
+            # 3.1 were O(k) numpy-scalar calls per cluster; add_up / sub_down are elementwise, so the values are
+            # the same bit for bit)
+            mask = np.ones(enc.mu.size, dtype=bool)
+            mask[list(Cset)] = False
+            mu_o, rad_o = enc.mu[mask], rad_m[mask]
+            hi_o, lo_o = add_up(mu_o, rad_o), sub_down(mu_o, rad_o)
+            clash = int(np.count_nonzero(~((hi_o < JL) | (lo_o > JU))))
             if clash or not (JL > window[0] and JU < window[1]):
                 rec.update(status="INCONCLUSIVE",
                            reason="cluster interval overlaps other claimed pairs or the window edge")
                 eig_records.append(rec)
                 continue
-            U_below = max([add_up(enc.mu[i], rad_m[i]) for i in others if enc.mu[i] < a_] + [window[0]])
-            L_above = min([sub_down(enc.mu[i], rad_m[i]) for i in others if enc.mu[i] > b_] + [window[1]])
+            U_below = max(float(hi_o[mu_o < a_].max()) if np.any(mu_o < a_) else -np.inf, window[0])
+            L_above = min(float(lo_o[mu_o > b_].min()) if np.any(mu_o > b_) else np.inf, window[1])
             # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
             # of the claimed values, to the remaining eigenvalues
             sep = float(sub_down(min(sub_down(a_, U_below), sub_down(L_above, b_)), eps))
@@ -1213,13 +1323,13 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
                 eig_records.append(rec)
                 continue
-            for name, O in opts.observables.items():
+            for name, O in observables.items():
                 # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
                 from .correlations import certify_observable_general
                 r_obs = certify_observable_general(ec, X, O, name)
                 O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
-            corr_recs = _correlations(ec, X, spec, claim, opts, rec)
+            corr_recs = _correlations(ec, X, spec, claim, correlations, rec)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":
                     _total_spin(ec, X, name, spec, claim, rec)
@@ -1317,7 +1427,9 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
 
     # ---------------- S8 degeneracy counts by bracketing inertia (Prop 14, UNVERIFIED)
     if sel.wants("S8"):
-        s8_gate = _gate(sel, budget, "S8", estimate_mb=s3_est, what="dense LDL^T factorizations (estimate: 2 n^2 entries)")
+        s8_gate = _gate(sel, budget, "S8", estimate_mb=s3_est,
+                        what="dense LDL^T factorizations (estimate: 2 n^2 entries)" if s3_est is not None and _meth == "dense"
+                        else "sparse LU factorizations (estimate from the fill model, certify_ed.cost)")
         if s8_gate is not None:
             statements.append(s8_gate)
         elif enc is None:
@@ -1343,7 +1455,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 statements.append(_stmt("S8.degeneracy", "NOT_CHECKED", "no clusters among the claimed pairs", {}, [],
                                         time.time() - t0, reason_code="NO_CLUSTERS"))
             else:
-                recs = degeneracy_counts(inertia_op, enc, cl, method=opts.inertia_method, eps_shift=eps_s3)
+                recs = degeneracy_counts(inertia_op, enc, cl, method=opts.inertia_method, eps_shift=eps_s3, budget_mb=opts.budget_mb)
                 n_cert = sum(1 for r in recs if r["status"] == "CERTIFIED")
                 n_fail = sum(1 for r in recs if r["status"] == "FAILED")
                 st8 = "CERTIFIED" if n_cert == len(recs) else ("FAILED" if n_fail else "INCONCLUSIVE")
@@ -1367,7 +1479,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                    "dimension": int(claim.sector_isometry.shape[1]),
                    "lift_shift": eps_shift}}
     claim_rec = {"description": claim.description or f"{claim.kind} claim, {mu.size} eigenvalues",
-                 "kind": claim.kind, "window": claim.window, "n_eigenvalues": int(mu.size),
+                 "kind": claim.kind, "window": None if claim.window is None else [float(claim.window[0]), float(claim.window[1])],
+                 "n_eigenvalues": int(mu.size),
                  "has_eigenvectors": X is not None, "producer": claim.producer,
                  "accuracy_target": claim.accuracy_target,
                  "eigenvalues": mu.tolist(),
@@ -1407,6 +1520,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "operator_note": op_note,
             "spectrum_enclosure": spectrum_record,
             "gaps": gaps_record,
+            "plan": plan_record,
             "scope": build_scope_block(
                 sel, statements, budget,
                 {"preset": opts.preset, "only": None if opts.only is None else list(opts.only), "skip": list(opts.skip),
@@ -1435,7 +1549,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             arrays["existence_radius"] = np.asarray(add_up(enc.existence_radius, _shift), dtype=float)
         arrays["residual_bound"] = enc.residual.upper
     if opts.store_eigenvectors and X is not None:
-        arrays["eigenvectors"] = X
+        arrays["eigenvectors"] = np.asarray(X) if not is_streamed(X) else read_columns(X, slice(0, int(X.shape[1])))
     return Certificate(body, arrays)
 
 
@@ -1460,20 +1574,20 @@ def _total_spin(ec, X, name, spec, claim, rec):
         r["total_spin"] = [float((-1 + np.sqrt(1 + 4 * v)) / 2) for v in r["certified_values"]]
 
 
-def _correlations(ec, X, spec, claim, opts, rec):
-    """S4 extension: two-point functions and structure factors requested in Options.correlations
-    (correlations.py, Proposition 15). Records are returned for the cluster; errors become INCONCLUSIVE
-    records rather than exceptions."""
-    if not opts.correlations:
+def _correlations(ec, X, spec, claim, requests, rec):
+    """S4 extension: two-point functions and structure factors requested in Options.correlations (resolved to
+    dictionaries by operators.resolve_correlation_request; correlations.py, Proposition 15). Records are
+    returned for the cluster; errors become INCONCLUSIVE records rather than exceptions."""
+    if not requests:
         return {}
     out = {}
     if spec is None or claim.sector_isometry is not None:
-        for name in opts.correlations:
+        for name in requests:
             out[name] = {"status": "NOT_CHECKED", "reason": "needs a specification and a computational-basis claim",
                          "reason_code": "NEEDS_SPEC" if spec is None else "UNSUPPORTED_CLAIM"}
         return out
     from .correlations import certify_correlations, structure_factor
-    for name, req in opts.correlations.items():
+    for name, req in requests.items():
         try:
             letter = req.get("letter", "z")
             sites = list(req.get("sites", range(spec.n_sites)))

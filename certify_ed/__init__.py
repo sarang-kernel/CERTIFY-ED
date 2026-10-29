@@ -29,7 +29,8 @@ from .report import methods_paragraph
 from .crossings import certified_crossing
 from .levelstats import level_statistics
 from .extrapolation import extrapolation_report
-from .cost import estimate_seconds, auto_budget
+from .cost import estimate_seconds, auto_budget, plan_for_claim
+from .operators import parse_operator
 from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
                         claim_from_hdf5, export_npz, claim_from_file, claim_from_bundle,
                         claim_from_hphi, claim_from_diagham, claim_from_spinpack, claim_from_alps)
@@ -51,7 +52,7 @@ __all__ = [
     "cyclic_isometry", "sector_matrix", "OperatorAdapter", "enclose", "kato_temple", "inertia_count",
     "Claim", "Options", "certify", "quick", "Certificate", "CertificateV2", "methods_paragraph",
     "certified_crossing", "level_statistics", "extrapolation_report",
-    "estimate_seconds", "auto_budget", "claim_from_quspin",
+    "estimate_seconds", "auto_budget", "plan_for_claim", "parse_operator", "claim_from_quspin",
     "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz", "claim_from_file",
     "claim_from_bundle", "claim_from_hphi", "claim_from_diagham", "claim_from_spinpack", "claim_from_alps",
     "read_bundle", "write_bundle", "record", "recorded", "Recorder",

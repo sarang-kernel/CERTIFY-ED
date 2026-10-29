@@ -111,8 +111,9 @@ def test_vectorless_respects_gates_and_options(heis8):
     # a 'lowest' eigenvalue-only claim is unchanged: NOT_CHECKED, needs eigenvectors
     low = ce.certify(ce.Claim(w[:4], None, operator=H, kind="lowest"), spec, ce.Options())
     assert _s3(low)["status"] == "NOT_CHECKED" and _s3(low)["evidence"]["reason_code"] == "NEEDS_EIGENVECTORS"
-    bad = _s3(_window_cert(spec, H, w[4:11], b, a))
-    assert bad["status"] == "INCONCLUSIVE" and "a < b" in bad["summary"]
+    # an inverted window is refused when the Claim is built (C-14's parse_window), before any statement
+    with pytest.raises(ValueError, match="a < b"):
+        _window_cert(spec, H, w[4:11], b, a)
 
 
 def test_vectorless_certificate_saves_and_validates(heis8, tmp_path):

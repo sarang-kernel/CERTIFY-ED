@@ -19,6 +19,12 @@ In Python: `Options.from_preset("benchmark", budget_seconds=600)`, or `Options(o
 `Options(skip=["S3"], narrowing_reason="...")`; the same keywords go through the one-call API,
 `certify_ed.quick(H, w, V, spec, preset="benchmark", budget_seconds="auto", progress=True)`.
 
+A whole-spectrum claim (`kind="all"`, `--kind all`) without a preset, `--only` or `--skip` uses the
+`whole-spectrum` preset (3.2, roadmap C-17): S1, S2 for every pair, S3 by the complete count, S7 when
+temperatures are given; S4 and S8 per cluster (one factorization pair per cluster) are left to `labels`. The
+choice is recorded in the scope block like any preset. `--plan` / `Options(plan=True)` prints the predicted
+time and memory per statement first; `certify-ed plan` prints it without running (`docs/cookbook/streaming_vectors.md`).
+
 ## Presets (data: `certify_ed.presets.PRESETS`)
 
 | preset | statements | options set | use |

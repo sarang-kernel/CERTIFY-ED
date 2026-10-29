@@ -8,10 +8,12 @@ output is pasted as printed; the scripts are in `docs/cookbook/snippets/` and `r
 |---|---|---|
 | dense arrays from `scipy.linalg.eigh` | [numpy arrays](numpy_eigh.md) | the whole spectrum of a TFIM chain; the k lowest, including an ill-posed k |
 | `scipy.sparse.linalg.eigsh`, lowest k | [eigsh](eigsh_lowest.md) | five lowest of a J1–J2 chain, dimension 4096 |
+| `eigsh(sigma=...)`, interior window | [shift-invert window](shift_invert_window.md) | eight eigenvalues around E = -1 of an open J1–J2 chain, `kind="window"`; a window that reaches too far is FAILED |
 | `.npz` / HDF5 files, command line | [files](files_import.md) | `certify-ed certify file.npz --spec` and `certify-ed import bundle/` |
 | QuSpin | [QuSpin](quspin.md) | a momentum block (`kblock=0`), with the certified lift to the full operator |
 | a `matvec` only | [matrix-free](matrix_free.md) | with a declared spec (S1 by probes) and without one |
 | any code that writes files | [producer bundle](producer_bundle.md) | a CSV bundle with `meta.json`, a preset, `certify-ed import` |
+| eigenvectors on disk (`.npy` memmap, HDF5) | [vectors larger than RAM](streaming_vectors.md) | the whole spectrum of a 924-block from a memmap, identical to the in-memory certificate; `--plan` |
 
 The inputs every path ends with are the same: a `Claim` (eigenvalues, optionally eigenvectors, the
 producer's operator, the kind of completeness claimed: `subset`, `lowest`, `window`, `all`) and a

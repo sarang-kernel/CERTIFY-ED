@@ -28,10 +28,12 @@ nav:
       - Overview: cookbook/index.md
       - numpy arrays (eigh): cookbook/numpy_eigh.md
       - eigsh, lowest k: cookbook/eigsh_lowest.md
+      - eigsh shift-invert, interior window: cookbook/shift_invert_window.md
       - Files and the command line: cookbook/files_import.md
       - QuSpin: cookbook/quspin.md
       - Matrix-free: cookbook/matrix_free.md
       - Producer bundle: cookbook/producer_bundle.md
+      - Vectors larger than RAM, the plan: cookbook/streaming_vectors.md
   - Integrations:
       - QuSpin: integrations/quspin.md
       - HPhi, DiagHam, SPINPACK, ALPS files: integrations/ed_codes.md
