@@ -35,6 +35,7 @@ nav:
   - Integrations:
       - QuSpin: integrations/quspin.md
       - HPhi, DiagHam, SPINPACK, ALPS files: integrations/ed_codes.md
+      - Pauli strings, OpenFermion, Qiskit: integrations/pauli.md
   - What certified means: what_certified_means.md
   - Limitations: limitations.md
   - FAQ, INCONCLUSIVE: faq_inconclusive.md

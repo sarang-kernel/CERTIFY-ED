@@ -58,6 +58,13 @@ for g, names in GROUPS.items():
                   entry("integrations.quspin.static_list_of", _iq.static_list_of),
                   "  One call from a QuSpin `hamiltonian` and its `eigsh` / `eigh` output (docs/integrations/quspin.md); "
                   "QuSpin is imported only when the objects are QuSpin objects."]
+        from certify_ed.integrations import pauli as _ip  # noqa: E402
+        lines += [entry("ModelSpec.from_pauli_strings", ce.ModelSpec.from_pauli_strings),
+                  entry("ModelSpec.from_openfermion", ce.ModelSpec.from_openfermion),
+                  entry("ModelSpec.from_qiskit", ce.ModelSpec.from_qiskit),
+                  entry("integrations.pauli.pauli_terms_to_static", _ip.pauli_terms_to_static),
+                  "  Qubit Hamiltonians as specs (docs/integrations/pauli.md); OpenFermion and Qiskit are read through "
+                  "their object interfaces and never imported."]
     if g == "Reports, diagnostics and budgets (3.2)":
         lines += [entry("diagnostics.next_action", _diag.next_action),
                   "  Every INCONCLUSIVE / NOT_CHECKED statement carries `evidence[\"next_action\"]` (set by `certify()`).",

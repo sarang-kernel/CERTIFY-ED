@@ -57,6 +57,16 @@ under the new reason code below.
   Tests: `tests/test_io_ed_codes.py` (22: layouts, truncation and header checks, round trips through certify()
   on a 6-site chain with S1-S3 CERTIFIED, MPI rank concatenation, negative controls: planted energy and swapped
   vector in the producer's files are not certified).
+- F-05 `ModelSpec.from_pauli_strings({"XXI": 0.5, ...})`, `ModelSpec.from_openfermion(QubitOperator)`,
+  `ModelSpec.from_qiskit(SparsePauliOp)` (`certify_ed/integrations/pauli.py`, docs/integrations/pauli.md): spin-1/2
+  Pauli-convention specs with character j on site j, basis index = big-endian bit string (the ordering of
+  `get_sparse_operator` and `SparsePauliOp.to_matrix()`; Qiskit's little-endian labels give site = n-1-qubit,
+  recorded in `parameters`), real coefficients required, identity term kept. The packages are read through their
+  object interfaces (`.terms`; `.to_list()`, `.num_qubits`) and never imported. Tests: `tests/test_pauli_specs.py`
+  (15: TFIM from strings equals `tfim_chain` entry by entry, a 2-qubit H2-like operator certifies with kind='all'
+  against numpy, complex odd-Y operator, OpenFermion/Qiskit-like objects, JSON round trip; negative controls:
+  a producer matrix with one coefficient off by 1e-3 -> S1 FAILED, planted eigenvalue not certified, wrong
+  endianness -> S1 FAILED).
 - `schema/certificate-2.1.schema.json` re-rendered: the file on dev/3.2 lacked the reason codes
   `MISSING_DEPENDENCY` and `UNDERFLOW_RISK` that `scope.REASON_CODES` already carried (the Wave 0 merge did not
   re-render).
