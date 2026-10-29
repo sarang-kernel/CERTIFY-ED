@@ -1,11 +1,25 @@
 # Changelog
 
-## [3.2.0.dev0] (unreleased; branch `dev/3.2-known-issues`)
+## [3.2.0.dev0] (unreleased; branch `dev/3.2`)
 
 `__version__` = 3.2.0.dev0. The computational source changes (certify.py, fp.py, scope.py), so records made
 with it are not comparable by `source_hash` with the 3.1.0 evidence run; no statement that 3.1.0 certified
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
+
+### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
+- `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls
+  `certify()` (no check of its own). `Certificate.summary()` is now one sentence; the former multi-line text is
+  `Certificate.report()`; `_repr_html_` / `_repr_markdown_` render a statement table in Jupyter.
+- `Certificate.methods_paragraph(style="plain"|"latex")` and `certify-ed statement CERT.json` (`certify_ed/report.py`,
+  outside the fingerprint): a methods-section paragraph whose every number is a certificate field, rounded in the safe
+  direction (radii up, gap bounds down), with hypotheses, run-stack caveat, body hash and a BibTeX entry (concept DOI;
+  version DOI placeholder).
+- `evidence["next_action"]` on every INCONCLUSIVE and NOT_CHECKED statement (`certify_ed/diagnostics.py`).
+- New reason code `MISSING_DEPENDENCY`: without python-flint, S6 is NOT_CHECKED instead of an import error; the QuSpin
+  importer names the extra to install. `certify_ed.apps` and the exact checker itself still need python-flint.
+- `Options(budget_seconds="auto")` / `--budget auto`: a default budget from a cost model fitted to seven E2 numbers of the
+  3.1.0 evidence run (`certify_ed/cost.py`; advisory, never changes a status); `Options(progress=True)` / `--progress`.
 
 ### INT-01: the no-underflow hypothesis is enforced (E-06; design decision D-57, conservative option)
 - The standard model behind every floating-point bound assumes no underflow: nonzero operands, radii and
@@ -69,6 +83,42 @@ under D-44 a version the paper cites needs its own full run).
   nonzero for almost every certificate, so this changes almost every exported radius by at most one ulp.
 - Tests: `tests/test_fix_3_1_1.py` (12; including a writer that drops a statement and recomputes the hash).
   Full suite 556 passed, 1 skipped; ruff clean.
+### Format, packaging and governance (roadmap B-02, F-09, A-03, H-01, H-05, B-09, G-05, G-12; track/format-packaging)
+
+No statement, bound or number changes in this track; the version is bumped in the known-issues track.
+`certify_ed/schema.py` and `certify_ed/conformance.py` are listed in `provenance.NON_COMPUTATIONAL`.
+
+- **B-02.** Published JSON Schema (draft 2020-12) of the certificate body, `schema/certificate-2.1.schema.json`,
+  and of the producer bundle, `schema/producer-bundle-1.0.schema.json`, rendered from `certify_ed/schema.py`
+  (the enumerations are the code's; a test keeps the files in sync). `Certificate.load(validate_schema=None|True|False)`
+  validates when `jsonschema` is installed (extra `schema`) and otherwise runs the structural checks (every
+  statement id exactly once in the scope block, reason codes declared and known, in_scope statuses equal to the
+  statements); a non-conforming body raises `SchemaValidationError`. This also closes INT-02 independently of
+  `fix/3.1.1`. `docs/schema.md`: field by field, stability promise, how a third-party writer conforms.
+- **F-09.** `certify-ed conform DIR...` (`certify_ed/conformance.py`): bundle schema, import, certify, certificate
+  schema, expected statuses. Three reference bundles under `conformance/reference/` (dense text, npz, matrix-free)
+  with `expected.json`; `conformance/README.md` for third-party writers. Negative controls: unknown status,
+  unknown reason code, CORROBORATED outside S5, duplicated/missing scope entries, tampered files with a recomputed
+  hash, a bundle with a planted wrong eigenvalue.
+- **A-03.** Extras `exact`, `quspin`, `hdf5`, `plots`, `schema`, `all` (the union), `dev`; `MANIFEST.in` ships the
+  schemas, the reference bundles, docs and tests in the sdist. `python -m build` gives an sdist and a wheel; the
+  wheel installs into a fresh venv and `certify-ed env` runs. `packaging/conda-forge/meta.yaml` (noarch draft),
+  `packaging/RELEASE_CHECKLIST.md` (version bump, annotated tag, full run per D-44, checksums, sigstore, Zenodo
+  new version under 10.5281/zenodo.20066565, GitHub release; never a force-push).
+- **H-01.** `.github/workflows/ci.yml` replaces `tests.yml`: lint, build, schema sync; ubuntu/macos/windows x
+  Python 3.11/3.12 with `.[all]` and QuSpin 1.0.1 (`--no-deps` after its real dependencies; the wheel declares the
+  obsolete `importlib` backport; documented in `docs/reproducibility.md`), test log uploaded; `nightly-mutation.yml`
+  runs a 32-mutant E6 sample without a failure gate.
+- **H-05.** `containers/Dockerfile` and `containers/certify-ed.def` pin the 3.1.0 evidence-run stack (Python 3.11,
+  numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0, QuSpin 1.0.1, h5py, matplotlib, mpmath).
+- **B-09.** `packaging/SIGNING.md`: keyless sigstore signing and verification of release assets and `SHA256SUMS`.
+  The certificate schema reserves `environment.distribution_sha256`; 3.1 does not write it (the hash of an installed
+  distribution is not well defined; `source_hash` identifies the code from a checkout).
+- **G-05 / G-12.** `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `GOVERNANCE.md` (maintainers,
+  decisions, release cadence, deprecation policy: schema fields never removed within a major version),
+  `docs/SCHEMA_RFC_PROCESS.md`, issue templates (bug, feature, *I could not certify X* feeding `docs/SCOPE_MATRIX.md`),
+  `ROADMAP.md` summarising the scored expansion roadmap.
+- Tests: `tests/test_schema_conformance.py` (17), `tests/test_packaging.py` (7).
 
 ## [3.1.0] - 2026-10-22
 

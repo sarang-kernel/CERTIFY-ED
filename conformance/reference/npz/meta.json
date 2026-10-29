@@ -1,0 +1,10 @@
+{
+ "description": "Heisenberg chain, 6 sites: lowest 4 eigenpairs, npz",
+ "kind": "lowest",
+ "producer": {
+  "name": "certify-ed reference bundles",
+  "note": "scipy.linalg.eigh of the dense matrix built by certify_ed.build_bitwise",
+  "version": "1.0"
+ },
+ "schema": "certify-ed/producer-bundle/1.0"
+}

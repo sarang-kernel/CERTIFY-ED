@@ -25,12 +25,14 @@ dependencies = ["numpy>=1.22", "scipy>=1.8"]
 
 [project.optional-dependencies]
 exact = ["python-flint>=0.6"]          # exact re-check layer, Arb references, applications
-quspin = ["quspin>=1.0"]               # importers, label audits, QuSpin cross-checks
+quspin = ["quspin>=1.0"]               # importers, label audits, QuSpin cross-checks (see docs/reproducibility.md:
+                                       # the wheel needs quspin-extensions and parallel-sparse-tools next to it)
 hdf5 = ["h5py>=3.0"]
 plots = ["matplotlib>=3.5"]
+schema = ["jsonschema>=4.18"]          # validate certificates against schema/certificate-2.1.schema.json (draft 2020-12)
 test = ["pytest>=7.0"]
-dev = ["pytest>=7.0", "pytest-cov", "ruff", "build"]
-all = ["python-flint>=0.6", "quspin>=1.0", "h5py>=3.0", "matplotlib>=3.5", "pytest>=7.0"]
+dev = ["pytest>=7.0", "pytest-cov", "ruff", "build", "jsonschema>=4.18"]
+all = ["python-flint>=0.6", "quspin>=1.0", "h5py>=3.0", "matplotlib>=3.5", "jsonschema>=4.18", "pytest>=7.0"]
 
 [project.scripts]
 certify-ed = "certify_ed.cli:main"

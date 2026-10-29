@@ -19,3 +19,5 @@
 
 The documentation site is built with `mkdocs build --strict` from `mkdocs.yml` in the repository root
 (`pip install -r docs/requirements-docs.txt`: mkdocs and the material theme). The built `site/` is not committed.
+| `schema.md` | the certificate JSON Schema 2.1 and the producer-bundle schema 1.0 (`schema/`): field by field, stability promise, how a third-party writer conforms |
+| `SCHEMA_RFC_PROCESS.md` | how a change to the certificate format is proposed, reviewed and versioned |

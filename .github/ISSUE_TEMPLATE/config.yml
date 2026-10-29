@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A soundness problem (a CERTIFIED statement you can show to be false)
+    url: mailto:sarangvehale2@gmail.com
+    about: Please report it to the maintainers first so that a fixed version can be released with the report (GOVERNANCE.md).

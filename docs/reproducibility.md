@@ -9,6 +9,21 @@ python run.py --full           # every experiment at paper size
 python run.py --full --jobs 4  # the same, four experiments at a time (E2, E6, E8 still run alone)
 ```
 
+### Installing QuSpin 1.0.1
+
+The QuSpin 1.0.1 wheel declares the obsolete PyPI backport `importlib` as a requirement, which cannot be
+installed on Python 3.12 (`RESULT_candidate_run.md`). Install its real runtime dependencies first and then
+the wheel without dependency resolution:
+
+```bash
+pip install quspin-extensions parallel-sparse-tools dill joblib numba numexpr six gmpy2
+pip install quspin==1.0.1 --no-deps
+```
+
+This is the sequence `.github/workflows/ci.yml` and the container recipes in `containers/` use; the
+versions of the 3.1.0 evidence run are Python 3.11, numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0 (FLINT
+3.6.0), QuSpin 1.0.1, quspin-extensions 0.1.8, parallel-sparse-tools 0.2.5.
+
 `run.py` is `certify-ed reproduce`. Options:
 
 | option | effect |

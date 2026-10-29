@@ -203,6 +203,23 @@ def cmd_presets(a):
     return 0
 
 
+def cmd_conform(a):
+    """Conformance of producer bundles: schema, import, certify, schema of the result (conformance/README.md)."""
+    from .conformance import check_bundle, format_report
+    rc = 0
+    reports = []
+    for path in a.bundles:
+        rep = check_bundle(path, allow_code=bool(a.allow_code), save=a.output if len(a.bundles) == 1 else None,
+                           require_jsonschema=bool(a.require_jsonschema))
+        reports.append(rep)
+        print(format_report(rep))
+        rc |= 0 if rep["ok"] else 1
+    if a.json:
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(reports if len(reports) > 1 else reports[0], f, indent=1, default=str)
+    return rc
+
+
 def cmd_spectrum(a):
     import numpy as np
     import scipy.sparse as sp
@@ -531,6 +548,14 @@ def main(argv=None):
     pr = sub.add_parser("presets", help="the presets and statements table")
     pr.add_argument("--markdown", action="store_true")
     pr.set_defaults(fn=cmd_presets)
+    cf = sub.add_parser("conform", help="conformance of producer bundles: schema, import, certify, certificate schema")
+    cf.add_argument("bundles", nargs="+", help="bundle directories (conformance/reference/* are the references)")
+    cf.add_argument("--allow-code", action="store_true", dest="allow_code", help="allow operator.py to be executed")
+    cf.add_argument("--require-jsonschema", action="store_true", dest="require_jsonschema",
+                    help="fail instead of falling back when the jsonschema package is missing")
+    cf.add_argument("-o", "--output", help="save the certificate here (single bundle)")
+    cf.add_argument("--json", help="write the report(s) as JSON to this file")
+    cf.set_defaults(fn=cmd_conform)
     s = sub.add_parser("spectrum", help="verified enclosure of a whole spectrum (.npz with H)")
     s.add_argument("matrix"); s.add_argument("--sectors", help="key of a conserved diagonal in the .npz")
     s.add_argument("-o", "--output"); s.add_argument("--show", type=int, default=10); s.set_defaults(fn=cmd_spectrum)
