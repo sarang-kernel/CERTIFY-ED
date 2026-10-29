@@ -197,6 +197,63 @@ def cmd_statement(a):
     return 0
 
 
+def cmd_crossing(a):
+    """C-11: order the rank-`level` eigenvalue intervals of two certificates (certify_ed.crossings)."""
+    from .certificate_v2 import Certificate
+    from .crossings import crossing_main, format_crossing
+    ca = Certificate.load(a.a, verify=not a.no_verify)
+    cb = Certificate.load(a.b, verify=not a.no_verify)
+    rec = crossing_main(ca, cb, level=a.level, json_path=a.json)
+    print(format_crossing(rec))
+    return 0 if rec["relation"] != "not separated" else 2
+
+
+def cmd_levelstats(a):
+    """C-09: interval r-ratios and spacing histogram of a complete, counted spectrum (certify_ed.levelstats)."""
+    from .certificate_v2 import Certificate
+    from .levelstats import format_level_statistics, level_statistics
+    cert = Certificate.load(a.certificate, verify=not a.no_verify)
+    unfold = a.unfold
+    if unfold not in (None, "none"):
+        try:
+            unfold = int(unfold.split(":")[-1])
+        except ValueError:
+            raise SystemExit(f"--unfold expects 'none' or 'poly:D' (got {a.unfold!r})") from None
+    else:
+        unfold = "none"
+    try:
+        res = level_statistics(cert, unfolding=unfold, bins=a.bins, bin_range=(0.0, a.smax))
+    except ValueError as e:
+        print(f"levelstats: refused: {e}")
+        return 2
+    print(format_level_statistics(res))
+    if a.json:
+        from .certificate_v2 import _jsonable
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(_jsonable(res), f, indent=1)
+    return 0
+
+
+def cmd_extrapolate(a):
+    """C-10: finite-size extrapolation report from per-size certificates (certify_ed.extrapolation; not certified)."""
+    from .certificate_v2 import Certificate
+    from .extrapolation import extrapolation_report
+    certs = [Certificate.load(p, verify=not a.no_verify) for p in a.certificates]
+    sizes = [int(x) for x in a.sizes.split(",")] if a.sizes else None
+    rep = extrapolation_report(certs, model=a.model, sizes=sizes, per_site=bool(a.per_site), level=a.level)
+    if a.output:
+        with open(a.output, "w", encoding="utf-8") as f:
+            f.write(rep["markdown"])
+        print(f"report: {a.output}")
+    else:
+        print(rep["markdown"])
+    if a.json:
+        from .certificate_v2 import _jsonable
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(_jsonable({k: v for k, v in rep.items() if k != "markdown"}), f, indent=1)
+    return 0
+
+
 def cmd_presets(a):
     from .presets import format_presets
     print(format_presets(markdown=bool(a.markdown)))
@@ -545,6 +602,31 @@ def main(argv=None):
     st.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
     st.add_argument("-o", "--output")
     st.set_defaults(fn=cmd_statement)
+    cx = sub.add_parser("crossing", help="order the rank-LEVEL eigenvalue intervals of two certificates (C-11)")
+    cx.add_argument("a", help="certificate JSON A"); cx.add_argument("b", help="certificate JSON B")
+    cx.add_argument("--level", type=int, default=0, help="eigenvalue rank, 0 = lowest (default 0)")
+    cx.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
+    cx.add_argument("--json", help="write the crossing record to this file")
+    cx.set_defaults(fn=cmd_crossing)
+    ls = sub.add_parser("levelstats", help="interval r-ratios and spacing histogram of a complete counted spectrum (C-09)")
+    ls.add_argument("certificate", help="certificate JSON of a kind 'all' claim with S3 CERTIFIED")
+    ls.add_argument("--unfold", default="none", help="'none' (default) or 'poly:D': polynomial unfolding of degree D "
+                                                     "(declared, not certified)")
+    ls.add_argument("--bins", type=int, default=12, help="spacing histogram bins (default 12)")
+    ls.add_argument("--smax", type=float, default=3.0, help="upper edge of the spacing histogram, in mean spacings (default 3)")
+    ls.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
+    ls.add_argument("--json", help="write the full record to this file")
+    ls.set_defaults(fn=cmd_levelstats)
+    ex = sub.add_parser("extrapolate", help="finite-size extrapolation report from per-size certificates (C-10; not certified)")
+    ex.add_argument("certificates", nargs="+", help="certificate JSON files, one per system size")
+    ex.add_argument("--model", default="1/N", help="'1/N' (default) or '1/N^2'")
+    ex.add_argument("--sizes", help="comma-separated N per certificate (default: the spec's n_sites)")
+    ex.add_argument("--per-site", action="store_true", dest="per_site", help="divide the intervals by N")
+    ex.add_argument("--level", type=int, default=0, help="eigenvalue rank, 0 = lowest (default 0)")
+    ex.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
+    ex.add_argument("-o", "--output", help="write the Markdown report here (default: stdout)")
+    ex.add_argument("--json", help="write the JSON record here")
+    ex.set_defaults(fn=cmd_extrapolate)
     pr = sub.add_parser("presets", help="the presets and statements table")
     pr.add_argument("--markdown", action="store_true")
     pr.set_defaults(fn=cmd_presets)

@@ -996,6 +996,20 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         statements.append(_stmt("S3.completeness", "NOT_CHECKED", "claim kind 'subset' makes no completeness claim",
                                 reason_code="NO_COMPLETENESS_CLAIM"))
 
+    # ---------------- gap records (C-01): a presentation of S2 + S3, no statement of its own (gaps.py)
+    gaps_record = None
+    _s2 = next((s for s in statements if s["id"] == "S2.eigenpairs"), None)
+    _s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
+    if (enc is not None and window is not None and _s2 is not None and _s3 is not None
+            and _s2["status"] == "CERTIFIED" and _s3["status"] == "CERTIFIED"
+            and claim.kind in ("lowest", "window", "all") and np.all(np.isfinite(enc.radius))):
+        from .gaps import gap_records
+        _rad = enc.radius if eps_s3 == 0.0 else add_up(enc.radius, eps_s3)
+        gaps_record = gap_records(mu, _rad, claim.kind, _s3["evidence"],
+                                  ("sector block" if audit is not None else
+                                   _s2["evidence"].get("radius_refers_to", "producer operator")))
+        if gaps_record["top_gap"] is not None:
+            _s3["evidence"]["gap_interval"] = list(gaps_record["top_gap"]["interval"])
     # ---------------- Kato-Temple sharpening for isolated pairs (Theorem 3)
     kt = []
     if (enc is not None and window is not None and opts.kato_temple and enc.rigorous
@@ -1277,6 +1291,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "hermitian_part": herm_note,
             "operator_note": op_note,
             "spectrum_enclosure": spectrum_record,
+            "gaps": gaps_record,
             "scope": build_scope_block(
                 sel, statements, budget,
                 {"preset": opts.preset, "only": None if opts.only is None else list(opts.only), "skip": list(opts.skip),

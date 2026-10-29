@@ -7,6 +7,25 @@ with it are not comparable by `source_hash` with the 3.1.0 evidence run; no stat
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
 
+### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
+
+- **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the
+  S2 enclosures (radii including the model shift) are merged into levels (maximal chains of overlapping
+  intervals), each holding exactly its count of eigenvalues (Corollary 5 for 'lowest', the window counts for
+  'window', count = dimension for 'all', then the pigeonhole step of theory §6), and every difference of
+  consecutive levels gets an outward-rounded interval. For 'lowest' claims the gap above the highest claimed
+  level has S3's `gap_lower_bound` as lower end and no upper end (the next eigenvalue is not claimed); it is
+  repeated as `S3.evidence.gap_interval`. To bound λ_{k+1} − λ_k on both sides, claim k + 1 pairs: the upper
+  end is then μ_{k+1} + r_{k+1} − (μ_k − r_k) (Theorem 1). No new statement id (the scope matrix calls this a
+  presentation task); the schema has `$defs/gaps_record`. Negative controls: a planted wrong (k+1)-th
+  eigenvalue gives S2 FAILED and no record; without S3 there is no record (`tests/test_gaps_crossings.py`).
+- **C-11 certified crossings.** `certify_ed.crossings.certified_crossing(cert_a, cert_b, level=0)` and
+  `certify-ed crossing A.json B.json [--level L] [--json out]`: the rank-`level` eigenvalue intervals of two
+  certificates are compared; relation `<`, `>` or `not separated`, the margin (rounded down), both intervals,
+  both certificate hashes and spec hashes, and the caveat when a certificate has no S3 CERTIFIED (then the
+  interval is the S2 enclosure of the claimed value at that sorted position and the statement says so). A
+  certificate without S2 CERTIFIED is refused (`ValueError`). Pure interval comparison of certified data.
+
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls
   `certify()` (no check of its own). `Certificate.summary()` is now one sentence; the former multi-line text is
