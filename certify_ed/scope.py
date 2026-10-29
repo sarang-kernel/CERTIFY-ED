@@ -52,11 +52,16 @@ OUT_OF_SCOPE_QUANTITIES = [
     {"quantity": "time evolution", "reason_code": "OUT_OF_SCOPE_DYNAMICS",
      "detail": "needs certified propagator error bounds (Krylov/Chebyshev/Trotter)"},
     {"quantity": "level statistics", "reason_code": "NOT_IMPLEMENTED",
-     "detail": "statistics of a certified complete spectrum are computable; the unfolding step has no certified form"},
+     "detail": ("no certificate statement; certify_ed.levelstats (3.2) computes interval r-ratios and spacing histograms "
+                "from a complete counted spectrum (kind 'all', S3 CERTIFIED) after the fact, with the unfolding declared, "
+                "not certified")},
     {"quantity": "finite-size extrapolation", "reason_code": "OUT_OF_SCOPE_EXTRAPOLATION",
-     "detail": "an extrapolation is a statement about a model of the sequence, not about any finite matrix"},
+     "detail": ("an extrapolation is a statement about a model of the sequence, not about any finite matrix; "
+                "certify_ed.extrapolation_report (3.2) cites per-size certificates by hash and fits a declared model, "
+                "and says that the fitted value is not certified")},
     {"quantity": "phase boundaries", "reason_code": "OUT_OF_SCOPE_EXTRAPOLATION",
-     "detail": "derived from extrapolated quantities; certified inputs at each size are what a certificate provides"},
+     "detail": ("derived from extrapolated quantities; certified inputs at each size are what a certificate provides; "
+                "certify_ed.crossings (3.2) orders two certified intervals at one size when they do not overlap")},
 ]
 
 __all__ = ["SCOPE_SCHEMA", "REASON_CODES", "OUT_OF_SCOPE_QUANTITIES", "Budget", "build_scope_block",

@@ -19,7 +19,7 @@ from .fp import U, add_up, gamma, up
 from .spec import ModelSpec, Term
 
 __all__ = ["site_operator", "certify_observables_batch", "certify_correlations", "structure_factor",
-           "combine_certified"]
+           "combine_certified", "hermitian_parts", "certify_observable_general"]
 
 
 def site_operator(spec: ModelSpec, letters: str, sites: Sequence[int], coeff: complex = 1.0,
@@ -46,19 +46,89 @@ def _hermitian_part_or_fail(O, name: str):
     return O
 
 
+def _two_sum_exact(a: np.ndarray, b: np.ndarray) -> bool:
+    """Whether every entry of fl(a + b) equals a + b exactly (Knuth's TwoSum: the error term is zero)."""
+    s_ = a + b
+    bb = s_ - a
+    err = (a - (s_ - bb)) + (b - bb)
+    return bool(np.all(err == 0)) and bool(np.all(np.isfinite(s_)))
+
+
+def hermitian_parts(O, name: str = "O"):
+    """Hermitian and anti-Hermitian parts of O: H = (O + O^H)/2 and K = (O - O^H)/(2i), both Hermitian, with
+    O = H + iK. Classical decomposition; both parts are formed in floating point and the formation is checked
+    to be exact entrywise (Knuth's TwoSum error term zero; halving and the multiplication by -i are exact).
+    Returns (H, K, exact). When `exact` is False the parts are rounded and the record that uses them must not
+    be CERTIFIED (no bound on the rounding is claimed)."""
+    O = sp.csr_matrix(O)
+    Oh = sp.csr_matrix(O.conj().T)
+    S = (O + Oh).tocsr()
+    D = (O - Oh).tocsr()
+    # the entrywise sums on the union of both patterns, checked for exactness with TwoSum
+    Un = (abs(O) + abs(Oh)).tocoo()
+    rows, cols = Un.row, Un.col
+    a = np.asarray(O[rows, cols]).ravel() if rows.size else np.zeros(0)
+    b = np.asarray(Oh[rows, cols]).ravel() if rows.size else np.zeros(0)
+    exact = _two_sum_exact(a, b) and _two_sum_exact(a, -b)
+    Hp = (S * 0.5).tocsr()                     # halving is exact (no underflow by hypothesis)
+    Dd = D.data
+    if np.iscomplexobj(Dd):
+        K_data = (Dd.imag * 0.5) + 1j * (-(Dd.real) * 0.5)        # (x + iy)/(2i) = y/2 - i x/2, exact
+    else:
+        K_data = 1j * (-(Dd) * 0.5)
+    Kp = sp.csr_matrix((K_data, D.indices, D.indptr), shape=D.shape)
+    Kp.eliminate_zeros()
+    Hp.eliminate_zeros()
+    return Hp, Kp, bool(exact)
+
+
+def certify_observable_general(ec: EigenspaceCertificate, X: np.ndarray, O, name: str) -> dict:
+    """Theorem 6 for a Hermitian O; for a non-Hermitian O (C-05) the Hermitian decomposition O = H + iK:
+    tr(P H) and tr(P K) are certified separately (Theorem 6 each) and recombined as tr(P O) = tr(P H) + i tr(P K)
+    with bound b_H + b_K (Proposition 15 with coefficients 1 and i). The record names both parts and how to
+    recombine them; `value` is then [re, im]. Records land in ec.observables[name]."""
+    Oc = sp.csr_matrix(O)
+    dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0
+    if dev == 0:
+        rec = certify_observable(ec, X, Oc, name)
+        rec["hermitian"] = True
+        return rec
+    Hp, Kp, exact = hermitian_parts(Oc, name)
+    rh = certify_observable(ec, X, Hp, f"{name}.hermitian_part")
+    rk = certify_observable(ec, X, Kp, f"{name}.anti_hermitian_part")
+    for k in (f"{name}.hermitian_part", f"{name}.anti_hermitian_part"):
+        ec.observables.pop(k, None)
+    bound = float(add_up(rh["bound"], rk["bound"]))
+    rec = {"hermitian": False, "hermitian_decomposition": True, "max_asymmetry": float(dev),
+           "definition": "O = H + iK with H = (O + O^H)/2 and K = (O - O^H)/(2i), both Hermitian",
+           "parts": {"hermitian": rh, "anti_hermitian": rk},
+           "parts_formed_exactly": bool(exact),
+           "recombine": "tr(P O) = tr(P H) + i tr(P K); |tr(P O) - (v_H + i v_K)| <= b_H + b_K (Proposition 15, a = 1, i)",
+           "value": [float(rh["value"]), float(rk["value"])], "bound": bound,
+           "statement": (f"tr(P {name}) = tr(P H) + i tr(P K) with tr(P H) in [{rh['value'] - rh['bound']:.15g}, "
+                         f"{rh['value'] + rh['bound']:.15g}] and tr(P K) in [{rk['value'] - rk['bound']:.15g}, "
+                         f"{rk['value'] + rk['bound']:.15g}]")}
+    if not exact:
+        rec["status"] = "INCONCLUSIVE"
+        rec["reason"] = ("the Hermitian and anti-Hermitian parts could not be formed exactly in floating point; the "
+                         "certified values refer to the rounded parts, not to O")
+    ec.observables[name] = rec
+    return rec
+
+
 def certify_observables_batch(ec: EigenspaceCertificate, X: np.ndarray, operators: Dict[str, object]) -> Dict[str, dict]:
-    """Theorem 6 for each named Hermitian operator; records land in ec.observables."""
+    """Theorem 6 for each named operator; non-Hermitian operators go through the Hermitian decomposition
+    (certify_observable_general). Records land in ec.observables."""
     out = {}
     for name, O in operators.items():
-        Oh = _hermitian_part_or_fail(O, name)
-        out[name] = certify_observable(ec, X, Oh, name)
+        out[name] = certify_observable_general(ec, X, O, name)
     return out
 
 
 def combine_certified(coefficients: Sequence[complex], values: Sequence[float], bounds: Sequence[float]) -> Tuple[complex, float]:
     """Proposition 15: (sum a_k v_k, sum |a_k| b_k + rounding of the sum), rounded outward."""
     a = np.asarray(coefficients, dtype=complex)
-    v = np.asarray(values, dtype=float)
+    v = np.asarray(values, dtype=complex)      # certified values may be complex (Hermitian decomposition, C-05)
     b = np.asarray(bounds, dtype=float)
     m = a.size
     val = complex(np.sum(a * v))
@@ -73,28 +143,55 @@ def combine_certified(coefficients: Sequence[complex], values: Sequence[float], 
 def certify_correlations(ec: EigenspaceCertificate, X: np.ndarray, spec: ModelSpec, letter: str,
                          sites: Sequence[int], states: Optional[StateSet] = None, name: str = "C",
                          pairs: Optional[Sequence[Tuple[int, int]]] = None) -> dict:
-    """Two-point functions C_ij = tr(P O_i O_j) for the single-site letter on the given sites.
+    """Two-point functions C_ij = tr(P O_i O_j) for the given sites.
 
-    O_i O_j is Hermitian for commuting Hermitian site operators (different sites); for i = j the operator
-    is O_i^2. Only i <= j is computed; C_ji = C_ij. Letters must be Hermitian single-site letters ('z',
-    'x', 'y', 'n', ...); for '+'/'-' use the symmetrised combinations through `operators`. Per-state values
-    are tr(P O)/g with bound b/g (g = cluster size)."""
+    `letter` is one Hermitian single-site letter ('z', 'x', 'y', 'n', ...): O_i O_j is Hermitian for commuting
+    Hermitian site operators (different sites), O_i^2 for i = j; only i <= j is computed and C_ji = C_ij.
+    Since 3.2 (C-05) `letter` may be two letters, e.g. '+-' for S+_i S-_j: the product is built as one
+    two-site term from the spec; where it is not Hermitian (i != j) it is certified through the Hermitian
+    decomposition O = H + iK (certify_observable_general), the pair record carries `value` = Re tr(P O),
+    `imag_value` = Im tr(P O), the summed bound and the `hermitian_decomposition` record, and
+    C_ji = conj(C_ij) (tr(P O^H) = conj tr(P O)). Per-state values are tr(P O)/g with bound b/g (g = cluster
+    size)."""
     sites = [int(s) for s in sites]
     g = len(ec.members)
-    ops = {i: site_operator(spec, letter, (i,), 1.0, states) for i in sites}
-    for i, O in ops.items():
-        _hermitian_part_or_fail(O, f"{letter}_{i}")
+    two = len(letter) == 2
+    if not two:
+        ops = {i: site_operator(spec, letter, (i,), 1.0, states) for i in sites}
+        for i, O in ops.items():
+            _hermitian_part_or_fail(O, f"{letter}_{i}")
     if pairs is None:
         pairs = [(i, j) for a, i in enumerate(sites) for j in sites[a:]]
-    rec = {"letter": letter, "sites": sites, "cluster_size": g, "pairs": []}
+    rec = {"letter": letter, "sites": sites, "cluster_size": g, "pairs": [],
+           "conjugate_symmetry": "C_ji = conj(C_ij)" if two else "C_ji = C_ij"}
     for i, j in pairs:
-        O = (ops[i] @ ops[j]).tocsr()
-        O = ((O + O.conj().T) / 2).tocsr() if i != j else O            # exact for commuting Hermitian factors
-        r = certify_observable(ec, X, O, f"{name}_{i}{j}")
-        rec["pairs"].append({"i": i, "j": j, "value": r["value"], "bound": r["bound"],
-                             "per_state_value": r["value"] / g, "per_state_bound": float(up(r["bound"] / g))})
-    rec["statement"] = (f"tr(P {letter}_i {letter}_j) certified for {len(rec['pairs'])} pairs; "
-                        f"Theorem 6 per pair, Proposition 15 for combinations [UNVERIFIED]")
+        if two:
+            O = site_operator(spec, letter, (i, j), 1.0, states)
+            r = certify_observable_general(ec, X, O, f"{name}_{i}{j}")
+            if r.get("hermitian_decomposition"):
+                val, imag = r["value"]
+                pr = {"i": i, "j": j, "value": float(val), "imag_value": float(imag), "bound": r["bound"],
+                      "hermitian_decomposition": {k: r[k] for k in ("definition", "parts", "parts_formed_exactly", "recombine")}}
+                if r.get("status") == "INCONCLUSIVE":
+                    pr["status"] = "INCONCLUSIVE"
+                    pr["reason"] = r["reason"]
+            else:
+                pr = {"i": i, "j": j, "value": r["value"], "imag_value": 0.0, "bound": r["bound"]}
+        else:
+            O = (ops[i] @ ops[j]).tocsr()
+            O = ((O + O.conj().T) / 2).tocsr() if i != j else O            # exact for commuting Hermitian factors
+            r = certify_observable(ec, X, O, f"{name}_{i}{j}")
+            pr = {"i": i, "j": j, "value": r["value"], "bound": r["bound"]}
+        pr["per_state_value"] = pr["value"] / g
+        pr["per_state_bound"] = float(up(pr["bound"] / g))
+        rec["pairs"].append(pr)
+    if two:
+        rec["statement"] = (f"tr(P {letter[0]}_i {letter[1]}_j) certified for {len(rec['pairs'])} pairs; Theorem 6 per "
+                            f"Hermitian part, Hermitian decomposition O = H + iK for i != j (Proposition 15 for the "
+                            f"recombination) [UNVERIFIED]")
+    else:
+        rec["statement"] = (f"tr(P {letter}_i {letter}_j) certified for {len(rec['pairs'])} pairs; "
+                            f"Theorem 6 per pair, Proposition 15 for combinations [UNVERIFIED]")
     return rec
 
 
@@ -112,8 +209,10 @@ def structure_factor(corr: dict, positions: Sequence[Sequence[float]], q_list: S
         else {int(i): np.asarray(positions[int(i)], dtype=float) for i in sites}
     table = {}
     for p in corr["pairs"]:
-        table[(p["i"], p["j"])] = (p["value"], p["bound"])
-        table[(p["j"], p["i"])] = (p["value"], p["bound"])
+        v = complex(p["value"], p.get("imag_value", 0.0))
+        table[(p["i"], p["j"])] = (v, p["bound"])
+        table[(p["j"], p["i"])] = (v.conjugate() if corr.get("conjugate_symmetry", "").startswith("C_ji = conj") else v,
+                                   p["bound"])
     out = []
     for q in q_list:
         q = np.asarray(q, dtype=float)

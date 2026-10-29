@@ -134,7 +134,12 @@ so that a reader knows what to expect; it does not forbid additional ones. The i
 * S2: `n_pairs`, `max_radius`, `median_radius`, `max_existence_radius`, `model_shift`, `sector_lift_shift`,
   `radius_refers_to`, `rigorous`, `accuracy_target`, `groups` (cluster records with `bound.eps`, `bound.eps_star`).
 * S3: `dimension`, `count_from_inertia`, `claimed_certified_inside`, `missing_at_least`, `gap_lower_bound`,
-  `next_eigenvalue_lower_bound`, `certified_window`, `window`, `beta_*` (backward-error bounds), `counts`.
+  `next_eigenvalue_lower_bound`, `certified_window`, `window`, `beta_*` (backward-error bounds), `counts`;
+  since 3.2 `gap_interval` (`[gap_lower_bound, "inf"]`: the gap above the highest claimed level of a 'lowest'
+  claim has no upper bound because the next eigenvalue is not claimed; written only when S2 and S3 are CERTIFIED);
+  for an eigenvalue-only window claim (C-02) `vectorless: true`, `n_claimed`, `count_in_window`, `count_statement`,
+  `pairing`, `edges` (per edge: `nu`, `beta`, `delta`, `shifts`, `nu_below`, `nu_above`, `beta_below`, `beta_above`,
+  `exact`, `eigenvalue_free`), and `missing_at_least` or `spurious_at_least` when FAILED.
 * S4: `clusters` (projector error, observables, correlations, quantum numbers per cluster).
 * S5: `oracles` (per solver: `max_abs_diff_vs_claim`, `n_compared`, `seconds`), `independence`, `tolerance`, `note`.
 * S7: `temperatures`, `rows` (interval bounds for Z, F, U, C), `n_intervals`, `energy_offset`, `hypothesis`.
@@ -146,6 +151,20 @@ so that a reader knows what to expect; it does not forbid additional ones. The i
 `index`, `claimed`, `lower`, `upper`, `radius` (required); `existence_radius`, `residual_bound`,
 `residual_computed`, `method` (`single` / `cluster` / `residual interval`), `group`, `group_size`, `distinct`.
 `radius` includes the model shift and the sector lift shift when they apply (`S2.evidence.radius_refers_to`).
+
+### `gaps` (since 3.2.0.dev0, roadmap C-01)
+
+`null` unless S2 and S3 are both CERTIFIED and the claim kind is `lowest`, `window` or `all`. Otherwise an
+object (`certify_ed.gaps.gap_records`): `refers_to` (what the intervals refer to, as `S2.evidence.radius_refers_to`),
+`ranked` (true for `lowest` / `all`: the levels carry eigenvalue ranks, 1 = lowest), `rank_origin`, `n_levels`,
+`levels[]` (`lower`, `upper`, `members` = indices into `claim.eigenvalues`, `count`, `ranks` = `[first, last]`
+when ranked): maximal chains of overlapping S2 enclosures (radii include the model shift), each holding exactly
+`count` eigenvalues (Corollary 5 for `lowest`, the inertia counts for `window`, count = dimension for `all`, then
+the pigeonhole step of theory §6); `gaps[]` (`interval` = `[lower, upper]` rounded outward, `lower_from` / `upper_from`
+= `S2` or `S3` / `null`, `within_level`, `levels` = the two level indices, `between_ranks` when ranked, `note`):
+one record per pair of consecutive levels (both ends from S2), one `[0, width]` record per level with `count > 1`,
+and for `lowest` claims the gap above the highest claimed level (`top_gap`, repeated in the list): lower end
+`S3.evidence.gap_lower_bound`, upper end `"inf"`. No new statement: the record is a presentation of S2 and S3.
 
 ### `arithmetic`
 

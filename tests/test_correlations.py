@@ -113,7 +113,7 @@ def test_free_fermion_density_correlations():
     assert abs(cl["observables"]["n0"]["value"] - 0.5) <= cl["observables"]["n0"]["bound"]
 
 
-def test_batch_observables_and_non_hermitian_rejected():
+def test_batch_observables_and_non_hermitian_decomposed():
     spec = ce.heisenberg_chain(4)
     H = ce.build_bitwise(spec)
     w, V = la.eigh(H.toarray())
@@ -121,8 +121,10 @@ def test_batch_observables_and_non_hermitian_rejected():
     ops = {f"z{i}": site_operator(spec, "z", (i,)) for i in range(4)}
     out = certify_observables_batch(ec, V, ops)
     assert set(out) == set(ops) and all(abs(r["value"]) <= r["bound"] + 1e-12 for r in out.values())   # singlet: <Sz_i> = 0
-    with pytest.raises(ValueError):
-        certify_observables_batch(ec, V, {"bad": sp.csr_matrix(site_operator(spec, "+", (0,)))})
+    # since 3.2 (C-05) a non-Hermitian operator is not rejected: it is certified through its Hermitian decomposition
+    rec = certify_observables_batch(ec, V, {"plus": sp.csr_matrix(site_operator(spec, "+", (0,)))})["plus"]
+    assert rec["hermitian_decomposition"] and rec["parts_formed_exactly"]
+    assert abs(rec["value"][0]) <= rec["bound"] and abs(rec["value"][1]) <= rec["bound"]   # <S+_0> = 0 in the singlet
 
 
 def test_correlation_request_without_spec_is_reported_not_raised():

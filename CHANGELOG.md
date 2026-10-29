@@ -7,6 +7,67 @@ with it are not comparable by `source_hash` with the 3.1.0 evidence run; no stat
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
 
+### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
+
+- **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the
+  S2 enclosures (radii including the model shift) are merged into levels (maximal chains of overlapping
+  intervals), each holding exactly its count of eigenvalues (Corollary 5 for 'lowest', the window counts for
+  'window', count = dimension for 'all', then the pigeonhole step of theory §6), and every difference of
+  consecutive levels gets an outward-rounded interval. For 'lowest' claims the gap above the highest claimed
+  level has S3's `gap_lower_bound` as lower end and no upper end (the next eigenvalue is not claimed); it is
+  repeated as `S3.evidence.gap_interval`. To bound λ_{k+1} − λ_k on both sides, claim k + 1 pairs: the upper
+  end is then μ_{k+1} + r_{k+1} − (μ_k − r_k) (Theorem 1). No new statement id (the scope matrix calls this a
+  presentation task); the schema has `$defs/gaps_record`. Negative controls: a planted wrong (k+1)-th
+  eigenvalue gives S2 FAILED and no record; without S3 there is no record (`tests/test_gaps_crossings.py`).
+- **C-11 certified crossings.** `certify_ed.crossings.certified_crossing(cert_a, cert_b, level=0)` and
+  `certify-ed crossing A.json B.json [--level L] [--json out]`: the rank-`level` eigenvalue intervals of two
+  certificates are compared; relation `<`, `>` or `not separated`, the margin (rounded down), both intervals,
+  both certificate hashes and spec hashes, and the caveat when a certificate has no S3 CERTIFIED (then the
+  interval is the S2 enclosure of the claimed value at that sorted position and the statement says so). A
+  certificate without S2 CERTIFIED is refused (`ValueError`). Pure interval comparison of certified data.
+- **C-02 vectorless window count.** An eigenvalue-only claim with `kind='window'` used to leave S3 NOT_CHECKED
+  (NEEDS_EIGENVECTORS). Now `_certify_window_vectorless` certifies the number of eigenvalues in (a, b) from
+  inertia counts alone: Lemma 4 at the edge, plus two counts at e ± δ whose agreement makes the edge collar
+  eigenvalue-free through the count inequality of Proposition 14 (docs/theory.md §3, "Vectorless window
+  count"). S3 is CERTIFIED when the count equals the number of claimed values, FAILED otherwise
+  (`missing_at_least` / `spurious_at_least`), INCONCLUSIVE when an edge is within the backward error of an
+  eigenvalue (the summary says "window edge ... of an eigenvalue"; `next_action` says to move the edge).
+  Evidence: `vectorless: true`, `count_in_window`, `edges`, `count_statement`, `pairing`. No claimed value is
+  paired with an eigenvalue: S2, S4, S8 stay NOT_CHECKED and the summary says so. Six factorizations per
+  window. Tests: `tests/test_vectorless_window.py` (count matches the dense spectrum at four windows, planted
+  wrong counts FAILED both ways, edge on an eigenvalue INCONCLUSIVE, random-window negative control, gates).
+- **C-05 Hermitian decomposition.** `Options.observables` and `Options.correlations` accept non-Hermitian
+  operators: `correlations.certify_observable_general` splits O = H + iK (H = (O + O^H)/2, K = (O - O^H)/(2i)),
+  certifies tr(P H) and tr(P K) by Theorem 6 and records the recombination tr(P O) = tr(P H) + i tr(P K) with
+  bound b_H + b_K (Proposition 15); the record names both parts (`parts`, `definition`, `recombine`,
+  `value` = [re, im]). The parts are checked to be formed exactly in floating point (TwoSum); otherwise the
+  record is INCONCLUSIVE. Correlation requests take a two-letter string (`{"letter": "+-", ...}` for
+  S+_i S-_j, built as one two-site term from the spec; C_ji = conj(C_ij) in the structure factor). A
+  non-Hermitian observable used to reach `certify_observable` unchecked; `certify_observables_batch` used to
+  raise. Tests: `tests/test_hermitian_decomposition.py` against the exact N = 4 ring values (-1/3, 1/6, 1/2;
+  S(pi) = 4/3), with a rounded-parts negative control.
+- **C-09 level statistics.** `certify_ed.levelstats.level_statistics(cert, unfolding='none'|degree, bins, bin_range)`
+  and `certify-ed levelstats CERT.json [--unfold poly:D]`: from a kind-'all' certificate with S2 and S3
+  CERTIFIED, the levels of `gaps.merge_enclosures` carry ranks, and interval arithmetic (`ivl.py`) gives the
+  spacings s_n, the r-ratios r_n = min(s_n, s_{n+1}) / max(s_n, s_{n+1}) (undefined when the larger spacing
+  may vanish, as inside a multiplet), the mean r as an interval, and a spacing histogram in units of the mean
+  spacing with per-bin at-least / at-most counts. The unfolding is a declared parameter: none, or a polynomial
+  fitted to the staircase in floating point, evaluated on the intervals by interval Horner, recorded with its
+  coefficients and marked "declared, not certified"; the unfolded spacings are clipped to >= 0 only when the
+  derivative of the polynomial is positive on the hull of the spectrum (interval check). A certificate
+  without a counted spectrum is refused (`LevelStatisticsError`, CLI exit 2 with a message). The scope block's
+  "level statistics" row keeps NOT_IMPLEMENTED (no certificate statement) with the detail naming the tool.
+- **C-10 extrapolation report.** `certify_ed.extrapolation.extrapolation_report(certs, model="1/N"|"1/N^2"|callable,
+  sizes=None, per_site=False, level=0)` and `certify-ed extrapolate C1.json C2.json ... [--model] [--per-site]`:
+  Markdown and JSON listing the per-size certified intervals by certificate hash (through
+  `crossings.level_interval`, with the caveat when S3 is not CERTIFIED), a numpy least-squares fit of the
+  declared model to the midpoints, and the fitted limit with the sentence that it is NOT certified and
+  depends on the declared model. The extrapolated record has no status field and its report section contains
+  no status word (test). `certify_ed/extrapolation.py` is in `provenance.NON_COMPUTATIONAL`; `gaps.py`,
+  `crossings.py` and `levelstats.py` are not (their intervals are claimed-certified numbers).
+- New public names: `certified_crossing`, `level_statistics`, `extrapolation_report` (docs/api.md regenerated).
+  Tests: `tests/test_levelstats_extrapolation.py`.
+
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls
   `certify()` (no check of its own). `Certificate.summary()` is now one sentence; the former multi-line text is

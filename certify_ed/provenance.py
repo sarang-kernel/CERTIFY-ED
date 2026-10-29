@@ -23,6 +23,10 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      # bundle; the integrations build Claims and ModelSpecs and call certify()
                      "certify_ed/recorder.py", "certify_ed/integrations/__init__.py",
                      "certify_ed/integrations/quspin.py", "certify_ed/integrations/pauli.py",
+                     # finite-size extrapolation report (3.2, C-10): reads certificates, fits a declared model, writes a
+                     # report; nothing in it is certified (gaps.py, crossings.py and levelstats.py are NOT listed: their
+                     # intervals are claimed-certified numbers and stay in the fingerprint)
+                     "certify_ed/extrapolation.py",
                      # post-processing: they read records and write tables, they never produce a record
                      "experiments/make_numbers.py", "experiments/make_numbers_apps.py",
                      "experiments/e6_classify.py", "experiments/e6_recheck.py",

@@ -31,6 +31,7 @@ GROUPS = {
                       "inertia_count", "probe_float_environment"],
     "Certificate methods (3.2)": [],
     "Reports, diagnostics and budgets (3.2)": ["methods_paragraph", "estimate_seconds", "auto_budget"],
+    "Derived records from certificates (3.2, Wave 1)": ["certified_crossing", "level_statistics", "extrapolation_report"],
     "Importers": ["claim_from_quspin", "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz",
                   "claim_from_file", "claim_from_bundle", "read_bundle", "write_bundle",
                   "claim_from_hphi", "claim_from_diagham", "claim_from_spinpack", "claim_from_alps"],
@@ -65,6 +66,13 @@ for g, names in GROUPS.items():
                   entry("integrations.pauli.pauli_terms_to_static", _ip.pauli_terms_to_static),
                   "  Qubit Hamiltonians as specs (docs/integrations/pauli.md); OpenFermion and Qiskit are read through "
                   "their object interfaces and never imported."]
+    if g == "Derived records from certificates (3.2, Wave 1)":
+        from certify_ed import gaps as _gaps
+        lines += [entry("gaps.gap_records", _gaps.gap_records),
+                  "  `body.gaps` of a certificate (C-01) is written by `certify()` when S2 and S3 are CERTIFIED; "
+                  "`certified_crossing` (C-11), `level_statistics` (C-09) and `extrapolation_report` (C-10) read saved "
+                  "certificates (CLI: `certify-ed crossing`, `certify-ed levelstats`, `certify-ed extrapolate`). The "
+                  "extrapolation report is not certified and says so; the other three are interval logic on certified data."]
     if g == "Reports, diagnostics and budgets (3.2)":
         lines += [entry("diagnostics.next_action", _diag.next_action),
                   "  Every INCONCLUSIVE / NOT_CHECKED statement carries `evidence[\"next_action\"]` (set by `certify()`).",

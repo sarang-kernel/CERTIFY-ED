@@ -75,6 +75,11 @@ def _statement_evidence_defs() -> Dict[str, dict]:
             "window": {"$ref": "#/$defs/interval"}, "certified_window": {"$ref": "#/$defs/interval"},
             "complete_below": num, "gap_lower_bound": num, "next_eigenvalue_lower_bound": num,
             "next_eigenvalue_estimate": num, "top_shift": num,
+            "gap_interval": {"$ref": "#/$defs/interval"},
+            "vectorless": {"type": "boolean"}, "n_claimed": {"type": "integer", "minimum": 0},
+            "count_in_window": {"type": "integer", "minimum": 0}, "spurious_at_least": {"type": "integer", "minimum": 0},
+            "count_statement": {"type": "string"}, "pairing": {"type": "string"},
+            "edges": {"type": "object", "additionalProperties": {"type": "object"}},
             "beta_a": num, "beta_b": num, "beta_effective": num,
             "counts": {"type": "array", "items": {"type": "object"}}, "top_multiplet": {"type": "object"},
             "narrowed": {"type": "object"}, "budget": budget}},
@@ -136,6 +141,9 @@ def _certificate_schema() -> dict:
                 "max_abs_asymmetry": num, "note": {"type": "string"}}}]},
             "operator_note": {"type": ["string", "null"]},
             "spectrum_enclosure": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/spectrum_enclosure"}]},
+            "gaps": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/gaps_record"}],
+                     "description": "since 3.2: certified gap intervals read off S2 and S3 (certify_ed.gaps); null unless "
+                                    "both are CERTIFIED"},
             "scope": {"$ref": "#/$defs/scope"},
             "not_verified": {"type": "array", "items": {"type": "string"}},
             "timing": {"type": "object", "properties": {"total_seconds": {"type": "number", "minimum": 0}}},
@@ -266,6 +274,31 @@ def _certificate_schema() -> dict:
                     "intervals": {"type": "array", "items": {"type": "object", "required": ["lo", "hi", "count"], "properties": {
                         "lo": num, "hi": num, "count": {"type": "integer", "minimum": 0},
                         "counted": {"type": "boolean"}, "method": {"type": "string"}}}}}},
+            "gaps_record": {
+                "type": "object", "required": ["refers_to", "ranked", "levels", "gaps"],
+                "description": ("levels: maximal chains of overlapping S2 enclosures (radii including the model shift), "
+                                "each holding exactly `count` eigenvalues when S3 is CERTIFIED; gaps: intervals for the "
+                                "differences of consecutive eigenvalues, ends rounded outward, upper end 'inf' when the next "
+                                "eigenvalue is not claimed (then the lower end is S3's gap_lower_bound)"),
+                "properties": {
+                    "refers_to": {"type": "string"}, "ranked": {"type": "boolean"}, "rank_origin": {"type": "string"},
+                    "n_levels": {"type": "integer", "minimum": 0}, "basis": {"type": "string"},
+                    "levels": {"type": "array", "items": {
+                        "type": "object", "required": ["lower", "upper", "members", "count"], "properties": {
+                            "lower": num, "upper": num, "count": {"type": "integer", "minimum": 1},
+                            "members": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+                            "ranks": {"type": "array", "items": {"type": "integer", "minimum": 1}, "minItems": 2, "maxItems": 2}}}},
+                    "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap_record"}},
+                    "top_gap": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/gap_record"}]}}},
+            "gap_record": {
+                "type": "object", "required": ["interval", "lower_from", "upper_from"],
+                "properties": {
+                    "interval": {"$ref": "#/$defs/interval"},
+                    "lower_from": {"enum": ["S2", "S3"]}, "upper_from": {"enum": ["S2", None]},
+                    "within_level": {"type": "boolean"},
+                    "levels": {"type": "array", "items": {"type": ["integer", "null"]}, "minItems": 2, "maxItems": 2},
+                    "between_ranks": {"type": "array", "items": {"type": "integer", "minimum": 1}, "minItems": 2, "maxItems": 2},
+                    "note": {"type": "string"}}},
             "scope": {
                 "type": "object",
                 "required": ["schema", "preset", "in_scope", "narrowed", "out_of_scope", "reason_codes"],

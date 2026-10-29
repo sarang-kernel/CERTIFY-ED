@@ -46,7 +46,7 @@ from .cost import resolve_budget_seconds
 from .diagnostics import annotate_next_actions
 from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
                         product_tolerance, SpecOperator)
-from .eigenspace import (certify_eigenspace, certify_observable, certify_quantum_numbers,
+from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import OperatorAdapter, enclose, kato_temple, _cluster_bound, cluster_groups
 from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
@@ -647,6 +647,91 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
     return "INCONCLUSIVE", ev, None
 
 
+def _edge_count_exact(A, e, opts, eps_shift, counts, scale):
+    """Exact number of eigenvalues below a window edge e, from inertia counts alone (C-02).
+
+    Lemma 4 at e gives nu_e with #{lambda < e - beta_e} <= nu_e <= #{lambda <= e + beta_e}: the count is exact
+    when the collar [e - beta_e, e + beta_e] holds no eigenvalue. Two further counts at sigma_1 = e - delta and
+    sigma_2 = e + delta (delta > beta) decide that with the count inequality of Proposition 14 on the window
+    (sigma_1, sigma_2): #{lambda in (sigma_1 + beta_1, sigma_2 - beta_2)} <= nu_2 - nu_1. If nu_2 = nu_1 and the
+    collar lies inside (sigma_1 + beta_1, sigma_2 - beta_2), the collar is eigenvalue-free, so nu_e = #{lambda < e}
+    and e itself is not an eigenvalue. If nu_2 > nu_1, an eigenvalue lies in [sigma_1 - beta_1, sigma_2 + beta_2]
+    around the edge and the count at e is not decided (INCONCLUSIVE). delta is widened (at most three retries) when a
+    backward error is not smaller than the distance to the collar, as the other S3 paths do.
+
+    Returns (status, record): status 'EXACT' with record {'nu', ...}, or 'NOT_CHECKED' / 'INCONCLUSIVE' with a
+    reason. Every count is appended to `counts`."""
+    r = inertia_count(A, e, method=opts.inertia_method)
+    counts.append(r.to_dict())
+    rec = {"edge": float(e)}
+    if r.resource_failure:
+        return "NOT_CHECKED", dict(rec, reason=f"inertia count not attempted to completion: {r.note}")
+    if not r.conclusive:
+        return "INCONCLUSIVE", dict(rec, reason=f"inertia inconclusive at the window edge {e:.10g} ({r.note})")
+    beta_e = float(add_up(r.beta, eps_shift))
+    rec.update(nu=int(r.negative), beta=beta_e)
+    delta = max(8.0 * beta_e, 32.0 * U * scale)
+    for _ in range(4):
+        s1, s2 = float(e - delta), float(e + delta)
+        r1 = inertia_count(A, s1, method=opts.inertia_method)
+        counts.append(r1.to_dict())
+        if r1.resource_failure:
+            return "NOT_CHECKED", dict(rec, reason=f"inertia count not attempted to completion: {r1.note}")
+        r2 = inertia_count(A, s2, method=opts.inertia_method)
+        counts.append(r2.to_dict())
+        if r2.resource_failure:
+            return "NOT_CHECKED", dict(rec, reason=f"inertia count not attempted to completion: {r2.note}")
+        if not (r1.conclusive and r2.conclusive):
+            return "INCONCLUSIVE", dict(rec, delta=delta, reason=f"inertia inconclusive next to the window edge {e:.10g}")
+        b1, b2 = float(add_up(r1.beta, eps_shift)), float(add_up(r2.beta, eps_shift))
+        rec.update(delta=delta, shifts=[s1, s2], nu_below=int(r1.negative), nu_above=int(r2.negative),
+                   beta_below=b1, beta_above=b2)
+        if add_up(s1, b1) < sub_down(e, beta_e) and sub_down(s2, b2) > add_up(e, beta_e):
+            if r2.negative == r1.negative:
+                rec.update(exact=True, eigenvalue_free=[float(add_up(s1, b1)), float(sub_down(s2, b2))])
+                return "EXACT", rec
+            rec.update(exact=False)
+            return "INCONCLUSIVE", dict(rec, reason=(f"window edge {e:.10g} is within {delta + max(b1, b2):.2e} of an "
+                                                     f"eigenvalue (counts {r1.negative} below {s1:.10g}, {r2.negative} "
+                                                     f"below {s2:.10g}): the count at the edge is not decided"))
+        delta = max(2.0 * delta, 4.0 * max(b1, b2, beta_e))
+    return "INCONCLUSIVE", dict(rec, exact=False,
+                                reason=f"factorization backward errors too large next to the window edge {e:.10g}")
+
+
+def _certify_window_vectorless(A, mu, a, b, opts, eps_shift=0.0):
+    """C-02: the number of eigenvalues in (a, b) from inertia counts alone (eigenvalue-only window claim).
+
+    No enclosures exist, so nothing pairs a claimed value with an eigenvalue: the statement is only that the
+    window holds exactly `count_in_window` eigenvalues (Lemma 4 at each edge, made exact by the edge check of
+    `_edge_count_exact`), compared with the number of claimed values."""
+    counts = []
+    n_claimed = int(np.asarray(mu).size)
+    ev = {"counts": counts, "window": [float(a), float(b)], "vectorless": True, "n_claimed": n_claimed}
+    if not (np.isfinite(a) and np.isfinite(b) and a < b):
+        return "INCONCLUSIVE", dict(ev, reason=f"window ({a!r}, {b!r}) is not a finite interval with a < b"), None
+    scale = max(1.0, abs(float(a)), abs(float(b)))
+    edges = {}
+    for name, e in (("a", float(a)), ("b", float(b))):
+        st, rec = _edge_count_exact(A, e, opts, eps_shift, counts, scale)
+        edges[name] = rec
+        ev["edges"] = edges
+        if st != "EXACT":
+            return st, dict(ev, reason=rec.get("reason", "")), None
+    n = int(edges["b"]["nu"] - edges["a"]["nu"])
+    ev["count_in_window"] = n
+    ev["count_statement"] = (f"exactly {n} eigenvalues in ({a:.17g}, {b:.17g}); neither edge is an eigenvalue "
+                             f"(eigenvalue-free collars {edges['a']['eigenvalue_free']} and {edges['b']['eigenvalue_free']})")
+    ev["pairing"] = "none: no eigenvectors, so no claimed value is matched to an eigenvalue"
+    if n == n_claimed:
+        return "CERTIFIED", ev, None
+    if n > n_claimed:
+        ev["missing_at_least"] = int(n - n_claimed)
+    else:
+        ev["spurious_at_least"] = int(n_claimed - n)
+    return "FAILED", ev, None
+
+
 # ---------------------------------------------------------------------------
 # main entry point
 # ---------------------------------------------------------------------------
@@ -965,6 +1050,33 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                     f"factorization skipped: dimension {inertia_op.shape[0]} > inertia_max_dim "
                                     f"{opts.inertia_max_dim}", {"dimension": int(inertia_op.shape[0])},
                                     reason_code="SIZE_LIMIT"))
+        elif enc is None and claim.kind == "window" and underflow:
+            statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
+                                    "UNDERFLOW_RISK: the factorization bounds rest on the no-underflow hypothesis, "
+                                    "which is not established for this operator; no vectorless count",
+                                    {"n_claimed": int(mu.size), "underflow": {"findings": uf_findings}},
+                                    reason_code="UNDERFLOW_RISK"))
+        elif enc is None and claim.kind == "window":
+            # C-02: eigenvalue-only window claim; the count in (a, b) from inertia alone, no pairing
+            a, b = claim.window
+            st, ev, _ = _certify_window_vectorless(inertia_op, mu, a, b, opts, eps_s3)
+            if st == "CERTIFIED":
+                summ = (f"exactly {ev['count_in_window']} eigenvalues in ({a:.10g}, {b:.10g}) by inertia counts, as "
+                        f"many as claimed; no eigenvectors, so no claimed value is paired with an eigenvalue")
+            elif st == "FAILED":
+                summ = (f"inertia counts exactly {ev['count_in_window']} eigenvalues in ({a:.10g}, {b:.10g}) but the "
+                        f"claim lists {mu.size}: " +
+                        (f"at least {ev['missing_at_least']} eigenvalue(s) in the window are not claimed"
+                         if "missing_at_least" in ev else
+                         f"at least {ev['spurious_at_least']} claimed value(s) are not eigenvalues in the window"))
+            else:
+                summ = ev.get("reason", "counts at the window edges could not be made exact")
+            statements.append(_stmt("S3.completeness", st, summ, ev,
+                                    ["Sylvester inertia of a computed LDL^T factorization with explicitly bounded "
+                                     "backward error (Lemma 4 at three shifts per window edge; the count inequality "
+                                     "of Proposition 14 on the edge collars); standard floating-point model; no "
+                                     "eigenvectors: the count is not paired with the claimed values"],
+                                    time.time() - t0))
         elif enc is None:
             statements.append(_stmt("S3.completeness", "NOT_CHECKED",
                                     "eigenvalue-only claim: completeness needs certified intervals",
@@ -996,6 +1108,20 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         statements.append(_stmt("S3.completeness", "NOT_CHECKED", "claim kind 'subset' makes no completeness claim",
                                 reason_code="NO_COMPLETENESS_CLAIM"))
 
+    # ---------------- gap records (C-01): a presentation of S2 + S3, no statement of its own (gaps.py)
+    gaps_record = None
+    _s2 = next((s for s in statements if s["id"] == "S2.eigenpairs"), None)
+    _s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
+    if (enc is not None and window is not None and _s2 is not None and _s3 is not None
+            and _s2["status"] == "CERTIFIED" and _s3["status"] == "CERTIFIED"
+            and claim.kind in ("lowest", "window", "all") and np.all(np.isfinite(enc.radius))):
+        from .gaps import gap_records
+        _rad = enc.radius if eps_s3 == 0.0 else add_up(enc.radius, eps_s3)
+        gaps_record = gap_records(mu, _rad, claim.kind, _s3["evidence"],
+                                  ("sector block" if audit is not None else
+                                   _s2["evidence"].get("radius_refers_to", "producer operator")))
+        if gaps_record["top_gap"] is not None:
+            _s3["evidence"]["gap_interval"] = list(gaps_record["top_gap"]["interval"])
     # ---------------- Kato-Temple sharpening for isolated pairs (Theorem 3)
     kt = []
     if (enc is not None and window is not None and opts.kato_temple and enc.rigorous
@@ -1088,8 +1214,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 eig_records.append(rec)
                 continue
             for name, O in opts.observables.items():
-                certify_observable(ec, X, O, name)
-                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O)
+                # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
+                from .correlations import certify_observable_general
+                r_obs = certify_observable_general(ec, X, O, name)
+                O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
+                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
             corr_recs = _correlations(ec, X, spec, claim, opts, rec)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":
@@ -1277,6 +1406,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             "hermitian_part": herm_note,
             "operator_note": op_note,
             "spectrum_enclosure": spectrum_record,
+            "gaps": gaps_record,
             "scope": build_scope_block(
                 sel, statements, budget,
                 {"preset": opts.preset, "only": None if opts.only is None else list(opts.only), "skip": list(opts.skip),
