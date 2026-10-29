@@ -353,6 +353,12 @@ def _bundle_schema() -> dict:
             "skip": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
             "budget_seconds": {"type": "number", "minimum": 0},
             "budget_mb": {"type": "number", "minimum": 0},
+            # written by certify_ed.recorder (A-07); informational, never read by certify()
+            "environment": {"type": "object", "properties": {k: {"type": "string"} for k in
+                                                            ("python", "numpy", "scipy", "certify_ed", "platform", "machine")}},
+            "timing": {"type": "object", "properties": {"started_utc": {"type": "string"}, "finished_utc": {"type": "string"},
+                                                       "wall_seconds": {"type": "number", "minimum": 0},
+                                                       "process_seconds": {"type": "number", "minimum": 0}}},
         },
         "if": {"properties": {"kind": {"const": "window"}}, "required": ["kind"]},
         "then": {"required": ["window"]},

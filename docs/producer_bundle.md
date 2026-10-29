@@ -82,6 +82,7 @@ All fields optional.
 | `state_order`, `basis_label` | for a 1-D basis file | spec's order / `producer basis` |
 | `temperatures` | list of T for S7 (whole-spectrum claims) | none |
 | `preset`, `only`, `skip`, `budget_seconds`, `budget_mb` | the scope the producer suggests; the command line overrides | |
+| `environment`, `timing` | written by the record hook (below): versions and platform of the producing process; UTC start and end, wall and process seconds. Informational; `certify()` does not read them | |
 
 ## What the certificate says about the import
 
@@ -97,3 +98,32 @@ Fortran/C++/Julia code without Python, text or Matrix Market is enough; a 4096 x
 in `.txt` is large but reads correctly. If the producer uses a different local-state numbering or site
 order than the spec, write `spec.json` in the producer's convention (the spec is the declaration; S1 says
 whether the matrix matches it) rather than permuting the arrays.
+
+## Writing a bundle from Python: the record hook
+
+For a producer that has the arrays in a Python process (an in-house code, a scipy script, a Python binding), the
+record hook writes the bundle without naming the files:
+
+```python
+import certify_ed as ce
+
+with ce.record(spec, "run42.bundle") as rec:          # spec: a ModelSpec, or None to declare the model later
+    w, V = scipy.sparse.linalg.eigsh(H, k=4, which="SA")
+    rec.capture(w, V, H)                              # or rec.eigenvalues = w; rec.eigenvectors = V; rec.operator = H
+```
+
+On exit the directory holds `eigenvalues.npz`, `eigenvectors.npz`, `operator.npz`, `spec.json` and `meta.json`
+with `kind` (default `lowest`; `record(..., kind="window", window=(a, b))`), `producer`, `environment` and
+`timing`. The arrays are written as given; nothing is sorted, rounded or filtered, so a wrong value in `w` is in
+the bundle and is found by `certify-ed certify --from run42.bundle`. If the block raises, nothing is written;
+if it exits without eigenvalues, `ValueError`. `rec.capture(..., basis=states)` records a U(1) state list (or an
+isometry) as `basis.npz`. The decorator form wraps a function returning `(w, V)` or `(w, V, H)`:
+
+```python
+@ce.recorded(spec, "run42.bundle", operator=H)
+def solve(k):
+    return scipy.sparse.linalg.eigsh(H, k=k, which="SA")
+```
+
+`certify-ed conform run42.bundle` checks the layout, the schema of `meta.json`, the import, and that the
+certificate validates. The hook is in `certify_ed/recorder.py` (provenance: non-computational).

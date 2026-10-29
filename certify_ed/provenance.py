@@ -19,6 +19,10 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      "certify_ed/api.py", "certify_ed/report.py", "certify_ed/diagnostics.py",
                      # schema validation and conformance: they read certificates and bundles, never write a number
                      "certify_ed/schema.py", "certify_ed/conformance.py",
+                     # producer-side helpers (3.2): the record hook writes the producer's arrays unchanged into a
+                     # bundle; the integrations build Claims and ModelSpecs and call certify()
+                     "certify_ed/recorder.py", "certify_ed/integrations/__init__.py",
+                     "certify_ed/integrations/quspin.py", "certify_ed/integrations/pauli.py",
                      # post-processing: they read records and write tables, they never produce a record
                      "experiments/make_numbers.py", "experiments/make_numbers_apps.py",
                      "experiments/e6_classify.py", "experiments/e6_recheck.py",

@@ -21,6 +21,32 @@ under the new reason code below.
 - `Options(budget_seconds="auto")` / `--budget auto`: a default budget from a cost model fitted to seven E2 numbers of the
   3.1.0 evidence run (`certify_ed/cost.py`; advisory, never changes a status); `Options(progress=True)` / `--progress`.
 
+### Producers (roadmap F-01, A-07, F-02, F-05; track/producers)
+- F-01 `certify_ed.integrations.quspin.certify_hamiltonian(H, w, V, basis=None, static=None, spec=None, kind="lowest",
+  **options)`: one call from a QuSpin `hamiltonian` and the output of `H.eigsh` / `H.eigh` to a Certificate. The
+  basis and the operator-string list are taken from the object; eigenvalues are sorted for `lowest` / `window`
+  claims; the Claim and ModelSpec come from `claim_from_quspin`, so a symmetry block (kblock, pblock, ...) keeps
+  the S1 sector audit through `basis.get_proj`. Time-dependent Hamiltonians are refused. `spec=` certifies
+  against an independently written model. Docs: `docs/integrations/quspin.md`; a draft upstream pull-request
+  text proposing `quspin.tools.certify` is `integrations/quspin_PR.md` (text only). Tests:
+  `tests/test_integrations_quspin.py` (full, U(1), kblock and kblock+pblock bases give the statuses of the direct
+  route; unsorted eigsh output; spec override with a wrong coupling -> S1 FAILED; negative controls: a planted
+  eigenvalue and a swapped eigenvector are not certified).
+- A-07 producer record hook `certify_ed.record(spec, path, kind=..., window=..., fmt=...)`: `with record(...) as
+  rec: ...; rec.capture(w, V, H)` (or the attributes `rec.eigenvalues`, `rec.eigenvectors`, `rec.operator`,
+  `rec.basis`) writes a producer bundle (schema 1.0) on exit with `meta.environment` (Python, numpy, scipy,
+  certify-ed versions, platform) and `meta.timing` (UTC start/end, wall and process seconds); the decorator
+  `certify_ed.recorded(spec, path)` wraps a function returning `(w, V)` or `(w, V, H)`. Nothing is written when
+  the block raises; exiting without eigenvalues raises. The bundle schema (`certify_ed/schema.py`,
+  `schema/producer-bundle-1.0.schema.json`) documents the two new optional fields. Module `certify_ed/recorder.py`
+  (NON_COMPUTATIONAL). Tests: `tests/test_recorder.py` (bundle passes `check_bundle` and the CLI `conform` and
+  `certify --from`; statuses equal the direct Claim; decorator; U(1) basis; window kind and csv format; meta
+  validates with jsonschema; negative controls: a planted eigenvalue and a planted operator entry written through
+  the hook are not certified).
+- `schema/certificate-2.1.schema.json` re-rendered: the file on dev/3.2 lacked the reason codes
+  `MISSING_DEPENDENCY` and `UNDERFLOW_RISK` that `scope.REASON_CODES` already carried (the Wave 0 merge did not
+  re-render).
+
 ### INT-01: the no-underflow hypothesis is enforced (E-06; design decision D-57, conservative option)
 - The standard model behind every floating-point bound assumes no underflow: nonzero operands, radii and
   residual bounds of magnitude at least 2^-900 (`fp.UNDERFLOW_THRESHOLD`). 3.1.0 stated this and probed
