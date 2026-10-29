@@ -88,6 +88,25 @@ class ModelSpec:
         spec.validate()
         return spec
 
+    @staticmethod
+    def from_pauli_strings(terms, n_qubits: int = None, qubit_order: str = "big_endian", **kw) -> "ModelSpec":
+        """ModelSpec of sum_k c_k P_k from {"XXI": 0.5, "ZZI": 1.0, ...} (or [(string, c), ...]); character j
+        acts on site j; spin-1/2 Pauli convention; real coefficients. Conventions: certify_ed.integrations.pauli."""
+        from .integrations.pauli import spec_from_pauli_terms
+        return spec_from_pauli_terms(terms, n_qubits, qubit_order=qubit_order, **kw)
+
+    @staticmethod
+    def from_openfermion(op, n_qubits: int = None, **kw) -> "ModelSpec":
+        """ModelSpec from an OpenFermion QubitOperator (site = qubit; matrix = get_sparse_operator)."""
+        from .integrations.pauli import spec_from_openfermion
+        return spec_from_openfermion(op, n_qubits, **kw)
+
+    @staticmethod
+    def from_qiskit(op, **kw) -> "ModelSpec":
+        """ModelSpec from a Qiskit SparsePauliOp (little-endian labels; matrix = op.to_matrix())."""
+        from .integrations.pauli import spec_from_qiskit
+        return spec_from_qiskit(op, **kw)
+
     def validate(self) -> None:
         if self.site_order != "site0_msb":
             raise ValueError("only site_order='site0_msb' is implemented")

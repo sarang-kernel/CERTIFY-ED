@@ -28,8 +28,10 @@ from .api import quick
 from .report import methods_paragraph
 from .cost import estimate_seconds, auto_budget
 from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
-                        claim_from_hdf5, export_npz, claim_from_file, claim_from_bundle)
+                        claim_from_hdf5, export_npz, claim_from_file, claim_from_bundle,
+                        claim_from_hphi, claim_from_diagham, claim_from_spinpack, claim_from_alps)
 from .io import read_bundle, write_bundle
+from .recorder import record, recorded, Recorder
 from .fp import probe_float_environment
 from .spectrum import enclose_spectrum, SpectrumEnclosure, SpectrumInterval
 from .checker import exact_matrix, exact_eigenpair_radii, exact_recheck_lowest
@@ -47,7 +49,9 @@ __all__ = [
     "Claim", "Options", "certify", "quick", "Certificate", "CertificateV2", "methods_paragraph",
     "estimate_seconds", "auto_budget", "claim_from_quspin",
     "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz", "claim_from_file",
-    "claim_from_bundle", "read_bundle", "write_bundle", "probe_float_environment",
+    "claim_from_bundle", "claim_from_hphi", "claim_from_diagham", "claim_from_spinpack", "claim_from_alps",
+    "read_bundle", "write_bundle", "record", "recorded", "Recorder",
+    "probe_float_environment",
     "enclose_spectrum", "SpectrumEnclosure", "SpectrumInterval", "exact_matrix",
     "exact_eigenpair_radii", "exact_recheck_lowest", "exact_recheck_sector_lowest", "site_permutation",
 ]

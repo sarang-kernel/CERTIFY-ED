@@ -163,3 +163,16 @@ def claim_from_bundle(path: str, allow_code: bool = False, kind: str = None, win
     b = read_bundle(path, allow_code=allow_code, kind=kind, window=window)
     return b.claim, b.spec, b.meta
 
+
+# ---------------------------------------------------------------------------------------------------- F-02
+# Readers for the output files of other ED codes live in certify_ed.io (one module per code, each stating which
+# parts of its layout are documented and which are assumptions); they are re-exported here under the importer
+# naming convention.
+from .io.hphi import claim_from_hphi          # noqa: E402
+from .io.diagham import claim_from_diagham    # noqa: E402
+from .io.spinpack import claim_from_spinpack  # noqa: E402
+from .io.alps import claim_from_alps          # noqa: E402
+
+__all__ = ["require_quspin", "claim_from_quspin", "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz",
+           "claim_from_file", "claim_from_bundle", "claim_from_hphi", "claim_from_diagham", "claim_from_spinpack",
+           "claim_from_alps", "QUSPIN_HINT"]

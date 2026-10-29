@@ -32,7 +32,10 @@ GROUPS = {
     "Certificate methods (3.2)": [],
     "Reports, diagnostics and budgets (3.2)": ["methods_paragraph", "estimate_seconds", "auto_budget"],
     "Importers": ["claim_from_quspin", "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz",
-                  "claim_from_file", "claim_from_bundle", "read_bundle", "write_bundle"],
+                  "claim_from_file", "claim_from_bundle", "read_bundle", "write_bundle",
+                  "claim_from_hphi", "claim_from_diagham", "claim_from_spinpack", "claim_from_alps"],
+    "Producer record hook (3.2)": ["record", "recorded", "Recorder"],
+    "Integrations (3.2)": [],
     "Whole-spectrum enclosure": ["enclose_spectrum", "SpectrumEnclosure", "SpectrumInterval"],
     "Exact layer": ["exact_matrix", "exact_eigenpair_radii", "exact_recheck_lowest", "exact_recheck_sector_lowest",
                     "site_permutation"],
@@ -49,6 +52,19 @@ for g, names in GROUPS.items():
                    "_repr_html_", "_repr_markdown_")]
         lines += ["  `summary()` is one sentence; `report()` is the full text (the `summary()` of 3.1); in Jupyter a "
                   "Certificate renders as a statement/status/evidence table.", ""]
+    if g == "Integrations (3.2)":
+        from certify_ed.integrations import quspin as _iq  # noqa: E402
+        lines += [entry("integrations.quspin.certify_hamiltonian", _iq.certify_hamiltonian),
+                  entry("integrations.quspin.static_list_of", _iq.static_list_of),
+                  "  One call from a QuSpin `hamiltonian` and its `eigsh` / `eigh` output (docs/integrations/quspin.md); "
+                  "QuSpin is imported only when the objects are QuSpin objects."]
+        from certify_ed.integrations import pauli as _ip  # noqa: E402
+        lines += [entry("ModelSpec.from_pauli_strings", ce.ModelSpec.from_pauli_strings),
+                  entry("ModelSpec.from_openfermion", ce.ModelSpec.from_openfermion),
+                  entry("ModelSpec.from_qiskit", ce.ModelSpec.from_qiskit),
+                  entry("integrations.pauli.pauli_terms_to_static", _ip.pauli_terms_to_static),
+                  "  Qubit Hamiltonians as specs (docs/integrations/pauli.md); OpenFermion and Qiskit are read through "
+                  "their object interfaces and never imported."]
     if g == "Reports, diagnostics and budgets (3.2)":
         lines += [entry("diagnostics.next_action", _diag.next_action),
                   "  Every INCONCLUSIVE / NOT_CHECKED statement carries `evidence[\"next_action\"]` (set by `certify()`).",

@@ -148,6 +148,48 @@
     "budget_mb": {
       "type": "number",
       "minimum": 0
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "python": {
+          "type": "string"
+        },
+        "numpy": {
+          "type": "string"
+        },
+        "scipy": {
+          "type": "string"
+        },
+        "certify_ed": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "machine": {
+          "type": "string"
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "started_utc": {
+          "type": "string"
+        },
+        "finished_utc": {
+          "type": "string"
+        },
+        "wall_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "process_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
     }
   },
   "if": {

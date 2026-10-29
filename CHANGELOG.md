@@ -21,6 +21,56 @@ under the new reason code below.
 - `Options(budget_seconds="auto")` / `--budget auto`: a default budget from a cost model fitted to seven E2 numbers of the
   3.1.0 evidence run (`certify_ed/cost.py`; advisory, never changes a status); `Options(progress=True)` / `--progress`.
 
+### Producers (roadmap F-01, A-07, F-02, F-05; track/producers)
+- F-01 `certify_ed.integrations.quspin.certify_hamiltonian(H, w, V, basis=None, static=None, spec=None, kind="lowest",
+  **options)`: one call from a QuSpin `hamiltonian` and the output of `H.eigsh` / `H.eigh` to a Certificate. The
+  basis and the operator-string list are taken from the object; eigenvalues are sorted for `lowest` / `window`
+  claims; the Claim and ModelSpec come from `claim_from_quspin`, so a symmetry block (kblock, pblock, ...) keeps
+  the S1 sector audit through `basis.get_proj`. Time-dependent Hamiltonians are refused. `spec=` certifies
+  against an independently written model. Docs: `docs/integrations/quspin.md`; a draft upstream pull-request
+  text proposing `quspin.tools.certify` is `integrations/quspin_PR.md` (text only). Tests:
+  `tests/test_integrations_quspin.py` (full, U(1), kblock and kblock+pblock bases give the statuses of the direct
+  route; unsorted eigsh output; spec override with a wrong coupling -> S1 FAILED; negative controls: a planted
+  eigenvalue and a swapped eigenvector are not certified).
+- A-07 producer record hook `certify_ed.record(spec, path, kind=..., window=..., fmt=...)`: `with record(...) as
+  rec: ...; rec.capture(w, V, H)` (or the attributes `rec.eigenvalues`, `rec.eigenvectors`, `rec.operator`,
+  `rec.basis`) writes a producer bundle (schema 1.0) on exit with `meta.environment` (Python, numpy, scipy,
+  certify-ed versions, platform) and `meta.timing` (UTC start/end, wall and process seconds); the decorator
+  `certify_ed.recorded(spec, path)` wraps a function returning `(w, V)` or `(w, V, H)`. Nothing is written when
+  the block raises; exiting without eigenvalues raises. The bundle schema (`certify_ed/schema.py`,
+  `schema/producer-bundle-1.0.schema.json`) documents the two new optional fields. Module `certify_ed/recorder.py`
+  (NON_COMPUTATIONAL). Tests: `tests/test_recorder.py` (bundle passes `check_bundle` and the CLI `conform` and
+  `certify --from`; statuses equal the direct Claim; decorator; U(1) basis; window kind and csv format; meta
+  validates with jsonschema; negative controls: a planted eigenvalue and a planted operator entry written through
+  the hook are not certified).
+- F-02 file importers for other ED codes (`certify_ed/io/hphi.py`, `diagham.py`, `spinpack.py`, `alps.py`;
+  `claim_from_hphi`, `claim_from_diagham`, `claim_from_spinpack`, `claim_from_alps`; docs/integrations/ed_codes.md).
+  Layout sources: HPhi `energy.dat` / `Eigenvalue.dat` / binary `eigenvec` (manual 3.5: int iterations, unsigned long
+  local_size, complex double x (local_size + 1), first component unused; the 4-byte-long variant is detected from the
+  file size); DiagHam binary real vectors (wiki: int dimension + doubles) with complex vectors ASSUMED Re/Im
+  interleaved, spectrum text files (quantum-number columns, energy last: observed convention); SPINPACK: ASSUMED
+  text layouts (`table`, `keyvalue`), recorded as `layout_status` in the claim's producer record, no vectors; ALPS
+  `/spectrum/sectors/<n>/energies`, `quantumnumbers`, and the `SAVE_EIGENVECTORS` eigenvector and basis tables
+  (reordered into the spec encoding when a spec is given). Every reader checks header against file size and column
+  counts and raises `FormatError`. The basis order of HPhi/DiagHam/SPINPACK relative to a ModelSpec is not
+  established: the caller passes `operator=` and `states=`. Fixture generators: `tests/fixtures/ed_codes.py`.
+  Tests: `tests/test_io_ed_codes.py` (22: layouts, truncation and header checks, round trips through certify()
+  on a 6-site chain with S1-S3 CERTIFIED, MPI rank concatenation, negative controls: planted energy and swapped
+  vector in the producer's files are not certified).
+- F-05 `ModelSpec.from_pauli_strings({"XXI": 0.5, ...})`, `ModelSpec.from_openfermion(QubitOperator)`,
+  `ModelSpec.from_qiskit(SparsePauliOp)` (`certify_ed/integrations/pauli.py`, docs/integrations/pauli.md): spin-1/2
+  Pauli-convention specs with character j on site j, basis index = big-endian bit string (the ordering of
+  `get_sparse_operator` and `SparsePauliOp.to_matrix()`; Qiskit's little-endian labels give site = n-1-qubit,
+  recorded in `parameters`), real coefficients required, identity term kept. The packages are read through their
+  object interfaces (`.terms`; `.to_list()`, `.num_qubits`) and never imported. Tests: `tests/test_pauli_specs.py`
+  (15: TFIM from strings equals `tfim_chain` entry by entry, a 2-qubit H2-like operator certifies with kind='all'
+  against numpy, complex odd-Y operator, OpenFermion/Qiskit-like objects, JSON round trip; negative controls:
+  a producer matrix with one coefficient off by 1e-3 -> S1 FAILED, planted eigenvalue not certified, wrong
+  endianness -> S1 FAILED).
+- `schema/certificate-2.1.schema.json` re-rendered: the file on dev/3.2 lacked the reason codes
+  `MISSING_DEPENDENCY` and `UNDERFLOW_RISK` that `scope.REASON_CODES` already carried (the Wave 0 merge did not
+  re-render).
+
 ### INT-01: the no-underflow hypothesis is enforced (E-06; design decision D-57, conservative option)
 - The standard model behind every floating-point bound assumes no underflow: nonzero operands, radii and
   residual bounds of magnitude at least 2^-900 (`fp.UNDERFLOW_THRESHOLD`). 3.1.0 stated this and probed
