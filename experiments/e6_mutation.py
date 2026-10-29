@@ -160,7 +160,7 @@ def main():
                 shutil.copy2(os.path.join(ROOT, "pyproject.toml"), d)
             copies.append(d)
         # baseline: unmutated (unparsed) sources must pass
-        base_status, base_first, base_t = run_tests(copies[0], 900)
+        base_status, base_first, base_t = run_tests(copies[0], 3600)   # the 3.2 suite takes ~25 min on 8 cores
         run.record("baseline", {"status": base_status, "seconds": base_t})
         run.log(f"baseline {base_status} in {base_t:.0f}s")
         if base_status != "survived":
