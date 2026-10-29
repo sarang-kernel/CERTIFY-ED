@@ -1,6 +1,6 @@
 # RESULT: track/whole-spectrum (roadmap C-17, C-14, D-08, A-06, C-15)
 
-Base: `dev/3.2` = f080586 (Wave 0 merged). Branch `track/whole-spectrum`, head: HEAD_PLACEHOLDER.
+Base: `dev/3.2` = f080586 (Wave 0 merged). Branch `track/whole-spectrum`, head: 07036b1 (this file was added in that commit; the code is e9a1857 + e24f45c).
 Environment: certifyed-311 (Python 3.11, numpy 2.4.4 with OpenBLAS 0.3.31 Haswell kernels, scipy 1.17.1,
 python-flint 0.9.0, QuSpin 1.0.1), Windows, 8 cores, 16 GB. Commits: e9a1857 (C-17, C-14, C-15, D-08
 scaffolding), e24f45c (D-08 calibrated and tested, A-06 documentation, changelog and docs), plus the final
