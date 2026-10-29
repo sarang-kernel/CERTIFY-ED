@@ -43,6 +43,20 @@ under the new reason code below.
   `certify --from`; statuses equal the direct Claim; decorator; U(1) basis; window kind and csv format; meta
   validates with jsonschema; negative controls: a planted eigenvalue and a planted operator entry written through
   the hook are not certified).
+- F-02 file importers for other ED codes (`certify_ed/io/hphi.py`, `diagham.py`, `spinpack.py`, `alps.py`;
+  `claim_from_hphi`, `claim_from_diagham`, `claim_from_spinpack`, `claim_from_alps`; docs/integrations/ed_codes.md).
+  Layout sources: HPhi `energy.dat` / `Eigenvalue.dat` / binary `eigenvec` (manual 3.5: int iterations, unsigned long
+  local_size, complex double x (local_size + 1), first component unused; the 4-byte-long variant is detected from the
+  file size); DiagHam binary real vectors (wiki: int dimension + doubles) with complex vectors ASSUMED Re/Im
+  interleaved, spectrum text files (quantum-number columns, energy last: observed convention); SPINPACK: ASSUMED
+  text layouts (`table`, `keyvalue`), recorded as `layout_status` in the claim's producer record, no vectors; ALPS
+  `/spectrum/sectors/<n>/energies`, `quantumnumbers`, and the `SAVE_EIGENVECTORS` eigenvector and basis tables
+  (reordered into the spec encoding when a spec is given). Every reader checks header against file size and column
+  counts and raises `FormatError`. The basis order of HPhi/DiagHam/SPINPACK relative to a ModelSpec is not
+  established: the caller passes `operator=` and `states=`. Fixture generators: `tests/fixtures/ed_codes.py`.
+  Tests: `tests/test_io_ed_codes.py` (22: layouts, truncation and header checks, round trips through certify()
+  on a 6-site chain with S1-S3 CERTIFIED, MPI rank concatenation, negative controls: planted energy and swapped
+  vector in the producer's files are not certified).
 - `schema/certificate-2.1.schema.json` re-rendered: the file on dev/3.2 lacked the reason codes
   `MISSING_DEPENDENCY` and `UNDERFLOW_RISK` that `scope.REASON_CODES` already carried (the Wave 0 merge did not
   re-render).

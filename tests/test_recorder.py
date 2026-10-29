@@ -186,7 +186,7 @@ def test_u1_basis_state_list_is_recorded(tmp_path):
     w, V = np.linalg.eigh(H.toarray())
     path = str(tmp_path / "u1.bundle")
     with ce.record(spec, path, kind="lowest") as rec:
-        rec.capture(w[:2], V[:, :2], H, basis=states.states_asc if hasattr(states, "states_asc") else states.states)
+        rec.capture(w[:2], V[:, :2], H, basis=states.states_asc)
     claim, bspec, meta = ce.claim_from_bundle(path)
     assert claim.states is not None and claim.states.size == H.shape[0]
     assert meta["state_order"] == spec.state_order
