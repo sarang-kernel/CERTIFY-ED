@@ -42,7 +42,11 @@ entrywise identity. See the [matrix-free cookbook page](cookbook/matrix_free.md)
 
 Entanglement entropies, dynamical response, time evolution, level statistics, finite-size extrapolation
 and phase boundaries are out of scope with reason codes (`NOT_IMPLEMENTED`, `OUT_OF_SCOPE_DYNAMICS`,
-`OUT_OF_SCOPE_EXTRAPOLATION`); the [scope matrix](SCOPE_MATRIX.md) names what each would need.
+`OUT_OF_SCOPE_EXTRAPOLATION`); the [scope matrix](SCOPE_MATRIX.md) names what each would need. Since 3.2
+three tools read saved certificates without adding a statement: `certify-ed levelstats` (interval r-ratios
+and spacing histograms of a counted whole spectrum; the unfolding is declared, not certified),
+`certify-ed crossing` (orders two certified eigenvalue intervals when they do not overlap) and
+`certify-ed extrapolate` (a report whose fitted limit is explicitly not certified).
 
 ## Known issues
 

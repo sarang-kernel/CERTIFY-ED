@@ -46,6 +46,27 @@ under the new reason code below.
   non-Hermitian observable used to reach `certify_observable` unchecked; `certify_observables_batch` used to
   raise. Tests: `tests/test_hermitian_decomposition.py` against the exact N = 4 ring values (-1/3, 1/6, 1/2;
   S(pi) = 4/3), with a rounded-parts negative control.
+- **C-09 level statistics.** `certify_ed.levelstats.level_statistics(cert, unfolding='none'|degree, bins, bin_range)`
+  and `certify-ed levelstats CERT.json [--unfold poly:D]`: from a kind-'all' certificate with S2 and S3
+  CERTIFIED, the levels of `gaps.merge_enclosures` carry ranks, and interval arithmetic (`ivl.py`) gives the
+  spacings s_n, the r-ratios r_n = min(s_n, s_{n+1}) / max(s_n, s_{n+1}) (undefined when the larger spacing
+  may vanish, as inside a multiplet), the mean r as an interval, and a spacing histogram in units of the mean
+  spacing with per-bin at-least / at-most counts. The unfolding is a declared parameter: none, or a polynomial
+  fitted to the staircase in floating point, evaluated on the intervals by interval Horner, recorded with its
+  coefficients and marked "declared, not certified"; the unfolded spacings are clipped to >= 0 only when the
+  derivative of the polynomial is positive on the hull of the spectrum (interval check). A certificate
+  without a counted spectrum is refused (`LevelStatisticsError`, CLI exit 2 with a message). The scope block's
+  "level statistics" row keeps NOT_IMPLEMENTED (no certificate statement) with the detail naming the tool.
+- **C-10 extrapolation report.** `certify_ed.extrapolation.extrapolation_report(certs, model="1/N"|"1/N^2"|callable,
+  sizes=None, per_site=False, level=0)` and `certify-ed extrapolate C1.json C2.json ... [--model] [--per-site]`:
+  Markdown and JSON listing the per-size certified intervals by certificate hash (through
+  `crossings.level_interval`, with the caveat when S3 is not CERTIFIED), a numpy least-squares fit of the
+  declared model to the midpoints, and the fitted limit with the sentence that it is NOT certified and
+  depends on the declared model. The extrapolated record has no status field and its report section contains
+  no status word (test). `certify_ed/extrapolation.py` is in `provenance.NON_COMPUTATIONAL`; `gaps.py`,
+  `crossings.py` and `levelstats.py` are not (their intervals are claimed-certified numbers).
+- New public names: `certified_crossing`, `level_statistics`, `extrapolation_report` (docs/api.md regenerated).
+  Tests: `tests/test_levelstats_extrapolation.py`.
 
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls

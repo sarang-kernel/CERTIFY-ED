@@ -73,7 +73,8 @@ Every certificate lists these under `not_verified`:
 - eigenvector subspaces of isolated pairs beyond their residuals (unless `eigenspaces="all"`);
 - entanglement entropies, dynamical response, time evolution, level statistics, finite-size
   extrapolations and phase boundaries: standing out-of-scope quantities, each with a reason code in
-  `scope.out_of_scope` ([scope matrix](SCOPE_MATRIX.md)).
+  `scope.out_of_scope` ([scope matrix](SCOPE_MATRIX.md)). The 3.2 tools `levelstats`, `crossing` and
+  `extrapolate` derive records from certificates after the fact; an extrapolated value is never certified.
 
 A radius is a bound, not an error estimate: the true eigenvalue is within it, and it is typically some
 orders of magnitude larger than the solver's actual error.
