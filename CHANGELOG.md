@@ -7,6 +7,15 @@ with it are not comparable by `source_hash` with the 3.1.0 evidence run; no stat
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
 
+Integration (2026-10-29): seven tracks of roadmap Waves 0 and 1 merged in the order known-issues, core-api,
+format-packaging, producers, statements, whole-spectrum (its commits re-written to LF line endings, content
+unchanged), viewer-corpus. Conflicts were additive except two: `certify.py`'s observable loop now applies the
+Hermitian decomposition (C-05) to the parsed operators of C-15, and an inverted window is refused when the
+Claim is built (C-14) rather than reported by S3 (C-02 test adjusted). `Certificate.load` validates the schema
+before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.md`. Sixteen CLI commands:
+env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum,
+list, test, reproduce, numbers.
+
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
 - **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the
