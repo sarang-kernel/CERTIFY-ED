@@ -54,9 +54,9 @@ def test_scope_validator_rejects_a_statement_dropped_from_the_scope_block(heis8,
     def drop(body):
         body["scope"]["in_scope"] = [x for x in body["scope"]["in_scope"] if x["id"] != victim]
     _rewrite_with_valid_hash(p, drop)
-    with pytest.raises(ValueError, match="scope"):
-        Certificate.load(p)                                   # load verifies by default and refuses it
-    rep = Certificate.load(p, verify=False).verify_integrity()
+    with pytest.raises(ValueError, match="scope"):           # refused by the schema's structural check or by
+        Certificate.load(p)                                   # verify_scope (both are ValueErrors naming the scope)
+    rep = Certificate.load(p, verify=False, validate_schema=False).verify_integrity()
     assert rep["body_hash_ok"], "the hash was recomputed; only the scope check can catch this"
     assert rep["scope_ok"] is False and rep["ok"] is False
     assert any(victim in m for m in rep["scope_problems"])

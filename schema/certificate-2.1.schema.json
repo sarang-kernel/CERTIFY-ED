@@ -160,6 +160,7 @@
         "BUDGET_TIME",
         "DEFAULT_SELECTION",
         "DEPENDENCY_NARROWED",
+        "MISSING_DEPENDENCY",
         "NARROWED_BY_USER",
         "NEEDS_DEPENDENCY",
         "NEEDS_EIGENVECTORS",
@@ -175,6 +176,7 @@
         "OUT_OF_SCOPE_DYNAMICS",
         "OUT_OF_SCOPE_EXTRAPOLATION",
         "SIZE_LIMIT",
+        "UNDERFLOW_RISK",
         "UNSUPPORTED_CLAIM",
         "UNSUPPORTED_MODEL"
       ],

@@ -327,13 +327,15 @@ class Certificate:
             with np.load(os.path.join(os.path.dirname(path), side)) as z:
                 arrays = {k: z[k] for k in z.files}
         cert = Certificate(body, arrays)
+        # order: the schema (shape, enumerations, scope-block structure) first, so that a malformed file is
+        # reported as a schema error; then the hashes and the scope-block semantics (verify_integrity)
+        if validate_schema is not False:
+            from .schema import validate_certificate_body
+            validate_certificate_body(body, require=bool(validate_schema))
         if verify:
             rep = cert.verify_integrity()
             if not rep["ok"]:
                 raise ValueError(f"certificate integrity check failed: {rep}")
-        if validate_schema is not False:
-            from .schema import validate_certificate_body
-            validate_certificate_body(body, require=bool(validate_schema))
         return cert
 
     def validate_schema(self, require: bool = False) -> Optional[bool]:

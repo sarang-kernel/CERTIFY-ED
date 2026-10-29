@@ -183,7 +183,12 @@ def test_unknown_status_and_reason_code_fail_at_load(fixture_certificates, tmp_p
         p.write_text(canonical_json(b))
         import shutil
         shutil.copy(side, tmp_path / body["arrays"]["sidecar"])
-        assert Certificate.load(str(p), validate_schema=False).verify_integrity()["ok"]   # integrity cannot see it
+        # the hash check alone cannot see it; verify_scope (fix/3.1.1) catches the reason code but not the
+        # status, so the hashes pass and only the schema objects to both
+        c_nov = Certificate.load(str(p), verify=False, validate_schema=False)
+        rep = c_nov.verify_integrity()
+        assert rep["body_hash_ok"] and rep["arrays_ok"]
+        assert rep["ok"] == (label == "status")
         with pytest.raises(SchemaValidationError):
             Certificate.load(str(p))                                                       # the schema does
         with pytest.raises(SchemaValidationError):
