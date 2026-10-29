@@ -763,6 +763,33 @@
                   "gap_interval": {
                     "$ref": "#/$defs/interval"
                   },
+                  "vectorless": {
+                    "type": "boolean"
+                  },
+                  "n_claimed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count_in_window": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "spurious_at_least": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count_statement": {
+                    "type": "string"
+                  },
+                  "pairing": {
+                    "type": "string"
+                  },
+                  "edges": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  },
                   "beta_a": {
                     "$ref": "#/$defs/number_or_special"
                   },

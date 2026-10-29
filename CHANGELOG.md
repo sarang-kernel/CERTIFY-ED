@@ -25,6 +25,17 @@ under the new reason code below.
   both certificate hashes and spec hashes, and the caveat when a certificate has no S3 CERTIFIED (then the
   interval is the S2 enclosure of the claimed value at that sorted position and the statement says so). A
   certificate without S2 CERTIFIED is refused (`ValueError`). Pure interval comparison of certified data.
+- **C-02 vectorless window count.** An eigenvalue-only claim with `kind='window'` used to leave S3 NOT_CHECKED
+  (NEEDS_EIGENVECTORS). Now `_certify_window_vectorless` certifies the number of eigenvalues in (a, b) from
+  inertia counts alone: Lemma 4 at the edge, plus two counts at e ± δ whose agreement makes the edge collar
+  eigenvalue-free through the count inequality of Proposition 14 (docs/theory.md §3, "Vectorless window
+  count"). S3 is CERTIFIED when the count equals the number of claimed values, FAILED otherwise
+  (`missing_at_least` / `spurious_at_least`), INCONCLUSIVE when an edge is within the backward error of an
+  eigenvalue (the summary says "window edge ... of an eigenvalue"; `next_action` says to move the edge).
+  Evidence: `vectorless: true`, `count_in_window`, `edges`, `count_statement`, `pairing`. No claimed value is
+  paired with an eigenvalue: S2, S4, S8 stay NOT_CHECKED and the summary says so. Six factorizations per
+  window. Tests: `tests/test_vectorless_window.py` (count matches the dense spectrum at four windows, planted
+  wrong counts FAILED both ways, edge on an eigenvalue INCONCLUSIVE, random-window negative control, gates).
 
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls

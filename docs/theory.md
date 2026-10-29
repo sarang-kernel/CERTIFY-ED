@@ -157,6 +157,23 @@ exactly: 2 × 2 blocks by the sign of a rational determinant.
 **Corollary 5 (completeness).** If k claimed values have distinct enclosures inside (−∞, σ − β) and ν = k,
 they enclose λ₁…λ_k, and λ_{k+1} ≥ σ − β.
 
+**Vectorless window count (C-02, since 3.2.0.dev0; `certify._certify_window_vectorless`).** For a window
+claim without eigenvectors there are no enclosures, so Corollary 5 does not apply; the code certifies only
+the *number* of eigenvalues in (a, b), with no pairing to the claimed values. It uses Lemma 4 and the count
+inequality of Proposition 14, nothing else:
+
+1. Lemma 4 at an edge e gives ν_e with #{λ < e − β_e} ≤ ν_e ≤ #{λ ≤ e + β_e}; the two ends agree, and equal
+   #{λ < e}, as soon as the collar [e − β_e, e + β_e] holds no eigenvalue.
+2. Two more counts at σ₁ = e − δ and σ₂ = e + δ (δ > β) give, by the first inequality of Proposition 14 on the
+   window (σ₁, σ₂), #{λ ∈ (σ₁ + β₁, σ₂ − β₂)} ≤ ν₂ − ν₁. When ν₂ = ν₁ and the collar of step 1 lies inside
+   (σ₁ + β₁, σ₂ − β₂), the collar is eigenvalue-free and ν_e = #{λ < e} exactly; e is then not an eigenvalue.
+   When ν₂ > ν₁, an eigenvalue lies in [σ₁ − β₁, σ₂ + β₂] and the statement is INCONCLUSIVE ("window edge
+   within ... of an eigenvalue"). δ starts at max(8 β_e, 32 u·scale) and is widened (at most three retries)
+   when a backward error is not smaller than the distance to the collar.
+3. With both edges exact, ν_b − ν_a = #{λ ∈ [a, b)} = #{λ ∈ (a, b)}. CERTIFIED when this equals the number of
+   claimed values, FAILED otherwise (`missing_at_least` or `spurious_at_least`). Endpoint arithmetic uses
+   `fp.add_up` / `fp.sub_down`; the S1 model shift is added to every β as in the other S3 paths.
+
 ## 4. Degenerate levels (S4)
 
 **Theorem 6 (projector).** If an interval contains the enclosures of a cluster and exactly g

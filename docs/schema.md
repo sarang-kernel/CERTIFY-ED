@@ -136,7 +136,10 @@ so that a reader knows what to expect; it does not forbid additional ones. The i
 * S3: `dimension`, `count_from_inertia`, `claimed_certified_inside`, `missing_at_least`, `gap_lower_bound`,
   `next_eigenvalue_lower_bound`, `certified_window`, `window`, `beta_*` (backward-error bounds), `counts`;
   since 3.2 `gap_interval` (`[gap_lower_bound, "inf"]`: the gap above the highest claimed level of a 'lowest'
-  claim has no upper bound because the next eigenvalue is not claimed; written only when S2 and S3 are CERTIFIED).
+  claim has no upper bound because the next eigenvalue is not claimed; written only when S2 and S3 are CERTIFIED);
+  for an eigenvalue-only window claim (C-02) `vectorless: true`, `n_claimed`, `count_in_window`, `count_statement`,
+  `pairing`, `edges` (per edge: `nu`, `beta`, `delta`, `shifts`, `nu_below`, `nu_above`, `beta_below`, `beta_above`,
+  `exact`, `eigenvalue_free`), and `missing_at_least` or `spurious_at_least` when FAILED.
 * S4: `clusters` (projector error, observables, correlations, quantum numbers per cluster).
 * S5: `oracles` (per solver: `max_abs_diff_vs_claim`, `n_compared`, `seconds`), `independence`, `tolerance`, `note`.
 * S7: `temperatures`, `rows` (interval bounds for Z, F, U, C), `n_intervals`, `energy_offset`, `hypothesis`.
