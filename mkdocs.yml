@@ -33,6 +33,7 @@ nav:
       - QuSpin: cookbook/quspin.md
       - Matrix-free: cookbook/matrix_free.md
       - Producer bundle: cookbook/producer_bundle.md
+      - Vectors larger than RAM, the plan: cookbook/streaming_vectors.md
   - What certified means: what_certified_means.md
   - Limitations: limitations.md
   - FAQ, INCONCLUSIVE: faq_inconclusive.md

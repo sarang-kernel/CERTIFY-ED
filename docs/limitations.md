@@ -14,6 +14,14 @@ What a certificate cannot do, where the statements stop, and the known issues of
 Whole-spectrum claims (`kind="all"`, S7) need every eigenvector, so they are bounded by what the producer
 can store, a few thousand states in practice.
 
+Eigenvectors that do not fit in memory (3.2, roadmap A-06): pass them as a numpy memmap or an h5py dataset;
+`certify()` reads them in column blocks and the certificate is identical to the in-memory one. This needs a
+sparse or spec operator: a dense operator is applied in one BLAS call (its `gemm` is not invariant under
+column blocking), so the vectors are then read whole, which is no restriction since a dense `n x n` operator
+is larger than `n x k` vectors. The inertia counts of S3/S8 (`lowest`, `window`) still factorize the stored
+matrix in memory, dense (about 9.5 n^2 entries of workspace) or sparse (SuperLU fill); `certify-ed plan`
+predicts both (`docs/cookbook/streaming_vectors.md`).
+
 ## NOT_CHECKED under budgets and memory caps
 
 `Options(budget_seconds=..., budget_mb=...)` turns statements that would exceed a budget into NOT_CHECKED

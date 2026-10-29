@@ -7,6 +7,60 @@ with it are not comparable by `source_hash` with the 3.1.0 evidence run; no stat
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
 
+### Whole spectrum, interior windows, streaming vectors, planner, operator text (roadmap C-17, C-14, A-06, D-08, C-15; track/whole-spectrum)
+- C-17 whole-spectrum path. `quick(H, w, V, spec, kind="all")` and `certify-ed certify --kind all` use the
+  `whole-spectrum` preset unless a preset, `--only` or `--skip` is given (recorded in the scope block as any
+  preset); `temperatures=[...]` adds S7. The evaluation of the S2 bounds was reorganised without changing a
+  bound: `enclosure.residuals` works in column blocks (bit-identical for sparse and spec operators; a dense
+  operator keeps one `gemm` call because OpenBLAS `gemm` is not invariant under column blocking), the rounding
+  bound `E` is reduced to its column norms and not stored, the dense `|A|` is formed transiently, the exact
+  Gram inner products of a cluster are cached across merges, the Kato-Temple products `H x`, `|H||x|` are
+  formed for a block of isolated pairs at once (for a sparse operator the intervals are bit-identical to the
+  per-pair ones; for a dense operator they differ in the last bits because `gemm` columns and `gemv` are
+  different floating-point evaluations of the same bound), and the S4 per-cluster Python loops over all other
+  pairs became array operations. `fp.exact_sum` (cascaded error-free summation, Ogita-Rump-Oishi SumK with
+  Knuth's TwoSum) returns `math.fsum`'s value and falls back to it whenever a rounding boundary is within the
+  slack; `exact_dot` uses it for long vectors. Timings and peak memory, whole-spectrum preset with two
+  temperatures, Heisenberg chain Sz = 0 blocks, dense operator unless noted (8 cores, OpenBLAS; before -> after):
+  the 924 block takes 3-4 s either way (the git provenance call dominates);
+  dimension 3432 (dense operator): total 34 s -> 22 s, S2 18 s -> 14 s, peak RSS 0.9 GB -> 0.7 GB (radii sha 7b132274 = 7b132274)
+  dimension 12870 (sparse operator): total 568 s -> 398 s, S2 536 s -> 366 s, peak RSS 8.7 GB -> 2.9 GB (radii sha def5ba16 = def5ba16)
+  dimension 12870 (dense operator): total 798 s -> 635 s, S2 657 s -> 585 s, peak RSS 9.8 GB -> 8.5 GB (radii sha 01b8df55 = 01b8df55)
+  (the 12870 sparse runs overlapped with the test suite; the dense ones ran alone). The dense 12870 run of dev/3.2
+  needed 10.1 GB on a 16 GB machine and paged; the remaining S2 time is two n^2 k gemms (about 4 TFlop each at
+  40 GFlop/s) plus the exact Gram inner products of the 6400 clusters.
+  The radii are bit-identical before and after on every fixture (`tests/test_whole_spectrum.py` against the
+  frozen `tests/_enclosure_reference.py` and against the recorded radii in `tests/fixtures/`).
+- C-14 interior windows everywhere. `Claim` validates `kind` and `window` (`certify.parse_window`: a pair
+  a < b of finite numbers, from a tuple, a list or 'a,b' / 'a b'); the same rule applies in
+  `claim_from_arrays/npz/hdf5/file/bundle`, in the bundle's `meta.json` and on the command line, where
+  `--window A B` (or `--window=A,B`) overrides the bundle. The certificate's `claim.window` is a list.
+  Cookbook: `docs/cookbook/shift_invert_window.md` (`eigsh(sigma=..., which="LM")`, executed output).
+- A-06 streaming vectors. `claim.eigenvectors` may be a numpy memmap or an h5py dataset: the residuals, the
+  Gram matrices and the cluster/Kato-Temple columns are read in blocks of `Options(block_mb=...)` (default
+  `budget_mb`, else 512 MB); the certificate is identical to the in-memory one (memmap and HDF5, C and F
+  layouts, tested). Limits: a dense operator reads the vectors whole (no restriction: it is larger than the
+  vectors); S3 by inertia for `lowest`/`window` claims still factorizes the stored matrix in memory
+  (`docs/cookbook/streaming_vectors.md`). `array_sha256` and the underflow scan work in row chunks.
+- D-08 planner. `cost.plan_certification` / `plan_for_claim` predict seconds and peak memory per statement from
+  n, nnz and k (dense LDL^T workspace 8.5 n^2 entries; sparse LU from a fitted fill model; residual arrays
+  counted one by one; rates measured on this machine, `cost.RATES`, `experiments/planner_calibration.py`);
+  `Options(plan=True)` / `--plan` print and record it (`body["plan"]`, schema re-rendered); `certify-ed plan`
+  prints it without running. `inertia_method="auto"` keeps the 3.1 rule and additionally sends a sparse matrix
+  whose dense workspace would exceed `budget_mb` (or the available memory) to SuperLU
+  (`cost.recommend_inertia_method`); the S3/S8 memory gate estimates the path that will be taken (3.1 estimated
+  the dense path only, so a budget below the dense workspace made S3 NOT_CHECKED even when SuperLU fitted).
+  `tests/test_planner.py`: predicted memory within a factor 2 of the measured peak (dense LDL^T at 3432, SuperLU
+  at 3432 and 12870, the recorded whole-spectrum runs); statuses of `auto` equal those of the explicit method
+  on the fixtures; `plan=True` changes nothing in the certificate. Advisory throughout: nothing here changes a
+  status.
+- C-15 operator text. `certify_ed.operators.parse_operator`: Pauli strings ("XIZY", "X0 Z2"), letter_site
+  shorthand ("Sz_0 Sz_3", "S+_0 S-_3", "n_0 n_1"), linear combinations ("0.5 S+_0 S-_1 + 0.5 S-_0 S+_1"),
+  dictionaries and QuSpin-style operator lists become the sparse operators `Options.observables` certifies;
+  `Options.correlations` accepts "Sz_0 Sz_3" for `{"letter": "z", "sites": [0, 3]}`. Non-Hermitian results
+  ("S+_0 S-_3" alone) are refused with the Theorem-6 message (the C-05 Hermitian split is not in this branch).
+  Tests against Kronecker-built matrices on 4 sites.
+
 ### Usability (roadmap A-01, A-02, A-09, A-04, A-05; track/core-api)
 - `certify_ed.quick(H, w, V=None, spec=None, kind="lowest", **options)`: builds the Claim and Options and calls
   `certify()` (no check of its own). `Certificate.summary()` is now one sentence; the former multi-line text is

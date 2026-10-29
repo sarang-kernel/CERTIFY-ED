@@ -26,7 +26,8 @@ from .certify import Claim, Options, certify
 from .certificate_v2 import Certificate
 from .api import quick
 from .report import methods_paragraph
-from .cost import estimate_seconds, auto_budget
+from .cost import estimate_seconds, auto_budget, plan_for_claim
+from .operators import parse_operator
 from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
                         claim_from_hdf5, export_npz, claim_from_file, claim_from_bundle)
 from .io import read_bundle, write_bundle
@@ -45,7 +46,7 @@ __all__ = [
     "u1_state_set", "magnetization_state_set", "translation", "spin_flip", "reflection",
     "cyclic_isometry", "sector_matrix", "OperatorAdapter", "enclose", "kato_temple", "inertia_count",
     "Claim", "Options", "certify", "quick", "Certificate", "CertificateV2", "methods_paragraph",
-    "estimate_seconds", "auto_budget", "claim_from_quspin",
+    "estimate_seconds", "auto_budget", "plan_for_claim", "parse_operator", "claim_from_quspin",
     "claim_from_arrays", "claim_from_npz", "claim_from_hdf5", "export_npz", "claim_from_file",
     "claim_from_bundle", "read_bundle", "write_bundle", "probe_float_environment",
     "enclose_spectrum", "SpectrumEnclosure", "SpectrumInterval", "exact_matrix",

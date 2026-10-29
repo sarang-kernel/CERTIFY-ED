@@ -13,6 +13,7 @@ output is pasted as printed; the scripts are in `docs/cookbook/snippets/` and `r
 | QuSpin | [QuSpin](quspin.md) | a momentum block (`kblock=0`), with the certified lift to the full operator |
 | a `matvec` only | [matrix-free](matrix_free.md) | with a declared spec (S1 by probes) and without one |
 | any code that writes files | [producer bundle](producer_bundle.md) | a CSV bundle with `meta.json`, a preset, `certify-ed import` |
+| eigenvectors on disk (`.npy` memmap, HDF5) | [vectors larger than RAM](streaming_vectors.md) | the whole spectrum of a 924-block from a memmap, identical to the in-memory certificate; `--plan` |
 
 The inputs every path ends with are the same: a `Claim` (eigenvalues, optionally eigenvectors, the
 producer's operator, the kind of completeness claimed: `subset`, `lowest`, `window`, `all`) and a

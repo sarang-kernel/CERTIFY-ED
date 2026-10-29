@@ -998,10 +998,21 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # for a symmetry sector they concern the producer's sector block (see compose.py for the lift)
     eps_s3 = model_shift if audit is None else 0.0
     n_op = int(adapter.shape[0])
-    s3_est = _mb(n_op * n_op, (16 if is_cplx_claim else 8) * 2) if (inertia_op is not None and
-                                                                     (opts.inertia_method == "dense" or n_op <= 4096)) else None
+    # memory estimate of the factorizations for the budget gate, for the path the planner would take (D-08):
+    # dense LDL^T (the 3.1 estimate of 2 n^2 entries) or SuperLU (cost.sparse_inertia_mb from the fill model)
+    s3_est = None
+    if inertia_op is not None:
+        from .cost import recommend_inertia_method, sparse_inertia_mb
+        _dense_op = not sp.issparse(inertia_op)
+        _meth = (recommend_inertia_method(n_op, None if _dense_op else int(inertia_op.nnz), _dense_op, is_cplx_claim,
+                                          opts.budget_mb)[0] if opts.inertia_method == "auto" else opts.inertia_method)
+        if _meth == "dense":
+            s3_est = _mb(n_op * n_op, (16 if is_cplx_claim else 8) * 2)
+        elif not _dense_op:
+            s3_est = sparse_inertia_mb(n_op, int(inertia_op.nnz), is_cplx_claim)
     s3_gate = _gate(sel, budget, "S3", estimate_mb=s3_est if claim.kind in ("lowest", "window") else None,
-                    what="dense LDL^T factorization (estimate: 2 n^2 entries)")
+                    what="dense LDL^T factorization (estimate: 2 n^2 entries)" if s3_est is not None and _meth == "dense"
+                    else "sparse LU factorization (estimate from the fill model, certify_ed.cost)")
     if s3_gate is not None:
         statements.append(s3_gate)
     elif nonfinite:
@@ -1287,7 +1298,9 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
 
     # ---------------- S8 degeneracy counts by bracketing inertia (Prop 14, UNVERIFIED)
     if sel.wants("S8"):
-        s8_gate = _gate(sel, budget, "S8", estimate_mb=s3_est, what="dense LDL^T factorizations (estimate: 2 n^2 entries)")
+        s8_gate = _gate(sel, budget, "S8", estimate_mb=s3_est,
+                        what="dense LDL^T factorizations (estimate: 2 n^2 entries)" if s3_est is not None and _meth == "dense"
+                        else "sparse LU factorizations (estimate from the fill model, certify_ed.cost)")
         if s8_gate is not None:
             statements.append(s8_gate)
         elif enc is None:

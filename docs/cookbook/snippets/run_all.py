@@ -6,7 +6,7 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ORDER = ["quickstart.py", "read_certificate.py", "numpy_eigh.py", "eigsh_lowest.py", "files_import.py",
-         "quspin.py", "matrix_free.py", "producer_bundle.py", "shift_invert_window.py", "inconclusive_examples.py"]
+         "quspin.py", "matrix_free.py", "producer_bundle.py", "shift_invert_window.py", "streaming_vectors.py", "inconclusive_examples.py"]
 
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as d:

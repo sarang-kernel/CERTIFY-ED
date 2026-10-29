@@ -104,10 +104,13 @@ def resolve_budget_seconds(value, dimension: Optional[int]) -> Tuple[Optional[fl
 # Planner (roadmap D-08, 3.2.0.dev0): predicted wall seconds and peak memory per statement from n, nnz and k.
 #
 # Memory is counted array by array (what the code allocates, in bytes per entry of the claim's dtype); the
-# constants below that are not arithmetic facts were measured on the 3.2.0.dev0 development machine (Windows,
-# 8 cores, OpenBLAS; experiments/planner_calibration.py prints them) on Heisenberg chain Sz = 0 blocks of
-# dimension 924, 3432 and 12870. Time predictions are rough (a factor 2 is the aim); memory predictions are
-# within a factor 2 of the measured peak on those fixtures (tests/test_planner.py). Everything here is advisory:
+# constants below that are not arithmetic facts were measured by experiments/planner_calibration.py on the
+# 3.2.0.dev0 development machine (Windows, 8 cores, OpenBLAS 0.3.31, 2026-10-29) on Heisenberg chain Sz = 0
+# blocks: dense LDL^T 9.28 / 8.75 n^2 entries at n = 924 / 3432; SuperLU fill 97156 / 1669784 / 19164106 at
+# n = 924 / 3432 / 12870 (0.117 n^2.006), working storage 4.2-4.4 x fill x 12 bytes; gemm 22-41 GFlop/s,
+# sparse H X 0.07-0.2 x 10^9 entries/s, one exact inner product 110 ns per term at n = 3432. Time predictions
+# are rough (a factor 2-3 on those blocks; another machine needs its own RATES); the memory predictions are
+# checked against measured peaks in tests/test_planner.py. Everything here is advisory:
 # the plan is printed and recorded, and it chooses between dense and sparse inertia only through
 # `recommend_inertia_method`, which never changes a status (a factorization that does not fit is NOT_CHECKED
 # either way; the choice only decides which path is tried).
@@ -115,26 +118,26 @@ def resolve_budget_seconds(value, dimension: Optional[int]) -> Tuple[Optional[fl
 from dataclasses import dataclass, field
 from typing import List, Sequence
 
-# measured machine rates (experiments/planner_calibration.py); replace to recalibrate
+# machine rates measured by experiments/planner_calibration.py (2026-10-29, see above); replace to recalibrate
 RATES = {
-    "gemm_gflops": 40.0,            # dense H @ X and |H| |X| (one call each; 2 n^2 k flops per call)
-    "spmm_gentries_per_s": 0.25,    # sparse H @ X: nnz x k multiply-adds per second (10^9)
+    "gemm_gflops": 40.0,            # dense H @ X and |H| |X| (one call each; 2 n^2 k flops per call): 41 at n = 3432
+    "spmm_gentries_per_s": 0.2,     # sparse H @ X: nnz x k multiply-adds per second (10^9): 0.20 at n = 3432
     "elementwise_gentries_per_s": 0.4,   # n x k elementwise passes (rounding bound E, |X|, R): entries per second (10^9)
-    "column_us": 25.0,              # per claimed column: three 2-norms of length n (ravel + ddot), fixed overhead
-    "column_per_entry_ns": 0.4,     # ... plus this per entry
-    "gram_dot_ns_per_term": 70.0,   # one accurately rounded inner product of a cluster: ns per term (2 n terms)
-    "ldl_gflops": 8.0,              # dense Bunch-Kaufman + explicit residual: n^3/3 + 4 n^3 flops per factorization
-    "splu_ns_per_fill_op": 1.2,     # sparse LU: ns per (nnz(L+U))^2 / n operation
+    "column_us": 20.0,              # per claimed column: three 2-norms of length n (ravel + ddot), fixed overhead
+    "column_per_entry_ns": 4.0,     # ... plus this per entry (35 us measured at n = 3432)
+    "gram_dot_ns_per_term": 110.0,  # one accurately rounded inner product of a cluster: ns per term (2 n terms)
+    "ldl_gflops": 4.0,              # dense Bunch-Kaufman + explicit residual, n^3/3 + 4 n^3 flops: 2.2 / 5.0 at 924 / 3432
+    "splu_ns_per_fill_op": 1.0,     # sparse LU: ns per (nnz(L+U))^2 / n operation: 1.2 / 0.78 at 3432 / 12870
     "thermo_us_per_interval_T": 400.0,   # S7: per interval and temperature (interval exp in Python)
 }
 # dense LDL peak memory: la.ldl copies S, lu, d; the explicit residual lu d lu^H - S and |lu||d||lu|^T hold
-# about five more n x n arrays (measured 7.6-8.4 n^2 entries at 924 and 3432)
-DENSE_LDL_ARRAYS = 8.5
+# about six more n x n arrays (measured 9.28 n^2 entries at 924, 8.75 at 3432)
+DENSE_LDL_ARRAYS = 9.5
 # sparse LU fill of the Heisenberg chain blocks (SuperLU, MMD_AT_PLUS_A, no pivoting): nnz(L+U) fitted as
-# a * n^b to the measured fills; the model is the one family the evidence run covers (advisory)
-SPARSE_FILL_FIT = (0.0, 0.0)        # (a, b) set from experiments/planner_calibration.py; (0, 0) -> fill_from_nnz
-SPARSE_FILL_FROM_NNZ = 40.0         # fallback: nnz(L+U) ~ this x nnz(H)
-SPARSE_LU_WORKING = 2.5             # SuperLU working storage relative to the stored factors
+# a * n^b to the measured fills at n = 924, 3432, 12870; the model is the one family the evidence run covers
+SPARSE_FILL_FIT = (0.1172, 2.0061)
+SPARSE_FILL_FROM_NNZ = 40.0         # fallback when the fit is switched off: nnz(L+U) ~ this x nnz(H)
+SPARSE_LU_WORKING = 4.5             # peak memory relative to fill x 12 bytes (measured 4.2-4.4)
 
 
 def _bytes(complex_: bool) -> int:
@@ -307,7 +310,7 @@ def plan_certification(n: int, nnz: Optional[int], k: int, kind: str = "lowest",
     # S1: reference CSR from the spec plus the entrywise comparison (three sparse temporaries of nnz entries)
     s1_mb = (3 * nnz * (b + 8) + (n * n if dense_operator else 0)) / 2 ** 20
     s1_s = 1.2e-7 * nnz + 1e-6 * n
-    row("S1.model_fidelity", "S1" in wanted and has_spec, "entrywise comparison with the spec reference", s1_s, s1_mb,
+    row("S1.model_fidelity", "S1" in wanted and has_spec, "spec reference, entrywise", s1_s, s1_mb,
         "3 nnz (b+8) bytes; ~0.1 us per entry")
     # S2: residuals (gemm or spmm, rounding bound, per-column norms) and the cluster bounds (exact Gram dots)
     if dense_operator:
