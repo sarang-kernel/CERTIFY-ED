@@ -23,7 +23,8 @@ REASON_CODES: Dict[str, str] = {
     "NEEDS_EIGENVECTORS": "the claim has eigenvalues only",
     "NEEDS_SPEC": "no model specification was declared",
     "NEEDS_MATRIX": "the operator is matrix-free and no stored reference matrix exists",
-    "NEEDS_WHOLE_SPECTRUM": "the claim is not a complete whole-spectrum claim (kind 'all', S3 certified)",
+    "NEEDS_WHOLE_SPECTRUM": ("the claim is not a complete whole-spectrum claim (kind 'all', S3 certified) nor, for S7, a "
+                             "'lowest' claim with S3 certified"),
     "NEEDS_TEMPERATURES": "no temperatures were given",
     "NEEDS_DEPENDENCY": "an input the statement needs was not named (a corroborating solver, h5py for a file)",
     "MISSING_DEPENDENCY": "an optional package the statement needs is not installed (python-flint for the exact "

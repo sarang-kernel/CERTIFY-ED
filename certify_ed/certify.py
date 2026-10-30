@@ -1394,17 +1394,55 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         spectrum_record = {"complete": se.complete, "n_intervals": len(se.intervals), "max_halfwidth": se.max_halfwidth,
                            "intervals": [{"lo": iv.lo, "hi": iv.hi, "count": iv.count, "counted": iv.counted,
                                           "method": iv.method} for iv in se.intervals]}
+    # C-06: a 'lowest' claim whose S3 is CERTIFIED gives the k lowest intervals, a lower bound on lambda_{k+1}
+    # (window[1]) and the dimension; the omitted weight is bounded by (n - k) exp(-beta L) (Proposition 16')
+    truncated_record = None
+    if (sel.wants("S7") and claim.kind == "lowest" and enc is not None and window is not None
+            and np.isfinite(window[1]) and len(opts.temperatures)):
+        from .spectrum import intervals_from_enclosure, merge_intervals
+        se_t = merge_intervals(intervals_from_enclosure(enc, eps_s3 if audit is None else 0.0), int(adapter.shape[0]))
+        nb = adapter.norm_upper()
+        truncated_record = {"intervals": [{"lo": iv.lo, "hi": iv.hi, "count": iv.count} for iv in se_t.intervals],
+                            "counted": all(iv.counted for iv in se_t.intervals),
+                            "next_lower_bound": float(window[1]),
+                            "upper_bound": None if nb is None else float(add_up(nb, eps_s3))}
     if sel.wants("S7"):
         s7_gate = _gate(sel, budget, "S7")
         if s7_gate is not None:
             statements.append(s7_gate)
-        elif underflow and claim.kind == "all" and enc is not None:
+        elif underflow and claim.kind in ("all", "lowest") and enc is not None:
             statements.append(_stmt("S7.thermodynamics", "INCONCLUSIVE",
                                     "S2 inconclusive under UNDERFLOW_RISK: no complete enclosure to sum over",
                                     {"underflow": {"findings": uf_findings}}, reason_code="UNDERFLOW_RISK"))
+        elif claim.kind == "lowest" and not len(opts.temperatures) and enc is not None and window is not None:
+            statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED", "no temperatures given (Options.temperatures)",
+                                    reason_code="NEEDS_TEMPERATURES"))
+        elif claim.kind == "lowest" and truncated_record is not None and truncated_record["counted"]:
+            from .thermo import thermodynamics_truncated
+            t0 = time.time()
+            try:
+                th = thermodynamics_truncated(truncated_record["intervals"], truncated_record["next_lower_bound"],
+                                              int(adapter.shape[0]), opts.temperatures,
+                                              upper_bound=truncated_record["upper_bound"])
+                st7 = "CERTIFIED"
+                tb = th["tail_bound"]
+                summ7 = (f"Z, F, U, C enclosed at {len(th['rows'])} temperature(s) from the {th.get('claimed_count', th['dimension'])} "
+                         f"lowest eigenvalues and the tail bound on the {tb['omitted_count']} omitted ones "
+                         f"(sum_(j>k) exp(-beta lambda_j) <= (n-k) exp(-beta L), L = {tb.get('next_lower_bound')!r}; "
+                         f"method {tb['method']!r}); max C width {max(r['C'][1] - r['C'][0] for r in th['rows']):.2e}")
+            except (ValueError, ZeroDivisionError, OverflowError) as e:
+                th, st7, summ7 = {"error": str(e)}, "INCONCLUSIVE", f"thermodynamic intervals not formed: {e}"
+            statements.append(_stmt("S7.thermodynamics", st7, summ7, th,
+                                    ["S2 enclosures and the S3 lower bound on lambda_{k+1} for the operator the "
+                                     "statements refer to; the dimension n of the operator; k_B = 1; dyadic interval "
+                                     "arithmetic with outward rounding (Lemma 17); Proposition 16' [derived: "
+                                     "docs/proofs/C06_truncated_thermodynamics.md; UNVERIFIED by independent "
+                                     "re-derivation, D-12]"],
+                                    time.time() - t0))
         elif claim.kind != "all" or spectrum_record is None or not spectrum_record["complete"]:
             statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED",
-                                    "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3)",
+                                    "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3), or a "
+                                    "'lowest' claim with S3 CERTIFIED (truncated spectrum, C-06)",
                                     reason_code="NEEDS_WHOLE_SPECTRUM"))
         elif not len(opts.temperatures):
             statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED", "no temperatures given (Options.temperatures)",
