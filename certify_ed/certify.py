@@ -165,6 +165,10 @@ class Options:
     # ---- entanglement (C-03, 3.2): name -> {"sites": [...], "log_base": "e" | 2, "max_dim_a": int}; S4 evidence
     # `entanglement` per cluster: certified interval for S(rho_A) and the entanglement spectrum (entanglement.py)
     entanglement: Dict[str, Any] = field(default_factory=dict)
+    # ---- approximate symmetries (C-12, 3.2): name -> (S, lattice_or_None[, allowed_values]); S a matrix or a diagonal in
+    # the claim space; the commutator bound ||[H, S]|| is computed from the stored reference matrix and recorded as the
+    # hypothesis of the label record (davis_kahan.py)
+    approximate_symmetries: Dict[str, Any] = field(default_factory=dict)
     # ---- no-underflow hypothesis (INT-01, 3.2.0.dev0): scan operands, radii and residual bounds for nonzero
     # magnitudes below fp.UNDERFLOW_THRESHOLD; a finding makes S2 and its dependents INCONCLUSIVE
     # (UNDERFLOW_RISK). False assumes the hypothesis; the choice is recorded in the scope block's options.
@@ -1319,9 +1323,15 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             L_above = min(float(lo_o[mu_o > b_].min()) if np.any(mu_o > b_) else np.inf, window[1])
             # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
             # of the claimed values, to the remaining eigenvalues
-            sep = float(sub_down(min(sub_down(a_, U_below), sub_down(L_above, b_)), eps))
+            dist = float(min(sub_down(a_, U_below), sub_down(L_above, b_)))
+            sep = float(sub_down(dist, eps))
             rec["separation_lower_bound"] = float(sep)
-            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep)
+            # E-07: the Davis-Kahan sin(theta) bound with the residual ||R||_F / sqrt(1 - eta) and the Ritz-value
+            # deviation w' (davis_kahan.py); S4 uses min(Theorem 6, Davis-Kahan), both proven and both recorded
+            from .davis_kahan import sin_theta_davis_kahan
+            s_dk = sin_theta_davis_kahan(_bound["R_fro"], _bound["XR"], eta, _bound["delta"], _bound["spread"], dist,
+                                         model_shift=eps_s3)
+            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep, sin_theta_alt=s_dk)
             if ec is None:
                 rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
                 eig_records.append(rec)
@@ -1352,6 +1362,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 ec.quantum_numbers[name]["commutation_checked_on"] = (
                     "reference matrix built from the spec" if Href is not None else
                     "operator used for the bounds" if comm_op is not None else "not checked")
+            if opts.approximate_symmetries:
+                # C-12: labels of approximately conserved operators, hypothesis ||[H, S]|| <= c recorded (davis_kahan.py)
+                from .davis_kahan import labels_hook
+                labels_hook(ec, X, opts.approximate_symmetries, Href if Href is not None else (op if is_matrix(op) else None),
+                            (JL, JU))
             r = ec.to_dict()
             r["splitting"] = rec["splitting"]
             r["status"] = "CERTIFIED"
@@ -1542,7 +1557,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                  "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
                  "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
                  "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy),
-                 "underflow_check": bool(opts.underflow_check), "entanglement": sorted(opts.entanglement)},
+                 "underflow_check": bool(opts.underflow_check), "entanglement": sorted(opts.entanglement),
+                 "approximate_symmetries": sorted(opts.approximate_symmetries)},
                 ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
                  "include the certified shift to the full operator") if audit is not None else "operator",
                 requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,

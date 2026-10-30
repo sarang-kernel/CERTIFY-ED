@@ -66,9 +66,10 @@ a constant ≥ 1 applied consistently). (iii) The Hermitian part Õ_h^exact := (
 (error ≤ u |Õ_fl + Õ_flᴴ|_{ij} ≤ u(|Õ_fl| + |Õ_flᴴ|)_{ij}) and the halving is exact, so
 ‖fl(Õ_h) − Õ_h^exact‖_F ≤ u ‖(|Õ_fl| + |Õ_flᴴ|)/2‖_F ≤ u ‖Õ_fl‖_F. Together ‖Õ_h − Õ‖_F ≤ γ̇_{w_O+w_V}
 ‖ |V|ᵀ|O||V| ‖_F + u‖Õ_fl‖_F, and ‖·‖₂ ≤ ‖·‖_F. The code evaluates ‖ |V|ᵀ|O||V| ‖_F from the floating-point
-product of the absolute values, bounded above by `fp.fro_upper`, with the index shifted by 2 and a factor
-(1 + 4u) to cover the roundings of that product (the same device as `sectors.audit_sector`), and bounds
-u‖Õ_fl‖_F by 2u·fro_upper(Õ_fl)(1 + 4u). ∎
+product of the absolute values, bounded above by `fp.fro_upper`; the computed product underestimates the exact
+one by at most a relative γ̇_{w_O+w_V} entrywise (inner products of non-negative terms), so the exact norm is at
+most fro_upper(computed)/(1 − γ̇_{w_O+w_V}), and the factor 1/(1 − γ̇) is applied (rounded up). u‖Õ_fl‖_F is bounded
+by u·fro_upper(Õ_fl)(1 + 4u). ∎
 
 **Proposition 1.** Π_V − Π_Q = Q(M P_s M − P_s)Qᴴ since V = QM. Because Q is an isometry, the singular values of
 Q Z Qᴴ are those of Z (for any d_s × d_s matrix Z), hence ‖Π_V − Π_Q‖₁ = ‖M P_s M − P_s‖₁. Write
@@ -95,10 +96,10 @@ i tr(Π K) by linearity, and |tr(Π O) − (v_H + i v_K)| ≤ b_H + b_K is Propo
 `certify_ed/correlations.py` (branch `track/new-statements`):
 
 * Lemma 1: `compress_operator` (lines 256–276). W = O @ V and Õ_fl = Vᴴ @ W in sparse binary64; `absprod` =
-  |V|ᵀ|O||V|; line 272 r_c = γ̇_{w_O + w_V + 2} · fro_upper(absprod) · (1 + 4u) (index shift and factor covering
-  the roundings of the absolute product); line 273 the Hermitian part (exactly Hermitian by construction: the
-  two roundings of conjugate entries are conjugate); line 275 adds the term 2u·fro_upper(Õ_fl)(1 + 4u) and
-  guards with `fp.up`. Returns Õ_h, r_c and `inf_norm_upper(Õ_h)`.
+  |V|ᵀ|O||V|; r_c = γ̇_{w_O + w_V} · fro_upper(absprod) · up(1/(1 − γ̇_{w_O+w_V})) (the last factor covers the rounding
+  of the absolute product); then the Hermitian part (exactly Hermitian by construction: the two roundings of
+  conjugate entries are conjugate); the term u·fro_upper(Õ_fl)(1 + 4u) is added and the sum guarded with `fp.up`.
+  Returns Õ_h, r_c and `inf_norm_upper(Õ_h)`.
 * Proposition 1: `_isometry_term` (279–284): δ = up(1 − √(1−ι)) + 4u (the same expression as
   `certify._subspace_shift` and `compose.certify_low_energy`), result 2g‖O‖δ(1 + √(1+ι))(1 + 4u), guarded;
   ∞ when ι ≥ 1.

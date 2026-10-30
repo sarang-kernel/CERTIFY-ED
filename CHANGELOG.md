@@ -78,6 +78,35 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
   the affinity defect. Tests `tests/test_sweep.py` (7), including the k = 0 / k = pi ground-state crossing of the
   8-site J1-J2 chain bracketed at the Majumdar-Ghosh point J2 = 1/2.
 
+- **E-07 Davis-Kahan alternative for S4.** `davis_kahan.sin_theta_davis_kahan`: with the Ritz matrix H' = Qhat^H A Qhat,
+  ||A Qhat - Qhat H'||_F <= ||R||_F / sqrt(1 - eta) and ||H' - Lambda|| <= w' = ||X^H R||/(1 - eta) + delta spread /
+  sqrt(1 - eta), the Frobenius form of the sin(Theta) theorem (proved in `docs/proofs/E-07_davis_kahan.md`) gives
+  ||Qhat Qhat^H - P||_2 <= s_DK = ||R||_F / (sqrt(1 - eta)(dist - w')), dist the certified distance of the cluster's
+  claimed values to every other eigenvalue (S3's window). `certify_eigenspace` now takes both proven bounds and
+  uses s = min(s_6, s_DK); the cluster record carries `sin_theta_bounds` = {theorem6, davis_kahan, used, ...}.
+  The (||A|| + ||Lambda||) delta term of Theorem 6's rho and its 2.5 sigma model-shift allowance do not enter s_DK, so
+  s_DK is smaller in every tested case (2.4x on the 8-site ring; 100/100 random cases in the verification). A cluster
+  with s_6 >= 1 but s_DK < 1 is now CERTIFIED at projector level (status change by a proven bound; D-12 pending).
+  `enclosure._cluster_bound` exports its ingredients (`R_fro`, `XR`, `delta`, `spread`) in its result dict (additive).
+  Negative control: an overstated dist (an eigenvalue inside the claimed gap) undercuts the exact sin(theta) in 20/20
+  planted cases, which is why dist comes from S3's certified window.
+- **C-12 approximate-symmetry labels.** `Options.approximate_symmetries = {name: (S, lattice[, allowed_values])}`
+  (S a matrix or a diagonal in the claim space) adds `quantum_numbers[name]` with `approximate_symmetry: true` to
+  every S4 cluster: the commutator bound c >= ||[H, S]||_2 is computed from the stored reference matrix
+  (`davis_kahan.commutator_bound`, infinity norm of the anti-Hermitian commutator plus the standard-model rounding)
+  and recorded as the hypothesis; every sorted eigenvalue of X^H S X then has an eigenvalue of S within
+  D = (2 s + 2 s^2 + eta) ||S|| + (c + ||S|| w/2) / gamma_0 + rounding (w the width of the cluster's level enclosure,
+  gamma_0 its midpoint's distance to the rest), and the labels snap to the lattice / allowed values when D is below
+  half their spacing (`docs/proofs/E-07_davis_kahan.md`, Proposition 2; the tight case A = diag(0, gamma),
+  S = c' sigma_x attains the bound). Without a stored reference matrix the record is NOT-CHECKED (NEEDS_MATRIX).
+- **C-13 fidelities.** `davis_kahan.certified_fidelity(X1, s1, eta1, X2, s2, eta2)` and
+  `fidelity_from_certificates(cert_a, cert_b, members_a, members_b)` (stored eigenvectors and CERTIFIED S4 clusters
+  needed): tr(P_1 P_2) = |<psi_1|psi_2>|^2 for g = 1 (the mean subspace overlap tr(P_1 P_2)/g for g > 1) with the bound
+  g (s_1 + eta_1) + g (1 + eta_1)(s_2 + eta_2) + rounding of ||X_1^H X_2||_F^2 (Proposition 3). Typical use: the overlap of
+  ground states at two couplings (fidelity susceptibility inputs), two sizes, or two sectors in one basis.
+  Verification of the three statements: 529 random + 24 adversarial cases, 0 violations; tests
+  `tests/test_davis_kahan.py` (7).
+
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
 - **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the

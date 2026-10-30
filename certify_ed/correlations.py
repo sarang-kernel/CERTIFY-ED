@@ -269,10 +269,12 @@ def compress_operator(V, O):
     w_O = int(np.diff(O.indptr).max()) if O.shape[0] else 1
     w_V = int(np.diff(sp.csc_matrix(V).indptr).max()) if V.shape[1] else 1
     absprod = (abs(V).T @ (abs(O) @ abs(V))).tocsr()
-    rnd = gamma_dot(w_O + w_V + 2, cplx) * fro_upper(absprod) * (1 + 4 * U)
+    # the computed |V|^T |O| |V| underestimates the exact one by at most a relative gamma_{w_O + w_V} entrywise
+    g_abs = gamma_dot(w_O + w_V, cplx)
+    rnd = g_abs * fro_upper(absprod) * up(1.0 / (1.0 - g_abs))
     Oh = ((Ot + Ot.conj().T) * 0.5).tocsr()
     Oh.eliminate_zeros()
-    rnd = up(rnd + 2 * U * fro_upper(Ot) * (1 + 4 * U))
+    rnd = up(rnd + U * fro_upper(Ot) * (1 + 4 * U))
     return Oh, float(rnd), float(inf_norm_upper(Oh))
 
 

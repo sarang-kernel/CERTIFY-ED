@@ -449,3 +449,14 @@ widening), and the neighbouring certificate's tube, shifted by the affinity defe
 apart on a sample interval of width D when max of the end margins + BD < 0 (the margin is 2B-Lipschitz); a
 not-separated run flanked by opposite certified relations contains a crossing (continuity of the sorted
 eigenvalues).
+
+### 10.4 Davis–Kahan statements (E-07, C-12, C-13; `davis_kahan.py`, `docs/proofs/E-07_davis_kahan.md`)
+
+*E-07.* With H′ = Q̂ᴴAQ̂, ‖AQ̂ − Q̂H′‖_F ≤ ‖R‖_F/√(1−η) and ‖H′ − Λ‖₂ ≤ w′ = ‖XᴴR‖₂/(1−η) + δ·spread/√(1−η) (the two
+polar identities of the Theorem 2′ sketch, proved in the document), and the Frobenius form of the sin Θ theorem
+(for Y = (I−P)Q̂: A_⊥Y − YH′ = (I−P)R′, entrywise division by the eigenvalue differences ≥ δ′) gives
+‖Q̂Q̂ᴴ − P‖₂ ≤ s_DK = ‖R‖_F/(√(1−η)(dist − w′)). S4 uses min(s₆, s_DK), both recorded (`sin_theta_bounds`).
+*C-12.* For ‖[A,S]‖ ≤ c (computed, recorded): every eigenvalue m of QᴴSQ has an eigenvalue of S within
+(c + ‖S‖w/2)/γ₀ (Theorem 1 for S with the residual ‖(I−P)Sφ‖), and the sorted eigenvalues of XᴴSX are within
+(2s + 2s² + η)‖S‖ of those of QᴴSQ (alignment ‖Q̂ − QU‖ ≤ s + s², Weyl, Ostrowski).
+*C-13.* |tr(P₁P₂) − ‖X₁ᴴX₂‖_F²| ≤ g(s₁+η₁) + g(1+η₁)(s₂+η₂) (Theorem 6 for both clusters, Hölder with ‖P‖₁ = g).
