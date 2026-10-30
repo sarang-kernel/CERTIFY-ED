@@ -106,7 +106,8 @@ def _statement_evidence_defs() -> Dict[str, dict]:
                 "weight_bound": {"type": "string"}, "statement": {"type": "string"}}}}},
         "S8.degeneracy": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
-            "clusters": {"type": "array", "items": {"type": "object"}}, "budget": budget}},
+            "clusters": {"type": "array", "items": {"type": "object"}}, "budget": budget,
+            "exact_bracket": {"type": "object"}}},
     }
 
 

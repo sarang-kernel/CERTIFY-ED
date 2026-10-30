@@ -28,23 +28,27 @@ def _load(name):
     return mod
 
 
-@pytest.mark.parametrize("script,n", [("verify_L17", 60), ("verify_P16", 4), ("verify_P14", 200), ("verify_P15", 40)])
+@pytest.mark.parametrize("script,n", [("verify_L17", 60), ("verify_P16", 4), ("verify_P14", 200), ("verify_P15", 40),
+                                      ("verify_C06", 6), ("verify_C16", 10)])
 def test_verification_scripts_report_zero_violations(script, n):
     pytest.importorskip("mpmath")
+    if script == "verify_C16":
+        pytest.importorskip("flint")
     r = _load(script).run(n, seed=1)
     assert r["violations"] == 0, r
     assert r["random_cases"] > 0 and r["adversarial_cases"] > 0
 
 
 def test_proof_documents_exist_with_the_six_sections():
-    for name in ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals"):
+    for name in ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
+                 "C06_truncated_thermodynamics", "C16_exact_bracket"):
         text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
         for sec in ("## 1. Statement", "## 2. Proof", "## 3. Where the code implements it",
                     "## 4. Computational verification", "## 5. Analytic cross-check", "## 6. Status"):
             assert sec in text, (name, sec)
         assert "Derived by Claude on" in text and "machine-checked (" in text
         assert "independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending." in text
-        assert "verified" not in text.lower().replace("unverified", "").replace("machine-checked", "")
+        assert "verified" not in text.lower().replace("unverified", "").replace("not_verified", "").replace("machine-checked", "")
 
 
 # ------------------------------------------------------------------------------------------- Lemma 17 pins

@@ -1498,14 +1498,49 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 n_cert = sum(1 for r in recs if r["status"] == "CERTIFIED")
                 n_fail = sum(1 for r in recs if r["status"] == "FAILED")
                 st8 = "CERTIFIED" if n_cert == len(recs) else ("FAILED" if n_fail else "INCONCLUSIVE")
-                statements.append(_stmt("S8.degeneracy", st8,
-                                        f"{n_cert}/{len(recs)} clusters: eigenvalue count in the level enclosure certified "
-                                        f"by bracketing inertia counts" + (f"; degeneracies {[r.get('degeneracy') for r in recs]}"
-                                                                           if st8 == "CERTIFIED" else ""),
-                                        {"clusters": recs},
-                                        ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
-                                         "[derived: docs/proofs/P14_degeneracy_bracketing.md; UNVERIFIED by "
-                                         "independent re-derivation, D-12]"], time.time() - t0))
+                assumptions8 = ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
+                                "[derived: docs/proofs/P14_degeneracy_bracketing.md; UNVERIFIED by "
+                                "independent re-derivation, D-12]"]
+                summ8 = (f"{n_cert}/{len(recs)} clusters: eigenvalue count in the level enclosure certified "
+                         f"by bracketing inertia counts" + (f"; degeneracies {[r.get('degeneracy') for r in recs]}"
+                                                            if st8 == "CERTIFIED" else ""))
+                # C-16: exact count and multiplicities in the inner bracket, no floating-point assumption
+                # (Options.exact_recheck, spec declared, python-flint, plain or U(1)-block claims)
+                exact_note = None
+                if opts.exact_recheck and spec is not None and claim.sector_isometry is None and any("bracket_inner" in r for r in recs):
+                    if not _have_flint():
+                        exact_note = {"status": "NOT_CHECKED", "reason": "python-flint not installed", "reason_code": "MISSING_DEPENDENCY"}
+                    else:
+                        from .checker import exact_matrix, is_hermitian_exact
+                        from .exact_degeneracy import MAX_DIM, exact_brackets_for_clusters
+                        n_ex = claim.states.size if claim.states is not None else spec.dim
+                        if n_ex > min(opts.exact_max_dim, MAX_DIM):
+                            exact_note = {"status": "NOT_CHECKED", "reason_code": "SIZE_LIMIT",
+                                          "reason": f"dimension {n_ex} above the exact bracket cap {min(opts.exact_max_dim, MAX_DIM)}"}
+                        else:
+                            ex_m = exact_matrix(spec, claim.states)
+                            if not is_hermitian_exact(ex_m):
+                                exact_note = {"status": "FAILED", "reason": "declared model is not Hermitian"}
+                            else:
+                                xb = exact_brackets_for_clusters(ex_m, recs)
+                                for r, x in zip(recs, xb):
+                                    if x is not None:
+                                        r["exact_bracket"] = x
+                                n_eq = sum(1 for x in xb if x and x.get("status") == "CERTIFIED" and x.get("equal"))
+                                n_neq = sum(1 for x in xb if x and x.get("status") == "CERTIFIED" and x.get("equal") is False)
+                                n_xf = sum(1 for x in xb if x and x.get("status") == "FAILED")
+                                if n_xf:
+                                    st8 = "FAILED"
+                                summ8 += (f"; exact brackets (C-16): {n_eq} cluster(s) exactly degenerate, {n_neq} not "
+                                          f"degenerate, {n_xf} contradicted")
+                                assumptions8.append("exact bracket (C-16): characteristic polynomial of the exact declared "
+                                                    "model, Sturm counts; no floating-point assumption "
+                                                    "[derived: docs/proofs/C16_exact_bracket.md; UNVERIFIED by "
+                                                    "independent re-derivation, D-12]")
+                ev8 = {"clusters": recs}
+                if exact_note is not None:
+                    ev8["exact_bracket"] = exact_note
+                statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0))
 
     # ---------------- assemble
     subject = {"description": (spec.name if spec else "operator supplied without spec"),

@@ -16,6 +16,41 @@ before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.
 env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
 
+### Props-proofs track (D-59 backlog: Props 14-16, Lemma 17; roadmap C-06, C-16; track/props-proofs)
+
+- **Derivations (D-59).** `docs/proofs/` holds one derivation document per statement with a verification script
+  in exact rational arithmetic or mpmath at 200 digits: `L17_dyadic_exp_ln.md` (dyadic interval arithmetic,
+  exp and ln by truncated series with proved remainders), `P16_thermo_intervals.md` (S7), `P14_degeneracy_bracketing.md`
+  (S8), `P15_summed_bounds.md` (S4 combinations), `C06_truncated_thermodynamics.md` (Proposition 16'),
+  `C16_exact_bracket.md`. Each document has the six sections of D-59 and ends with the status line "Derived by
+  Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's check
+  (D-12): pending". `tests/test_proofs_props.py` runs every script at reduced size and pins the code facts the
+  proofs use. The statement strings keep the word UNVERIFIED in the D-12 sense (independent re-derivation
+  pending) and name the derivation document.
+- **Corrections found by the derivations (both make a bound looser, never tighter).** `ivl.py`: the atanh
+  remainder constant is 8/7 for arguments up to 0.35 (the rounded upper argument can exceed 1/3 by one grid
+  unit; the 3.1 constant 9/8 was stated for u <= 1/3), with a runtime range check; `exp_interval` encloses
+  arguments below -1000 by [0, 2^-192] and refuses arguments above 2^16 (a beta*e of 2^190 made the halving loop
+  attempt 2^190 squarings). `correlations.combine_certified`: the moduli |a_k|, |v_k| are bounded with an IEEE
+  sqrt (`modulus_upper`) instead of a libm hypot and the rounding term is formed with directed rounding; the
+  correlation record names the stored-operator hypothesis (D2) and the structure-factor record the
+  floating-point-phase hypothesis (D1). `degeneracy.py`: the S8 statement names the open interval.
+- **C-06 truncated-spectrum thermodynamics.** `thermo.thermodynamics_truncated`: for a 'lowest' claim with S3
+  CERTIFIED (lower bound L on lambda_{k+1}) and the dimension n, the omitted weight is bounded by
+  (n - k) exp(-beta L) and the omitted first and second moments by the envelopes of e exp(-beta e) and
+  e^2 exp(-beta e) over [L, M] (M the operator norm bound) or [L, inf); two-sided intervals for Z, F, U, C,
+  informative when T << L - E_0. S7 is CERTIFIED for such claims with evidence `tail_bound` (schema 2.1 declares
+  `tail_bound` and `claimed_count`); a 'lowest' claim with S3 CERTIFIED and no temperatures gets
+  NEEDS_TEMPERATURES. `tests/test_thermo_truncated.py` checks against full spectra of chains with negative
+  controls (no S3, planted wrong L, dimension too small).
+- **C-16 exact bracket.** `certify_ed/exact_degeneracy.py`: the characteristic polynomial of the exact declared
+  model (or of a symmetry-sector block), its squarefree factorization and Sturm sequences give, in exact
+  arithmetic, the number of eigenvalues in a rational bracket with their multiplicities: "exactly g in [a, b],
+  all equal" or "not all equal". With `Options.exact_recheck` every S8 cluster record carries `exact_bracket`;
+  a contradicted count makes S8 FAILED. Dimension cap 600 (charpoly cost). `tests/test_exact_degeneracy.py`:
+  Heisenberg singlet and triplet exactly degenerate; a field of 2^-30 gives a cluster of three that is certified
+  as "not all equal" (negative control); sector counts add up to the k = 0 block.
+
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
 - **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the

@@ -1051,6 +1051,9 @@
                   },
                   "budget": {
                     "$ref": "#/$defs/budget_record"
+                  },
+                  "exact_bracket": {
+                    "type": "object"
                   }
                 }
               }
