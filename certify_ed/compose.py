@@ -30,9 +30,9 @@ from typing import Dict, Optional, Sequence
 import numpy as np
 import scipy.sparse as sp
 
-from .construct import build_bitwise
+from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
-from .fp import U, add_up, fro_upper, gamma_dot, inf_norm_upper, sub_down, up
+from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
@@ -51,7 +51,7 @@ class SectorResult:
 def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: float,
                        H_full=None, inertia_method: str = "auto", label_symmetries: Sequence[str] = ()) -> Dict:
     t0 = time.time()
-    H = None if H_full is None else sp.csr_matrix(H_full)
+    H = None if H_full is None else hermitian_part(sp.csr_matrix(H_full))
     n = spec.dim
     cache = {}
     Hn = inf_norm_upper(H) if H is not None else 0.0
@@ -75,9 +75,10 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         red = restrict_to_u1(spec, s.V, cache) if H is None else None
         if red is not None:
             Ha, Va, st_a = red
+            Ha = hermitian_part(Ha)          # Theorem 8 needs a Hermitian H; the builder shift covers this
         else:
             if H is None:
-                H = build_bitwise(spec)
+                H = hermitian_part(build_bitwise(spec))
             Ha, Va, st_a = H, s.V, None
         Hn = max(Hn, inf_norm_upper(Ha))
         key = None if st_a is None else (st_a.size, int(st_a.states_asc[0]), int(st_a.states_asc[-1]))
@@ -131,7 +132,9 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     G = (W.conj().T @ W - sp.identity(covered, format="csc")).tocsr()
     wmax = int(np.diff(W.indptr).max()) if covered else 1
     eta = up(fro_upper(G) + gamma_dot(wmax, cplx) * fro_upper(W) ** 2)
-    D = up(math.sqrt(sum(p["invariance_defect"] ** 2 for p in per)))
+    # ||H W - W B||_2 <= ||.||_F = ||(inv_1, ..., inv_m)||_2 (block columns); norm2_upper covers the roundings of
+    # the sum of squares and their underflow (was up(sqrt(sum of squares)) before track/backlog-proofs)
+    D = norm2_upper(np.array([p["invariance_defect"] for p in per], dtype=float))
     out = {"n": n, "covered_dim": covered, "n_sectors": len(sectors), "eta": eta,
            "invariance_total": D, "E_cut": E_cut, "sectors": per,
            "symmetrised_blocks": symmetrised}
@@ -162,7 +165,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         # with ||Rhat|| <= D + (||H|| + ||B||) delta = rho, and Weyl pairs the sorted eigenvalues within
         # rho (docs/theory.md, Theorem 8 note; was (1 + sqrt 5)/2 rho before 3.1.0, review IMP-12/IMP-20)
         delta = up(1 - math.sqrt(1 - eta)) + 4 * U
-        rho = up(D + (Hn + Bn) * delta)
+        rho = up(D + (Hn + Bn) * delta) + ULP_MIN
         eps = up(rho + m_build)
         pooled = np.sort(np.asarray(pooled))
         K = int(pooled.size)

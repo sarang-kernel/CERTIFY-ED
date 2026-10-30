@@ -31,7 +31,7 @@ from typing import List, Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import fro_upper, gamma_dot, up, U
+from .fp import ULP_MIN, fro_upper, gamma_dot, norm2_upper, up, U
 
 
 @dataclass
@@ -134,15 +134,18 @@ def decomposition_shift(audit: "DecompositionAudit", H_norm: float, B_norm: floa
     if audit.covered_dim != audit.expected_dim:
         return None
     m = len(audit.sectors)
-    eta_sq = sum(s.isometry_defect ** 2 for s in audit.sectors) + 2 * (m * (m - 1) / 2) * audit.orthogonality_defect ** 2
-    eta = up(math.sqrt(eta_sq))
+    # ||W^H W - I||_2 <= ||.||_F: the m diagonal blocks V_s^H V_s - I and the m(m - 1) off-diagonal blocks V_s^H V_t,
+    # each bounded by the audit's Frobenius bounds; norm2_upper covers the sum of squares and its underflow
+    eta = norm2_upper(np.concatenate([np.array([s.isometry_defect for s in audit.sectors], dtype=float),
+                                      np.full(m * (m - 1), audit.orthogonality_defect, dtype=float)]))
     if not eta < 1:
         return None
     delta = up(1 - math.sqrt(1 - eta)) + 4 * U
-    D = up(math.sqrt(sum(s.invariance_defect ** 2 for s in audit.sectors)))
-    rho = up(D + (H_norm + B_norm) * delta)
-    w = rho
-    return up(0.5 * (w + math.sqrt(w * w + 4 * rho * rho)))
+    D = norm2_upper(np.array([s.invariance_defect for s in audit.sectors], dtype=float))
+    # Kahan's theorem on the polar factor of W pairs the eigenvalues of B with distinct eigenvalues of H
+    # within rho (docs/proofs/thm2_polar-factor.md; for the square W Weyl gives the same constant,
+    # docs/proofs/thm8_rho.md). Was (1 + sqrt 5)/2 rho before track/backlog-proofs.
+    return up(D + (H_norm + B_norm) * delta) + ULP_MIN
 
 
 def lift_radius(sector_rel_radius: float, audit: "SectorAudit") -> float:

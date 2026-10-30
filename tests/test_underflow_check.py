@@ -114,24 +114,23 @@ def test_planted_tiny_sparse_matrix_entry(chain):
 def test_radius_forced_tiny_by_exact_eigenpair_of_scaled_operator():
     # exact eigenpairs of a diagonal operator scaled to 1e-258 with eigenvectors of norm 1e125: every stored
     # entry and the claimed values are above 2^-900 = 1.2e-271, the exact residual is zero, and the computed
-    # Theorem 1 radius gamma |H| ~ 1e-274 (nonzero: the rounding bound of H x divided by ||x||) is below the
-    # threshold, so the radius itself is an operand the model does not cover
+    # Theorem 1 radius gamma |H| ~ 1e-274 is below the threshold. Until track/backlog-proofs the radius was
+    # scanned and S2 was INCONCLUSIVE (UNDERFLOW_RISK); the Theorem 1 radius is now evaluated under the
+    # underflow-tolerant model (INT-05, docs/proofs/int05_underflow.md), so the tiny radius is a bound for
+    # every magnitude and S2 is CERTIFIED; the scan covers the inputs only
     D = np.diag([1.0, 2.0, 3.0, 4.0]) * 1e-258
     X = np.eye(4)[:, :2] * 1e125
     assert np.abs(D[D != 0]).min() > UNDERFLOW_THRESHOLD
     claim = Claim(eigenvalues=[1e-258, 2e-258], eigenvectors=X, operator=D, kind="lowest")
     cert = certify(claim, None, Options())
     st = _statuses(cert)
-    assert st["S2.eigenpairs"] == ("INCONCLUSIVE", "UNDERFLOW_RISK")
-    assert st["S3.completeness"] == ("INCONCLUSIVE", "UNDERFLOW_RISK")
-    f = cert.statements[1]["evidence"]["underflow"]["findings"]
-    assert any(x["where"] == "enclosure.radius" for x in f)
-    assert not any(x["where"] in ("claim.eigenvalues", "operator.entries", "claim.eigenvectors") for x in f)
-    radius = [x for x in f if x["where"] == "enclosure.radius"][0]["min_magnitude"]
-    assert 0 < radius < UNDERFLOW_THRESHOLD
-    # without the check the same input is CERTIFIED, with a radius below the hypothesis
-    cert2 = certify(claim, None, Options(underflow_check=False))
-    assert cert2.statements[1]["status"] == "CERTIFIED"
+    assert st["S2.eigenpairs"] == ("CERTIFIED", None)
+    rec = cert.body["arithmetic"]["underflow_check"]
+    assert rec["findings"] == [] and "enclosure.radius" not in rec["scanned"]
+    radius = np.asarray(cert.arrays["radius"])
+    assert np.all(radius > 0) and radius.max() < UNDERFLOW_THRESHOLD
+    # the exact eigenvalues are the claimed values: the tiny radii are correct bounds
+    assert np.all(np.abs(np.array([1e-258, 2e-258]) - np.array([1e-258, 2e-258])) <= radius)
 
 
 def test_tiny_claimed_eigenvalue_is_reported():
@@ -196,7 +195,7 @@ def test_standard_fixtures_unchanged_by_underflow_check(chain, kind):
     assert "UNDERFLOW_RISK" not in _codes(with_check).values()
     rec = with_check.body["arithmetic"]["underflow_check"]
     assert rec["performed"] and rec["findings"] == [] and "claim.eigenvectors" in rec["scanned"]
-    assert "enclosure.radius" in rec["scanned"]
+    assert "enclosure.radius" not in rec["scanned"]        # INT-05: outputs are no longer scanned
     assert with_check.body["scope"]["options"]["underflow_check"] is True
 
 

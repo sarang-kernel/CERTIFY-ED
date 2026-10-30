@@ -59,18 +59,44 @@ def heis12():
     return _block(12)           # dimension 924
 
 
+# Theorem 2's cluster radius changed on track/backlog-proofs (docs/proofs/thm2_polar-factor.md): the frozen module
+# computes eps = (w + sqrt(w^2 + 4 rho^2))/2 <= (1 + sqrt 5)/2 rho, the package computes rho (Kahan's constant),
+# and the Theorem 2' term uses norm2_upper (factor 1 + gamma_{g+2}) where the frozen module used (1 + 8u). The
+# Theorem 1 pipeline (residuals, existence radii) is unchanged bit for bit; cluster radii lie in the bracket below.
+_PHI = (1 + np.sqrt(5.0)) / 2
+
+
+def _radius_bracket(e_new, e_old):
+    sizes_new = np.array([e_new.groups[gi].size for gi in e_new.group_of])
+    single = sizes_new == 1
+    assert np.array_equal(e_new.radius[single], e_old.radius[single])
+    r_new, r_old = e_new.radius[~single], e_old.radius[~single]
+    assert np.all(r_new <= r_old * (1 + 1e-12)) and np.all(r_new >= r_old / _PHI * (1 - 1e-12))
+
+
 def _same_enclosure(e_new, e_old):
-    assert np.array_equal(e_new.radius, e_old.radius)
+    _radius_bracket(e_new, e_old)
     assert np.array_equal(e_new.existence_radius, e_old.existence_radius)
     assert np.array_equal(e_new.residual.upper, e_old.residual.upper)
     assert np.array_equal(e_new.residual.computed, e_old.residual.computed)
     assert np.array_equal(e_new.residual.rel_estimate, e_old.residual.rel_estimate)
     assert np.array_equal(e_new.residual.xnorm_lower, e_old.residual.xnorm_lower)
     assert [g.members for g in e_new.groups] == [g.members for g in e_old.groups]
-    assert [g.radius for g in e_new.groups] == [g.radius for g in e_old.groups]
     assert e_new.all_distinct == e_old.all_distinct
     E_norm_old = np.array([ref.norm2_upper(e_old.residual.E[:, j]) for j in range(e_old.mu.size)])
     assert np.array_equal(e_new.residual.E_norm, E_norm_old)
+
+
+def _identical_enclosure(e_a, e_b):
+    """Bit identity between two evaluations of the package (the column-blocking invariance of C-17)."""
+    assert np.array_equal(e_a.radius, e_b.radius)
+    assert np.array_equal(e_a.existence_radius, e_b.existence_radius)
+    assert np.array_equal(e_a.residual.upper, e_b.residual.upper)
+    assert np.array_equal(e_a.residual.computed, e_b.residual.computed)
+    assert np.array_equal(e_a.residual.E_norm, e_b.residual.E_norm)
+    assert [g.members for g in e_a.groups] == [g.members for g in e_b.groups]
+    assert [g.radius for g in e_a.groups] == [g.radius for g in e_b.groups]
+    assert e_a.all_distinct == e_b.all_distinct
 
 
 # ------------------------------------------------------------------------------ bit-identity (C-17)
@@ -85,7 +111,7 @@ def test_enclosure_radii_bit_identical_to_pre_change_code(request, fixture, stor
     if storage == "sparse":
         # forced narrow column blocks (the whole-spectrum memory path): still the same bits
         e_blk = enclose(OperatorAdapter(A), w, V, block_mb=0.05)
-        _same_enclosure(e_blk, e_old)
+        _identical_enclosure(e_blk, e_new)
         assert len(column_blocks(w.size, V.shape[0], 8, 0.05)) >= 3
     # the stored residual matrix is the pre-change one, and the recomputed columns equal it
     assert np.array_equal(e_new.residual.R, e_old.residual.R)
@@ -119,11 +145,16 @@ def test_recorded_pre_change_radii_dim_252():
         exp = np.load(os.path.join(FIXTURES, f"whole_spectrum_252_{storage}.npz"))
         e = enclose(OperatorAdapter(A), mu, X)
         assert np.array_equal(e.group_of, exp["group_of"]) and bool(exp["all_distinct"]) == e.all_distinct
-        for key, got in (("radius", e.radius), ("existence_radius", e.existence_radius),
+        single = np.array([e.groups[gi].size for gi in e.group_of]) == 1
+        for key, got in (("radius", e.radius[single]), ("existence_radius", e.existence_radius),
                          ("residual_bound", e.residual.upper), ("residual_computed", e.residual.computed)):
-            np.testing.assert_allclose(got, exp[key], rtol=1e-12, atol=0)
-            if not np.array_equal(got, exp[key]):
+            want = exp[key][single] if key == "radius" else exp[key]
+            np.testing.assert_allclose(got, want, rtol=1e-12, atol=0)
+            if not np.array_equal(got, want):
                 warnings.warn(f"{storage} {key}: not bit-identical to the recorded radii (different BLAS kernels?)")
+        # cluster radii: the recorded eps against the package's min(rho, eps*) (see _radius_bracket)
+        assert np.all(e.radius[~single] <= exp["radius"][~single] * (1 + 1e-12))
+        assert np.all(e.radius[~single] >= exp["radius"][~single] / _PHI * (1 - 1e-12))
         # the frozen module reproduces the recording exactly on this machine's BLAS, or the recording is stale
         e_ref = ref.enclose(ref.OperatorAdapter(A), mu, X)
         np.testing.assert_allclose(e_ref.radius, exp["radius"], rtol=1e-12, atol=0)

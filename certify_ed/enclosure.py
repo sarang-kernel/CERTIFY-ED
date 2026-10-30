@@ -19,20 +19,24 @@ Theorem 1 (single pair; e.g. Parlett 1998, Thm 4.5.1). For Hermitian A, any
 nonzero x and any real mu, some eigenvalue lambda_j satisfies
     |lambda_j - mu| <= ||A x - mu x|| / ||x||.
 
-Theorem 2 (cluster; proved in the paper's appendix). Let X (n x g) satisfy
+Theorem 2 (cluster; docs/proofs/thm2_polar-factor.md). Let X (n x g) satisfy
 ||X^* X - I||_2 <= eta < 1, let Lambda = diag(mu_1..mu_g) be real, and let
-R = A X - X Lambda. Put delta = 1 - sqrt(1 - eta),
-    rho = ||R||_2 + (||A||_2 + ||Lambda||_2) delta,
-    w   = any upper bound on ||Qhat^* Rhat||_2 (w <= rho),
-    eps = (w + sqrt(w^2 + 4 rho^2)) / 2,
-where Qhat is the orthonormal polar factor of X. Then there is an injective
-map i -> j(i) with |lambda_{j(i)} - mu_i| <= eps for i = 1..g.
+R = A X - X Lambda. Put delta = 1 - sqrt(1 - eta) and
+    rho = ||R||_2 + (||A||_2 + ||Lambda||_2) delta.
+Then there is an injective map i -> j(i) with |lambda_{j(i)} - mu_i| <= rho for
+i = 1..g. Proof: the polar factor Qhat = X (X^* X)^(-1/2) is an isometry with
+||X - Qhat|| <= delta, so ||A Qhat - Qhat Lambda|| <= rho (polar-factor lemma),
+and Kahan's inclusion theorem (any Hermitian g x g block, radius = residual
+norm) pairs the eigenvalues of Lambda with distinct eigenvalues of A. Before
+track/backlog-proofs the radius was eps = (w + sqrt(w^2 + 4 rho^2))/2 >= rho,
+from the Weyl-perturbation proof of the appendix; rho is the Kahan constant.
 
-Theorem 2' (sharper cluster radius; docs/theory.md section 2, UNVERIFIED, D-12).
+Theorem 2' (sharper cluster radius; docs/proofs/thm2prime_eps-star.md).
 Under the same hypotheses, with spread(Lambda) = max(mu) - min(mu),
     eps* = ||R||_2 / sqrt(1 - eta) + ||X^* R||_2 / (1 - eta) + delta spread(Lambda) / sqrt(1 - eta)
 also admits such an injection (Kahan's theorem for Qhat^* A Qhat, then Weyl for
-Qhat^* A Qhat - Lambda). The cluster radius used is min(eps, eps*).
+Qhat^* A Qhat - Lambda). The cluster radius used is min(rho, eps*); both are
+proven (D-59), so the min is sound.
 
 Each cluster member keeps its Theorem-1 radius as its *existence radius*; the
 cluster radius is the one under which the members are matched to distinct
@@ -60,8 +64,8 @@ from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import (U, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
-                 inf_norm_upper, max_nnz_per_row, safe_sqrt_upper, exact_dot, exact_gram,
+from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
+                 inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up)
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
@@ -100,8 +104,12 @@ class OperatorAdapter:
             self.complex = op.dtype == np.complex128
             spec = op.spec
             max_len = max((len(t.op) for t in spec.terms), default=1)
-            # each matrix element is a sum over couplings of products of <= max_len+1 factors
-            self.width = spec.n_terms * (2 ** max_len) + max_len + 2
+            # each entry of H x is a sum of at most m = n_terms 2^max_len monomial contributions, each a
+            # product of the coupling, <= max_len local amplitudes (one rounding each where irrational) and
+            # x_j: at most 2 max_len + 1 roundings per contribution, m - 1 in the sum (width = m + 2 max_len + 2
+            # matches certify._builder_shift; docs/proofs/appA_model-shift.md). Before track/backlog-proofs the
+            # width was m + max_len + 2, short by max_len - 4 roundings for strings of five or more letters.
+            self.width = spec.n_terms * (2 ** max_len) + 2 * max_len + 2
             ones = np.ones(op.shape[0])
             self._norm = up(float(np.max(op.abs_matvec(ones)))) * (1 + gamma(self.width))
         else:
@@ -354,11 +362,17 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
                 R[:, a:b] = Rb
         del Rb
     if adapter.rigorous:
-        upper = R_up + E_up
+        # ||A x - mu x|| <= ||R|| + ||E|| + sqrt(n) c_w u_min: the last term is the INT-05 additive term (the
+        # per-entry shortfall of R and E under fl(z) = z(1 + delta) + eta); it is about 1e-160 and changes the
+        # stored sum only when the bound itself is below about 1e-145 (docs/proofs/int05_underflow.md)
+        upper = (R_up + E_up) + residual_additive_term(n, adapter.width, adapter.complex or cplx_x)
     else:
         upper = np.full(k, np.inf)
     with np.errstate(divide="ignore", invalid="ignore"):
-        rel = np.where(xl > 0, upper / xl, np.inf) * (1 + 4 * U)
+        # four roundings (the two sums, the division, the product): (1 + 4u) covers three, the fourth is
+        # absorbed by the slack of norm2_upper (docs/proofs/thm1_fp-accounting.md, step 5); + 2 ULP_MIN covers
+        # the absolute errors of a division and a product whose results are subnormal
+        rel = np.where(xl > 0, upper / xl, np.inf) * (1 + 4 * U) + 2 * ULP_MIN
         est = computed / xn
     return ResidualReport(computed, upper, xl, rel, est, R, E_up, adapter.rigorous, adapter, mu, X)
 
@@ -376,7 +390,7 @@ class Group:
     eta: Optional[float] = None  # orthonormality defect bound (cluster)
     rho: Optional[float] = None  # ||Rhat||_2 bound (cluster)
     note: str = ""
-    bound: Optional[dict] = None # cluster: {'eps': Theorem 2, 'eps_star': Theorem 2', 'used': which is smaller}
+    bound: Optional[dict] = None # cluster: {'rho' (= 'eps'): Theorem 2, 'eps_star': Theorem 2', 'used': the smaller}
 
     @property
     def size(self):
@@ -443,9 +457,12 @@ def _exact_gram_cached(Xg: np.ndarray, idx: Sequence[int], cache: Optional[Dict[
 
 def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X, res: ResidualReport, idx: Sequence[int],
                    cache: Optional[Dict[tuple, tuple]] = None):
-    """Cluster radius for the group idx: min of the Theorem 2 radius eps and the Theorem 2' radius
-    eps* = ||R||/sqrt(1-eta) + ||X^H R||/(1-eta) + delta*spread(mu)/sqrt(1-eta) (docs/theory.md).
-    Returns (radius, eta, rho, {'eps', 'eps_star', 'used'}) or None when eta >= 1 or ||A|| is unknown.
+    """Cluster radius for the group idx: min of the Theorem 2 radius rho = ||R|| + (||A|| + ||Lambda||) delta
+    and the Theorem 2' radius eps* = ||R||/sqrt(1-eta) + ||X^H R||/(1-eta) + delta*spread(mu)/sqrt(1-eta)
+    (docs/proofs/thm2_polar-factor.md, docs/proofs/thm2prime_eps-star.md: section 3 of each lists the lines
+    below with their rounding counts; `up` = (1 + 8u) covers at most six round-to-nearest operations).
+    Returns (radius, eta, rho, {'eps', 'rho', 'eps_star', 'used'}) or None when eta >= 1 or ||A|| is
+    unknown ('eps' repeats 'rho': the key the certificate schema has carried since 3.1.0).
     `cache` memoises the exact Gram inner products between calls (enclose passes one per call)."""
     idx = list(idx)
     Xg = read_columns(X, idx)
@@ -453,45 +470,47 @@ def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X, res: ResidualRep
     cplx = np.iscomplexobj(Xg)
     gd = gamma_dot(n, cplx)
     if n * g * (g + 1) // 2 <= EXACT_GRAM_BUDGET:
-        # accurately rounded Gram entries: error <= 2u|G_ij| each (error-free transformations)
+        # accurately rounded Gram entries: error <= Eg_ij each (error-free transformations, fp.exact_dot);
+        # ||X^H X - I||_2 <= ||fl(G - I)||_F /(1 - u) + ||Eg||_F  (two additions inside up)
         G, Eg = _exact_gram_cached(Xg, idx, cache)
         eta = up(fro_upper(G - np.eye(g)) + fro_upper(Eg) + 4 * U * g)
     else:
+        # BLAS Gram: entrywise error <= gamma_dot(n) (|X|^H |X|)_ij, Frobenius norm <= gamma_dot(n) ||X||_F^2
         G = Xg.conj().T @ Xg
         xf2 = fro_upper(Xg) ** 2
-        eta = up(fro_upper(G - np.eye(g)) + gd * xf2)
+        eta = up(fro_upper(G - np.eye(g)) + gd * xf2) + gram_additive_term(g, n, cplx) + 2 * ULP_MIN
     if not eta < 1.0:
         return None
+    # delta >= 1 - sqrt(1 - eta): three roundings (1 - eta, sqrt, 1 - .) cost at most 2.6u absolute, up()
+    # adds >= 6u relative and the final + 4u is absolute (docs/proofs/thm2_polar-factor.md, section 3)
     delta = 1.0 - math.sqrt(1.0 - eta)
     delta = up(delta) + 4 * U
-    Rg_fro = safe_sqrt_upper(float(np.sum(res.upper[idx] ** 2)))
+    # ||R||_2 <= ||R||_F = ||(||r_1||, ..., ||r_g||)||_2 <= norm2_upper of the vector of Theorem-1 bounds
+    Rg_fro = norm2_upper(np.asarray(res.upper[idx], dtype=float))
     Hn = adapter.norm_upper()
     if Hn is None or not np.isfinite(Hn):
         return None
-    lam_n = float(np.max(np.abs(mu[idx])))
-    rho = up(Rg_fro + (Hn + lam_n) * delta)
-    # w bound: ||Qhat^* Rhat|| <= ||X^* R_exact|| + ||X|| ||Rhat - R|| + delta ||Rhat||
+    lam_n = float(np.max(np.abs(mu[idx])))              # = ||Lambda||_2 exactly
+    rho = up(Rg_fro + (Hn + lam_n) * delta) + ULP_MIN   # three roundings inside up; one product may be subnormal
+    # Theorem 2': ||X^H R||_2 <= ||fl(X^H Rc)||_F + gamma_dot(n) ||X||_F ||Rc||_F + ||X||_2 ||Rc - R||_F,
+    # with Rc the computed residual columns and ||Rc - R||_F <= norm2_upper of the per-column E bounds
     Rc = res.residual_columns(idx, Xg)
     XR = Xg.conj().T @ Rc
-    xnorm = math.sqrt(1.0 + eta)
-    Rerr = safe_sqrt_upper(float(sum(res.E_norm[j] ** 2 for j in idx)))
-    # ||X^* R_exact||_2 <= ||fl(X^* Rc)||_F + rounding of that product + ||X|| ||R_exact - Rc||
-    XR_bound = up(fro_upper(XR) + gd * fro_upper(Xg) * fro_upper(Rc) + xnorm * Rerr)
-    w = XR_bound + xnorm * (Hn + lam_n) * delta + delta * rho
-    w = min(up(w), rho)
-    eps = up(0.5 * (w + math.sqrt(w * w + 4.0 * rho * rho)))
-    # Theorem 2' (IMP-13): every factor an upper bound; up() covers the few roundings of each product
-    inv_sqrt = up(1.0 / math.sqrt(1.0 - eta))
-    inv = up(1.0 / (1.0 - eta))
+    xnorm = up(math.sqrt(1.0 + eta))                    # >= ||X||_2 = sqrt(lambda_max(X^H X)); two roundings
+    Rerr = norm2_upper(np.asarray(res.E_norm[idx], dtype=float))
+    XR_bound = (up(fro_upper(XR) + fro_upper(Xg) * fro_upper(Rc) * gd + xnorm * Rerr)   # five roundings
+                + gram_additive_term(g, n, cplx) + 3 * ULP_MIN)      # underflow in the BLAS product; 3 products
+    inv_sqrt = up(1.0 / math.sqrt(1.0 - eta))          # >= (1 - eta)^(-1/2); three roundings
+    inv = up(1.0 / (1.0 - eta))                        # >= (1 - eta)^(-1);   two roundings
     mu_g = mu[list(idx)]
     spread = up(float(sub_up(float(np.max(mu_g)), float(np.min(mu_g)))))
-    eps_star = up(Rg_fro * inv_sqrt + XR_bound * inv + delta * spread * inv_sqrt)
-    used = "eps_star" if eps_star < eps else "eps"
+    eps_star = up(Rg_fro * inv_sqrt + XR_bound * inv + delta * spread * inv_sqrt) + 4 * ULP_MIN   # six roundings
+    used = "eps_star" if eps_star < rho else "rho"
     # the ingredients are exported for the Davis-Kahan sin(theta) alternative of S4 (E-07, davis_kahan.py): upper
     # bounds on ||R||_F, ||X^H R||_2, delta = 1 - sqrt(1 - eta) and spread(mu) (3.2; additive, used nowhere else here)
-    return min(eps, eps_star), eta, rho, {"eps": float(eps), "eps_star": float(eps_star), "used": used,
-                                          "R_fro": float(Rg_fro), "XR": float(XR_bound), "delta": float(delta),
-                                          "spread": float(spread)}
+    return min(rho, eps_star), eta, rho, {"eps": float(rho), "rho": float(rho), "eps_star": float(eps_star),
+                                         "used": used, "R_fro": float(Rg_fro), "XR": float(XR_bound),
+                                         "delta": float(delta), "spread": float(spread)}
 
 
 def nonfinite_columns(X, block_mb: Optional[float] = None) -> List[int]:
@@ -689,7 +708,7 @@ def kato_temple(adapter: OperatorAdapter, x: np.ndarray, alpha: float, beta: flo
     r = up(r_hat + max(th_hi - th, th - th_lo))
     if not (alpha < sub_down(th_lo, r) and add_up(th_hi, r) < beta):
         return None
-    r2 = np.nextafter(r * r, np.inf)
+    r2 = np.nextafter(r * r, np.inf) + ULP_MIN       # + ULP_MIN: the product's absolute error when r^2 is subnormal
     lower = float(sub_down(th_lo, np.nextafter(r2 / sub_down(beta, th_lo), np.inf)))
     upper = float(add_up(th_hi, np.nextafter(r2 / sub_down(th_hi, alpha), np.inf)))
     lower -= abs(lower) * 8 * U

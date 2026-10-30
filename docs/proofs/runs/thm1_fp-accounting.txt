@@ -1,0 +1,8 @@
+  ... 0 random cases
+  ... 5000 random cases
+  ... 10000 random cases
+  ... 15000 random cases
+scalar lemmas (L2), (L4), (L5), (L6): 20000 random + 12 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+rel >= exact radius: 20000 random + 246 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+stage inequalities (S2)-(S5): 40000 random + 480 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations

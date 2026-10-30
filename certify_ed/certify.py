@@ -44,13 +44,13 @@ import scipy.sparse as sp
 from .certificate_v2 import Certificate, environment_record, matrix_sha256, array_sha256
 from .cost import resolve_budget_seconds
 from .diagnostics import annotate_next_actions
-from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
+from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, hermitian_part, matrix_difference,
                         product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, _cluster_bound, cluster_groups,
                         is_streamed, nonfinite_columns, read_columns)
-from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
+from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
                  sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
@@ -258,9 +258,10 @@ def _underflow_operands(mu, X, adapter, seed: int):
     (name, array, threshold) tuples: the claimed eigenvalues and eigenvector entries; for a stored matrix
     its entries (the sparse data array); for a spec or black-box operator the norm bound and the result of
     one matvec on a fixed random probe (the only access to its entries; the probe uses the certificate's
-    seed). Intermediate quantities of the bounds (the residual vectors, the entrywise rounding bound) are
-    not scanned: the hypothesis is stated for the stored inputs and for the radii and residual bounds the
-    certificate reports, which are scanned after the enclosure (CHANGELOG 3.2.0.dev0, INT-05).
+    seed). Neither the intermediate quantities of the Theorem 1 bound (residual vectors, entrywise rounding
+    bound) nor its outputs (radii, residual bounds) are scanned: that bound holds under the underflow-tolerant
+    model for every magnitude (INT-05, docs/proofs/int05_underflow.md). The hypothesis is stated for the
+    stored inputs and the model shift, which the standard-model bounds of the other statements use.
     """
     T = UNDERFLOW_THRESHOLD
     parts = [("claim.eigenvalues", mu, T)]
@@ -293,12 +294,13 @@ def _underflow_statement_note(findings):
 
 
 def _subspace_shift(iso: float, inv: float, H_norm: float, M_norm: float) -> Optional[float]:
-    """Theorem 2 with X = V (sector isometry, g = d_s) and Hermitian M = H_s."""
+    """Theorem 2 with X = V (sector isometry, g = d_s) and Hermitian M = H_s: every eigenvalue of H_s is
+    within rho = inv + (||H|| + ||H_s||) delta of a distinct eigenvalue of H (Kahan's theorem on the polar
+    factor of V, docs/proofs/thm2_polar-factor.md). Was (1 + sqrt 5)/2 rho before track/backlog-proofs."""
     if not iso < 1:
         return None
     delta = up(1 - math.sqrt(1 - iso)) + 4 * U
-    rho = up(inv + (H_norm + M_norm) * delta)
-    return up(0.5 * (rho + math.sqrt(rho * rho + 4 * rho * rho)))
+    return up(inv + (H_norm + M_norm) * delta) + ULP_MIN
 
 
 # ---------------------------------------------------------------------------
@@ -365,11 +367,14 @@ def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
 
     Every entry of H_ref is a sum of at most m = n_terms * 2^Lmax contributions, each a product of the
     coupling and at most Lmax local amplitudes; each local amplitude carries one rounding when it is not
-    exactly representable (square roots for S >= 1 and bosons), and the product Lmax + 1 more. Hence
+    exactly representable (square roots for S >= 1 and bosons), each of the Lmax multiplications one more,
+    and the sum m - 1: a relative perturbation theta with |theta| <= gamma_{m + 2 Lmax - 1} per contribution
+    (one more rounding when the matrix is symmetrised, construct.hermitian_part). Hence
     |H_ref - H_spec| <= gamma_W |H|_abs entrywise with W = m + 2 Lmax + 2, where |H|_abs sums the absolute
-    values of the contributions, and ||H_ref - H_spec||_2 <= gamma_W sqrt(||H|_abs||_1 ||H|_abs||_inf).
-    Both norms are evaluated with the matrix-free operator (row sums and column sums of nonnegative terms,
-    inflated by a further gamma factor for their own rounding). No symmetry of |H|_abs is assumed."""
+    values of the exact contributions, and ||H_ref - H_spec||_2 <= gamma_W sqrt(||H|_abs||_1 ||H|_abs||_inf).
+    Both norms are evaluated with the matrix-free operator (row sums and column sums of the computed
+    nonnegative terms, which are at least the exact ones times (1 - gamma_{m + 2 Lmax - 1}); the division by
+    (1 - gamma_W) undoes that). No symmetry of |H|_abs is assumed (docs/proofs/appA_model-shift.md)."""
     from .fp import gamma
     op = SpecOperator(spec, states)
     n = op.shape[0]
@@ -381,7 +386,8 @@ def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
     row = float(np.max(op.abs_matvec(ones)))
     col = float(np.max(op.abs_rmatvec(ones)))
     g = gamma(width)
-    return up(g * math.sqrt(row * col) * (1 + gamma(width)) * (1 + 4 * U))
+    # six roundings (product, sqrt, product, 1 - gamma, division, product) covered by (1 + 4u)(1 + 8u) of up()
+    return up(g * math.sqrt(row * col) / (1 - gamma(width)) * (1 + 4 * U))
 
 
 def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_ref=None):
@@ -398,6 +404,8 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         elif H_full_ref is None:
             H_full_ref = build_bitwise(spec)
             ev["audit_space"] = {"kind": "full Hilbert space", "dimension": int(spec.dim)}
+        # Theorem 2 with X = V needs a Hermitian full operator; the builder shift covers the symmetrisation
+        H_full_ref = hermitian_part(H_full_ref)
         Hs = sp.csr_matrix(op)
         herm = float(abs(Hs - Hs.conj().T).max()) if Hs.nnz else 0.0
         ev["hermiticity_max_abs"] = herm
@@ -1063,16 +1071,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 st = "FAILED"
                 summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
                         f"accuracy target {target:.1e} [{tsrc}]")
-        if opts.underflow_check:
-            # the radii and residual bounds are the reported quantities and the operands of every downstream
-            # comparison (endpoints, shifts, separations)
-            T = UNDERFLOW_THRESHOLD
-            post = [("enclosure.radius", enc.radius, T), ("enclosure.existence_radius", enc.existence_radius, T),
-                    ("enclosure.residual_bound", enc.residual.upper, T),
-                    ("enclosure.residual_norm", enc.residual.computed, T)]
-            uf_record["scanned"] += [p[0] for p in post]
-            uf_findings += underflow_scan(post)
-            underflow = bool(uf_findings)
+        # INT-05 (track/backlog-proofs): the radii, existence radii and residual bounds are no longer scanned. The
+        # Theorem 1 radius is evaluated under the underflow-tolerant model fl(z) = z(1 + delta) + eta with the
+        # additive terms of fp.norm2_upper/norm2_lower and fp.residual_additive_term, so it is an upper bound for
+        # every magnitude of the intermediate quantities (docs/proofs/int05_underflow.md); the scan covers the
+        # stored inputs and the model shift, on which the remaining standard-model bounds (inertia, Gram,
+        # Rayleigh quotients) rest.
         code2 = None
         if underflow:
             st, code2 = "INCONCLUSIVE", "UNDERFLOW_RISK"

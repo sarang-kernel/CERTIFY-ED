@@ -129,6 +129,62 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
   Deviations recorded in the captions: the E1 record stores per-statement statuses for the correct result only
   (the statement column is derived from the diagnosis text); the E9 landscape is recorded at the re-optimised
   couplings, not the printed ones, and the named sectors carry no certified interval.
+### Backlog proofs (D-59; track/backlog-proofs)
+
+Six items of the UNVERIFIED backlog derived in `docs/proofs/` (one document per statement in the D-59 format:
+statement, proof, where the code implements it, computational verification, analytic cross-check, status line) with
+verification scripts `docs/proofs/verify_<id>.py` and their recorded outputs in `docs/proofs/runs/`. Every status line
+reads "Derived by Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's
+check (D-12): pending" — nothing is called verified.
+
+- **Theorem 2 with Kahan's constant** (`thm2_polar-factor.md`). The polar-factor lemma (Q̂ = X(XᴴX)^{−1/2} is an
+  isometry, ‖X − Q̂‖ ≤ δ, ‖AQ̂ − Q̂Λ‖ ≤ ρ = ‖R‖ + (‖A‖ + ‖Λ‖)δ) and Kahan's inclusion theorem for an *arbitrary*
+  Hermitian block (proof: Courant–Fischer interval count plus Hall's theorem) give the cluster radius ρ. The code used
+  ε = (w + √(w² + 4ρ²))/2 ≥ ρ (the Weyl-perturbation proof); `enclosure._cluster_bound` now returns min(ρ, ε*), both
+  proven, and `bound` carries `rho` (and `eps` = ρ for the schema). `certify._subspace_shift` and
+  `sectors.decomposition_shift` return ρ instead of (1 + √5)/2 ρ. Bound change: cluster radii shrink by up to the
+  factor 1.618 where ρ was the smaller bound (tests/test_whole_spectrum.py compares them within that bracket; the
+  Theorem 1 pipeline is bit-identical to the frozen reference).
+- **Theorem 2′** (`thm2prime_eps-star.md`): derived as stated (Kahan for the Rayleigh block of Q̂, Weyl for
+  Q̂ᴴAQ̂ − Λ with the commutator identity [M, Λ] = [M − I, Λ − cI]); `_cluster_bound` evaluates every term with
+  explicit rounding counts (≤ 6 per `up`) and the INT-05 additive terms.
+- **Corollary 5** (`cor5_pairing.md`): the pairing of the sorted claimed values with λ₁ … λ_k is proved through the
+  disjoint union intervals of the enclosure groups and a sorted-pairing lemma for a uniform radius (it fails for
+  non-uniform radii, hence the group structure); the model shift enters by Weyl. **Theorem 8** (`thm8_rho.md`): the
+  sector assembly with radius ρ (Corollary 5 per sector, the K lowest of B, Weyl for the unitary polar factor of W,
+  Weyl again for the builder shift). `compose.py` and the sector path of `certify()` symmetrise the built reference
+  matrix (`construct.hermitian_part`; a build with irrational local amplitudes can differ from its adjoint in the
+  last bit), and `D` is formed with `norm2_upper` instead of `up(sqrt(sum of squares))`.
+- **Appendix A model shift** (`appA_model-shift.md`): the builder error (which operations round, Lemma A1), the
+  symmetrisation (Lemma A2), ‖E‖₂ ≤ √(‖E‖₁‖E‖_∞) ≤ max(…) (Lemma A3), Δ = max(‖D‖₁, ‖D‖_∞) + Δ_builder (Theorem A4) and
+  the Weyl transfer of S2/S3 (Theorem A5). `_builder_shift` divides by (1 − γ_W) where it multiplied by (1 + γ_W)
+  (the latter is sufficient only for Wu ≲ 10⁻⁸). `OperatorAdapter.width` for a spec operator is m + 2L_max + 2 (was
+  m + L_max + 2, short by L_max − 4 roundings for strings of five or more letters). Its verification script was
+  written but could not be executed in the track's session (platform safety gate); the document says so.
+- **Theorem 1 accounting** (`thm1_fp-accounting.md`, `appendixA_scaffold.tex`): the INT-04 list as a proof with the
+  scalar lemmas behind every factor ((1 − γ₃)(1 + 4u) ≥ 1; the norm guards give a 3u slack; the |A||x| and E guards),
+  hypotheses n, w ≤ 2²⁶, and a statement-level LaTeX scaffold for the manuscript's Appendix A.
+- **INT-05 closed** (`int05_underflow.md`). Model fl(z) = z(1 + δ) + η, |η| ≤ 2⁻¹⁰⁷⁵, η = 0 for ±, derived from the
+  binary64 format. `fp.norm2_upper`/`norm2_lower` carry `norm_underflow_term(N)` ≥ √(N u_min)√((1 + γ_N)/(1 − γ_N));
+  `enclosure.residuals` adds `residual_additive_term(n, w, cplx)` ≥ √n c_w u_min to the residual bound and 2 ULP_MIN
+  to the radius; `fp.exact_dot` leaves products below 2⁻⁹⁶⁷ out of Dekker's TwoProduct (exact above that threshold
+  for normal factors; a subnormal factor is rescaled by 2^±60) and adds n_tiny·2⁻⁹⁶⁶ to its error bound;
+  `gram_additive_term` and `+ k ULP_MIN` guard the products of `_cluster_bound`, `compose`, `decomposition_shift`,
+  `_subspace_shift` and `kato_temple`. Radii never shrink (Theorem U6; difference ≤ D) and are bit-identical for
+  every radius above ≈ 10⁻¹⁴⁵. The UNDERFLOW_RISK scan covers the stored inputs and the model shift only; the
+  post-enclosure scan of radii and residual bounds is removed (`test_radius_forced_tiny_by_exact_eigenpair_of_scaled_operator`
+  is now CERTIFIED with radii of order 10⁻²⁷⁴ that enclose the exact eigenvalues).
+- **Mutation survivors** (RESULT_integration_3.2.md): `sectors.py:240` — a planted label defect two ulps below the
+  decision threshold (leak within the rounding allowance rnd) is not certified (`test_label_audit_defect_within_rounding_allowance_of_the_threshold`);
+  `certify.py` Kato–Temple `pos > 0` — the second-lowest pair's isolation interval starts at the lowest
+  enclosure's upper end; with −∞ the Rayleigh quotient of a ground-state-contaminated vector would be an unsound
+  upper end (`test_kato_temple_second_lowest_pair_uses_its_lower_neighbour_as_isolation_end`); `checker.py:261` —
+  `_float_vector_to_int` reconstructs the vector exactly (the mutant 2⁵⁴ doubles it; `radius_exact` is scale
+  invariant, so only a reconstruction test sees it). The 15 E6 survivors of the 3.1.0 run were not examined (the
+  worksheet is not in the clone).
+- Tests: `tests/test_backlog_proofs.py` (25); `tests/test_underflow_check.py` and `tests/test_whole_spectrum.py` adjusted
+  to the INT-05 and Theorem 2 changes. Computational source changes (enclosure.py, fp.py, certify.py, compose.py,
+  sectors.py, construct.py): records are not comparable by `source_hash` with 3.2.0.dev0 before this track.
 
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 

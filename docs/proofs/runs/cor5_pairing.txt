@@ -1,0 +1,6 @@
+sorted-pairing lemma (exact rationals): 20000 random + 500 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+Corollary 5 against mpmath eigenvalues of A + E: 347 random + 0 adversarial cases, 53 skipped (hypothesis not met), 0 violations
+negative controls not CERTIFIED: 0 random + 400 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+documented counterexample: non-uniform radii break the sorted pairing in 238 of 2000 cases (expected > 0)
+informational: with ||E|| = 1e-3 > declared Delta = 1e-12 the conclusion fails for A + E in 100 of 100 CERTIFIED cases (Delta is needed)
+RESULT: 0 violations

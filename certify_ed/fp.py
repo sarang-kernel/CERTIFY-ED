@@ -29,6 +29,16 @@ import scipy.sparse as sp
 U = 2.0 ** -53          # unit roundoff for binary64
 _GUARD = 1.0 + 8 * U    # relative guard applied to computed upper bounds
 
+# Underflow-tolerant model (INT-05, docs/proofs/int05_underflow.md). One binary64 operation with exact result z
+# returns fl(z) = z (1 + delta) + eta, |delta| <= u, |eta| <= u_min = 2^-1075: for |z| >= 2^-1022 the grid
+# spacing at z is <= 2^-52 |z| (so eta = 0), below it the spacing is 2^-1074 (so delta = 0). An addition or
+# subtraction whose exact result lies below 2^-1022 is exact (both operands are multiples of 2^-1074, so is
+# the sum, and every such multiple below 2^-1022 is a subnormal number): eta = 0 for + and -. 2^-1075 itself
+# is not a binary64 number; additive terms are formed in units of ULP_MIN = 2^-1074 >= 2 u_min, or with
+# math.ldexp(., -1075) followed by + ULP_MIN (the ldexp rounds to the subnormal grid, by at most u_min).
+ULP_MIN = 2.0 ** -1074          # smallest positive binary64 number (= 2 u_min)
+_SQRT_HALF_2M537 = math.sqrt(0.5) * 2.0 ** -537      # sqrt(u_min) = sqrt(0.5) 2^-537, rounded once
+
 # No-underflow hypothesis (INT-01, enforced since 3.2.0.dev0 unless Options(underflow_check=False)): every
 # nonzero operand, radius and residual bound of the floating-point statements has magnitude >= 2^-900. The
 # standard model fl(a op b) = (a op b)(1 + delta) does not hold for results in the subnormal range
@@ -85,18 +95,71 @@ def up(x: float) -> float:
     return float(x) * _GUARD + 0.0
 
 
+def norm_underflow_term(N: int) -> float:
+    """T_N >= sqrt(N u_min) sqrt((1 + gamma_N)/(1 - gamma_N)): the mass the squares of N real components can lose
+    to underflow in fl(||v||) = sqrt(sum fl(v_i^2)), expressed as a norm (docs/proofs/int05_underflow.md,
+    Lemma U3). N = n for a real vector, 2n for a complex one. About 1e-161 sqrt(N): below the resolution of
+    every radius above 1e-145, so it changes no bound of a normal-sized quantity. (1 + 2 gamma_{N+2}) >=
+    sqrt((1 + gamma_N)/(1 - gamma_N)) for N u <= 1/3; sqrt(0.5 N) 2^-537 = sqrt(N 2^-1075) (2^-537 is a normal
+    number; 2^-1075 is not); the two guards cover the five roundings of this line (sqrt, 1 + 2 gamma, two
+    products, gamma itself)."""
+    N = max(int(N), 1)
+    return math.sqrt(0.5 * N) * 2.0 ** -537 * (1.0 + 2.0 * gamma(N + 2)) * _GUARD * _GUARD
+
+
+def _real_components(v: np.ndarray) -> int:
+    return 2 * v.size if np.iscomplexobj(v) else v.size
+
+
+def residual_entry_count(w: int, complex_arith: bool) -> float:
+    """c_w: the number of u_min = 2^-1075 by which one entry of the computed residual R_i = fl(fl(A x)_i -
+    fl(mu x_i)) plus the computed entrywise bound E_i can fall short of the exact |A x - mu x|_i under
+    fl(z) = z(1 + delta) + eta (docs/proofs/int05_underflow.md, Lemma U4): w + 1 real products in R_i for real
+    data (4w + 2 for complex data: four per complex product, two for mu x_i), each eta propagated by at most
+    (1 + gamma_{w+1}); in E_i the w products of |A||x| propagated by at most 2 g (1 + 4u), then three operations
+    at scale g (1 + 4u)^2 and two at scale (1 + 4u). w = adapter.width."""
+    w = max(int(w), 1)
+    g = gamma_dot(w + 2, complex_arith)
+    products = (4 * w + 2) if complex_arith else (w + 1)
+    return (products * (1.0 + gamma(w + 1)) + 2.0 * g * w * (1.0 + gamma(w)) * (1 + 4 * U)
+            + 3.0 * g * (1 + 4 * U) ** 2 + 2 * (1 + 4 * U))
+
+
+def residual_additive_term(n: int, w: int, complex_arith: bool) -> float:
+    """A_{n,w} >= sqrt(n) c_w u_min: the 2-norm of the vector of entrywise additive terms, added to the bound on
+    ||A x - mu x|| in enclosure.residuals (INT-05). Formed as ldexp(sqrt(n) c_w (1 + 8u)^2, -1075) + ULP_MIN:
+    the guards cover the roundings of the normal-range factor, the ldexp rounds to the subnormal grid by at
+    most u_min, and ULP_MIN = 2 u_min covers that (the addition is exact in the subnormal range)."""
+    n = max(int(n), 1)
+    t = math.sqrt(float(n)) * residual_entry_count(w, complex_arith) * _GUARD * _GUARD
+    return math.ldexp(t, -1075) + ULP_MIN
+
+
+def gram_additive_term(g: int, n: int, complex_arith: bool) -> float:
+    """Upper bound on the Frobenius norm of the additive (underflow) part of the rounding error of a BLAS
+    product X^H Y with X, Y n x g: each of the g^2 entries is a sum of n products (3n real products of
+    which at most 2n enter one component for complex data), each contributing one eta <= u_min propagated
+    by at most (1 + gamma_n); the matrix of these bounds has Frobenius norm <= g n (1 + gamma_n) u_min times
+    3 for complex data (|z| <= |Re z| + |Im z|, 2n + 2n real products) (docs/proofs/int05_underflow.md)."""
+    g, n = max(int(g), 1), max(int(n), 1)
+    t = g * (3.0 if complex_arith else 1.0) * n * (1.0 + gamma(n)) * _GUARD * _GUARD
+    return math.ldexp(t, -1075) + ULP_MIN
+
+
 def norm2_upper(v: np.ndarray) -> float:
-    """Upper bound on the exact 2-norm of a stored float vector."""
+    """Upper bound on the exact 2-norm of a stored float vector (any magnitude: the standard-model factor
+    (1 + gamma_{n+2})(1 + 8u) undoes the relative errors of the squares, the sum and the square root; the
+    additive norm_underflow_term covers the squares that underflow, INT-05)."""
     n = v.size
     s = float(np.linalg.norm(v))
-    return s * (1.0 + gamma(n + 2)) * _GUARD
+    return s * (1.0 + gamma(n + 2)) * _GUARD + norm_underflow_term(_real_components(v))
 
 
 def norm2_lower(v: np.ndarray) -> float:
-    """Lower bound on the exact 2-norm of a stored float vector."""
+    """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve)."""
     n = v.size
     s = float(np.linalg.norm(v))
-    return max(0.0, s * (1.0 - gamma(n + 2)) / _GUARD)
+    return max(0.0, s * (1.0 - gamma(n + 2)) / _GUARD - norm_underflow_term(_real_components(v)))
 
 
 def fro_upper(A) -> float:
@@ -359,32 +422,63 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     return math.fsum(t.tolist())
 
 
+# Dekker's TwoProduct (Veltkamp split of two normal numbers, then the partial products) is exact when every
+# intermediate lies on a grid no finer than 2^-1074: all of them are multiples of ulp(a) ulp(b), which is
+# >= 2^-1074 whenever |a b| >= 2^-968 (docs/proofs/int05_underflow.md, Lemma U4). Pairs whose computed product
+# is below TINY_PRODUCT = 2^-967 are left out of the error-free sum and their total magnitude, at most
+# TINY_BOUND each, is added to the error bound. A pair with a subnormal factor and a product above the
+# threshold has its other factor above 2^54; it is rescaled by 2^60 and 2^-60 (exact) before the split.
+TINY_PRODUCT = 2.0 ** -967
+TINY_BOUND = 2.0 ** -966          # >= 2^-967 + u_min, the largest exact product a left-out pair can have
+_MIN_NORMAL = 2.0 ** -1022
+
+
+def _two_product_split(a: np.ndarray, b: np.ndarray):
+    """(p, e, n_tiny): TwoProduct of the pairs whose product is at least TINY_PRODUCT in magnitude (exact),
+    and the number of pairs left out (their products are below TINY_BOUND in magnitude)."""
+    big = np.abs(a * b) >= TINY_PRODUCT
+    n_tiny = int(a.size - np.count_nonzero(big))
+    if n_tiny:
+        a, b = a[big], b[big]
+    sa = np.abs(a) < _MIN_NORMAL          # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
+    sb = np.abs(b) < _MIN_NORMAL
+    if np.any(sa) or np.any(sb):
+        a, b = a.astype(float, copy=True), b.astype(float, copy=True)
+        a[sa] *= 2.0 ** 60
+        b[sa] *= 2.0 ** -60
+        a[sb] *= 2.0 ** -60
+        b[sb] *= 2.0 ** 60
+    p, e = _two_product(a, b)
+    return p, e, n_tiny
+
+
 def exact_dot(x: np.ndarray, y: np.ndarray):
     """Return (s, err) with |s - x^H y| <= err, where s is the correctly rounded
-    value of the exact inner product (computed with TwoProduct and a correctly rounded
-    summation: exact_sum, which is math.fsum's value by construction).
+    value of the exact inner product of the terms whose products do not underflow (computed with
+    TwoProduct and a correctly rounded summation: exact_sum, which is math.fsum's value by construction).
 
     err = 2u|s| per real component (the summation is correctly rounded; the factor 2
-    covers the conversion of the complex result). Underflow is excluded by the
-    stated arithmetic assumptions.
+    covers the conversion of the complex result) plus the total magnitude the left-out products can
+    have, n_tiny * TINY_BOUND per real component (INT-05; zero for every input whose
+    products are above 2^-967, i.e. for every pair of vectors with entries above 2^-483 in magnitude).
     """
     x = np.asarray(x).ravel()
     y = np.asarray(y).ravel()
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         xr, xi = np.real(x).astype(float), np.imag(x).astype(float)
         yr, yi = np.real(y).astype(float), np.imag(y).astype(float)
-        p1, e1 = _two_product(xr, yr)
-        p2, e2 = _two_product(xi, yi)
-        p3, e3 = _two_product(xr, yi)
-        p4, e4 = _two_product(xi, yr)
+        p1, e1, t1 = _two_product_split(xr, yr)
+        p2, e2, t2 = _two_product_split(xi, yi)
+        p3, e3, t3 = _two_product_split(xr, yi)
+        p4, e4, t4 = _two_product_split(xi, yr)
         re = exact_sum(np.concatenate([p1, e1, p2, e2]))
         im = exact_sum(np.concatenate([p3, e3, -p4, -e4]))
         s = complex(re, im)
-        err = 2 * U * (abs(re) + abs(im))
+        err = 2 * U * (abs(re) + abs(im)) + (t1 + t2 + t3 + t4) * TINY_BOUND
         return s, err
-    p, e = _two_product(x.astype(float), y.astype(float))
+    p, e, t = _two_product_split(x.astype(float), y.astype(float))
     s = exact_sum(np.concatenate([p, e]))
-    return s, 2 * U * abs(s)
+    return s, 2 * U * abs(s) + t * TINY_BOUND
 
 
 def exact_gram(X: np.ndarray):
