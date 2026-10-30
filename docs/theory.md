@@ -506,3 +506,15 @@ the distinct status CERTIFIED_UNDER_HYPOTHESIS with the hypothesis `declared_gap
 statement text. An MPS is contracted left to right with |ψ̂ − ψ| ≤ γ_M |A⁽¹⁾|⋯|A⁽ᴸ⁾| entrywise (M = Σ D_{j−1}, Higham
 Lemma 3.3); the certified statements are about ψ̂, and |θ(ψ) − θ(ψ̂)| ≤ (2r‖ψ̂‖e + (‖H‖ + |θ|)e²)/(‖ψ̂‖ − e)² is recorded.
 Producer-declared stochastic estimates are DECLARED (DECLARED_ESTIMATE) and nothing rests on them.
+
+### 10.6 Generalized eigenproblems (E-03, `generalized.py`, `docs/proofs/E-03_generalized.md`)
+
+For A x = λ B x with B ≻ 0 and B = LLᴴ, the pencil is similar to C = L⁻¹AL⁻ᴴ (Lᴴx are C's eigenvectors). Theorem 1 for C
+gives |λ − μ| ≤ ‖Ax − μBx‖_{B⁻¹}/‖x‖_B ≤ ‖Ax − μBx‖₂/(√β_c ‖x‖_B) for any certified β_c ≤ λ_min(B) (‖L⁻¹‖₂² = 1/λ_min(B)); β_c
+comes from the inertia of B − βI (ν = 0 with backward error b ⇒ λ_min(B) ≥ β − b), and a B whose inertia at 0 is
+negative is refused. The residual s = fl(Ax − μ fl(Bx)) carries the entrywise bound γ̇_n|A||x| + |μ|γ̇_{n+1}|B||x| +
+u(1 + 2u)|ŝ|, xᴴBx the error-free inner product of `fp.exact_dot` minus γ̇_n|x|ᵀ|B||x|. Completeness of a 'lowest' claim:
+A − σB = L(C − σI)Lᴴ, so ν(A − σB) = #{λ < σ} (Sylvester); a factorization of M̂ = fl(A − σB) with total backward error b
+(LDLᴴ plus the forming error ‖u|σ||B| + u|M̂|‖_∞) satisfies #{λ < σ − b/β_c} ≤ ν ≤ #{λ ≤ σ + b/β_c}, because bI ⪯ (b/β_c)B;
+ν = k with pairwise disjoint enclosures above which σ − b/β_c lies makes the enclosures the k lowest eigenvalues and
+gives λ_{k+1} ≥ σ − b/β_c. A declared λ_min(B) is a named hypothesis (CERTIFIED_UNDER_HYPOTHESIS).

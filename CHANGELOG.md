@@ -49,6 +49,21 @@ non-certified record statement a `next_action`.
   orthogonal trial state, mismatched certificate, tiny norms (2⁻⁴⁵⁰ valid, 2⁻⁹⁵⁰ UNDERFLOW_RISK), complex data,
   non-Hermitian operator refused, MPS (Neel product state, random D = 3, size limit), sparse CI, declared estimates,
   record schema negative controls, CLI.
+- **E-03 generalized eigenproblems A x = λ B x, B positive definite.** `certify_ed.generalized.certify_generalized(A, B,
+  eigenvalues, eigenvectors, kind='lowest' | 'subset', lambda_min_B=..., lambda_min_B_source=...)`, dense path (n ≤ 4000):
+  G1 a certified lower bound β_c on λ_min(B) from the inertia of B − βI (Bunch–Kaufman LDLᴴ with its backward error; a B
+  whose inertia at shift 0 is negative is refused with UNSUPPORTED_MODEL), G2 per pair |λ − μ| ≤ ‖Ax − μBx‖₂/(√β_c ‖x‖_B)
+  (Theorem 1 for the similar Hermitian matrix L⁻¹AL⁻ᴴ, ‖L⁻¹‖₂ = λ_min(B)^{-1/2}; residual and xᴴBx with the standard-model
+  accounting), G3 completeness of a 'lowest' claim by the inertia of A − σB (Sylvester's law for the congruence
+  L(C − σI)Lᴴ; collar b/β_c for the backward error b of the factorization plus the rounding of forming A − σB) with
+  λ_{k+1} ≥ σ − b/β_c; overlapping enclosures and ν ≠ k are INCONCLUSIVE with the count recorded (`missing_at_least`). A
+  declared λ_min(B) (used only when the inertia is inconclusive) is the named hypothesis `declared_lambda_min_B` and makes
+  every statement CERTIFIED_UNDER_HYPOTHESIS. Mathematics: `docs/proofs/E-03_generalized.md`. Verification against
+  mpmath ground truth (Cholesky, L⁻¹AL⁻ᴴ, exact B⁻¹-norm residuals): 303 random + 100 adversarial cases, 0 violations;
+  negative control (declared λ_min(B) ten times the true one, inertia disabled): the radii undercut the exact residual in
+  40/40 pairs while the record names the hypothesis. Tests `tests/test_generalized.py` (8): random pencils against
+  `scipy.linalg.eigh(A, B)` (real and complex), perturbed vectors, indefinite B refused, wrong eigenvalue, swapped pairs, a
+  missing eigenvalue detected, 'subset', the declared path with a false declaration, size limit, schema.
 
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
 
