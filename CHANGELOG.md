@@ -12,8 +12,8 @@ format-packaging, producers, statements, whole-spectrum (its commits re-written 
 unchanged), viewer-corpus. Conflicts were additive except two: `certify.py`'s observable loop now applies the
 Hermitian decomposition (C-05) to the parsed operators of C-15, and an inverted window is refused when the
 Claim is built (C-14) rather than reported by S3 (C-02 test adjusted). `Certificate.load` validates the schema
-before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.md`. Sixteen CLI commands:
-env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum,
+before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.md`. Seventeen CLI commands:
+env, certify, import, plan, statement, crossing, sweep, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
 
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
@@ -57,6 +57,26 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
   violations; tests `tests/test_correlation_lift.py` (7) against full-space values on the 8-site ring (k = 0 and
   parity sectors, S^z S^z and S+ S-, S(q)), with a planted 0.1 % stretch (INCONCLUSIVE), S1 skipped
   (NOT_CHECKED) and a planted iota = 0.05 where only the isometry term makes the interval contain tr(Pi_Q O).
+
+- **E-04 certified parameter intervals.** `certify_ed.sweep.certified_sweep(spec_fn, couplings, k, ...)` certifies
+  the k lowest eigenpairs at every grid coupling and assembles eigenvalue tubes between them: with H1 the
+  derivative spec (declared, or inferred from the coefficients at the first two couplings) and B >= ||H1||_2 (the
+  smaller of the row-sum bound of the built H1 plus the builder shift and the triangle bound over the terms, both
+  rounded up), Weyl's inequality per sorted index gives |lambda_j(F_k(c)) - lambda_j(H(c_k))| <= B |c - c_k| for the
+  affine interpolant F_k(c) = H(c_k) + (c - c_k) H1 of each segment, so every S2 enclosure widens to a tube and the
+  rank certified by S3 is preserved (equivalently: the count below a shifting threshold); the neighbouring
+  certificate's tube, shifted by the segment's affinity defect (exactly zero when the coefficients are affine in
+  binary64, computed in rationals), is intersected with it (`docs/proofs/E-04_parameter_intervals.md`). `tube_at`,
+  `next_level_lower_bound_at`, U(1) blocks (`states_fn`, zero-leak check for H1) and symmetry sectors (`sector_fn`:
+  tubes for the stored block family with ranks in the block; the lift to the full operator is certified at the grid
+  points only, recorded) are supported. `certified_crossing_interval(scan_a, level_a, scan_b, level_b)` returns the
+  coupling runs where two tubes are certified apart ('<' / '>') and the crossing intervals between them, using the
+  2B-Lipschitz bound on the margin between sample points so that no coupling is missed. CLI `certify-ed sweep
+  --model ... --param ... --values ...`. Verification: 1 049 random + 107 adversarial cases, 0 violations; the tubes
+  contain dense-diagonalisation eigenvalues at 100 % of random intermediate couplings; negative controls: a wrong
+  B (B/20) is caught at every sampled coupling (violation or empty intersection), a wrong declared H1 is flagged by
+  the affinity defect. Tests `tests/test_sweep.py` (7), including the k = 0 / k = pi ground-state crossing of the
+  8-site J1-J2 chain bracketed at the Majumdar-Ghosh point J2 = 1/2.
 
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 

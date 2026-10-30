@@ -437,3 +437,15 @@ with Q the polar factor of V and Π_Q = QP_sQᴴ (an orthogonal projector of ran
 compression VᴴOV is formed in floating point with the standard-model bound γ̇_{w_O+w_V}‖|V|ᵀ|O||V|‖_F +
 u‖Õ_fl‖_F on its error, which enters multiplied by ‖P_s‖₁ = g. The certified statement is about Π_Q; whether
 range Π_Q is an H-eigenspace rests on ν (recorded), and other sectors may share the level.
+
+### 10.3 Certified parameter intervals (E-04, `sweep.py`, `docs/proofs/E-04_parameter_intervals.md`)
+
+For the affine interpolant F_k(c) = H(c_k) + (c − c_k)H1 of the certified grid Hamiltonians, with B ≥ ‖H1‖₂ (row-sum
+bound of the built derivative plus the builder shift, or the triangle bound Σ|b_t|Π‖o‖_∞ over the terms), Weyl's
+inequality gives |λ_j(F_k(c)) − λ_j(H(c_k))| ≤ B|c − c_k| for every sorted index j, so the S2 enclosures at c_k widen
+to tubes over the segment with S3's ranks preserved (the count below a shifting threshold moves by at most the
+widening), and the neighbouring certificate's tube, shifted by the affinity defect d_k ≥ ‖H(c_{k+1}) − F_k(c_{k+1})‖₂
+(zero for coefficients affine in binary64; exact rational check), is intersected with it. Two tubes are certified
+apart on a sample interval of width D when max of the end margins + BD < 0 (the margin is 2B-Lipschitz); a
+not-separated run flanked by opposite certified relations contains a crossing (continuity of the sorted
+eigenvalues).
