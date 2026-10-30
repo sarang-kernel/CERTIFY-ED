@@ -44,13 +44,13 @@ import scipy.sparse as sp
 from .certificate_v2 import Certificate, environment_record, matrix_sha256, array_sha256
 from .cost import resolve_budget_seconds
 from .diagnostics import annotate_next_actions
-from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, matrix_difference,
+from .construct import (StateSet, build_bitwise, cross_construct, full_state_set, hermitian_part, matrix_difference,
                         product_tolerance, SpecOperator)
 from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, _cluster_bound, cluster_groups,
                         is_streamed, nonfinite_columns, read_columns)
-from .fp import (U, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
+from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
                  sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
@@ -286,12 +286,13 @@ def _underflow_statement_note(findings):
 
 
 def _subspace_shift(iso: float, inv: float, H_norm: float, M_norm: float) -> Optional[float]:
-    """Theorem 2 with X = V (sector isometry, g = d_s) and Hermitian M = H_s."""
+    """Theorem 2 with X = V (sector isometry, g = d_s) and Hermitian M = H_s: every eigenvalue of H_s is
+    within rho = inv + (||H|| + ||H_s||) delta of a distinct eigenvalue of H (Kahan's theorem on the polar
+    factor of V, docs/proofs/thm2_polar-factor.md). Was (1 + sqrt 5)/2 rho before track/backlog-proofs."""
     if not iso < 1:
         return None
     delta = up(1 - math.sqrt(1 - iso)) + 4 * U
-    rho = up(inv + (H_norm + M_norm) * delta)
-    return up(0.5 * (rho + math.sqrt(rho * rho + 4 * rho * rho)))
+    return up(inv + (H_norm + M_norm) * delta) + ULP_MIN
 
 
 # ---------------------------------------------------------------------------
@@ -391,6 +392,8 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         elif H_full_ref is None:
             H_full_ref = build_bitwise(spec)
             ev["audit_space"] = {"kind": "full Hilbert space", "dimension": int(spec.dim)}
+        # Theorem 2 with X = V needs a Hermitian full operator; the builder shift covers the symmetrisation
+        H_full_ref = hermitian_part(H_full_ref)
         Hs = sp.csr_matrix(op)
         herm = float(abs(Hs - Hs.conj().T).max()) if Hs.nnz else 0.0
         ev["hermiticity_max_abs"] = herm

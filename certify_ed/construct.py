@@ -207,6 +207,21 @@ def build_bitwise(spec: ModelSpec, states: Optional[StateSet] = None,
     return H
 
 
+def hermitian_part(H: sp.spmatrix) -> sp.csr_matrix:
+    """H itself when it is exactly Hermitian, else (H + H^H)/2 (one rounding per entry).
+
+    The bitwise builder forms the (i, j) and (j, i) entries from different monomials (a different order of
+    the same amplitude factors), so a built matrix with irrational local amplitudes (S >= 1, bosons) can
+    differ from its adjoint in the last bit. The statements of Theorems 1, 2 and 8 and Weyl's inequality
+    need a Hermitian matrix; the builder shift certify._builder_shift covers the symmetrisation
+    (docs/proofs/appA_model-shift.md, Lemma A2)."""
+    H = sp.csr_matrix(H)
+    asym = H - H.conj().T
+    if asym.nnz == 0 or float(abs(asym).max()) == 0.0:
+        return H
+    return ((H + H.conj().T) / 2).tocsr()
+
+
 # ---------------------------------------------------------------------------
 # Matrix-free application (for producers that never store H)
 # ---------------------------------------------------------------------------
