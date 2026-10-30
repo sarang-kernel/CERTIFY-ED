@@ -77,24 +77,39 @@ class EigenspaceCertificate:
     projector_error: float              # || X X^* - P ||_2 bound
     observables: Dict[str, dict] = field(default_factory=dict)
     quantum_numbers: Dict[str, dict] = field(default_factory=dict)
+    sin_theta_bounds: Dict[str, object] = field(default_factory=dict)   # E-07: 'theorem6', 'davis_kahan', 'used'
 
     def to_dict(self):
         return {"members": self.members, "claimed": self.claimed,
                 "separation_lower_bound": self.separation, "rho": self.rho, "eta": self.eta,
                 "sin_theta_bound": self.sin_theta, "projector_error_bound": self.projector_error,
+                "sin_theta_bounds": self.sin_theta_bounds,
                 "observables": self.observables, "quantum_numbers": self.quantum_numbers}
 
 
 def certify_eigenspace(X: np.ndarray, members: List[int], claimed: np.ndarray,
-                       rho: float, eta: float, separation: float) -> Optional[EigenspaceCertificate]:
-    if not (separation > 0 and eta < 1):
+                       rho: float, eta: float, separation: float,
+                       sin_theta_alt: Optional[dict] = None) -> Optional[EigenspaceCertificate]:
+    """s = rho / separation (Theorem 6: Davis-Kahan with the Theorem 2 residual bound rho) or, when `sin_theta_alt`
+    carries a second proven bound (E-07, davis_kahan.sin_theta_davis_kahan: {'bound': s_dk, ...}), the smaller of
+    the two; both are recorded in `sin_theta_bounds`. None when neither bound is below 1 or eta >= 1."""
+    if not eta < 1:
         return None
-    s = up(rho / separation)
-    if s >= 1:
+    s6 = up(rho / separation) if separation > 0 else float("inf")
+    s_dk = float("inf")
+    if sin_theta_alt is not None and sin_theta_alt.get("bound") is not None:
+        s_dk = float(sin_theta_alt["bound"])
+    s = min(s6, s_dk)
+    if not s < 1:
         return None
+    used = "theorem6" if s6 <= s_dk else "davis_kahan"
+    rec = {"theorem6": float(s6) if math.isfinite(s6) else None, "davis_kahan": float(s_dk) if math.isfinite(s_dk) else None,
+           "used": used}
+    if sin_theta_alt is not None:
+        rec["davis_kahan_record"] = {k: v for k, v in sin_theta_alt.items() if k != "bound"}
     return EigenspaceCertificate(list(map(int, members)), [float(claimed[i]) for i in members],
                                  float(separation), float(rho), float(eta), float(s),
-                                 float(up(s + eta)))
+                                 float(up(s + eta)), sin_theta_bounds=rec)
 
 
 def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,

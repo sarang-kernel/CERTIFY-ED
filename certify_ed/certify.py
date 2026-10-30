@@ -162,6 +162,13 @@ class Options:
     correlations: Dict[str, Any] = field(default_factory=dict)
     #   name -> {"letter": "z", "sites": [...], "positions": [[x, y], ...] (optional), "q": [[...], ...] (optional)}
     degeneracy: bool = True                  # S8 for the S4 clusters
+    # ---- entanglement (C-03, 3.2): name -> {"sites": [...], "log_base": "e" | 2, "max_dim_a": int}; S4 evidence
+    # `entanglement` per cluster: certified interval for S(rho_A) and the entanglement spectrum (entanglement.py)
+    entanglement: Dict[str, Any] = field(default_factory=dict)
+    # ---- approximate symmetries (C-12, 3.2): name -> (S, lattice_or_None[, allowed_values]); S a matrix or a diagonal in
+    # the claim space; the commutator bound ||[H, S]|| is computed from the stored reference matrix and recorded as the
+    # hypothesis of the label record (davis_kahan.py)
+    approximate_symmetries: Dict[str, Any] = field(default_factory=dict)
     # ---- no-underflow hypothesis (INT-01, 3.2.0.dev0): scan operands, radii and residual bounds for nonzero
     # magnitudes below fp.UNDERFLOW_THRESHOLD; a finding makes S2 and its dependents INCONCLUSIVE
     # (UNDERFLOW_RISK). False assumes the hypothesis; the choice is recorded in the scope block's options.
@@ -1316,20 +1323,32 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             L_above = min(float(lo_o[mu_o > b_].min()) if np.any(mu_o > b_) else np.inf, window[1])
             # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
             # of the claimed values, to the remaining eigenvalues
-            sep = float(sub_down(min(sub_down(a_, U_below), sub_down(L_above, b_)), eps))
+            dist = float(min(sub_down(a_, U_below), sub_down(L_above, b_)))
+            sep = float(sub_down(dist, eps))
             rec["separation_lower_bound"] = float(sep)
-            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep)
+            # E-07: the Davis-Kahan sin(theta) bound with the residual ||R||_F / sqrt(1 - eta) and the Ritz-value
+            # deviation w' (davis_kahan.py); S4 uses min(Theorem 6, Davis-Kahan), both proven and both recorded
+            from .davis_kahan import sin_theta_davis_kahan
+            s_dk = sin_theta_davis_kahan(_bound["R_fro"], _bound["XR"], eta, _bound["delta"], _bound["spread"], dist,
+                                         model_shift=eps_s3)
+            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep, sin_theta_alt=s_dk)
             if ec is None:
                 rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
                 eig_records.append(rec)
                 continue
             for name, O in observables.items():
                 # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
-                from .correlations import certify_observable_general
+                from .correlations import certify_observable_general, certify_observable_lifted
+                if (claim.sector_isometry is not None and audit is not None and audit.passed
+                        and O.shape[0] == claim.sector_isometry.shape[0] != X.shape[0]):
+                    # C-04: an observable given in the full space is lifted through the sector isometry
+                    certify_observable_lifted(ec, X, claim.sector_isometry, O, name, audit.isometry_defect,
+                                              audit.invariance_defect)
+                    continue
                 r_obs = certify_observable_general(ec, X, O, name)
                 O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
-            corr_recs = _correlations(ec, X, spec, claim, correlations, rec)
+            corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":
                     _total_spin(ec, X, name, spec, claim, rec)
@@ -1343,11 +1362,20 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 ec.quantum_numbers[name]["commutation_checked_on"] = (
                     "reference matrix built from the spec" if Href is not None else
                     "operator used for the bounds" if comm_op is not None else "not checked")
+            if opts.approximate_symmetries:
+                # C-12: labels of approximately conserved operators, hypothesis ||[H, S]|| <= c recorded (davis_kahan.py)
+                from .davis_kahan import labels_hook
+                labels_hook(ec, X, opts.approximate_symmetries, Href if Href is not None else (op if is_matrix(op) else None),
+                            (JL, JU))
             r = ec.to_dict()
             r["splitting"] = rec["splitting"]
             r["status"] = "CERTIFIED"
             if corr_recs:
                 r["correlations"] = corr_recs
+            if opts.entanglement:
+                # C-03: certified entanglement entropy and spectrum across declared cuts (entanglement.py)
+                from .entanglement import entanglement_records
+                r["entanglement"] = entanglement_records(ec, X, spec, claim, opts.entanglement)
             n_ok += 1
             eig_records.append(r)
             s4_clusters.append(C)
@@ -1529,7 +1557,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                  "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
                  "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
                  "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy),
-                 "underflow_check": bool(opts.underflow_check)},
+                 "underflow_check": bool(opts.underflow_check), "entanglement": sorted(opts.entanglement),
+                 "approximate_symmetries": sorted(opts.approximate_symmetries)},
                 ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
                  "include the certified shift to the full operator") if audit is not None else "operator",
                 requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
@@ -1574,24 +1603,46 @@ def _total_spin(ec, X, name, spec, claim, rec):
         r["total_spin"] = [float((-1 + np.sqrt(1 + 4 * v)) / 2) for v in r["certified_values"]]
 
 
-def _correlations(ec, X, spec, claim, requests, rec):
+def _correlations(ec, X, spec, claim, requests, rec, audit=None):
     """S4 extension: two-point functions and structure factors requested in Options.correlations (resolved to
     dictionaries by operators.resolve_correlation_request; correlations.py, Proposition 15). Records are
-    returned for the cluster; errors become INCONCLUSIVE records rather than exceptions."""
+    returned for the cluster; errors become INCONCLUSIVE records rather than exceptions. For a symmetry-adapted
+    claim (sector_isometry) the site operators are built in the full space and lifted through the isometry
+    (C-04, certify_correlations_lifted) using S1's audit (isometry and invariance defects); without that audit
+    the records are NOT_CHECKED, and when the audit failed they are INCONCLUSIVE."""
     if not requests:
         return {}
     out = {}
-    if spec is None or claim.sector_isometry is not None:
+    if spec is None:
         for name in requests:
-            out[name] = {"status": "NOT_CHECKED", "reason": "needs a specification and a computational-basis claim",
-                         "reason_code": "NEEDS_SPEC" if spec is None else "UNSUPPORTED_CLAIM"}
+            out[name] = {"status": "NOT_CHECKED", "reason": "needs a model specification",
+                         "reason_code": "NEEDS_SPEC"}
         return out
-    from .correlations import certify_correlations, structure_factor
+    lifted = claim.sector_isometry is not None
+    if lifted and audit is None:
+        for name in requests:
+            out[name] = {"status": "NOT_CHECKED", "reason_code": "DEPENDENCY_NARROWED",
+                         "reason": ("symmetry-adapted claim: the lift of tr(P O) through the sector isometry needs S1's "
+                                    "sector audit (isometry and invariance defects); S1 did not run or produced no audit")}
+        return out
+    if lifted and not audit.passed:
+        for name in requests:
+            out[name] = {"status": "INCONCLUSIVE",
+                         "reason": ("symmetry-adapted claim whose S1 sector audit failed: the block is not certified to be an "
+                                    "invariant orthonormal restriction of the declared model, so the lifted quantity is not "
+                                    "certified"), "isometry_defect": float(audit.isometry_defect),
+                         "invariance_defect": float(audit.invariance_defect)}
+        return out
+    from .correlations import certify_correlations, certify_correlations_lifted, structure_factor
     for name, req in requests.items():
         try:
             letter = req.get("letter", "z")
             sites = list(req.get("sites", range(spec.n_sites)))
-            cr = certify_correlations(ec, X, spec, letter, sites, states=claim.states, name=name)
+            if lifted:
+                cr = certify_correlations_lifted(ec, X, spec, claim.sector_isometry, letter, sites,
+                                                 audit.isometry_defect, audit.invariance_defect, name=name)
+            else:
+                cr = certify_correlations(ec, X, spec, letter, sites, states=claim.states, name=name)
             cr["status"] = "CERTIFIED"
             if req.get("q") is not None:
                 pos = req.get("positions") or [[float(i)] for i in sites]

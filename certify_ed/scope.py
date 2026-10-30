@@ -45,8 +45,10 @@ REASON_CODES: Dict[str, str] = {
 
 # standing quantities labs report that no statement of this version certifies (docs/SCOPE_MATRIX.md)
 OUT_OF_SCOPE_QUANTITIES = [
-    {"quantity": "entanglement entropy and entanglement spectrum", "reason_code": "NOT_IMPLEMENTED",
-     "detail": "needs an eigenvector-error-to-entropy perturbation bound (Fannes-Audenaert on the reduced density matrix)"},
+    {"quantity": "entanglement entropy and entanglement spectrum", "reason_code": "DEFAULT_SELECTION",
+     "detail": ("since 3.2 (C-03) an S4 evidence record per cluster when Options.entanglement names a cut: certified "
+                "interval for S(rho_A) (Fannes-Audenaert on the trace-norm bound 2T <= 2 s + 2 eta/(1 - eta) of the "
+                "reduced state) and the entanglement spectrum (Weyl); not computed unless requested")},
     {"quantity": "dynamical response, spectral functions", "reason_code": "OUT_OF_SCOPE_DYNAMICS",
      "detail": "needs certified Krylov / continued-fraction error bounds; not a statement about one eigenpair set"},
     {"quantity": "time evolution", "reason_code": "OUT_OF_SCOPE_DYNAMICS",
@@ -168,7 +170,9 @@ def build_scope_block(selection: Selection, statements: List[dict], budget: Budg
                         "implied": selection.implied.get(short)})
         else:
             in_scope.append({"id": sid, "status": st["status"], "implied": selection.implied.get(short)})
-    out += [dict(q) for q in OUT_OF_SCOPE_QUANTITIES]
+    requested_ent = bool((options_record or {}).get("entanglement"))
+    out += [dict(q) for q in OUT_OF_SCOPE_QUANTITIES
+            if not (requested_ent and q["quantity"].startswith("entanglement"))]
     return {"schema": SCOPE_SCHEMA, "preset": selection.preset, "selection": selection.to_dict(),
             "budgets": budget.to_dict(), "in_scope": in_scope, "narrowed": narrowed, "out_of_scope": out,
             "requested": requested or {}, "options": options_record, "operator_scope": operator_scope,

@@ -411,3 +411,52 @@ values they are.
 [0, 1/3); outward dyadic rounding preserves enclosure at each step; squaring and division of
 positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
 P bits; the enclosures are therefore not the tightest possible, only correct.)
+
+## 10. Statements added in 3.2 (derived under D-59; documents in `docs/proofs/`)
+
+Each statement below has a derivation document with exactly the sections Statement, Proof, Where the code
+implements it, Computational verification, Analytic cross-check and Status, and a verification script
+`docs/proofs/verify_<id>.py`. All are **[derived by Claude; independent re-derivation pending, D-12]**.
+
+### 10.1 Entanglement entropy and spectrum (C-03, `entanglement.py`, `docs/proofs/C-03_entanglement.md`)
+
+For a certified cluster (Theorem 6: ‖Q̂Q̂ᴴ − P‖₂ ≤ s, η = ‖XᴴX − I‖₂) and a declared cut A|B, with
+ρ_A = tr_B(P)/g and ρ̂_A = tr_B(XXᴴ)/tr(XᴴX): T = ‖ρ_A − ρ̂_A‖₁/2 ≤ T* = s + η/(1 − η) (= s for g = 1), by the
+rank-2g trace-norm bound on P − Q̂Q̂ᴴ and the contractivity of the partial trace; |S(ρ_A) − S(ρ̂_A)| ≤
+T* ln(d_A − 1) + h(T*) (Fannes–Audenaert, Audenaert 2007) provided T* ≤ 1 − 1/d_A, where the right-hand side is
+increasing in T; |λ_k(ρ_A) − λ_k(ρ̂_A)| ≤ 2T* (Weyl). The reduced matrix of the stored vectors is exact
+(rational), its spectrum is enclosed by Ostrowski + Weyl around a floating-point eigendecomposition with exactly
+computed defects, and x ln x, h and ln are evaluated on the dyadic intervals of Lemma 17.
+
+### 10.2 Correlations through the sector isometry (C-04, `correlations.py`, `docs/proofs/C-04_correlation_lift.md`)
+
+For a symmetry-adapted claim (V, H_s) audited by S1 (ι ≥ ‖VᴴV − I‖, ν ≥ ‖HV − VH_s‖) and a cluster certified
+by Theorem 6 in the block (P_s, ‖XXᴴ − P_s‖ ≤ s + η): tr(P_s VᴴOV) = tr(Π_V O) with Π_V = VP_sVᴴ (exact), and
+with Q the polar factor of V and Π_Q = QP_sQᴴ (an orthogonal projector of rank g),
+|tr(Π_V O) − tr(Π_Q O)| ≤ 2g‖O‖₂δ(1 + √(1+ι)), δ = 1 − √(1−ι) (rank-2g bound on ‖Π_V − Π_Q‖₁ and Hölder). The
+compression VᴴOV is formed in floating point with the standard-model bound γ̇_{w_O+w_V}‖|V|ᵀ|O||V|‖_F +
+u‖Õ_fl‖_F on its error, which enters multiplied by ‖P_s‖₁ = g. The certified statement is about Π_Q; whether
+range Π_Q is an H-eigenspace rests on ν (recorded), and other sectors may share the level.
+
+### 10.3 Certified parameter intervals (E-04, `sweep.py`, `docs/proofs/E-04_parameter_intervals.md`)
+
+For the affine interpolant F_k(c) = H(c_k) + (c − c_k)H1 of the certified grid Hamiltonians, with B ≥ ‖H1‖₂ (row-sum
+bound of the built derivative plus the builder shift, or the triangle bound Σ|b_t|Π‖o‖_∞ over the terms), Weyl's
+inequality gives |λ_j(F_k(c)) − λ_j(H(c_k))| ≤ B|c − c_k| for every sorted index j, so the S2 enclosures at c_k widen
+to tubes over the segment with S3's ranks preserved (the count below a shifting threshold moves by at most the
+widening), and the neighbouring certificate's tube, shifted by the affinity defect d_k ≥ ‖H(c_{k+1}) − F_k(c_{k+1})‖₂
+(zero for coefficients affine in binary64; exact rational check), is intersected with it. Two tubes are certified
+apart on a sample interval of width D when max of the end margins + BD < 0 (the margin is 2B-Lipschitz); a
+not-separated run flanked by opposite certified relations contains a crossing (continuity of the sorted
+eigenvalues).
+
+### 10.4 Davis–Kahan statements (E-07, C-12, C-13; `davis_kahan.py`, `docs/proofs/E-07_davis_kahan.md`)
+
+*E-07.* With H′ = Q̂ᴴAQ̂, ‖AQ̂ − Q̂H′‖_F ≤ ‖R‖_F/√(1−η) and ‖H′ − Λ‖₂ ≤ w′ = ‖XᴴR‖₂/(1−η) + δ·spread/√(1−η) (the two
+polar identities of the Theorem 2′ sketch, proved in the document), and the Frobenius form of the sin Θ theorem
+(for Y = (I−P)Q̂: A_⊥Y − YH′ = (I−P)R′, entrywise division by the eigenvalue differences ≥ δ′) gives
+‖Q̂Q̂ᴴ − P‖₂ ≤ s_DK = ‖R‖_F/(√(1−η)(dist − w′)). S4 uses min(s₆, s_DK), both recorded (`sin_theta_bounds`).
+*C-12.* For ‖[A,S]‖ ≤ c (computed, recorded): every eigenvalue m of QᴴSQ has an eigenvalue of S within
+(c + ‖S‖w/2)/γ₀ (Theorem 1 for S with the residual ‖(I−P)Sφ‖), and the sorted eigenvalues of XᴴSX are within
+(2s + 2s² + η)‖S‖ of those of QᴴSQ (alignment ‖Q̂ − QU‖ ≤ s + s², Weyl, Ostrowski).
+*C-13.* |tr(P₁P₂) − ‖X₁ᴴX₂‖_F²| ≤ g(s₁+η₁) + g(1+η₁)(s₂+η₂) (Theorem 6 for both clusters, Hölder with ‖P‖₁ = g).

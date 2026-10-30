@@ -268,6 +268,52 @@ def cmd_crossing(a):
     return 0 if rec["relation"] != "not separated" else 2
 
 
+def cmd_sweep(a):
+    """E-04: certified eigenvalue tubes over a coupling interval (certify_ed.sweep) for a built-in model family."""
+    from . import spec as _spec
+    from .sweep import certified_crossing_interval, certified_sweep, format_sweep
+    factory = getattr(_spec, a.model, None)
+    if factory is None or not callable(factory):
+        raise SystemExit(f"unknown model factory {a.model!r}; known: heisenberg_chain, tfim_chain, heisenberg_square, "
+                         "spinless_fermion_chain, bose_hubbard_chain, spin1_heisenberg_chain")
+    fixed = {}
+    for item in (a.fixed.split(",") if a.fixed else []):
+        key, _, val = item.partition("=")
+        try:
+            fixed[key.strip()] = float(val)
+        except ValueError:
+            fixed[key.strip()] = val.strip()
+    first = [int(x) for x in a.sizes.split(",")]
+    values = [float(x) for x in a.values.split(",")]
+
+    def spec_fn(c):
+        return factory(*first, **dict(fixed, **{a.param: c}))
+
+    states_fn = None
+    if a.two_sz is not None:
+        from .basis import magnetization_state_set
+        states_fn = lambda spec: magnetization_state_set(spec, a.two_sz)  # noqa: E731
+    sector_fn = None
+    if a.momentum is not None:
+        from .basis import cyclic_isometry, translation
+        sector_fn = lambda spec, st: cyclic_isometry(st, translation(spec), a.momentum)  # noqa: E731
+    from .certify import Options
+    opts = Options(eigenspaces="none", degeneracy=False) if a.fast else Options()
+    rec = certified_sweep(spec_fn, values, k=a.k, options=opts, states_fn=states_fn, sector_fn=sector_fn,
+                          parameter_name=a.param, save_dir=a.save_dir)
+    print(format_sweep(rec))
+    if a.crossing is not None:
+        la_, lb_ = (int(x) for x in a.crossing.split(","))
+        x = certified_crossing_interval(rec, la_, rec, lb_)
+        print(x["statement"])
+        rec["crossing"] = x
+    if a.json:
+        from .certificate_v2 import _jsonable
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(_jsonable({k: v for k, v in rec.items() if not k.startswith("_")}), f, indent=1)
+    return 0
+
+
 def cmd_levelstats(a):
     """C-09: interval r-ratios and spacing histogram of a complete, counted spectrum (certify_ed.levelstats)."""
     from .certificate_v2 import Certificate
@@ -693,6 +739,20 @@ def main(argv=None):
     cx.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check on load")
     cx.add_argument("--json", help="write the crossing record to this file")
     cx.set_defaults(fn=cmd_crossing)
+    sw = sub.add_parser("sweep", help="certified eigenvalue tubes over a coupling interval for a built-in model family (E-04)")
+    sw.add_argument("--model", required=True, help="spec factory in certify_ed.spec, e.g. heisenberg_chain, tfim_chain")
+    sw.add_argument("--sizes", required=True, help="positional size arguments of the factory, e.g. 8 or 4,4")
+    sw.add_argument("--param", required=True, help="the keyword parameter swept, e.g. J2, Delta, h")
+    sw.add_argument("--values", required=True, help="increasing grid of parameter values, e.g. 0.3,0.4,0.5")
+    sw.add_argument("--fixed", help="other keyword parameters, e.g. J=1.0,boundary=periodic")
+    sw.add_argument("--k", type=int, default=1, help="number of lowest eigenpairs per point")
+    sw.add_argument("--two-sz", type=int, default=None, help="restrict to the U(1) block with this 2 S^z")
+    sw.add_argument("--momentum", type=int, default=None, help="translation sector j (needs --two-sz): tubes in the block")
+    sw.add_argument("--crossing", help="two level indices 'a,b' to separate within this scan")
+    sw.add_argument("--fast", action="store_true", help="Options(eigenspaces='none', degeneracy=False) per point")
+    sw.add_argument("--save-dir", help="save the per-point certificates here")
+    sw.add_argument("--json", help="write the scan record to this file")
+    sw.set_defaults(fn=cmd_sweep)
     ls = sub.add_parser("levelstats", help="interval r-ratios and spacing histogram of a complete counted spectrum (C-09)")
     ls.add_argument("certificate", help="certificate JSON of a kind 'all' claim with S3 CERTIFIED")
     ls.add_argument("--unfold", default="none", help="'none' (default) or 'poly:D': polynomial unfolding of degree D "

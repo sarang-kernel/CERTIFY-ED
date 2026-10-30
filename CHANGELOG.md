@@ -12,9 +12,100 @@ format-packaging, producers, statements, whole-spectrum (its commits re-written 
 unchanged), viewer-corpus. Conflicts were additive except two: `certify.py`'s observable loop now applies the
 Hermitian decomposition (C-05) to the parsed operators of C-15, and an inverted window is refused when the
 Claim is built (C-14) rather than reported by S3 (C-02 test adjusted). `Certificate.load` validates the schema
-before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.md`. Sixteen CLI commands:
-env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum,
+before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.md`. Seventeen CLI commands:
+env, certify, import, plan, statement, crossing, sweep, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
+
+### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
+
+Every statement of this track has a derivation in `docs/proofs/<id>_<name>.md` with its verification script
+`docs/proofs/verify_<id>.py` (decision D-59: derived here, machine-checked in exact rational arithmetic where the
+quantity is rational and at 40-50 mpmath digits where it is not; independent re-derivation pending, D-12). No
+existing bound became tighter; new bounds are combined with old ones as min(old, new) only where both are proven.
+
+- **C-03 entanglement entropy and spectrum.** `Options.entanglement = {name: {"sites": [...], "log_base": "e" | 2,
+  "max_dim_a": 64}}` adds, to every S4 cluster record, `entanglement[name]`: a certified interval for S(rho_A)
+  with rho_A = tr_B(P)/g (the reduced state of the certified eigenvector for g = 1; for a cluster the normalised
+  projector, the only basis-independent object), the entanglement spectrum as intervals, the computed value, the
+  trace-distance bound T* = s (+ eta/(1 - eta) for g > 1) and the Fannes-Audenaert term. Mathematics
+  (`docs/proofs/C-03_entanglement.md`): ||rho_A - rho_hat_A||_1 <= 2 T* from the rank-2g trace-norm bound on
+  P - Qhat Qhat^H and the contractivity of the partial trace; |S(rho_A) - S(rho_hat_A)| <= T* ln(d_A - 1) + h(T*)
+  (Audenaert 2007; the upper bound T* may replace T only for T* <= 1 - 1/d_A, where the function is increasing:
+  outside that range the record is NOT_CHECKED with the reason, never an interval); |lambda_k(rho_A) -
+  lambda_k(rho_hat_A)| <= 2 T* (Weyl). The reduced matrix of the stored vectors is formed in exact rational
+  arithmetic, its spectrum enclosed by Ostrowski's and Weyl's theorems around a floating-point
+  eigendecomposition with exactly computed defects, and -p ln p, h and ln evaluated on dyadic intervals
+  (`ivl.py`). New module `certify_ed/entanglement.py`; one hook in the S4 loop; `scope.OUT_OF_SCOPE_QUANTITIES`
+  lists the quantity as DEFAULT_SELECTION (not NOT_IMPLEMENTED) and omits it when requested. Symmetry-adapted
+  claims are not lifted (UNSUPPORTED_CLAIM). Verification: 1 150 random + 20 026 adversarial cases, 0
+  violations; tests `tests/test_entanglement.py` (11) against 40-digit references, planted rotations and the
+  negative controls.
+
+- **C-04 correlations for symmetry-adapted claims.** A claim with `sector_isometry` V used to leave
+  `Options.correlations` NOT_CHECKED (UNSUPPORTED_CLAIM). Now `correlations.certify_correlations_lifted` builds
+  the site operators in the full space and certifies tr(Pi_Q O) through the isometry: Theorem 6 in the block on
+  the compressed Hermitian operator (V^H O V)_h, plus g times the compression rounding bound (standard model,
+  `compress_operator`), plus the isometry term 2 g ||O|| delta (1 + sqrt(1 + iota)), delta = 1 - sqrt(1 - iota),
+  iota = S1's isometry defect, where Pi_Q = Q P_s Q^H is the orthogonal projector onto the lift of the certified
+  block eigenspace by the polar factor Q of V (`docs/proofs/C-04_correlation_lift.md`). Each pair record carries
+  `bound` (for Pi_Q) and `bound_V` (for Pi_V = V P_s V^H, the exact identity tr(P_s V^H O V) = tr(Pi_V O)), the
+  defects and `refers_to`; two-letter requests go through the Hermitian decomposition; structure factors apply
+  unchanged. A full-space matrix in `Options.observables` is lifted the same way for sector claims. Without
+  S1's audit the records are NOT_CHECKED (DEPENDENCY_NARROWED); when the audit failed they are INCONCLUSIVE.
+  The lift does not claim that range(Pi_Q) is an H-eigenspace (that rests on the invariance defect, recorded)
+  nor that other sectors are absent from the level. Verification: 240 random + 14 adversarial cases, 0
+  violations; tests `tests/test_correlation_lift.py` (7) against full-space values on the 8-site ring (k = 0 and
+  parity sectors, S^z S^z and S+ S-, S(q)), with a planted 0.1 % stretch (INCONCLUSIVE), S1 skipped
+  (NOT_CHECKED) and a planted iota = 0.05 where only the isometry term makes the interval contain tr(Pi_Q O).
+
+- **E-04 certified parameter intervals.** `certify_ed.sweep.certified_sweep(spec_fn, couplings, k, ...)` certifies
+  the k lowest eigenpairs at every grid coupling and assembles eigenvalue tubes between them: with H1 the
+  derivative spec (declared, or inferred from the coefficients at the first two couplings) and B >= ||H1||_2 (the
+  smaller of the row-sum bound of the built H1 plus the builder shift and the triangle bound over the terms, both
+  rounded up), Weyl's inequality per sorted index gives |lambda_j(F_k(c)) - lambda_j(H(c_k))| <= B |c - c_k| for the
+  affine interpolant F_k(c) = H(c_k) + (c - c_k) H1 of each segment, so every S2 enclosure widens to a tube and the
+  rank certified by S3 is preserved (equivalently: the count below a shifting threshold); the neighbouring
+  certificate's tube, shifted by the segment's affinity defect (exactly zero when the coefficients are affine in
+  binary64, computed in rationals), is intersected with it (`docs/proofs/E-04_parameter_intervals.md`). `tube_at`,
+  `next_level_lower_bound_at`, U(1) blocks (`states_fn`, zero-leak check for H1) and symmetry sectors (`sector_fn`:
+  tubes for the stored block family with ranks in the block; the lift to the full operator is certified at the grid
+  points only, recorded) are supported. `certified_crossing_interval(scan_a, level_a, scan_b, level_b)` returns the
+  coupling runs where two tubes are certified apart ('<' / '>') and the crossing intervals between them, using the
+  2B-Lipschitz bound on the margin between sample points so that no coupling is missed. CLI `certify-ed sweep
+  --model ... --param ... --values ...`. Verification: 1 049 random + 107 adversarial cases, 0 violations; the tubes
+  contain dense-diagonalisation eigenvalues at 100 % of random intermediate couplings; negative controls: a wrong
+  B (B/20) is caught at every sampled coupling (violation or empty intersection), a wrong declared H1 is flagged by
+  the affinity defect. Tests `tests/test_sweep.py` (7), including the k = 0 / k = pi ground-state crossing of the
+  8-site J1-J2 chain bracketed at the Majumdar-Ghosh point J2 = 1/2.
+
+- **E-07 Davis-Kahan alternative for S4.** `davis_kahan.sin_theta_davis_kahan`: with the Ritz matrix H' = Qhat^H A Qhat,
+  ||A Qhat - Qhat H'||_F <= ||R||_F / sqrt(1 - eta) and ||H' - Lambda|| <= w' = ||X^H R||/(1 - eta) + delta spread /
+  sqrt(1 - eta), the Frobenius form of the sin(Theta) theorem (proved in `docs/proofs/E-07_davis_kahan.md`) gives
+  ||Qhat Qhat^H - P||_2 <= s_DK = ||R||_F / (sqrt(1 - eta)(dist - w')), dist the certified distance of the cluster's
+  claimed values to every other eigenvalue (S3's window). `certify_eigenspace` now takes both proven bounds and
+  uses s = min(s_6, s_DK); the cluster record carries `sin_theta_bounds` = {theorem6, davis_kahan, used, ...}.
+  The (||A|| + ||Lambda||) delta term of Theorem 6's rho and its 2.5 sigma model-shift allowance do not enter s_DK, so
+  s_DK is smaller in every tested case (2.4x on the 8-site ring; 100/100 random cases in the verification). A cluster
+  with s_6 >= 1 but s_DK < 1 is now CERTIFIED at projector level (status change by a proven bound; D-12 pending).
+  `enclosure._cluster_bound` exports its ingredients (`R_fro`, `XR`, `delta`, `spread`) in its result dict (additive).
+  Negative control: an overstated dist (an eigenvalue inside the claimed gap) undercuts the exact sin(theta) in 20/20
+  planted cases, which is why dist comes from S3's certified window.
+- **C-12 approximate-symmetry labels.** `Options.approximate_symmetries = {name: (S, lattice[, allowed_values])}`
+  (S a matrix or a diagonal in the claim space) adds `quantum_numbers[name]` with `approximate_symmetry: true` to
+  every S4 cluster: the commutator bound c >= ||[H, S]||_2 is computed from the stored reference matrix
+  (`davis_kahan.commutator_bound`, infinity norm of the anti-Hermitian commutator plus the standard-model rounding)
+  and recorded as the hypothesis; every sorted eigenvalue of X^H S X then has an eigenvalue of S within
+  D = (2 s + 2 s^2 + eta) ||S|| + (c + ||S|| w/2) / gamma_0 + rounding (w the width of the cluster's level enclosure,
+  gamma_0 its midpoint's distance to the rest), and the labels snap to the lattice / allowed values when D is below
+  half their spacing (`docs/proofs/E-07_davis_kahan.md`, Proposition 2; the tight case A = diag(0, gamma),
+  S = c' sigma_x attains the bound). Without a stored reference matrix the record is NOT-CHECKED (NEEDS_MATRIX).
+- **C-13 fidelities.** `davis_kahan.certified_fidelity(X1, s1, eta1, X2, s2, eta2)` and
+  `fidelity_from_certificates(cert_a, cert_b, members_a, members_b)` (stored eigenvectors and CERTIFIED S4 clusters
+  needed): tr(P_1 P_2) = |<psi_1|psi_2>|^2 for g = 1 (the mean subspace overlap tr(P_1 P_2)/g for g > 1) with the bound
+  g (s_1 + eta_1) + g (1 + eta_1)(s_2 + eta_2) + rounding of ||X_1^H X_2||_F^2 (Proposition 3). Typical use: the overlap of
+  ground states at two couplings (fidelity susceptibility inputs), two sizes, or two sectors in one basis.
+  Verification of the three statements: 529 random + 24 adversarial cases, 0 violations; tests
+  `tests/test_davis_kahan.py` (7).
 
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
