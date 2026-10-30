@@ -67,31 +67,30 @@ so #{λ(H) < σ − β − ε} ≤ #{λ(A) < σ − β} and #{λ(A) ≤ σ + β}
 
 ## 3. Where the code implements it
 
-`certify_ed/degeneracy.py` (line numbers of this revision):
+`certify_ed/degeneracy.py` (line numbers of this revision, 105 lines):
 
 * (H1): `rad = add_up(enc.radius[C], eps_shift)`; J_L = `min(sub_down(mu, rad))`, J_U = `max(add_up(mu, rad))`
-  (lines 61–63): J is rounded outward, so the exact J is inside the computed one. `distinct` (64–68)
+  (lines 57–59): J is rounded outward, so the exact J is inside the computed one. `distinct` (61–65)
   requires every pair of C to belong to a Theorem 2 group with `distinct = True`; otherwise INCONCLUSIVE
   ((H1) unavailable).
-* (H2): `_probe` (34–49) obtains a conclusive count at a shift beyond J (direction −1 below J_L, +1 above
+* (H2): `_probe` (30–45) obtains a conclusive count at a shift beyond J (direction −1 below J_L, +1 above
   J_U), retrying up to three times with the shift moved outward when β + ε is not smaller than the distance
-  from the shift to J; `b_lo = add_up(r_lo.beta, eps_shift)`, `b_hi = add_up(r_hi.beta, eps_shift)` (85–86)
+  from the shift to J; `b_lo = add_up(r_lo.beta, eps_shift)`, `b_hi = add_up(r_hi.beta, eps_shift)` (82–83)
   are β_lo, β_hi (upper bounds, rounded up). The inequality form of Lemma 4 is the one `inertia.py` states in
   its module docstring and `InertiaResult.negative` is ν.
-* I_in = `(add_up(s_lo, b_lo), sub_down(s_hi, b_hi))` (87): the computed I_in is a *subset* of the exact
+* I_in = `(add_up(s_lo, b_lo), sub_down(s_hi, b_hi))` (84): the computed I_in is a *subset* of the exact
   one (left end rounded up, right end rounded down), so #(computed I_in) ≤ #(exact I_in) and (b) holds a
   fortiori for the computed interval; J ⊂ computed I_in implies J ⊂ exact I_in. I_out = `(sub_down(s_lo,
-  b_lo), add_up(s_hi, b_hi))` (88) is a *superset* of the exact one, so (a) holds for it a fortiori.
-* `diff = r_hi.negative - r_lo.negative` (89) is ν_hi − ν_lo.
-* Decision (92–104): `if not (I_in[0] < JL and JU < I_in[1])` → INCONCLUSIVE (J ⊄ I_in: neither (c) nor (e)
-  applies); `elif diff == g` → CERTIFIED with the statement "exactly g eigenvalues in [I_in[0], I_in[1]]"
-  (c); `elif diff > g` → INCONCLUSIVE with `degeneracy_at_least = g` and the reason naming I_out (d);
-  `else` → FAILED (e).
+  b_lo), add_up(s_hi, b_hi))` (85) is a *superset* of the exact one, so (a) holds for it a fortiori.
+* `diff = r_hi.negative - r_lo.negative` (86) is ν_hi − ν_lo.
+* Decision (89–104): `if not (I_in[0] < JL and JU < I_in[1])` → INCONCLUSIVE (J ⊄ I_in: neither (c) nor (e)
+  applies); `elif diff == g` → CERTIFIED with the statement "exactly g eigenvalues in the open interval
+  (I_in[0], I_in[1])" (c); `elif diff > g` → INCONCLUSIVE with `degeneracy_at_least = g` and the reason naming
+  I_out (d); `else` → FAILED (e).
 
-The one wording issue found: the CERTIFIED statement prints I_in with square brackets although I_in is
-open; since the computed ends are rounded inward this is harmless (the closed computed interval is still
-inside the exact open I_in only if the rounding moved the ends strictly; `add_up`/`sub_down` move by one
-ulp, so it does), but the statement text now says "in the open interval" to match the proof.
+The one wording issue found: the 3.1 statement printed I_in with square brackets although I_in is open; the
+statement now says "in the open interval" to match the proof (the computed ends are rounded inward, so the
+closed computed interval is in any case inside the exact open I_in).
 
 ## 4. Computational verification
 

@@ -27,9 +27,9 @@ STATEMENTS: Dict[str, dict] = {
     "S6": {"id": "S6.exact_recheck", "needs": ("S2",), "inputs": ("spec", "eigenvectors", "python-flint"),
            "what": "S2 radii and the S3 count re-derived in integer arithmetic (Lemmas 10-12, Prop 13)"},
     "S7": {"id": "S7.thermodynamics", "needs": ("S2", "S3"), "inputs": ("whole spectrum", "temperatures"),
-           "what": "interval bounds on Z, F, U, C from a complete enclosure (Prop 16; UNVERIFIED)"},
+           "what": "interval bounds on Z, F, U, C from a complete enclosure (Prop 16; derived in docs/proofs, re-derivation pending)"},
     "S8": {"id": "S8.degeneracy", "needs": ("S2",), "inputs": ("eigenvectors", "matrix"),
-           "what": "number of eigenvalues in each cluster by bracketing inertia counts (Prop 14; UNVERIFIED)"},
+           "what": "number of eigenvalues in each cluster by bracketing inertia counts (Prop 14; derived in docs/proofs, re-derivation pending)"},
 }
 SHORT_OF = {v["id"]: k for k, v in STATEMENTS.items()}
 ORDER = tuple(STATEMENTS)

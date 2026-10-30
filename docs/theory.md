@@ -292,11 +292,19 @@ AKLT (`apps/aklt`):
 - The number of unit cosines is bounded below by a mod-p rank of the union VBS states.
 - Symmetry blocking is an exact congruence (`apps/aklt/eta.py` docstring).
 
-## 9. Statements added in 3.1 (written before their code, rule D-46) — **UNVERIFIED**
+## 9. Statements added in 3.1 (written before their code, rule D-46) — derived in 3.2, independent re-derivation pending
 
-Every result in this section is marked **[UNVERIFIED – re-derivation pending, D-12]**. The code in
-`degeneracy.py`, `correlations.py`, `ivl.py` and `thermo.py` implements exactly the statements below;
-the tests check the implementation against the statements, not the other way round.
+Every result in this section was marked **[UNVERIFIED – re-derivation pending, D-12]** in 3.1. In 3.2 (decision
+D-59) each has a derivation document in `docs/proofs/` with a verification script in exact rational arithmetic
+or mpmath at 200 digits, and the proofs below are superseded by those documents: Proposition 14 →
+`docs/proofs/P14_degeneracy_bracketing.md`, Proposition 15 → `docs/proofs/P15_summed_bounds.md`, Proposition 16 →
+`docs/proofs/P16_thermo_intervals.md`, Lemma 17 → `docs/proofs/L17_dyadic_exp_ln.md`. The independent
+re-derivation (Phase 2) and Sarang's check (D-12) are pending for all four; the code strings therefore keep the
+word UNVERIFIED with that meaning. Two corrections found by the derivations are already in the code: the atanh
+remainder constant of Lemma 17 (8/7 for u ≤ 0.35 instead of 9/8 for u ≤ 1/3, because the rounded upper argument
+can exceed 1/3 by one grid unit) and the moduli |a_k| of Proposition 15 (an IEEE sqrt bound instead of a libm
+hypot). The code in `degeneracy.py`, `correlations.py`, `ivl.py` and `thermo.py` implements exactly the
+statements below; the tests check the implementation against the statements, not the other way round.
 
 ### 9.1 Degeneracy count (S8, `degeneracy.py`)
 
@@ -401,7 +409,8 @@ intervals whose ends are dyadic rationals p·2^{−P} (P = 192 bits), with every
 Taylor polynomial of degree N at t = x/2^s ≤ 1/2 with remainder 0 ≤ R ≤ t^{N+1}/(N+1)! · 1/(1 − t/(N+2)),
 followed by s squarings (monotone on [1, ∞)); exp(−x) = 1/exp(x) with outward division. For z > 0 write
 z = 2^k·m with m ∈ [1, 2) and ln z = k ln 2 + 2 atanh(u), u = (m − 1)/(m + 1) ∈ [0, 1/3); the series
-2 Σ_{j≤N} u^{2j+1}/(2j+1) has remainder 0 ≤ R ≤ 2u^{2N+3}/((2N+3)(1 − u²)); ln 2 = 2 atanh(1/3) likewise.
+2 Σ_{j≤N} u^{2j+1}/(2j+1) has remainder 0 ≤ R ≤ 2u^{2N+3}/((2N+3)(1 − u²)) ≤ (16/7) u^{2N+3}/(2N+3) for the
+rounded upper argument u ≤ 0.35; ln 2 = 2 atanh(1/3) likewise.
 Each enclosure is rounded outward to the dyadic grid at every step. Conversion of a dyadic end to
 binary64 rounds outward (`ivl.to_float_down/up`). No floating-point operation enters S7 except this
 final conversion and the reading of the input floats l_k, h_k, which are taken as the exact binary64

@@ -93,17 +93,17 @@ the same bounds, which is why the verification can draw random spectra consisten
 
 ## 3. Where the code implements it
 
-`certify_ed/thermo.py`, `thermodynamics` (line numbers of this revision):
+`certify_ed/thermo.py`, `thermodynamics` (line numbers of this revision, 112 lines):
 
-* input validation, counts, completeness against `dimension`: lines 49–61; `E0 = min(lo)` (62),
-  `shifted` and `e_ivs` = [a_k^↓, b_k^↑] (63–65; from_fraction floors the lower, ceils the upper end).
-* β̂ = `one / T_iv` (74); the placeholder on line 72 is dead code kept from 3.1.
-* W_k: `arg = -(beta * e_iv)`, `exp_interval(arg).scale_int(c)` (76–79); Z̃ = `sum_intervals(W)` (80).
-* ln Ẑ, Ẑ: lines 83–89 (Z = None on OverflowError / ValueError from the binary64 conversion).
-* F̂ = `E0_iv - T_iv * lnZt` (90–93).
-* Û: `num1`, `e_mean = num1 / Zt`, `U = E0_iv + e_mean` (94–98).
+* input validation, counts, completeness against `dimension`: lines 51–61; `E0 = min(lo)` (62),
+  `shifted` and `e_ivs` = [a_k^↓, b_k^↑] (64–65; from_fraction floors the lower, ceils the upper end).
+* β̂ = `one / T_iv` (75); the placeholder on line 73 is dead code kept from 3.1.
+* W_k: `arg = -(beta * e_iv)`, `exp_interval(arg).scale_int(c)` (79–80); Z̃ = `sum_intervals(W)` (81).
+* ln Ẑ, Ẑ: lines 85–90 (Z = None on OverflowError / ValueError from the binary64 conversion).
+* F̂ = `E0_iv - T_iv * lnZt` (92–94).
+* Û: `num1`, `e_mean = num1 / Zt`, `U = E0_iv + e_mean` (96–99).
 * V̂, Ĉ: `num2` with `e.square()`, `e2_mean`, `var = (e2_mean - e_mean.square()).intersect_nonneg()`,
-  `C = beta.square() * var` (99–105).
+  `C = beta.square() * var` (101–106).
 * Conversion: `.floats()` on every reported interval (Lemma 17 (v)).
 
 Rounding direction: every operation is the outward-rounded operation of `ivl.py`; no floating-point

@@ -3,7 +3,8 @@
 Numbers are Python integers at a fixed scale 2^PREC (PREC = 192 bits). Every operation rounds its lower
 end down (floor) and its upper end up (ceil), so an interval always contains the exact result of the
 exact operation on any members of its operands. exp and ln are enclosed by truncated series with explicit
-remainder bounds (docs/theory.md, Section 9.3, Lemma 17). No floating-point arithmetic is used except in
+remainder bounds (docs/theory.md, Section 9.3, Lemma 17; derivation and machine check in
+docs/proofs/L17_dyadic_exp_ln.md, verification script docs/proofs/verify_L17.py). No floating-point arithmetic is used except in
 `from_float` (exact: a binary64 is a dyadic rational) and in `to_float_down/up` (outward).
 
 This module exists for S7 (thermodynamic intervals), where the standard-model floating-point bounds of

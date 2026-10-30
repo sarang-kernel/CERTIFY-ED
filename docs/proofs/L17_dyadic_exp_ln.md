@@ -111,7 +111,7 @@ ln((1+u)/(1−u)) = 2 atanh(u) (direct computation). In grid units, u(m_lo 2^-P)
 (m_lo + 2^P), floored to u_lo (the max with 0 is harmless since u ≥ 0); the same with ceiling and m_hi gives
 u_hi. Thus u_lo ≤ u(m) 2^P ≤ u_hi. *Range of u_hi.* From m_hi ≤ 2·2^P, u_hi ≤ ⌈2^P · 2^P / (3 · 2^P)⌉ = ⌈2^P/3⌉
 ≤ 2^P/3 + 1, so u_hi 2^-P ≤ 1/3 + 2^-P < 0.35; this is why the runtime check admits arguments up to U_MAX =
-⌊0.35 · 2^P⌋ ≥ ⌈2^P/3⌉ (verified in `verify_L17.check_remainder_constants`) and why the remainder constant
+⌊0.35 · 2^P⌋ ≥ ⌈2^P/3⌉ (checked in `verify_L17.check_remainder_constants`) and why the remainder constant
 below is stated for u ≤ 0.35 rather than 1/3. (The 3.1 code used the constant 9/8 valid only for u ≤ 1/3;
 the enclosure was in practice unaffected because the deficiency is far below one grid unit, but the proof
 needs the weaker constant, so the code now uses 8/7.)
@@ -145,28 +145,31 @@ Objects/longobject.c, documented as correctly rounded).
 
 ## 3. Where the code implements it
 
-`certify_ed/ivl.py` (line numbers of this revision):
+`certify_ed/ivl.py` (line numbers of this revision, 273 lines):
 
-* grid constants `PREC`, `ONE`, `_floor_div`, `_ceil_div`: lines 17–30.
-* (i) `from_fraction` (33–36), `__add__`/`__sub__`/`__neg__` (78–85), `scale_int` (91–93),
-  `sum_intervals` (144–149). Rounding direction: none (exact).
-* (ii) `__mul__` (87–89): `_floor_div(min(ps), ONE)` lower, `_ceil_div(max(ps), ONE)` upper.
-  `__truediv__` (95–102): floors for the lower end (`qs`), ceilings for the upper (`qs2`); raises on 0 ∈ Y.
-  `square` (104–110): the three sign cases; `intersect_nonneg` (112–116).
-* (iii) `_EXP_TERMS = 40` (153); `_exp_point_nonneg` (156–186): halving loop with `_ceil_div(t, 2)` (lines
-  162–164), `t_lo = x >> s`, `t_hi = _ceil_div(x, 1 << s)` (167–168), `poly(tv, up)` termwise with floor
-  (lower) or ceiling (upper) of the product and of the division by k (170–177), `rem` (181), s squarings
-  (184–185). `exp_interval` (189–197): the negative branch divides `ONE << PREC` = 2^{2P} with `_ceil_div`
-  for the upper end and `_floor_div` for the lower end.
-* (iv) `_LN_TERMS = 60`, `_U_MAX` (201–202); `_atanh2_series` (205–227): runtime check of the argument
-  range, `u2` floored/ceiled, `pw` floored/ceiled, the remainder `_ceil_div(_ceil_div(pw * 8, 7), 2 * _LN_TERMS
-  + 3)` added to the upper end only; `ln2_interval` (233–238) with the grid interval around 1/3;
-  `_ln_point` (241–258): `k`, `m`, `exact_shift`, `m_lo`, `m_hi`, `u_lo` (`_floor_div`), `u_hi` (`_ceil_div`),
-  `a + kl`; `ln_interval` (261–265).
-* (v) `to_float_down` / `to_float_up` (50–63), `from_float` (39–43).
+* grid constants `PREC`, `ONE` (19–20), `_floor_div` (26), `_ceil_div` (30).
+* (i) `from_fraction` (34–37), `__add__`/`__sub__`/`__neg__` (79–86), `scale_int` (92–94),
+  `sum_intervals` (141–146). Rounding direction: none (exact).
+* (ii) `__mul__` (88–90): `_floor_div(min(ps), ONE)` lower, `_ceil_div(max(ps), ONE)` upper.
+  `__truediv__` (96–103): floors for the lower end (`qs`), ceilings for the upper (`qs2`); raises on 0 ∈ Y.
+  `square` (105–110): the three sign cases; `intersect_nonneg` (112–116).
+* (iii) `_EXP_TERMS = 40` (150); `_exp_point_nonneg` (153–183): halving loop with `_ceil_div(t, 2)` (159–162),
+  `t_lo = x >> s`, `t_hi = _ceil_div(x, 1 << s)` (164–165), `poly(tv, up)` termwise with floor (lower) or
+  ceiling (upper) of the product and of the division by k (167–174), `rem` (178), s squarings (181–182).
+  `_EXP_ARG_MAX = ONE << 16`, `_EXP_ARG_UNDER = 1000 * ONE` (186–187); `exp_interval` (190–205): OverflowError
+  above the argument limit (196), the shortcut `1 if up else 0` for arguments ≤ −1000 (201–202; exp(−1000) ≈
+  5e−435 < 2^−192, so (0, 1 unit) encloses it), the negative branch dividing `ONE << PREC` = 2^{2P} with
+  `_ceil_div` for the upper end and `_floor_div` for the lower end (203–204).
+* (iv) `_LN_TERMS = 60`, `_U_MAX = (7 * ONE) // 20` (209–210); `_atanh2_series` (213–238): runtime check of the
+  argument range (219–220), `u2` floored/ceiled, `pw` floored/ceiled, the remainder `_ceil_div(_ceil_div(pw * 8,
+  7), 2 * _LN_TERMS + 3)` added to the upper end only (233); `ln2_interval` (241–246) with the grid interval around
+  1/3; `_ln_point` (249–266): `k`, `m`, `exact_shift`, `m_lo`, `m_hi`, `u_lo` (`_floor_div`), `u_hi`
+  (`_ceil_div`), `a + kl`; `ln_interval` (269–273).
+* (v) `to_float_down` / `to_float_up` (51–66), `from_float` (40–44).
 
 Every constant of the proof appears literally: 1/2 as `half = ONE >> 1`, the factor 2 and `_EXP_TERMS + 1`
-in `rem`, 8/7 and `2 * _LN_TERMS + 3` in the ln remainder, 1/3 as `_floor_div(ONE, 3)`, `_ceil_div(ONE, 3)`.
+in `rem`, 8/7 and `2 * _LN_TERMS + 3` in the ln remainder, 1/3 as `_floor_div(ONE, 3)`, `_ceil_div(ONE, 3)`,
+0.35 as `(7 * ONE) // 20`, 1000 and 2^16 as the exp argument guards.
 
 ## 4. Computational verification
 
@@ -176,9 +179,10 @@ in `rem`, 8/7 and `2 * _LN_TERMS + 3` in the ln remainder, 1/3 as `_floor_div(ON
   probability 0.2), every operation of (i)–(ii) checked against `fractions.Fraction`; the binary64
   conversions checked to be the tightest floats on the safe side;
 * exp: 2000 random arguments (uniform in [−700, 700], in [−2, 2], random dyadics of 60–80 bits, arbitrary
-  grid points of up to 200 bits) and 58 adversarial ones (x = 0; x = 1/2 and its grid neighbours, where the
+  grid points of up to 200 bits) and 66 adversarial ones (x = 0; x = 1/2 and its grid neighbours, where the
   halving count changes; powers of two and their neighbours; odd grid points with up to seven inexact
-  halvings; |x| = 700 and 745 near the binary64 overflow threshold), each also through `exp_interval` on a
+  halvings; |x| = 700 and 745 near the binary64 overflow threshold; |x| = 1000 and its grid neighbours,
+  where the underflow shortcut starts; x = 2^16 and one unit above, the argument limit), each also through `exp_interval` on a
   random interval containing it; ground truth mpmath at 200 digits;
 * ln: 2000 random arguments (log-uniform over 1e−13 … 1e130, uniform in [0.5, 4], random rationals, arbitrary
   grid points of up to 600 bits) and 74 adversarial ones (z = 1, 2, 1/2, powers of two up to 2^19 and their
@@ -188,7 +192,7 @@ in `rem`, 8/7 and `2 * _LN_TERMS + 3` in the ln remainder, 1/3 as `_floor_div(ON
   u ≤ 0.35; ⌈2^P/3⌉ ≤ U_MAX), and that both truncated series have remainders below one grid unit at their
   largest admitted arguments (tightness).
 
-Result (seed 0): 6000 random + 132 adversarial cases, 0 violations. Smallest relative slack of an exp
+Result (seed 0, current code): 6000 random + 140 adversarial cases, 0 violations. Smallest relative slack of an exp
 enclosure 6.9e−58 (about 2^−190, i.e. the enclosures are tight to a few grid units); largest ln enclosure
 width 8.7e−54 (for z ≈ 2^600 the k·ln 2 term scales the width of L2).
 
@@ -210,5 +214,5 @@ Closed-form special cases, all reproduced by the enclosures (part of the adversa
 
 ## 6. Status
 
-Derived by Claude on 2026-10-30; machine-checked (6000 random + 132 adversarial cases, 0 violations);
+Derived by Claude on 2026-10-30; machine-checked (6000 random + 140 adversarial cases, 0 violations);
 independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

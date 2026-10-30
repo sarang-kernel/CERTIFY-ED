@@ -8,7 +8,8 @@ the exact value for the matrix whose spectrum is enclosed. All arithmetic is dya
 outward conversion of each end to binary64.
 
 The hypothesis and the known looseness (C and, to a lesser extent, U are quotients of intervals that ignore
-the correlation between numerator and denominator) are stated in every record. **UNVERIFIED** (D-12).
+the correlation between numerator and denominator) are stated in every record. Derivation and machine check:
+docs/proofs/P16_thermo_intervals.md and docs/proofs/L17_dyadic_exp_ln.md; independent re-derivation pending (D-12).
 """
 from __future__ import annotations
 
@@ -107,4 +108,5 @@ def thermodynamics(intervals: Sequence[dict], temperatures: Iterable[float], dim
     return {"temperatures": temps, "rows": rows, "hypothesis": HYPOTHESIS, "looseness": LOOSENESS,
             "energy_offset": E0, "dimension": n, "n_intervals": len(ivs),
             "method": "dyadic interval arithmetic, 192-bit grid, outward rounding (ivl.py, Lemma 17); "
-                      "Proposition 16 [UNVERIFIED - re-derivation pending, D-12]"}
+                      "Proposition 16 [derived: docs/proofs/P16_thermo_intervals.md; UNVERIFIED by independent "
+                      "re-derivation, D-12]"}

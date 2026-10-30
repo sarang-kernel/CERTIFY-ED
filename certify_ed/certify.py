@@ -1422,7 +1422,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             statements.append(_stmt("S7.thermodynamics", st7, summ7, th,
                                     ["complete whole-spectrum enclosure (Prop 9) for the operator the S2/S3 "
                                      "statements refer to; k_B = 1; dyadic interval arithmetic with outward rounding "
-                                     "(Lemma 17); Proposition 16 [UNVERIFIED - re-derivation pending, D-12]"],
+                                     "(Lemma 17); Proposition 16 [derived: docs/proofs/P16_thermo_intervals.md; UNVERIFIED by "
+                                     "independent re-derivation, D-12]"],
                                     time.time() - t0))
 
     # ---------------- S8 degeneracy counts by bracketing inertia (Prop 14, UNVERIFIED)
@@ -1465,7 +1466,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                                                            if st8 == "CERTIFIED" else ""),
                                         {"clusters": recs},
                                         ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
-                                         "[UNVERIFIED - re-derivation pending, D-12]"], time.time() - t0))
+                                         "[derived: docs/proofs/P14_degeneracy_bracketing.md; UNVERIFIED by "
+                                         "independent re-derivation, D-12]"], time.time() - t0))
 
     # ---------------- assemble
     subject = {"description": (spec.name if spec else "operator supplied without spec"),

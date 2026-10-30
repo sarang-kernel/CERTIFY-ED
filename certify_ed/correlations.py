@@ -3,7 +3,8 @@
 Everything here is Theorem 6 (one certified tr(P O) per Hermitian operator O) plus Proposition 15 (a
 linear combination of certified traces carries the sum of |coefficient| x bound). Site operators are built
 from the declared model's local space with the same bitwise builder that S1 uses, so the operator the
-statement refers to is defined by the spec, not by the producer. **UNVERIFIED** (D-12; docs/theory.md 9.2).
+statement refers to is defined by the spec, not by the producer. Derivation and machine check:
+docs/proofs/P15_summed_bounds.md (docs/theory.md 9.2); independent re-derivation pending (D-12).
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import scipy.sparse as sp
 
 from .construct import StateSet, build_bitwise, full_state_set
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import U, add_up, gamma, up
+from .fp import add_up, gamma, up
 from .spec import ModelSpec, Term
 
 __all__ = ["site_operator", "certify_observables_batch", "certify_correlations", "structure_factor",
@@ -125,19 +126,41 @@ def certify_observables_batch(ec: EigenspaceCertificate, X: np.ndarray, operator
     return out
 
 
+def modulus_upper(z: complex) -> float:
+    """Upper bound on |z| from IEEE +, x and sqrt only (Proposition 15, Lemma A; no libm call): with s =
+    fl(sqrt(fl(fl(x^2) + fl(y^2)))) >= |z| (1 - u)^2 when neither square underflows, up(s) >= |z| (1 - u)^3 (1 + 8u)
+    >= |z|. When a component is below 2^-500 the bound up(|x| + |y|) >= |z| is used instead (looser by at most
+    sqrt(2), never affected by underflow)."""
+    x, y = float(np.real(z)), float(np.imag(z))
+    if y == 0.0:
+        return abs(x)
+    if x == 0.0:
+        return abs(y)
+    if min(abs(x), abs(y)) < 2.0 ** -500:
+        return float(up(abs(x) + abs(y)))
+    return float(up(math.sqrt(x * x + y * y)))
+
+
 def combine_certified(coefficients: Sequence[complex], values: Sequence[float], bounds: Sequence[float]) -> Tuple[complex, float]:
-    """Proposition 15: (sum a_k v_k, sum |a_k| b_k + rounding of the sum), rounded outward."""
+    """Proposition 15: (fl(sum a_k v_k), sum |a_k| b_k + rounding of the sum), the bound rounded outward.
+
+    The moduli |a_k|, |v_k| enter only through `modulus_upper` (an upper bound from IEEE +, x, sqrt; no libm
+    call), the products and sums of the bound are rounded up, and the rounding term is 2 gamma_{m+2} sum
+    |a_k||v_k| (docs/proofs/P15_summed_bounds.md, Section 2, Lemma B: the actual rounding of fl(sum a_k v_k) is
+    at most (sqrt(2) gamma_2 + gamma_{m-1}(1 + sqrt(2) gamma_2)) sum |a_k||v_k| <= gamma_{m+2} sum |a_k||v_k|)."""
     a = np.asarray(coefficients, dtype=complex)
     v = np.asarray(values, dtype=complex)      # certified values may be complex (Hermitian decomposition, C-05)
     b = np.asarray(bounds, dtype=float)
     m = a.size
     val = complex(np.sum(a * v))
     bound = 0.0
-    for ak, bk in zip(np.abs(a), b):
-        bound = float(add_up(bound, up(ak * bk)))
-    # rounding of the computed sum: |fl(sum a_k v_k) - sum a_k v_k| <= gamma_{m+1} sum |a_k||v_k| (complex: x2)
-    rnd = 2 * gamma(m + 2) * float(np.sum(np.abs(a) * np.abs(v))) * (1 + 8 * U) if m else 0.0
-    return val, float(add_up(bound, up(rnd)))
+    sum_av = 0.0
+    for ak, vk, bk in zip(a.tolist(), v.tolist(), b.tolist()):
+        ma = modulus_upper(ak)
+        bound = float(add_up(bound, up(ma * bk)))
+        sum_av = float(add_up(sum_av, up(ma * modulus_upper(vk))))
+    rnd = float(up(2 * gamma(m + 2) * sum_av)) if m else 0.0
+    return val, float(add_up(bound, rnd))
 
 
 def certify_correlations(ec: EigenspaceCertificate, X: np.ndarray, spec: ModelSpec, letter: str,
@@ -163,7 +186,10 @@ def certify_correlations(ec: EigenspaceCertificate, X: np.ndarray, spec: ModelSp
     if pairs is None:
         pairs = [(i, j) for a, i in enumerate(sites) for j in sites[a:]]
     rec = {"letter": letter, "sites": sites, "cluster_size": g, "pairs": [],
-           "conjugate_symmetry": "C_ji = conj(C_ij)" if two else "C_ji = C_ij"}
+           "conjugate_symmetry": "C_ji = conj(C_ij)" if two else "C_ji = C_ij",
+           "operator_hypothesis": ("the statement refers to the stored floating-point operator matrix of each pair "
+                                   "(exact for dyadic local entries such as spin-1/2 letters; rounded for entries like "
+                                   "1/sqrt(2)); docs/proofs/P15_summed_bounds.md (D2)")}
     for i, j in pairs:
         if two:
             O = site_operator(spec, letter, (i, j), 1.0, states)
@@ -188,10 +214,12 @@ def certify_correlations(ec: EigenspaceCertificate, X: np.ndarray, spec: ModelSp
     if two:
         rec["statement"] = (f"tr(P {letter[0]}_i {letter[1]}_j) certified for {len(rec['pairs'])} pairs; Theorem 6 per "
                             f"Hermitian part, Hermitian decomposition O = H + iK for i != j (Proposition 15 for the "
-                            f"recombination) [UNVERIFIED]")
+                            f"recombination) [derived: docs/proofs/P15_summed_bounds.md; UNVERIFIED by "
+                            f"independent re-derivation, D-12]")
     else:
         rec["statement"] = (f"tr(P {letter}_i {letter}_j) certified for {len(rec['pairs'])} pairs; "
-                            f"Theorem 6 per pair, Proposition 15 for combinations [UNVERIFIED]")
+                            f"Theorem 6 per pair, Proposition 15 for combinations [derived: "
+                            f"docs/proofs/P15_summed_bounds.md; UNVERIFIED by independent re-derivation, D-12]")
     return rec
 
 
@@ -229,7 +257,10 @@ def structure_factor(corr: dict, positions: Sequence[Sequence[float]], q_list: S
         val, bound = combine_certified(coeffs, vals, bnds)
         out.append({"q": q.tolist(), "value": val.real, "imag_part": val.imag, "bound": float(bound),
                     "per_state_value": val.real / g, "per_state_bound": float(up(bound / g)),
-                    "n_terms": len(coeffs)})
+                    "n_terms": len(coeffs),
+                    "phase_hypothesis": ("the coefficients are the floating-point phases exp(i q.(r_i - r_j))/N as "
+                                         "computed; their distance to the exact phases rests on the accuracy of the "
+                                         "platform's cos/sin (docs/proofs/P15_summed_bounds.md, D1)")})
     return out
 
 
