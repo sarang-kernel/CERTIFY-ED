@@ -23,13 +23,13 @@ import scipy.sparse as sp
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.getcwd())
-from _common import Counter, TOL, bottleneck_sorted, eigh, herm, norm2, to_mp  # noqa: E402
+from _common import Counter, TOL, bottleneck_sorted, eigh, norm2, to_mp  # noqa: E402
 
 import certify_ed as ce  # noqa: E402
 from certify_ed.certify import Options, _builder_shift, check_model_fidelity  # noqa: E402
 from certify_ed.checker import exact_matrix  # noqa: E402
 from certify_ed.construct import SpecOperator, build_bitwise, hermitian_part, product_tolerance  # noqa: E402
-from certify_ed.fp import U, gamma, inf_norm_upper  # noqa: E402
+from certify_ed.fp import U, inf_norm_upper  # noqa: E402
 from certify_ed.localops import LocalSpace  # noqa: E402
 from certify_ed.spec import ModelSpec  # noqa: E402
 
@@ -176,7 +176,7 @@ def main():
         Href, Hm = check_builder(spec, counters, False, f"spec {i} {spec.local.kind}")
         check_model_shift(spec, Href, Hm, rng, counters, False, f"spec {i}")
     # adversarial specs
-    for i in range(20):
+    for _i in range(20):
         for kind, scale, lmax in (("spin1", 1e100, 2), ("spin1", 1e-100, 2), ("boson", 1.0, 3), ("spin32", 1.0, 4),
                                   ("spin1", 1.0, 1), ("spinhalf", 1.0, 4)):
             spec = random_spec(rng, kind=kind, scale=scale, lmax=lmax)

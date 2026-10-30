@@ -141,10 +141,13 @@ Random cases: n ∈ [2, 6], g ∈ [1, 4], real or complex A with a planted clust
 A = 0; A = cI; square X (g = n); large spread of Λ; A and μ scaled by 10^{±40}, 10^{±150}; column scaling;
 n = g = 1. Cases with η ≥ 1 are counted as skipped (hypothesis not met).
 
-Counts: RUN PENDING (to be filled from the script's output; a 60-case pilot run before the INT-05 fix found
-2 violations in the "implemented bounds" counter, both in the 10^{−150}-scaled family: the code returned
-radius 0 for a residual of 7 × 10⁻¹⁶⁷ because the squares in its norms underflowed — the INT-05 defect,
-`docs/proofs/int05_underflow.md`).
+Counts (run of 2026-10-30, `--cases 20000 --seed 1`, output in `docs/proofs/runs/thm2_polar-factor.txt`):
+20 000 generated random cases (17 224 met η < 1 − 10⁻²⁰; 2 776 skipped) and 600 adversarial cases, plus 5 000 + 600
+random-block Kahan cases; per counter: L1/L2 34 448 random + 900 adversarial checks, K and T2 17 224 + 450 each, KG
+5 000 + 600, C 32 738 + 859 (1 751 skipped where the code's guarded η reached 1); 0 violations. A 60-case pilot
+run *before* the INT-05 fix had found 2 violations in the C counter, both in the 10^{−150}-scaled family: the
+code returned radius 0 for a residual of 7 × 10⁻¹⁶⁷ because the squares in its norms underflowed — the INT-05
+defect (`docs/proofs/int05_underflow.md`); the final run passes that family.
 
 ## 5 Analytic cross-check
 
@@ -167,6 +170,4 @@ inequality pairs the sorted eigenvalues within ρ — the same constant as Theor
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (17 224 (34 448 lemma checks, 5 000 Kahan-block checks) random + 600 (900 lemma checks, 600 Kahan-block checks) adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

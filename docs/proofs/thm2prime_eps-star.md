@@ -95,7 +95,10 @@ Theorem 2 script with its ten adversarial families, plus the family "spread" wit
 - C: the code's `eps_star` ≥ exact ε*, its `XR_bound` ≥ ‖XᴴR‖₂ (recomputed from the returned `bound` and the
   exact norms), and its radius min(ρ, ε*) ≥ d*.
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts (run of 2026-10-30, `--cases 20000 --seed 2`, output in `docs/proofs/runs/thm2prime_eps-star.txt`): 20 000
+generated random cases (17 094 met η < 1 − 10⁻²⁰) and 800 adversarial cases (600 of the ten shared families, 100
+"spread", 100 "ritz"); per counter: E1–E3 51 282 random + 1 863 adversarial checks (3 085 skipped), E4 17 094 + 621,
+C 15 337 + 547 (1 831 skipped where the code's guarded η reached 1); 0 violations.
 
 ## 5 Analytic cross-check
 
@@ -119,6 +122,4 @@ changes η, so the bound is not scale-free in X (nor should it be: η is the ort
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (17 094 (51 282 inequality checks) random + 621 (1 863 inequality checks) adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

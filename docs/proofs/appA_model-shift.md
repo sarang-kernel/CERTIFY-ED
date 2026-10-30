@@ -139,7 +139,7 @@ in floating point. `hermitian_part`: `(H + H.conj().T) / 2`, one rounding per en
 - adversarial: couplings 10^{±100} (scale), a spec with a single term, L_max = 4 strings, a boson chain with
   n_max = 4 (√k roundings), a coupling that is a huge integer (exact) next to one that is not.
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts: NOT RUN. The verification script exists but has not been executed in this session (its run was held by the platform's safety gate pending the user's approval); the document therefore records no counts and the status line below says so.
 
 ## 5 Analytic cross-check
 
@@ -161,6 +161,5 @@ reported since INT-03.
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked: NOT RUN (script written, execution awaiting the user's
+approval of the gated step); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

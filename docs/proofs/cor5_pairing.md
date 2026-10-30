@@ -116,7 +116,12 @@ enclosure can account for is unclaimed), and the task's negative controls exerci
   model the code was told about, and a CERTIFIED result for the wrong Δ is *not* a violation of the corollary
   but is counted separately) — the first three must not be CERTIFIED.
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts (run of 2026-10-30, `--cases 20000 --seed 3`, output in `docs/proofs/runs/cor5_pairing.txt`): P 20 000
+random + 500 adversarial (ties); C 400 code cases of which 347 were CERTIFIED and checked (53 skipped: the code
+returned INCONCLUSIVE or FAILED, which is not a statement); N 400 negative controls (200 missing eigenvalue, 200
+duplicated vector), none CERTIFIED; 0 violations. Documented counterexample: non-uniform radii broke the
+sorted pairing in 238 of 2 000 cases. Informational: with ‖E‖ = 10⁻³ against a declared Δ = 10⁻¹² the conclusion
+failed for A + E in 100 of 100 CERTIFIED cases (Δ is necessary).
 
 ## 5 Analytic cross-check
 
@@ -139,6 +144,4 @@ cluster radii are uniform (Remark in section 1).
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (20 347 random + 900 adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

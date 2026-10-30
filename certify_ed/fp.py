@@ -95,25 +95,34 @@ def up(x: float) -> float:
     return float(x) * _GUARD + 0.0
 
 
-def norm_underflow_term(n: int) -> float:
-    """T_n >= sqrt(n u_min) sqrt((1 + gamma_n)/(1 - gamma_n)): the mass the squares of n entries can lose to
-    underflow in fl(||v||) = sqrt(sum fl(v_i^2)), expressed as a norm (docs/proofs/int05_underflow.md,
-    Lemma U2). About 1e-161 sqrt(n): below the resolution of every radius above 1e-145, so it changes no
-    bound of a normal-sized quantity. (1 + 2 gamma_{n+2}) >= sqrt((1 + gamma_n)/(1 - gamma_n)) for n u <= 1/3;
-    the two guards cover the five roundings of this line (sqrt, 1 + 2 gamma, two products, gamma itself)."""
-    n = max(int(n), 1)
-    return math.sqrt(0.5 * n) * 2.0 ** -537 * (1.0 + 2.0 * gamma(n + 2)) * _GUARD * _GUARD
+def norm_underflow_term(N: int) -> float:
+    """T_N >= sqrt(N u_min) sqrt((1 + gamma_N)/(1 - gamma_N)): the mass the squares of N real components can lose
+    to underflow in fl(||v||) = sqrt(sum fl(v_i^2)), expressed as a norm (docs/proofs/int05_underflow.md,
+    Lemma U3). N = n for a real vector, 2n for a complex one. About 1e-161 sqrt(N): below the resolution of
+    every radius above 1e-145, so it changes no bound of a normal-sized quantity. (1 + 2 gamma_{N+2}) >=
+    sqrt((1 + gamma_N)/(1 - gamma_N)) for N u <= 1/3; sqrt(0.5 N) 2^-537 = sqrt(N 2^-1075) (2^-537 is a normal
+    number; 2^-1075 is not); the two guards cover the five roundings of this line (sqrt, 1 + 2 gamma, two
+    products, gamma itself)."""
+    N = max(int(N), 1)
+    return math.sqrt(0.5 * N) * 2.0 ** -537 * (1.0 + 2.0 * gamma(N + 2)) * _GUARD * _GUARD
+
+
+def _real_components(v: np.ndarray) -> int:
+    return 2 * v.size if np.iscomplexobj(v) else v.size
 
 
 def residual_entry_count(w: int, complex_arith: bool) -> float:
     """c_w: the number of u_min = 2^-1075 by which one entry of the computed residual R_i = fl(fl(A x)_i -
-    fl(mu x_i)) plus the computed entrywise bound E_i can fall short of the exact |A x - mu x|_i (every
-    operation fl(z) = z(1 + delta) + eta): (w + 1) products in R_i, each eta propagated by at most (1 +
-    gamma_{w+1}); in E_i the w products of |A||x| propagated by at most 2 g, then three operations at scale g
-    and two at scale 1 (docs/proofs/int05_underflow.md, Lemma U3). w = adapter.width."""
+    fl(mu x_i)) plus the computed entrywise bound E_i can fall short of the exact |A x - mu x|_i under
+    fl(z) = z(1 + delta) + eta (docs/proofs/int05_underflow.md, Lemma U4): w + 1 real products in R_i for real
+    data (4w + 2 for complex data: four per complex product, two for mu x_i), each eta propagated by at most
+    (1 + gamma_{w+1}); in E_i the w products of |A||x| propagated by at most 2 g (1 + 4u), then three operations
+    at scale g (1 + 4u)^2 and two at scale (1 + 4u). w = adapter.width."""
     w = max(int(w), 1)
     g = gamma_dot(w + 2, complex_arith)
-    return (w + 1) * (1.0 + gamma(w + 1)) + 2.0 * g * w * (1.0 + gamma(w)) + 3.0 * g * (1 + 4 * U) + 2 * (1 + 4 * U)
+    products = (4 * w + 2) if complex_arith else (w + 1)
+    return (products * (1.0 + gamma(w + 1)) + 2.0 * g * w * (1.0 + gamma(w)) * (1 + 4 * U)
+            + 3.0 * g * (1 + 4 * U) ** 2 + 2 * (1 + 4 * U))
 
 
 def residual_additive_term(n: int, w: int, complex_arith: bool) -> float:
@@ -143,14 +152,14 @@ def norm2_upper(v: np.ndarray) -> float:
     additive norm_underflow_term covers the squares that underflow, INT-05)."""
     n = v.size
     s = float(np.linalg.norm(v))
-    return s * (1.0 + gamma(n + 2)) * _GUARD + norm_underflow_term(n)
+    return s * (1.0 + gamma(n + 2)) * _GUARD + norm_underflow_term(_real_components(v))
 
 
 def norm2_lower(v: np.ndarray) -> float:
     """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve)."""
     n = v.size
     s = float(np.linalg.norm(v))
-    return max(0.0, s * (1.0 - gamma(n + 2)) / _GUARD - norm_underflow_term(n))
+    return max(0.0, s * (1.0 - gamma(n + 2)) / _GUARD - norm_underflow_term(_real_components(v)))
 
 
 def fro_upper(A) -> float:
@@ -434,8 +443,11 @@ def _two_product_split(a: np.ndarray, b: np.ndarray):
     sa = np.abs(a) < _MIN_NORMAL          # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
     sb = np.abs(b) < _MIN_NORMAL
     if np.any(sa) or np.any(sb):
-        a = np.where(sa, a * 2.0 ** 60, np.where(sb, a * 2.0 ** -60, a))
-        b = np.where(sa, b * 2.0 ** -60, np.where(sb, b * 2.0 ** 60, b))
+        a, b = a.astype(float, copy=True), b.astype(float, copy=True)
+        a[sa] *= 2.0 ** 60
+        b[sa] *= 2.0 ** -60
+        a[sb] *= 2.0 ** -60
+        b[sb] *= 2.0 ** 60
     p, e = _two_product(a, b)
     return p, e, n_tiny
 

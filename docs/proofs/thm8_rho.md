@@ -106,7 +106,10 @@ underflow, `docs/proofs/int05_underflow.md`) and the built H was not symmetrised
   dropped sector, a corrupted block entry (10⁻³), a sector that omits an eigenvalue below the cut, a
   duplicated eigenvector in one sector, a cut inside a claimed enclosure.
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts (run of 2026-10-30, `--cases 240 --seed 4`, output in `docs/proofs/runs/thm8_rho.txt`): T 240 random + 49
+adversarial CERTIFIED cases checked against the exact spectrum (31 perturbed cases skipped: not CERTIFIED), S 160
+random + 32 adversarial cases of the Step 2–3 inequalities (dimension ≤ 30), N 5 negative controls (none
+CERTIFIED); 0 violations.
 
 ## 5 Analytic cross-check
 
@@ -126,6 +129,4 @@ by t, while η and δ are unchanged — the conclusion is homogeneous of degree 
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (240 (160 inequality checks) random + 49 (32 inequality checks, 5 negative controls) adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

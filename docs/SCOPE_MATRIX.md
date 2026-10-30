@@ -47,7 +47,7 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
 | `OUT_OF_SCOPE_DYNAMICS` | dynamical response and time evolution are not statements about eigenpairs of one matrix |
 | `OUT_OF_SCOPE_EXTRAPOLATION` | extrapolations and phase boundaries are not statements about any finite matrix |
 | `NOT_APPLICABLE` | the statement does not apply to this input |
-| `UNDERFLOW_RISK` | (since 3.2.0.dev0) a nonzero operand, radius or residual bound has magnitude below 2^-900: the no-underflow hypothesis of the floating-point model is not established for this input, so S2 and the statements that rest on it are INCONCLUSIVE; `Options(underflow_check=False)` assumes the hypothesis instead and records that |
+| `UNDERFLOW_RISK` | (since 3.2.0.dev0) a nonzero stored input (claimed value, eigenvector entry, operator entry or probe, model shift) has magnitude below 2^-900: the no-underflow hypothesis of the standard-model bounds (inertia, Rayleigh quotients, Kato–Temple) is not established for this input, so S2 and the statements that rest on it are INCONCLUSIVE; `Options(underflow_check=False)` assumes the hypothesis instead and records that. Since track/backlog-proofs (INT-05) the Theorem 1 radius and the cluster bound hold for any magnitude (additive underflow terms, `docs/proofs/int05_underflow.md`), so the radii and residual bounds are no longer scanned |
 
 ## How to read a certificate against this table
 

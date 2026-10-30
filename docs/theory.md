@@ -17,22 +17,29 @@ fail for Strassen-type products, reduced-precision BLAS, flush-to-zero/denormals
 non-default rounding. `fp.probe_float_environment` tests these properties on every run and downgrades
 CERTIFIED statements when one fails.
 
-**No-underflow hypothesis (enforced since 3.2.0.dev0; INT-01).** The model fl(a∘b) = (a∘b)(1+δ) fails
-for results in the subnormal range, where the rounding error is absolute, not relative. The bounds
-therefore assume that every nonzero operand, radius and residual bound has magnitude at least 2⁻⁹⁰⁰
-(`fp.UNDERFLOW_THRESHOLD`). Until 3.1.0 this was stated and not checked. `certify()` now scans the
-claimed eigenvalues, the eigenvector entries, the operator's stored entries (for a spec or matrix-free
-operator: its norm bound and one matvec on a seeded random probe), the model shift and, after the
-enclosure, the radii, existence radii, residual bounds and residual norms. Exact zeros are allowed. Any
-finding makes S2 INCONCLUSIVE with
-reason code `UNDERFLOW_RISK`, and S3, S4, S7 and S8 INCONCLUSIVE with the same code, because each rests
-on the S2 enclosure; S1 and the exact layer (S6) are untouched. A user who prefers to assume the
-hypothesis can pass `Options(underflow_check=False)` (CLI `--assume-no-underflow`); the choice is
-recorded in the certificate's `scope.options.underflow_check` and `arithmetic.underflow_check`. The
-scan covers the stored inputs and the reported outputs of the enclosure, not the intermediate quantities
-of the bound (the residual vectors and the entrywise rounding bound E), for which routine LAPACK output
-violates the hypothesis as stated — see CHANGELOG 3.2.0.dev0, INT-05, an open design decision. Two quantities are computed more accurately: Gram entries and
-Rayleigh quotients use error-free products and exactly rounded sums, so each has error ≤ 2u|·|.
+**No-underflow hypothesis (enforced since 3.2.0.dev0; INT-01) and the underflow-tolerant Theorem 1 radius
+(INT-05, track/backlog-proofs).** The model fl(a∘b) = (a∘b)(1+δ) fails for results in the subnormal range, where
+the rounding error is absolute, not relative. Since track/backlog-proofs the Theorem 1 radius (`enclosure.residuals`)
+and the cluster bound are evaluated under the underflow-tolerant model fl(a∘b) = (a∘b)(1+δ) + η, |δ| ≤ u,
+|η| ≤ u_min = 2⁻¹⁰⁷⁵, with η = 0 for additions and subtractions (a sum that underflows is exact; derived from the
+binary64 format in `docs/proofs/int05_underflow.md`): `fp.norm2_upper`/`norm2_lower` carry the term
+√(N u_min)·√((1+γ_N)/(1−γ_N)) for the squares that may underflow, the residual bound carries √n·c_w·u_min for the
+per-entry additive errors of A x, μ x and the bound E, and `fp.exact_dot` leaves products below 2⁻⁹⁶⁷ out of the
+error-free sum and adds their possible total to its error bound. These terms are ≈ 10⁻¹⁶⁰ and change no stored
+bound of a normal-sized quantity (bit identity on the recorded fixtures); for inputs with tiny magnitudes the
+radii grow instead of being reported as UNDERFLOW_RISK, and they never shrink. The remaining standard-model
+bounds (inertia backward errors, Rayleigh quotients, Kato–Temple arithmetic) still assume that every nonzero
+operand has magnitude at least 2⁻⁹⁰⁰ (`fp.UNDERFLOW_THRESHOLD`): `certify()` scans the claimed eigenvalues, the
+eigenvector entries, the operator's stored entries (for a spec or matrix-free operator: its norm bound and one
+matvec on a seeded random probe) and the model shift. Exact zeros are allowed. Any finding makes S2
+INCONCLUSIVE with reason code `UNDERFLOW_RISK`, and S3, S4, S7 and S8 INCONCLUSIVE with the same code, because
+each rests on the S2 enclosure; S1 and the exact layer (S6) are untouched. A user who prefers to assume the
+hypothesis can pass `Options(underflow_check=False)` (CLI `--assume-no-underflow`); the choice is recorded in the
+certificate's `scope.options.underflow_check` and `arithmetic.underflow_check`. The radii, existence radii,
+residual bounds and residual norms are no longer scanned (they were until this branch; the INT-05 known issue of
+CHANGELOG 3.2.0.dev0 is closed by the additive terms). Two quantities are computed more accurately: Gram entries
+and Rayleigh quotients use error-free products and exactly rounded sums, so each has error ≤ 2u|·| (plus the
+tiny-product term of `exact_dot`).
 
 **Endpoints are rounded outward (since 3.1).** The certified statement |λ − μ| ≤ r is about the stored
 numbers μ and r. An endpoint μ − r computed with round-to-nearest can land half an ulp *inside* the
@@ -48,7 +55,11 @@ This gives existence only: two copies of one vector satisfy it with the same eig
 
 **Floating-point evaluation of the Theorem 1 radius (code-facing; `enclosure.residuals`, INT-04).** The
 manuscript's Appendix A is to be rewritten from this list (D-16); the code's bound is what is described
-here, not what the appendix said (k ≤ 6 roundings, factor 1 + 8u, shift multiplied in). Notation: A the
+here, not what the appendix said (k ≤ 6 roundings, factor 1 + 8u, shift multiplied in). The list is proved,
+with the exact error model and the scalar inequalities behind each factor, in `docs/proofs/thm1_fp-accounting.md`
+(standard model) and `docs/proofs/int05_underflow.md` (additive underflow terms); a statement-level scaffold of
+the appendix is `docs/proofs/appendixA_scaffold.tex`. Since track/backlog-proofs step 5 has one more rounding (the
+addition of the INT-05 term), paid by the 3u slack of the norm guards, and `upper` ends with that term. Notation: A the
 stored matrix, x and μ the stored claim, w = `adapter.width` the largest number of nonzeros in a row of
 A, n the dimension, u = 2⁻⁵³, γ_m = mu/(1 − mu), g = `gamma_dot(w + 2)` (= γ_{w+2} for real data,
 2γ_{w+6} for complex data), ‖·‖ the Euclidean norm. Every operation below is round-to-nearest; "(1 + 4u)
@@ -101,32 +112,36 @@ pins, stage by stage, that each computed quantity is at least what it bounds and
 times the factors and rounding envelopes listed here.
 
 **Theorem 2 (clusters with non-orthonormal vectors).** Let X be n × g, Λ = diag(μ) real,
-R = AX − XΛ and η = ‖X^H X − I‖ < 1. Set δ = 1 − √(1 − η) and ρ = ‖R‖ + (‖A‖ + ‖Λ‖)δ. Let Q̂ be the
-polar factor of X, w ≥ ‖Q̂^H(AQ̂ − Q̂Λ)‖ and ε = (w + √(w² + 4ρ²))/2. Then there are g *distinct*
-indices i_j with |λ_{i_j} − μ_j| ≤ ε. For orthonormal Ritz pairs this reduces to Kahan's theorem,
-ε = ‖R‖. **UNVERIFIED** in this form.
+R = AX − XΛ and η = ‖Xᴴ X − I‖ < 1. Set δ = 1 − √(1 − η) and ρ = ‖R‖ + (‖A‖ + ‖Λ‖)δ. Then there are g
+*distinct* indices i_j with |λ_{i_j} − μ_j| ≤ ρ. Proof: the polar factor Q̂ = X(XᴴX)^{−1/2} is an isometry with
+‖X − Q̂‖ ≤ δ, so ‖AQ̂ − Q̂Λ‖ ≤ ρ (polar-factor lemma), and Kahan's inclusion theorem — for an orthonormal Q and
+*any* Hermitian g × g block H, the eigenvalues of H are matched to distinct eigenvalues of A within ‖AQ − QH‖
+(proof by the Courant–Fischer interval count and Hall's theorem) — gives the matching. For orthonormal
+Ritz pairs this is Kahan's theorem with ρ = ‖R‖. Until track/backlog-proofs the radius was
+ε = (w + √(w² + 4ρ²))/2 ≥ ρ (the Weyl-perturbation proof of the manuscript appendix); ρ is never worse.
+Derivation, rounding accounting and verification: `docs/proofs/thm2_polar-factor.md` (D-59; Sarang's check
+D-12 pending).
 
 **Theorem 2′ (sharper cluster radius; since 3.1.0, review finding IMP-13).** Under the hypotheses of
 Theorem 2 (η < 1; Λ Hermitian, in the implementation Λ = diag(μ) real), with δ = 1 − √(1 − η) and
 spread(Λ) = λ_max(Λ) − λ_min(Λ), there are g distinct indices i_j with
 
-    |λ_{i_j} − μ_j| ≤ ε* := ‖R‖/√(1 − η) + ‖X^H R‖/(1 − η) + δ·spread(Λ)/√(1 − η).
+    |λ_{i_j} − μ_j| ≤ ε* := ‖R‖/√(1 − η) + ‖Xᴴ R‖/(1 − η) + δ·spread(Λ)/√(1 − η).
 
-`enclosure._cluster_bound` computes both ε and ε* (each term an upper bound, guarded with `fp.up`) and
-uses min(ε, ε*) as the cluster radius. For exact eigenvectors of one degenerate level ε* is of the
-order of the residual, where ε is dominated by (‖A‖ + ‖Λ‖)δ.
-**[UNVERIFIED — re-derivation pending, D-12].** Numerical evidence: 15 876 random cases with 0
-violations (`thm2_checks.py`, review of 2026-10-21).
+`enclosure._cluster_bound` computes both ρ and ε* (each term an upper bound, guarded with `fp.up` and the
+INT-05 additive terms) and uses min(ρ, ε*) as the cluster radius; both are proven, so the min is sound. For
+exact eigenvectors of one degenerate level ε* is of the order of the residual, where ρ is dominated by
+(‖A‖ + ‖Λ‖)δ. Derivation and verification: `docs/proofs/thm2prime_eps-star.md` (D-59; Sarang's check D-12
+pending; the earlier numerical evidence was 15 876 random cases, `thm2_checks.py`, review of 2026-10-21).
 
-*Proof sketch.* Polar decomposition X = Q̂M with M = (X^H X)^{1/2}; the eigenvalues of M lie in
+*Proof sketch.* Polar decomposition X = Q̂M with M = (Xᴴ X)^{1/2}; the eigenvalues of M lie in
 [√(1−η), √(1+η)], so ‖M − I‖ ≤ 1 − √(1−η) = δ and ‖M⁻¹‖ ≤ (1−η)^{−1/2}.
-(i) *Kahan.* H′ := Q̂^H A Q̂ is Hermitian. From AX = R + XΛ, A Q̂ = R M⁻¹ + Q̂ M Λ M⁻¹, hence
-(I − Q̂Q̂^H) A Q̂ = (I − Q̂Q̂^H) R M⁻¹ and ‖A Q̂ − Q̂ H′‖ ≤ ‖R‖/√(1−η). Kahan's theorem (Parlett 1998,
-Thm 11.5.1; valid for any Hermitian H′, not only diagonal) matches the eigenvalues θ_1 ≤ … ≤ θ_g of H′
-to g *distinct* eigenvalues of A within ‖R‖/√(1−η).
-(ii) *Weyl.* Using Q̂^H = M⁻¹X^H, H′ − Λ = M⁻¹ X^H R M⁻¹ + (MΛM⁻¹ − Λ), and MΛM⁻¹ − Λ = [M, Λ]M⁻¹ =
+(i) *Kahan.* H′ := Q̂ᴴ A Q̂ is Hermitian. From AX = R + XΛ, A Q̂ = R M⁻¹ + Q̂ M Λ M⁻¹, hence
+(I − Q̂Q̂ᴴ) A Q̂ = (I − Q̂Q̂ᴴ) R M⁻¹ and ‖A Q̂ − Q̂ H′‖ ≤ ‖R‖/√(1−η). Kahan's theorem matches the eigenvalues
+θ_1 ≤ … ≤ θ_g of H′ to g *distinct* eigenvalues of A within ‖R‖/√(1−η).
+(ii) *Weyl.* Using Q̂ᴴ = M⁻¹Xᴴ, H′ − Λ = M⁻¹ Xᴴ R M⁻¹ + (MΛM⁻¹ − Λ), and MΛM⁻¹ − Λ = [M, Λ]M⁻¹ =
 [M − I, Λ − cI] M⁻¹ for any scalar c; with c the midpoint of the spectrum of Λ, ‖Λ − cI‖ = spread/2, so
-‖H′ − Λ‖ ≤ ‖X^H R‖/(1−η) + δ·spread/√(1−η). H′ − Λ is Hermitian, so Weyl's inequality pairs the sorted
+‖H′ − Λ‖ ≤ ‖Xᴴ R‖/(1−η) + δ·spread/√(1−η). H′ − Λ is Hermitian, so Weyl's inequality pairs the sorted
 eigenvalues of H′ and Λ within this bound.
 (iii) Composing the two matchings gives distinct eigenvalues of A within ε* of the eigenvalues of Λ. ∎
 
@@ -155,7 +170,10 @@ and block-diagonal D with ν negative eigenvalues, then #{λ < σ − β} ≤ ν
 exactly: 2 × 2 blocks by the sign of a rational determinant.
 
 **Corollary 5 (completeness).** If k claimed values have distinct enclosures inside (−∞, σ − β) and ν = k,
-they enclose λ₁…λ_k, and λ_{k+1} ≥ σ − β.
+they enclose λ₁…λ_k, and λ_{k+1} ≥ σ − β. The pairing is the sorted one — λ_j in the j-th sorted enclosure —
+because the enclosure groups have disjoint union intervals and the members of a cluster group share the
+cluster radius (sorted-pairing lemma; it fails for non-uniform radii). With a model shift Δ the radii and β
+grow by Δ (Weyl). Derivation and verification: `docs/proofs/cor5_pairing.md` (D-59; Sarang's check D-12 pending).
 
 **Vectorless window count (C-02, since 3.2.0.dev0; `certify._certify_window_vectorless`).** For a window
 claim without eigenvectors there are no enclosures, so Corollary 5 does not apply; the code certifies only
@@ -193,11 +211,15 @@ with η = ‖W^H W − I‖ < 1. Let every sector's claims below E_cut be certif
 claimed values match λ₁…λ_K within r + ε, and λ_{K+1} ≥ E_cut − max β_s − ε (`compose.py`).
 
 *ε for a square W (since 3.1.0, review IMP-12/IMP-20).* Because Σd_s = n is checked first, W is square
-and its polar factor Q̂ is unitary. With R̂ = AQ̂ − Q̂B = (AW − WB) + A(Q̂ − W) − (Q̂ − W)B and
-‖Q̂ − W‖ = ‖I − M‖ ≤ δ, ‖R̂‖ ≤ ‖AW − WB‖ + (‖A‖ + ‖B‖)δ = ρ. Q̂^H A Q̂ − B = Q̂^H R̂ is Hermitian and
-Q̂^H A Q̂ has the spectrum of A, so Weyl's inequality pairs the sorted eigenvalues of A and B within ρ.
-`compose.py` therefore uses ε = ρ (+ the builder shift) where it used (1 + √5)/2 · ρ before.
-**[UNVERIFIED — re-derivation pending, D-12]** (a one-line consequence of Weyl, but new in the project).
+and its polar factor Q̂ is unitary. With R̂ = HQ̂ − Q̂B = (HW − WB) + H(Q̂ − W) − (Q̂ − W)B and
+‖Q̂ − W‖ = ‖I − M‖ ≤ δ, ‖R̂‖ ≤ ‖HW − WB‖ + (‖H‖ + ‖B‖)δ = ρ. Q̂ᴴ H Q̂ − B = Q̂ᴴ R̂ is Hermitian and
+Q̂ᴴ H Q̂ has the spectrum of H, so Weyl's inequality pairs the sorted eigenvalues of H and B within ρ.
+`compose.py` therefore uses ε = ρ (+ the builder shift) where it used (1 + √5)/2 · ρ before. Here H is the
+symmetrised built matrix (`construct.hermitian_part`), whose distance to the declared model is the builder
+shift (Appendix A). Derivation (with Corollary 5 for each sector and the sorted-pairing lemma) and
+verification: `docs/proofs/thm8_rho.md` (D-59; Sarang's check D-12 pending). `sectors.decomposition_shift` and
+`certify._subspace_shift` (a single sector against the full operator, Theorem 2 with X = V) also return ρ since
+track/backlog-proofs.
 
 ## 6. Whole-spectrum enclosure (`spectrum.py`, formerly symveig)
 

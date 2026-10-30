@@ -251,9 +251,10 @@ def _underflow_operands(mu, X, adapter, seed: int):
     (name, array, threshold) tuples: the claimed eigenvalues and eigenvector entries; for a stored matrix
     its entries (the sparse data array); for a spec or black-box operator the norm bound and the result of
     one matvec on a fixed random probe (the only access to its entries; the probe uses the certificate's
-    seed). Intermediate quantities of the bounds (the residual vectors, the entrywise rounding bound) are
-    not scanned: the hypothesis is stated for the stored inputs and for the radii and residual bounds the
-    certificate reports, which are scanned after the enclosure (CHANGELOG 3.2.0.dev0, INT-05).
+    seed). Neither the intermediate quantities of the Theorem 1 bound (residual vectors, entrywise rounding
+    bound) nor its outputs (radii, residual bounds) are scanned: that bound holds under the underflow-tolerant
+    model for every magnitude (INT-05, docs/proofs/int05_underflow.md). The hypothesis is stated for the
+    stored inputs and the model shift, which the standard-model bounds of the other statements use.
     """
     T = UNDERFLOW_THRESHOLD
     parts = [("claim.eigenvalues", mu, T)]
@@ -1063,16 +1064,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 st = "FAILED"
                 summ = (f"certified radius {enc.radius.max() + eps_shift:.2e} (pair {worst}) exceeds the "
                         f"accuracy target {target:.1e} [{tsrc}]")
-        if opts.underflow_check:
-            # the radii and residual bounds are the reported quantities and the operands of every downstream
-            # comparison (endpoints, shifts, separations)
-            T = UNDERFLOW_THRESHOLD
-            post = [("enclosure.radius", enc.radius, T), ("enclosure.existence_radius", enc.existence_radius, T),
-                    ("enclosure.residual_bound", enc.residual.upper, T),
-                    ("enclosure.residual_norm", enc.residual.computed, T)]
-            uf_record["scanned"] += [p[0] for p in post]
-            uf_findings += underflow_scan(post)
-            underflow = bool(uf_findings)
+        # INT-05 (track/backlog-proofs): the radii, existence radii and residual bounds are no longer scanned. The
+        # Theorem 1 radius is evaluated under the underflow-tolerant model fl(z) = z(1 + delta) + eta with the
+        # additive terms of fp.norm2_upper/norm2_lower and fp.residual_additive_term, so it is an upper bound for
+        # every magnitude of the intermediate quantities (docs/proofs/int05_underflow.md); the scan covers the
+        # stored inputs and the model shift, on which the remaining standard-model bounds (inertia, Gram,
+        # Rayleigh quotients) rest.
         code2 = None
         if underflow:
             st, code2 = "INCONCLUSIVE", "UNDERFLOW_RISK"

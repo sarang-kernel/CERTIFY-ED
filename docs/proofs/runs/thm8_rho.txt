@@ -1,0 +1,4 @@
+Theorem 8 statement against the exact spectrum: 240 random + 49 adversarial cases, 31 skipped (hypothesis not met), 0 violations
+Steps 2-3 inequalities in mp: 160 random + 32 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+negative controls not CERTIFIED: 0 random + 5 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations
