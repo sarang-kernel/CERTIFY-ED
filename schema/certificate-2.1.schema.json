@@ -986,6 +986,41 @@
                     "items": {
                       "type": "object"
                     }
+                  },
+                  "claimed_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "tail_bound": {
+                    "type": "object",
+                    "properties": {
+                      "omitted_count": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "next_lower_bound": {
+                        "$ref": "#/$defs/number_or_special"
+                      },
+                      "upper_bound": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/number_or_special"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "method": {
+                        "type": "string"
+                      },
+                      "weight_bound": {
+                        "type": "string"
+                      },
+                      "statement": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               }
@@ -1016,6 +1051,9 @@
                   },
                   "budget": {
                     "$ref": "#/$defs/budget_record"
+                  },
+                  "exact_bracket": {
+                    "type": "object"
                   }
                 }
               }

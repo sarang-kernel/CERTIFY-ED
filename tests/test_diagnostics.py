@@ -249,6 +249,9 @@ def test_battery_of_calls_every_open_statement_carries_next_action(heis10, monke
     c = run("labminimal", preset="lab-minimal")
     assert "eigenspaces=" in c.statement("S4.eigenspaces")["evidence"]["next_action"]
     c = run("wholespectrum", preset="whole-spectrum")
+    # since 3.2 (C-06) a 'lowest' claim with S3 CERTIFIED lacks only the temperatures for S7
+    assert "temperatures" in c.statement("S7.thermodynamics")["evidence"]["next_action"]
+    c = run("wholespectrum-subset", preset="whole-spectrum", kind="subset")
     assert "kind='all'" in c.statement("S7.thermodynamics")["evidence"]["next_action"]
     assert {"NARROWED_BY_USER", "DEPENDENCY_NARROWED", "BUDGET_TIME", "BUDGET_MEMORY", "NEEDS_EIGENVECTORS", "NEEDS_SPEC",
             "NEEDS_MATRIX", "NO_COMPLETENESS_CLAIM", "SIZE_LIMIT", "UNSUPPORTED_CLAIM", "MISSING_DEPENDENCY",

@@ -98,10 +98,16 @@ def _statement_evidence_defs() -> Dict[str, dict]:
             "energy_offset": num, "hypothesis": {"type": "string"}, "method": {"type": "string"},
             "looseness": {"type": "string"},
             "temperatures": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}},
-            "rows": {"type": "array", "items": {"type": "object"}}}},
+            "rows": {"type": "array", "items": {"type": "object"}},
+            "claimed_count": {"type": "integer", "minimum": 0},
+            "tail_bound": {"type": "object", "properties": {
+                "omitted_count": {"type": "integer", "minimum": 0}, "next_lower_bound": num,
+                "upper_bound": {"anyOf": [num, {"type": "null"}]}, "method": {"type": "string"},
+                "weight_bound": {"type": "string"}, "statement": {"type": "string"}}}}},
         "S8.degeneracy": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
-            "clusters": {"type": "array", "items": {"type": "object"}}, "budget": budget}},
+            "clusters": {"type": "array", "items": {"type": "object"}}, "budget": budget,
+            "exact_bracket": {"type": "object"}}},
     }
 
 

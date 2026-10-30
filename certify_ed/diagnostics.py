@@ -44,7 +44,8 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
     "NEEDS_MATRIX": ("supply the operator as a stored matrix (Claim.operator: dense or scipy.sparse), or declare a spec "
                      "so that a reference matrix of dimension <= reference_max_dim can be built"),
     "NEEDS_WHOLE_SPECTRUM": ("claim the whole spectrum (kind='all', every eigenpair with orthonormal vectors) so that S3 "
-                             "can certify completeness"),
+                             "can certify completeness; for S7 a 'lowest' claim with S3 CERTIFIED also suffices (the omitted "
+                             "eigenvalues enter through the tail bound (n-k) exp(-beta lambda_{k+1}), C-06)"),
     "NEEDS_TEMPERATURES": "pass the temperatures: Options(temperatures=[...]) or --temperatures T1,T2 (k_B = 1)",
     "NEEDS_DEPENDENCY": FLINT,
     "MISSING_DEPENDENCY": FLINT,

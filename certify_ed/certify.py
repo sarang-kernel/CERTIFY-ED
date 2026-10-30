@@ -1426,17 +1426,55 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         spectrum_record = {"complete": se.complete, "n_intervals": len(se.intervals), "max_halfwidth": se.max_halfwidth,
                            "intervals": [{"lo": iv.lo, "hi": iv.hi, "count": iv.count, "counted": iv.counted,
                                           "method": iv.method} for iv in se.intervals]}
+    # C-06: a 'lowest' claim whose S3 is CERTIFIED gives the k lowest intervals, a lower bound on lambda_{k+1}
+    # (window[1]) and the dimension; the omitted weight is bounded by (n - k) exp(-beta L) (Proposition 16')
+    truncated_record = None
+    if (sel.wants("S7") and claim.kind == "lowest" and enc is not None and window is not None
+            and np.isfinite(window[1]) and len(opts.temperatures)):
+        from .spectrum import intervals_from_enclosure, merge_intervals
+        se_t = merge_intervals(intervals_from_enclosure(enc, eps_s3 if audit is None else 0.0), int(adapter.shape[0]))
+        nb = adapter.norm_upper()
+        truncated_record = {"intervals": [{"lo": iv.lo, "hi": iv.hi, "count": iv.count} for iv in se_t.intervals],
+                            "counted": all(iv.counted for iv in se_t.intervals),
+                            "next_lower_bound": float(window[1]),
+                            "upper_bound": None if nb is None else float(add_up(nb, eps_s3))}
     if sel.wants("S7"):
         s7_gate = _gate(sel, budget, "S7")
         if s7_gate is not None:
             statements.append(s7_gate)
-        elif underflow and claim.kind == "all" and enc is not None:
+        elif underflow and claim.kind in ("all", "lowest") and enc is not None:
             statements.append(_stmt("S7.thermodynamics", "INCONCLUSIVE",
                                     "S2 inconclusive under UNDERFLOW_RISK: no complete enclosure to sum over",
                                     {"underflow": {"findings": uf_findings}}, reason_code="UNDERFLOW_RISK"))
+        elif claim.kind == "lowest" and not len(opts.temperatures) and enc is not None and window is not None:
+            statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED", "no temperatures given (Options.temperatures)",
+                                    reason_code="NEEDS_TEMPERATURES"))
+        elif claim.kind == "lowest" and truncated_record is not None and truncated_record["counted"]:
+            from .thermo import thermodynamics_truncated
+            t0 = time.time()
+            try:
+                th = thermodynamics_truncated(truncated_record["intervals"], truncated_record["next_lower_bound"],
+                                              int(adapter.shape[0]), opts.temperatures,
+                                              upper_bound=truncated_record["upper_bound"])
+                st7 = "CERTIFIED"
+                tb = th["tail_bound"]
+                summ7 = (f"Z, F, U, C enclosed at {len(th['rows'])} temperature(s) from the {th.get('claimed_count', th['dimension'])} "
+                         f"lowest eigenvalues and the tail bound on the {tb['omitted_count']} omitted ones "
+                         f"(sum_(j>k) exp(-beta lambda_j) <= (n-k) exp(-beta L), L = {tb.get('next_lower_bound')!r}; "
+                         f"method {tb['method']!r}); max C width {max(r['C'][1] - r['C'][0] for r in th['rows']):.2e}")
+            except (ValueError, ZeroDivisionError, OverflowError) as e:
+                th, st7, summ7 = {"error": str(e)}, "INCONCLUSIVE", f"thermodynamic intervals not formed: {e}"
+            statements.append(_stmt("S7.thermodynamics", st7, summ7, th,
+                                    ["S2 enclosures and the S3 lower bound on lambda_{k+1} for the operator the "
+                                     "statements refer to; the dimension n of the operator; k_B = 1; dyadic interval "
+                                     "arithmetic with outward rounding (Lemma 17); Proposition 16' [derived: "
+                                     "docs/proofs/C06_truncated_thermodynamics.md; UNVERIFIED by independent "
+                                     "re-derivation, D-12]"],
+                                    time.time() - t0))
         elif claim.kind != "all" or spectrum_record is None or not spectrum_record["complete"]:
             statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED",
-                                    "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3)",
+                                    "needs a whole-spectrum claim (kind 'all') whose enclosure is complete (S3), or a "
+                                    "'lowest' claim with S3 CERTIFIED (truncated spectrum, C-06)",
                                     reason_code="NEEDS_WHOLE_SPECTRUM"))
         elif not len(opts.temperatures):
             statements.append(_stmt("S7.thermodynamics", "NOT_CHECKED", "no temperatures given (Options.temperatures)",
@@ -1454,7 +1492,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             statements.append(_stmt("S7.thermodynamics", st7, summ7, th,
                                     ["complete whole-spectrum enclosure (Prop 9) for the operator the S2/S3 "
                                      "statements refer to; k_B = 1; dyadic interval arithmetic with outward rounding "
-                                     "(Lemma 17); Proposition 16 [UNVERIFIED - re-derivation pending, D-12]"],
+                                     "(Lemma 17); Proposition 16 [derived: docs/proofs/P16_thermo_intervals.md; UNVERIFIED by "
+                                     "independent re-derivation, D-12]"],
                                     time.time() - t0))
 
     # ---------------- S8 degeneracy counts by bracketing inertia (Prop 14, UNVERIFIED)
@@ -1491,13 +1530,49 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 n_cert = sum(1 for r in recs if r["status"] == "CERTIFIED")
                 n_fail = sum(1 for r in recs if r["status"] == "FAILED")
                 st8 = "CERTIFIED" if n_cert == len(recs) else ("FAILED" if n_fail else "INCONCLUSIVE")
-                statements.append(_stmt("S8.degeneracy", st8,
-                                        f"{n_cert}/{len(recs)} clusters: eigenvalue count in the level enclosure certified "
-                                        f"by bracketing inertia counts" + (f"; degeneracies {[r.get('degeneracy') for r in recs]}"
-                                                                           if st8 == "CERTIFIED" else ""),
-                                        {"clusters": recs},
-                                        ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
-                                         "[UNVERIFIED - re-derivation pending, D-12]"], time.time() - t0))
+                assumptions8 = ["Lemma 4 at two shifts; Theorem 2 distinctness; Proposition 14 "
+                                "[derived: docs/proofs/P14_degeneracy_bracketing.md; UNVERIFIED by "
+                                "independent re-derivation, D-12]"]
+                summ8 = (f"{n_cert}/{len(recs)} clusters: eigenvalue count in the level enclosure certified "
+                         f"by bracketing inertia counts" + (f"; degeneracies {[r.get('degeneracy') for r in recs]}"
+                                                            if st8 == "CERTIFIED" else ""))
+                # C-16: exact count and multiplicities in the inner bracket, no floating-point assumption
+                # (Options.exact_recheck, spec declared, python-flint, plain or U(1)-block claims)
+                exact_note = None
+                if opts.exact_recheck and spec is not None and claim.sector_isometry is None and any("bracket_inner" in r for r in recs):
+                    if not _have_flint():
+                        exact_note = {"status": "NOT_CHECKED", "reason": "python-flint not installed", "reason_code": "MISSING_DEPENDENCY"}
+                    else:
+                        from .checker import exact_matrix, is_hermitian_exact
+                        from .exact_degeneracy import MAX_DIM, exact_brackets_for_clusters
+                        n_ex = claim.states.size if claim.states is not None else spec.dim
+                        if n_ex > min(opts.exact_max_dim, MAX_DIM):
+                            exact_note = {"status": "NOT_CHECKED", "reason_code": "SIZE_LIMIT",
+                                          "reason": f"dimension {n_ex} above the exact bracket cap {min(opts.exact_max_dim, MAX_DIM)}"}
+                        else:
+                            ex_m = exact_matrix(spec, claim.states)
+                            if not is_hermitian_exact(ex_m):
+                                exact_note = {"status": "FAILED", "reason": "declared model is not Hermitian"}
+                            else:
+                                xb = exact_brackets_for_clusters(ex_m, recs)
+                                for r, x in zip(recs, xb):
+                                    if x is not None:
+                                        r["exact_bracket"] = x
+                                n_eq = sum(1 for x in xb if x and x.get("status") == "CERTIFIED" and x.get("equal"))
+                                n_neq = sum(1 for x in xb if x and x.get("status") == "CERTIFIED" and x.get("equal") is False)
+                                n_xf = sum(1 for x in xb if x and x.get("status") == "FAILED")
+                                if n_xf:
+                                    st8 = "FAILED"
+                                summ8 += (f"; exact brackets (C-16): {n_eq} cluster(s) exactly degenerate, {n_neq} not "
+                                          f"degenerate, {n_xf} contradicted")
+                                assumptions8.append("exact bracket (C-16): characteristic polynomial of the exact declared "
+                                                    "model, Sturm counts; no floating-point assumption "
+                                                    "[derived: docs/proofs/C16_exact_bracket.md; UNVERIFIED by "
+                                                    "independent re-derivation, D-12]")
+                ev8 = {"clusters": recs}
+                if exact_note is not None:
+                    ev8["exact_bracket"] = exact_note
+                statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0))
 
     # ---------------- assemble
     subject = {"description": (spec.name if spec else "operator supplied without spec"),
