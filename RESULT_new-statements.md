@@ -84,9 +84,11 @@ fidelity); no new reason code or statement id. `python -m certify_ed.schema --ch
 
 ## Checks
 
+* Branch head: see the git log (the commit after 94ab4d2 adds this summary).
+
 * `ruff check certify_ed tests experiments conformance corpus docs/proofs`: clean.
 * `python -m certify_ed.schema --check schema`: in sync.
-* Full suite: see the summary line below (filled from the run on this branch).
+* Full suite (`pytest -q tests`, PYTHONSAFEPATH removed, TEMP inside the workspace) at 94ab4d2: **985 passed, 2 skipped** in 2288.8 s (38 min on this host; the 953 tests of dev/3.2 plus the 32 new ones).
 * Verification scripts (each prints case counts and violations): `verify_C-03.py` 21 176 cases, `verify_C-04.py`
   254, `verify_E-04.py` 1 156, `verify_E-07.py` 553 — 0 violations each.
 
