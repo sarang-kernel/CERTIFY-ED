@@ -411,3 +411,19 @@ values they are.
 [0, 1/3); outward dyadic rounding preserves enclosure at each step; squaring and division of
 positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
 P bits; the enclosures are therefore not the tightest possible, only correct.)
+
+## 10. Statements added in 3.2 (derived under D-59; documents in `docs/proofs/`)
+
+Each statement below has a derivation document with exactly the sections Statement, Proof, Where the code
+implements it, Computational verification, Analytic cross-check and Status, and a verification script
+`docs/proofs/verify_<id>.py`. All are **[derived by Claude; independent re-derivation pending, D-12]**.
+
+### 10.1 Entanglement entropy and spectrum (C-03, `entanglement.py`, `docs/proofs/C-03_entanglement.md`)
+
+For a certified cluster (Theorem 6: ‖Q̂Q̂ᴴ − P‖₂ ≤ s, η = ‖XᴴX − I‖₂) and a declared cut A|B, with
+ρ_A = tr_B(P)/g and ρ̂_A = tr_B(XXᴴ)/tr(XᴴX): T = ‖ρ_A − ρ̂_A‖₁/2 ≤ T* = s + η/(1 − η) (= s for g = 1), by the
+rank-2g trace-norm bound on P − Q̂Q̂ᴴ and the contractivity of the partial trace; |S(ρ_A) − S(ρ̂_A)| ≤
+T* ln(d_A − 1) + h(T*) (Fannes–Audenaert, Audenaert 2007) provided T* ≤ 1 − 1/d_A, where the right-hand side is
+increasing in T; |λ_k(ρ_A) − λ_k(ρ̂_A)| ≤ 2T* (Weyl). The reduced matrix of the stored vectors is exact
+(rational), its spectrum is enclosed by Ostrowski + Weyl around a floating-point eigendecomposition with exactly
+computed defects, and x ln x, h and ln are evaluated on the dyadic intervals of Lemma 17.

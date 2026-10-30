@@ -21,7 +21,7 @@ STATEMENTS: Dict[str, dict] = {
     "S3": {"id": "S3.completeness", "needs": ("S2",), "inputs": ("eigenvectors", "matrix", "completeness claim"),
            "what": "no eigenvalue missing in the claimed window; gap to the next (Lemma 4, Cor 5, Prop 9)"},
     "S4": {"id": "S4.eigenspaces", "needs": ("S2", "S3"), "inputs": ("eigenvectors",),
-           "what": "projector error, observables, correlations, structure factors, quantum numbers (Thm 6, Prop 7, Prop 15)"},
+           "what": "projector error, observables, correlations, structure factors, quantum numbers, entanglement (Thm 6, Prop 7, Prop 15, C-03)"},
     "S5": {"id": "S5.corroboration", "needs": (), "inputs": ("matrix",),
            "what": "recomputation by algorithmically distinct solvers (evidence, not a certified statement)"},
     "S6": {"id": "S6.exact_recheck", "needs": ("S2",), "inputs": ("spec", "eigenvectors", "python-flint"),

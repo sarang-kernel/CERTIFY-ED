@@ -16,6 +16,31 @@ before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.
 env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
 
+### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
+
+Every statement of this track has a derivation in `docs/proofs/<id>_<name>.md` with its verification script
+`docs/proofs/verify_<id>.py` (decision D-59: derived here, machine-checked in exact rational arithmetic where the
+quantity is rational and at 40-50 mpmath digits where it is not; independent re-derivation pending, D-12). No
+existing bound became tighter; new bounds are combined with old ones as min(old, new) only where both are proven.
+
+- **C-03 entanglement entropy and spectrum.** `Options.entanglement = {name: {"sites": [...], "log_base": "e" | 2,
+  "max_dim_a": 64}}` adds, to every S4 cluster record, `entanglement[name]`: a certified interval for S(rho_A)
+  with rho_A = tr_B(P)/g (the reduced state of the certified eigenvector for g = 1; for a cluster the normalised
+  projector, the only basis-independent object), the entanglement spectrum as intervals, the computed value, the
+  trace-distance bound T* = s (+ eta/(1 - eta) for g > 1) and the Fannes-Audenaert term. Mathematics
+  (`docs/proofs/C-03_entanglement.md`): ||rho_A - rho_hat_A||_1 <= 2 T* from the rank-2g trace-norm bound on
+  P - Qhat Qhat^H and the contractivity of the partial trace; |S(rho_A) - S(rho_hat_A)| <= T* ln(d_A - 1) + h(T*)
+  (Audenaert 2007; the upper bound T* may replace T only for T* <= 1 - 1/d_A, where the function is increasing:
+  outside that range the record is NOT_CHECKED with the reason, never an interval); |lambda_k(rho_A) -
+  lambda_k(rho_hat_A)| <= 2 T* (Weyl). The reduced matrix of the stored vectors is formed in exact rational
+  arithmetic, its spectrum enclosed by Ostrowski's and Weyl's theorems around a floating-point
+  eigendecomposition with exactly computed defects, and -p ln p, h and ln evaluated on dyadic intervals
+  (`ivl.py`). New module `certify_ed/entanglement.py`; one hook in the S4 loop; `scope.OUT_OF_SCOPE_QUANTITIES`
+  lists the quantity as DEFAULT_SELECTION (not NOT_IMPLEMENTED) and omits it when requested. Symmetry-adapted
+  claims are not lifted (UNSUPPORTED_CLAIM). Verification: 1 150 random + 20 026 adversarial cases, 0
+  violations; tests `tests/test_entanglement.py` (11) against 40-digit references, planted rotations and the
+  negative controls.
+
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
 - **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the

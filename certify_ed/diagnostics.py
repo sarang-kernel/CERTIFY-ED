@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 
 from .scope import classify_not_checked
 
-__all__ = ["next_action", "annotate_next_actions", "NEXT_ACTION_BY_CODE"]
+__all__ = ["next_action", "annotate_next_actions", "NEXT_ACTION_BY_CODE", "entanglement_next_action"]
 
 MORE_PAIRS = ("ask the producer for more eigenpairs (k+2 at least) so that the cluster at the top of the claim is "
               "complete and separated from the rest, or use kind='window' with an upper edge inside a gap")
@@ -223,3 +223,27 @@ def annotate_next_actions(statements: List[dict], context: Optional[dict] = None
                 ev = s["evidence"] = {}
             ev["next_action"] = act
     return statements
+
+
+# ---- sub-records of S4 (3.2): entanglement records (C-03) carry their own next_action, keyed on reason_code and
+# on the wording of the reason written by entanglement.py
+def entanglement_next_action(rec: dict) -> str:
+    """Next action for a NOT_CHECKED entanglement record (entanglement.certify_entanglement)."""
+    code = rec.get("reason_code")
+    text = str(rec.get("reason", "")).lower()
+    if code == "NEEDS_SPEC":
+        return NEXT_ACTION_BY_CODE["NEEDS_SPEC"]
+    if code == "UNSUPPORTED_CLAIM":
+        return ("certify the eigenvectors in the computational basis (full space, or a U(1) block through Claim.states) "
+                "instead of the symmetry-adapted block; the entanglement statement is not lifted through sector isometries")
+    if code == "SIZE_LIMIT":
+        return ("choose a smaller subsystem A, or raise the limit: Options(entanglement={name: {'sites': [...], "
+                "'max_dim_a': d}}) (the exact reduced-density stage costs about d_A^3 rational operations)")
+    if "fannes-audenaert range" in text:
+        return (TIGHTEN + "; the trace-distance bound T = s (+ eta/(1 - eta) for a cluster) must be <= 1 - 1/d_A: a smaller "
+                "residual or a larger certified separation lowers s = rho/separation")
+    if "proper subset" in text or "non-empty subset" in text:
+        return "declare A as a non-empty proper subset of the sites: Options(entanglement={name: {'sites': [...]}})"
+    if "eta >= 1" in text:
+        return REORTHO
+    return "inspect the entanglement record's reason; docs/SCOPE_MATRIX.md (entanglement row) lists what the statement needs"

@@ -162,6 +162,9 @@ class Options:
     correlations: Dict[str, Any] = field(default_factory=dict)
     #   name -> {"letter": "z", "sites": [...], "positions": [[x, y], ...] (optional), "q": [[...], ...] (optional)}
     degeneracy: bool = True                  # S8 for the S4 clusters
+    # ---- entanglement (C-03, 3.2): name -> {"sites": [...], "log_base": "e" | 2, "max_dim_a": int}; S4 evidence
+    # `entanglement` per cluster: certified interval for S(rho_A) and the entanglement spectrum (entanglement.py)
+    entanglement: Dict[str, Any] = field(default_factory=dict)
     # ---- no-underflow hypothesis (INT-01, 3.2.0.dev0): scan operands, radii and residual bounds for nonzero
     # magnitudes below fp.UNDERFLOW_THRESHOLD; a finding makes S2 and its dependents INCONCLUSIVE
     # (UNDERFLOW_RISK). False assumes the hypothesis; the choice is recorded in the scope block's options.
@@ -1348,6 +1351,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             r["status"] = "CERTIFIED"
             if corr_recs:
                 r["correlations"] = corr_recs
+            if opts.entanglement:
+                # C-03: certified entanglement entropy and spectrum across declared cuts (entanglement.py)
+                from .entanglement import entanglement_records
+                r["entanglement"] = entanglement_records(ec, X, spec, claim, opts.entanglement)
             n_ok += 1
             eig_records.append(r)
             s4_clusters.append(C)
@@ -1529,7 +1536,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                  "observables": sorted(opts.observables), "correlations": sorted(opts.correlations),
                  "symmetries": sorted(opts.symmetries), "corroborate": list(opts.corroborate),
                  "exact_recheck": bool(opts.exact_recheck), "degeneracy": bool(opts.degeneracy),
-                 "underflow_check": bool(opts.underflow_check)},
+                 "underflow_check": bool(opts.underflow_check), "entanglement": sorted(opts.entanglement)},
                 ("sector block: S2-S4 concern the producer's sector matrix; S2 radii in 'arrays' "
                  "include the certified shift to the full operator") if audit is not None else "operator",
                 requested={"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
