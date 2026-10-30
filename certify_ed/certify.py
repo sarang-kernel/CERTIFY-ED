@@ -1328,11 +1328,17 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 continue
             for name, O in observables.items():
                 # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
-                from .correlations import certify_observable_general
+                from .correlations import certify_observable_general, certify_observable_lifted
+                if (claim.sector_isometry is not None and audit is not None and audit.passed
+                        and O.shape[0] == claim.sector_isometry.shape[0] != X.shape[0]):
+                    # C-04: an observable given in the full space is lifted through the sector isometry
+                    certify_observable_lifted(ec, X, claim.sector_isometry, O, name, audit.isometry_defect,
+                                              audit.invariance_defect)
+                    continue
                 r_obs = certify_observable_general(ec, X, O, name)
                 O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
                 ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
-            corr_recs = _correlations(ec, X, spec, claim, correlations, rec)
+            corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
             for name, (sdiag, lattice) in opts.symmetries.items():
                 if isinstance(sdiag, str) and sdiag == "su2":
                     _total_spin(ec, X, name, spec, claim, rec)
@@ -1581,24 +1587,46 @@ def _total_spin(ec, X, name, spec, claim, rec):
         r["total_spin"] = [float((-1 + np.sqrt(1 + 4 * v)) / 2) for v in r["certified_values"]]
 
 
-def _correlations(ec, X, spec, claim, requests, rec):
+def _correlations(ec, X, spec, claim, requests, rec, audit=None):
     """S4 extension: two-point functions and structure factors requested in Options.correlations (resolved to
     dictionaries by operators.resolve_correlation_request; correlations.py, Proposition 15). Records are
-    returned for the cluster; errors become INCONCLUSIVE records rather than exceptions."""
+    returned for the cluster; errors become INCONCLUSIVE records rather than exceptions. For a symmetry-adapted
+    claim (sector_isometry) the site operators are built in the full space and lifted through the isometry
+    (C-04, certify_correlations_lifted) using S1's audit (isometry and invariance defects); without that audit
+    the records are NOT_CHECKED, and when the audit failed they are INCONCLUSIVE."""
     if not requests:
         return {}
     out = {}
-    if spec is None or claim.sector_isometry is not None:
+    if spec is None:
         for name in requests:
-            out[name] = {"status": "NOT_CHECKED", "reason": "needs a specification and a computational-basis claim",
-                         "reason_code": "NEEDS_SPEC" if spec is None else "UNSUPPORTED_CLAIM"}
+            out[name] = {"status": "NOT_CHECKED", "reason": "needs a model specification",
+                         "reason_code": "NEEDS_SPEC"}
         return out
-    from .correlations import certify_correlations, structure_factor
+    lifted = claim.sector_isometry is not None
+    if lifted and audit is None:
+        for name in requests:
+            out[name] = {"status": "NOT_CHECKED", "reason_code": "DEPENDENCY_NARROWED",
+                         "reason": ("symmetry-adapted claim: the lift of tr(P O) through the sector isometry needs S1's "
+                                    "sector audit (isometry and invariance defects); S1 did not run or produced no audit")}
+        return out
+    if lifted and not audit.passed:
+        for name in requests:
+            out[name] = {"status": "INCONCLUSIVE",
+                         "reason": ("symmetry-adapted claim whose S1 sector audit failed: the block is not certified to be an "
+                                    "invariant orthonormal restriction of the declared model, so the lifted quantity is not "
+                                    "certified"), "isometry_defect": float(audit.isometry_defect),
+                         "invariance_defect": float(audit.invariance_defect)}
+        return out
+    from .correlations import certify_correlations, certify_correlations_lifted, structure_factor
     for name, req in requests.items():
         try:
             letter = req.get("letter", "z")
             sites = list(req.get("sites", range(spec.n_sites)))
-            cr = certify_correlations(ec, X, spec, letter, sites, states=claim.states, name=name)
+            if lifted:
+                cr = certify_correlations_lifted(ec, X, spec, claim.sector_isometry, letter, sites,
+                                                 audit.isometry_defect, audit.invariance_defect, name=name)
+            else:
+                cr = certify_correlations(ec, X, spec, letter, sites, states=claim.states, name=name)
             cr["status"] = "CERTIFIED"
             if req.get("q") is not None:
                 pos = req.get("positions") or [[float(i)] for i in sites]

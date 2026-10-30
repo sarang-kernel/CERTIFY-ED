@@ -427,3 +427,13 @@ T* ln(d_A − 1) + h(T*) (Fannes–Audenaert, Audenaert 2007) provided T* ≤ 1 
 increasing in T; |λ_k(ρ_A) − λ_k(ρ̂_A)| ≤ 2T* (Weyl). The reduced matrix of the stored vectors is exact
 (rational), its spectrum is enclosed by Ostrowski + Weyl around a floating-point eigendecomposition with exactly
 computed defects, and x ln x, h and ln are evaluated on the dyadic intervals of Lemma 17.
+
+### 10.2 Correlations through the sector isometry (C-04, `correlations.py`, `docs/proofs/C-04_correlation_lift.md`)
+
+For a symmetry-adapted claim (V, H_s) audited by S1 (ι ≥ ‖VᴴV − I‖, ν ≥ ‖HV − VH_s‖) and a cluster certified
+by Theorem 6 in the block (P_s, ‖XXᴴ − P_s‖ ≤ s + η): tr(P_s VᴴOV) = tr(Π_V O) with Π_V = VP_sVᴴ (exact), and
+with Q the polar factor of V and Π_Q = QP_sQᴴ (an orthogonal projector of rank g),
+|tr(Π_V O) − tr(Π_Q O)| ≤ 2g‖O‖₂δ(1 + √(1+ι)), δ = 1 − √(1−ι) (rank-2g bound on ‖Π_V − Π_Q‖₁ and Hölder). The
+compression VᴴOV is formed in floating point with the standard-model bound γ̇_{w_O+w_V}‖|V|ᵀ|O||V|‖_F +
+u‖Õ_fl‖_F on its error, which enters multiplied by ‖P_s‖₁ = g. The certified statement is about Π_Q; whether
+range Π_Q is an H-eigenspace rests on ν (recorded), and other sectors may share the level.

@@ -15,11 +15,12 @@ import scipy.sparse as sp
 
 from .construct import StateSet, build_bitwise, full_state_set
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import U, add_up, gamma, up
+from .fp import U, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, up
 from .spec import ModelSpec, Term
 
 __all__ = ["site_operator", "certify_observables_batch", "certify_correlations", "structure_factor",
-           "combine_certified", "hermitian_parts", "certify_observable_general"]
+           "combine_certified", "hermitian_parts", "certify_observable_general", "compress_operator",
+           "certify_observable_lifted", "certify_correlations_lifted"]
 
 
 def site_operator(spec: ModelSpec, letters: str, sites: Sequence[int], coeff: complex = 1.0,
@@ -239,3 +240,147 @@ def positions_chain(N: int) -> List[List[float]]:
 
 def q_chain(N: int) -> List[List[float]]:
     return [[2 * math.pi * k / N] for k in range(N)]
+
+
+# -------------------------------------------------------------------------------------------- C-04: sector lift
+# A symmetry-adapted claim certifies eigenpairs of the producer's block H_s = V^H H V (S1 audits V: isometry
+# defect iota >= ||V^H V - I||, invariance defect >= ||H V - V H_s||). Theorem 6 in the block gives P_s, the spectral
+# projector of H_s on the cluster, with ||X X^H - P_s|| <= s + eta. For a full-space operator O the lifted quantity is
+#   tr(P_s V^H O V) = tr(Pi_V O),  Pi_V := V P_s V^H          (cyclicity of the trace; exact),
+# and with Q the polar factor of V (an exact isometry with the same range) and Pi_Q := Q P_s Q^H (an orthogonal
+# projector of rank g onto a subspace of range V):
+#   |tr(Pi_V O) - tr(Pi_Q O)| <= 2 g ||O||_2 delta (1 + sqrt(1 + iota)),  delta = 1 - sqrt(1 - iota).
+# The compression V^H O V is formed in floating point; its rounding error enters as g ||E||_2 (||P_s||_1 = g).
+# Derivation and proof: docs/proofs/C-04_correlation_lift.md.
+
+def compress_operator(V, O):
+    """Hermitian part of fl(V^H (O V)) with a bound rnd on ||Otilde_h - V^H O V||_2 for Hermitian O.
+
+    Standard-model analysis (docs/proofs/C-04_correlation_lift.md, Lemma 1): entrywise
+    |fl(V^H fl(O V)) - V^H O V| <= gamma_{w_O + w_V} (|V|^T |O| |V|), w_O the row width of O and w_V the column width
+    of V; the Hermitian part of an approximation to the Hermitian V^H O V is at least as close; forming it in
+    floating point adds at most u |Otilde_fl| entrywise. ||.||_2 <= ||.||_F closes the bound.
+    Returns (Otilde_h (csr, exactly Hermitian), rnd, norm_upper) with norm_upper >= ||Otilde_h||_2."""
+    V = sp.csr_matrix(V)
+    O = sp.csr_matrix(O)
+    cplx = np.iscomplexobj(V.data) or np.iscomplexobj(O.data)
+    OV = (O @ V).tocsr()
+    Ot = (V.conj().T @ OV).tocsr()
+    w_O = int(np.diff(O.indptr).max()) if O.shape[0] else 1
+    w_V = int(np.diff(sp.csc_matrix(V).indptr).max()) if V.shape[1] else 1
+    absprod = (abs(V).T @ (abs(O) @ abs(V))).tocsr()
+    rnd = gamma_dot(w_O + w_V + 2, cplx) * fro_upper(absprod) * (1 + 4 * U)
+    Oh = ((Ot + Ot.conj().T) * 0.5).tocsr()
+    Oh.eliminate_zeros()
+    rnd = up(rnd + 2 * U * fro_upper(Ot) * (1 + 4 * U))
+    return Oh, float(rnd), float(inf_norm_upper(Oh))
+
+
+def _isometry_term(g: int, O_norm: float, iota: float) -> float:
+    """2 g ||O|| delta (1 + sqrt(1 + iota)), delta = 1 - sqrt(1 - iota) (rounded up); inf when iota >= 1."""
+    if not iota < 1:
+        return float("inf")
+    delta = up(1.0 - math.sqrt(1.0 - iota)) + 4 * U
+    return float(up(2 * g * O_norm * delta * (1.0 + math.sqrt(1.0 + iota)) * (1 + 4 * U)))
+
+
+def certify_observable_lifted(ec: EigenspaceCertificate, X: np.ndarray, V, O, name: str, isometry_defect: float,
+                              invariance_defect: Optional[float] = None) -> dict:
+    """Certified tr(Pi_Q O) for a full-space operator O through the sector isometry V (C-04).
+
+    Hermitian O: Theorem 6 for the compressed Hermitian Otilde_h = (V^H O V)_h in the block (certify_observable),
+    plus g * rnd for the compression rounding (bound for tr(Pi_V O), `bound_V`), plus the isometry term for
+    tr(Pi_Q O) (`bound`). Non-Hermitian O: the exact Hermitian decomposition O = H + iK (C-05) in the full space,
+    each part lifted, recombined with bound b_H + b_K (Proposition 15); `value` is then [re, im]."""
+    Oc = sp.csr_matrix(O)
+    g = len(ec.members)
+    iota = float(isometry_defect)
+    dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0
+    if dev == 0:
+        Oh, rnd, Oh_norm = compress_operator(V, Oc)
+        r6 = certify_observable(ec, X, Oh, f"{name}.compressed", O_norm=Oh_norm)
+        ec.observables.pop(f"{name}.compressed", None)
+        O_norm = float(inf_norm_upper(Oc))
+        bound_V = float(add_up(r6["bound"], up(g * rnd)))
+        iso_term = _isometry_term(g, O_norm, iota)
+        bound = float(add_up(bound_V, iso_term))
+        rec = {"hermitian": True, "lifted": True, "value": float(r6["value"]), "bound": bound, "bound_V": bound_V,
+               "isometry_term": iso_term, "compression_rounding": float(rnd), "O_norm_bound": O_norm,
+               "compressed_norm_bound": float(Oh_norm), "theorem6_bound_in_block": float(r6["bound"]),
+               "isometry_defect": iota, "invariance_defect": None if invariance_defect is None else float(invariance_defect),
+               "statement": (f"tr(Pi_Q {name}) in [{r6['value'] - bound:.15g}, {r6['value'] + bound:.15g}]; "
+                             f"tr(Pi_V {name}) in [{r6['value'] - bound_V:.15g}, {r6['value'] + bound_V:.15g}]")}
+    else:
+        Hp, Kp, exact = hermitian_parts(Oc, name)
+        rh = certify_observable_lifted(ec, X, V, Hp, f"{name}.hermitian_part", iota, invariance_defect)
+        rk = certify_observable_lifted(ec, X, V, Kp, f"{name}.anti_hermitian_part", iota, invariance_defect)
+        for k in (f"{name}.hermitian_part", f"{name}.anti_hermitian_part"):
+            ec.observables.pop(k, None)
+        rec = {"hermitian": False, "lifted": True, "hermitian_decomposition": True, "max_asymmetry": float(dev),
+               "definition": "O = H + iK with H = (O + O^H)/2 and K = (O - O^H)/(2i), both Hermitian",
+               "parts": {"hermitian": rh, "anti_hermitian": rk}, "parts_formed_exactly": bool(exact),
+               "recombine": "tr(Pi O) = tr(Pi H) + i tr(Pi K); bound b_H + b_K (Proposition 15, a = 1, i)",
+               "value": [float(rh["value"]), float(rk["value"])],
+               "bound": float(add_up(rh["bound"], rk["bound"])), "bound_V": float(add_up(rh["bound_V"], rk["bound_V"])),
+               "isometry_defect": iota, "invariance_defect": None if invariance_defect is None else float(invariance_defect),
+               "statement": (f"tr(Pi_Q {name}) = tr(Pi_Q H) + i tr(Pi_Q K) with tr(Pi_Q H) in [{rh['value'] - rh['bound']:.15g}, "
+                             f"{rh['value'] + rh['bound']:.15g}] and tr(Pi_Q K) in [{rk['value'] - rk['bound']:.15g}, "
+                             f"{rk['value'] + rk['bound']:.15g}]")}
+        if not exact:
+            rec["status"] = "INCONCLUSIVE"
+            rec["reason"] = ("the Hermitian and anti-Hermitian parts could not be formed exactly in floating point; the "
+                             "certified values refer to the rounded parts, not to O")
+    rec["refers_to"] = ("Pi_Q = Q P_s Q^H, the orthogonal projector onto the lift by the polar factor Q of V of the "
+                        "certified H_s-eigenspace (rank g); Pi_V = V P_s V^H for the stored V (exact identity "
+                        "tr(P_s V^H O V) = tr(Pi_V O)). Whether range(Pi_Q) is an H-eigenspace rests on S1's invariance "
+                        "audit; the lift does not certify that another sector has no eigenvalue in the same level")
+    ec.observables[name] = rec
+    return rec
+
+
+def certify_correlations_lifted(ec: EigenspaceCertificate, X: np.ndarray, spec: ModelSpec, V, letter: str,
+                                sites: Sequence[int], isometry_defect: float, invariance_defect: Optional[float] = None,
+                                name: str = "C", pairs: Optional[Sequence[Tuple[int, int]]] = None) -> dict:
+    """Two-point functions C_ij = tr(Pi_Q O_i O_j) for a symmetry-adapted claim (C-04): the site operators are built
+    in the full space from the spec and lifted through V (certify_observable_lifted). Record shape as in
+    certify_correlations (pairs with value, imag_value, bound, per-state value and bound), plus `bound_V` per pair and
+    the isometry and invariance defects."""
+    sites = [int(s) for s in sites]
+    g = len(ec.members)
+    two = len(letter) == 2
+    if not two:
+        ops = {i: site_operator(spec, letter, (i,), 1.0, None) for i in sites}
+        for i, O in ops.items():
+            _hermitian_part_or_fail(O, f"{letter}_{i}")
+    if pairs is None:
+        pairs = [(i, j) for a, i in enumerate(sites) for j in sites[a:]]
+    rec = {"letter": letter, "sites": sites, "cluster_size": g, "pairs": [], "lifted": True,
+           "isometry_defect": float(isometry_defect),
+           "invariance_defect": None if invariance_defect is None else float(invariance_defect),
+           "conjugate_symmetry": "C_ji = conj(C_ij)" if two else "C_ji = C_ij"}
+    for i, j in pairs:
+        if two:
+            O = site_operator(spec, letter, (i, j), 1.0, None)
+        else:
+            O = (ops[i] @ ops[j]).tocsr()
+            O = ((O + O.conj().T) / 2).tocsr() if i != j else O            # exact for commuting Hermitian factors
+        r = certify_observable_lifted(ec, X, V, O, f"{name}_{i}{j}", isometry_defect, invariance_defect)
+        if r.get("hermitian_decomposition"):
+            val, imag = r["value"]
+            pr = {"i": i, "j": j, "value": float(val), "imag_value": float(imag), "bound": r["bound"], "bound_V": r["bound_V"],
+                  "hermitian_decomposition": {k: r[k] for k in ("definition", "parts", "parts_formed_exactly", "recombine")}}
+            if r.get("status") == "INCONCLUSIVE":
+                pr["status"] = "INCONCLUSIVE"
+                pr["reason"] = r["reason"]
+        else:
+            pr = {"i": i, "j": j, "value": r["value"], "imag_value": 0.0, "bound": r["bound"], "bound_V": r["bound_V"]}
+        pr["per_state_value"] = pr["value"] / g
+        pr["per_state_bound"] = float(up(pr["bound"] / g))
+        rec["pairs"].append(pr)
+    rec["statement"] = (f"tr(Pi_Q {letter[0]}_i {letter[-1]}_j) certified for {len(rec['pairs'])} pairs through the sector "
+                        f"isometry (Theorem 6 in the block on V^H O V, compression rounding, isometry term "
+                        f"2 g ||O|| delta (1 + sqrt(1 + iota)); docs/proofs/C-04_correlation_lift.md)")
+    rec["refers_to"] = ("Pi_Q = Q P_s Q^H with Q the polar factor of V: the lift of the certified H_s-eigenspace; its "
+                        "identification with an H-eigenspace rests on S1's invariance audit, and other sectors may hold "
+                        "eigenvalues of the same level")
+    return rec

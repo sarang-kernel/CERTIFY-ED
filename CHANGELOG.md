@@ -41,6 +41,23 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
   violations; tests `tests/test_entanglement.py` (11) against 40-digit references, planted rotations and the
   negative controls.
 
+- **C-04 correlations for symmetry-adapted claims.** A claim with `sector_isometry` V used to leave
+  `Options.correlations` NOT_CHECKED (UNSUPPORTED_CLAIM). Now `correlations.certify_correlations_lifted` builds
+  the site operators in the full space and certifies tr(Pi_Q O) through the isometry: Theorem 6 in the block on
+  the compressed Hermitian operator (V^H O V)_h, plus g times the compression rounding bound (standard model,
+  `compress_operator`), plus the isometry term 2 g ||O|| delta (1 + sqrt(1 + iota)), delta = 1 - sqrt(1 - iota),
+  iota = S1's isometry defect, where Pi_Q = Q P_s Q^H is the orthogonal projector onto the lift of the certified
+  block eigenspace by the polar factor Q of V (`docs/proofs/C-04_correlation_lift.md`). Each pair record carries
+  `bound` (for Pi_Q) and `bound_V` (for Pi_V = V P_s V^H, the exact identity tr(P_s V^H O V) = tr(Pi_V O)), the
+  defects and `refers_to`; two-letter requests go through the Hermitian decomposition; structure factors apply
+  unchanged. A full-space matrix in `Options.observables` is lifted the same way for sector claims. Without
+  S1's audit the records are NOT_CHECKED (DEPENDENCY_NARROWED); when the audit failed they are INCONCLUSIVE.
+  The lift does not claim that range(Pi_Q) is an H-eigenspace (that rests on the invariance defect, recorded)
+  nor that other sectors are absent from the level. Verification: 240 random + 14 adversarial cases, 0
+  violations; tests `tests/test_correlation_lift.py` (7) against full-space values on the 8-site ring (k = 0 and
+  parity sectors, S^z S^z and S+ S-, S(q)), with a planted 0.1 % stretch (INCONCLUSIVE), S1 skipped
+  (NOT_CHECKED) and a planted iota = 0.05 where only the isometry term makes the interval contain tr(Pi_Q O).
+
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 
 - **C-01 gap record.** `body.gaps` (`certify_ed/gaps.py`): for a claim whose S2 and S3 are both CERTIFIED, the
