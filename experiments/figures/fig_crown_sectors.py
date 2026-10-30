@@ -64,19 +64,19 @@ def draw(e9):
     axb.axhline(pub, color=C.INK2, lw=0.8, ls="--")
     axb.text(-0.55, pub - 0.0002, f"published lower\nbound {pub:.6f}", fontsize=C.SIZES[2], color=C.INK2, va="top",
              linespacing=1.1)
-    xs_named = [1.0, 2.4]
+    xs_named = [0.95, 2.65]
     for j, s in enumerate(named):
         axb.plot(xs_named[j], s["energy"], marker="o", mfc="white", mec=C.INK, ms=5, ls="none", zorder=3)
         axb.text(xs_named[j], s["energy"] + 0.0009, f"{label(s['pair_spins2'])}\ndim {s['dim']:,}\n{s['energy']:.7f} (FP)",
                  ha="center", va="bottom", fontsize=C.SIZES[2], color=C.INK, linespacing=1.1)
     axb.plot(0, up, marker="v", color=C.BLUE, ms=6, ls="none", zorder=3)
-    axb.text(0, up - 0.0004, f"all-singlet sector\n≤ {up:.7f}\n(exact re-check, r = {p['E0_radius_exact']:.0e})",
-             ha="center", va="top", fontsize=C.SIZES[2], color=C.BLUE, linespacing=1.1)
+    axb.text(-0.3, up - 0.0004, f"all-singlet sector ≤ {up:.7f}\n(exact re-check, radius {p['E0_radius_exact']:.0e})",
+             ha="left", va="top", fontsize=C.SIZES[2], color=C.BLUE, linespacing=1.1)
     axb.annotate("", xy=(3.1, up), xytext=(3.1, pub), arrowprops=dict(arrowstyle="<->", color=C.BLUE, lw=0.8))
     axb.text(3.18, (up + pub) / 2, f"margin\n{p['margin']:.1e}", fontsize=C.SIZES[2], color=C.BLUE, va="center",
              linespacing=1.1)
     axb.set_xlim(-0.6, 3.9)
-    axb.set_xticks([0, 1.0, 2.4])
+    axb.set_xticks([0, 0.95, 2.65])
     axb.set_xticklabels(["all-singlet", "named A", "named B"])
     axb.set_ylim(up - 0.003, pub + 0.0028)
     axb.set_ylabel("eigenvalue (S^z = 0 block)")
