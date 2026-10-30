@@ -89,7 +89,7 @@ roundings (the product |x_i||μ|, the addition, the product with g, the product 
 
 the last two by (Λ6) with E*_i ≥ e_i(1 + u/γ_{w+2}) (real data) or by the slack E*_i/2 (complex data).
 
-**Step 4: the norms** (`fp.norm2_upper`, `fp.norm2_lower`, lines 140–153; used at lines 351–352 and 356).
+**Step 4: the norms** (`fp.norm2_upper`, `fp.norm2_lower`, lines 149–162; used at lines 351–352 and 356).
 `np.linalg.norm(v)` = fl(√fl(Σ_j v_j²)) with the sum of N squares (N = n real entries, or 2n real components) as a
 BLAS dot product: S := fl(Σ v_j²) = Σ v_j²(1 + θ_N^{(j)}) ∈ ‖v‖²[1 − γ_N, 1 + γ_N] (non-negative terms, (Λ1)), and
 s := fl(√S) = √S(1 + δ) ∈ ‖v‖[(1 − γ_N)^{1/2}(1 − u), (1 + γ_N)^{1/2}(1 + u)]. `norm2_upper(v)` = fl(fl(fl(s·fl(1 + γ̂))·(1 + 8u))
@@ -138,7 +138,7 @@ the radius is never zero for a nonzero x (E_i ≥ g q_i > 0 unless μx = 0 and A
 | 1 | 343, 346 | `HX = adapter.matvec(Xb)`; `Rb = HX - Xb * mub[None, :]` | e_i ≤ g(a_i + q_i) |
 | 2 | 293–296 | `E = adapter.abs_matvec(X)`; `E /= (1.0 - gw)`; `E *= (1 + 4 * U)`; `gw = gamma(w + 1)` | (Λ5): absHX_up ≥ a_i |
 | 3 | 297–301 | `aX = abs(X) * abs(mu)`; `E += aX`; `E *= g`; `E *= (1 + 4 * U)`; `g = gamma_dot(w + 2, cplx)` | (Λ6): E_i ≥ e_i |
-| 4 | 140–153 (fp), 351–352, 356 | `norm2_upper(v) = s (1 + gamma(n + 2)) _GUARD + norm_underflow_term(n)`; `norm2_lower(v) = max(0, s (1 - gamma(n + 2)) / _GUARD - norm_underflow_term(n))` | (Λ4): ≥ ‖v‖(1 + 3u), ≤ ‖v‖(1 − 3u) |
+| 4 | 149–162 (fp), 351–352, 356 | `norm2_upper(v) = s (1 + gamma(n + 2)) _GUARD + norm_underflow_term(n)`; `norm2_lower(v) = max(0, s (1 - gamma(n + 2)) / _GUARD - norm_underflow_term(n))` | (Λ4): ≥ ‖v‖(1 + 3u), ≤ ‖v‖(1 − 3u) |
 | 5 | 368, 375 | `upper = (R_up + E_up) + residual_additive_term(n, w, cplx)`; `rel = where(xl > 0, upper / xl, inf) * (1 + 4 * U) + 2 * ULP_MIN` | four roundings: (1 + 4u) and the 3u slack |
 | constants | fp 30, 50, 58, 93 | `_GUARD = 1 + 8u`; `gamma(k) = ku/(1 - ku)`; `gamma_dot(k, cplx) = 2 gamma(k + 4)` or `gamma(k)`; `up(x) = x _GUARD` | (Λ3) |
 | spec width | enclosure `OperatorAdapter.__init__` (spec branch) | `width = n_terms 2^max_len + 2 max_len + 2` | Remark 3 |
@@ -163,7 +163,10 @@ arithmetic; `tests/test_backlog_proofs.py::test_theorem1_accounting_slack_consta
   (|Rc| ≪ |A||x|), complex A with real x and real A with complex x, a spec operator (`SpecOperator`) against
   its dense build for a spin-1 chain (Remark 3).
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts (run of 2026-10-30, `--cases 20000 --seed 6`, output in `docs/proofs/runs/thm1_fp-accounting.txt`): Λ 20 000
+grid points + 12 powers of two; R (rel ≥ exact radius) 20 000 random + 246 adversarial cases (12 families × 20
+one-ulp jitters, and 6 spec-operator pairs); S (stage inequalities) 40 000 random + 480 adversarial checks;
+0 violations.
 
 ## 5 Analytic cross-check
 
@@ -186,6 +189,4 @@ is the fourth rounding of step 5 (the INT-05 term), paid by the step-4 slack.
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (20 000 (40 000 stage checks, 20 000 lemma grid points) random + 246 (480 stage checks, 12 lemma grid points) adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

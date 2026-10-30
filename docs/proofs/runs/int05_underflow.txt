@@ -1,0 +1,11 @@
+  ... 0 cases
+  ... 5000 cases
+  ... 10000 cases
+  ... 15000 cases
+model (M-U): 18992 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+dot products (Lemma U1): 5000 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+exact_dot (Lemma U2): 5000 random + 200 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+norms and T_N (Lemma U3): 205000 random + 23 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+Theorem 1 radius under (M-U) (Theorem U5): 2500 random + 150 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+radii never shrink (Theorem U6): 2500 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations

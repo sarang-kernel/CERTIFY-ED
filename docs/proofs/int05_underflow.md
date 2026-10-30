@@ -232,7 +232,11 @@ subnormals included, exactly; square roots bracketed with `decimal` at 120 digit
   subnormal entries, μ subnormal, the 2⁻⁹⁶⁷ threshold of Lemma U2 approached from both sides, a vector of 10⁴
   entries of 2⁻⁵⁴⁰ (every square flushes to 0; the norm bound must still exceed 10²·2⁻⁵⁴⁰).
 
-Counts: RUN PENDING (to be filled from the script's output).
+Counts (run of 2026-10-30, `--cases 20000 --seed 7`, output in `docs/proofs/runs/int05_underflow.txt`): M 18 992
+operations; U1 5 000 dot products; U2 5 000 random + 200 adversarial `exact_dot` cases (threshold pairs at 2^{−968},
+2^{−967}, 2^{−966} and the rescaling branch); U3 5 000 random vectors + the scalar inequality and the computed T_N on
+200 000 grid points, + 23 adversarial; U5 2 500 random + 150 adversarial residual cases (zero residual with tiny x,
+one subnormal entry, subnormal A and μ); U6 2 500 monotonicity cases; 0 violations.
 
 ## 5 Analytic cross-check
 
@@ -258,6 +262,4 @@ eigenvalues lie inside the tiny intervals.
 
 ## 6 Status
 
-STATUS LINE PENDING: to be written from the completed verification run (format: "Derived by Claude on <date>;
-machine-checked (<N> random + <M> adversarial cases, 0 violations); independent re-derivation: pending
-(Phase 2); Sarang's check (D-12): pending.").
+Derived by Claude on 2026-10-30; machine-checked (2 500 residual + 2 500 monotonicity + 5 000 dot + 5 000 exact_dot + 5 000 norm + 18 992 model operations random + 373 adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.

@@ -104,7 +104,7 @@ count below σ − β − Δ for H_spec is ≤ the count below σ − β for H_h
 | r, c | `row = max(op.abs_matvec(ones))`, `col = max(op.abs_rmatvec(ones))` (`construct.SpecOperator`) | computed sums ≥ exact (1 − γ_{m+2L_max−1}) (Lemma A1); the division by `(1 - gamma(width))` restores an upper bound |
 | Δ_builder | `up(g * sqrt(row * col) / (1 - gamma(width)) * (1 + 4 U))`, `g = gamma(width)` | six roundings covered by (1 + 4u)(1 + 8u); `gamma(width)` ≥ γ_W(1 − u)², absorbed by the two spare units of W (before this branch the factor was `(1 + gamma(width))`, which is ≥ 1/(1 − γ_{W−3}) only for Wu ≲ 10⁻⁸) |
 | D, ‖D‖_∞, ‖D‖₁ | `Dm = (Hh - Href).tocsr()`; `inf_norm_upper(Dm)`, `inf_norm_upper(Dm.conj().T)` | the entrywise subtraction rounds once (relative u); `inf_norm_upper` = max row sum × (1 + γ_{width+1})(1 + 8u) covers the sum's γ_{width−1} and that u |
-| Δ | `ev["model_shift_bound"] = up(max(inf_norm_upper(Dm), inf_norm_upper(Dm.conj().T.tocsr())) + ev["model_shift_bound"])` (line 469) | one addition inside `up` |
+| Δ | `ev["model_shift_bound"] = up(max(inf_norm_upper(Dm), inf_norm_upper(Dm.conj().T.tocsr())) + ev["model_shift_bound"])` (line 470) | one addition inside `up` |
 | H_h | `certify()`: `op = (opm + opm.conj().T) / 2` when `opm` is not exactly Hermitian; `OperatorAdapter(op)` | S2–S4 concern H_h |
 | no producer matrix | `op = Href` (then symmetrised by the same lines) or `SpecOperator`; `model_shift_bound = _builder_shift(spec, states)` | Lemma A2/A3 symmetrised case |
 | sector claim | `H_full_ref = hermitian_part(H_full_ref)`; `_builder_shift(spec, st_u1 or None)` | Theorem 8 / Theorem 2 need a Hermitian full operator |
