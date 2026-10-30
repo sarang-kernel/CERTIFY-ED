@@ -1,0 +1,23 @@
+{
+ "Linux, certify-ed 3.0.0 (run_full_20261021)": {
+  "S3_certified": 7,
+  "S3_not_checked": 4,
+  "blocks": 11,
+  "largest_dim": 112720,
+  "max_dim_S3_certified": 12870,
+  "max_mib": 4162.97265625,
+  "max_seconds": 494.81552934646606
+ },
+ "Windows, certify-ed 3.1.0 (run_full_20261022)": {
+  "S3_certified": 7,
+  "S3_not_checked": 4,
+  "blocks": 11,
+  "largest_dim": 112720,
+  "max_dim_S3_certified": 12870,
+  "max_mib": 4213.2109375,
+  "max_seconds": 793.0214908123016
+ },
+ "memory_cap_GiB": 4.5,
+ "record_A": "e2_cost_20261022_200335/data.json",
+ "record_B": "e2_cost_20261021_070755/data.json"
+}

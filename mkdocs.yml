@@ -52,6 +52,9 @@ nav:
       - Applications: applications.md
       - Reproducibility: reproducibility.md
       - symveig audit: symveig_audit.md
+  - Figures:
+      - Figure index: figures/INDEX.md
+      - Placement in the manuscript and report: figures/MANUSCRIPT_PLACEMENT.md
 
 exclude_docs: |
   make_api.py

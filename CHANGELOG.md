@@ -106,6 +106,29 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
   ground states at two couplings (fidelity susceptibility inputs), two sizes, or two sectors in one basis.
   Verification of the three statements: 529 random + 24 adversarial cases, 0 violations; tests
   `tests/test_davis_kahan.py` (7).
+### Figures track (track/figures)
+
+- **Figure set for the manuscript, the report and the docs site.** `experiments/figures/` holds one script per
+  figure (listed in `provenance.NON_COMPUTATIONAL`: they read records and documents and draw, none computes a
+  bound) and writes PDF + PNG + `<name>.numbers.json` into `docs/figures/`. Concept figures (no data):
+  `fig_certificate_anatomy` (blocks and statement dependencies), `fig_enclosure_geometry` (Theorems 1–3,
+  Lemma 4, Corollary 5 on the real line), `fig_inertia_completeness` (counting-function sandwich, vectorless
+  window count, refusals), `fig_rounding_accounting` (the Theorem 1 accounting of theory.md §2 as a flow).
+  Evidence figures from the records of `run_full_20261022` (and `run_full_20261021` for the second stack):
+  `fig_failure_matrix` (E1), `fig_cost_memory` (E2, two stacks), `fig_two_stack` (compare CSV, 0 MISMATCH),
+  `fig_mutation` (E6 with `classification.json`; the dev/3.2 16-mutant sample from RESULT_integration_3.2.md),
+  `fig_corpus_detection` (corpus report), `fig_scope_vs_survey` (survey percentages with Wilson intervals
+  against the scope-matrix row status), `fig_roadmap_progress` (78 items by wave and theme; the roadmap CSV
+  snapshot with a `wave` column is `experiments/figures/data/`). Applications: `fig_crown_sectors` (E9),
+  `fig_aklt_eta` (E10). `docs/figures/INDEX.md` is rendered by `experiments/figures/make_index.py` from the
+  numbers files (every number in a caption comes from the data file the entry names);
+  `docs/figures/MANUSCRIPT_PLACEMENT.md` proposes the placement in manuscript v4 and the report with
+  `\caption` scaffolds naming the existing `make_numbers` macros and the macros still needed. mkdocs nav gains
+  a Figures section. Tests: `tests/test_figures.py` runs every script (skipped, not passed, when the record
+  files are absent; a negative control checks the data-absent exit code) and checks INDEX.md is in sync.
+  Deviations recorded in the captions: the E1 record stores per-statement statuses for the correct result only
+  (the statement column is derived from the diagnosis text); the E9 landscape is recorded at the re-optimised
+  couplings, not the printed ones, and the named sectors carry no certified interval.
 
 ### Statements track (roadmap C-01, C-11, C-02, C-05, C-09, C-10; track/statements)
 

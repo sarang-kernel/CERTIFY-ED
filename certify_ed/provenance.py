@@ -36,6 +36,9 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      # generators, and the scope-matrix generator (3.1.0)
                      "experiments/make_survey_table.py", "experiments/make_scope_table.py",
                      "experiments/compare_runs.py", "experiments/make_result_candidate.py", "experiments/survey",
+                     # figure scripts for the paper, the report and the docs site (3.2): they read records and
+                     # documents and draw; none of them computes a bound
+                     "experiments/figures",
                      # documentation site tooling (3.2): the cookbook snippets only call the public API and print
                      "docs/cookbook/snippets", "docs/make_api.py", "mkdocs.yml")
 
