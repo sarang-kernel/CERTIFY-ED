@@ -145,20 +145,21 @@ def _diag3():
     return spec, H, i0, i1
 
 
-@pytest.mark.parametrize("sin_phi", [0.25, 0.3])
+@pytest.mark.parametrize("sin_phi", [0.55, 0.6])
 def test_negative_control_trace_distance_above_fannes_audenaert_range(sin_phi):
-    """A claimed vector rotated by sin(phi) >= 1/2 relative to the exact eigenvector in a d_A = 2 cut: S2, S3 and
-    S4 can still be CERTIFIED (accuracy target waived), but the entanglement record must be NOT_CHECKED with the
-    range reason and no interval, never a false interval."""
+    """A claimed vector rotated by sin(phi) > 1/2 relative to the exact eigenvector in a d_A = 2 cut: S2, S3 and
+    S4 can still be CERTIFIED (accuracy target waived; the window (-12, -5.6) keeps the other eigenvalues 1.2 away so
+    that the sin(theta) bound stays below 1), but the entanglement record must be NOT_CHECKED with the range reason
+    and no interval, never a false interval."""
     spec, H, i0, i1 = _diag3()
     x = np.zeros(8)
     x[i0], x[i1] = math.sqrt(1 - sin_phi ** 2), sin_phi
     mu = float(x @ H @ x)
-    cert = ce.certify(ce.Claim([mu], x[:, None], operator=H, kind="window", window=(-9.0, -6.0),
+    cert = ce.certify(ce.Claim([mu], x[:, None], operator=H, kind="window", window=(-12.0, -5.6),
                                accuracy_target=float("inf")), spec,
                       ce.Options(eigenspaces="all", entanglement={"one": {"sites": [0]}}))
     cl = _s4(cert)["evidence"]["clusters"][0]
-    assert cl["sin_theta_bound"] >= sin_phi                    # the bound covers the planted rotation
+    assert sin_phi <= cl["sin_theta_bound"] < 1                 # the bound covers the planted rotation
     r = cl["entanglement"]["one"]
     assert r["status"] == "NOT_CHECKED" and r["reason_code"] == "NOT_APPLICABLE"
     assert "Fannes-Audenaert range" in r["reason"] and "certified_interval" not in r
