@@ -182,23 +182,42 @@ def _exp_point_nonneg(x: int) -> Interval:
     return iv
 
 
+_EXP_ARG_MAX = ONE << 16        # exp of a larger argument is not formed (2^16 real units: ~94,500-bit results)
+_EXP_ARG_UNDER = 1000 * ONE     # exp(-x) < 2^-PREC for x >= 1000 (exp(-1000) ~ 5e-435): enclosed by (0, 1 unit)
+
+
 def exp_interval(iv: Interval) -> Interval:
-    """Enclosure of exp over the interval (exp is increasing)."""
+    """Enclosure of exp over the interval (exp is increasing).
+
+    Arguments below -1000 give the enclosure [0, 2^-PREC] without forming the series (Lemma 17 (iii), last
+    paragraph); arguments above 2^16 raise OverflowError (the caller reports no value)."""
     def exp_end(v: int, up: bool) -> int:
+        if v > _EXP_ARG_MAX:
+            raise OverflowError("exp argument above 2^16: enclosure not formed")
         if v >= 0:
             e = _exp_point_nonneg(v)
             return e.hi if up else e.lo
+        if -v >= _EXP_ARG_UNDER:
+            return 1 if up else 0         # 0 < exp(v) <= exp(-1000) < 2^-PREC
         e = _exp_point_nonneg(-v)      # exp(-|v|) = 1 / exp(|v|)
         return _ceil_div(ONE << PREC, e.lo) if up else _floor_div(ONE << PREC, e.hi)
     return Interval(exp_end(iv.lo, False), exp_end(iv.hi, True))
 
 
 # ---------------------------------------------------------------------------------------- ln
-_LN_TERMS = 60            # atanh series terms for u <= 1/3: remainder <= 2 u^(2N+3)/((2N+3)(1-u^2)) ~ 1e-59
+_LN_TERMS = 60            # atanh series terms for u <= 0.35: remainder <= 2 u^(2N+3)/((2N+3)(1-u^2)) ~ 1e-59
+_U_MAX = (7 * ONE) // 20  # 0.35: the upper argument of the series may exceed 1/3 by one grid unit (Lemma 17)
 
 
 def _atanh2_series(u_lo: int, u_hi: int) -> Interval:
-    """Enclosure of 2*atanh(u) = ln((1+u)/(1-u)) for 0 <= u_lo <= u_hi <= 1/3 (scaled ints)."""
+    """Enclosure of 2*atanh(u) = ln((1+u)/(1-u)) for 0 <= u_lo <= u_hi <= 0.35 (scaled ints).
+
+    The argument u = (m - 1)/(m + 1) of ln lies in [0, 1/3) exactly, but its outward-rounded upper end can be
+    1/3 + 2^-PREC; the remainder constant therefore uses 1 - u^2 >= 7/8, valid for u <= 0.35
+    (docs/proofs/L17_dyadic_exp_ln.md, Lemma 17 (iv))."""
+    if not (0 <= u_lo <= u_hi <= _U_MAX):
+        raise ValueError("atanh series argument outside [0, 0.35]")
+
     def series(u: int, up: bool) -> int:
         acc = 0
         pw = u
@@ -208,8 +227,9 @@ def _atanh2_series(u_lo: int, u_hi: int) -> Interval:
             acc += term
             pw = (pw * u2) // ONE if not up else _ceil_div(pw * u2, ONE)
         if up:
-            # remainder: sum_{j>N} u^(2j+1)/(2j+1) <= pw / ((2N+3)(1-u^2)); 1-u^2 >= 8/9 for u <= 1/3
-            acc += _ceil_div(_ceil_div(pw * 9, 8), 2 * _LN_TERMS + 3)
+            # remainder: sum_{j>N} u^(2j+1)/(2j+1) <= u^(2N+3) / ((2N+3)(1-u^2)) <= pw * (8/7) / (2N+3)
+            # (pw >= u^(2N+3) after the loop; 1 - u^2 >= 7/8 for u <= 0.35)
+            acc += _ceil_div(_ceil_div(pw * 8, 7), 2 * _LN_TERMS + 3)
         return 2 * acc
     return Interval(series(u_lo, False), series(u_hi, True))
 

@@ -6,7 +6,8 @@ I_in = (sigma_lo + beta_lo, sigma_hi - beta_hi) and I_out = [sigma_lo - beta_lo,
 #I_in <= nu_hi - nu_lo <= #I_out. If J is inside I_in and nu_hi - nu_lo = g, I_in holds exactly g
 eigenvalues: 'degeneracy g certified' (a count in an interval of stated width; exact equality of the g
 eigenvalues is not a floating-point statement). Otherwise INCONCLUSIVE with the counts.
-**UNVERIFIED** (D-12; docs/theory.md 9.1).
+Derivation and machine check: docs/proofs/P14_degeneracy_bracketing.md (docs/theory.md 9.1); independent
+re-derivation pending (D-12).
 """
 from __future__ import annotations
 
@@ -89,8 +90,10 @@ def degeneracy_counts(A, enc, clusters: Sequence[Sequence[int]], method: str = "
             rec.update(status="INCONCLUSIVE", reason="backward error of the factorization reaches the level enclosure")
         elif diff == g:
             rec.update(status="CERTIFIED", degeneracy=g,
-                       statement=f"exactly {g} eigenvalues in [{I_in[0]:.15g}, {I_in[1]:.15g}] "
-                                 f"(level enclosure width {JU - JL:.2e}); Proposition 14 [UNVERIFIED]")
+                       statement=f"exactly {g} eigenvalues in the open interval ({I_in[0]:.15g}, {I_in[1]:.15g}) "
+                                 f"(level enclosure width {JU - JL:.2e}); Proposition 14 [derived: "
+                                 f"docs/proofs/P14_degeneracy_bracketing.md; UNVERIFIED by independent "
+                                 f"re-derivation, D-12]")
         elif diff > g:
             rec.update(status="INCONCLUSIVE", degeneracy_at_least=g,
                        reason=f"{diff - g} further eigenvalue(s) within the outer bracket "
