@@ -1,0 +1,163 @@
+{
+ "coded_papers": 67,
+ "n": 67,
+ "papers_fully_covered": 32,
+ "quantities": {
+  "correlation functions": {
+   "k": 28,
+   "percent": 41.8,
+   "status": "certified statement",
+   "wilson95_percent": [
+    30.7,
+    53.7
+   ]
+  },
+  "degeneracies": {
+   "k": 4,
+   "percent": 6.0,
+   "status": "certified statement",
+   "wilson95_percent": [
+    2.3,
+    14.4
+   ]
+  },
+  "dynamical response/spectral function": {
+   "k": 10,
+   "percent": 14.9,
+   "status": "out of scope by design",
+   "wilson95_percent": [
+    8.3,
+    25.3
+   ]
+  },
+  "entanglement entropy/spectrum": {
+   "k": 9,
+   "percent": 13.4,
+   "status": "nothing certified",
+   "wilson95_percent": [
+    7.2,
+    23.6
+   ]
+  },
+  "excited levels": {
+   "k": 42,
+   "percent": 62.7,
+   "status": "certified statement",
+   "wilson95_percent": [
+    50.7,
+    73.3
+   ]
+  },
+  "fidelity/susceptibility": {
+   "k": 1,
+   "percent": 1.5,
+   "status": "nothing certified",
+   "wilson95_percent": [
+    0.3,
+    8.0
+   ]
+  },
+  "finite-size extrapolation": {
+   "k": 10,
+   "percent": 14.9,
+   "status": "out of scope by design",
+   "wilson95_percent": [
+    8.3,
+    25.3
+   ]
+  },
+  "gaps": {
+   "k": 8,
+   "percent": 11.9,
+   "status": "certified statement",
+   "wilson95_percent": [
+    6.2,
+    21.8
+   ]
+  },
+  "ground energy": {
+   "k": 38,
+   "percent": 56.7,
+   "status": "certified statement",
+   "wilson95_percent": [
+    44.8,
+    67.9
+   ]
+  },
+  "level statistics": {
+   "k": 3,
+   "percent": 4.5,
+   "status": "derived record, no status",
+   "wilson95_percent": [
+    1.5,
+    12.4
+   ]
+  },
+  "order parameter": {
+   "k": 25,
+   "percent": 37.3,
+   "status": "certified statement",
+   "wilson95_percent": [
+    26.7,
+    49.3
+   ]
+  },
+  "other": {
+   "k": 29,
+   "percent": 43.3,
+   "status": "not classifiable",
+   "wilson95_percent": [
+    32.1,
+    55.2
+   ]
+  },
+  "quantum numbers/labels": {
+   "k": 2,
+   "percent": 3.0,
+   "status": "certified statement",
+   "wilson95_percent": [
+    0.8,
+    10.2
+   ]
+  },
+  "structure factor": {
+   "k": 6,
+   "percent": 9.0,
+   "status": "certified statement",
+   "wilson95_percent": [
+    4.2,
+    18.2
+   ]
+  },
+  "thermodynamics (full spectrum)": {
+   "k": 2,
+   "percent": 3.0,
+   "status": "certified statement",
+   "wilson95_percent": [
+    0.8,
+    10.2
+   ]
+  },
+  "time evolution": {
+   "k": 3,
+   "percent": 4.5,
+   "status": "out of scope by design",
+   "wilson95_percent": [
+    1.5,
+    12.4
+   ]
+  }
+ },
+ "source": [
+  "experiments/survey/survey_for_scope.json",
+  "experiments/survey/survey_coded.csv",
+  "docs/SCOPE_MATRIX.md"
+ ],
+ "status_counts": {
+  "certified statement": 9,
+  "derived record, no status": 1,
+  "not classifiable": 1,
+  "nothing certified": 2,
+  "out of scope by design": 3
+ }
+}
