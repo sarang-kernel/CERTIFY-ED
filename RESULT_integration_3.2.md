@@ -42,3 +42,12 @@ CI workflows and container recipes syntax-checked only; wheel installed offline;
 | `certify.py:1236` `pos > 0` → `pos > 1` | the second-lowest claimed pair loses its lower neighbour in the Kato-Temple isolation window; the lowest pair has none anyway. Possible test gap: a test where the second pair's isolation interval decides a Kato-Temple sharpening. |
 | `sectors.py:240` `defects[k] + rnd` → `defects[k] - rnd` | **tightens a bound** (the rounding allowance of the sector defect is subtracted instead of added). No test resolves a sector-audit radius short by `rnd`; a soundness-relevant gap by the project's own rule (rounding allowances are sound when looser, undetectable when tighter unless a test resolves them). Add a test with a planted defect within `rnd` of the threshold. |
 | `checker.py:261` `2**53` → `2**54` in the mantissa scaling of the exact-rational conversion | with the exponent left at `e − 53`, every converted value doubles; the tests pass, so either the downstream common-exponent normalisation absorbs a common factor (then the mutant is equivalent for ratios but not for absolute values) or no test checks an absolute exact value through this path. Needs a careful read before a verdict. |
+
+
+## Completion plan Phase 1 integration (2026-10-30)
+
+Merged into `dev/3.2` on 38b0212: track/new-statements (ec8163a), track/figures (9c8b043), track/backlog-proofs (dffa41b), track/props-proofs (f7a5983). Conflicts resolved by hand: CHANGELOG.md (additive, four times), certify_ed/enclosure.py `_cluster_bound` (Backlog's min(rho, eps*) with INT-05 guard, plus the Davis-Kahan ingredient keys of New statements), certify_ed/correlations.py (fp import union), docs/SCOPE_MATRIX.md (degeneracies/thermodynamics rows from Props proofs, labels/entanglement rows from New statements, correlation row with the P15 derivation reference). docs/api.md regenerated; schema in sync.
+
+Full suite at d5ddf17: 1047 passed, 8 skipped, 5 warnings in 1992.79s (0:33:12). ruff clean.
+
+Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not run (held by a platform safety gate in the track's session; awaiting the user's decision); C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
