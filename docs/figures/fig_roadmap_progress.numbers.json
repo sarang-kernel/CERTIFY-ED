@@ -1,0 +1,42 @@
+{
+ "blocked_ids": [
+  "G-01"
+ ],
+ "done_points_per_wave": {
+  "0": 55,
+  "1": 93,
+  "2": 0,
+  "3": 0,
+  "4": 25
+ },
+ "items": 78,
+ "items_per_wave": {
+  "0": 11,
+  "1": 17,
+  "2": 11,
+  "3": 18,
+  "4": 21
+ },
+ "partial_ids": [
+  "B-03",
+  "B-09",
+  "F-02"
+ ],
+ "points_done": 173,
+ "points_per_wave": {
+  "0": 66,
+  "1": 99,
+  "2": 76,
+  "3": 120,
+  "4": 109
+ },
+ "points_total": 470,
+ "source": "experiments/figures/data/ROADMAP_expansion_items_2026-10-29.csv",
+ "status_column": "status_2026-10-29",
+ "status_counts": {
+  "blocked": 1,
+  "done": 30,
+  "not started": 44,
+  "partial": 3
+ }
+}
