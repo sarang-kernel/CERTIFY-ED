@@ -491,3 +491,18 @@ polar identities of the Theorem 2′ sketch, proved in the document), and the Fr
 (c + ‖S‖w/2)/γ₀ (Theorem 1 for S with the residual ‖(I−P)Sφ‖), and the sorted eigenvalues of XᴴSX are within
 (2s + 2s² + η)‖S‖ of those of QᴴSQ (alignment ‖Q̂ − QU‖ ≤ s + s², Weyl, Ostrowski).
 *C-13.* |tr(P₁P₂) − ‖X₁ᴴX₂‖_F²| ≤ g(s₁+η₁) + g(1+η₁)(s₂+η₂) (Theorem 6 for both clusters, Hölder with ‖P‖₁ = g).
+
+### 10.5 Variational certificates for non-ED states (E-05, `variational.py`, `docs/proofs/E-05_variational.md`)
+
+For a trial vector ψ (dense, an MPS contracted to a vector, or a sparse CI vector) and H Hermitian: λ₁ ≤ θ = ⟨ψ, Hψ⟩/⟨ψ, ψ⟩
+(Rayleigh–Ritz, no hypothesis); an eigenvalue within r = ‖Hψ − θψ‖/‖ψ‖ of θ (Theorem 1), r² = ⟨ψ, H²ψ⟩/⟨ψ, ψ⟩ − θ²; and
+Temple's inequality λ₁ ≥ θ − r²/(ρ − θ) for any ρ with θ < ρ ≤ λ₂ (from (H − λ₁)(H − ρ) ⪰ 0; an equality for two-level
+mixtures). θ is enclosed from the error-free inner products of `fp.exact_dot` and the entrywise bound γ̇_{w+2}|H||ψ| on
+fl(Hψ) (the four corner quotients, 4u outward), r by the Theorem 1 radius at θ̂ plus the width of the θ enclosure; for a
+spec the model shift σ enters as λ₁(H_spec) ≤ θ_hi + σ, radius + σ (Weyl), and Temple applied to H_ref with ρ − σ, then
+− σ. The Temple statement is CERTIFIED only when ρ comes from a certificate of a 'lowest' claim on the same operator
+(second smallest lower endpoint of its S2 enclosures for k ≥ 2, S3's next-eigenvalue bound for k = 1); a declared ρ gives
+the distinct status CERTIFIED_UNDER_HYPOTHESIS with the hypothesis `declared_gap` named in the record and in the
+statement text. An MPS is contracted left to right with |ψ̂ − ψ| ≤ γ_M |A⁽¹⁾|⋯|A⁽ᴸ⁾| entrywise (M = Σ D_{j−1}, Higham
+Lemma 3.3); the certified statements are about ψ̂, and |θ(ψ) − θ(ψ̂)| ≤ (2r‖ψ̂‖e + (‖H‖ + |θ|)e²)/(‖ψ̂‖ − e)² is recorded.
+Producer-declared stochastic estimates are DECLARED (DECLARED_ESTIMATE) and nothing rests on them.

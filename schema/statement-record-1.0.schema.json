@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:certify-ed:schema:statement-record:1.0",
+  "title": "CERTIFY-ED standalone statement record, schema 1.0",
+  "description": "JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03) and certify_ed.moments (C-07). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one hypothesis; DECLARED marks a producer value that is recorded, not certified.",
+  "type": "object",
+  "required": [
+    "schema",
+    "statements",
+    "record_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "enum": [
+        "certify-ed/variational/1.0",
+        "certify-ed/generalized/1.0",
+        "certify-ed/moments/1.0"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "operator": {
+      "type": "object"
+    },
+    "state": {
+      "type": "object"
+    },
+    "basis": {
+      "type": "string"
+    },
+    "record_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hex digest"
+    },
+    "statements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "summary",
+          "evidence",
+          "hypotheses"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z][0-9]+\\."
+          },
+          "status": {
+            "enum": [
+              "CERTIFIED",
+              "CERTIFIED_UNDER_HYPOTHESIS",
+              "DECLARED",
+              "INCONCLUSIVE",
+              "NOT_CHECKED"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "reason_code": {
+                "enum": [
+                  "BUDGET_MEMORY",
+                  "BUDGET_TIME",
+                  "DECLARED_ESTIMATE",
+                  "DEFAULT_SELECTION",
+                  "DEPENDENCY_NARROWED",
+                  "MISSING_DEPENDENCY",
+                  "NARROWED_BY_USER",
+                  "NEEDS_DEPENDENCY",
+                  "NEEDS_EIGENVECTORS",
+                  "NEEDS_MATRIX",
+                  "NEEDS_OBSERVABLES",
+                  "NEEDS_SPEC",
+                  "NEEDS_TEMPERATURES",
+                  "NEEDS_WHOLE_SPECTRUM",
+                  "NOT_APPLICABLE",
+                  "NOT_IMPLEMENTED",
+                  "NO_CLUSTERS",
+                  "NO_COMPLETENESS_CLAIM",
+                  "OUT_OF_SCOPE_DYNAMICS",
+                  "OUT_OF_SCOPE_EXTRAPOLATION",
+                  "SIZE_LIMIT",
+                  "UNDERFLOW_RISK",
+                  "UNSUPPORTED_CLAIM",
+                  "UNSUPPORTED_MODEL"
+                ]
+              },
+              "next_action": {
+                "type": "string"
+              }
+            }
+          },
+          "hypotheses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "statement",
+                "source"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "statement": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "value": {}
+              }
+            }
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "if": {
+          "properties": {
+            "status": {
+              "const": "CERTIFIED_UNDER_HYPOTHESIS"
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "hypotheses": {
+              "minItems": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

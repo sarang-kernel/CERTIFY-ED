@@ -66,6 +66,9 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
                               "the dynamical quantity as uncertified (docs/SCOPE_MATRIX.md)"),
     "OUT_OF_SCOPE_EXTRAPOLATION": ("certify each finite size separately and cite the certificates by hash; the "
                                    "extrapolation itself is not a statement about any finite matrix"),
+    "DECLARED_ESTIMATE": ("report the declared estimate as the producer's own (with its sample count and method); the "
+                          "certified statements of the record (Rayleigh upper bound, existence radius, Temple lower bound) "
+                          "come from the trial vector, not from the samples"),
 }
 
 _GENERIC = {
@@ -248,3 +251,60 @@ def entanglement_next_action(rec: dict) -> str:
     if "eta >= 1" in text:
         return REORTHO
     return "inspect the entanglement record's reason; docs/SCOPE_MATRIX.md (entanglement row) lists what the statement needs"
+
+
+# ---- standalone statement records (3.2): variational records (E-05, variational.py), generalized eigenproblem records
+# (E-03, generalized.py) and moment records (C-07, moments.py) carry their own next_action per statement
+def record_next_action(stmt: dict) -> Optional[str]:
+    """Next action for a statement of a standalone record (status not CERTIFIED): keyed on the reason code, then on
+    the wording of the summary. None for CERTIFIED and DECLARED-with-nothing-to-do statements."""
+    st = stmt.get("status")
+    ev = stmt.get("evidence") or {}
+    code = ev.get("reason_code")
+    text = str(stmt.get("summary", "")).lower()
+    sid = str(stmt.get("id", ""))
+    if st == "CERTIFIED":
+        return None
+    if st == "CERTIFIED_UNDER_HYPOTHESIS":
+        names = ", ".join(h.get("name", "?") for h in stmt.get("hypotheses", []))
+        return (f"the bound rests on the declared hypothesis ({names}); to remove it, certify the gap with an ED run of the "
+                "same operator (certify-ed certify, kind 'lowest') and pass the certificate as gap_certificate / --gap-certificate")
+    if code == "DECLARED_ESTIMATE":
+        return NEXT_ACTION_BY_CODE["DECLARED_ESTIMATE"]
+    if code == "UNDERFLOW_RISK":
+        return NEXT_ACTION_BY_CODE["UNDERFLOW_RISK"]
+    if code == "SIZE_LIMIT":
+        if "contracted vector" in text or sid.startswith("V"):
+            return ("the MPS contracts to a vector above the 2^22 limit: contract it yourself to a dense vector on a machine "
+                    "that holds it, or reduce the system; a residual bound without the dense vector is not implemented")
+        return "raise the dimension limit named in the summary (max_dim), or restrict to a smaller block"
+    if code == "NEEDS_DEPENDENCY" and sid.startswith("V3"):
+        return ("declare a lower bound on lambda_2 with its source (gap_hypothesis, gap_source) or supply a certificate of an "
+                "ED run on the same operator (gap_certificate) for a certified Temple bound")
+    if code == "NEEDS_EIGENVECTORS":
+        return "supply the trial vector (dense, MPS tensors or sparse CI amplitudes); declared estimates alone certify nothing"
+    if code == "UNSUPPORTED_MODEL":
+        return "the statement needs a Hermitian A and a positive definite B (certified by inertia); see the record's reason"
+    if code == "NOT_APPLICABLE":
+        if "theta < rho" in text:
+            return ("improve the trial state (lower its Rayleigh quotient below the gap bound rho) or supply a larger certified "
+                    "rho; Temple's inequality needs theta < rho <= lambda_2")
+        if "too small to resolve" in text:
+            return "rescale the trial state (multiply by a power of two) so that its squared norm is a normal binary64 number"
+        if "non-finite" in text:
+            return "remove the non-finite entries from the trial state"
+        if "no producer estimates" in text:
+            return None
+        return "the statement does not apply to this input; see the record's reason"
+    if code in NEXT_ACTION_BY_CODE:
+        return NEXT_ACTION_BY_CODE[code]
+    return "inspect the record's reason; docs/SCOPE_MATRIX.md lists what the statement needs"
+
+
+def annotate_record(rec: dict) -> dict:
+    """Write evidence['next_action'] into every non-CERTIFIED statement of a standalone record (in place)."""
+    for stmt in rec.get("statements", []):
+        na = record_next_action(stmt)
+        if na is not None:
+            stmt.setdefault("evidence", {})["next_action"] = na
+    return rec

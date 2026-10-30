@@ -314,6 +314,52 @@ def cmd_sweep(a):
     return 0
 
 
+def cmd_variational(a):
+    """E-05: variational statements for a trial state (certify_ed.variational)."""
+    from .io.formats import read_array, read_operator
+    from .variational import certify_variational, format_variational
+    spec = None
+    if a.spec:
+        from .spec import ModelSpec
+        with open(a.spec, encoding="utf-8") as f:
+            spec = ModelSpec.from_dict(json.load(f))
+    operator = read_operator(a.operator) if a.operator else None
+    if operator is None and spec is None:
+        raise SystemExit("give --operator (a stored matrix file) or --spec (a model spec JSON)")
+    if a.mps:
+        import numpy as np
+        data = np.load(a.mps)
+        keys = sorted(data.files, key=lambda k: (len(k), k))
+        psi = {"mps": [data[k] for k in keys]}
+    elif a.ci_indices:
+        n = int(a.dim) if a.dim else (operator.shape[0] if operator is not None else spec.dim)
+        psi = {"indices": read_array(a.ci_indices), "amplitudes": read_array(a.state, role="eigenvectors"), "n": n}
+    else:
+        psi = read_array(a.state, role="eigenvectors") if a.state else None
+    gap_cert = None
+    if a.gap_certificate:
+        from .certificate_v2 import Certificate
+        gap_cert = Certificate.load(a.gap_certificate)
+    declared = None
+    if a.declared:
+        declared = {}
+        for item in a.declared.split(","):
+            key, _, val = item.partition("=")
+            try:
+                declared[key.strip()] = float(val)
+            except ValueError:
+                declared[key.strip()] = val.strip()
+    rec = certify_variational(operator, psi, spec=spec, gap_hypothesis=a.gap, gap_source=a.gap_source or "",
+                              gap_certificate=gap_cert, declared=declared, underflow_check=not a.assume_no_underflow,
+                              description=a.description or "")
+    print(format_variational(rec))
+    if a.json:
+        from .certificate_v2 import _jsonable
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(_jsonable({k: v for k, v in rec.items() if not k.startswith("_")}), f, indent=1)
+    return 0
+
+
 def cmd_levelstats(a):
     """C-09: interval r-ratios and spacing histogram of a complete, counted spectrum (certify_ed.levelstats)."""
     from .certificate_v2 import Certificate
@@ -753,6 +799,21 @@ def main(argv=None):
     sw.add_argument("--save-dir", help="save the per-point certificates here")
     sw.add_argument("--json", help="write the scan record to this file")
     sw.set_defaults(fn=cmd_sweep)
+    va = sub.add_parser("variational", help="Rayleigh upper bound, existence radius and Temple lower bound for a trial state (E-05)")
+    va.add_argument("--operator", help="stored Hermitian matrix (npy/npz/HDF5/Matrix Market/...; docs/producer_bundle.md)")
+    va.add_argument("--spec", help="model spec JSON (the operator is then built from it; model shift recorded)")
+    va.add_argument("--state", help="trial vector file (dense), or the amplitudes with --ci-indices")
+    va.add_argument("--mps", help="npz of MPS tensors (D_left, d, D_right), contracted to a dense vector (<= 2^22)")
+    va.add_argument("--ci-indices", dest="ci_indices", help="indices file of a sparse CI vector (with --state = amplitudes)")
+    va.add_argument("--dim", help="dimension of the sparse CI vector (default: the operator's)")
+    va.add_argument("--gap", type=float, default=None, help="DECLARED lower bound rho on lambda_2 (Temple; recorded as a hypothesis)")
+    va.add_argument("--gap-source", dest="gap_source", help="where the declared gap comes from (recorded verbatim)")
+    va.add_argument("--gap-certificate", dest="gap_certificate", help="certificate of a 'lowest' claim on the same operator: certified rho")
+    va.add_argument("--declared", help="producer estimates, e.g. energy=-3.65,variance=1e-4,samples=10000,method=VMC (DECLARED)")
+    va.add_argument("--assume-no-underflow", action="store_true", dest="assume_no_underflow")
+    va.add_argument("--description")
+    va.add_argument("--json", help="write the record to this file")
+    va.set_defaults(fn=cmd_variational)
     ls = sub.add_parser("levelstats", help="interval r-ratios and spacing histogram of a complete counted spectrum (C-09)")
     ls.add_argument("certificate", help="certificate JSON of a kind 'all' claim with S3 CERTIFIED")
     ls.add_argument("--unfold", default="none", help="'none' (default) or 'poly:D': polynomial unfolding of degree D "
