@@ -56,21 +56,20 @@ XR_bound has 5 roundings inside `up` (two products, the `gd` product, product, t
 the cap of `up`. Directions: all towards +∞; (1 − η)^{−1/2} and (1 − η)^{−1} are increasing in η, so evaluating
 them at the stored η ≥ exact η is sound.
 
-**Gap in the code mapping (not in the proof).** The table states `res.E_norm[i] ≥ ‖Rc_i − r_i‖` "(Theorem 1
-accounting, step 3–4)". That holds under the standard model only. Under the underflow-tolerant model this branch
-adopted (INT-05), the per-column shortfall of Rc_i + E_i is √n·c_w·u_min (`fp.residual_additive_term`), and that
-term is added to `res.upper` (enclosure.py 368) but *not* to `res.E_norm`. Hence `Rerr = norm2_upper(E_norm)`
-(line 500) can fall short of ‖Rc − R‖_F by up to √g·√n·c_w·u_min ≈ 10⁻¹⁶⁰·√(gn)·c_w, and `XR_bound` by ‖X‖₂
-times that. Consequence: the stated direction "exact ε* ≤ eps_star" is proved only when ε* ≳ 10⁻¹⁴⁵ (where the
-≥ 2u relative slack of `up` after five roundings exceeds the missing term), or when no operation of the residual
-underflows (then η = 0 in the model and E_norm suffices). The statement itself is unaffected; the fix is a looser
-bound: add `math.sqrt(g) * residual_additive_term(n, adapter.width, cplx) + ULP_MIN` to `Rerr` (or the equivalent
-term `xnorm * …` outside `up` in `XR_bound`). My adversarial run (subnormal operator entries 2⁻¹⁰³⁰…2⁻¹⁰⁷⁰,
-subnormal vectors) found no actual violation: the relative slack of E over the true rounding error covers the
-worst-case additive allowance in every case tried. Recorded in VERDICTS.md under Required corrections.
+**Imprecision in the code mapping (not a gap in the bound).** The table states `res.E_norm[i] ≥ ‖Rc_i − r_i‖`
+"(Theorem 1 accounting, step 3–4)". Under the standard model that holds; under the underflow-tolerant model this
+branch adopted (INT-05) the per-column shortfall of Rc_i + E_i is √n·c_w·u_min (`fp.residual_additive_term`),
+which is added to `res.upper` (enclosure.py 368) but not to `E_norm`. The bound `Rerr = norm2_upper(E_norm)`
+(line 500) nevertheless holds: `norm2_upper` adds `norm_underflow_term(g)` ≈ √(g/2)·2⁻⁵³⁷ ≈ 10⁻¹⁶¹√g, and
+√g·√n·c_w·u_min is below that term as long as √n·c_w ≤ 2⁵³⁸ (ratio evaluated for g ≤ 64, n ≤ 10⁹, w ≤ 10⁴,
+real and complex: at most 1.4e-153). So the stated direction is correct for a reason the document does not give;
+the table row should read "`norm2_upper(E_norm)` ≥ ‖(E_norm_i)‖₂ + T_g ≥ ‖Rc − R‖_F, the INT-05 shortfall
+√g√n c_w u_min being below T_g = `norm_underflow_term(g)`". No code change is needed (an earlier draft of this
+session recorded a looser-bound change as a required correction; it was withdrawn once the slack was quantified,
+and no code change was committed).
 
-**Verdict: AGREES-WITH-REMARKS on the proof; GAP in the code mapping (INT-05 additive term missing in `Rerr`;
-statement still holds; closing change given above).**
+**Verdict: AGREES-WITH-REMARKS** (proof valid, same constant; one justification in section 3 incomplete but
+the bound holds).
 
 ## Runs
 
