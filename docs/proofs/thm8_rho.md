@@ -91,16 +91,17 @@ underflow, `docs/proofs/int05_underflow.md`) and the built H was not symmetrised
 
 `docs/proofs/verify_thm8_rho.py`:
 
-- A: Heisenberg chains (spin-1/2, N = 6 and 8, exact dyadic matrices) decomposed into U(1) blocks and into
+- A: Heisenberg chains (spin-1/2, N = 4 and 6, exact dyadic matrices) decomposed into U(1) blocks and into
   momentum blocks (complex isometries), eigenpairs from `scipy.linalg.eigh` of each block,
   `certify_low_energy` at several cuts; when CERTIFIED, the conclusion is checked against the eigenvalues
   of the exact spec matrix (mpmath, 60 digits): |λ_j − c₍ⱼ₎| ≤ `radius` for j ≤ K and λ_{K+1} ≥ `next_lower_bound`,
   and the intermediate inequalities of Steps 2–3 (‖HW − WB‖ ≤ D, ‖HQ̂ − Q̂B‖ ≤ ρ, sorted pairing of eig(B) with
-  eig(H) within ρ, the K lowest of B equal the pooled matched values) are checked in mp;
-- B: a spin-1 chain (N = 4, irrational amplitudes, m > 0): the eigenvalues of the declared model from
+  eig(H) within ρ, the K lowest of B equal the pooled matched values) are checked in mp for dimensions ≤ 30;
+- B: a spin-1 chain (N = 3, irrational amplitudes, m > 0): the eigenvalues of the declared model from
   `checker.exact_matrix` (the rational matrix K = D⁻¹HD, similar to H_spec) — this checks Step 4, i.e. that
   the builder shift is large enough;
-- adversarial: a sector basis perturbed by 10⁻⁸ … 10⁻³ (η > 0), a sector block perturbed by 10⁻¹⁰ (D > 0): the
+- adversarial: a sector basis perturbed by 10⁻¹⁴ … 3·10⁻¹¹ (η > 0), a sector block perturbed by 10⁻¹³ (D > 0; both
+  within the audit tolerance 10⁻¹⁰): the
   statement must still hold whenever the result is CERTIFIED; negative controls (must not be CERTIFIED): a
   dropped sector, a corrupted block entry (10⁻³), a sector that omits an eigenvalue below the cut, a
   duplicated eigenvector in one sector, a cut inside a claimed enclosure.

@@ -359,11 +359,14 @@ def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
 
     Every entry of H_ref is a sum of at most m = n_terms * 2^Lmax contributions, each a product of the
     coupling and at most Lmax local amplitudes; each local amplitude carries one rounding when it is not
-    exactly representable (square roots for S >= 1 and bosons), and the product Lmax + 1 more. Hence
+    exactly representable (square roots for S >= 1 and bosons), each of the Lmax multiplications one more,
+    and the sum m - 1: a relative perturbation theta with |theta| <= gamma_{m + 2 Lmax - 1} per contribution
+    (one more rounding when the matrix is symmetrised, construct.hermitian_part). Hence
     |H_ref - H_spec| <= gamma_W |H|_abs entrywise with W = m + 2 Lmax + 2, where |H|_abs sums the absolute
-    values of the contributions, and ||H_ref - H_spec||_2 <= gamma_W sqrt(||H|_abs||_1 ||H|_abs||_inf).
-    Both norms are evaluated with the matrix-free operator (row sums and column sums of nonnegative terms,
-    inflated by a further gamma factor for their own rounding). No symmetry of |H|_abs is assumed."""
+    values of the exact contributions, and ||H_ref - H_spec||_2 <= gamma_W sqrt(||H|_abs||_1 ||H|_abs||_inf).
+    Both norms are evaluated with the matrix-free operator (row sums and column sums of the computed
+    nonnegative terms, which are at least the exact ones times (1 - gamma_{m + 2 Lmax - 1}); the division by
+    (1 - gamma_W) undoes that). No symmetry of |H|_abs is assumed (docs/proofs/appA_model-shift.md)."""
     from .fp import gamma
     op = SpecOperator(spec, states)
     n = op.shape[0]
@@ -375,7 +378,8 @@ def _builder_shift(spec: ModelSpec, states: Optional[StateSet] = None) -> float:
     row = float(np.max(op.abs_matvec(ones)))
     col = float(np.max(op.abs_rmatvec(ones)))
     g = gamma(width)
-    return up(g * math.sqrt(row * col) * (1 + gamma(width)) * (1 + 4 * U))
+    # six roundings (product, sqrt, product, 1 - gamma, division, product) covered by (1 + 4u)(1 + 8u) of up()
+    return up(g * math.sqrt(row * col) / (1 - gamma(width)) * (1 + 4 * U))
 
 
 def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_ref=None):

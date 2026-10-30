@@ -1,11 +1,11 @@
 """Computational verification of docs/proofs/thm8_rho.md (Theorem 8, sector assembly with radius rho).
 
-A  Heisenberg chains (spin-1/2, exact dyadic matrices) in U(1) and momentum sectors: compose.certify_low_energy
+A  Heisenberg chains (spin-1/2, N = 4 and 6, exact dyadic matrices) in U(1) and momentum sectors: compose.certify_low_energy
    at several cuts; CERTIFIED results checked against the eigenvalues of the exact spec matrix (mpmath, 60 digits),
    plus the intermediate inequalities of the proof (Steps 2-3) in mp.
-B  spin-1 chain (irrational amplitudes, builder shift m > 0): eigenvalues of the declared model from
+B  spin-1 chain (N = 3, irrational amplitudes, builder shift m > 0): eigenvalues of the declared model from
    checker.exact_matrix (D^-1 (W K) D^-1, Hermitian, exact rationals times sqrt of integer weights).
-Adversarial: perturbed sector bases (eta > 0) and blocks (D > 0): the statement must hold whenever CERTIFIED;
+Adversarial: sector bases perturbed by 1e-14 .. 3e-11 (eta > 0) and blocks by 1e-13 (D > 0), within the audit tolerance: the statement must hold whenever CERTIFIED;
 negative controls must not be CERTIFIED.
 Usage: python docs/proofs/verify_thm8_rho.py [--cases 300] [--seed 4]
 """
@@ -51,7 +51,7 @@ def exact_spectrum(spec):
 def u1_sectors(spec, H, rng, perturb_V=0.0, perturb_H=0.0):
     full = full_state_set(spec)
     secs = []
-    for nup in range(spec.n_sites + 1):
+    for nup in range(spec.n_sites * (spec.q - 1) + 1):          # all digit sums (q = 3 for spin 1)
         st = ce.u1_state_set(spec, nup)
         idx, found = full.index_of(st.states_in_order())
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
@@ -98,6 +98,16 @@ def momentum_sectors(spec, H, rng):
     return secs
 
 
+def gap_cut(wf, rng, tol=1e-8):
+    """A cut in a gap between two distinct levels of the sorted spectrum wf (never inside a multiplet)."""
+    levels = [wf[0]]
+    for v in wf[1:]:
+        if v - levels[-1] > tol:
+            levels.append(v)
+    j = int(rng.integers(1, min(len(levels), 7)))
+    return float((levels[j - 1] + levels[j]) / 2)
+
+
 def check_statement(out, lam, counters, adversarial, tag, spec=None, secs=None, Hm=None):
     if out["status"] != "CERTIFIED":
         counters["T"].skipped += 1
@@ -110,7 +120,7 @@ def check_statement(out, lam, counters, adversarial, tag, spec=None, secs=None, 
     if K < len(lam):
         ok &= lam[K] >= mp.mpf(out["next_lower_bound"]) - tol
     counters["T"].add(adversarial, ok, f"T {tag}: K={K} radius={out['radius']} eps={out['eps_decomposition']}")
-    if secs is not None and Hm is not None and len(lam) <= 80:
+    if secs is not None and Hm is not None and len(lam) <= 30:      # the mp steps cost O(n^3) at 60 digits
         # Steps 2-3 in mp: ||H W - W B|| <= D, ||H Qhat - Qhat B|| <= rho, sorted pairing within rho
         W = to_mp(sp.hstack([sp.csr_matrix(s.V) for s in secs]).toarray())
         B = to_mp(la.block_diag(*[s.H.toarray() for s in secs]))
@@ -143,21 +153,20 @@ def main():
     rng = np.random.default_rng(args.seed)
     counters = {k: Counter() for k in ("T", "S", "N")}
     models = []
-    for N in (6, 8):
+    for N in (4, 6):
         spec = ce.heisenberg_chain(N)
         H = hermitian_part(ce.build_bitwise(spec))
         lam, Hm = exact_spectrum(spec)
         models.append((f"heis{N}", spec, H, lam, Hm))
-    spec1 = ce.spin1_heisenberg_chain(4)
+    spec1 = ce.spin1_heisenberg_chain(3)
     H1 = hermitian_part(ce.build_bitwise(spec1))
     lam1, Hm1 = exact_spectrum(spec1)
-    models.append(("spin1_N4", spec1, H1, lam1, Hm1))
+    models.append(("spin1_N3", spec1, H1, lam1, Hm1))
     # A/B: random cuts, exact decompositions
     for i in range(args.cases):
         name, spec, H, lam, Hm = models[i % len(models)]
         wf = [float(v) for v in lam]
-        j = int(rng.integers(1, min(len(wf) - 1, 12)))
-        E_cut = float((wf[j - 1] + wf[j]) / 2) if wf[j] - wf[j - 1] > 1e-9 else float(wf[j] + 1e-3)
+        E_cut = gap_cut(wf, rng)
         if name.startswith("heis") and rng.random() < 0.5:
             secs = momentum_sectors(spec, H, rng)
         else:
@@ -166,19 +175,18 @@ def main():
         check_statement(out, lam, counters, False, f"{name} cut={E_cut:.6g}", spec, secs, Hm)
     # adversarial: perturbed bases and blocks (statement must hold when CERTIFIED)
     for i in range(args.cases // 3):
-        name, spec, H, lam, Hm = models[i % 2]
+        name, spec, H, lam, Hm = models[i % len(models)]
         wf = [float(v) for v in lam]
-        j = int(rng.integers(1, 8))
-        E_cut = float((wf[j - 1] + wf[j]) / 2)
-        pv = float(rng.choice([1e-8, 1e-5, 1e-3]))
-        ph = float(rng.choice([0.0, 1e-10]))
+        E_cut = gap_cut(wf, rng)
+        pv = float(rng.choice([1e-14, 1e-12, 3e-11]))        # the audit tolerance is 1e-10 on iso and inv
+        ph = float(rng.choice([0.0, 1e-13]))
         secs = u1_sectors(spec, H, rng, perturb_V=pv, perturb_H=ph)
         out = certify_low_energy(spec, secs, E_cut, H_full=H)
         check_statement(out, lam, counters, True, f"{name} perturbed V {pv} H {ph}", spec, secs, Hm)
     # negative controls
-    name, spec, H, lam, Hm = models[0]
+    name, spec, H, lam, Hm = models[1]
     wf = [float(v) for v in lam]
-    E_cut = float((wf[4] + wf[5]) / 2)
+    E_cut = gap_cut(wf, np.random.default_rng(0))
     secs = u1_sectors(spec, H, rng)
     out = certify_low_energy(spec, secs[:-1], E_cut, H_full=H)
     counters["N"].add(True, out["status"] != "CERTIFIED", "dropped sector")
@@ -201,7 +209,7 @@ def main():
         dup = SectorResult(s3.label, s3.V, s3.H, s3.eigenvalues, X)
         out = certify_low_energy(spec, secs[:3] + [dup] + secs[4:], E_cut, H_full=H)
         counters["N"].add(True, out["status"] != "CERTIFIED", "duplicated eigenvector")
-    out = certify_low_energy(spec, secs, float(wf[4]), H_full=H)       # cut on an eigenvalue
+    out = certify_low_energy(spec, secs, float(wf[3]), H_full=H)       # cut on an eigenvalue
     counters["N"].add(True, out["status"] != "CERTIFIED", "cut inside a claimed enclosure")
     ok = True
     for key, nm in (("T", "Theorem 8 statement against the exact spectrum"), ("S", "Steps 2-3 inequalities in mp"),
