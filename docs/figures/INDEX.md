@@ -128,4 +128,3 @@ The Pomata–Wei AKLT lattices (E10 record, run_full_20261022 (Windows, certify-
 
 - data source: e10_aklt_20261022_170609/data.json of run_full_20261022 (Windows, certify-ed 3.1.0 evidence run)
 - script: `experiments/figures/fig_aklt_eta.py`
-

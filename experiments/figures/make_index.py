@@ -241,7 +241,7 @@ def render():
         out.append(fn(n) + "\n\n")
         out.append(f"- data source: {source.format(**{k: v for k, v in n.items() if isinstance(v, str)})}\n")
         out.append(f"- script: `experiments/figures/{name}.py`\n\n")
-    return "".join(out)
+    return "".join(out).rstrip("\n") + "\n"
 
 
 def main():
