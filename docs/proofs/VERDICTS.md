@@ -10,7 +10,20 @@ results is described as verified; Sarang's check (D-12) is pending for all of th
 | document | statement checked | protocol followed | verdict | remarks | original verify run (reduced) | independent adversarial counts | violations | date |
 |---|---|---|---|---|---|---|---|---|
 | thm2_polar-factor.md | Polar-factor lemma (a)-(d); Kahan inclusion for any Hermitian block; Theorem 2 radius rho = \|\|R\|\| + (\|\|A\|\|+\|\|Lambda\|\|) delta | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS | Proof valid, same constant. Code mapping holds at current lines (enclosure.py 476-511; certify.py 296-303; sectors.py 125-148); section 3 line numbers are those of track/backlog-proofs. Remark: sectors.audit_orthogonality has no rounding term for the computed product V_a^H V_b (input of the decomposition_shift eta) - filed under thm8_rho. | verify --cases 2000 --seed 7: 3452+860 lemma, 1726+430 Kahan, 1726+430 Thm2, 500+600 Kahan-block, 3291+809 code; 0 violations | 500 cases seed 3: 36 random + 355 adversarial (109 skipped eta>=1); code 26+225 (140 skipped Frobenius eta>=1); 129 negative controls; 0 violations | 0 | 2026-10-30 |
+| thm2prime_eps-star.md | Theorem 2': distinct matching within eps* = \|\|R\|\|/sqrt(1-eta) + \|\|X^H R\|\|/(1-eta) + delta spread/sqrt(1-eta) | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS (proof); GAP (code mapping) | Proof identical in structure, valid, same constant. Code: Rerr = norm2_upper(E_norm) (enclosure.py 500) lacks the INT-05 additive term sqrt(g) sqrt(n) c_w u_min that res.upper carries; exact eps* <= eps_star is proved only when eps* >~ 1e-145 or no residual operation underflows. Looser fix listed under Required corrections. No actual violation found. | verify --cases 1500 --seed 7: 3786+1875 (413 skipped), 1262+625, 1122+549 (216 skipped); 0 violations | 400 cases seed 5: 29 random + 254 adversarial (117 skipped eta>=1); code 22+232; 80 remark checks; subnormal operator/vector cases included; 0 violations | 0 | 2026-10-30 |
 
 ## Required corrections
 
-None recorded.
+### thm2prime_eps-star.md
+
+Code mapping gap (section 3, row ‖Rc − R‖_F). `enclosure._cluster_bound` line 500 forms
+`Rerr = norm2_upper(res.E_norm[idx])`, but under the INT-05 model ‖Rc_i − r_i‖ ≤ ‖E_i‖ + √n·c_w·u_min per column
+(`fp.residual_additive_term(n, w, cplx)` ≥ √n·c_w·u_min is added to `res.upper`, enclosure.py 368, not to
+`E_norm`). Exact change (looser bound, allowed immediately): replace line 500 by
+
+    Rerr = norm2_upper(np.asarray(res.E_norm[idx], dtype=float)) + math.sqrt(g) * residual_additive_term(n, adapter.width, cplx) + ULP_MIN
+
+(`residual_additive_term` imported from `fp`; the `+ ULP_MIN` covers the rounding of the subnormal product), and in
+the document's table replace "`res.E_norm[i]` ≥ ‖Rc_i − r_i‖" by "`res.E_norm[i]` + √n·c_w·u_min ≥ ‖Rc_i − r_i‖
+(`docs/proofs/int05_underflow.md`, Lemma U4)". Implemented on this branch with a negative-control test
+(see `tests/test_independent_check.py`) — recorded below in "Corrections implemented".

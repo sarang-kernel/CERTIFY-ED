@@ -122,4 +122,4 @@ changes η, so the bound is not scale-free in X (nor should it be: η is the ort
 
 ## 6 Status
 
-Derived by Claude on 2026-10-30; machine-checked (17 094 (51 282 inequality checks) random + 621 (1 863 inequality checks) adversarial cases, 0 violations); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+Derived by Claude on 2026-10-30; machine-checked (17 094 (51 282 inequality checks) random + 621 (1 863 inequality checks) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS (proof); GAP (code mapping), docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
