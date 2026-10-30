@@ -1,0 +1,83 @@
+"""Smoke test of the figure scripts (experiments/figures): every script runs and writes its PNG.
+
+Concept figures and the figures drawn from documents in the repository always run. Figures drawn from
+evidence-run records need $CERTIFY_RESULTS (and $CERTIFY_RESULTS_B for the two-stack cost figure); when a
+script exits with _common.DATA_ABSENT the test is skipped, not failed.
+"""
+import glob
+import json
+import os
+import subprocess
+import sys
+
+import pytest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FIG_DIR = os.path.join(ROOT, "experiments", "figures")
+SCRIPTS = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(FIG_DIR, "fig_*.py")))
+DATA_ABSENT = 3
+
+
+def _run(name, out_dir):
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    return subprocess.run([sys.executable, os.path.join(FIG_DIR, name + ".py"), "--out", out_dir, "--png-only"],
+                          capture_output=True, text=True, env=env, cwd=ROOT, timeout=600)
+
+
+def test_every_figure_has_a_script_and_index_entry():
+    assert len(SCRIPTS) >= 13
+    index = open(os.path.join(ROOT, "docs", "figures", "INDEX.md"), encoding="utf-8").read()
+    for name in SCRIPTS:
+        assert f"`{name}.png`" in index or f"{name}.pdf" in index, f"{name} missing from docs/figures/INDEX.md"
+        assert f"experiments/figures/{name}.py" in index
+
+
+@pytest.mark.parametrize("name", SCRIPTS)
+def test_figure_script_runs(name, tmp_path):
+    out = str(tmp_path / "figs")
+    r = _run(name, out)
+    if r.returncode == DATA_ABSENT:
+        pytest.skip(f"{name}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'data absent'}")
+    assert r.returncode == 0, r.stderr[-2000:]
+    assert os.path.exists(os.path.join(out, name + ".png"))
+    numbers = json.load(open(os.path.join(out, name + ".numbers.json"), encoding="utf-8"))
+    assert isinstance(numbers, dict) and numbers
+
+
+def test_data_absent_exit_code_is_a_skip(tmp_path):
+    """Negative control: a record-driven script pointed at an empty results directory exits with DATA_ABSENT and
+    writes nothing (the smoke test above turns that into a skip, never a pass)."""
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    env["CERTIFY_RESULTS"] = str(empty)
+    env.pop("CERTIFY_RESULTS_B", None)
+    out = tmp_path / "figs"
+    r = subprocess.run([sys.executable, os.path.join(FIG_DIR, "fig_failure_matrix.py"), "--out", str(out), "--png-only"],
+                       capture_output=True, text=True, env=env, cwd=ROOT, timeout=120)
+    assert r.returncode == DATA_ABSENT
+    assert "data absent" in r.stderr
+    assert not glob.glob(str(out / "*.png"))
+
+
+def test_index_is_in_sync_with_numbers_files():
+    """docs/figures/INDEX.md is rendered from the .numbers.json files; a stale index fails."""
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    r = subprocess.run([sys.executable, os.path.join(FIG_DIR, "make_index.py"), "--check"], capture_output=True,
+                       text=True, env=env, cwd=ROOT, timeout=120)
+    assert r.returncode == 0, r.stderr
+
+
+def test_concept_figures_need_no_data(tmp_path):
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    env["CERTIFY_RESULTS"] = str(tmp_path / "nowhere")
+    env.pop("CERTIFY_RESULTS_B", None)
+    out = tmp_path / "figs"
+    r = subprocess.run([sys.executable, os.path.join(FIG_DIR, "fig_certificate_anatomy.py"), "--out", str(out), "--png-only"],
+                       capture_output=True, text=True, env=env, cwd=ROOT, timeout=300)
+    assert r.returncode == 0, r.stderr[-2000:]
+    assert (out / "fig_certificate_anatomy.png").exists()

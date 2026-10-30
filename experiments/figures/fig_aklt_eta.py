@@ -59,7 +59,7 @@ def draw(e10):
     axa.set_title("certified η agrees with the published values to 2e-9")
     C.panel_letter(axa, "a", dx=-0.5)
     # (b) criterion values against 1
-    for j, (lab, expr, val, crit) in enumerate(crit_rows):
+    for j, (_lab, _expr, val, _crit) in enumerate(crit_rows):
         axb.barh(j, val, color=C.TEAL, height=0.6)
         axb.text(val - 0.02, j, f"{val:.5f}", va="center", ha="right", fontsize=C.SIZES[2], color="white")
     axb.axvline(1.0, color=C.ORANGE, lw=1.2)

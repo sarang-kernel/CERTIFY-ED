@@ -117,7 +117,7 @@ def save(fig, out_dir, name, png_only=False):
     paths.append(png)
     if not png_only:
         pdf = os.path.join(out_dir, name + ".pdf")
-        fig.savefig(pdf)
+        fig.savefig(pdf, metadata={"CreationDate": None})   # no timestamp: identical input, identical file
         paths.append(pdf)
     return paths
 

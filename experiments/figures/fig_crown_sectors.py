@@ -53,7 +53,6 @@ def draw(e9):
              ha="right", va="bottom", fontsize=C.SIZES[2], color=C.INK2)
     axa.set_xlabel("pair-spin class, sorted by lowest eigenvalue")
     axa.set_ylabel("lowest eigenvalue of the class")
-    c1, c3 = land["couplings"]["c1"], land["couplings"]["c3"]
     axa.set_title(f"{len(cls)} pair-spin classes at the re-optimised couplings")
     axa.margins(x=0.05, y=0.15)
     C.panel_letter(axa, "a", dx=-0.2)
@@ -70,7 +69,7 @@ def draw(e9):
         axb.text(xs_named[j], s["energy"] + 0.0009, f"{label(s['pair_spins2'])}\ndim {s['dim']:,}\n{s['energy']:.7f} (FP)",
                  ha="center", va="bottom", fontsize=C.SIZES[2], color=C.INK, linespacing=1.1)
     axb.plot(0, up, marker="v", color=C.BLUE, ms=6, ls="none", zorder=3)
-    axb.text(-0.3, up - 0.0004, f"all-singlet sector ≤ {up:.7f}\n(exact re-check, radius {p['E0_radius_exact']:.0e})",
+    axb.text(-0.3, up - 0.0004, f"all-singlet sector ≤ {up:.7f}\n(exact re-check; ring radius {p['E0_radius_exact']:.0e})",
              ha="left", va="top", fontsize=C.SIZES[2], color=C.BLUE, linespacing=1.1)
     axb.annotate("", xy=(3.1, up), xytext=(3.1, pub), arrowprops=dict(arrowstyle="<->", color=C.BLUE, lw=0.8))
     axb.text(3.18, (up + pub) / 2, f"margin\n{p['margin']:.1e}", fontsize=C.SIZES[2], color=C.BLUE, va="center",

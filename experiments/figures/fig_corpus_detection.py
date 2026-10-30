@@ -21,7 +21,7 @@ VERDICT_COLORS = {"detected": C.TEAL, "refused": C.PURPLE, "control": "white"}
 
 def draw(report):
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Patch, Rectangle
+    from matplotlib.patches import Rectangle
     C.style()
     rows = report["rows"]
     classes = sorted({r["error_class"] for r in rows}, key=lambda c: (c != "correct", c))
@@ -37,7 +37,6 @@ def draw(report):
                 linespacing=1.1)
     ax.text(x_verdict + 0.4, n + 0.08, "corpus\nverdict", ha="center", va="bottom", fontsize=C.SIZES[2], linespacing=1.1)
     ax.text(x_lab, n + 0.08, "planted error class  (cases)", va="bottom", fontsize=C.SIZES[1], fontweight="bold")
-    totals = {"cases": len(rows)}
     for i, cls in enumerate(classes):
         y = n - 1 - i
         cases = [r for r in rows if r["error_class"] == cls]
