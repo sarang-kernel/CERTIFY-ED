@@ -91,4 +91,4 @@ written, not run).
 Full suite (`pytest -q tests`, Windows, QuSpin installed): **978 passed, 2 skipped, 5 warnings in 1670.21s (0:27:50)**
 (953 + 25 new tests).
 
-Branch head: HEAD_PLACEHOLDER.
+Branch head: bea0cd5 (plus this amendment commit recording the head).
