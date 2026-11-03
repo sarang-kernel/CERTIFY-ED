@@ -99,3 +99,18 @@ def test_rounding_bound_uses_width_plus_three_for_complex_data():
     ref_old = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
     ref_new = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 3)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
     assert np.all(E_cplx >= ref_old) and np.allclose(E_cplx, ref_new, rtol=1e-12, atol=0)
+
+
+def test_real_spec_with_complex_vectors_takes_the_wider_rounding_constant():
+    """D-02 / thm1 correction: a real spec applied to complex-typed claim vectors goes through the complex branch of
+    _rounding_bound, whose division constant is gamma_{w+3}; the resulting radius is at least the real-branch value."""
+    import numpy as np
+    from certify_ed.enclosure import OperatorAdapter, residuals
+    rng = np.random.default_rng(11)
+    A = rng.standard_normal((8, 8)); A = A + A.T
+    w, V = np.linalg.eigh(A)
+    xr = V[:, :2].copy()
+    xc = xr.astype(np.complex128)
+    rr = residuals(OperatorAdapter(A), w[:2], xr)
+    rc = residuals(OperatorAdapter(A), w[:2], xc)
+    assert np.all(np.asarray(rc.upper) >= np.asarray(rr.upper))

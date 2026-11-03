@@ -142,6 +142,9 @@ named, and S2 adds nothing. S3 (inertia) needs a factorization and stays NOT_CHE
 | Lemma N | `local_norm_bound`, `norm_bound()`; `OperatorAdapter` takes min with the Appendix-A row-sum bound (its γ index raised to `width + 2` ≥ W − 1 for this operator) | upward (`up`, (1 + γ)) |
 | amplitude hypothesis in the record | `amplitude_hypothesis`; `certify.check_model_fidelity` (matrix-free branch, `Options(matrix_free=True)`) | — |
 
+
+**Note after the independent re-derivation (2026-11-03, `docs/proofs/VERDICTS.md`).** Lemma M3's second-pass count omits the modulus roundings of a complex vector applied to a real spec (and the complex modulus costs up to 2u on this host, measured 1.88u). On dev/3.2 `enclosure._rounding_bound` uses γ_{width+3} in place of γ_{width+1} for complex data, which restores `absHX_up_i ≥ (|H_spec|_abs |x|)_i` for up to two extra roundings per entry; the counts in section 2 are to be read with the exponent w_row + L + ρ + h_a + h_x (h ≤ 2) as recorded in VERDICTS.md. Sarang's check (D-12) remains pending.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_D-02.py` (run from the repository root; 150 random specs by default):

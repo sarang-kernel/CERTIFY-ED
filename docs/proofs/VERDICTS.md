@@ -117,8 +117,7 @@ should be stated (D-01 uses h = 3) and the counts redone with it; this also conc
 Exact change to the proof (no code change): in Lemma M3 write the exponent as w_row + L + ρ + h_a + h_x with h_a = 0
 for a real spec, h_x = 0 for a real vector, h_a, h_x ≤ h otherwise, and conclude (1 − γ_{W−1}) only for (real spec,
 real x) and (complex spec, h ≤ L + 1); for (real spec, complex x) state that `absHX_up_i` ≥ (|H_spec|_abs|x|)_i
-(1 − 2hu) and that (b) still follows from the factor 2 of the complex `gamma_dot`. Alternative (code, looser bound,
-allowed immediately, not implemented on this branch — the author's choice, as for thm1): in
-`enclosure._rounding_bound` use `gw = gamma(adapter.width + 3)` when `cplx` (the same change recorded for thm1),
+(1 − 2hu) and that (b) still follows from the factor 2 of the complex `gamma_dot`. Alternative (code, looser bound) — IMPLEMENTED on dev/3.2 (lead commit 2e1dc59, before this verdict landed): in
+`enclosure._rounding_bound` `gw = gamma(adapter.width + 3)` when `cplx` (the same change recorded for thm1),
 which restores the second-pass inequality for h ≤ 2 in every family; `tests/` should then include a real spec with
 complex-typed vectors through `residuals` and, if the hypothesis h ≤ 2 is adopted, a `hypot` accuracy probe.
