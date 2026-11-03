@@ -163,4 +163,4 @@ rounding bound is checked in exact rationals.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (240 random + 14 adversarial cases, 0 violations);
-independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

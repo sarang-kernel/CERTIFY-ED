@@ -359,8 +359,9 @@ def certified_crossing_interval(rec_a: dict, level_a: int, rec_b: Optional[dict]
     """Where the tube of level_a (scan rec_a) and the tube of level_b (scan rec_b, default rec_a) are certified apart.
 
     The margin m_<(c) = upper_a(c) - lower_b(c) is 2B-Lipschitz (B = max of the two scans' B); on a sample interval
-    [c_i, c_{i+1}] of width D the relation a < b holds throughout when max(m_<(c_i), m_<(c_{i+1})) + B D < 0
-    (docs/proofs/E-04_parameter_intervals.md, Lemma 3), and likewise for '>'. Returns the maximal runs where '<'
+    [c_i, c_{i+1}] of width D the relation a < b holds throughout when max(m_<(c_i), m_<(c_{i+1})) + B D + d_a + d_b < 0
+    (docs/proofs/E-04_parameter_intervals.md, Lemma 3; d_a, d_b the affinity defects of the segments of the two
+    scans that end at c_{i+1}, zero unless c_{i+1} is an interior grid point of that scan), and likewise for '>'. Returns the maximal runs where '<'
     or '>' is certified, the remaining 'not separated' runs, and `crossing_intervals`: not-separated runs with '<'
     certified on one side and '>' on the other (each contains a crossing of the two branches)."""
     rec_b = rec_a if rec_b is None else rec_b
@@ -382,10 +383,24 @@ def certified_crossing_interval(rec_a: dict, level_a: int, rec_b: Optional[dict]
         tb = tube_at(rec_b, level_b, c)["interval"]
         m_lt.append(float(np.nextafter(ta[1] - tb[0], np.inf)))      # upper_a - lower_b, rounded up
         m_gt.append(float(np.nextafter(tb[1] - ta[0], np.inf)))      # upper_b - lower_a, rounded up
+    # At an interior grid point c_{k+1} of a scan, tube_at switches from the segment-k family F_k to F_{k+1}, whose
+    # value at c_{k+1} is H(c_{k+1}); the margin of the segment-k branches at that end is therefore only known up to
+    # the segment's affinity defect d_k (|lambda_j(F_k(c_{k+1})) - lambda_j(H(c_{k+1}))| <= d_k, Weyl). The sample
+    # interval ending there gets d_k of every scan with a grid point there added to its slack (independent
+    # re-derivation 2026-10-30, docs/proofs/VERDICTS.md, E-04: without it a crossing of the segment-k branches
+    # inside the last sample interval before a grid point with d_k > 0 was certified away).
+    def _end_defect(rec: dict, c_end: float) -> float:
+        cps = rec["couplings"]
+        for k in range(1, len(cps) - 1):
+            if cps[k] == c_end:
+                return float(rec["affinity_defects"][k - 1])
+        return 0.0
+
     labels = []
     for i in range(len(cs) - 1):
         D = float(np.nextafter(cs[i + 1] - cs[i], np.inf))
         slack = float(up(B * D))
+        slack = float(add_up(slack, add_up(_end_defect(rec_a, cs[i + 1]), _end_defect(rec_b, cs[i + 1]))))
         if max(m_lt[i], m_lt[i + 1]) + slack < 0:
             labels.append("<")
         elif max(m_gt[i], m_gt[i + 1]) + slack < 0:

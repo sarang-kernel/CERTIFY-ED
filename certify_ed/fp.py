@@ -159,6 +159,11 @@ def norm2_lower(v: np.ndarray) -> float:
     """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve)."""
     n = v.size
     s = float(np.linalg.norm(v))
+    if not math.isfinite(s):
+        # the sum of squares overflowed (||v|| > ~1.3e154): inf is not a lower bound; 0 makes every quotient by
+        # it +inf (no enclosure) instead of 0 (independent re-derivation 2026-10-30, docs/proofs/VERDICTS.md,
+        # int05_underflow: a radius 2 ULP_MIN was returned for ||x|| ~ 1e160 with a small residual)
+        return 0.0
     return max(0.0, s * (1.0 - gamma(n + 2)) / _GUARD - norm_underflow_term(_real_components(v)))
 
 
