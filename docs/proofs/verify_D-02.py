@@ -8,7 +8,8 @@ fermions, 60-digit mpmath for the square roots of spin-1 and bosons) and checks
   (V1) |fl(H x)_i - (H_spec x)_i| <= gamma_W a_i   with a_i = (|H_spec|_abs |x|)_i exact and W = op.W,
   (V2) the terms_per_row bound: the number of monomial contributions landing in any output entry (counted
        by instrumenting the monomial passes) is <= op.terms_per_row,
-  (V3) ||H_spec||_2 <= op.norm_bound() and <= OperatorAdapter(op).norm_upper() (60-digit spectral norm),
+  (V3) ||H_spec||_2 <= op.norm_bound() (any spec) and <= OperatorAdapter(op).norm_upper() (Hermitian specs; the
+       Appendix-A row-sum bound needs Hermiticity) -- 60-digit spectral norm,
   (V4) the implemented Theorem 1-fl radius: enclosure.residuals(adapter, mu, x).rel_bound >= ||H_spec x - mu x|| / ||x||
        for mu = the Rayleigh quotient and for mu = a perturbed value (so that the residual is not tiny),
   (V5) fl(H x) of MatrixFreeOperator equals construct.SpecOperator's bit for bit (same arithmetic).
@@ -238,7 +239,10 @@ def check_core(spec, rng, ctr, adversarial, note, x=None):
     ok2 = count_terms_per_row(op) <= op.terms_per_row
     ad = OperatorAdapter(op)
     nrm = norm2(Hm)
-    ok3 = nrm <= mp.mpf(op.norm_bound()) and nrm <= mp.mpf(ad.norm_upper())
+    # Lemma N holds for any spec; the adapter's row-sum bound (Appendix A) needs a Hermitian spec, the standing
+    # hypothesis of certify(): it is checked only when H_spec is Hermitian
+    herm = all(Hm[i, j] == mp.conj(Hm[j, i]) for i in range(n) for j in range(n))
+    ok3 = nrm <= mp.mpf(op.norm_bound()) and (not herm or nrm <= mp.mpf(ad.norm_upper()))
     ctr.add(adversarial, ok1 and ok2 and ok3 and ok5,
             f"{note}: V1 {ok1} V2 {ok2} V3 {ok3} (norm {mp.nstr(nrm, 6)} <= {op.norm_bound():.6g}) V5 {ok5}")
 

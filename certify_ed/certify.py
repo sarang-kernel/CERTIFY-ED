@@ -183,6 +183,11 @@ class Options:
     # ---- planner (D-08, 3.2): print the predicted seconds and peak memory per statement (cost.plan_for_claim) before
     # running, and record it under body["plan"]. Advisory: it never changes a status.
     plan: bool = False
+    # ---- matrix-free S2 (D-02, 3.2, docs/proofs/D-02_matrix-free.md): for a claim without an operator, apply the
+    # spec term by term (matrixfree.MatrixFreeOperator) at any dimension instead of building a reference matrix;
+    # the roundings of the local amplitudes are counted in the S2 radius (no model shift), the amplitude hypothesis
+    # is recorded in S1; S3 and S8 need a stored matrix and are NOT_CHECKED (NEEDS_MATRIX).
+    matrix_free: bool = False
 
     @classmethod
     def from_preset(cls, name: str, **overrides) -> "Options":
@@ -425,6 +430,20 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
                      time.time() - t0), H_full_ref, audit
 
     n_ref = claim.states.size if claim.states is not None else spec.dim
+    if opts.matrix_free and op is None:
+        # D-02: no reference matrix at any dimension; the S2 radius concerns the exact spec operator directly
+        from .matrixfree import MatrixFreeOperator
+        mf = MatrixFreeOperator(spec, claim.states)
+        hyp = mf.amplitude_hypothesis
+        ev["reference"] = {"path": "matrix-free from the spec (D-02)", "dimension": int(n_ref),
+                           "note": "no stored matrix; local amplitudes' roundings are counted in the S2 residual bound"}
+        ev["model_shift_bound"] = 0.0
+        ev["operator_source"] = "applied matrix-free from the spec by CERTIFY-ED (D-02)"
+        ev["amplitude_hypothesis"] = hyp
+        return _stmt("S1.model_fidelity", "CERTIFIED",
+                     "operator applied matrix-free from the spec by CERTIFY-ED; " + hyp["statement"],
+                     ev, [hyp["statement"], "docs/proofs/D-02_matrix-free.md (derived, independent re-derivation pending)"],
+                     time.time() - t0), None, None
     if n_ref > opts.reference_max_dim:
         # too large to store a reference matrix: work with the matrix-free reference operator
         ref = SpecOperator(spec, claim.states)
@@ -947,6 +966,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     if claim.operator is None:
         if Href is not None:
             op = Href
+        elif spec is not None and opts.matrix_free:
+            from .matrixfree import MatrixFreeOperator
+            op = MatrixFreeOperator(spec, claim.states)
+            op_note = ("operator applied matrix-free from the spec (no stored matrix); rounding counted per row "
+                       "from the spec, D-02")
         elif spec is not None:
             op = SpecOperator(spec, claim.states)
             op_note = "operator applied matrix-free from the spec (no stored matrix)"

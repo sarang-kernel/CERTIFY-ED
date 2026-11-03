@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 
