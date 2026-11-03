@@ -36,8 +36,9 @@ list, test, reproduce, numbers.
   + conformance), 8 refused by certify-ed, 55 certificates verified with exit 0; the 18 S2/S3 statuses
   certify-ed set to FAILED are all reproduced from the stored data; 80 forged certificates (20 each: unsound
   radius with resealed hashes, altered array hash, altered body hash, status forged to CERTIFIED) all caught.
-- `tests/test_verifier.py` (6 tests; skipped without a C compiler): agreement on the conformance fixture, the
-  three negative controls, canonical JSON vs `json.dumps`, deflate and Fortran-ordered sidecars.
+- `tests/test_verifier.py` (7 tests; skipped without a C compiler): agreement on the conformance fixture, the
+  three negative controls, canonical JSON vs `json.dumps`, deflate and Fortran-ordered sidecars, the `window`
+  and `all` S3 paths.
   `.github/workflows/verifier.yml` builds and runs it (syntax only, not exercised here). Documentation:
   `verifier/README.md`, `docs/SCOPE_MATRIX.md` (how to read a verifier report).
 

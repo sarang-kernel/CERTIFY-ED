@@ -172,3 +172,31 @@ def test_npz_reader_handles_compressed_and_fortran(cev_binary, certificate, tmp_
     assert rc == 0, (err, summary)
     ids = {c["id"]: c["status"] for c in summary["checks"]}
     assert ids["H2.eigenvectors"] == "PASS" and ids["R2.residual_bound"] == "PASS"
+
+
+def test_window_and_full_spectrum_paths(cev_binary, tmp_path):
+    """The S3 re-check for kind 'window' (edge counts, enclosures strictly inside) and kind 'all' (k == dimension)."""
+    import scipy.sparse as sp
+    import certify_ed as ce
+    from certify_ed.importers import claim_from_bundle
+    bundle = os.path.join(ROOT, "corpus", "cases", "tfim8_correct")
+    claim, spec, _ = claim_from_bundle(bundle)
+    mu = np.asarray(claim.eigenvalues, dtype=float)
+    win = ce.Claim(mu, claim.eigenvectors, claim.operator, kind="window",
+                   window=(float(mu.min()) - 0.05, float(mu.max()) + 0.05), accuracy_target=1e-8)
+    cert = ce.certify(win, spec, ce.Options(store_eigenvectors=True))
+    assert cert.status_of("S3.completeness") == "CERTIFIED"
+    path = cert.save(str(tmp_path / "win"))
+    rc, summary, err = run(cev_binary, path, os.path.join(bundle, "operator.npz"), str(tmp_path / "w.json"))
+    assert rc == 0, (err, summary)
+    ids = {c["id"]: c["status"] for c in summary["checks"]}
+    assert ids["S3.ordering"] == "PASS" and ids["S3.window_record"] == "PASS"
+    A = claim.operator.toarray() if sp.issparse(claim.operator) else np.asarray(claim.operator)
+    w, V = np.linalg.eigh(A)
+    full = ce.Claim(w, V, claim.operator, kind="all", accuracy_target=1e-8)
+    cert = ce.certify(full, spec, ce.Options(store_eigenvectors=True, preset="whole-spectrum"))
+    assert cert.status_of("S3.completeness") == "CERTIFIED"
+    path = cert.save(str(tmp_path / "all"))
+    rc, summary, err = run(cev_binary, path, os.path.join(bundle, "operator.npz"), str(tmp_path / "a.json"))
+    assert rc == 0, (err, summary)
+    assert {c["id"]: c["status"] for c in summary["checks"]}["S3.status"] == "PASS"
