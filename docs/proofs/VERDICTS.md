@@ -30,6 +30,7 @@ results is described as verified; Sarang's check (D-12) is pending for all of th
 | E-03_generalized.md | Generalized pencil: Cholesky reduction, B⁻¹-norm residual enclosure, inertia counting with collar, G1–G3 | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS | Forming error of M̂ stated as u\|M̂\| (is u(1+2u)\|M̂\|; covered by the up guard); ν < k paragraph describes the overlapping case (with disjoint enclosures it is an input inconsistency); indefinite-B refusal conservative; inertia_dense contract taken as hypothesis. | verify_E-03.py --cases 60 --seed 7: 303 cases, 0 violations | adversarial_E-03_generalized.py --cases 80 --seed 97: 0 violations | 0 | 2026-10-30 |
 | C-07_moments.md | Moments tr(P O Hᵏ O)/g through stored vectors (Lemmas 1–4) and the zeroth/first-moment sum-rule consistency statements (Props 1–2) | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES | — | verify_C-07.py --cases 40 --seed 9: 604 cases, 0 violations | adversarial_C-07_moments.py --cases 60 --seed 101: 0 violations | 0 | 2026-10-30 |
 | D-01_sparse-residual.md | a-posteriori backward error of the stored sparse L D Lᴴ factors: entrywise (a), row-sum (b), β ≥ ‖E‖₂ + 2u max\|S_ii\| (c), inertia sandwich | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS | (Λ-R1) first-order margin is 6u, not 5u (harmless); fl(\|z\|) via C `hypot` is a library function outside the one-rounding model (assume ≤ 3u relative error); the counted factorisation is L·Re(D)·Lᴴ (imaginary parts of complex pivots land in E); E_c is not Hermitian — the mirrored lower triangle is valid because the exact E is; (H1) Hermiticity supplied by the callers via `hermitian_part`, underflow hypothesis for L, D not scanned | verify_D-01.py --cases 60 --seed 11: 60 random + 17 adversarial cases, 4 skipped, 0 violations | independent/adversarial_D-01_sparse-residual.py --cases 40 --seed 103 (exact-rational residual, mp sandwich, corrupted factors): 0 violations; --cases 16 --seed 104: 0 violations | 0 | 2026-10-30 |
+| D-02_matrix-free.md | matrix-free rounding width W = w_row + L + ρ + 1 (real) / w_row + 3L + ρ + 3 (complex): entrywise (a), Theorem-1 radius for the exact spec operator (b), spec norm bound (Lemma N) | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | GAP | Lemma M3 omits the rounding of \|x_j\| for complex vectors: for a real spec applied to complex-typed claim vectors (reachable) the second-pass inequality (1 − γ_{W−1}) is 1–2 counts short, so absHX_up ≥ \|H_spec\|_abs\|x\| is not established; (b) unaffected (complex branch uses 2γ_{W+4}). The modulus model is not in section 1; measured NumPy complex \|z\| error on this host up to 1.88u (> one rounding). Lemma N evaluates the local norms on stored, not exact, amplitudes (covered by the guard). | verify_D-02.py --cases 40 --seed 13: 72 random + 18 adversarial cases, 0 skipped, 0 violations | independent/adversarial_D-02_matrix-free.py --cases 40 --seed 107 (independent mp H_spec, (a), (b), M1, M3 per family, Lemma N, exact letters, hypot accuracy): 0 violations | 0 | 2026-10-30 |
 
 ## Required corrections
 
@@ -93,3 +94,32 @@ Proof text only (no certified bound changes): Proposition 1 with a model shift �
 ### E-05_variational.md
 
 Proof/statement text only (no certified bound changes). Section 2, Lemma 3 (v): replace the route through λ_j(H_ref) (Weyl, Rayleigh–Ritz and Temple applied to the floating-point build, which is Hermitian only up to rounding — e.g. a boson chain with complex hopping has max|H_ref − H_refᴴ| = 1.1e-16) by the direct route: θ_spec = ⟨ψ, H_spec ψ⟩/⟨ψ,ψ⟩ ∈ [θ − σ, θ + σ], r_spec ≤ r_stored + σ (the Rayleigh quotient minimises the residual over shifts), and Temple for the Hermitian H_spec with θ_hi + σ < ρ ≤ λ₂(H_spec): λ₁(H_spec) ≥ θ_lo − σ − (r_stored + σ)²/(ρ − σ − θ_hi). Section 1: state the Temple bound with r ≥ r_stored + σ (the value the code uses, variational.py line 350), not "any r ≥ r_stored". Alternative (code): symmetrise the spec build used by the variational adapter; then the H_ref route is valid as written. Not implemented here.
+
+### D-02_matrix-free.md
+
+Statement-level gap, no certified bound affected. Section 2, Lemma M3 counts the second pass fl(|H|_abs|x|) without
+the rounding of |x_j| for a complex vector x ("the moduli of real amplitudes are exact; of complex ones one rounding
+each (hypot) … then the product with |x_j|"). For a real spec (W = w_row + L + ρ + 1) applied to complex-typed
+vectors — reachable, since `certify.py:893–898` uses `claim.eigenvectors` in the producer's dtype and
+`enclosure._rounding_bound` takes the complex branch for them — the second pass carries w_i + L + ρ + h roundings
+(h = roundings of one complex modulus) against the budget W − 1 = w_row + L + ρ, so fl(|H|_abs|x|)_i ≥
+(|H_spec|_abs|x|)_i (1 − γ_{W−1}) and `absHX_up_i` ≥ (|H_spec|_abs|x|)_i are not established (h = 1: one count short;
+h = 2: two). For a complex spec the 2L spare counts of W cover h ≤ L + 1. Statement (b) is unaffected: the complex
+branch uses g = 2γ_{W+4} ≥ 2γ_W, and the shortfall of a few u in `absHX_up` is absorbed by the factor 2 exactly as in
+Step 3 of `thm1_fp-accounting.md` (same mechanism as the (S2) gap recorded there).
+
+Second, the modulus model: section 1's error model does not mention `np.abs` of a complex number, which Lemma M3 (and
+Lemma N's |c_t|) rely on as "one rounding". On this host (Windows, NumPy's complex `absolute` → C `hypot`) the
+measured relative error over 140 000 arguments reaches 1.88u (`independent/adversarial_D-02_matrix-free.py`,
+informational line), i.e. more than one rounding, within 1 ulp. The hypothesis |fl(|z|) − |z|| ≤ h u |z| with h ≥ 2
+should be stated (D-01 uses h = 3) and the counts redone with it; this also concerns `thm1_fp-accounting.md` Step 2
+(its complex (S2) accounting assumes h = 1; its Step 3 slack still absorbs h ≤ 3).
+
+Exact change to the proof (no code change): in Lemma M3 write the exponent as w_row + L + ρ + h_a + h_x with h_a = 0
+for a real spec, h_x = 0 for a real vector, h_a, h_x ≤ h otherwise, and conclude (1 − γ_{W−1}) only for (real spec,
+real x) and (complex spec, h ≤ L + 1); for (real spec, complex x) state that `absHX_up_i` ≥ (|H_spec|_abs|x|)_i
+(1 − 2hu) and that (b) still follows from the factor 2 of the complex `gamma_dot`. Alternative (code, looser bound,
+allowed immediately, not implemented on this branch — the author's choice, as for thm1): in
+`enclosure._rounding_bound` use `gw = gamma(adapter.width + 3)` when `cplx` (the same change recorded for thm1),
+which restores the second-pass inequality for h ≤ 2 in every family; `tests/` should then include a real spec with
+complex-typed vectors through `residuals` and, if the hypothesis h ≤ 2 is adopted, a `hypot` accuracy probe.
