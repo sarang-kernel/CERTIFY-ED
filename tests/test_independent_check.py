@@ -28,3 +28,20 @@ def test_huge_claimed_vector_gives_no_finite_enclosure():
     assert res.xnorm_lower[0] == 0.0 and res.rel_bound[0] == float("inf")
     enc = enclose(OperatorAdapter(A), mu, x)
     assert enc.radius[0] == float("inf") and not enc.all_distinct
+
+
+def test_exact_bracket_statement_names_the_exact_bracket():
+    """C16_exact_bracket: the certified sentence used to print the outward-rounded binary64 bracket; an eigenvalue
+    within one ulp below the counted bracket's end lies in the printed interval but not in the count, so the
+    sentence 'exactly 1 eigenvalue in [1, 2]' was false here (the model has two eigenvalues in [1, 2])."""
+    import flint
+    from fractions import Fraction
+    from certify_ed.exact_degeneracy import _record
+    lam = [Fraction(1) + Fraction(1, 2 ** 60), Fraction(3, 2)]
+    den = 2 ** 60
+    p = flint.fmpz_mat([[int(lam[0] * den), 0], [0, int(lam[1] * den)]]).charpoly()
+    rec = _record(p, den, 1, Fraction(1.0 + 2.0 ** -52), Fraction(2.0), 1, 2, "demo")
+    assert rec["status"] == "CERTIFIED" and rec["count"] == 1
+    assert rec["bracket"][0] <= float(lam[0]) <= rec["bracket"][1]          # the display interval holds a 2nd eigenvalue
+    assert "exact bracket [4503599627370497/4503599627370496, 2/1]" in rec["statement"]
+    assert "in [1, 2]" not in rec["statement"].split("(about")[0]

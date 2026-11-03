@@ -198,22 +198,26 @@ def _record(p, den_: int, factor: int, a_: Fraction, b_: Fraction, g: int, dim: 
            "bracket_nudged": bool(r["nudged"]), "charpoly_degree": int(p.degree()), "dimension": int(dim),
            "source": src, "no_floating_point_assumption": True, "method": _METHOD}
     w = float(b_used - a_used)
-    lo, hi = rec["bracket"]
+    # the statement names the exact rational bracket that was counted; the binary64 `bracket` is an outward-rounded
+    # display and may contain an eigenvalue within one ulp of an end that the count excludes (independent
+    # re-derivation 2026-10-30, docs/proofs/VERDICTS.md, C16)
+    where = (f"in the exact bracket [{rec['bracket_exact'][0]}, {rec['bracket_exact'][1]}] "
+             f"(about [{rec['bracket'][0]:.15g}, {rec['bracket'][1]:.15g}], width {w:.2e})")
     if rec["count"] == g:
         rec["status"] = "CERTIFIED"
         rec["equal"] = rec["distinct_values"] == 1
         if rec["equal"]:
-            rec["statement"] = (f"exactly {g} eigenvalues of the declared model in [{lo:.15g}, {hi:.15g}] (width {w:.2e}), "
+            rec["statement"] = (f"exactly {g} eigenvalues of the declared model {where}, "
                                 f"all equal: one eigenvalue of multiplicity {g} (exact arithmetic, no floating-point "
                                 f"assumption)")
         else:
-            rec["statement"] = (f"exactly {g} eigenvalues of the declared model in [{lo:.15g}, {hi:.15g}] (width {w:.2e}), "
+            rec["statement"] = (f"exactly {g} eigenvalues of the declared model {where}, "
                                 f"NOT all equal: {rec['distinct_values']} distinct eigenvalues with multiplicities "
                                 f"{rec['multiplicities']} (exact arithmetic, no floating-point assumption)")
     else:
         rec["status"] = "FAILED"
         rec["equal"] = None
-        rec["reason"] = (f"exact count {rec['count']} in [{lo:.15g}, {hi:.15g}] differs from the {g} claimed: the "
+        rec["reason"] = (f"exact count {rec['count']} {where} differs from the {g} claimed: the "
                          f"floating-point bracket statement is contradicted")
     return rec
 
