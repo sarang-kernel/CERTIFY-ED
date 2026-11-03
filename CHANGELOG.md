@@ -1,8 +1,31 @@
 # Changelog
 
-## [3.2.0.dev0] (unreleased; branch `dev/3.2`)
+## [3.2.0] — 2026-11-04 (tag `v3.2.0` on `dev/3.2`; evidence run pending, see RESULT_integration_3.2.md)
 
-`__version__` = 3.2.0.dev0. The computational source changes (certify.py, fp.py, scope.py), so records made
+`__version__` = 3.2.0 (3.2.0.dev0 during development: every entry below was written under that name). Summary of the release: the
+D-12 backlog derived, machine-checked and independently re-derived (22 documents in `docs/proofs/`, verdicts in
+`docs/proofs/VERDICTS.md`; Sarang's check pending for every document; two errors found by the independent check were corrected
+by looser code); INT-05 closed; Theorem 2 with Kahan's constant rho; new statements C-03, C-04, C-06, C-07 (first part), C-12,
+C-13 (API), C-16, E-03, E-04, E-05, E-07; the a-posteriori sparse S3 residual (D-01) and matrix-free S2 (D-02); the independent C
+verifier (`verifier/`); thirteen figures (`docs/figures/`); the Waves 0-1 engineering of the roadmap. Statuses of 3.1.0 records
+can change only by the documented bound changes (listed per track below) and the downgrades to INCONCLUSIVE under UNDERFLOW_RISK.
+
+### Release integration (2026-11-03/04)
+
+- Lead corrections after the independent check: `enclosure._rounding_bound` uses gamma_{w+3} for complex data (thm1 (S2) and
+  D-02 Lemma M3 gaps; looser), `fp.norm2_lower` returns 0 when the squared norm overflows (int05 ERROR; looser),
+  `sweep.certified_crossing_interval` adds the affinity defects at interior grid points (E-04 ERROR; looser),
+  `exact_degeneracy._record` names the exact bracket (C-16 wording). Negative controls in `tests/test_independent_check.py`.
+- Appendix A verification script run after the user's approval (386 random + 681 adversarial, 0 violations).
+- Figures regenerated from the final tree: `fig_scope_vs_survey` (3.2 scope), `fig_rounding_accounting` (INT-05 terms),
+  `fig_roadmap_progress` (status 2026-11-03: 43 of 78 items, 270 of 470 points).
+- Known limits carried into the release notes: C-07 continued-fraction bounds, C-13 CLI, C-16 sector path, `exact_bracket`
+  dimension cap 600, D-01 out-of-core, verifier scope (no sector/complex/vectorless paths), E6 survivors of the 3.1.0 run
+  awaiting verdicts.
+
+### Development history (3.2.0.dev0)
+
+The computational source changes (certify.py, fp.py, scope.py), so records made
 with it are not comparable by `source_hash` with the 3.1.0 evidence run; no statement that 3.1.0 certified
 becomes *more* certified here (soundness rule), and the only status changes are downgrades to INCONCLUSIVE
 under the new reason code below.
