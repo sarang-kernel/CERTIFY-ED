@@ -66,3 +66,8 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
    saying what would let the statement be decided (more eigenpairs, eigenvectors, a larger budget or limit, a
    window claim, an optional package). It is advice derived from the reason code and the summary; it never
    changes a status.
+5. An independent re-check (`verifier/`, 3.2, B-01) re-derives from the stored data the hashes, the S2 enclosure
+   arithmetic and the S3 count logic, and whether a CERTIFIED S2/S3 is permitted by them; it does not address S1
+   (model fidelity), S4-S8, or the factorizations behind the inertia counts. Its report (exit 0 or 1, one line per
+   check) is a statement about the certificate's internal arithmetic, not an additional certification of the
+   physics: a verifier PASS on a certificate whose S1 is FAILED still concerns the producer's operator only.
