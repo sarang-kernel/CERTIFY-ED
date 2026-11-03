@@ -165,8 +165,8 @@ named, and S2 adds nothing. S3 (inertia) needs a factorization and stays NOT_CHE
   same vector under a spec with one coefficient changed by 0.1 % has rel > 10³ times larger (the bound stays
   valid for the wrong operator — it bounds the residual of the vector *under that spec*, which is what makes S2
   fail); a planted vector V₀ + 10⁻³V₁ has rel ≈ 7·10⁻⁴ > 10⁻⁴.
-- **Result:** RESULT_PLACEHOLDER
-- **Scale (timing, not a correctness check; `experiments/d02_matrixfree_scale.py`):** SCALE_PLACEHOLDER
+- **Result:** 182 random + 18 adversarial cases, 0 skipped, **0 violations** (435 s; `--cases 150`, the default).
+- **Scale (timing, not a correctness check; `experiments/d02_matrixfree_scale.py`):** S2 CERTIFIED at every point with the radius at rounding level and the memory under 3.2 GB: d = 2^16: S2 8 s (one matvec 3 s), radius 3.96e-14, peak 67 MB, W = 51; d = 2^20: S2 169 s (one matvec 40 s), radius 6.34e-14, peak 257 MB, W = 63; d = 2^22: S2 653 s (one matvec 210 s), radius 7.71e-14, peak 869 MB, W = 69; d = 2^24: S2 1896 s (one matvec 734 s), radius 9.21e-14, peak 3160 MB, W = 75. The time is the Python-level term-by-term application (about 60 vectorised passes per product at N = 20–24); the bound itself costs one extra pass (|H|_abs|x|) and the norm pass. Records: `results/d02_matrixfree_scale.json`.
 
 ## 5 Analytic cross-check
 
@@ -181,5 +181,5 @@ model shift. (iii) *Lemma N for a single Pauli string* reduces to ‖c σ^{a}⊗
 
 ## 6 Status
 
-Derived by Claude on 2026-10-31; machine-checked (STATUS_PLACEHOLDER); independent re-derivation: pending
+Derived by Claude on 2026-10-31; machine-checked (182 random + 18 adversarial cases, 0 violations); independent re-derivation: pending
 (Phase 2); Sarang's check (D-12): pending.

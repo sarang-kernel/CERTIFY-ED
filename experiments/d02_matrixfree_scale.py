@@ -75,6 +75,7 @@ print("RESULT" + json.dumps(out))
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-N", type=int, default=24)
+    ap.add_argument("--min-N", type=int, default=16)
     ap.add_argument("--out", default=os.path.join(ROOT, "results", "d02_matrixfree_scale.json"))
     args = ap.parse_args()
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
@@ -83,6 +84,8 @@ def main():
     env.pop("PYTHONSAFEPATH", None)
     env["PYTHONPATH"] = ROOT
     for N in (16, 20, 22, 24):
+        if N < args.min_N:
+            continue
         if N > args.max_N:
             break
         with tempfile.TemporaryDirectory() as d:
