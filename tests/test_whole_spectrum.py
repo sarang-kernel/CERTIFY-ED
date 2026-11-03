@@ -66,25 +66,38 @@ def heis12():
 _PHI = (1 + np.sqrt(5.0)) / 2
 
 
-def _radius_bracket(e_new, e_old):
+def _radius_bracket(e_new, e_old, cplx=False):
     sizes_new = np.array([e_new.groups[gi].size for gi in e_new.group_of])
     single = sizes_new == 1
-    assert np.array_equal(e_new.radius[single], e_old.radius[single])
+    if cplx:
+        # complex data: the division constant is gamma_{w+3} (3.2.0, thm1/D-02 corrections of VERDICTS.md), so the
+        # Theorem 1 radii are >= the frozen module's and within the factor (1 - gamma_{w+1})/(1 - gamma_{w+3}) < 1 + 1e-12
+        assert np.all(e_new.radius[single] >= e_old.radius[single])
+        assert np.all(e_new.radius[single] <= e_old.radius[single] * (1 + 1e-12))
+    else:
+        assert np.array_equal(e_new.radius[single], e_old.radius[single])
     r_new, r_old = e_new.radius[~single], e_old.radius[~single]
     assert np.all(r_new <= r_old * (1 + 1e-12)) and np.all(r_new >= r_old / _PHI * (1 - 1e-12))
 
 
-def _same_enclosure(e_new, e_old):
-    _radius_bracket(e_new, e_old)
-    assert np.array_equal(e_new.existence_radius, e_old.existence_radius)
-    assert np.array_equal(e_new.residual.upper, e_old.residual.upper)
+def _same_enclosure(e_new, e_old, cplx=False):
+    """Bit identity with the frozen module (real data); for complex data the quantities that carry the gamma_{w+3}
+    constant (residual upper bounds, existence radii, E norms) are >= the frozen values and within 1 + 1e-12."""
+    _radius_bracket(e_new, e_old, cplx)
+    E_norm_old = np.array([ref.norm2_upper(e_old.residual.E[:, j]) for j in range(e_old.mu.size)])
+    if cplx:
+        for a, b in ((e_new.existence_radius, e_old.existence_radius), (e_new.residual.upper, e_old.residual.upper),
+                     (e_new.residual.E_norm, E_norm_old)):
+            assert np.all(np.asarray(a) >= np.asarray(b)) and np.all(np.asarray(a) <= np.asarray(b) * (1 + 1e-12))
+    else:
+        assert np.array_equal(e_new.existence_radius, e_old.existence_radius)
+        assert np.array_equal(e_new.residual.upper, e_old.residual.upper)
+        assert np.array_equal(e_new.residual.E_norm, E_norm_old)
     assert np.array_equal(e_new.residual.computed, e_old.residual.computed)
     assert np.array_equal(e_new.residual.rel_estimate, e_old.residual.rel_estimate)
     assert np.array_equal(e_new.residual.xnorm_lower, e_old.residual.xnorm_lower)
     assert [g.members for g in e_new.groups] == [g.members for g in e_old.groups]
     assert e_new.all_distinct == e_old.all_distinct
-    E_norm_old = np.array([ref.norm2_upper(e_old.residual.E[:, j]) for j in range(e_old.mu.size)])
-    assert np.array_equal(e_new.residual.E_norm, E_norm_old)
 
 
 def _identical_enclosure(e_a, e_b):
@@ -130,7 +143,7 @@ def test_enclosure_radii_bit_identical_complex_operator():
     V[:, 3] += 1e-7 * V[:, 4]           # a slightly non-orthonormal pair near a cluster
     e_old = ref.enclose(ref.OperatorAdapter(A), w, V)
     e_new = enclose(OperatorAdapter(A), w, V)
-    _same_enclosure(e_new, e_old)
+    _same_enclosure(e_new, e_old, cplx=True)
 
 
 def test_recorded_pre_change_radii_dim_252():
