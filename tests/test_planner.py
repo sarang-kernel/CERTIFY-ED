@@ -102,7 +102,7 @@ def test_auto_matches_the_explicit_method_and_the_guard_changes_no_status(heis10
     guarded = ce.quick(H, w[:k], V[:, :k], spec, budget_mb=50.0)
     sparse = ce.quick(H, w[:k], V[:, :k], spec, inertia_method="sparse")
     assert [(s["id"], s["status"]) for s in guarded.statements] == [(s["id"], s["status"]) for s in sparse.statements]
-    assert all(c["method"] == "sparse-superlu-symmetric" for s in guarded.statements if s["id"] == "S3.completeness"
+    assert all(c["method"] == "sparse-superlu-residual" for s in guarded.statements if s["id"] == "S3.completeness"
                for c in s["evidence"]["counts"])
     assert [(s["id"], s["status"]) for s in guarded.statements] == [(s["id"], s["status"]) for s in auto.statements]
     # a window claim and the degeneracy counts go through the same switch

@@ -62,13 +62,13 @@ class ResidualBound:
         return asdict(self)
 
 
-def _row_blocks(n: int, L: sp.csr_matrix, bytes_per_entry: int, block_mb: float):
+def _row_blocks(n: int, L: sp.csr_matrix, bytes_per_entry: int, block_mb: float, min_rows: int = _MIN_BLOCK_ROWS):
     """Row blocks whose products L[I, :] (D L^H)[:, :I_end] fit the block memory: the product's nonzeros lie in
     the filled pattern (docs/proofs/D-01_sparse-residual.md, Lemma R2), so a block has at most 2 nnz(L[I, :])
     entries; three such temporaries (product, difference, moduli) plus the S block are allowed."""
     if n == 0:
         return []
-    budget = max(block_mb, 1.0) * 2 ** 20
+    budget = max(float(block_mb) * 2 ** 20, 1.0)
     per_row = np.diff(L.indptr).astype(np.int64)
     cost = (2 * per_row + 1) * 3 * (bytes_per_entry + 8) + (bytes_per_entry + 8)
     blocks = []
@@ -76,7 +76,7 @@ def _row_blocks(n: int, L: sp.csr_matrix, bytes_per_entry: int, block_mb: float)
     acc = 0
     for i in range(n):
         acc += int(cost[i])
-        if acc > budget and i + 1 - start >= _MIN_BLOCK_ROWS:
+        if acc > budget and i + 1 - start >= max(1, int(min_rows)):
             blocks.append((start, i + 1))
             start, acc = i + 1, 0
     if start < n:
@@ -85,7 +85,8 @@ def _row_blocks(n: int, L: sp.csr_matrix, bytes_per_entry: int, block_mb: float)
 
 
 def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, perm: np.ndarray,
-                              block_mb: Optional[float] = None, threads: Optional[int] = None) -> ResidualBound:
+                              block_mb: Optional[float] = None, threads: Optional[int] = None,
+                              min_block_rows: int = _MIN_BLOCK_ROWS) -> ResidualBound:
     """beta >= ||L D L^H - P S P^T||_2 for the stored factors L (unit lower triangular), D (real pivots) and
     the stored Hermitian S, with (P S P^T)_ij = S[p_i, p_j] for p the inverse of `perm` (SuperLU's perm_c:
     L U = Pr S Pc with Pr[perm_r, :] = I, Pc[:, perm_c] = I, i.e. (Pr S Pc)_ij = S[ip_i, ip_j], ip = argsort(perm)).
@@ -117,13 +118,16 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     nth = max(1, int(threads)) if threads is not None else max(1, min(8, os.cpu_count() or 1))
     # the partition depends on block_mb and on L only (not on the thread count), so that the recorded bound is
     # the same on every machine: the blocks are reduced in block order
-    blocks = _row_blocks(n, L, bytes_per, block_mb if block_mb is not None else DEFAULT_BLOCK_MB)
+    blocks = _row_blocks(n, L, bytes_per, block_mb if block_mb is not None else DEFAULT_BLOCK_MB, min_block_rows)
     rows_abs = np.zeros(n)        # sum_j |E_c,ij| assembled from the lower triangle, mirrored
     nnz_prod = 0
 
     def one_block(blk):
         a, b = blk
-        Fb = (L[a:b] @ DLt[:, :b]).tocsr()           # rows a:b, columns < b (the lower-triangular part and more)
+        # columns < b of D L^H as a view on the CSC arrays (a slice DLt[:, :b] would copy nearly all of it per block)
+        DLt_b = sp.csc_matrix((DLt.data[:DLt.indptr[b]], DLt.indices[:DLt.indptr[b]], DLt.indptr[:b + 1]),
+                              shape=(n, b), copy=False)
+        Fb = (L[a:b] @ DLt_b).tocsr()                # rows a:b, columns < b (the lower-triangular part and more)
         Eb = (Fb - SP[a:b, :b]).tocsr()
         # entry (r, j) of the block is (i, j) with i = a + r; keep the lower triangle j <= i, i.e. j - r <= a
         Eb = sp.tril(Eb, k=a).tocsr()

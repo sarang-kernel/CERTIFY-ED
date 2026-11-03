@@ -4,7 +4,9 @@ For random sparse Hermitian S (real and complex) the script factorizes S with Su
 certify_ed.inertia.inertia_sparse does, calls ldl_residual.sparse_ldl_residual_bound on the stored factors and
 checks, in exact rational arithmetic on the stored binary64 numbers,
 
-  (V1) ||E||_inf <= beta             with E = L D L^H - P S P^T the exact residual of the stored factors,
+  (V1) ||E||_inf <= beta             with E = L D L^H - P S P^T the exact residual of the stored factors, for the
+       beta of the default row partition (what inertia_sparse records) and for the beta of a partition into
+       many small row blocks (block_mb = 0.001, min_block_rows = 1: the mirrored column sums are exercised),
   (V2) |E_ij| <= |E_c,ij|/(1 - u) + gamma_{t_ij+1} G_ij  entry by entry, where E_c is the residual recomputed in
        floating point by the same SciPy operations (the rounding-model step of the proof),
   (V3) #{lambda < -beta} <= nu <= #{lambda <= beta}   (Lemma 4 of docs/theory.md) against 60-digit eigenvalues,
@@ -133,11 +135,10 @@ def check_case(S, ctr, adversarial, note, expect_inconclusive=False):
     f = factor(S)
     L = f.L.tocsr()
     D = f.U.diagonal()
-    rb = sparse_ldl_residual_bound(L, D, S, f.perm_c, block_mb=0.001, threads=1)   # many blocks on purpose
-    if rb.beta != res.beta:
-        ctr.add(adversarial, False, f"{note}: inertia_sparse and the direct call disagree")
-        return
-    beta = Fraction(rb.beta)
+    rb = sparse_ldl_residual_bound(L, D, S, f.perm_c, block_mb=0.001, threads=1, min_block_rows=1)   # many blocks
+    # the default partition (inertia_sparse: one block at these sizes) and the many-block one give two bounds; both
+    # must dominate the exact residual (they differ in the order of the floating-point row sums and in m)
+    beta = Fraction(min(rb.beta, res.beta))
     ip = np.argsort(f.perm_c)
     SP = sp.csr_matrix(S)[ip][:, ip]
     E, G, T = exact_residual(L, D, SP)
@@ -162,10 +163,12 @@ def check_case(S, ctr, adversarial, note, expect_inconclusive=False):
                 ok2 = False
     # V3: Lemma 4 against 60-digit eigenvalues
     vals, _ = eigh(to_mp(S.toarray()))
-    b = mp.mpf(rb.beta)
-    below = sum(1 for v in vals if v < -b)
-    upto = sum(1 for v in vals if v <= b)
-    ok3 = below <= res.negative <= upto
+    ok3 = True
+    for bb in (rb.beta, res.beta):
+        b = mp.mpf(bb)
+        below = sum(1 for v in vals if v < -b)
+        upto = sum(1 for v in vals if v <= b)
+        ok3 = ok3 and (below <= res.negative <= upto)
     scale = float(np.max(np.abs(S.data))) if S.nnz else 1.0
     ok4 = adversarial or rb.beta <= 2.0 ** -30 * max(1.0, scale)   # sanity: beta is a measured O(u ||S||) quantity
     ctr.add(adversarial, ok1 and ok2 and ok3 and ok4,

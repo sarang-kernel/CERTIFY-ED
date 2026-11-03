@@ -157,9 +157,38 @@ def dense_inertia_mb(n: int, complex_: bool = False) -> float:
     return DENSE_LDL_ARRAYS * float(n) * n * _bytes(complex_) / 2 ** 20
 
 
-def sparse_inertia_mb(n: int, nnz: int, complex_: bool = False) -> float:
+# a-posteriori residual of the sparse factors (D-01, ldl_residual.py): D L^H and |L| (nnz(L) ~ fill / 2 each) and
+# the permuted S stay resident; each worker thread holds the temporaries of one row block, measured at
+# RESIDUAL_BLOCK_FACTOR x the block budget (75 MB per thread at block_mb = 64 on the n = 12870 chain block, 2026-10-31)
+RESIDUAL_BLOCK_FACTOR = 1.2
+
+
+def residual_threads() -> int:
+    import os
+    return max(1, min(8, os.cpu_count() or 1))
+
+
+def sparse_residual_mb(n: int, nnz: int, complex_: bool = False, threads: Optional[int] = None,
+                       block_mb: Optional[float] = None) -> float:
+    """Memory of ldl_residual.sparse_ldl_residual_bound beyond the factors: resident arrays plus the per-thread block
+    temporaries (at most ceil(total / block_mb) blocks are live at once, each at most RESIDUAL_BLOCK_FACTOR x its size)."""
+    from .ldl_residual import DEFAULT_BLOCK_MB
     fill = sparse_fill_estimate(n, nnz)
-    return SPARSE_LU_WORKING * fill * (_bytes(complex_) + 4) / 2 ** 20 + (nnz * (_bytes(complex_) + 4) + 8 * n) / 2 ** 20
+    b = _bytes(complex_) + 4
+    resident = (fill * b + nnz * b) / 2 ** 20
+    bmb = block_mb if block_mb is not None else DEFAULT_BLOCK_MB
+    total = (fill + n) * 3 * (b + 4) / 2 ** 20            # the partition's cost function summed over all rows
+    blocks = max(1, int(-(-total // bmb)))
+    live = min(threads if threads is not None else residual_threads(), blocks)
+    return resident + live * RESIDUAL_BLOCK_FACTOR * min(bmb, total / blocks)
+
+
+def sparse_inertia_mb(n: int, nnz: int, complex_: bool = False, threads: Optional[int] = None) -> float:
+    """Predicted peak of one sparse inertia count: SuperLU's working storage (fill model) plus the a-posteriori
+    residual (D-01). Checked against measured peaks in tests/test_planner.py."""
+    fill = sparse_fill_estimate(n, nnz)
+    return (SPARSE_LU_WORKING * fill * (_bytes(complex_) + 4) / 2 ** 20 + (nnz * (_bytes(complex_) + 4) + 8 * n) / 2 ** 20
+            + sparse_residual_mb(n, nnz, complex_, threads))
 
 
 def dense_inertia_seconds(n: int) -> float:
@@ -389,5 +418,5 @@ def plan_for_claim(claim, spec, options) -> Plan:
 
 __all__ = ["E2_RECORDS", "COEFFICIENTS", "AUTO_FACTOR", "AUTO_FLOOR_SECONDS", "estimate_seconds", "auto_budget",
            "resolve_budget_seconds", "RATES", "DENSE_LDL_ARRAYS", "SPARSE_FILL_FIT", "sparse_fill_estimate",
-           "dense_inertia_mb", "sparse_inertia_mb", "dense_inertia_seconds", "sparse_inertia_seconds",
+           "dense_inertia_mb", "sparse_inertia_mb", "sparse_residual_mb", "RESIDUAL_BLOCK_FACTOR", "dense_inertia_seconds", "sparse_inertia_seconds",
            "available_memory_mb", "recommend_inertia_method", "Plan", "PlanRow", "plan_certification", "plan_for_claim"]

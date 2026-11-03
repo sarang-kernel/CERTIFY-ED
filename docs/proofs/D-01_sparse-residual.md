@@ -152,7 +152,7 @@ The collar logic that consumes β (`certify._certify_lowest`, `_certify_window`,
 
 ## 4 Computational verification
 
-`docs/proofs/verify_D-01.py` (run from the repository root, `python docs/proofs/verify_D-01.py`, 207 s):
+`docs/proofs/verify_D-01.py` (run from the repository root, `python docs/proofs/verify_D-01.py`, 202 s):
 
 - **Random cases (400):** sparse Hermitian S, n ∈ [2, 13], real and complex alternating, densities 0.15/0.3/0.6,
   entry scales 1, 10⁻³, 10³, diagonal shifts 0, ±3·scale (so that the inertia varies). For each: SuperLU as in
@@ -161,8 +161,9 @@ The collar logic that consumes β (`certify._certify_lowest`, `_certify_window`,
   quantity, which can only produce spurious violations, never hide one); (V2) the entrywise inequality (a), with
   E_c recomputed by the same SciPy operations and t_ij counted exactly; (V3) Lemma 4's sandwich against 60-digit
   mpmath eigenvalues; and the sanity check β ≤ 2⁻³⁰ max(1, max|S_ij|). The direct call uses `block_mb = 0.001` so
-  that every case runs through many row blocks (the mirrored column sums and the block partition are exercised),
-  and the script requires its β to equal the one `inertia_sparse` returns.
+  and `min_block_rows = 1`, so that every case also runs through many row blocks (the mirrored column sums and the
+  block partition are exercised); (V1) and (V3) are checked for both bounds, the many-block one and the one
+  `inertia_sparse` records with the default partition (they differ in the summation order of the row sums and in m).
 - **Scalar inequalities (Λ-R1), (Λ-R2):** checked exactly in rational arithmetic for m, n ∈ {1, …, 2·10⁴} ∪
   {2^j : 15 ≤ j ≤ 27} (reported as part of the adversarial count: one case per inequality).
 - **Adversarial cases (15, 4 skipped as expected-inconclusive):** exact zero pivot [[0,1],[1,0]] (inconclusive);
@@ -172,11 +173,12 @@ The collar logic that consumes β (`certify._certify_lowest`, `_certify_window`,
   holds: the eigenvalue lies inside the collar); entry scales 10¹⁵⁰ (overflow in the product → non-finite factors,
   inconclusive, counted as skipped), 10⁻¹⁵⁰ and 10³⁰⁰; n = 1; a diagonal matrix; a complex Hermitian tridiagonal;
   five dense-pattern n = 12 matrices.
-- **Result:** 400 random + 17 adversarial cases (15 matrices + the two scalar inequalities), 4 skipped (hypothesis not met), **0 violations** (207 s).
+- **Result:** 400 random + 17 adversarial cases (15 matrices + the two scalar inequalities), 4 skipped (hypothesis not met), **0 violations** (202 s).
 - **Scale (not a correctness check):** on the Heisenberg chain S^z = 0 blocks, σ = −0.4N: n = 924, β = 4.4·10⁻¹²
   (3.1: 1.7·10⁻¹⁰); n = 3432, β = 4.1·10⁻⁹ (3.1: 3.1·10⁻⁸); n = 12870, β = 1.6·10⁻⁸ (3.1: 6.4·10⁻⁸); the measured
   ‖E_c‖_∞ itself is 10⁻¹⁴ … 10⁻¹¹ — the bound is dominated by the rounding term g_{c_i+1}(G 1)_i, i.e. by the fill.
-  Times: factorization 0.0 / 0.6 / 20 s, residual 0.1 / 4 / 24 s (8 threads; 88 s on one thread). See
+  Times: factorization 0.0 / 0.6 / 20 s, residual 0.1 / 7 / 57 s (8 threads; 138 s on one thread); peak memory of
+  the count at 12870: 1.48 GB (8 threads), 0.88 GB (1 thread), against 1.06 GB for the 3.1 factorization alone. See
   `experiments/e2_s3_reach.py` and RESULT_scale.md for the E2 points.
 
 ## 5 Analytic cross-check
