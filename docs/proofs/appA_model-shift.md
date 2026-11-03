@@ -139,7 +139,7 @@ in floating point. `hermitian_part`: `(H + H.conj().T) / 2`, one rounding per en
 - adversarial: couplings 10^{±100} (scale), a spec with a single term, L_max = 4 strings, a boson chain with
   n_max = 4 (√k roundings), a coupling that is a huge integer (exact) next to one that is not.
 
-Counts: NOT RUN. The verification script exists but has not been executed in this session (its run was held by the platform's safety gate pending the user's approval); the document therefore records no counts and the status line below says so.
+Counts (run of 2026-11-03, `--cases 400 --seed 5`, 235 min wall on the Windows workstation, output in `docs/proofs/runs/appA_model-shift.txt`; the run had been held by a platform safety gate in the authoring session and was executed after the user's approval): N1 norm inequality / `inf_norm_upper` 100 random cases; B1 builder error (Lemmas A1-A3) 180 random + 363 adversarial; W1 Weyl transfer (Theorem A5) 47 random + 99 adversarial; D1 model shift Δ (Theorem A4) 59 random + 80 adversarial (1 skipped, hypothesis not met); 139 negative controls, all detected; 0 violations in every counter (386 random + 681 adversarial in total).
 
 ## 5 Analytic cross-check
 
@@ -161,5 +161,4 @@ reported since INT-03.
 
 ## 6 Status
 
-Derived by Claude on 2026-10-30; machine-checked: NOT RUN (script written, execution awaiting the user's
-approval of the gated step); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived by Claude on 2026-10-30; machine-checked (386 random + 681 adversarial cases, 0 violations; run of 2026-11-03 approved by the user, `docs/proofs/runs/appA_model-shift.txt`); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
