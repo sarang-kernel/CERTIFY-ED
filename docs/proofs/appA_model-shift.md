@@ -162,4 +162,4 @@ reported since INT-03.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked: NOT RUN (script written, execution awaiting the user's
-approval of the gated step); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+approval of the gated step); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
