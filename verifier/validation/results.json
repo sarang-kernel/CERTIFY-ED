@@ -1,0 +1,2218 @@
+{
+ "certificates": 63,
+ "failed_statuses_S2_S3": 18,
+ "mutant_rows": [
+  {
+   "case": "heis10_duplicated_vector",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 4: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "caught_by": [
+    "S3.inertia",
+    "S3.bound",
+    "S3.ordering",
+    "S3.gap",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "caught_by": [
+    "S3.inertia",
+    "S3.bound",
+    "S3.ordering",
+    "S3.gap",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 3: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 4: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 1: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 6: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 1: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 4: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 2: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "caught_by": [
+    "S3.ordering",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "caught_by": [
+    "S3.inertia",
+    "S3.bound",
+    "S3.ordering",
+    "S3.gap",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "caught_by": [
+    "S3.inertia",
+    "S3.bound",
+    "S3.ordering",
+    "S3.gap",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "caught_by": [
+    "C4.arrays_vs_records",
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 1: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 1: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 4: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 2: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "caught_by": [
+    "S3.ordering",
+    "S3.window_record"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S3.completeness FAILED -> CERTIFIED (statement + scope block, body resealed)"
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "caught_by": [
+    "R2.residual_bound",
+    "R3.existence_radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "radius",
+   "what": "pair 0: existence_radius and residual_bound / 1e4 (record + arrays, hashes resealed)"
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "caught_by": [
+    "H2.radius"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "array_hash",
+   "what": "arrays.sha256[radius] first hex digit changed, body resealed"
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "caught_by": [
+    "H1.body_sha256"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "body_hash",
+   "what": "integrity.body_sha256 last hex digit changed"
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "caught_by": [
+    "S2.status"
+   ],
+   "error": "",
+   "exit": 1,
+   "mutation": "status",
+   "what": "S2.eigenpairs INCONCLUSIVE -> CERTIFIED (statement + scope block, body resealed)"
+  }
+ ],
+ "mutants": {
+  "array_hash": {
+   "caught": 20,
+   "total": 20
+  },
+  "body_hash": {
+   "caught": 20,
+   "total": 20
+  },
+  "radius": {
+   "caught": 20,
+   "total": 20
+  },
+  "status": {
+   "caught": 20,
+   "total": 20
+  }
+ },
+ "not_reproduced": [],
+ "refused_by_certify_ed": 8,
+ "reproduced": 18,
+ "rows": [
+  {
+   "case": "heis10_correct",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_nan_eigenvalue",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "heis10_nan_eigenvector_entry",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "heis10_non_hermitian",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "counts": {
+    "fail": 0,
+    "info": 3,
+    "not_reproduced": 0,
+    "pass": 34,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 35,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_unnormalised_isolated",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "counts": {
+    "fail": 0,
+    "info": 3,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 42,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 35,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_wrong_matrix_entry",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_correct",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_nan_eigenvalue",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "heis8_nan_eigenvector_entry",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "heis8_non_hermitian",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "counts": {
+    "fail": 0,
+    "info": 3,
+    "not_reproduced": 0,
+    "pass": 34,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 35,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_unnormalised_isolated",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_wrong_coupling",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 54,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 42,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 35,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_wrong_matrix_entry",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_correct",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 54,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_mislabeled_sector",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_missing_multiplet_member",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_nan_eigenvalue",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "j1j2_8_nan_eigenvector_entry",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "j1j2_8_non_hermitian",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 54,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_subnormal_entries",
+   "counts": {
+    "fail": 0,
+    "info": 3,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_unnormalised_cluster_member",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_wrong_coupling",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 54,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_1e-05",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 52,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_large",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 45,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "j1j2_8_wrong_matrix_entry",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 54,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_correct",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_duplicated_vector",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_mislabeled_sector",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_missing_multiplet_member",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_nan_eigenvalue",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "tfim8_nan_eigenvector_entry",
+   "certify_ed": "refused",
+   "verifier": "n/a"
+  },
+  {
+   "case": "tfim8_non_hermitian",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 45,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_swapped_pairs",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 45,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_unnormalised_cluster_member",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 27,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_unnormalised_isolated",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_wrong_coupling",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 34,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_1e-05",
+   "counts": {
+    "fail": 0,
+    "info": 1,
+    "not_reproduced": 0,
+    "pass": 42,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_large",
+   "counts": {
+    "fail": 0,
+    "info": 2,
+    "not_reproduced": 0,
+    "pass": 35,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S2.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_wrong_matrix_entry",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "tfim8_wrong_window_count",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 37,
+    "reproduced": 1,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "corpus",
+   "reproduced": {
+    "S3.failed": "REPRODUCED"
+   },
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "dense-arrays",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 38,
+    "reproduced": 0,
+    "skip": 1
+   },
+   "fails": [],
+   "origin": "conformance",
+   "reproduced": {},
+   "skips": [
+    "R2.residual_bound"
+   ],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "matrix-free",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 30,
+    "reproduced": 0,
+    "skip": 1
+   },
+   "fails": [],
+   "origin": "conformance",
+   "reproduced": {},
+   "skips": [
+    "R2.residual_bound"
+   ],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verifier_exit": 0
+  },
+  {
+   "case": "npz",
+   "counts": {
+    "fail": 0,
+    "info": 0,
+    "not_reproduced": 0,
+    "pass": 44,
+    "reproduced": 0,
+    "skip": 0
+   },
+   "fails": [],
+   "origin": "conformance",
+   "reproduced": {},
+   "skips": [],
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verifier_exit": 0
+  }
+ ],
+ "verified": 55,
+ "verifier": "verifier\\build\\cev.exe",
+ "verifier_error": 0,
+ "verifier_fail": 0,
+ "verifier_pass": 55
+}

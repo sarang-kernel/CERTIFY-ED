@@ -1432,6 +1432,19 @@ int main(int argc, char **argv) {
     } else if (op_path && !A_X) add("SKIP", "R2.residual_bound", "eigenvectors are not stored in the sidecar: Theorem-1 radii not recomputed (hash chain and recorded arithmetic checked instead)");
     else if (!op_path) add("SKIP", "R2.residual_bound", "no --operator given: Theorem-1 radii not recomputed (hash chain and recorded arithmetic checked instead)");
 
+    /* ---- U1 no-underflow hypothesis (INT-01): the standard-model bounds assume every nonzero operand magnitude is
+     * >= the recorded threshold (2^-900 by default); the stored eigenvalues and vectors are scanned here */
+    jv *AR = jget(J, "arithmetic"); jv *UC = jget(AR, "underflow_check");
+    double thr = jnum(jget(UC, "threshold"), ldexp(1.0, -900));
+    int tiny_found = 0; size_t tiny_count = 0; double tiny_min = INFINITY;
+    for (size_t i = 0; A_mu && i < A_mu->count; i++) { double v = fabs(f64_at(A_mu, i)); if (v != 0 && v < thr) { tiny_found = 1; tiny_count++; if (v < tiny_min) tiny_min = v; } }
+    for (size_t i = 0; A_X && i < A_X->count; i++) { double v = fabs(f64_at(A_X, i)); if (v != 0 && v < thr) { tiny_found = 1; tiny_count++; if (v < tiny_min) tiny_min = v; } }
+    int recorded_findings = jlen(jget(UC, "findings")) > 0 || jlen(jget(jget(EV2, "underflow"), "findings")) > 0;
+    if (A_X && tiny_found) add("INFO", "U1.underflow_scan", "%zu nonzero magnitudes below the threshold %.3e in the stored eigenvalues/vectors (min %.3e); recorded findings: %d", tiny_count, thr, tiny_min, recorded_findings);
+    else if (A_X) add("PASS", "U1.underflow_scan", "no nonzero magnitude below %.3e in the stored eigenvalues and vectors; recorded findings: %d", thr, recorded_findings);
+    else add("SKIP", "U1.underflow_scan", "eigenvectors not stored: the no-underflow hypothesis is taken from the record (findings: %d)", recorded_findings);
+    int hypotheses_ok = !recorded_findings && !tiny_found && jbool(jget(jget(AR, "runtime_probe"), "standard_model_hypotheses_hold"), 1);
+
     /* ---- S2 status consistency */
     double target = jnum(jget(jget(EV2, "accuracy_target"), "value"), NAN);
     if (st2 && !strcmp(st2, "CERTIFIED")) {
@@ -1442,8 +1455,8 @@ int main(int argc, char **argv) {
                 if (!jbool(jget(encof[i], "distinct"), 0)) all_dist = 0;
                 double r = f64_at(A_rad, i); if (!isfinite(r)) all_fin = 0; if (r > rmax) rmax = r;
             }
-            int ok = all_dist && all_fin && isfinite(target) && rmax <= target;
-            add(PASSFAIL(ok), "S2.status", "CERTIFIED permitted: all distinct %d, all finite %d, max arrays.radius %.6e <= accuracy target %.3e: %d", all_dist, all_fin, rmax, target, rmax <= target);
+            int ok = all_dist && all_fin && isfinite(target) && rmax <= target && hypotheses_ok;
+            add(PASSFAIL(ok), "S2.status", "CERTIFIED permitted: all distinct %d, all finite %d, max arrays.radius %.6e <= accuracy target %.3e: %d, floating-point hypotheses (no underflow finding, probe) hold: %d", all_dist, all_fin, rmax, target, rmax <= target, hypotheses_ok);
             add(PASSFAIL(jbool(jget(EV2, "rigorous"), 0)), "S2.rigorous", "evidence.rigorous is %s", jbool(jget(EV2, "rigorous"), 0) ? "true" : "false");
         }
     } else if (st2 && !strcmp(st2, "FAILED")) {
@@ -1544,6 +1557,8 @@ int main(int argc, char **argv) {
             add(rep ? "REPRODUCED" : "NOT_REPRODUCED", "S3.failed", "inertia count in the window %g vs %d claimed enclosures touching it: at least %g unclaimed (recorded %g)", n_in, touching, n_in - touching, jnum(jget(EV3, "missing_at_least"), NAN));
         } else add("NOT_REPRODUCED", "S3.failed", "S3 FAILED with an evidence form this verifier does not re-derive (%s)", kind ? kind : "?");
     } else add("INFO", "S3.status", "S3 is %s: no certification to re-check", st3 ? st3 : "absent");
+    if (st3 && !strcmp(st3, "CERTIFIED") && kind && strcmp(kind, "subset"))
+        add(PASSFAIL(hypotheses_ok), "S3.hypotheses", "S3 CERTIFIED requires the floating-point hypotheses of S2 (no underflow finding, runtime probe): %d", hypotheses_ok);
 
     /* ---- C7 scope block statuses equal the statements' */
     {

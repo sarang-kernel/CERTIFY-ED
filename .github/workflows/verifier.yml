@@ -1,0 +1,35 @@
+name: verifier
+# Builds the independent C verifier (verifier/src/cev.c) and runs it on a certificate of the conformance fixture
+# plus the pytest module. Syntax-checked only when added (track/verifier); not exercised on a runner.
+on:
+  push:
+    paths: ["verifier/**", "tests/test_verifier.py", ".github/workflows/verifier.yml"]
+  pull_request:
+    paths: ["verifier/**", "tests/test_verifier.py"]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - name: Build the verifier
+        run: python verifier/build.py --cc gcc
+      - name: Certify the conformance fixture with stored vectors
+        run: |
+          python - <<'EOF'
+          import certify_ed as ce
+          from certify_ed.importers import claim_from_bundle
+          claim, spec, _ = claim_from_bundle("conformance/reference/npz")
+          ce.certify(claim, spec, ce.Options(store_eigenvectors=True)).save("npz_case")
+          EOF
+      - name: Verify it
+        run: verifier/build/cev npz_case.json --operator conformance/reference/npz/operator.npz --json cev.json
+      - run: python -m pytest -q tests/test_verifier.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier-report
+          path: cev.json

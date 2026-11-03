@@ -55,7 +55,7 @@ def main() -> int:
             row["error"] = f"{type(e).__name__}: {e}"
         index.append(row)
         print(f"{name:40s} {'refused' if row['refused'] else ' '.join(v[0] for v in row['statuses'].values())}")
-    with open(os.path.join(a.out, "index.json"), "w") as f:
+    with open(os.path.join(a.out, "index.json"), "w", newline="\n") as f:
         json.dump(index, f, indent=1, sort_keys=True)
     print(f"{len(index)} cases, {sum(r['refused'] for r in index)} refused")
     return 0

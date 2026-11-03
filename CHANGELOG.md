@@ -16,6 +16,31 @@ before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.
 env, certify, import, plan, statement, crossing, sweep, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
 
+### Independent verifier (roadmap B-01; track/verifier)
+
+- **`verifier/`: a second-language re-check of certificates.** `verifier/src/cev.c` (C11, standard library
+  only, no code shared with `certify_ed`) reads a certificate and its `.arrays.npz` sidecar with its own JSON,
+  SHA-256, ZIP/`.npy` (stored and deflate) and exact decimal conversion, and re-checks: the body hash under
+  `certify-ed-canonical-json-1` (shortest round-trip floats reproduced by exact integer arithmetic), every
+  array hash, the specification hash, the operator hash (canonical CSR, or the Hermitian part), the per-pair
+  enclosure records and exported arrays (model shift included), the recorded Theorem 2 / 2' cluster arithmetic,
+  the disjointness of distinct groups, the S3 count-and-ordering logic for `lowest`, `window` and `all` claims
+  from the stored enclosures and the recorded inertia counts, the no-underflow hypothesis, and whether a
+  CERTIFIED S2/S3 is permitted by those data. With the producer's `operator.npz` and stored vectors
+  (`Options(store_eigenvectors=True)`) it recomputes every Theorem-1 radius, the Gram defect and the cross term
+  as directed-rounding intervals (`fesetround`; error-free transformations for the Gram matrix) and requires the
+  recorded bounds to be at least the upper ends. Exit code 0/1/2, text report, JSON summary. `verifier/build.py`
+  compiles it with gcc/clang/cc (`CEV_CC`). What it cannot check (S1, S4-S8, the factorizations behind the
+  counts, complex data) is listed in `verifier/README.md`.
+- Validation (`verifier/validation/run_validation.py`, standard library only; `RESULTS.md`): 63 bundles (corpus
+  + conformance), 8 refused by certify-ed, 55 certificates verified with exit 0; the 18 S2/S3 statuses
+  certify-ed set to FAILED are all reproduced from the stored data; 80 forged certificates (20 each: unsound
+  radius with resealed hashes, altered array hash, altered body hash, status forged to CERTIFIED) all caught.
+- `tests/test_verifier.py` (6 tests; skipped without a C compiler): agreement on the conformance fixture, the
+  three negative controls, canonical JSON vs `json.dumps`, deflate and Fortran-ordered sidecars.
+  `.github/workflows/verifier.yml` builds and runs it (syntax only, not exercised here). Documentation:
+  `verifier/README.md`, `docs/SCOPE_MATRIX.md` (how to read a verifier report).
+
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
 
 Every statement of this track has a derivation in `docs/proofs/<id>_<name>.md` with its verification script
