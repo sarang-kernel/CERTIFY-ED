@@ -153,7 +153,7 @@ def exact_spec_operator(spec):
             cm = mpc_(c)
             sp_add_scaled(H, O, cm)
             sp_add_scaled(Habs, A, abs(cm))
-            for (i, j), k in C.items():
+            for (i, _j), k in C.items():
                 w[i] += k
     return H, Habs, w
 

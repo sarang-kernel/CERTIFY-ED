@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np
@@ -83,7 +82,7 @@ def exact_residual_inf(L, Dr, SP):
     # |E_ij| is irrational in general: form the moduli in 50-digit mp from the exact rational components (the margin
     # of the comparison is far above 1e-45).
     rows_mp = [mp.mpf(0)] * n
-    for (i, j), e in E.items():
+    for (i, _j), e in E.items():
         rows_mp[i] += mp.sqrt((mp.mpf(e[0].numerator) / e[0].denominator) ** 2 + (mp.mpf(e[1].numerator) / e[1].denominator) ** 2)
     return max(rows_mp) if n else mp.mpf(0), E
 

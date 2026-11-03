@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np
@@ -28,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _indcommon import F, mpf, to_mp, herm, eig_herm, spec_norm, herm_fun, Tally, report  # noqa: E402
 from certify_ed.moments import certified_moments, hermitian_matrix_with_bound  # noqa: E402
-from certify_ed.fp import gamma, gamma_dot, norm2_upper, up  # noqa: E402
+from certify_ed.fp import gamma, gamma_dot, norm2_upper  # noqa: E402
 
 mp.mp.dps = 60
 

@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np
@@ -37,7 +36,6 @@ import certify_ed as ce  # noqa: E402
 from certify_ed.enclosure import OperatorAdapter, rayleigh_interval  # noqa: E402
 from certify_ed.variational import certify_variational, state_from_mps, gap_from_certificate  # noqa: E402
 from certify_ed.checker import exact_matrix  # noqa: E402
-from certify_ed.construct import full_state_set  # noqa: E402
 from certify_ed.spec import ModelSpec, Term  # noqa: E402
 from certify_ed.localops import LocalSpace  # noqa: E402
 
