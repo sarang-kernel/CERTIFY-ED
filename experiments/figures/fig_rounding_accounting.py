@@ -15,15 +15,15 @@ import _common as C  # noqa: E402
 NAME = "fig_rounding_accounting"
 
 STEPS = [  # (title, formula lines, guard badge, "what it bounds")
-    ("1  residual vectors", ["R = fl(A x − fl(μ x))", "lines 149–152"], None,
-     "|Rᵢ − (Ax − μx)ᵢ| ≤ γ_{w+2}((|A||x|)ᵢ + |μ xᵢ|)"),
+    ("1  residual vectors", ["R = fl(A x − fl(μ x))", "lines 355–358"], None,
+     "|Rᵢ − (Ax − μx)ᵢ| ≤ γ_{w+2}((|A||x|)ᵢ + |μ xᵢ|) + η-terms (INT-05)"),
     ("2  bound on |A||x|", ["absHX_up = fl(|A||x|) / (1 − γ_{w+1}) · (1 + 4u)"], "(1 + 4u)",
-     "absHX_upᵢ ≥ (|A||x|)ᵢ"),
+     "absHX_upᵢ ≥ (|A||x|)ᵢ   (complex data: γ_{w+3})"),
     ("3  entrywise bound E", ["E = g · (absHX_up + |x||μ|) · (1 + 4u),  g = γ̇_{w+2}"], "(1 + 4u)",
-     "Eᵢ ≥ |Rᵢ − (Ax − μx)ᵢ|"),
-    ("4  norms", ["upper = fl(‖R‖↑ + ‖E‖↑),  xl = ‖x‖↓"], "(1 ± γ_{n+2}) (1 + 8u)",
-     "‖·‖↑ = s(1 + γ_{n+2})(1 + 8u) ≥ ‖·‖\n‖·‖↓ = s(1 − γ_{n+2})/(1 + 8u) ≤ ‖·‖,  s = fl(‖·‖)"),
-    ("5  radius", ["rel = upper / xl · (1 + 4u)"], "(1 + 4u)",
+     "Eᵢ ≥ |Rᵢ − (Ax − μx)ᵢ| − (underflow part)"),
+    ("4  norms", ["upper = fl(‖R‖↑ + ‖E‖↑) + T_N,  xl = ‖x‖↓"], "(1±γ_{n+2})(1+8u) ± η",
+     "‖·‖↑ = s(1 + γ_{n+2})(1 + 8u) + η_N ≥ ‖·‖\n‖·‖↓ = s(1 − γ_{n+2})/(1 + 8u) − η_N ≤ ‖·‖ (0 if Σx² overflows)"),
+    ("5  radius", ["rel = upper / xl · (1 + 4u) + 2 ulp_min"], "(1 + 4u) + 2 ulp_min",
      "rel ≥ ‖Ax − μx‖ / ‖x‖:\nthe Theorem 1 radius for the stored numbers"),
     ("6  model shift", ["radius = add_up(rel, σ): fl(rel + σ) one ulp towards +∞"], "σ added, not ×",
      "the radius refers to the declared model:\nS3 enclosures, S4 separations, exported arrays"),
@@ -41,10 +41,10 @@ def draw():
     ax.set_xlim(0, W)
     ax.set_ylim(0, H)
     ax.set_aspect("equal")
-    ax.text(0.12, H - 0.1, "Theorem 1 radius in binary64: three factors (1 + 4u), two norm guards (1 + 8u), "
+    ax.text(0.12, H - 0.1, "Theorem 1 radius in binary64 (3.2): three factors (1 + 4u), two norm guards (1 + 8u), additive underflow terms η, "
             "one shift added at the end", fontsize=C.SIZES[0], va="top")
     ax.text(0.12, H - 0.3, "u = 2⁻⁵³,  γₘ = mu/(1 − mu),  w = nonzeros per row of A,  n = dimension.  Every line "
-            "rounds to nearest; the factor named on it covers those roundings.", fontsize=C.SIZES[2], va="top",
+            "rounds to nearest; the factor named on it covers those roundings; η-terms (INT-05, docs/proofs/int05_underflow.md) cover subnormal results.", fontsize=C.SIZES[2], va="top",
             color=C.INK2)
     ax.text(0.12, H - 0.62, "computed in enclosure.residuals (and certify.py for step 6)", fontsize=C.SIZES[1],
             va="top", fontweight="bold")

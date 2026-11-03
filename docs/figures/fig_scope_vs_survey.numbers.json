@@ -1,7 +1,7 @@
 {
  "coded_papers": 67,
  "n": 67,
- "papers_fully_covered": 32,
+ "papers_fully_covered": 36,
  "quantities": {
   "correlation functions": {
    "k": 28,
@@ -24,7 +24,7 @@
   "dynamical response/spectral function": {
    "k": 10,
    "percent": 14.9,
-   "status": "out of scope by design",
+   "status": "derived record, no status",
    "wilson95_percent": [
     8.3,
     25.3
@@ -33,7 +33,7 @@
   "entanglement entropy/spectrum": {
    "k": 9,
    "percent": 13.4,
-   "status": "nothing certified",
+   "status": "certified statement",
    "wilson95_percent": [
     7.2,
     23.6
@@ -51,7 +51,7 @@
   "fidelity/susceptibility": {
    "k": 1,
    "percent": 1.5,
-   "status": "nothing certified",
+   "status": "certified statement",
    "wilson95_percent": [
     0.3,
     8.0
@@ -154,10 +154,10 @@
   "docs/SCOPE_MATRIX.md"
  ],
  "status_counts": {
-  "certified statement": 9,
-  "derived record, no status": 1,
+  "certified statement": 11,
+  "derived record, no status": 2,
   "not classifiable": 1,
-  "nothing certified": 2,
-  "out of scope by design": 3
+  "nothing certified": 0,
+  "out of scope by design": 2
  }
 }

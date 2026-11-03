@@ -6,7 +6,7 @@ experiments/survey/survey_coded.csv (per-paper quantity lists, for the coverage 
 reported quantity; its colour is the status of the corresponding row of docs/SCOPE_MATRIX.md: a certified
 statement (with the statement id), a derived record that carries no status, nothing (not certified), or
 out of scope by design (reason code). The mapping is the table STATUS_OF below, written from the scope
-matrix on dev/3.2; the "other" category of the survey is not classifiable.
+matrix on dev/3.2 after the completion plan (C-03, C-04, C-06, C-07 first part, C-12, C-13, C-16, E-04); the "other" category of the survey is not classifiable.
 """
 import csv
 import json
@@ -23,17 +23,17 @@ STATUS_OF = {  # survey quantity: (status, what the scope matrix says)
     "ground energy": (CERT, "S2 + S3 (+ S6 exact, S1 model)"),
     "excited levels": (CERT, "S2 per pair, S3 in the window"),
     "gaps": (CERT, "S3 gap bound; gaps record"),
-    "degeneracies": (CERT, "S8 (Prop 14, UNVERIFIED)"),
-    "quantum numbers/labels": (CERT, "S4 labels, S1 sector audit"),
-    "correlation functions": (CERT, "S4 extension (Prop 15)"),
+    "degeneracies": (CERT, "S8 (Prop 14), exact (C-16)"),
+    "quantum numbers/labels": (CERT, "S4 labels, S1 audit, C-12"),
+    "correlation functions": (CERT, "S4 ext. (Prop 15), lift (C-04)"),
     "structure factor": (CERT, "S4 extension (Prop 15)"),
     "order parameter": (CERT, "S4 observables"),
-    "thermodynamics (full spectrum)": (CERT, "S7 from a whole spectrum"),
+    "thermodynamics (full spectrum)": (CERT, "S7 whole / truncated (C-06)"),
     "level statistics": (DERIVED, "levelstats (C-09), kind all"),
     "finite-size extrapolation": (OUT, "OUT_OF_SCOPE_EXTRAPOLATION; report only"),
-    "entanglement entropy/spectrum": (NOTCERT, "NOT_IMPLEMENTED"),
-    "fidelity/susceptibility": (NOTCERT, "no row in the scope matrix"),
-    "dynamical response/spectral function": (OUT, "OUT_OF_SCOPE_DYNAMICS"),
+    "entanglement entropy/spectrum": (CERT, "S4 entanglement (C-03)"),
+    "fidelity/susceptibility": (CERT, "fidelity (C-13), sweep (E-04)"),
+    "dynamical response/spectral function": (DERIVED, "moments, sum rules (C-07)"),
     "time evolution": (OUT, "OUT_OF_SCOPE_DYNAMICS"),
     "other": (NA, "mixed, not coded to a row"),
 }
@@ -75,14 +75,14 @@ def draw(survey, cov):
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
     ax.set_xlabel(f"papers reporting the quantity (%), n = {n}, Wilson 95 % interval")
-    ax.set_title("the frequently reported quantities have a statement; dynamics and extrapolation do not")
+    ax.set_title("every surveyed quantity but extrapolation and time evolution has a statement or a derived record")
     handles = [Patch(fc=COLORS[s], ec=C.INK2 if s == NA else "none", hatch="////" if s == NA else None, label=s)
-               for s in (CERT, DERIVED, NOTCERT, OUT, NA)]
-    ax.legend(handles=handles, loc="lower right", fontsize=C.SIZES[2], handlelength=1.2, title="scope-matrix row status",
-              title_fontsize=C.SIZES[2])
+               for s in (CERT, DERIVED, NOTCERT, OUT, NA) if s != NOTCERT or any(v[0] == NOTCERT for v in STATUS_OF.values())]
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.62, 0.42), fontsize=C.SIZES[2], handlelength=1.2,
+              title="scope-matrix row status", title_fontsize=C.SIZES[2], frameon=False)
     npap, full = cov
-    ax.text(0.99, 0.31, f"{full} of {npap} papers report only\nquantities a statement covers", transform=ax.transAxes,
-            ha="right", va="bottom", fontsize=C.SIZES[2], color=C.INK2, linespacing=1.15)
+    ax.text(0.64, 0.20, f"{full} of {npap} papers report only\nquantities a statement covers", transform=ax.transAxes,
+            ha="left", va="top", fontsize=C.SIZES[2], color=C.INK2, linespacing=1.15)
     numbers = {"n": n, "coded_papers": npap, "papers_fully_covered": full,
                "quantities": {k: {"k": q[k]["k"], "percent": round(100 * q[k]["fraction"], 1),
                                   "wilson95_percent": [round(100 * v, 1) for v in q[k]["wilson95"]],
