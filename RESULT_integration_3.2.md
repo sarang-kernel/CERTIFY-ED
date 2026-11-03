@@ -51,3 +51,12 @@ Merged into `dev/3.2` on 38b0212: track/new-statements (ec8163a), track/figures 
 Full suite at d5ddf17: 1047 passed, 8 skipped, 5 warnings in 1992.79s (0:33:12). ruff clean.
 
 Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not run (held by a platform safety gate in the track's session; awaiting the user's decision); C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
+
+
+## Completion plan Phase 2 integration (2026-11-03)
+
+Merged into `dev/3.2` on ac52920: track/variational (fda4d74; E-05, E-03, C-07 first part), track/verifier (be4456a; C verifier `verifier/src/cev.c`, builds with `CEV_CC` = MinGW gcc 14.2 from GNU Octave 10.3 on this host; 7 tests pass, skipped without a C compiler), track/scale (4150a79; D-01 a-posteriori sparse residual, D-02 matrix-free S2), track/independent-check (8b598d7; `docs/proofs/VERDICTS.md`, 17 documents: 5 AGREES, 7 AGREES-WITH-REMARKS, 3 GAP (thm1, C-04, E-07: proof text), 2 ERROR corrected by looser code with negative controls (int05 `norm2_lower` overflow; E-04 crossing slack at interior grid points)). Conflicts resolved by hand: CHANGELOG.md (additive), docs/SCOPE_MATRIX.md (producer-formats row; the D-02 row now says S1 and S2 at 2^20-2^24, the only statements the scale run timed). Lead commit 2e1dc59: thm1 correction implemented as the looser option (`gamma(width + 3)` for complex data in `enclosure._rounding_bound`).
+
+Full suite at e69bca5 (+2e1dc59 for subprocess tests): 1161 passed, 8 skipped, 8 warnings in 6404 s (1:46:44, run concurrently with the Appendix A verification script). ruff clean (certify_ed tests experiments conformance corpus docs/proofs verifier). Schema in sync (certificate-2.1, producer-bundle-1.0, statement-record-1.0).
+
+Open: independent re-derivation of the five Phase 2 documents (E-05, E-03, C-07, D-01, D-02) in progress on track/independent-check-2; `verify_appA_model-shift.py` running (user approved 2026-11-03); E6 survivors of the 3.1.0 run (Sarang); figures fig_scope_vs_survey / fig_rounding_accounting to regenerate from the final tree.
