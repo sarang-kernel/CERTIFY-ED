@@ -145,13 +145,14 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
         nnz_prod += nz
     # residual part: every row sum has at most n terms plus len(blocks) partial-sum roundings (factor 1 - gamma_m
     # at most), the division by (1 - u) and the three roundings of the inflation are covered by (1 + 4u)(1 + 8u);
-    # rounding part: G1 carries <= 2n + 2 roundings per entry, g_i two (gamma itself) and the product one, so
-    # (1 + gamma_{2n+4})(1 + 8u)^2 restores an upper bound (docs/proofs/D-01_sparse-residual.md, Step 4)
+    # rounding part: G1 is below (G 1)_i by at most a factor (1 - gamma_{2n+6}) (column sums, scaling, matvec,
+    # moduli), g_i carries two roundings (gamma itself) and the product one, so (1 + gamma_{2n+8})(1 + 8u)^2
+    # restores an upper bound (docs/proofs/D-01_sparse-residual.md, Step 4, inequality Lambda-R2)
     m = n + len(blocks) + 1
     resid_inf = float(rows_abs.max()) if n else 0.0
     resid_inf = resid_inf * (1.0 + gamma(m)) * (1.0 + 4 * U) * _GUARD
     round_inf = float(rounding_rows.max()) if n else 0.0
-    round_inf = round_inf * (1.0 + gamma(2 * n + 4)) * _GUARD * _GUARD
+    round_inf = round_inf * (1.0 + gamma(2 * n + 8)) * _GUARD * _GUARD
     shift_term = 2.0 * U * float(np.max(np.abs(S.diagonal()))) if n else 0.0
     beta = up(resid_inf + round_inf + shift_term)
     return ResidualBound(float(beta), float(resid_inf), float(round_inf), float(shift_term), int(L.nnz),

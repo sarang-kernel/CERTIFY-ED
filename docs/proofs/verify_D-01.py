@@ -173,6 +173,24 @@ def check_case(S, ctr, adversarial, note, expect_inconclusive=False):
             f"({below} <= {res.negative} <= {upto}) small-beta {ok4}")
 
 
+def gamma_exact(k: int) -> Fraction:
+    return k * UF / (1 - k * UF)
+
+
+def check_scalar_inequalities(ctr):
+    """(Lambda-R1) and (Lambda-R2) of the document, exactly, on a grid of m and n."""
+    grid = list(range(1, 20001)) + [2 ** j for j in range(15, 28)]
+    one_m_u = 1 - UF
+    bad1 = [m for m in grid if m >= 2 and not
+            ((1 - gamma_exact(m + 2)) * (1 + gamma_exact(m) * one_m_u ** 2) * (1 + 4 * UF) * (1 + 8 * UF) * one_m_u ** 3
+             >= 1 / one_m_u)]
+    bad2 = [n for n in grid if not
+            ((1 - gamma_exact(2 * n + 6)) * one_m_u ** 3 * (1 + gamma_exact(2 * n + 8) * one_m_u ** 2) * (1 + 8 * UF) ** 2
+             * one_m_u ** 3 >= 1)]
+    ctr.add(True, not bad1, f"Lambda-R1 fails at m = {bad1[:5]}")
+    ctr.add(True, not bad2, f"Lambda-R2 fails at n = {bad2[:5]}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", type=int, default=400)
@@ -214,6 +232,7 @@ def main():
         r2 = np.random.default_rng(seed)
         S = random_sparse_hermitian(r2, 12, bool(seed % 2), 0.9, 1.0)
         check_case(S, ctr, True, f"dense-pattern n=12 seed={seed}")
+    check_scalar_inequalities(ctr)
     ok = ctr.report("D-01 sparse residual")
     sys.exit(0 if ok else 1)
 
