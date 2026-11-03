@@ -55,7 +55,7 @@ Code change (looser bound, implemented on this branch, commit noted in RESULT): 
 `if not math.isfinite(s): return 0.0` before the guarded formula, so that `rel` = ∞ (no enclosure) whenever the
 sum of squares overflows. Negative-control tests: `tests/test_independent_check.py`
 (`test_norm2_lower_is_zero_when_the_squared_norm_overflows`, `test_huge_claimed_vector_gives_no_finite_enclosure`),
-which fail on the previous code (verified: 2 failed before, 2 passed after). No other bound becomes tighter.
+which fail on the previous code (checked: 2 failed before, 2 passed after). No other bound becomes tighter.
 
 Proof/statement change: either add the hypothesis "Σ|x_j|² < 2¹⁰²⁴ (the sum of squares does not overflow)" to
 Theorem U5 and Lemma U3 (lower bound), or keep the statement and add to Lemma U3: "when fl(Σv_j²) = ∞ the code
