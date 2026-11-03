@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np
@@ -29,7 +28,7 @@ import scipy.sparse as sp
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import F, mpf, to_mp, herm, eig_herm, spec_norm, herm_fun, Tally, report  # noqa: E402
+from _indcommon import mpf, to_mp, herm, eig_herm, spec_norm, herm_fun, Tally, report  # noqa: E402
 from certify_ed.davis_kahan import sin_theta_davis_kahan, commutator_bound, approximate_symmetry_label, certified_fidelity  # noqa: E402
 from certify_ed.eigenspace import EigenspaceCertificate  # noqa: E402
 
@@ -250,7 +249,7 @@ def part_D(rng, cases, T):
             pars.append((up_(s), up_(eta)))
         if len(pars) < 2:
             T.skip(); continue
-        tofl = lambda X: np.array([[complex(X[r, k]) if cplx else float(mp.re(X[r, k])) for k in range(g)] for r in range(n)])  # noqa: E731
+        tofl = lambda X, cplx=cplx, g=g, n=n: np.array([[complex(X[r, k]) if cplx else float(mp.re(X[r, k])) for k in range(g)] for r in range(n)])  # noqa: E731
         X1f, X2f = tofl(Xs[0]), tofl(Xs[1])
         rec = certified_fidelity(X1f, pars[0][0], pars[0][1], X2f, pars[1][0], pars[1][1])
         # the stored X differ from the mp X by rounding: s, eta are for the mp X; the Theorem-6 bound ||X X^H - P|| <= s + eta
@@ -270,7 +269,7 @@ def part_E(rng, cases, T):
         cplx = i % 2 == 1
         n = int(rng.integers(2, 8))
         dens = float(rng.choice([0.3, 1.0]))
-        def rh():
+        def rh(n=n, dens=dens, cplx=cplx, i=i):
             A = rng.standard_normal((n, n)) * (rng.random((n, n)) < dens)
             if cplx:
                 A = A + 1j * rng.standard_normal((n, n)) * (rng.random((n, n)) < dens)

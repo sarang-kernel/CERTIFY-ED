@@ -178,7 +178,6 @@ def main():
                       f"{tag}: e={e}")
     # duplicate-column necessity of eta < 1: x twice, exact eigenvector, R = 0, but only one eigenvalue index
     for k in range(20):
-        n = 3
         A = np.diag([0.0, 1.0 + k, 2.0 + 2 * k])
         X = np.array([[1.0, 1.0], [0.0, 0.0], [0.0, 0.0]])
         Am, Xm = to_mp(A), to_mp(X)

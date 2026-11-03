@@ -46,12 +46,12 @@ def contains(iv, val):
 
 
 def lemma_c(rng, T_c):
-    for i in range(200):
+    for _i in range(200):
         beta = mp.mpf(10) ** mp.mpf(float(rng.uniform(-3, 3)))
         l_ = mp.mpf(10) ** mp.mpf(float(rng.uniform(-3, 3))); m_ = l_ * (1 + mp.mpf(10) ** mp.mpf(float(rng.uniform(-6, 3))))
-        phi = lambda e: e * mp.exp(-beta * e)       # noqa: E731
-        psi = lambda e: e * e * mp.exp(-beta * e)   # noqa: E731
-        clamp = lambda x: min(max(x, l_), m_)       # noqa: E731
+        phi = lambda e, beta=beta: e * mp.exp(-beta * e)       # noqa: E731
+        psi = lambda e, beta=beta: e * e * mp.exp(-beta * e)   # noqa: E731
+        clamp = lambda x, l_=l_, m_=m_: min(max(x, l_), m_)       # noqa: E731
         grid = [l_ + (m_ - l_) * mp.mpf(t) / 400 for t in range(401)]
         ok = max(phi(e) for e in grid) <= phi(clamp(1 / beta)) * (1 + mp.mpf("1e-100")) and min(phi(e) for e in grid) >= min(phi(l_), phi(m_)) * (1 - mp.mpf("1e-100"))
         ok = ok and max(psi(e) for e in grid) <= psi(clamp(2 / beta)) * (1 + mp.mpf("1e-100")) and min(psi(e) for e in grid) >= min(psi(l_), psi(m_)) * (1 - mp.mpf("1e-100"))
@@ -150,7 +150,7 @@ def main():
                 ex = exact(mem, T)
                 bad = [key for key in ("Z", "lnZ", "F", "U", "variance_E", "C") if key in row and not contains(row[key], ex[key])]
                 T_in.add(not bad, adv, f"{tag} T={T} mode={mode}: " + "; ".join(f"{key}: {row[key]} vs {mp.nstr(ex[key], 20)}" for key in bad))
-    for i in range(10):
+    for _i in range(10):
         ivs = [{"lo": 0.0, "hi": 0.1, "count": 2}]
         for args, exc in (((ivs, 0.1, 4, [1.0]), ValueError), ((ivs, 0.5, 4, [1.0], 0.4), ValueError), ((ivs, 0.5, 1, [1.0]), ValueError)):
             try:

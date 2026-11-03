@@ -13,7 +13,6 @@ import argparse
 import math
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np

@@ -21,7 +21,7 @@ import numpy as np
 import scipy.sparse as sp
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import Tally, eig_herm, fro_norm, herm, herm_fun, mpf, report, spec_norm, to_mp  # noqa: E402
+from _indcommon import Tally, eig_herm, fro_norm, herm, mpf, report, spec_norm, to_mp  # noqa: E402
 import certify_ed as ce  # noqa: E402
 from certify_ed.checker import exact_matrix  # noqa: E402
 from certify_ed.compose import SectorResult, certify_low_energy  # noqa: E402
@@ -58,7 +58,7 @@ def part_a(rng, cases, T):
         if not eta < 1:
             T.skip(); continue
         # blocks: Hermitian part of the compression, perturbed for kind 3 (B far from the compression)
-        blocks, off = [], 0
+        _blocks, off = [], 0
         Bm = mp.zeros(n, n)
         for d in dims:
             Vs = Wm[:, off:off + d]
@@ -158,7 +158,7 @@ def exact_mp(spec):
 
 
 def part_c(rng, cases, T, T_neg):
-    for i in range(cases):
+    for _i in range(cases):
         N = int(rng.choice([4, 5, 6]))
         spec = ce.heisenberg_chain(N, J=1.0, Delta=float(rng.choice([1.0, 0.5, 1.7])))
         H = hermitian_part(build_bitwise(spec))
@@ -168,7 +168,7 @@ def part_c(rng, cases, T, T_neg):
         j = int(np.argmax(gaps[: max(1, len(gaps) // 2)]))
         E_cut = float((wf[j] + wf[j + 1]) / 2)
         out = certify_low_energy(spec, secs, E_cut, H_full=H)
-        def check(out, tag):
+        def check(out, tag, spec=spec, N=N):
             if out["status"] != "CERTIFIED":
                 T.skip(); return
             lam, _ = eig_herm(exact_mp(spec))

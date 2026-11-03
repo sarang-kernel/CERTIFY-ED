@@ -17,21 +17,20 @@ import os
 import sys
 from fractions import Fraction
 
-import mpmath as mp
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _indcommon import Tally, eig_herm, mpf, report, to_mp  # noqa: E402
 from certify_ed.degeneracy import degeneracy_counts  # noqa: E402
-from certify_ed.enclosure import OperatorAdapter, cluster_groups, enclose  # noqa: E402
+from certify_ed.enclosure import OperatorAdapter, enclose  # noqa: E402
 
 
 def part_a(rng, cases, T):
     for i in range(cases):
         n = int(rng.integers(1, 9))
         lam = sorted(Fraction(int(v), 4) for v in rng.integers(-12, 13, size=n))
-        N = lambda x: sum(1 for v in lam if v < x)       # noqa: E731
-        Nb = lambda x: sum(1 for v in lam if v <= x)     # noqa: E731
+        N = lambda x, lam=lam: sum(1 for v in lam if v < x)       # noqa: E731
+        Nb = lambda x, lam=lam: sum(1 for v in lam if v <= x)     # noqa: E731
         # a level: pick an eigenvalue value and the g = multiplicity (or fewer: the claim may cover part of it)
         v0 = lam[int(rng.integers(0, n))]
         mult = sum(1 for v in lam if v == v0)
@@ -49,8 +48,8 @@ def part_a(rng, cases, T):
         else:             # eigenvalues exactly at sigma +- beta
             s_lo = JL - Fraction(1, 2); b_lo = Fraction(1, 4); s_hi = JU + Fraction(1, 2); b_hi = Fraction(1, 4)
             lam = sorted(lam + [s_lo - b_lo, s_hi + b_hi]); n = len(lam)
-            N = lambda x: sum(1 for v in lam if v < x)   # noqa: E731
-            Nb = lambda x: sum(1 for v in lam if v <= x)  # noqa: E731
+            N = lambda x, lam=lam: sum(1 for v in lam if v < x)   # noqa: E731
+            Nb = lambda x, lam=lam: sum(1 for v in lam if v <= x)  # noqa: E731
         if not (s_lo < JL and s_hi > JU):
             continue
         nu_lo = int(rng.integers(N(s_lo - b_lo), Nb(s_lo + b_lo) + 1))

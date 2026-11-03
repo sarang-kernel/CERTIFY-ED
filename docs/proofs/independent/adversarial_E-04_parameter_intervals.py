@@ -31,7 +31,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import F, mpf, to_mp, herm, eig_herm, spec_norm, Tally, report  # noqa: E402
+from _indcommon import mpf, to_mp, eig_herm, spec_norm, Tally, report  # noqa: E402
 import certify_ed as ce  # noqa: E402
 from certify_ed import sweep  # noqa: E402
 from certify_ed.construct import build_bitwise  # noqa: E402
@@ -164,7 +164,7 @@ def part_B(rng, cases, T):
             vb, sb, db = random_scalar_family(rng, grid_b)
             ra_rad = [Fraction(int(rng.integers(0, 3)), 128) for _ in grid_a]
             rb_rad = [Fraction(int(rng.integers(0, 3)), 128) for _ in grid_b]
-        B = float(max(abs(sa), abs(sb)))
+        float(max(abs(sa), abs(sb)))
         ra = scalar_scan([float(g) for g in grid_a], float(abs(sa)), [float(d) for d in da],
                          [float(v - r) for v, r in zip(va, ra_rad)], [float(v + r) for v, r in zip(va, ra_rad)])
         rb = scalar_scan([float(g) for g in grid_b], float(abs(sb)), [float(d) for d in db],

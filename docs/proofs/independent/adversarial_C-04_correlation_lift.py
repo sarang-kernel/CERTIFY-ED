@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np

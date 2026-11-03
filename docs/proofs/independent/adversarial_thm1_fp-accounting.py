@@ -15,14 +15,13 @@ Usage: python docs/proofs/independent/adversarial_thm1_fp-accounting.py [--cases
 import argparse
 import os
 import sys
-from fractions import Fraction
 
 import mpmath as mp
 import numpy as np
 import scipy.sparse as sp
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import F, Tally, mpf, report  # noqa: E402
+from _indcommon import Tally, mpf, report  # noqa: E402
 from certify_ed.enclosure import OperatorAdapter, _rounding_bound, residuals  # noqa: E402
 from certify_ed.fp import U, gamma, norm2_lower, norm2_upper  # noqa: E402
 

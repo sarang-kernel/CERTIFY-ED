@@ -1,4 +1,5 @@
-"""Pinning tests for the derivations in docs/proofs (D-59): Lemma 17, Propositions 14, 15, 16.
+"""Pinning tests for the derivations in docs/proofs (D-59): Lemma 17, Propositions 14, 15, 16, and the status
+lines / VERDICTS.md of all 17 derivation documents (independent re-derivation, D-12).
 
 Each verification script exposes run(n_random, seed); the tests run it at reduced size (the documents record
 the full runs) and pin the code facts the proofs rely on: the series argument range and the exp argument
@@ -8,6 +9,7 @@ statement. Negative controls show that the verification harnesses detect a false
 import importlib.util
 import math
 import os
+import re
 from fractions import Fraction
 
 import numpy as np
@@ -39,16 +41,51 @@ def test_verification_scripts_report_zero_violations(script, n):
     assert r["random_cases"] > 0 and r["adversarial_cases"] > 0
 
 
-def test_proof_documents_exist_with_the_six_sections():
-    for name in ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
-                 "C06_truncated_thermodynamics", "C16_exact_bracket"):
+PROOF_DOCUMENTS = ("thm2_polar-factor", "thm2prime_eps-star", "cor5_pairing", "thm8_rho", "appA_model-shift",
+                   "thm1_fp-accounting", "int05_underflow", "L17_dyadic_exp_ln", "P16_thermo_intervals",
+                   "P14_degeneracy_bracketing", "P15_summed_bounds", "C06_truncated_thermodynamics", "C16_exact_bracket",
+                   "C-03_entanglement", "C-04_correlation_lift", "E-04_parameter_intervals", "E-07_davis_kahan")
+ORIGINAL_SIX = ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
+                "C06_truncated_thermodynamics", "C16_exact_bracket")
+VERDICTS = ("AGREES", "AGREES-WITH-REMARKS", "GAP", "ERROR")
+STATUS_RE = re.compile(r"independent re-derivation: done 2026-10-30 \(fresh-context session, verdict ("
+                       + "|".join(re.escape(v) for v in VERDICTS) + r"), docs/proofs/VERDICTS\.md\); "
+                       r"Sarang's check \(D-12\): pending\.")
+
+
+@pytest.mark.parametrize("name", PROOF_DOCUMENTS)
+def test_proof_documents_exist_with_the_six_sections(name):
+    """Every derivation document has the six sections, the 'Derived by Claude' / 'machine-checked' status, the
+    independent re-derivation status line in the fixed format (one of the four verdicts, pointing at VERDICTS.md,
+    Sarang's check still pending) and nowhere the word 'verified' for these results (D-12/D-59)."""
+    text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
+    for num, title in enumerate(("Statement", "Proof", "Where the code implements it", "Computational verification",
+                                 "Analytic cross-check", "Status"), start=1):
+        assert re.search(rf"^## {num}\.? {re.escape(title)}", text, flags=re.M), (name, title)
+    assert "Derived by Claude on" in text
+    assert "machine-checked (" in text or "machine-checked: NOT RUN" in text      # appA's script is gated (NOT RUN)
+    status = text[text.index("Status", text.rindex("## 6")):]
+    assert len(STATUS_RE.findall(status)) == 1, (name, status[-400:])
+    assert "independent re-derivation: pending" not in text
+    # the status section never calls these results 'verified'; the six D-59 documents nowhere in the text
+    scope = text if name in ORIGINAL_SIX else status
+    cleaned = scope.lower().replace("unverified", "").replace("not_verified", "").replace("machine-checked", "")
+    assert "verified" not in cleaned, name
+
+
+def test_verdicts_table_lists_every_document_with_its_status_line_verdict():
+    """docs/proofs/VERDICTS.md has one row per document and the verdict there matches the document's status line."""
+    table = open(os.path.join(PROOFS, "VERDICTS.md"), encoding="utf-8").read()
+    for name in PROOF_DOCUMENTS:
         text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
-        for sec in ("## 1. Statement", "## 2. Proof", "## 3. Where the code implements it",
-                    "## 4. Computational verification", "## 5. Analytic cross-check", "## 6. Status"):
-            assert sec in text, (name, sec)
-        assert "Derived by Claude on" in text and "machine-checked (" in text
-        assert "independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending." in text
-        assert "verified" not in text.lower().replace("unverified", "").replace("not_verified", "").replace("machine-checked", "")
+        verdict = STATUS_RE.search(text).group(1)
+        rows = [line for line in table.splitlines() if line.startswith("|") and f"{name}.md" in line.split("|")[1]]
+        assert len(rows) == 1, (name, rows)
+        assert f"| {verdict} |" in rows[0], (name, verdict, rows[0])
+    independent = os.path.join(PROOFS, "independent")
+    for name in PROOF_DOCUMENTS:
+        assert os.path.exists(os.path.join(independent, name + ".md")), name
+        assert os.path.exists(os.path.join(independent, "adversarial_" + name + ".py")), name
 
 
 # ------------------------------------------------------------------------------------------- Lemma 17 pins

@@ -17,11 +17,10 @@ import os
 import sys
 from fractions import Fraction
 
-import mpmath as mp
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import F, Tally, eig_herm, has_matching, mpf, report, to_mp  # noqa: E402
+from _indcommon import Tally, eig_herm, has_matching, mpf, report, to_mp  # noqa: E402
 from certify_ed.certify import Options, _certify_lowest  # noqa: E402
 from certify_ed.enclosure import OperatorAdapter, enclose  # noqa: E402
 from certify_ed.fp import add_up  # noqa: E402

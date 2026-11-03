@@ -23,7 +23,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _indcommon import Tally, report  # noqa: E402
-from certify_ed import ivl  # noqa: E402
 from certify_ed.ivl import ONE, PREC, Interval, exp_interval, from_fraction, ln_interval, to_float_down, to_float_up  # noqa: E402
 
 mp.mp.dps = 150

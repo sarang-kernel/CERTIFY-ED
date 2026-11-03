@@ -23,10 +23,10 @@ import mpmath as mp
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _indcommon import F, Tally, eig_herm, herm, herm_fun, mpf, report, spec_norm, to_mp  # noqa: E402
+from _indcommon import Tally, eig_herm, herm, herm_fun, mpf, report, spec_norm, to_mp  # noqa: E402
 from certify_ed import ivl  # noqa: E402
 from certify_ed.entanglement import (_f_interval, bipartition_indices, certify_entanglement, enclose_psd_eigenvalues,  # noqa: E402
-                                     fannes_audenaert_bound, reduced_density_exact)
+                                     )
 
 mp.mp.dps = 60
 
