@@ -199,5 +199,4 @@ SuperLU.
 
 ## 6 Status
 
-Derived by Claude on 2026-10-31; machine-checked (400 random + 17 adversarial cases, 0 violations); independent
-re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+Derived by Claude on 2026-10-31; machine-checked (400 random + 17 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
