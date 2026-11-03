@@ -5,8 +5,8 @@
  "done_points_per_wave": {
   "0": 55,
   "1": 93,
-  "2": 0,
-  "3": 0,
+  "2": 29,
+  "3": 68,
   "4": 25
  },
  "items": 78,
@@ -19,10 +19,13 @@
  },
  "partial_ids": [
   "B-03",
+  "B-08",
   "B-09",
+  "C-07",
+  "C-13",
   "F-02"
  ],
- "points_done": 173,
+ "points_done": 270,
  "points_per_wave": {
   "0": 66,
   "1": 99,
@@ -31,12 +34,12 @@
   "4": 109
  },
  "points_total": 470,
- "source": "experiments/figures/data/ROADMAP_expansion_items_2026-10-29.csv",
- "status_column": "status_2026-10-29",
+ "source": "experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv",
+ "status_column": "status_2026-11-03",
  "status_counts": {
   "blocked": 1,
-  "done": 30,
-  "not started": 44,
-  "partial": 3
+  "done": 43,
+  "not started": 28,
+  "partial": 6
  }
 }

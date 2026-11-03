@@ -1,7 +1,7 @@
 """E7 fig_roadmap_progress: the 78 roadmap items by wave and theme, with status and points.
 
-Reads experiments/figures/data/ROADMAP_expansion_items_2026-10-29.csv (see data/README.md: the roadmap
-items with their wave). (a) points (score = adoption + rigor) per wave, stacked by status on 2026-10-29;
+Reads experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv (see data/README.md: the roadmap
+items with their wave). (a) points (score = adoption + rigor) per wave, stacked by status on 2026-11-03;
 (b) item counts per theme, stacked by status. Status words are those of the CSV: done, partial, blocked,
 not started.
 """
@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _common as C  # noqa: E402
 
 NAME = "fig_roadmap_progress"
-DATA = os.path.join(C.HERE, "data", "ROADMAP_expansion_items_2026-10-29.csv")
+DATA = os.path.join(C.HERE, "data", "ROADMAP_expansion_items_2026-11-03.csv")
 STATUS = ["done", "partial", "blocked", "not started"]
 COLORS = {"done": C.BLUE, "partial": "#7fb0e8", "blocked": C.ORANGE, "not started": "#e4e3df"}
 WAVE_TITLE = {"0": "0  ship what exists", "1": "1  cover what labs report", "2": "2  trust and scale",
@@ -29,7 +29,7 @@ def draw(rows):
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
     C.style()
-    status_col = [c for c in rows[0] if c.startswith("status_")][0]
+    status_col = sorted(c for c in rows[0] if c.startswith("status_2"))[-1]   # the latest dated status column
     fig, (axa, axb) = plt.subplots(1, 2, figsize=(7.1, 2.9), gridspec_kw=dict(width_ratios=[1.1, 1], wspace=0.9,
                                                                               left=0.19, right=0.99, bottom=0.16, top=0.86))
     waves = sorted({r["wave"] for r in rows})

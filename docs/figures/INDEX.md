@@ -106,9 +106,9 @@ What ED papers report against what a certificate states. Bars: the share of the 
 
 ![fig_roadmap_progress](fig_roadmap_progress.png)
 
-The 78 roadmap items (ROADMAP_expansion_items.csv, status column `status_2026-10-29`) by wave (a, points = adoption + rigor) and theme (b, item counts): 30 done, 3 partial (B-03, B-09, F-02), 1 blocked (G-01), 44 not started; 173 of 470 points done. Wave 0 (66 points) has 55 done, Wave 1 (99) has 93, Wave 4 (109) has 25; Waves 2 and 3 (76 and 120 points) are untouched. The wave of each item is read from the wave lists of ROADMAP_expansion.md (experiments/figures/data/README.md).
+The 78 roadmap items (ROADMAP_expansion_items.csv, status column `status_2026-11-03`) by wave (a, points = adoption + rigor) and theme (b, item counts): 43 done, 6 partial (B-03, B-08, B-09, C-07, C-13, F-02), 1 blocked (G-01), 28 not started; 270 of 470 points done. Wave 0 (66 points) has 55 done, Wave 1 (99) has 93, Wave 4 (109) has 25; Waves 2 and 3 (76 and 120 points) are untouched. The wave of each item is read from the wave lists of ROADMAP_expansion.md (experiments/figures/data/README.md).
 
-- data source: experiments/figures/data/ROADMAP_expansion_items_2026-10-29.csv
+- data source: experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv
 - script: `experiments/figures/fig_roadmap_progress.py`
 
 ## A1  `fig_crown_sectors.pdf` / `fig_crown_sectors.png`
