@@ -20,12 +20,19 @@ Dense path : LAPACK ?sytrf/?hetrf (Bunch-Kaufman) via scipy.linalg.ldl; beta
              from the explicitly formed residual L D L^H - (A - sigma I) plus a
              bound on the rounding error of forming it.
 Sparse path: SuperLU in symmetric mode with no pivoting and no equilibration
-             (row permutation == column permutation, verified). beta from the
-             a-priori LU bound |Delta| <= gamma_w |L||U| (Higham 2002, Thm 9.3)
-             plus the explicitly computed asymmetry ||U - D L^H||. Only O(nnz)
-             work beyond the factorization. Without pivoting the factorization
-             can be unstable; instability shows up as a large beta and yields
-             INCONCLUSIVE, never a wrong count.
+             (row permutation == column permutation, verified). Since 3.2 (D-01,
+             docs/proofs/D-01_sparse-residual.md) beta is A POSTERIORI: the residual
+             L D L^H - P (A - sigma I) P^T of the stored factors is formed in floating
+             point, row block by row block, and its rounding is bounded with the
+             Theorem-1 accounting (ldl_residual.py). Nothing is assumed about how
+             SuperLU computed the factors. The 3.1 a-priori bound (gamma_w ||L||_F
+             ||U||_F, Higham 2002 Thm 9.3, plus the asymmetry ||U - D L^H||) is kept
+             as method 'sparse-apriori'; it is conditional on SuperLU evaluating every
+             entry of L and U as a standard inner-product update, and is not used by
+             default. Without pivoting the factorization can be unstable; instability
+             shows up as a large beta and yields INCONCLUSIVE, never a wrong count.
+             The factorization is not attempted when the fill model (cost.py) predicts
+             more memory than the budget (resource_failure -> NOT_CHECKED).
 Prior art: this is the inertia test used for completeness in spectrum-slicing
 eigensolvers (Parlett 1998; Campos & Roman 2012, SLEPc). CERTIFY-ED applies it
 a posteriori to results from arbitrary producers and records beta.
@@ -57,6 +64,7 @@ class InertiaResult:
     note: str = ""
     fill_nnz: Optional[int] = None
     resource_failure: bool = False   # the factorization could not be completed (memory / library error)
+    residual: Optional[dict] = None  # a-posteriori residual record (ldl_residual.ResidualBound), sparse path
 
     def to_dict(self):
         return asdict(self)
@@ -126,7 +134,11 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     return res
 
 
-def inertia_sparse(A: sp.spmatrix, sigma: float) -> InertiaResult:
+def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", block_mb: Optional[float] = None,
+                   threads: Optional[int] = None) -> InertiaResult:
+    """Inertia of A - sigma I from SuperLU's symmetric-mode LU. residual='posteriori' (default, D-01): beta from
+    the measured residual of the stored factors (ldl_residual.sparse_ldl_residual_bound); residual='apriori':
+    the 3.1 bound gamma_{w+1} ||L||_F ||U||_F + ... (conditional on SuperLU's arithmetic, see module docstring)."""
     t0 = time.time()
     A = sp.csc_matrix(A)
     n = A.shape[0]
@@ -153,19 +165,28 @@ def inertia_sparse(A: sp.spmatrix, sigma: float) -> InertiaResult:
         return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric",
                              time.time() - t0, False, "zero pivot")
     neg = int(np.sum(signs < 0))
-    # beta <= gamma_w ||L||_F ||U||_F  (LU backward error, Higham Thm 9.3)
-    #       + ||L||_F ||U - D L^H||_F   (symmetrisation)  + rounding of that difference
-    w = int(np.diff(L.indptr).max()) if n else 1
-    Lf, Uff = fro_upper(L), fro_upper(Uf)
-    asym = (Uf - sp.diags(Dreal) @ L.conj().T).tocsr()
-    asym_f = fro_upper(asym) if asym.nnz else 0.0
-    g2 = gamma_dot(2, cplx)
-    beta = (gamma_dot(w + 1, cplx) * Lf * Uff + Lf * asym_f
-            + Lf * g2 * (Uff + float(np.max(np.abs(Dreal))) * Lf)
-            + U * float(np.max(np.abs(S.diagonal()))) * 2)
-    beta = up(beta)
-    return InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-symmetric",
-                         time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz))
+    if not (np.all(np.isfinite(L.data)) and np.all(np.isfinite(Dreal))):
+        return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric",
+                             time.time() - t0, False, "non-finite entries in the stored factors")
+    if residual == "apriori":
+        # 3.1 bound: beta <= gamma_w ||L||_F ||U||_F  (LU backward error, Higham Thm 9.3)
+        #            + ||L||_F ||U - D L^H||_F   (symmetrisation)  + rounding of that difference
+        w = int(np.diff(L.indptr).max()) if n else 1
+        Lf, Uff = fro_upper(L), fro_upper(Uf)
+        asym = (Uf - sp.diags(Dreal) @ L.conj().T).tocsr()
+        asym_f = fro_upper(asym) if asym.nnz else 0.0
+        g2 = gamma_dot(2, cplx)
+        beta = (gamma_dot(w + 1, cplx) * Lf * Uff + Lf * asym_f
+                + Lf * g2 * (Uff + float(np.max(np.abs(Dreal))) * Lf)
+                + U * float(np.max(np.abs(S.diagonal()))) * 2)
+        beta = up(beta)
+        return InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
+                             time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz))
+    from .ldl_residual import sparse_ldl_residual_bound
+    del Uf
+    rb = sparse_ldl_residual_bound(L, dU, S, f.perm_c, block_mb=block_mb, threads=threads)
+    return InertiaResult(float(sigma), neg, float(rb.beta), "sparse-superlu-residual",
+                         time.time() - t0, True, "", fill_nnz=int(2 * L.nnz - n), residual=rb.to_dict())
 
 
 def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget_mb: Optional[float] = None) -> InertiaResult:
@@ -177,22 +198,37 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
     method='auto' (cost.recommend_inertia_method, D-08): dense for a dense matrix or a sparse one of dimension
     <= 2500 (the 3.1 rule), except that a sparse matrix whose dense LDL^T would exceed `budget_mb` (or, without
     a budget, the available physical memory) is factorized by SuperLU. The choice is recorded in the result's
-    `method`; it decides which path is tried, never what a count says."""
+    `method`; it decides which path is tried, never what a count says. method='sparse' uses the a-posteriori
+    residual bound (D-01); method='sparse-apriori' the 3.1 bound.
+
+    Memory gate (D-01): a sparse factorization whose predicted peak (cost.sparse_inertia_mb, fill model plus the
+    residual's own arrays) exceeds `budget_mb` is not attempted and is reported as a resource failure."""
     if method == "auto":
         from .cost import recommend_inertia_method
         method, _why = recommend_inertia_method(int(A.shape[0]), int(A.nnz) if sp.issparse(A) else None,
                                                 not sp.issparse(A), bool(np.iscomplexobj(A.data if sp.issparse(A) else A)),
                                                 budget_mb, dense_max=min(dense_max, 2500))
     t0 = time.time()
+    label = "dense-bunch-kaufman" if method == "dense" else ("sparse-superlu-apriori" if method == "sparse-apriori"
+                                                             else "sparse-superlu-residual")
+    if method != "dense" and budget_mb is not None:
+        from .cost import sparse_inertia_mb
+        n_ = int(A.shape[0])
+        nnz_ = int(A.nnz) if sp.issparse(A) else n_ * n_
+        need = sparse_inertia_mb(n_, nnz_, bool(np.iscomplexobj(A.data if sp.issparse(A) else A)))
+        if need > budget_mb:
+            return InertiaResult(float(sigma), None, float("inf"), label, time.time() - t0, False,
+                                 f"factorization not attempted: predicted peak {need:.0f} MB exceeds the memory "
+                                 f"budget {budget_mb:.0f} MB (cost.sparse_inertia_mb; out-of-core factorization "
+                                 f"is not implemented)", resource_failure=True)
     try:
         if method == "dense":
             return inertia_dense(A.toarray() if sp.issparse(A) else np.asarray(A), sigma)
-        return inertia_sparse(A if sp.issparse(A) else sp.csc_matrix(A), sigma)
+        return inertia_sparse(A if sp.issparse(A) else sp.csc_matrix(A), sigma,
+                              residual="apriori" if method == "sparse-apriori" else "posteriori")
     except (MemoryError, SystemError) as e:
         msg = " ".join(str(e).split())[:160]
-        return InertiaResult(float(sigma), None, float("inf"),
-                             "dense-bunch-kaufman" if method == "dense" else "sparse-superlu-symmetric",
-                             time.time() - t0, False,
+        return InertiaResult(float(sigma), None, float("inf"), label, time.time() - t0, False,
                              f"factorization could not be completed ({type(e).__name__}: {msg})",
                              resource_failure=True)
 
