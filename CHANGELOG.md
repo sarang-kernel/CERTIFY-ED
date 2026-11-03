@@ -64,6 +64,21 @@ non-certified record statement a `next_action`.
   40/40 pairs while the record names the hypothesis. Tests `tests/test_generalized.py` (8): random pencils against
   `scipy.linalg.eigh(A, B)` (real and complex), perturbed vectors, indefinite B refused, wrong eigenvalue, swapped pairs, a
   missing eigenvalue detected, 'subset', the declared path with a false declaration, size limit, schema.
+- **C-07 first part: certified moments and sum rules.** `certify_ed.moments.certified_moments(H, O, X, s, eta, K, level)` and
+  `moments_from_certificate(cert, H, O, K, members)`: M1 certified intervals for m_k = tr(P O Hᵏ O)/g, k = 0..K, on a
+  CERTIFIED S4 cluster — O applied once and H k times to the stored vectors (Hᵏ is never formed), the rounding of every
+  application accounted in the Theorem 1 style (entrywise γ̇_w|H||z| bounds, propagated with ‖H‖; `fp.exact_dot` for the
+  quadratic form), plus the projector term (2gs + gη)‖O‖²‖H‖ᵏ from the trace-norm bound on P − XXᴴ; M2 the zeroth-moment
+  sum rule m₀ = tr(PO²)/g and M3 the f-sum rule m₁ − tr(PHPO²)/g = tr(P[O,[H,O]])/(2g), each certified by a second route
+  (Theorem 6 on the explicitly formed O² and [O,[H,O]] with their product rounding bounds) and reported as CERTIFIED when
+  the two intervals overlap and FAILED when they are disjoint (consistency statements, not new theorems; FAILED is
+  added to the record status vocabulary for them); M4 the continued-fraction (Lanczos) bounds, NOT_IMPLEMENTED — the
+  open part, described in `docs/theory.md` §9.4 and the scope matrix. Mathematics: `docs/proofs/C-07_moments.md`.
+  Verification: 418 random + 192 adversarial cases, 0 violations (exact rationals for the rounding term, mpmath for the
+  exact projector moments); negative controls: s understated 10⁴× breaks the enclosure in 132/138 moments, a random
+  orthonormal X with s = η = 0 claimed in 138/138, a wrong level interval makes M3 FAILED in 40/40. Tests
+  `tests/test_moments.py` (6): 8-site ring (ground state, triplet cluster, rotated basis), the negative controls, a
+  complex operator with the exact-rational rounding check, underflow and input checks, schema.
 
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
 

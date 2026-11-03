@@ -9,7 +9,7 @@ Parts:
      of the eigenspace with the exact s; small Heisenberg chains (N = 4, 6) with O = S^z_0 S^z_1 and the exact
      ground-state projector
   C  negative controls: s understated by 10^4 x on tilted vectors breaks the enclosure; a random orthonormal X with
-     s = eta = 0 claimed breaks it; a wrong level interval makes the first-moment sum rule FAILED (never CERTIFIED)
+     s = eta = 0 claimed breaks it; a wrong level interval (shifted beyond the interval widths) makes the first-moment sum rule FAILED (never CERTIFIED)
 Run from the repository root: python docs/proofs/verify_C-07.py [--cases N] [--seed S]
 """
 from __future__ import annotations
@@ -206,10 +206,16 @@ def main():
             neg_x_total += 1
             if not (mp.mpf(m["interval"][0]) <= exm[m["k"]] <= mp.mpf(m["interval"][1])):
                 neg_x_broken += 1
-        # negative control 3: wrong level interval (shifted by the gap) -> the first-moment sum rule must not be CERTIFIED
-        rec_bad3 = certified_moments(H, O, X, s_in, eta_in, K=max(K, 1), level=(level[0] + 1.0, level[1] + 1.0))
+        # negative control 3: a wrong level interval, shifted by more than the combined widths of the two certified
+        # intervals divided by m_0 (so that the two enclosures cannot overlap any more) -> M3 must be FAILED
+        m3 = stmt(rec, "M3.sum_rule_first")["evidence"]
+        w_lhs = m3["lhs_interval"][1] - m3["lhs_interval"][0]
+        w_rhs = m3["rhs_interval"][1] - m3["rhs_interval"][0]
+        m0_lo = max(rec["moments"][0]["interval"][0], 1e-12)
+        shift = 1.0 + 2.0 * (w_lhs + w_rhs) / m0_lo
+        rec_bad3 = certified_moments(H, O, X, s_in, eta_in, K=K, level=(level[0] + shift, level[1] + shift))
         cC.add(True, stmt(rec_bad3, "M3.sum_rule_first")["status"] == "FAILED",
-               f"C case {case}: wrong level interval gave {stmt(rec_bad3, 'M3.sum_rule_first')['status']}")
+               f"C case {case}: wrong level interval (shift {shift:.3g}) gave {stmt(rec_bad3, 'M3.sum_rule_first')['status']}")
 
     # ---- B': small Heisenberg chains, O = S^z_0 S^z_1, exact ground-state projector
     from certify_ed.construct import build_bitwise

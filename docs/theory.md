@@ -443,6 +443,20 @@ values they are.
 positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
 P bits; the enclosures are therefore not the tightest possible, only correct.)
 
+### 9.4 Open: continued-fraction bounds from certified moments (C-07, second part; not implemented)
+
+The first part of C-07 (`moments.py`, §10.7) certifies the moments m_k = tr(P O Hᵏ O)/g of a local operator on a
+certified level for k ≤ K. What remains open is turning K + 1 certified moment intervals into certified bounds on the
+spectral function A(ω) = Σ_n |⟨n|O|φ⟩|² δ(ω − E_n) (its Stieltjes transform, or its integrated weight on an interval). The
+mathematics needed: the Lanczos three-term recurrence coefficients (a_j, b_j) are rational functions of the moments
+(Hankel determinants), so interval moments give interval coefficients only while the Hankel matrices stay certified
+positive definite; the Chebyshev–Markov–Stieltjes inequalities then bound the integrated spectral weight between
+consecutive Gauss nodes, and a Gauss quadrature of the truncated continued fraction gives a two-sided bound on
+∫ f dA for functions f with a sign-definite (2K+2)-th derivative. Each step has a floating-point accounting of its own
+(the recurrence is numerically unstable from moments; a stable route works from the Krylov vectors H^k Oφ themselves
+with certified orthogonalisation defects). None of this is implemented; the record's statement M4 says so
+(NOT_IMPLEMENTED), and `docs/SCOPE_MATRIX.md` lists it as the open slot.
+
 ## 10. Statements added in 3.2 (derived under D-59; documents in `docs/proofs/`)
 
 Each statement below has a derivation document with exactly the sections Statement, Proof, Where the code
@@ -518,3 +532,15 @@ A − σB = L(C − σI)Lᴴ, so ν(A − σB) = #{λ < σ} (Sylvester); a facto
 (LDLᴴ plus the forming error ‖u|σ||B| + u|M̂|‖_∞) satisfies #{λ < σ − b/β_c} ≤ ν ≤ #{λ ≤ σ + b/β_c}, because bI ⪯ (b/β_c)B;
 ν = k with pairwise disjoint enclosures above which σ − b/β_c lies makes the enclosures the k lowest eigenvalues and
 gives λ_{k+1} ≥ σ − b/β_c. A declared λ_min(B) is a named hypothesis (CERTIFIED_UNDER_HYPOTHESIS).
+
+### 10.7 Certified moments and sum rules (C-07 first part, `moments.py`, `docs/proofs/C-07_moments.md`)
+
+For a certified cluster (P, g stored vectors X, s, η) and Hermitian O: |tr(PM) − tr(XXᴴM)| ≤ (2gs + gη)‖M‖₂ for every
+Hermitian M (trace norm of P − Q̂Q̂ᴴ ≤ 2gs by rank, of Q̂(M² − I)Q̂ᴴ ≤ gη; Hölder), applied to M = OHᵏO with ‖M‖ ≤ ‖O‖²‖H‖ᵏ.
+tr(XXᴴOHᵏO) = Σ_i ⟨Ox_i, HᵏOx_i⟩ is evaluated by one application of O and k of H to the stored vectors with the Theorem 1
+style entrywise bounds γ̇_w|O||x|, γ̇_w|H||z| propagated as D_k = ‖H‖D_{k−1} + ε_k, the polarisation identity for the error
+of the quadratic form, and `fp.exact_dot` for the final inner product; Hᵏ is never formed. Sum rules: m₀ = tr(PO²)/g and
+m₁ − tr(PHPO²)/g = tr(P[O,[H,O]])/(2g) (HP = PH, cyclicity), with tr(PHPO²)/g ∈ [a, b]·m₀; the right-hand sides are
+certified by Theorem 6 on the explicitly formed matrices (product chains with the entrywise bound γ_M|F₁|⋯|F_m| and the
+Hermitian average), and the record states whether the two certified intervals overlap (CERTIFIED) or not (FAILED). The
+continued-fraction part is open (§9.4).
