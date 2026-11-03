@@ -104,6 +104,45 @@ non-certified record statement a `next_action`.
   and `all` S3 paths.
   `.github/workflows/verifier.yml` builds and runs it (syntax only, not exercised here). Documentation:
   `verifier/README.md`, `docs/SCOPE_MATRIX.md` (how to read a verifier report).
+### Scale track (roadmap D-01, D-02; track/scale)
+
+Derivations in `docs/proofs/D-01_sparse-residual.md` and `docs/proofs/D-02_matrix-free.md` with verification scripts
+`verify_D-01.py` (400 random + 17 adversarial cases, exact rational arithmetic, 0 violations) and `verify_D-02.py`
+(182 random specs + 18 adversarial cases at 60 digits, 0 violations); decision D-59, independent re-derivation
+pending (D-12). No existing bound became tighter without a proof; the 3.1 a-priori sparse bound is kept, labelled
+conditional, and is no longer the default.
+
+- **D-01 a-posteriori backward error for the sparse S3 path (known issue MS-M11).** `inertia.inertia_sparse` now
+  measures β: the residual L D Lᴴ − P(A − σI)Pᵀ of the stored SuperLU factors is formed in floating point, row block by
+  row block (new module `certify_ed/ldl_residual.py`, `sparse_ldl_residual_bound`; deterministic block partition,
+  `threads` for the blocks), and bounded entrywise by |E_c|/(1 − u) + γ_{t+1}(|L||D||L|ᵀ); ‖E‖₂ ≤ ‖E‖_∞. Lemma 4 then
+  needs no hypothesis on SuperLU's arithmetic. Method name `sparse-superlu-residual` (was `sparse-superlu-symmetric`;
+  `tests/test_planner.py` adjusted); the inertia record carries `residual` (measured residual, rounding and shift
+  terms, blocks, threads, seconds). The 3.1 bound (γ_{w+1}‖L‖_F‖U‖_F + …, Higham Thm 9.3) is `inertia_method=
+  'sparse-apriori'`, method name `sparse-superlu-apriori`. On the Heisenberg S^z = 0 blocks the measured β is 4–50×
+  smaller than the 3.1 bound (`experiments/e2_s3_reach.py`, `results/e2_s3_reach.json`: d = 924 / 3432 / 12870 S3
+  CERTIFIED in 3.0 / 15.5 / 95.4 s, β = 9.0e-11 / 2.4e-9 / 1.2e-6 against 3.7e-10 / 7.2e-9 / 5.8e-6; peak 1.55 GB at
+  12870 with 8 threads). Memory: `inertia()` refuses a sparse factorization whose predicted peak
+  (`cost.sparse_inertia_mb`, fill model plus the new `cost.sparse_residual_mb`) exceeds `budget_mb`
+  (`resource_failure`, S3 NOT_CHECKED); d = 48620 is refused at 19 GB predicted; out-of-core factorization is not
+  implemented (the bound would carry over unchanged: it needs only the stored factors). Tests
+  `tests/test_sparse_residual.py` (46: sandwich on random and planted-inertia sparse matrices, exact rational
+  entrywise check, determinism across threads and block sizes, memory gate, adversarial zero/ill-conditioned pivots,
+  eigenvalue at σ, overflowing scale; negative controls: a corrupted factor entry, a flipped pivot sign and a wrong
+  permutation raise β, an omitted lowest eigenvalue is not certified).
+- **D-02 matrix-free residual bounds from the spec.** New module `certify_ed/matrixfree.py`:
+  `MatrixFreeOperator(spec, states)` applies the spec term by term (bit-identical to `construct.SpecOperator`; the
+  full state set needs no index search) and derives from the spec the rounding count W = w_row + L + ρ + 1 (w_row =
+  Σ_t Π_l c(o_l) monomial contributions per output entry — n_terms for spin-1/2 and fermions, where the 3.1 count was
+  n_terms·2^L + 2L + 2 —, ρ rounded amplitudes per string), the norm bound Σ_t |c_t| Π_l ‖o_l‖₂ and the named
+  amplitude hypothesis. `OperatorAdapter` takes `width = min(3.1 count, W − 2)` and `norm = min(row-sum bound,
+  spec bound)`. `Options(matrix_free=True)`: a claim without an operator is certified at any dimension without a
+  reference matrix; S1 is CERTIFIED with `model_shift_bound = 0` and `amplitude_hypothesis` in its evidence and
+  statement text; S2 radii concern the exact spec operator; S3/S8 NOT_CHECKED (NEEDS_MATRIX). Scale
+  (`experiments/d02_matrixfree_scale.py`, Heisenberg chain, one-magnon exact eigenvector as a memmap, S1–S2):
+  S2 CERTIFIED at every point with the radius at rounding level and the memory under 3.2 GB: d = 2^16: S2 8 s (one matvec 3 s), radius 3.96e-14, peak 67 MB, W = 51; d = 2^20: S2 169 s (one matvec 40 s), radius 6.34e-14, peak 257 MB, W = 63; d = 2^22: S2 653 s (one matvec 210 s), radius 7.71e-14, peak 869 MB, W = 69; d = 2^24: S2 1896 s (one matvec 734 s), radius 9.21e-14, peak 3160 MB, W = 75. The time is the Python-level term-by-term application (about 60 vectorised passes per product at N = 20–24); the bound itself costs one extra pass (|H|_abs|x|) and the norm pass. Tests `tests/test_matrixfree.py` (14: bit identity, counts, norm bound, radii not wider than the 3.1
+  spec path and containing the eigenvalues, end to end on a memmap vector, spin-1 hypothesis, cancellation and
+  couplings 1e±150; negative controls: a wrong coefficient and a planted wrong eigenvector fail S2).
 
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
 

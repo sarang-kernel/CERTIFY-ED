@@ -163,6 +163,18 @@ if an existence radius misses the target, S2 is FAILED.
 eigenvalue λ: θ − r²/(β − θ) ≤ λ ≤ θ + r²/(θ − α). The isolating interval comes from S3, and the
 adjacent levels are used (tests pin this).
 
+**Matrix-free operators (D-02, since 3.2; `matrixfree.MatrixFreeOperator`, `Options(matrix_free=True)`).** When
+the claim carries no operator and the spec is applied term by term, the Theorem 1-fl accounting uses a rounding
+count derived from the spec: W = w_row + L + ρ + 1 (real data; w_row + 3L + ρ + 3 complex), where w_row bounds the
+number of monomial contributions to one output entry (Σ_t Π_l c(o_{t,l}); c(o) = 1 for every spin-1/2 and fermion
+letter, so w_row = n_terms there), L the longest string and ρ the number of letters per string whose stored
+amplitudes are rounded (spin ≥ 1 ladder/x/y, boson ladders; exact for spin-1/2, fermions, S^z, n). The radius then
+bounds ‖H_spec x − μx‖/‖x‖ for the *exact* spec operator (the amplitude roundings are inside W), so no model shift is
+added; S1 records the amplitude hypothesis by name. ‖H‖₂ ≤ Σ_t |c_t| Π_l ‖o_{t,l}‖₂ (tensor-product and unitary
+invariance of the Jordan–Wigner string) is combined with the Appendix-A row-sum bound by a minimum (both proven).
+Derivation and verification (182 random specs + 18 adversarial cases at 60 digits, 0 violations):
+`docs/proofs/D-02_matrix-free.md`. S3 and S8 keep needing a stored matrix (NEEDS_MATRIX).
+
 ## 3. Counting (S3)
 
 **Lemma 4 (inertia with backward error).** If ‖LDL^H − P(A − σI)P^T‖ ≤ β for unit lower-triangular L
@@ -174,6 +186,19 @@ they enclose λ₁…λ_k, and λ_{k+1} ≥ σ − β. The pairing is the sorted
 because the enclosure groups have disjoint union intervals and the members of a cluster group share the
 cluster radius (sorted-pairing lemma; it fails for non-uniform radii). With a model shift Δ the radii and β
 grow by Δ (Weyl). Derivation and verification: `docs/proofs/cor5_pairing.md` (D-59; Sarang's check D-12 pending).
+
+**Backward error β of the sparse path (D-01, since 3.2; `inertia.inertia_sparse`, `ldl_residual.py`).** For the
+SuperLU symmetric-mode factorization the 3.1 code bounded β a priori by γ_{w+1}‖L‖_F‖U‖_F + ‖L‖_F‖U − DLᴴ‖_F + …
+(Higham 2002, Thm 9.3), which assumes that SuperLU forms every entry of L and U by a standard inner-product update
+— a property of the library's supernodal kernels that is not established (known issue MS-M11). Since 3.2 β is
+measured: the residual E = L D Lᴴ − P(A − σI)Pᵀ of the *stored* factors is formed in floating point in row blocks and
+its rounding bounded entrywise by |E_ij| ≤ |E_c,ij|/(1 − u) + γ_{t_ij+1}(|L||D||L|ᵀ)_ij, t_ij ≤ min(c_i, c_j) (the number
+of stored nonzeros in the rows); ‖E‖₂ ≤ ‖E‖_∞ (E Hermitian) gives β. Lemma 4 then applies with no hypothesis on how
+the factors were computed; an unstable factorization (no pivoting) shows as a large β. Derivation, code map and
+verification (400 random + 17 adversarial cases in exact rational arithmetic, 0 violations):
+`docs/proofs/D-01_sparse-residual.md`. The a-priori bound remains available as `inertia_method='sparse-apriori'`
+(conditional). The factorization is not attempted when `cost.sparse_inertia_mb` (fill model plus the residual's
+arrays) exceeds the memory budget: NOT_CHECKED, never a count.
 
 **Vectorless window count (C-02, since 3.2.0.dev0; `certify._certify_window_vectorless`).** For a window
 claim without eigenvectors there are no enclosures, so Corollary 5 does not apply; the code certifies only

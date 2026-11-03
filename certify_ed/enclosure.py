@@ -110,8 +110,17 @@ class OperatorAdapter:
             # matches certify._builder_shift; docs/proofs/appA_model-shift.md). Before track/backlog-proofs the
             # width was m + max_len + 2, short by max_len - 4 roundings for strings of five or more letters.
             self.width = spec.n_terms * (2 ** max_len) + 2 * max_len + 2
+            if hasattr(op, "rounding_width"):
+                # D-02 (matrixfree.MatrixFreeOperator): per-row monomial count plus the amplitude roundings,
+                # docs/proofs/D-02_matrix-free.md; never larger than the count above
+                self.width = min(self.width, int(op.rounding_width))
             ones = np.ones(op.shape[0])
-            self._norm = up(float(np.max(op.abs_matvec(ones)))) * (1 + gamma(self.width))
+            # the row sums of |H|_abs carry at most width (3.1 count) or width + 1 (D-02: W - 1) roundings
+            g_norm = gamma(self.width + 2) if hasattr(op, "rounding_width") else gamma(self.width)
+            self._norm = up(float(np.max(op.abs_matvec(ones)))) * (1 + g_norm)
+            if hasattr(op, "norm_bound"):
+                # D-02 Lemma N: ||H|| <= sum_t |c_t| prod ||o_l||; both bounds are proven, the smaller is kept
+                self._norm = min(self._norm, float(op.norm_bound()))
         else:
             self.kind = "blackbox"
             self.shape = op.shape
