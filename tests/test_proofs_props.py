@@ -44,7 +44,8 @@ def test_verification_scripts_report_zero_violations(script, n):
 PROOF_DOCUMENTS = ("thm2_polar-factor", "thm2prime_eps-star", "cor5_pairing", "thm8_rho", "appA_model-shift",
                    "thm1_fp-accounting", "int05_underflow", "L17_dyadic_exp_ln", "P16_thermo_intervals",
                    "P14_degeneracy_bracketing", "P15_summed_bounds", "C06_truncated_thermodynamics", "C16_exact_bracket",
-                   "C-03_entanglement", "C-04_correlation_lift", "E-04_parameter_intervals", "E-07_davis_kahan")
+                   "C-03_entanglement", "C-04_correlation_lift", "E-04_parameter_intervals", "E-07_davis_kahan",
+                   "E-05_variational", "E-03_generalized", "C-07_moments", "D-01_sparse-residual", "D-02_matrix-free")
 ORIGINAL_SIX = ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
                 "C06_truncated_thermodynamics", "C16_exact_bracket")
 VERDICTS = ("AGREES", "AGREES-WITH-REMARKS", "GAP", "ERROR")

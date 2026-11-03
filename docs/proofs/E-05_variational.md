@@ -199,4 +199,4 @@ schema and the CLI.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (666 random + 294 adversarial cases, 0 violations; negative
-control broken 66/66); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+control broken 66/66); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

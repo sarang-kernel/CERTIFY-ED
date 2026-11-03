@@ -165,4 +165,4 @@ the dense size limit, JSON round trip and the record schema.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (303 random + 100 adversarial cases, 0 violations; negative control
-undercut 40/40); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+undercut 40/40); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
