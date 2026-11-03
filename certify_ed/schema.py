@@ -24,9 +24,9 @@ from .io.bundle import META_SCHEMA
 from .scope import REASON_CODES, SCOPE_SCHEMA
 from .spec import SPEC_SCHEMA
 
-__all__ = ["CERTIFICATE_SCHEMA", "PRODUCER_BUNDLE_SCHEMA", "SCHEMA_FILES", "SchemaValidationError",
-           "have_jsonschema", "validate_certificate_body", "validate_bundle_meta", "structural_check",
-           "schema_errors", "write_schema_files", "render"]
+__all__ = ["CERTIFICATE_SCHEMA", "PRODUCER_BUNDLE_SCHEMA", "STATEMENT_RECORD_SCHEMA", "SCHEMA_FILES",
+           "SchemaValidationError", "have_jsonschema", "validate_certificate_body", "validate_bundle_meta",
+           "validate_record", "structural_check", "schema_errors", "write_schema_files", "render"]
 
 DRAFT = "https://json-schema.org/draft/2020-12/schema"
 SHA256 = {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest"}
@@ -411,10 +411,55 @@ def _bundle_schema() -> dict:
     }
 
 
+# standalone statement records (3.2): variational (E-05), generalized eigenproblem (E-03), moments (C-07). They are
+# not certificates: their status vocabulary adds CERTIFIED_UNDER_HYPOTHESIS (a bound that rests on a named, declared
+# hypothesis) and DECLARED (a producer value that nothing rests on), and every statement under hypothesis lists it.
+RECORD_SCHEMAS = ("certify-ed/variational/1.0", "certify-ed/generalized/1.0", "certify-ed/moments/1.0")
+RECORD_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED", "FAILED")
+
+
+def _record_schema() -> dict:
+    return {
+        "$schema": DRAFT,
+        "$id": "urn:certify-ed:schema:statement-record:1.0",
+        "title": "CERTIFY-ED standalone statement record, schema 1.0",
+        "description": ("JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03) and "
+                        "certify_ed.moments (C-07). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one "
+                        "hypothesis; DECLARED marks a producer value that is recorded, not certified."),
+        "type": "object",
+        "required": ["schema", "statements", "record_sha256"],
+        "properties": {
+            "schema": {"enum": list(RECORD_SCHEMAS)},
+            "description": {"type": "string"},
+            "operator": {"type": "object"},
+            "state": {"type": "object"},
+            "basis": {"type": "string"},
+            "record_sha256": SHA256,
+            "statements": {"type": "array", "items": {
+                "type": "object", "required": ["id", "status", "summary", "evidence", "hypotheses"],
+                "properties": {
+                    "id": {"type": "string", "pattern": "^[A-Z][0-9]+\\."},
+                    "status": {"enum": list(RECORD_STATUSES)},
+                    "summary": {"type": "string"},
+                    "evidence": {"type": "object", "properties": {
+                        "reason_code": {"enum": sorted(REASON_CODES)}, "next_action": {"type": "string"}}},
+                    "hypotheses": {"type": "array", "items": {
+                        "type": "object", "required": ["name", "statement", "source"],
+                        "properties": {"name": {"type": "string"}, "statement": {"type": "string"},
+                                       "source": {"type": "string"}, "value": {}}}},
+                    "assumptions": {"type": "array", "items": {"type": "string"}}},
+                "if": {"properties": {"status": {"const": "CERTIFIED_UNDER_HYPOTHESIS"}}},
+                "then": {"properties": {"hypotheses": {"minItems": 1}}}}},
+        },
+    }
+
+
 CERTIFICATE_SCHEMA: dict = _certificate_schema()
 PRODUCER_BUNDLE_SCHEMA: dict = _bundle_schema()
+STATEMENT_RECORD_SCHEMA: dict = _record_schema()
 SCHEMA_FILES = {"certificate-2.1.schema.json": CERTIFICATE_SCHEMA,
-                "producer-bundle-1.0.schema.json": PRODUCER_BUNDLE_SCHEMA}
+                "producer-bundle-1.0.schema.json": PRODUCER_BUNDLE_SCHEMA,
+                "statement-record-1.0.schema.json": STATEMENT_RECORD_SCHEMA}
 
 
 def render(schema: dict) -> str:
@@ -536,6 +581,36 @@ def validate_bundle_meta(meta: dict, spec: Optional[dict] = None, require: bool 
         errs += ["spec.json/" + e for e in (schema_errors(spec, sub) or [])]
     if errs:
         raise SchemaValidationError(f"producer bundle does not conform to {META_SCHEMA}: " + "; ".join(errs[:8]))
+    return True
+
+
+def validate_record(rec: dict, require: bool = False) -> Optional[bool]:
+    """Validate a standalone statement record (variational / generalized / moments) against
+    STATEMENT_RECORD_SCHEMA plus the structural rule that a CERTIFIED_UNDER_HYPOTHESIS statement names a hypothesis
+    and that the recorded hash matches the body. Returns True, or None without jsonschema (unless require)."""
+    problems = []
+    for st in rec.get("statements", []):
+        if st.get("status") == "CERTIFIED_UNDER_HYPOTHESIS" and not st.get("hypotheses"):
+            problems.append(f"{st.get('id')}: CERTIFIED_UNDER_HYPOTHESIS without a named hypothesis")
+        if st.get("status") not in RECORD_STATUSES:
+            problems.append(f"{st.get('id')}: unknown status {st.get('status')!r}")
+    body = {k: v for k, v in rec.items() if not str(k).startswith("_") and k != "record_sha256"}
+    if "record_sha256" in rec:
+        import hashlib
+        from .certificate_v2 import _jsonable
+        from .spec import canonical_json
+        h = hashlib.sha256(canonical_json(_jsonable(body)).encode()).hexdigest()
+        if h != rec["record_sha256"]:
+            problems.append("record_sha256 does not match the body")
+    if problems:
+        raise SchemaValidationError("; ".join(problems))
+    if not have_jsonschema():
+        if require:
+            raise SchemaValidationError("jsonschema is not installed (pip install 'certify-ed[schema]')")
+        return None
+    errs = schema_errors({k: v for k, v in rec.items() if not str(k).startswith("_")}, STATEMENT_RECORD_SCHEMA)
+    if errs:
+        raise SchemaValidationError("; ".join(errs[:5]))
     return True
 
 

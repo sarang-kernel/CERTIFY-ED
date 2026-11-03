@@ -443,6 +443,20 @@ values they are.
 positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
 P bits; the enclosures are therefore not the tightest possible, only correct.)
 
+### 9.4 Open: continued-fraction bounds from certified moments (C-07, second part; not implemented)
+
+The first part of C-07 (`moments.py`, §10.7) certifies the moments m_k = tr(P O Hᵏ O)/g of a local operator on a
+certified level for k ≤ K. What remains open is turning K + 1 certified moment intervals into certified bounds on the
+spectral function A(ω) = Σ_n |⟨n|O|φ⟩|² δ(ω − E_n) (its Stieltjes transform, or its integrated weight on an interval). The
+mathematics needed: the Lanczos three-term recurrence coefficients (a_j, b_j) are rational functions of the moments
+(Hankel determinants), so interval moments give interval coefficients only while the Hankel matrices stay certified
+positive definite; the Chebyshev–Markov–Stieltjes inequalities then bound the integrated spectral weight between
+consecutive Gauss nodes, and a Gauss quadrature of the truncated continued fraction gives a two-sided bound on
+∫ f dA for functions f with a sign-definite (2K+2)-th derivative. Each step has a floating-point accounting of its own
+(the recurrence is numerically unstable from moments; a stable route works from the Krylov vectors H^k Oφ themselves
+with certified orthogonalisation defects). None of this is implemented; the record's statement M4 says so
+(NOT_IMPLEMENTED), and `docs/SCOPE_MATRIX.md` lists it as the open slot.
+
 ## 10. Statements added in 3.2 (derived under D-59; documents in `docs/proofs/`)
 
 Each statement below has a derivation document with exactly the sections Statement, Proof, Where the code
@@ -491,3 +505,42 @@ polar identities of the Theorem 2′ sketch, proved in the document), and the Fr
 (c + ‖S‖w/2)/γ₀ (Theorem 1 for S with the residual ‖(I−P)Sφ‖), and the sorted eigenvalues of XᴴSX are within
 (2s + 2s² + η)‖S‖ of those of QᴴSQ (alignment ‖Q̂ − QU‖ ≤ s + s², Weyl, Ostrowski).
 *C-13.* |tr(P₁P₂) − ‖X₁ᴴX₂‖_F²| ≤ g(s₁+η₁) + g(1+η₁)(s₂+η₂) (Theorem 6 for both clusters, Hölder with ‖P‖₁ = g).
+
+### 10.5 Variational certificates for non-ED states (E-05, `variational.py`, `docs/proofs/E-05_variational.md`)
+
+For a trial vector ψ (dense, an MPS contracted to a vector, or a sparse CI vector) and H Hermitian: λ₁ ≤ θ = ⟨ψ, Hψ⟩/⟨ψ, ψ⟩
+(Rayleigh–Ritz, no hypothesis); an eigenvalue within r = ‖Hψ − θψ‖/‖ψ‖ of θ (Theorem 1), r² = ⟨ψ, H²ψ⟩/⟨ψ, ψ⟩ − θ²; and
+Temple's inequality λ₁ ≥ θ − r²/(ρ − θ) for any ρ with θ < ρ ≤ λ₂ (from (H − λ₁)(H − ρ) ⪰ 0; an equality for two-level
+mixtures). θ is enclosed from the error-free inner products of `fp.exact_dot` and the entrywise bound γ̇_{w+2}|H||ψ| on
+fl(Hψ) (the four corner quotients, 4u outward), r by the Theorem 1 radius at θ̂ plus the width of the θ enclosure; for a
+spec the model shift σ enters as λ₁(H_spec) ≤ θ_hi + σ, radius + σ (Weyl), and Temple applied to H_ref with ρ − σ, then
+− σ. The Temple statement is CERTIFIED only when ρ comes from a certificate of a 'lowest' claim on the same operator
+(second smallest lower endpoint of its S2 enclosures for k ≥ 2, S3's next-eigenvalue bound for k = 1); a declared ρ gives
+the distinct status CERTIFIED_UNDER_HYPOTHESIS with the hypothesis `declared_gap` named in the record and in the
+statement text. An MPS is contracted left to right with |ψ̂ − ψ| ≤ γ_M |A⁽¹⁾|⋯|A⁽ᴸ⁾| entrywise (M = Σ D_{j−1}, Higham
+Lemma 3.3); the certified statements are about ψ̂, and |θ(ψ) − θ(ψ̂)| ≤ (2r‖ψ̂‖e + (‖H‖ + |θ|)e²)/(‖ψ̂‖ − e)² is recorded.
+Producer-declared stochastic estimates are DECLARED (DECLARED_ESTIMATE) and nothing rests on them.
+
+### 10.6 Generalized eigenproblems (E-03, `generalized.py`, `docs/proofs/E-03_generalized.md`)
+
+For A x = λ B x with B ≻ 0 and B = LLᴴ, the pencil is similar to C = L⁻¹AL⁻ᴴ (Lᴴx are C's eigenvectors). Theorem 1 for C
+gives |λ − μ| ≤ ‖Ax − μBx‖_{B⁻¹}/‖x‖_B ≤ ‖Ax − μBx‖₂/(√β_c ‖x‖_B) for any certified β_c ≤ λ_min(B) (‖L⁻¹‖₂² = 1/λ_min(B)); β_c
+comes from the inertia of B − βI (ν = 0 with backward error b ⇒ λ_min(B) ≥ β − b), and a B whose inertia at 0 is
+negative is refused. The residual s = fl(Ax − μ fl(Bx)) carries the entrywise bound γ̇_n|A||x| + |μ|γ̇_{n+1}|B||x| +
+u(1 + 2u)|ŝ|, xᴴBx the error-free inner product of `fp.exact_dot` minus γ̇_n|x|ᵀ|B||x|. Completeness of a 'lowest' claim:
+A − σB = L(C − σI)Lᴴ, so ν(A − σB) = #{λ < σ} (Sylvester); a factorization of M̂ = fl(A − σB) with total backward error b
+(LDLᴴ plus the forming error ‖u|σ||B| + u|M̂|‖_∞) satisfies #{λ < σ − b/β_c} ≤ ν ≤ #{λ ≤ σ + b/β_c}, because bI ⪯ (b/β_c)B;
+ν = k with pairwise disjoint enclosures above which σ − b/β_c lies makes the enclosures the k lowest eigenvalues and
+gives λ_{k+1} ≥ σ − b/β_c. A declared λ_min(B) is a named hypothesis (CERTIFIED_UNDER_HYPOTHESIS).
+
+### 10.7 Certified moments and sum rules (C-07 first part, `moments.py`, `docs/proofs/C-07_moments.md`)
+
+For a certified cluster (P, g stored vectors X, s, η) and Hermitian O: |tr(PM) − tr(XXᴴM)| ≤ (2gs + gη)‖M‖₂ for every
+Hermitian M (trace norm of P − Q̂Q̂ᴴ ≤ 2gs by rank, of Q̂(M² − I)Q̂ᴴ ≤ gη; Hölder), applied to M = OHᵏO with ‖M‖ ≤ ‖O‖²‖H‖ᵏ.
+tr(XXᴴOHᵏO) = Σ_i ⟨Ox_i, HᵏOx_i⟩ is evaluated by one application of O and k of H to the stored vectors with the Theorem 1
+style entrywise bounds γ̇_w|O||x|, γ̇_w|H||z| propagated as D_k = ‖H‖D_{k−1} + ε_k, the polarisation identity for the error
+of the quadratic form, and `fp.exact_dot` for the final inner product; Hᵏ is never formed. Sum rules: m₀ = tr(PO²)/g and
+m₁ − tr(PHPO²)/g = tr(P[O,[H,O]])/(2g) (HP = PH, cyclicity), with tr(PHPO²)/g ∈ [a, b]·m₀; the right-hand sides are
+certified by Theorem 6 on the explicitly formed matrices (product chains with the entrywise bound γ_M|F₁|⋯|F_m| and the
+Hermitian average), and the record states whether the two certified intervals overlap (CERTIFIED) or not (FAILED). The
+continued-fraction part is open (§9.4).

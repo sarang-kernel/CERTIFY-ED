@@ -201,6 +201,7 @@
       "enum": [
         "BUDGET_MEMORY",
         "BUDGET_TIME",
+        "DECLARED_ESTIMATE",
         "DEFAULT_SELECTION",
         "DEPENDENCY_NARROWED",
         "MISSING_DEPENDENCY",

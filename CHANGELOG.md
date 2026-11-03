@@ -16,6 +16,70 @@ before the hashes. Full suite on the merged branch: see `RESULT_integration_3.2.
 env, certify, import, plan, statement, crossing, sweep, levelstats, extrapolate, view, presets, conform, spectrum,
 list, test, reproduce, numbers.
 
+### Variational and dynamics track (roadmap E-05, E-03, C-07 first part; track/variational)
+
+Derivations in `docs/proofs/<id>_<name>.md` with verification scripts (D-59; independent re-derivation pending). The
+three modules are additive (no existing bound changes); their results are standalone JSON records validated by the new
+`schema/statement-record-1.0.schema.json` (`schema.validate_record`), whose status vocabulary adds
+CERTIFIED_UNDER_HYPOTHESIS (a bound that rests on a named, declared hypothesis; the schema requires the hypothesis
+list to be non-empty) and DECLARED (a producer value nothing rests on) to the certificate statuses, so that neither can
+be read as CERTIFIED. New reason code DECLARED_ESTIMATE. `diagnostics.record_next_action` / `annotate_record` give every
+non-certified record statement a `next_action`.
+
+- **E-05 variational certificates for non-ED states.** `certify_ed.variational.certify_variational(operator_or_None, psi,
+  spec=..., gap_hypothesis=..., gap_source=..., gap_certificate=..., declared=...)` and `certify-ed variational`: V1 the
+  Rayleigh upper bound λ₁ ≤ θ (unconditional; the rounded quotient is enclosed through `enclosure.rayleigh_interval`,
+  the model shift σ of a spec is added), V2 the Theorem 1 existence radius r at θ (+σ by Weyl), V3 Temple's lower bound
+  λ₁ ≥ θ − r²/(ρ − θ) for θ < ρ ≤ λ₂ — CERTIFIED when ρ is read from a certificate of a 'lowest' claim on the same
+  operator (S2 and S3 CERTIFIED: second smallest lower endpoint of the enclosures for k ≥ 2, S3's
+  `next_eigenvalue_lower_bound` for k = 1), CERTIFIED_UNDER_HYPOTHESIS with the named hypothesis `declared_gap` (ρ and
+  the producer's source text, repeated in the statement text) when ρ is declared, INCONCLUSIVE when θ_hi ≥ ρ — and V4
+  producer-declared stochastic estimates (energy, variance from samples) with status DECLARED (DECLARED_ESTIMATE).
+  Adapters: a dense vector; an MPS (`state_from_mps`: open-boundary tensors contracted left to right for dimension
+  ≤ 2²², else SIZE_LIMIT) with the entrywise rounding bound γ_M|A⁽¹⁾|⋯|A⁽ᴸ⁾| of the contraction recorded as
+  `contraction_error` and the Rayleigh-quotient difference between the source MPS and the contracted vector (Lemma 5)
+  — the certified statements are about the contracted vector; a sparse CI vector (`state_from_sparse_ci`, exact scatter,
+  duplicate indices refused). The no-underflow scan of the state and operator entries makes V1–V3 INCONCLUSIVE
+  (UNDERFLOW_RISK); a norm too small to resolve gives NOT_CHECKED; matrix-free and non-Hermitian operators are refused.
+  Mathematics: `docs/proofs/E-05_variational.md` (Rayleigh–Ritz, Theorem 1, Temple 1928 / Kato 1949 with the exact
+  hypothesis, the floating-point accounting of θ and r, the MPS contraction bound). Verification: 666 random + 294
+  adversarial cases, 0 violations; negative control (ρ = λ₃ > λ₂ declared on two-level mixtures): the bound is broken
+  in 66/66 cases while the record stays CERTIFIED_UNDER_HYPOTHESIS and names the hypothesis. Tests
+  `tests/test_variational.py` (12): 8-site ring, certificate-sourced ρ (k = 1 and k = 4), false gap hypothesis,
+  orthogonal trial state, mismatched certificate, tiny norms (2⁻⁴⁵⁰ valid, 2⁻⁹⁵⁰ UNDERFLOW_RISK), complex data,
+  non-Hermitian operator refused, MPS (Neel product state, random D = 3, size limit), sparse CI, declared estimates,
+  record schema negative controls, CLI.
+- **E-03 generalized eigenproblems A x = λ B x, B positive definite.** `certify_ed.generalized.certify_generalized(A, B,
+  eigenvalues, eigenvectors, kind='lowest' | 'subset', lambda_min_B=..., lambda_min_B_source=...)`, dense path (n ≤ 4000):
+  G1 a certified lower bound β_c on λ_min(B) from the inertia of B − βI (Bunch–Kaufman LDLᴴ with its backward error; a B
+  whose inertia at shift 0 is negative is refused with UNSUPPORTED_MODEL), G2 per pair |λ − μ| ≤ ‖Ax − μBx‖₂/(√β_c ‖x‖_B)
+  (Theorem 1 for the similar Hermitian matrix L⁻¹AL⁻ᴴ, ‖L⁻¹‖₂ = λ_min(B)^{-1/2}; residual and xᴴBx with the standard-model
+  accounting), G3 completeness of a 'lowest' claim by the inertia of A − σB (Sylvester's law for the congruence
+  L(C − σI)Lᴴ; collar b/β_c for the backward error b of the factorization plus the rounding of forming A − σB) with
+  λ_{k+1} ≥ σ − b/β_c; overlapping enclosures and ν ≠ k are INCONCLUSIVE with the count recorded (`missing_at_least`). A
+  declared λ_min(B) (used only when the inertia is inconclusive) is the named hypothesis `declared_lambda_min_B` and makes
+  every statement CERTIFIED_UNDER_HYPOTHESIS. Mathematics: `docs/proofs/E-03_generalized.md`. Verification against
+  mpmath ground truth (Cholesky, L⁻¹AL⁻ᴴ, exact B⁻¹-norm residuals): 303 random + 100 adversarial cases, 0 violations;
+  negative control (declared λ_min(B) ten times the true one, inertia disabled): the radii undercut the exact residual in
+  40/40 pairs while the record names the hypothesis. Tests `tests/test_generalized.py` (8): random pencils against
+  `scipy.linalg.eigh(A, B)` (real and complex), perturbed vectors, indefinite B refused, wrong eigenvalue, swapped pairs, a
+  missing eigenvalue detected, 'subset', the declared path with a false declaration, size limit, schema.
+- **C-07 first part: certified moments and sum rules.** `certify_ed.moments.certified_moments(H, O, X, s, eta, K, level)` and
+  `moments_from_certificate(cert, H, O, K, members)`: M1 certified intervals for m_k = tr(P O Hᵏ O)/g, k = 0..K, on a
+  CERTIFIED S4 cluster — O applied once and H k times to the stored vectors (Hᵏ is never formed), the rounding of every
+  application accounted in the Theorem 1 style (entrywise γ̇_w|H||z| bounds, propagated with ‖H‖; `fp.exact_dot` for the
+  quadratic form), plus the projector term (2gs + gη)‖O‖²‖H‖ᵏ from the trace-norm bound on P − XXᴴ; M2 the zeroth-moment
+  sum rule m₀ = tr(PO²)/g and M3 the f-sum rule m₁ − tr(PHPO²)/g = tr(P[O,[H,O]])/(2g), each certified by a second route
+  (Theorem 6 on the explicitly formed O² and [O,[H,O]] with their product rounding bounds) and reported as CERTIFIED when
+  the two intervals overlap and FAILED when they are disjoint (consistency statements, not new theorems; FAILED is
+  added to the record status vocabulary for them); M4 the continued-fraction (Lanczos) bounds, NOT_IMPLEMENTED — the
+  open part, described in `docs/theory.md` §9.4 and the scope matrix. Mathematics: `docs/proofs/C-07_moments.md`.
+  Verification: 418 random + 192 adversarial cases, 0 violations (exact rationals for the rounding term, mpmath for the
+  exact projector moments); negative controls: s understated 10⁴× breaks the enclosure in 132/138 moments, a random
+  orthonormal X with s = η = 0 claimed in 138/138, a wrong level interval makes M3 FAILED in 40/40. Tests
+  `tests/test_moments.py` (6): 8-site ring (ground state, triplet cluster, rotated basis), the negative controls, a
+  complex operator with the exact-rational rounding check, underflow and input checks, schema.
+
 ### New statements track (roadmap C-03, C-04, E-04, C-12, C-13, E-07; track/new-statements)
 
 Every statement of this track has a derivation in `docs/proofs/<id>_<name>.md` with its verification script
