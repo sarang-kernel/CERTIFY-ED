@@ -45,3 +45,34 @@ def test_exact_bracket_statement_names_the_exact_bracket():
     assert rec["bracket"][0] <= float(lam[0]) <= rec["bracket"][1]          # the display interval holds a 2nd eigenvalue
     assert "exact bracket [4503599627370497/4503599627370496, 2/1]" in rec["statement"]
     assert "in [1, 2]" not in rec["statement"].split("(about")[0]
+
+
+# --- E-04 (docs/proofs/E-04_parameter_intervals.md, Lemma 3 applied at interior grid points) ----------------------
+# Two scalar scans: a: F_0(c) = -1.9951 + c on [0, 1] (B = 1) with H_a(1) = -1.0951, i.e. an affinity defect
+# d_0 = 0.1; b: H_b(c) = -c exactly (B = 1, d = 0). The segment-0 branches cross at c* = 0.99755, inside the last
+# sample interval [0.995, 1] before the grid point. Before the fix the criterion used the right-segment tube at c = 1
+# (H_a(1), not F_0(1)) and certified '<' on [0, 1.045]; with the defect added to the slack the interval is not
+# separated.
+def _scalar_scan(cs, B, defects, values):
+    pts = [{"index": i, "c": c, "lower": [v], "upper": [v], "rank_certified": True, "next_eigenvalue_lower_bound": None}
+           for i, (c, v) in enumerate(zip(cs, values))]
+    return {"parameter": "c", "couplings": cs, "B": B, "affinity_defects": defects, "points": pts,
+            "record_sha256": "synthetic"}
+
+
+def test_crossing_criterion_accounts_for_the_affinity_defect_at_interior_grid_points():
+    from certify_ed.sweep import certified_crossing_interval
+    ra = _scalar_scan([0.0, 1.0, 2.0], 1.0, [0.1, 0.0], [-1.9951, -1.0951, -0.0951])
+    rb = _scalar_scan([0.0, 1.0, 2.0], 1.0, [0.0, 0.0], [0.0, -1.0, -2.0])
+    out = certified_crossing_interval(ra, 0, rb, 0, samples_per_segment=200)
+    c_star = 1.9951 / 2                                   # a(c) - b(c) = -1.9951 + 2c = 0 on segment 0
+    for run in out["runs"]:
+        lo, hi = run["interval"]
+        if run["relation"] == "<" and lo < 1.0:          # segment 0: nothing certified '<' beyond its crossing
+            assert hi <= c_star + 1e-12, run
+    bad = [run for run in out["runs"] if run["relation"] == "<" and run["interval"][0] < 1.0 and run["interval"][1] > 0.995 + 1e-12]
+    assert not bad, bad                                   # before the fix: [{'relation': '<', 'interval': [0.0, 1.045]}]
+    # the same scans with d_0 = 0 are a consistent affine family for which '<' on [0, 0.995] is right
+    ra0 = _scalar_scan([0.0, 1.0, 2.0], 1.0, [0.0, 0.0], [-1.9951, -0.9951, 0.0049])
+    out0 = certified_crossing_interval(ra0, 0, rb, 0, samples_per_segment=200)
+    assert out0["runs"][0]["relation"] == "<" and out0["runs"][0]["interval"][1] >= 0.99

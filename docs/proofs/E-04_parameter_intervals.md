@@ -179,4 +179,4 @@ dense block diagonalisation; the CLI.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (1 049 random + 107 adversarial cases, 0 violations; negative
-controls detected); independent re-derivation: pending (Phase 2); Sarang's check (D-12): pending.
+controls detected); independent re-derivation: done 2026-10-30 (fresh-context session, verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
