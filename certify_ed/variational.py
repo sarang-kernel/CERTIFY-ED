@@ -17,7 +17,8 @@ about the lowest eigenvalue lambda_1 of H and one declaration (docs/proofs/E-05_
                       recorded as DECLARED with reason code DECLARED_ESTIMATE; nothing rests on them
 
 Status vocabulary of these records (distinct from the certificate statuses so that a hypothesis is never read
-as a certification): CERTIFIED, CERTIFIED_UNDER_HYPOTHESIS, DECLARED, INCONCLUSIVE, NOT_CHECKED.
+as a certification): CERTIFIED, CERTIFIED_UNDER_HYPOTHESIS, DECLARED, INCONCLUSIVE, NOT_CHECKED, FAILED (the last
+only for refuted consistency statements, C-07).
 
 The statements concern the operator as stored (a matrix) or, for a spec, the operator the spec defines in exact
 arithmetic: the floating-point build differs from it by at most the model shift sigma (certify._builder_shift,
@@ -42,7 +43,7 @@ from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, norm2_upper, sub
 from .spec import ModelSpec, canonical_json
 
 VARIATIONAL_SCHEMA = "certify-ed/variational/1.0"
-VARIATIONAL_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED")
+VARIATIONAL_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED", "FAILED")
 VARIATIONAL_STATEMENT_IDS = ("V1.rayleigh_upper", "V2.existence", "V3.temple_lower", "V4.declared_estimates")
 MPS_MAX_DIM = 2 ** 22
 

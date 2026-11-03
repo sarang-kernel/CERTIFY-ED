@@ -56,7 +56,8 @@
               "CERTIFIED_UNDER_HYPOTHESIS",
               "DECLARED",
               "INCONCLUSIVE",
-              "NOT_CHECKED"
+              "NOT_CHECKED",
+              "FAILED"
             ]
           },
           "summary": {

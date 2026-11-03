@@ -415,7 +415,7 @@ def _bundle_schema() -> dict:
 # not certificates: their status vocabulary adds CERTIFIED_UNDER_HYPOTHESIS (a bound that rests on a named, declared
 # hypothesis) and DECLARED (a producer value that nothing rests on), and every statement under hypothesis lists it.
 RECORD_SCHEMAS = ("certify-ed/variational/1.0", "certify-ed/generalized/1.0", "certify-ed/moments/1.0")
-RECORD_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED")
+RECORD_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED", "FAILED")
 
 
 def _record_schema() -> dict:
