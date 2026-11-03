@@ -38,8 +38,7 @@ which does not imply absHX_up_i ≥ a_i. Exact change to the proof (no code chan
 for real data and ≥ a_i(1 − 8wu²) for complex data", and in Step 3 note that the complex slack
 g(1 − 3u) = 2γ_{w+6}(1 − 3u) ≥ γ_{w+4}(1 + 8wu²) absorbs it (true for (w + 6)u ≤ 1/4). Alternative (code, looser
 bound, allowed immediately): in `enclosure._rounding_bound` use `gw = gamma(adapter.width + 3)` when `cplx`,
-which restores absHX_up_i ≥ a_i(1 + u) for complex data by the (Λ5) argument with w + 2 in place of w. Not
-implemented on this branch (the choice between the two is the author's); the verification script's stage check
+which restores absHX_up_i ≥ a_i(1 + u) for complex data by the (Λ5) argument with w + 2 in place of w. IMPLEMENTED on dev/3.2 (2026-11-03, lead integration: `gamma(width + 3)` for complex data, test `test_rounding_bound_uses_width_plus_three_for_complex_data`; a note in the document's section 3); the verification script's stage check
 (S2) should then include complex cases with tuned moduli (see `independent/adversarial_thm1_fp-accounting.py`,
 family `complex_S2_targeted`).
 

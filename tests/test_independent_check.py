@@ -76,3 +76,26 @@ def test_crossing_criterion_accounts_for_the_affinity_defect_at_interior_grid_po
     ra0 = _scalar_scan([0.0, 1.0, 2.0], 1.0, [0.0, 0.0], [-1.9951, -0.9951, 0.0049])
     out0 = certified_crossing_interval(ra0, 0, rb, 0, samples_per_segment=200)
     assert out0["runs"][0]["relation"] == "<" and out0["runs"][0]["interval"][1] >= 0.99
+
+
+def test_rounding_bound_uses_width_plus_three_for_complex_data():
+    """thm1 correction (VERDICTS.md): for complex data the division constant is gamma_{w+3}, so the entrywise bound
+    E is never smaller than the real-data formula would give; a real operator with real vectors is unchanged."""
+    import numpy as np
+    from certify_ed.enclosure import OperatorAdapter, _rounding_bound
+    from certify_ed.fp import U, gamma, gamma_dot
+    rng = np.random.default_rng(7)
+    A = rng.standard_normal((6, 6)); A = A + A.T
+    x = rng.standard_normal((6, 2))
+    ad = OperatorAdapter(A)
+    E_real = _rounding_bound(ad, np.array([0.3, -1.2]), x)
+    # the real formula, reproduced
+    absHX = np.abs(A) @ np.abs(x)
+    ref = gamma_dot(ad.width + 2, False) * (absHX / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(x) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
+    assert np.allclose(E_real, ref, rtol=1e-12, atol=0)
+    xc = x + 1j * rng.standard_normal((6, 2))
+    E_cplx = _rounding_bound(ad, np.array([0.3, -1.2]), xc)
+    absHXc = np.abs(A) @ np.abs(xc)
+    ref_old = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
+    ref_new = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 3)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
+    assert np.all(E_cplx >= ref_old) and np.allclose(E_cplx, ref_new, rtol=1e-12, atol=0)

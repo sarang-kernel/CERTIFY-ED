@@ -294,10 +294,14 @@ class ResidualReport:
 
 def _rounding_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray, absHX: Optional[np.ndarray] = None):
     """E = gamma_dot(w+2) (|H||X| / (1 - gamma_{w+1}) (1 + 4u) + |X| |mu|) (1 + 4u), componentwise, as in the
-    Theorem-1 accounting (docs/theory.md section 1). Computed in place on `absHX` when given."""
+    Theorem-1 accounting (docs/theory.md section 1); for complex data gamma_{w+3} replaces gamma_{w+1} (the two extra
+    modulus roundings). Computed in place on `absHX` when given."""
     cplx = adapter.complex or np.iscomplexobj(X)
     g = gamma_dot(adapter.width + 2, cplx)
-    gw = gamma(adapter.width + 1)
+    # real data: |H||x| is formed with w products and w - 1 additions (gamma_{w+1} covers them). Complex data: the
+    # moduli |a_ij| and |x_j| are each rounded once more (hypot), so the division needs gamma_{w+3} for
+    # absHX_up >= (|H||x|)_i to hold (docs/proofs/VERDICTS.md, thm1 correction; looser than before)
+    gw = gamma(adapter.width + (3 if cplx else 1))
     E = adapter.abs_matvec(X) if absHX is None else absHX
     if E.ndim == 1:
         E = E[:, None]

@@ -148,6 +148,9 @@ error, norm2_upper on the norm, rel on the radius) and `xl` a lower bound on ‖
 `tests/test_theorem1_accounting.py` pins the stages on a fixed 3 × 3 case and random cases in exact rational
 arithmetic; `tests/test_backlog_proofs.py::test_theorem1_accounting_slack_constants` pins (Λ4)–(Λ6) at a few n, w.
 
+
+**Correction after the independent re-derivation (2026-11-03, `docs/proofs/VERDICTS.md`).** For complex data the moduli |a_ij| and |x_j| are each rounded once (hypot), so (S2) `absHX_up_i >= a_i` needs the division constant γ_{w+3} in place of γ_{w+1}; `enclosure._rounding_bound` now uses `gamma(width + 3)` when the data are complex (looser bound; real data unchanged). The (Λ5) argument then applies with w + 2 in place of w. Section 1 (S2) and Step 2 of section 2 are to be read with this constant for complex data; Sarang's check (D-12) remains pending.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_thm1_fp-accounting.py` (exact rationals: `fractions.Fraction` for every stored number,
