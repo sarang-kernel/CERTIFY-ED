@@ -164,8 +164,17 @@ RESIDUAL_BLOCK_FACTOR = 1.2
 
 
 def residual_threads() -> int:
+    """Threads for the block products of ldl_residual.sparse_ldl_residual_bound. Default 1 (3.2.1): the bound does not
+    depend on the thread count, and under a committed-memory cap (job object / RLIMIT_AS) several concurrent sparse
+    products can exhaust memory inside SciPy's C++ kernels, which ends the process (access violation) instead of
+    raising MemoryError (3.2.0 evidence run, E4 W4 4x4 J2 = 0.5 under 5 GiB). Opt in with the environment variable
+    CERTIFY_ED_RESIDUAL_THREADS=<n> (capped at the CPU count and 8)."""
     import os
-    return max(1, min(8, os.cpu_count() or 1))
+    try:
+        want = int(os.environ.get("CERTIFY_ED_RESIDUAL_THREADS", "1"))
+    except ValueError:
+        want = 1
+    return max(1, min(8, want, os.cpu_count() or 1))
 
 
 def sparse_residual_mb(n: int, nnz: int, complex_: bool = False, threads: Optional[int] = None,

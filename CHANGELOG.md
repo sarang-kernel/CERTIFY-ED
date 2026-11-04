@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
+
+One robustness fix found by the 3.2.0 evidence run; no bound, status rule or record field changes.
+
+- `cost.residual_threads` (used by `ldl_residual.sparse_ldl_residual_bound`, the D-01 a-posteriori S3 residual) now
+  returns 1 unless `CERTIFY_ED_RESIDUAL_THREADS=<n>` asks for more. In the 3.2.0 run, E4 W4 (J1-J2 square 4x4, J2 = 0.5,
+  dimension 12870) under the experiment's 5 GiB job-object cap ended with an access violation inside SciPy's sparse
+  product while eight row blocks of the residual were formed concurrently: an allocation failure in a worker thread
+  under a committed-memory cap is not turned into `MemoryError`. With one thread the same case certifies S3 under the
+  cap (gap >= 0.287); without the cap both settings certify. The bound is independent of the thread count (test
+  `test_residual_bound_does_not_depend_on_the_default_thread_count`), so no certified quantity changes. The 3.2.0 run's
+  other steps are unaffected; the 3.2.1 run repeats every step from this tag (D-44).
+
 ## [3.2.0] — 2026-11-04 (tag `v3.2.0` on `dev/3.2`; evidence run pending, see RESULT_integration_3.2.md)
 
 `__version__` = 3.2.0 (3.2.0.dev0 during development: every entry below was written under that name). Summary of the release: the

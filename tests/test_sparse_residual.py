@@ -4,6 +4,8 @@ Pins: the sandwich of Lemma 4 with the a-posteriori beta on planted-inertia and 
 truth: dense eigh); the entrywise inequality against an exact rational residual; determinism across thread counts
 and block sizes; the memory gate; the adversarial cases; and the negative controls (a corrupted factor or pivot
 changes the residual and never produces a wrong count with a small beta)."""
+import os
+
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -230,3 +232,30 @@ def test_negative_control_planted_wrong_count_in_certify_is_not_certified():
     assert all(cnt["method"] == "sparse-superlu-residual" for cnt in s3["evidence"].get("counts", []))
     ok = ce.quick(H, w[:5], V[:, :5], spec, inertia_method="sparse")   # k = 5 closes the lowest multiplet
     assert [s for s in ok.statements if s["id"] == "S3.completeness"][0]["status"] == "CERTIFIED"
+
+
+def test_residual_threads_default_to_one_and_opt_in_by_environment(monkeypatch):
+    """3.2.1: the a-posteriori residual runs its block products on one thread unless CERTIFY_ED_RESIDUAL_THREADS asks
+    for more (under a committed-memory cap, concurrent sparse products crashed the process in the 3.2.0 run, E4 W4)."""
+    from certify_ed.cost import residual_threads
+    monkeypatch.delenv("CERTIFY_ED_RESIDUAL_THREADS", raising=False)
+    assert residual_threads() == 1
+    monkeypatch.setenv("CERTIFY_ED_RESIDUAL_THREADS", "4")
+    assert residual_threads() == max(1, min(4, 8, os.cpu_count() or 1))
+    monkeypatch.setenv("CERTIFY_ED_RESIDUAL_THREADS", "not-a-number")
+    assert residual_threads() == 1
+
+
+def test_residual_bound_does_not_depend_on_the_default_thread_count(monkeypatch):
+    """The recorded bound is identical whether the default (1) or an opt-in count is used."""
+    import numpy as np
+    import scipy.sparse as sp
+    from certify_ed.inertia import inertia_sparse
+    rng = np.random.default_rng(3)
+    n = 300
+    A = sp.random(n, n, density=0.02, random_state=rng, format="csr"); A = (A + A.T).tocsc() + sp.identity(n) * 5
+    monkeypatch.delenv("CERTIFY_ED_RESIDUAL_THREADS", raising=False)
+    r1 = inertia_sparse(A, 0.1)
+    monkeypatch.setenv("CERTIFY_ED_RESIDUAL_THREADS", "8")
+    r8 = inertia_sparse(A, 0.1)
+    assert r1.beta == r8.beta and r1.negative == r8.negative

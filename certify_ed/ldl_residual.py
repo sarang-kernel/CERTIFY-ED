@@ -29,7 +29,6 @@ itself (sum_k nnz(L_{:,k})^2), done in row blocks (memory bounded by `block_mb`)
 
 from __future__ import annotations
 
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, asdict
@@ -115,7 +114,8 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     g_i = np.array([gmap[int(ci)] for ci in c])
     rounding_rows = g_i * G1
     bytes_per = 16 if cplx else 8
-    nth = max(1, int(threads)) if threads is not None else max(1, min(8, os.cpu_count() or 1))
+    from .cost import residual_threads
+    nth = max(1, int(threads)) if threads is not None else residual_threads()
     # the partition depends on block_mb and on L only (not on the thread count), so that the recorded bound is
     # the same on every machine: the blocks are reduced in block order
     blocks = _row_blocks(n, L, bytes_per, block_mb if block_mb is not None else DEFAULT_BLOCK_MB, min_block_rows)
