@@ -19,6 +19,8 @@ can change only by the documented bound changes (listed per track below) and the
 - Appendix A verification script run after the user's approval (386 random + 681 adversarial, 0 violations).
 - Figures regenerated from the final tree: `fig_scope_vs_survey` (3.2 scope), `fig_rounding_accounting` (INT-05 terms),
   `fig_roadmap_progress` (status 2026-11-03: 43 of 78 items, 270 of 470 points).
+- Release suite 1168 passed / 8 skipped; 16-mutant sample 10 killed, the two reachable survivors (exact_sectors weights branch,
+  eigenspace guard) turned into tests, the other four equivalent or heuristic (RESULT_integration_3.2.md).
 - Known limits carried into the release notes: C-07 continued-fraction bounds, C-13 CLI, C-16 sector path, `exact_bracket`
   dimension cap 600, D-01 out-of-core, verifier scope (no sector/complex/vectorless paths), E6 survivors of the 3.1.0 run
   awaiting verdicts.

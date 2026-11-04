@@ -114,3 +114,35 @@ def test_real_spec_with_complex_vectors_takes_the_wider_rounding_constant():
     rr = residuals(OperatorAdapter(A), w[:2], xr)
     rc = residuals(OperatorAdapter(A), w[:2], xc)
     assert np.all(np.asarray(rc.upper) >= np.asarray(rr.upper))
+
+
+# --- 3.2.0 mutation-sample survivors (RESULT_integration_3.2.md): the two reachable-but-untested paths ---
+
+def test_check_commutes_reports_a_generator_that_does_not_preserve_the_weights():
+    """exact_sectors.check_commutes, weight branch: a state map that permutes states of different scaling weights
+    returns (False, '<name> (does not preserve the scaling weights)') instead of raising (mutant Add->Sub at the
+    string concatenation survived the 3.2.0 sample)."""
+    import types
+    import numpy as np
+    from certify_ed.exact_sectors import check_commutes
+    ex = types.SimpleNamespace(rows=np.array([0, 1]), cols=np.array([0, 1]), re=np.array([1, 2]), im=np.array([0, 0]),
+                               weights=np.array([1, 2]), den=1)
+    group = types.SimpleNamespace(gen_maps=[(np.array([1, 0]), np.array([1, 1]))],
+                                  gens=[types.SimpleNamespace(name="swap")])
+    ok, why = check_commutes(ex, group)
+    assert ok is False and why == "swap (does not preserve the scaling weights)"
+
+
+def test_certify_eigenspace_without_an_alternative_bound_uses_theorem_6_only():
+    """eigenspace.certify_eigenspace with sin_theta_alt None or without a 'bound' key: the Theorem 6 bound alone
+    (mutant And->Or at the guard survived the 3.2.0 sample; it would raise on None)."""
+    import numpy as np
+    from certify_ed.eigenspace import certify_eigenspace
+    rng = np.random.default_rng(5)
+    A = rng.standard_normal((6, 6)); A = A + A.T
+    w, V = np.linalg.eigh(A)
+    X = V[:, :2]
+    c0 = certify_eigenspace(X, [0, 1], w[:2], rho=1e-12, eta=1e-15, separation=max(w[2] - w[1], 1e-3), sin_theta_alt=None)
+    c1 = certify_eigenspace(X, [0, 1], w[:2], rho=1e-12, eta=1e-15, separation=max(w[2] - w[1], 1e-3), sin_theta_alt={})
+    assert c0 is not None and c1 is not None
+    assert c0.sin_theta == c1.sin_theta

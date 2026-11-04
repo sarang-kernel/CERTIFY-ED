@@ -60,3 +60,23 @@ Merged into `dev/3.2` on ac52920: track/variational (fda4d74; E-05, E-03, C-07 f
 Full suite at e69bca5 (+2e1dc59 for subprocess tests): 1161 passed, 8 skipped, 8 warnings in 6404 s (1:46:44, run concurrently with the Appendix A verification script). ruff clean (certify_ed tests experiments conformance corpus docs/proofs verifier). Schema in sync (certificate-2.1, producer-bundle-1.0, statement-record-1.0).
 
 Open: independent re-derivation of the five Phase 2 documents (E-05, E-03, C-07, D-01, D-02) in progress on track/independent-check-2; `verify_appA_model-shift.py` running (user approved 2026-11-03); E6 survivors of the 3.1.0 run (Sarang); figures fig_scope_vs_survey / fig_rounding_accounting to regenerate from the final tree.
+
+
+## 3.2.0 release sample (2026-11-04)
+
+Full suite at e1ebaed (release tree, idle machine, `--basetemp` in the workspace): **1168 passed, 8 skipped, 8 warnings in 2582.80 s (43:02)**.
+
+`experiments/e6_mutation.py 16 2` at e1ebaed (record `experiments/results/e6_mutation_20261104_043326/`; baseline 2355 s): **10 of 16 killed** (3.2.0.dev0 sample: 13 of 16; 3.1.0's 64-mutant sample: 38 of 64). An earlier attempt at b832d8e aborted because the baseline failed: `tests/test_whole_spectrum.py::test_enclosure_radii_bit_identical_complex_operator` compared complex-data radii bit for bit against the frozen oracle after the gamma_{w+3} change (fixed in e1ebaed: the complex comparison is >= and within 1 + 1e-12; real data stay bit-identical). The full suite of 2026-11-03 (1161 passed) had been started before that change was imported and did not see it; the release suite above does.
+
+Survivors, with the lead's reading (suggestions, not verdicts, RA-25):
+
+| mutant | reading |
+|---|---|
+| `construct.py:220` `== 0.0` → `== 1.0` in `hermitian_part`'s early return | equivalent: when H equals its adjoint, (H + Hᴴ)/2 == H exactly, so the mutant's extra symmetrisation changes no entry |
+| `certify.py:1039` `bad_x[:8]` → `[:9]` | message text only (how many offending column indices are listed) |
+| `exact_sectors.py:213` string `+` → `-` in the weights-violation reason | reachable error path never exercised: a generator that does not preserve the scaling weights would raise instead of returning (False, reason). Test added: `test_check_commutes_reports_a_generator_that_does_not_preserve_the_weights` (fails on the mutant) |
+| `sectors.py:179` dropped `not` in `restrict_to_u1` | outcome-equivalent: for a single-sector support the mutant returns None (the caller falls back to the full-space operator, slower but the same statements); for a multi-sector support it proceeds and `st.index_of` reports missing states, returning None at line 194 |
+| `checker.py:521` `>` → `>=` in `top_excess` | heuristic: triggers the extra witness point also when the count equals the claim; FAILED still needs `w["count"] > w["claimed_below"]` at line 536 (unmutated), so no status can change wrongly |
+| `eigenspace.py:100` `and` → `or` in the `sin_theta_alt` guard | reachable robustness path: `certify_eigenspace(..., sin_theta_alt=None)` would raise. Test added: `test_certify_eigenspace_without_an_alternative_bound_uses_theorem_6_only` (fails on the mutant) |
+
+Killed: localops.py:193, certify.py:1142, certify.py:1155, certify.py:1213, fp.py:333, localops.py:41, fp.py:239, spec.py:247, localops.py:186, enclosure.py:624 (first failing tests in the run log). The 64-mutant sample belongs to the 3.2.0 evidence run (`run.py --full --with-mutation`).
