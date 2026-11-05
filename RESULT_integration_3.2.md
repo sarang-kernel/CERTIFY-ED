@@ -72,7 +72,7 @@ Survivors, with the lead's reading (suggestions, not verdicts, RA-25):
 
 | mutant | reading |
 |---|---|
-| `construct.py:220` `== 0.0` → `== 1.0` in `hermitian_part`'s early return | equivalent: when H equals its adjoint, (H + Hᴴ)/2 == H exactly, so the mutant's extra symmetrisation changes no entry |
+| `construct.py:220` constant `0` → `1` in `asym.nnz == 0` of `hermitian_part`'s early return | equivalent: for an exactly Hermitian H the second clause (`abs(asym).max() == 0.0`) still returns H, for a stored explicit zero the mutant's `nnz == 1` returns H as the original did, and otherwise both paths symmetrise; no entry changes |
 | `certify.py:1039` `bad_x[:8]` → `[:9]` | message text only (how many offending column indices are listed) |
 | `exact_sectors.py:213` string `+` → `-` in the weights-violation reason | reachable error path never exercised: a generator that does not preserve the scaling weights would raise instead of returning (False, reason). Test added: `test_check_commutes_reports_a_generator_that_does_not_preserve_the_weights` (fails on the mutant) |
 | `sectors.py:179` dropped `not` in `restrict_to_u1` | outcome-equivalent: for a single-sector support the mutant returns None (the caller falls back to the full-space operator, slower but the same statements); for a multi-sector support it proceeds and `st.index_of` reports missing states, returning None at line 194 |

@@ -6,10 +6,10 @@ Classes: equivalent (no output can change), looser (the bound only grows), heuri
 
 | mutant | mutation | class | reading | suggested action |
 |---|---|---|---|---|
-| `construct.py:220` | 0.0 -> 1.0 in hermitian_part's early return | equivalent | when H == H^H exactly, (H + H^H)/2 == H bit for bit | none |
+| `construct.py:220` | constant 0 -> 1 in `asym.nnz == 0` of hermitian_part's early return | equivalent | the second clause (`abs(asym).max() == 0.0`) still returns H for an exactly Hermitian H (and for a stored explicit zero the mutant's `nnz == 1` returns H as the original did); otherwise both symmetrise | none |
 | `fp.py:40` | drop unary minus in _SQRT_HALF_2M537 | equivalent (dead constant) | the constant is defined and never used (git grep) | delete the constant |
 | `certify.py:640` | and -> or (count == k, not distinct) after the shift loop | equivalent status | reached only when no CERTIFIED return happened; with `or` the same INCONCLUSIVE is returned with a different reason text | none, or pin the reason text |
-| `checker.py:535` | gd - dd -> gd + dd in the witness separation test | test gap, false FAILED possible | a weaker separation condition can mark a witness separated and turn INCONCLUSIVE into FAILED; never a false CERTIFIED | test: witness point within dd of a component on the left side |
+| `checker.py:535` | Add->Sub: `lo > gd + dd` -> `lo > gd - dd` in the witness separation test (right-hand clause) | test gap, false FAILED possible | a weaker separation condition (a component whose lower edge lies within dd to the right of the witness point now counts as separated) can turn INCONCLUSIVE into FAILED; never a false CERTIFIED | test: a component whose lower edge lies in (gd - dd, gd + dd] |
 | `eigenspace.py:154` | sin_theta ** 2 -> sin_theta * 2 | looser | s < 1, so 2 s >= s^2: the label bound only grows | none |
 | `checker.py:234` | RE != 0 -> RE != 1 in the exact-matrix deduplication | needs inspection | entries whose scaled real part equals 1 (and imaginary part 0) would be dropped; S6 would then report a false FAILED (the residual of the claimed vector is nonzero), not a false CERTIFIED. Survival means no test drives this reduceat path with such entries, or the path is reached only for duplicated (r, c) pairs | test: a spec with duplicated terms whose summed scaled entry is 1 |
 | `inertia.py:129` | gamma_dot(2n + 2) -> gamma_dot(3n + 2) | looser | larger rounding constant for the dense LDL^T residual | none |

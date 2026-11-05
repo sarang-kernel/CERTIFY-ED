@@ -55,8 +55,8 @@ float-differs 19, stack-dependent 77, fp-statistic 13, text-numbers 19, sample-d
 The certified application results are unchanged: **E9 (Kranitz-Penc crown) 893 of 893 compared leaves identical; E10 (Pomata-Wei
 AKLT) 333 of 333 identical** - the exact lower bound -0.5501582988212038 for the S = 1/2 reduced model, the all-singlet upper bound
 -1.6380246425131773 for S = 1 at the printed couplings, and every certified eta. E7 (exact benchmarks) 336 identical; E1 (failure
-matrix) identical statuses. The float-differs leaves (19) are 3.2 radii in E3/E4 that moved by less than 1e-9 relative with the
-Theorem 2 constant rho (docs/proofs/thm2_polar-factor.md; cluster radii can only shrink) and the INT-05 additive terms (they can only
+matrix) identical statuses. The float-differs leaves (19: E3 11, E4 7, E1 1, every one a radius or bound that shrank by less than 1e-9
+relative, the largest 9.3e-10) are 3.2 radii that moved with the Theorem 2 constant rho (docs/proofs/thm2_polar-factor.md; cluster radii can only shrink) and the INT-05 additive terms (they can only
 grow radii by multiples of 2^-1074); none changes a status.
 
 ## E6 survivors
