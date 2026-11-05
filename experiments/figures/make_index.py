@@ -108,12 +108,25 @@ def caption_failure_matrix(n):
 def caption_cost_memory(n):
     a = n[RUN_KEY_A]
     b = n[RUN_KEY_B]
-    return (f"Certifier wall time (a) and peak memory (b) against block dimension for the {a['blocks']} E2 blocks "
+    na, nb = RUN_KEY_A.split('(')[0].strip(), RUN_KEY_B.split('(')[0].strip()
+    same = (a['blocks'] == b['blocks'] and a['S3_certified'] == b['S3_certified'] and a['S3_not_checked'] == b['S3_not_checked'])
+    if same:
+        counts = (f"On both runs {a['blocks']} blocks are plotted, S3 certified for {a['S3_certified']} of them up to dimension "
+                  f"{a['max_dim_S3_certified']:,} and not checked for {a['S3_not_checked']}; ")
+    else:
+        miss_a, miss_b = n.get("rows_without_certifier_data_A", 0), n.get("rows_without_certifier_data_B", 0)
+        counts = (f"Plotted: {a['blocks']} blocks of {na} (S3 certified for {a['S3_certified']} up to dimension "
+                  f"{a['max_dim_S3_certified']:,}, not checked for {a['S3_not_checked']}"
+                  + (f"; {miss_a} further rows hit the experiment's certifier limit and record no time or memory" if miss_a else "")
+                  + f") and {b['blocks']} blocks of {nb} (S3 certified for {b['S3_certified']} up to dimension "
+                  f"{b['max_dim_S3_certified']:,}, not checked for {b['S3_not_checked']}"
+                  + (f"; {miss_b} rows without certifier data" if miss_b else "") + "); ")
+    return (f"Certifier wall time (a) and peak memory (b) against block dimension for the E2 blocks "
             f"on {TWO}: {RUN_A} and {RUN_B}. Filled markers: S3 (completeness) CERTIFIED; open markers: S3 "
-            f"NOT_CHECKED because the factorization did not fit under the {n['memory_cap_GiB']:g} GiB cap. On both "
-            f"runs S3 is certified for {a['S3_certified']} blocks up to dimension {a['max_dim_S3_certified']:,} and "
-            f"not checked for {a['S3_not_checked']}; the largest block has dimension {a['largest_dim']:,}. Longest "
-            f"certifier run: {a['max_seconds']:.0f} s ({RUN_KEY_A.split('(')[0].strip()}), {b['max_seconds']:.0f} s ({RUN_KEY_B.split('(')[0].strip()}); peak memory "
+            f"NOT_CHECKED because the factorization did not fit under the {n['memory_cap_GiB']:g} GiB cap. "
+            + counts +
+            f"the largest block has dimension {a['largest_dim']:,}. Longest "
+            f"certifier run: {a['max_seconds']:.0f} s ({na}), {b['max_seconds']:.0f} s ({nb}); peak memory "
             f"{a['max_mib']:.0f} MiB and {b['max_mib']:.0f} MiB. Time is `certifier.total`, memory "
             f"`certifier.maxrss_mb`, both read from the records.")
 

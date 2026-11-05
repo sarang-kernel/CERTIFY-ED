@@ -61,7 +61,7 @@ Fifteen results checked by three practices (E1 record, run_full_20261022 (Window
 
 ![fig_cost_memory](fig_cost_memory.png)
 
-Certifier wall time (a) and peak memory (b) against block dimension for the 11 E2 blocks on two stacks: run_full_20261022 (Windows, certify-ed 3.1.0 evidence run) and run_full_20261021 (Linux, certify-ed 3.0.0 run). Filled markers: S3 (completeness) CERTIFIED; open markers: S3 NOT_CHECKED because the factorization did not fit under the 4.5 GiB cap. On both runs S3 is certified for 7 blocks up to dimension 12,870 and not checked for 4; the largest block has dimension 112,720. Longest certifier run: 793 s (Windows, certify-ed 3.1.0), 495 s (Linux, certify-ed 3.0.0); peak memory 4213 MiB and 4163 MiB. Time is `certifier.total`, memory `certifier.maxrss_mb`, both read from the records.
+Certifier wall time (a) and peak memory (b) against block dimension for the E2 blocks on two stacks: run_full_20261022 (Windows, certify-ed 3.1.0 evidence run) and run_full_20261021 (Linux, certify-ed 3.0.0 run). Filled markers: S3 (completeness) CERTIFIED; open markers: S3 NOT_CHECKED because the factorization did not fit under the 4.5 GiB cap. On both runs 11 blocks are plotted, S3 certified for 7 of them up to dimension 12,870 and not checked for 4; the largest block has dimension 112,720. Longest certifier run: 793 s (Windows, certify-ed 3.1.0), 495 s (Linux, certify-ed 3.0.0); peak memory 4213 MiB and 4163 MiB. Time is `certifier.total`, memory `certifier.maxrss_mb`, both read from the records.
 
 - data source: e2_cost_20261022_200335/data.json of run_full_20261022 (Windows, certify-ed 3.1.0 evidence run); e2_cost_20261021_070755/data.json of run_full_20261021 (Linux, certify-ed 3.0.0 run)
 - script: `experiments/figures/fig_cost_memory.py`
