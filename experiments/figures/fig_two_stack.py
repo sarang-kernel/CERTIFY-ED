@@ -1,6 +1,7 @@
 """E3 fig_two_stack: record-by-record comparison classes of two runs, per experiment.
 
-Reads compare_vs_<other run>.csv at the root of the evidence run (written by experiments/compare_runs.py).
+Reads compare_vs_<other run>.csv at the root of the evidence run (written by experiments/compare_runs.py);
+with --results-b the CSV named after that run is preferred, else the first in sorted order.
 Each leaf of each experiment's data.json is in exactly one class: same; float-differs (relative difference
 <= 1e-9); stack-dependent (a named floating-point statistic or a limit within 10 %); fp-statistic
 (a statistic of floating-point residuals, compared by value only); text-numbers (the same sentence with
@@ -76,6 +77,10 @@ def draw(counts, title_runs):
 def main():
     a = C.parse_args(__doc__.splitlines()[0])
     files = sorted(glob.glob(os.path.join(a.results, "compare_vs_*.csv")))
+    if a.results_b:  # prefer the comparison against the run named by --results-b / CERTIFY_RESULTS_B
+        pref = os.path.join(a.results, "compare_vs_" + os.path.basename(os.path.normpath(a.results_b)) + ".csv")
+        if pref in files:
+            files = [f for f in files if f != pref] + [pref]
     if not files:
         C.absent(f"compare_vs_*.csv under {a.results}")
     csv_path = files[-1]

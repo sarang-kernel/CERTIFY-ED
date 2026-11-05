@@ -19,5 +19,9 @@
  },
  "memory_cap_GiB": 4.5,
  "record_A": "e2_cost_20261022_200335/data.json",
- "record_B": "e2_cost_20261021_070755/data.json"
+ "record_B": "e2_cost_20261021_070755/data.json",
+ "rows_without_certifier_data_A": 0,
+ "rows_without_certifier_data_B": 0,
+ "run_A": "Windows, certify-ed 3.1.0 (run_full_20261022)",
+ "run_B": "Linux, certify-ed 3.0.0 (run_full_20261021)"
 }

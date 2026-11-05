@@ -1,12 +1,14 @@
 """E2 fig_cost_memory: certifier wall time and peak memory against block dimension on two stacks.
 
-Reads e2_cost_*/data.json of the evidence run (--results; the Windows 3.1.0 run) and of the second-stack
-run (--results-b; the Linux 3.0.0 run). Each point is one E2 block (chain U(1) blocks, chain k = 0 blocks,
+Reads e2_cost_*/data.json of the evidence run (--results) and of a second run (--results-b;
+the Linux 3.0.0 run for the two-stack figure of docs/figures, the 3.1.0 run for docs/figures_run_3.2.1); the legend
+names platform and version from each manifest. Each point is one E2 block (chain U(1) blocks, chain k = 0 blocks,
 4 x 4 square blocks); filled when S3 (completeness) was CERTIFIED, open when S3 was NOT_CHECKED because the
 factorization did not fit under the memory cap. The horizontal line is the cap (settings.memory_cap_GiB
 of the evidence run). Time is `certifier.total`, memory `certifier.maxrss_mb` (MiB); both from the
 record, not recomputed.
 """
+import json
 import os
 import sys
 
@@ -61,7 +63,12 @@ def draw(dA, dB, nameA, nameB):
         ax.margins(x=0.08, y=0.12)
     axes[0].set_ylabel("certifier wall time (s)")
     axes[1].set_ylabel("certifier peak memory (MiB)")
-    axes[0].set_title("the same 11 blocks certified on two stacks")
+    common = len({p["label"] for p in pa} & {p["label"] for p in pb})
+    same_stack = nameA.split(",")[0] == nameB.split(",")[0]
+    if len(pa) == len(pb) == common:
+        axes[0].set_title(f"the same {common} blocks certified on two {'versions' if same_stack else 'stacks'}")
+    else:  # rows that hit the experiment's certifier limit carry no time or memory and are absent on that side
+        axes[0].set_title(f"{common} common blocks on two {'versions' if same_stack else 'stacks'}")
     axes[1].set_title("memory decides whether S3 runs")
     axes[0].set_yticks([0.1, 1, 10, 100, 1000])
     axes[0].set_yticklabels(["0.1", "1", "10", "100", "1000"])
@@ -91,16 +98,32 @@ def draw(dA, dB, nameA, nameB):
     return fig, numbers
 
 
+def run_name(results):
+    """'<platform>, certify-ed <version> (<run dir>)' from the run's manifest; platform names as in the records."""
+    plat, ver = "", ""
+    try:
+        env = json.load(open(os.path.join(results, "manifest.json"), encoding="utf-8")).get("environment") or {}
+        ver = str(env.get("certify_ed") or "")
+        plat = {"win32": "Windows", "linux": "Linux", "darwin": "macOS"}.get(str(env.get("platform") or "")[:6].lower(), str(env.get("platform") or ""))
+    except (OSError, ValueError):
+        pass
+    base = os.path.basename(os.path.normpath(results))
+    return (f"{plat}, certify-ed {ver} ({base})" if plat or ver else base)
+
+
 def main():
     a = C.parse_args(__doc__.splitlines()[0], needs=("e2_cost",))
     dA, recA = C.load_record(a.results, "e2_cost")
     if not a.results_b or C.latest_record(a.results_b, "e2_cost") is None:
         C.absent("second-stack run (--results-b / CERTIFY_RESULTS_B) with an e2_cost record")
     dB, recB = C.load_record(a.results_b, "e2_cost")
-    nameA = "Windows, certify-ed 3.1.0 (" + os.path.basename(os.path.normpath(a.results)) + ")"
-    nameB = "Linux, certify-ed 3.0.0 (" + os.path.basename(os.path.normpath(a.results_b)) + ")"
+    nameA, nameB = run_name(a.results), run_name(a.results_b)
+    numbers_extra = {"rows_without_certifier_data_A": sum(1 for r in dA["rows"] if "statements" not in (r.get("certifier") or {})),
+                     "rows_without_certifier_data_B": sum(1 for r in dB["rows"] if "statements" not in (r.get("certifier") or {}))}
     fig, numbers = draw(dA, dB, nameA, nameB)
     numbers["record_A"], numbers["record_B"] = recA, recB
+    numbers["run_A"], numbers["run_B"] = nameA, nameB
+    numbers.update(numbers_extra)  # rows whose certifier hit the experiment limit carry no time/memory and are not plotted
     findings = C.check_layout(fig)
     paths = C.save(fig, a.out, NAME, a.png_only)
     C.write_numbers(a.out, NAME, numbers)

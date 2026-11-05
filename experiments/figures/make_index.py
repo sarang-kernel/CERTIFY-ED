@@ -11,9 +11,31 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _common as C  # noqa: E402
 
-FIG = os.path.join(C.ROOT, "docs", "figures")
-RUN_A = "run_full_20261022 (Windows, certify-ed 3.1.0 evidence run)"
+FIG = os.path.join(C.ROOT, "docs", "figures")   # --dir <path> selects another figure directory (docs/figures_run_3.2.1)
+RUN_A = "run_full_20261022 (Windows, certify-ed 3.1.0 evidence run)"   # replaced from fig_cost_memory.numbers.json
 RUN_B = "run_full_20261021 (Linux, certify-ed 3.0.0 run)"
+RUN_KEY_A = "Windows, certify-ed 3.1.0 (run_full_20261022)"
+RUN_KEY_B = "Linux, certify-ed 3.0.0 (run_full_20261021)"
+PLAT_A, PLAT_B = "Windows", "Linux"
+TWO = "two stacks"
+
+
+def set_runs(n):
+    """Read the two run labels from fig_cost_memory.numbers.json ('<platform>, certify-ed <version> (<dir>)')."""
+    global RUN_A, RUN_B, RUN_KEY_A, RUN_KEY_B, PLAT_A, PLAT_B, TWO
+    if "run_A" in n and "run_B" in n:
+        RUN_KEY_A, RUN_KEY_B = n["run_A"], n["run_B"]
+    else:
+        keys = [k for k, v in n.items() if isinstance(v, dict) and "blocks" in v]
+        if len(keys) != 2:
+            return
+        RUN_KEY_A, RUN_KEY_B = keys
+    def lab(k, role):
+        plat, rest = k.split(",", 1)
+        ver, d = rest.strip().rsplit("(", 1)
+        return f"{d.rstrip(')')} ({plat.strip()}, {ver.strip()} {role})", plat.strip()
+    (RUN_A, PLAT_A), (RUN_B, PLAT_B) = lab(RUN_KEY_A, "evidence run"), lab(RUN_KEY_B, "run")
+    TWO = "two stacks" if PLAT_A != PLAT_B else "two versions on one stack"
 
 
 def N(name):
@@ -84,14 +106,14 @@ def caption_failure_matrix(n):
 
 
 def caption_cost_memory(n):
-    a = n["Windows, certify-ed 3.1.0 (run_full_20261022)"]
-    b = n["Linux, certify-ed 3.0.0 (run_full_20261021)"]
+    a = n[RUN_KEY_A]
+    b = n[RUN_KEY_B]
     return (f"Certifier wall time (a) and peak memory (b) against block dimension for the {a['blocks']} E2 blocks "
-            f"on two stacks: {RUN_A} and {RUN_B}. Filled markers: S3 (completeness) CERTIFIED; open markers: S3 "
+            f"on {TWO}: {RUN_A} and {RUN_B}. Filled markers: S3 (completeness) CERTIFIED; open markers: S3 "
             f"NOT_CHECKED because the factorization did not fit under the {n['memory_cap_GiB']:g} GiB cap. On both "
-            f"stacks S3 is certified for {a['S3_certified']} blocks up to dimension {a['max_dim_S3_certified']:,} and "
+            f"runs S3 is certified for {a['S3_certified']} blocks up to dimension {a['max_dim_S3_certified']:,} and "
             f"not checked for {a['S3_not_checked']}; the largest block has dimension {a['largest_dim']:,}. Longest "
-            f"certifier run: {a['max_seconds']:.0f} s (Windows), {b['max_seconds']:.0f} s (Linux); peak memory "
+            f"certifier run: {a['max_seconds']:.0f} s ({RUN_KEY_A.split('(')[0].strip()}), {b['max_seconds']:.0f} s ({RUN_KEY_B.split('(')[0].strip()}); peak memory "
             f"{a['max_mib']:.0f} MiB and {b['max_mib']:.0f} MiB. Time is `certifier.total`, memory "
             f"`certifier.maxrss_mb`, both read from the records.")
 
@@ -109,7 +131,7 @@ def caption_two_stack(n):
 
 
 def caption_mutation(n):
-    r, s = n["run_3_1_0"], n["dev_3_2_sample"]
+    r, s = n.get("evidence_run", n.get("run_3_1_0")), n["dev_3_2_sample"]
     sc = r["survivor_categories"]
     return (f"Mutation testing. (a) E6 record of {RUN_A}: {r['n']} sampled mutants over {r['modules']} modules, "
             f"{r['killed']} killed and {r['survived']} survived ({r['timeouts']} timeouts; score {r['score']:.3f}); "
@@ -222,7 +244,7 @@ Figures for the manuscript, the consolidated report and this documentation site.
 none computes a bound) and is written as PDF and PNG into this directory together with `<name>.numbers.json`,
 the numbers the caption prints. This file is rendered by `experiments/figures/make_index.py` from those files; every
 number below was read from the data source named in the entry. Concept figures carry no data. The evidence run is
-`run_full_20261022` (Windows, certify-ed 3.1.0), compared with `run_full_20261021` (Linux, certify-ed 3.0.0); the
+{RUN_A_MD}, compared with {RUN_B_MD}; the
 record directories are those of the project archive (`code/certify-ed-3.1/results/`). To regenerate:
 `CERTIFY_RESULTS=<run dir> CERTIFY_RESULTS_B=<second run dir> python experiments/figures/<script>.py`, then
 `python experiments/figures/make_index.py`. The smoke test is `tests/test_figures.py`.
@@ -233,8 +255,21 @@ Placement in the manuscript and the report: `MANUSCRIPT_PLACEMENT.md`.
 
 
 def render():
-    out = [HEADER]
+    try:
+        set_runs(N("fig_cost_memory"))
+    except OSError:
+        pass
+    def md(key):
+        plat, rest = key.split(",", 1)
+        ver, d = rest.strip().rsplit("(", 1)
+        return f"`{d.rstrip(')')}` ({plat.strip()}, {ver.strip()})"
+    out = [HEADER.replace("{RUN_A_MD}", md(RUN_KEY_A)).replace("{RUN_B_MD}", md(RUN_KEY_B))]
+    if FIG != os.path.join(C.ROOT, "docs", "figures"):
+        out.append(f"This directory holds the record-driven figures regenerated from {md(RUN_KEY_A)}; concept figures and "
+                   f"document-driven figures are in `docs/figures/` and are not repeated here.\n\n")
     for name, label, fn, source in FIGURES:
+        if not os.path.exists(os.path.join(FIG, name + ".numbers.json")):
+            continue
         n = N(name)
         out.append(f"## {label}  `{name}.pdf` / `{name}.png`\n\n")
         out.append(f"![{name}]({name}.png)\n\n")
@@ -245,6 +280,9 @@ def render():
 
 
 def main():
+    global FIG
+    if "--dir" in sys.argv:
+        FIG = os.path.abspath(sys.argv[sys.argv.index("--dir") + 1])
     text = render()
     path = os.path.join(FIG, "INDEX.md")
     if "--check" in sys.argv:

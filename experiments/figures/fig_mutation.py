@@ -1,10 +1,10 @@
-"""E4 fig_mutation: mutation-testing outcomes of the 3.1.0 evidence run and the 3.2 integration sample.
+"""E4 fig_mutation: mutation-testing outcomes of the evidence run (--results) and the latest dev/3.2 sample.
 
 (a) e6_mutation_*/data.json of the evidence run (64 sampled mutants): killed and survived per module;
 survivors are split by the category assigned in classification.json (experiments/e6_classify.py's rules,
-the "needs inspection" class awaiting a human verdict). (b) the 16-mutant sample run on the merged dev/3.2
-branch, read from RESULT_integration_3.2.md (section "Mutation sample on the merged branch"): killed count
-and the surviving mutants named there. The two samples are drawn from different code (different mutation
+the "needs inspection" class awaiting a human verdict). (b) the most recent 16-mutant sample recorded in
+RESULT_integration_3.2.md (the last section whose heading says "sample"; the 3.2.0 release sample): killed count
+and the surviving mutants named there. The title of (a) names the run's certify-ed version from its manifest. The two samples are drawn from different code (different mutation
 sites) and different sizes; the figure places them side by side, it does not compare the scores.
 """
 import json
@@ -27,18 +27,38 @@ CAT_COLORS = ["#c8372d", "#e0a21b", "#7b5ea7", "#b8b7b3", "#8fd1c6"]
 
 
 def parse_integration(md_path):
-    """(killed, n, [mutant labels]) from RESULT_integration_3.2.md."""
+    """(killed, n, [mutant labels], heading) of the LAST mutation sample recorded in RESULT_integration_3.2.md.
+
+    The file accumulates one section per sample (the 2026-10-29 integration sample, the 3.2.0 release sample);
+    the figure shows the most recent one."""
     text = open(md_path, encoding="utf-8").read()
-    m = re.search(r"\*\*(\d+) of (\d+) killed\*\*", text)
-    if not m:
-        m = re.search(r"(\d+) of (\d+) killed", text)
+    heads = [(m.start(), m.group(1)) for m in re.finditer(r"^## (.*(?:[Ss]ample).*)$", text, flags=re.M)]
+    start, heading = heads[-1] if heads else (0, "dev/3.2 sample")
+    sec = text[start:]
+    nxt = re.search(r"^## ", sec[3:], flags=re.M)
+    if nxt:
+        sec = sec[:nxt.start() + 3]
+    m = re.search(r"\*\*(\d+) of (\d+) killed\*\*", sec) or re.search(r"(\d+) of (\d+) killed", sec)
     killed, n = int(m.group(1)), int(m.group(2))
-    sec = text[text.find("## Mutation sample on the merged branch"):]
     labels = re.findall(r"^\| `([a-z_]+\.py:\d+)`", sec, flags=re.M)
-    return killed, n, labels
+    short = re.sub(r"\s*\(\d{4}-\d{2}-\d{2}\)\s*$", "", heading)
+    return killed, n, labels, short
 
 
-def draw(data, classification, integ):
+def run_version(results):
+    """certify-ed version of the run from its manifest (environment.certify_ed), else the directory name."""
+    try:
+        mf = json.load(open(os.path.join(results, "manifest.json"), encoding="utf-8"))
+        env = mf.get("environment") or {}
+        for k in ("certify_ed", "certify-ed", "version"):
+            if env.get(k):
+                return str(env[k])
+    except (OSError, ValueError):
+        pass
+    return os.path.basename(os.path.normpath(results))
+
+
+def draw(data, classification, integ, version):
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
     C.style()
@@ -70,14 +90,14 @@ def draw(data, classification, integ):
     axa.invert_yaxis()
     axa.set_xlabel("sampled mutants")
     s = data["summary"]
-    axa.set_title(f"3.1.0 evidence run: {s['killed']} of {s['n']} mutants killed, {s['survived']} survived")
+    axa.set_title(f"{version} evidence run: {s['killed']} of {s['n']} mutants killed, {s['survived']} survived")
     axa.margins(x=0.08)
     handles = [Patch(fc=C.BLUE, label="killed (a test failed)")] + [Patch(fc=col, label=CAT_SHORT[c])
                                                                       for c, col in zip(cats, CAT_COLORS)]
     axa.legend(handles=handles, loc="lower right", fontsize=C.SIZES[2], handlelength=1.2)
     C.panel_letter(axa, "a", dx=-0.3)
     # (b) the integration sample
-    killed, n, labels = integ
+    killed, n, labels, heading = integ
     axb.bar(0, killed, color=C.BLUE, width=0.6)
     axb.bar(0, n - killed, bottom=killed, color="#c8372d", width=0.6)
     axb.text(0, killed / 2, f"{killed}\nkilled", ha="center", va="center", color="white", fontsize=C.SIZES[2])
@@ -87,10 +107,10 @@ def draw(data, classification, integ):
     axb.set_xlim(-0.45, 1.6)
     axb.set_xticks([])
     axb.set_ylabel("mutants")
-    axb.set_title(f"dev/3.2: {n}-mutant sample")
+    axb.set_title(f"{heading}: {n} mutants")
     axb.spines["bottom"].set_visible(False)
     C.panel_letter(axb, "b", dx=-0.45)
-    numbers = {"run_3_1_0": {"n": s["n"], "killed": s["killed"], "survived": s["survived"], "timeouts": s["timeouts"],
+    numbers = {"evidence_run": {"version": version, "n": s["n"], "killed": s["killed"], "survived": s["survived"], "timeouts": s["timeouts"],
                              "score": s["score"], "modules": len(mods),
                              "survivor_categories": classification["survivor_categories"],
                              "baseline_seconds": data["baseline"]["seconds"]},
@@ -105,7 +125,7 @@ def main():
     classification = json.load(open(cls_path, encoding="utf-8"))
     md = C.require(os.path.join(C.ROOT, "RESULT_integration_3.2.md"))
     integ = parse_integration(md)
-    fig, numbers = draw(data, classification, integ)
+    fig, numbers = draw(data, classification, integ, run_version(a.results))
     numbers["record"] = rec
     numbers["classification"] = os.path.relpath(cls_path, a.results).replace(os.sep, "/")
     numbers["integration_result"] = "RESULT_integration_3.2.md"
