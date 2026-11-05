@@ -13,6 +13,12 @@ One robustness fix found by the 3.2.0 evidence run; no bound, status rule or rec
   `test_residual_bound_does_not_depend_on_the_default_thread_count`), so no certified quantity changes. The 3.2.0 run's
   other steps are unaffected; the 3.2.1 run repeats every step from this tag (D-44).
 
+Post-tag, non-computational (the run's source hash `cb73dec3e4433a3b` is unchanged): `experiments/make_numbers.py` counts
+an E2 row whose certifier hit the experiment's S3 limit and left its certificate without S3 as a certificate, not a crash
+(macro `CnumSthreeTimedOut`; commit 44d318c5); the figure scripts read run labels from the manifests and
+`docs/figures_run_3.2.1/` holds the record-driven figures of the 3.2.1 run; `RESULT_evidence_run_3.2.1.md` records the
+run and its comparison with 3.1.0 (10 MISMATCH leaves, all documented changes) and with 3.2.0 (none).
+
 ## [3.2.0] — 2026-11-04 (tag `v3.2.0` on `dev/3.2`; evidence run pending, see RESULT_integration_3.2.md)
 
 `__version__` = 3.2.0 (3.2.0.dev0 during development: every entry below was written under that name). Summary of the release: the

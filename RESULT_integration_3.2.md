@@ -80,3 +80,10 @@ Survivors, with the lead's reading (suggestions, not verdicts, RA-25):
 | `eigenspace.py:100` `and` → `or` in the `sin_theta_alt` guard | reachable robustness path: `certify_eigenspace(..., sin_theta_alt=None)` would raise. Test added: `test_certify_eigenspace_without_an_alternative_bound_uses_theorem_6_only` (fails on the mutant) |
 
 Killed: localops.py:193, certify.py:1142, certify.py:1155, certify.py:1213, fp.py:333, localops.py:41, fp.py:239, spec.py:247, localops.py:186, enclosure.py:624 (first failing tests in the run log). The 64-mutant sample belongs to the 3.2.0 evidence run (`run.py --full --with-mutation`).
+
+## Evidence runs (2026-11-04 to 2026-11-06)
+
+The 3.2.0 run `results/run_full_20261104` failed its E4 step (native crash of the eight-thread residual under the memory
+cap); 3.2.1 (tag f3c478b, one residual thread by default) has the complete run `results/run_full_20261105`: tests 1172
+passed, E0-E10 ok, E6 36 of 64 killed, numbers 44/44 and 61/61; against 3.1.0 10 MISMATCH leaves, all documented changes;
+E9 and E10 identical. Details: `RESULT_evidence_run_3.2.1.md`; decision D-61.
