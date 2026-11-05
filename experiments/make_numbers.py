@@ -632,7 +632,11 @@ def table_mem_cert(r):
 
 
 ok_rows = [r for r in rows2 if "error" not in r.get("certifier", {"error": 1})]
-check(len(ok_rows) == len(rows2), "E2: every certifier run produced a certificate (no crash)")
+# a run that hit the experiment's S3 limit (900 s, or the memory cap) is recorded with its certificate without S3
+# (e2_cost.py); only a run that left no certificate at all is a crash (3.2.1: two points time out on the serial residual)
+timed_out = [r for r in rows2 if r not in ok_rows and "statements" in (r.get("certifier_without_S3") or {})]
+check(len(ok_rows) + len(timed_out) == len(rows2), "E2: every certifier run produced a certificate (no crash)")
+macro("CnumSthreeTimedOut", str(len(timed_out)))
 s3_ok = [r for r in ok_rows if r["certifier"]["statements"]["S3.completeness"]["status"] == "CERTIFIED"]
 dmax = max(r["producer"]["dim"] for r in s3_ok)
 rmax = max(s3_ok, key=lambda r: (r["producer"]["dim"], r["certifier"]["statements"]["S3.completeness"]["seconds"]))
