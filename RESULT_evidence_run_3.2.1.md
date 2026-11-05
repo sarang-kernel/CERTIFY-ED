@@ -1,6 +1,6 @@
 # RESULT: the 3.2.1 evidence run (results/run_full_20261105) and its comparison with 3.1.0
 
-Date: 2026-11-05/06. Machine: the Windows workstation (D-54), 8 cores, 16 GiB; env certifyed-311 (Python 3.11.17, NumPy 2.4.4,
+Date: 2026-11-05/06. Machine: the Windows workstation (D-54), 8 logical processors, 16 GiB; env certifyed-311 (Python 3.11.17, NumPy 2.4.4,
 SciPy 1.17.1, python-flint 0.9.0 / FLINT 3.6.0, QuSpin 1.0.1, h5py 3.16.0). Command: `certify-ed reproduce --full --with-mutation
 --jobs 2 --out results/run_full_20261105` from tag `v3.2.1` = f3c478b, clean tree; computational source `cb73dec3e4433a3b` at every
 step (`source_dirty = False`), tests fingerprint `9da2ba19ca572962`. Wall time 15 h 55 min (06:51 to 22:46). Floating-point
