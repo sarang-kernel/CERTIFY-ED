@@ -239,15 +239,15 @@ FIGURES = [  # (name, label, caption function, data source)
     ("fig_enclosure_geometry", "C2", caption_enclosure_geometry, "concept figure, no data (docs/theory.md sections 2–3)"),
     ("fig_inertia_completeness", "C3", caption_inertia_completeness, "concept figure, no data (docs/theory.md section 3)"),
     ("fig_rounding_accounting", "C4", caption_rounding_accounting, "concept figure, no data (docs/theory.md section 2)"),
-    ("fig_failure_matrix", "E1", caption_failure_matrix, "{record}; run " + RUN_A),
-    ("fig_cost_memory", "E2", caption_cost_memory, "{record_A} of " + RUN_A + "; {record_B} of " + RUN_B),
-    ("fig_two_stack", "E3", caption_two_stack, "{csv} at the root of " + RUN_A),
-    ("fig_mutation", "E4", caption_mutation, "{record} and {classification} of " + RUN_A + "; {integration_result} (dev/3.2)"),
+    ("fig_failure_matrix", "E1", caption_failure_matrix, "{record}; run {RUN_A}"),
+    ("fig_cost_memory", "E2", caption_cost_memory, "{record_A} of {RUN_A}; {record_B} of {RUN_B}"),
+    ("fig_two_stack", "E3", caption_two_stack, "{csv} at the root of {RUN_A}"),
+    ("fig_mutation", "E4", caption_mutation, "{record} and {classification} of {RUN_A}; {integration_result} (dev/3.2)"),
     ("fig_corpus_detection", "E5", caption_corpus_detection, "{report} (repository, corpus run on dev/3.2)"),
     ("fig_scope_vs_survey", "E6", caption_scope_vs_survey, "experiments/survey/survey_for_scope.json, experiments/survey/survey_coded.csv, docs/SCOPE_MATRIX.md"),
     ("fig_roadmap_progress", "E7", caption_roadmap_progress, "{source}"),
-    ("fig_crown_sectors", "A1", caption_crown_sectors, "{record} of " + RUN_A),
-    ("fig_aklt_eta", "A2", caption_aklt_eta, "{record} of " + RUN_A),
+    ("fig_crown_sectors", "A1", caption_crown_sectors, "{record} of {RUN_A}"),
+    ("fig_aklt_eta", "A2", caption_aklt_eta, "{record} of {RUN_A}"),
 ]
 
 HEADER = """# Figure index
@@ -287,7 +287,7 @@ def render():
         out.append(f"## {label}  `{name}.pdf` / `{name}.png`\n\n")
         out.append(f"![{name}]({name}.png)\n\n")
         out.append(fn(n) + "\n\n")
-        out.append(f"- data source: {source.format(**{k: v for k, v in n.items() if isinstance(v, str)})}\n")
+        out.append(f"- data source: {source.format(RUN_A=RUN_A, RUN_B=RUN_B, **{k: v for k, v in n.items() if isinstance(v, str)})}\n")
         out.append(f"- script: `experiments/figures/{name}.py`\n\n")
     return "".join(out).rstrip("\n") + "\n"
 
