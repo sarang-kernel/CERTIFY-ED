@@ -1,0 +1,125 @@
+{
+ "agreement_rows": 135,
+ "agreement_rows_agree": 135,
+ "certificates": {
+  "bundles": 63,
+  "c_verifier_pass": 55,
+  "cecheck_pass": 55,
+  "checked": 55,
+  "refused_by_certify_ed": 8,
+  "source": "code/certify-ed/verifier/make_validation_set.py on corpus/cases and conformance/reference (archive v5, dev/3.2 a814d28)",
+  "statuses_equal_to_archived_validation_record": true
+ },
+ "checker_seconds_forgeries": 2514,
+ "checker_seconds_genuine": 1785,
+ "exact_checks_on_genuine": {
+  "S2_inconclusive_by_underflow_rule_but_exactly_valid": [
+   "heis10_subnormal_entries",
+   "heis10_wrong_coupling",
+   "heis8_subnormal_entries",
+   "j1j2_8_subnormal_entries"
+  ],
+  "S8_brackets_confirmed": 42,
+  "certified_S2_confirmed": 31,
+  "certified_S3_confirmed": 24,
+  "cluster_radii_confirmed": 55,
+  "exact_counts": 211,
+  "kato_temple_records_confirmed": 15,
+  "recorded_counts_equal": 70,
+  "recorded_counts_recomputed": 70
+ },
+ "failed_statuses": {
+  "refuted_by_exact_counts": 15,
+  "reproduced_by_c_verifier": 18,
+  "reproduced_by_cecheck": 18,
+  "total": 18
+ },
+ "forgeries": {
+  "by_mutation": {
+   "array_hash": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 20,
+    "total": 20
+   },
+   "body_hash": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 20,
+    "total": 20
+   },
+   "radius": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 0,
+    "total": 20
+   },
+   "status": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 0,
+    "total": 20
+   }
+  },
+  "rejected_by_c_verifier": 80,
+  "rejected_by_cecheck": 80,
+  "rejected_by_certify_ed_integrity_check": 40,
+  "status_forgeries_rejected_only_by_the_floating_point_rule": [
+   "heis10_subnormal_entries__status",
+   "heis10_wrong_coupling__status",
+   "heis8_subnormal_entries__status"
+  ],
+  "total": 80
+ },
+ "inertia": {
+  "heis10_correct_reduced_seconds": 16.5,
+  "largest_block": 128,
+  "method": "Bareiss with symmetric pivoting, connected components, character blocks of commuting basis involutions",
+  "tfim8_correct_dense_256_seconds": 247,
+  "tfim8_correct_reduced_seconds": 2.9
+ },
+ "kernel_theorems": {
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "count": 76,
+  "files": [
+   "CertifyCore/Theorems/Gamma.lean",
+   "CertifyCore/Theorems/Thm1.lean",
+   "CertifyCore/Theorems/Int05.lean",
+   "CertifyCore/Theorems/L17.lean",
+   "CertifyCore/Theorems/E04.lean",
+   "CertifyCore/Theorems/Counting.lean",
+   "CertifyCore/Kernel/Small.lean"
+  ],
+  "findings": [
+   "Lambda6 holds for w+2 <= 3002399751580329 and fails at 3002399751580330, which (w+2)u <= 1/3 admits",
+   "the 3.1 ln remainder constant 9/8 is too small at x = 0.35 (8/7 suffices)",
+   "the Lambda4 upper guard with N = 2n has margin 1.5u at n = 2^26 and becomes negative between 2^26 and 2^27"
+  ],
+  "kernel_checked_certificates": [
+   "matrix-free",
+   "dense-arrays",
+   "npz"
+  ],
+  "kernel_small_build_seconds": 309,
+  "leanchecker": {
+   "command": "lake env leanchecker CertifyCore",
+   "exit_code": 0,
+   "modules": "every module whose name begins with CertifyCore",
+   "seconds": 562
+  }
+ },
+ "lean": "4.35.0",
+ "not_checked": [
+  "S1 model fidelity (model shift taken from the record)",
+  "S4 eigenspace bounds",
+  "S5 to S7",
+  "Theorems 1, 2, 2', Sylvester's law and Weyl's inequality (Mathlib part)",
+  "complex operators and sector certificates (none in the set)",
+  "second independent kernel (lean4lean)"
+ ],
+ "track": "core-Lean exact checker and kernel theorems (no Mathlib)"
+}

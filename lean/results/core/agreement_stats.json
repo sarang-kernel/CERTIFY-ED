@@ -1,0 +1,41 @@
+{
+ "agree": 135,
+ "by_mutation": {
+  "array_hash": {
+   "c": 20,
+   "lean": 20,
+   "python_integrity": 20,
+   "total": 20
+  },
+  "body_hash": {
+   "c": 20,
+   "lean": 20,
+   "python_integrity": 20,
+   "total": 20
+  },
+  "radius": {
+   "c": 20,
+   "lean": 20,
+   "python_integrity": 0,
+   "total": 20
+  },
+  "status": {
+   "c": 20,
+   "lean": 20,
+   "python_integrity": 0,
+   "total": 20
+  }
+ },
+ "failed_c_reproduced": 18,
+ "failed_lean_refuted": 15,
+ "failed_lean_reproduced": 18,
+ "failed_statuses": 18,
+ "forgeries": 80,
+ "forgeries_c_rejected": 80,
+ "forgeries_lean_rejected": 80,
+ "forgeries_python_rejected": 40,
+ "genuine": 55,
+ "genuine_c_pass": 55,
+ "genuine_lean_pass": 55,
+ "rows": 135
+}
