@@ -1,0 +1,368 @@
+{
+ "agreeing": 13,
+ "description": "Recomputation of the certified application numbers of certify-ed in compiled core Lean (trust level N); see reverification_lean/APPS.md",
+ "disagreeing": 0,
+ "lean_program": "ceapps (reverification_lean/CertifyApps/Main.lean)",
+ "skipped": 0,
+ "targets": [
+  {
+   "agreement": true,
+   "id": "e7_chain_J2_0",
+   "lean_value": {
+    "count": 1,
+    "delta": "4.9432867231835551e-13",
+    "radius": "2.1599193648251390e-23",
+    "radius_at_record_E0": "2.5249289783497136e-14",
+    "rayleigh_quotient": "-8.9043865298764423e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 131895296,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-8.9043865298764171e0",
+    "count": 1,
+    "delta": "2.4676572307452423e-10",
+    "exact_radius": "3.7193004277411412e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_chain_J2_0.json",
+   "seconds": 578.5,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_chain_J2_0.5",
+   "lean_value": {
+    "count": 1,
+    "delta": "3.9205600890254744e-13",
+    "radius": "6.2805712975047203e-23",
+    "radius_at_record_E0": "3.3750779948604759e-14",
+    "rayleigh_quotient": "-7.5000000000000000e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 135729152,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-7.4999999999999662e0",
+    "count": 1,
+    "delta": "4.2024233071565570e-10",
+    "exact_radius": "3.3926633543218007e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_chain_J2_0.5.json",
+   "seconds": 673.0,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_square_J2_0",
+   "lean_value": {
+    "count": 1,
+    "delta": "2.2583362660115805e-13",
+    "radius": "6.6295588784963786e-31",
+    "radius_at_record_E0": "8.6548064142404770e-16",
+    "rayleigh_quotient": "-1.1228483208428860e1",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 36851712,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-1.1228483208428859e1",
+    "count": 1,
+    "delta": "6.8237294005347545e-11",
+    "exact_radius": "1.7685219221982841e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_square_J2_0.json",
+   "seconds": 130.3,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_square_J2_0.5",
+   "lean_value": {
+    "count": 1,
+    "delta": "1.7130522014567057e-13",
+    "radius": "3.8644449557691711e-23",
+    "radius_at_record_E0": "7.1742627698341029e-15",
+    "rayleigh_quotient": "-8.4579233513948467e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 45727744,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-8.4579233513948395e0",
+    "count": 1,
+    "delta": "8.3762290850411612e-11",
+    "exact_radius": "1.0998626604929780e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_square_J2_0.5.json",
+   "seconds": 157.7,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e9_crown_spin_half_lower_bound",
+   "lean_value": {
+    "count": 0,
+    "delta": "6.5807061378185269e-14",
+    "lower_bound": "-5.5015829796302939e-1",
+    "lower_bound_exact": "-1662751428206861688552370713366242609/3022314549036572936765440000000000000",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 289865728,
+   "quantity": "certified lower bound on lambda_min of the reduced spin-1/2 crown",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e9_pyrochlore_20261105_084835/data.json",
+    "code/certify-ed/results/run_full_20261022/e9_pyrochlore_20261022_185936/data.json"
+   ],
+   "record_value": {
+    "delta": "8.5824017850325153e-10",
+    "lower_bound": "-5.5015829882120382e-1",
+    "lower_bound_exact": "-365642906453273759099372454070876322095643/664613997892457936451903530140172288000000"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e9_crown_spin_half_lower_bound.json",
+   "seconds": 1360.1,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e9_crown_spin_one_upper_bound",
+   "lean_value": {
+    "eigenvalue_upper": "-1.6380246425131775e0",
+    "from_record_numbers": "-1.6380246425131772e0",
+    "ring_radius": "4.9852152691217544e-28",
+    "ring_rayleigh_quotient": "-8.6174231818142135e0"
+   },
+   "peak_memory_bytes": 24227840,
+   "quantity": "certified upper bound -12 c1 + c17 (E0 + r) on an eigenvalue of the spin-1 crown at the printed couplings",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e9_pyrochlore_20261105_084835/data.json",
+    "code/certify-ed/results/run_full_20261022/e9_pyrochlore_20261022_185936/data.json"
+   ],
+   "record_value": {
+    "E0_radius": "5.0929865200188118e-15",
+    "E0_ring": "-8.6174231818142157e0",
+    "eigenvalue_upper": "-1.6380246425131773e0"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e9_crown_spin_one_upper_bound.json",
+   "seconds": 6.6,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_star",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.1104302202114303e-1",
+    "positive": 32,
+    "record_t_prime_recertified": true,
+    "t_prime": "1.2330552739588056e-2",
+    "unit_cosines": 32
+   },
+   "peak_memory_bytes": 13631488,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.1104302202338649e-1",
+    "positive": 32,
+    "t_prime": "1.2330552740086294e-2",
+    "unit_cosines": 32
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_star.json",
+   "seconds": 0.2,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_perp",
+   "lean_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.5896633112606854e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "2.5270294431682869e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 21504000,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.5896633115208958e-1",
+    "positive": 256,
+    "t_prime": "2.5270294439955797e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_perp.json",
+   "seconds": 2.9,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_par",
+   "lean_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.0614468582666172e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "1.1266694329240721e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 21561344,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.0614468587603454e-1",
+    "positive": 256,
+    "t_prime": "1.1266694339722041e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_par.json",
+   "seconds": 2.9,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_cross",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.9973845006935519e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "3.9895448436108296e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 142958592,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.9973845072185567e-1",
+    "positive": 256,
+    "t_prime": "3.9895448696767151e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_cross.json",
+   "seconds": 84.6,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_decorated_honeycomb",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.5303290854841137e-1",
+    "positive": 216,
+    "record_t_prime_recertified": true,
+    "t_prime": "2.3419071098786437e-2",
+    "unit_cosines": 216
+   },
+   "peak_memory_bytes": 28581888,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.5303290857599913e-1",
+    "positive": 216,
+    "t_prime": "2.3419071107230095e-2",
+    "unit_cosines": 216
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_decorated_honeycomb.json",
+   "seconds": 6.0,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_decorated_square",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "2.2035431746216704e-1",
+    "positive": 1728,
+    "record_t_prime_recertified": true,
+    "t_prime": "4.8556025224217495e-2",
+    "unit_cosines": 1728
+   },
+   "peak_memory_bytes": 853786624,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "2.2035431930729685e-1",
+    "positive": 1728,
+    "t_prime": "4.8556026037382119e-2",
+    "unit_cosines": 1728
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_decorated_square.json",
+   "seconds": 2468.4,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_criterion",
+   "lean_value": {
+    "criterion_holds": true,
+    "sum_upper": "8.4815469615759761e-1"
+   },
+   "peak_memory_bytes": 12890112,
+   "quantity": "4 eta_perp + 2 eta_par < 1",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "sum_upper": "8.4815469636042740e-1"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_criterion.json",
+   "seconds": 0.1,
+   "skipped_reason": null
+  }
+ ]
+}

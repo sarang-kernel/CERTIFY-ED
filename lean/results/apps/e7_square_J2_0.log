@@ -1,0 +1,67 @@
+E7 square_J2=0: building model and sectors
+  12870 states, group order 32, block 12870, sectors #[441, 381, 392, 408, 430, 386, 392, 408, 392, 408, 392, 408, 392, 408, 392, 408, 430, 386, 392, 408, 430, 386, 392, 408, 392, 408, 392, 408, 392, 408, 392, 408] [11.030000s]
+  [certCount n=441] build 129 ms, ldl 162 ms, limbs 21 ms
+  sector #[0, 0, 0] dim 441: 1 below the point, delta 1.085e-13, 0.903000s 
+  [certCount n=381] build 91 ms, ldl 114 ms, limbs 19 ms
+  sector #[0, 0, 2] dim 381: 0 below the point, delta 1.039e-13, 0.629000s 
+  [certCount n=784] build 372 ms, ldl 1044 ms, limbs 81 ms
+  sector #[0, 1, 0] dim 392: 0 below the point, delta 2.057e-13, 4.508000s 
+  [certCount n=816] build 414 ms, ldl 1041 ms, limbs 83 ms
+  sector #[0, 1, 2] dim 408: 0 below the point, delta 2.139e-13, 4.860000s 
+  [certCount n=430] build 118 ms, ldl 147 ms, limbs 20 ms
+  sector #[0, 2, 0] dim 430: 0 below the point, delta 1.056e-13, 0.846000s 
+  [certCount n=386] build 103 ms, ldl 105 ms, limbs 20 ms
+  sector #[0, 2, 2] dim 386: 0 below the point, delta 9.315e-14, 0.659000s 
+  [certCount n=784] build 379 ms, ldl 921 ms, limbs 73 ms
+  sector #[0, 3, 0] dim 392: 0 below the point, delta 2.057e-13, 4.346000s 
+  [certCount n=816] build 426 ms, ldl 1065 ms, limbs 114 ms
+  sector #[0, 3, 2] dim 408: 0 below the point, delta 2.139e-13, 4.964000s 
+  [certCount n=784] build 389 ms, ldl 905 ms, limbs 73 ms
+  sector #[1, 0, 0] dim 392: 0 below the point, delta 1.988e-13, 4.286000s 
+  [certCount n=816] build 419 ms, ldl 1017 ms, limbs 73 ms
+  sector #[1, 0, 2] dim 408: 0 below the point, delta 2.258e-13, 4.769000s 
+  [certCount n=784] build 376 ms, ldl 916 ms, limbs 78 ms
+  sector #[1, 1, 0] dim 392: 0 below the point, delta 2.223e-13, 4.216000s 
+  [certCount n=816] build 393 ms, ldl 1038 ms, limbs 78 ms
+  sector #[1, 1, 2] dim 408: 0 below the point, delta 2.042e-13, 4.892000s 
+  [certCount n=784] build 389 ms, ldl 919 ms, limbs 128 ms
+  sector #[1, 2, 0] dim 392: 0 below the point, delta 2.067e-13, 4.441000s 
+  [certCount n=816] build 420 ms, ldl 1028 ms, limbs 80 ms
+  sector #[1, 2, 2] dim 408: 0 below the point, delta 1.991e-13, 4.723000s 
+  [certCount n=784] build 400 ms, ldl 940 ms, limbs 77 ms
+  sector #[1, 3, 0] dim 392: 0 below the point, delta 2.247e-13, 4.479000s 
+  [certCount n=816] build 453 ms, ldl 1037 ms, limbs 78 ms
+  sector #[1, 3, 2] dim 408: 0 below the point, delta 1.986e-13, 4.855000s 
+  [certCount n=430] build 121 ms, ldl 145 ms, limbs 21 ms
+  sector #[2, 0, 0] dim 430: 0 below the point, delta 1.096e-13, 0.852000s 
+  [certCount n=386] build 94 ms, ldl 116 ms, limbs 19 ms
+  sector #[2, 0, 2] dim 386: 0 below the point, delta 9.144e-14, 0.652000s 
+  [certCount n=784] build 379 ms, ldl 903 ms, limbs 69 ms
+  sector #[2, 1, 0] dim 392: 0 below the point, delta 2.032e-13, 4.247000s 
+  [certCount n=816] build 436 ms, ldl 1031 ms, limbs 75 ms
+  sector #[2, 1, 2] dim 408: 0 below the point, delta 1.926e-13, 4.836000s 
+  [certCount n=430] build 120 ms, ldl 157 ms, limbs 20 ms
+  sector #[2, 2, 0] dim 430: 0 below the point, delta 1.023e-13, 0.871000s 
+  [certCount n=386] build 101 ms, ldl 107 ms, limbs 19 ms
+  sector #[2, 2, 2] dim 386: 0 below the point, delta 1.048e-13, 0.663000s 
+  [certCount n=784] build 374 ms, ldl 970 ms, limbs 88 ms
+  sector #[2, 3, 0] dim 392: 0 below the point, delta 2.032e-13, 4.451000s 
+  [certCount n=816] build 444 ms, ldl 999 ms, limbs 81 ms
+  sector #[2, 3, 2] dim 408: 0 below the point, delta 1.926e-13, 4.761000s 
+  [certCount n=784] build 393 ms, ldl 924 ms, limbs 72 ms
+  sector #[3, 0, 0] dim 392: 0 below the point, delta 1.988e-13, 4.356000s 
+  [certCount n=816] build 421 ms, ldl 1018 ms, limbs 72 ms
+  sector #[3, 0, 2] dim 408: 0 below the point, delta 2.258e-13, 4.726000s 
+  [certCount n=784] build 371 ms, ldl 917 ms, limbs 77 ms
+  sector #[3, 1, 0] dim 392: 0 below the point, delta 2.247e-13, 4.332000s 
+  [certCount n=816] build 397 ms, ldl 1033 ms, limbs 75 ms
+  sector #[3, 1, 2] dim 408: 0 below the point, delta 1.986e-13, 4.807000s 
+  [certCount n=784] build 400 ms, ldl 900 ms, limbs 72 ms
+  sector #[3, 2, 0] dim 392: 0 below the point, delta 2.067e-13, 4.483000s 
+  [certCount n=816] build 429 ms, ldl 1057 ms, limbs 77 ms
+  sector #[3, 2, 2] dim 408: 0 below the point, delta 1.991e-13, 4.999000s 
+  [certCount n=784] build 420 ms, ldl 918 ms, limbs 85 ms
+  sector #[3, 3, 0] dim 392: 0 below the point, delta 2.223e-13, 4.567000s 
+  [certCount n=816] build 516 ms, ldl 1156 ms, limbs 89 ms
+  sector #[3, 3, 2] dim 408: 0 below the point, delta 2.042e-13, 5.149000s 
+E7 square_J2=0: count 1 (record 1), record enclosure re-certified true, agreement true

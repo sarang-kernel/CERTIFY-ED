@@ -1,0 +1,24 @@
+square_octagon_perp: threshold 1263514721581/50000000000000
+  reduced dims L 16, C 16, R 16; Gamma boundaries 64, 64; unit cosines >= 256 [0s]
+  [certCount n=16] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=16] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=16] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=64] build 3 ms, ldl 1 ms, limbs 0 ms
+  [certCount n=64] build 2 ms, ldl 1 ms, limbs 1 ms
+  symmetry group of order 2 checked exactly; C signs #[1, 1] [0s]
+  [certCount n=2] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 13 chi 0: size 2, 0 positive pivots, beta 3.02e-5 [0.000000s] [0s]
+  [certCount n=20] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 14 chi 0: size 20, 1 positive pivots, beta 1.85e-4 [0.002000s] [0s]
+  [certCount n=90] build 11 ms, ldl 1 ms, limbs 2 ms
+    block 15 chi 0: size 90, 8 positive pivots, beta 8.24e-4 [0.029000s] [0s]
+  [certCount n=240] build 68 ms, ldl 27 ms, limbs 10 ms
+    block 16 chi 0: size 240, 28 positive pivots, beta 2.43e-3 [0.259000s] [0s]
+  [certCount n=420] build 203 ms, ldl 136 ms, limbs 32 ms
+    block 17 chi 0: size 420, 56 positive pivots, beta 4.49e-3 [0.965000s] [1s]
+  [certCount n=252] build 85 ms, ldl 32 ms, limbs 11 ms
+    block 18 chi 0: size 252, 35 positive pivots, beta 3.61e-3 [0.309000s] [2s]
+  [certCount n=252] build 93 ms, ldl 31 ms, limbs 11 ms
+    block 18 chi 1: size 252, 35 positive pivots, beta 3.91e-3 [0.318000s] [2s]
+  t = 2.52703e-2: 256 positive pivots (need <= 256); beta = 4.49e-3; t' = 2.5270294432e-2; certified true [2s]
+square_octagon_perp: Lean t' 2.52702944317e-2 vs record 2.52702944400e-2; agreement true; record t' re-certified true

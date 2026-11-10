@@ -1,0 +1,79 @@
+{
+ "e10_cross": {
+  "exit_code": 0,
+  "log": "e10_cross.log",
+  "peak_memory_bytes": 142958592,
+  "seconds": 84.6
+ },
+ "e10_decorated_honeycomb": {
+  "exit_code": 0,
+  "log": "e10_decorated_honeycomb.log",
+  "peak_memory_bytes": 28581888,
+  "seconds": 6.0
+ },
+ "e10_decorated_square": {
+  "exit_code": 0,
+  "log": "e10_decorated_square.log",
+  "peak_memory_bytes": 853786624,
+  "seconds": 2468.4
+ },
+ "e10_square_octagon_criterion": {
+  "exit_code": 0,
+  "peak_memory_bytes": 12890112,
+  "seconds": 0.1
+ },
+ "e10_square_octagon_par": {
+  "exit_code": 0,
+  "log": "e10_square_octagon_par.log",
+  "peak_memory_bytes": 21561344,
+  "seconds": 2.9
+ },
+ "e10_square_octagon_perp": {
+  "exit_code": 0,
+  "log": "e10_square_octagon_perp.log",
+  "peak_memory_bytes": 21504000,
+  "seconds": 2.9
+ },
+ "e10_star": {
+  "exit_code": 0,
+  "log": "e10_star.log",
+  "peak_memory_bytes": 13631488,
+  "seconds": 0.2
+ },
+ "e7_chain_J2_0": {
+  "exit_code": 0,
+  "log": "e7_chain_J2_0.log",
+  "peak_memory_bytes": 131895296,
+  "seconds": 578.5
+ },
+ "e7_chain_J2_0.5": {
+  "exit_code": 0,
+  "log": "e7_chain_J2_0.5.log",
+  "peak_memory_bytes": 135729152,
+  "seconds": 673.0
+ },
+ "e7_square_J2_0": {
+  "exit_code": 0,
+  "log": "e7_square_J2_0.log",
+  "peak_memory_bytes": 36851712,
+  "seconds": 130.3
+ },
+ "e7_square_J2_0.5": {
+  "exit_code": 0,
+  "log": "e7_square_J2_0.5.log",
+  "peak_memory_bytes": 45727744,
+  "seconds": 157.7
+ },
+ "e9_crown_spin_half_lower_bound": {
+  "exit_code": 0,
+  "log": "e9_crown_spin_half_lower_bound.log",
+  "peak_memory_bytes": 289865728,
+  "seconds": 1360.1
+ },
+ "e9_crown_spin_one_upper_bound": {
+  "exit_code": 0,
+  "log": "e9_crown_spin_one_upper_bound.log",
+  "peak_memory_bytes": 24227840,
+  "seconds": 6.6
+ }
+}
