@@ -137,6 +137,8 @@ f (if f ≤ q, f itself is returned and the next one up exceeds q, else f would 
 for `to_float_up`. `from_float`: a finite binary64 is m·2^e with integers m, e, a dyadic rational, which
 `Fraction(float)` represents exactly. ∎
 
+  *Erratum (10 Nov 2026, found by the Lean formalization, `Dyadic.from_fraction_tiny` and `Dyadic.two_pow_neg_1074_grid`, certify-ed-project reverification_lean/ENCLOSURE.md).* `from_float(f)` has width 0 only when f·2^P is an integer. A binary64 below the grid resolution, for example 2⁻¹⁰⁷⁴ with P = 192, gives `from_fraction` = (0, 1), an interval of width one grid unit that contains f. The enclosure property, which is all that (v) is used for, is unaffected; the word "exact" in the statement of (v) should read "exact when f·2^P is an integer, an enclosure otherwise".
+
 *Classical results cited.* Taylor series of exp and atanh with nonnegative terms (any calculus text;
 e.g. Rudin, *Principles of Mathematical Analysis*, Thm 8.1 for power series, and the identity atanh u =
 ½ ln((1+u)/(1−u))); the nested-ceiling identity ⌈⌈a/b⌉/c⌉ = ⌈a/(bc)⌉ (Graham, Knuth, Patashnik, *Concrete

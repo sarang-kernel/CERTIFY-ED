@@ -26,6 +26,12 @@ Proposition 14 in `docs/theory.md` 9.1; an erratum to the closing condition of t
 `docs/proofs/thm1_fp-accounting.md`. The last two were found by the Lean formalization in the separate repository
 certify-ed-project (`reverification_lean/COUNTING.md`, `CORE.md`).
 
+Further errata of 10 Nov 2026 from the same formalization (`reverification_lean/ENCLOSURE.md`; non-computational, source
+hash unchanged): one inequality in the proof of Theorem U5 (`docs/proofs/int05_underflow.md`; conclusion unaffected), the
+argument for part (b) of D-02 (a second-order margin, not a spare index; `docs/proofs/D-02_matrix-free.md`), the width of
+`from_float` below the grid resolution (`docs/proofs/L17_dyadic_exp_ln.md`), and the index of the computed |H|_abs sums for
+complex amplitudes in Lemma A1 (`docs/proofs/appA_model-shift.md`; covered by the code's width). No bound or status changes.
+
 ## [3.2.0] — 2026-11-04 (tag `v3.2.0` on `dev/3.2`; evidence run pending, see RESULT_integration_3.2.md)
 
 `__version__` = 3.2.0 (3.2.0.dev0 during development: every entry below was written under that name). Summary of the release: the

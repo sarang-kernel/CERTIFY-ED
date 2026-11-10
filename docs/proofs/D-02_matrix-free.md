@@ -106,6 +106,8 @@ components, relative u in modulus). Summing the moduli,
 which is (a). (The slack of one index, γ_{W−1} ≤ γ_W, is kept for the real case; the complex case uses
 `gamma_dot(W − 2 + 2)` = 2γ_{W+4} ≥ γ_W in `_rounding_bound`.)
 
+*Erratum to the argument for (b) (10 Nov 2026, found by the Lean formalization, theorems `FP.d02b_key` and `FP.d02b_radius`, certify-ed-project reverification_lean/ENCLOSURE.md).* For real data the slack of one index does not carry part (b) by itself: with |fl(Hx)_i − (H_spec x)_i| ≤ γ_{W−1} a_i the residual error is at most (γ_{W−1} + u(1 + γ_{W−1})) a_i + (2u + u²) q_i, and the entrywise bound of the code at `adapter.width = W − 2` covers it only through a second-order inequality, (γ_k + u(1 + γ_k))(1 − γ_k(1 − u)²)(1 + u) ≤ γ_{k+1}(1 − u)⁷(1 + 4u)²(1 − γ_k) for k = W − 1 ≤ 2²⁶ + 1, with a margin of about W u². Part (b) holds (kernel-checked for real data in the standard model, with (a) and Lemma M3 as hypotheses); the sentence above about the slack of one index should be read as this inequality.
+
 **Lemma M3 (the second pass).** `abs_matvec(|x|)` computes Σ |a_l …| |x_j| by the same passes with `np.abs`:
 the moduli of real amplitudes are exact; of complex ones one rounding each (hypot) on an amplitude that already
 carries (1 + θ_{3L_t+ρ}); then the product with |x_j| and the ≤ w_row − 1 additions of non-negative terms. The
