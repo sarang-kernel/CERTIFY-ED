@@ -1,5 +1,7 @@
 {
  "agree": 135,
+ "agree_forgeries": 80,
+ "agree_genuine": 55,
  "by_mutation": {
   "array_hash": {
    "c": 20,
@@ -26,10 +28,30 @@
    "total": 20
   }
  },
+ "certificates_with_failed_status": 18,
+ "definitions": {
+  "REFUTED": "REPRODUCED, and in addition an exact inertia count of the stored operator contradicts the claim (for S2 no eigenvalue within target plus model shift of the claimed value, for S3 an eigenvalue among the lowest, or in the window, that no claim covers); only cecheck computes exact counts, so the C verifier reports REPRODUCED or NOT_REPRODUCED only",
+  "REPRODUCED": "the recorded FAILED status is reproduced: the checker finds, on the stored numbers, the reason that certify-ed recorded (for S2 a pair whose residual radius plus the model shift exceeds the accuracy target, for S3 more eigenvalues below the witness shift, or in the window, than claimed)",
+  "agree": "genuine certificate: both checkers exit 0 and failed_reproduced_both is yes or empty; forgery: both checkers exit 1",
+  "failed_reproduced_both": "yes when cecheck and the C verifier both reproduce every recorded FAILED status of the certificate (the same question asked of both), no otherwise, empty when there is none",
+  "lean_exact_refutation": "per FAILED statement, yes when cecheck's exact inertia count contradicts the claim; this has no counterpart in the C verifier and does not enter agree"
+ },
+ "failed_c_category_REPRODUCED": 18,
  "failed_c_reproduced": 18,
- "failed_lean_refuted": 15,
+ "failed_lean_category_REFUTED": 15,
+ "failed_lean_category_REPRODUCED": 3,
+ "failed_lean_exact_refutation": 15,
+ "failed_lean_exact_refutation_by_statement": {
+  "S2": 9,
+  "S3": 6
+ },
  "failed_lean_reproduced": 18,
+ "failed_reproduced_by_both": 18,
  "failed_statuses": 18,
+ "failed_statuses_by_statement": {
+  "S2": 12,
+  "S3": 6
+ },
  "forgeries": 80,
  "forgeries_c_rejected": 80,
  "forgeries_lean_rejected": 80,

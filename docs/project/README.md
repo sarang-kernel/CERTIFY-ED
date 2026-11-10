@@ -25,7 +25,8 @@ mm3x3 project.
 | Level | Meaning |
 |---|---|
 | K | a Lean theorem, accepted by the Lean kernel, with no `sorry` and no `native_decide`; its axioms are printed |
-| K2 | a level K theorem that a second, independent checker (`leanchecker` or `lean4lean` from the toolchain) also accepts |
+| K2 | a level K theorem that the independent kernel `nanoda` (a separate implementation of Lean's type theory, run on the exported declarations) also accepts |
+| K+ | a level K theorem whose module `leanchecker` replays; this re-runs the same Lean kernel on the compiled files and guards against elaborator and file corruption, not against a kernel defect |
 | N | a compiled Lean program recomputed the number or the status from the raw data and agrees with the record |
 | P | the number is in a Python run record of certify-ed and has not been recomputed in Lean |
 | H | checked by a named person |
