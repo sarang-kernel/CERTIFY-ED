@@ -12,8 +12,13 @@ import CertifyMathlib.Enclosure.Residual
 * Proposition 1 (Temple): if `θ < ρ` and at most one eigenvalue (with multiplicity) is `< ρ`
   (that is, `ρ ≤ λ₂`), then `λ₁ ≥ θ - r² / (ρ - θ)` (`temple`).
 
-Lemmas 3 to 5 of the document (floating-point enclosure of `θ` and `r`, MPS contraction, Rayleigh
-quotient of the source state) are statements about binary64 arithmetic and are not formalized here.
+* Lemma 5 (Rayleigh quotient of a perturbed vector): for `‖ψ - ψ̂‖ ≤ e < ‖ψ̂‖`,
+  `|θ(ψ) - θ(ψ̂)| ≤ (2 r(ψ̂) ‖ψ̂‖ e + (‖H‖ + |θ(ψ̂)|) e²) / (‖ψ̂‖ - e)²` (`rayleigh_perturb`);
+* the quotient step of Lemma 3: a quotient with numerator and positive denominator in intervals lies
+  between the extreme corner quotients (`quotient_mem_corners`).
+
+The floating-point parts of Lemma 3 are in `FloatAccounting.lean` (`rayleigh_numerator_error`);
+Lemma 4 (MPS contraction) is not formalized.
 -/
 
 open scoped InnerProductSpace ComplexConjugate
@@ -148,5 +153,103 @@ theorem temple_matrix {H : Matrix n n 𝕜} (hH : H.IsHermitian) {ψ : Euclidean
     (hmin : ∀ j, hH.eigenvalues i ≤ hH.eigenvalues j) :
     θ - (‖toEuclideanLin H ψ - (θ : 𝕜) • ψ‖ / ‖ψ‖) ^ 2 / (ρ - θ) ≤ hH.eigenvalues i :=
   (hermitianEigenData hH).temple (isSymmetric_of_isHermitian hH) hψ hθ hθρ hρ hmin
+
+/-! ### Lemma 5: the Rayleigh quotient of a perturbed vector -/
+
+section RayleighPerturb
+
+variable {T : E →ₗ[𝕜] E}
+
+/-- **E-05, Lemma 5.** If `‖ψ - ψ̂‖ ≤ e < ‖ψ̂‖` and `‖T z‖ ≤ n_H ‖z‖`, the Rayleigh quotients satisfy
+`|θ(ψ) - θ(ψ̂)| ≤ (2 ‖T ψ̂ - θ(ψ̂) ψ̂‖ e + (n_H + |θ(ψ̂)|) e²) / (‖ψ̂‖ - e)²`; the first term is
+`2 r(ψ̂) ‖ψ̂‖ e` of the document. -/
+theorem rayleigh_perturb (hT : T.IsSymmetric) {nH : ℝ} (hnH0 : 0 ≤ nH)
+    (hnH : ∀ z, ‖T z‖ ≤ nH * ‖z‖) {ψ ψh : E} {θ θh e : ℝ}
+    (hθ : θ * ‖ψ‖ ^ 2 = RCLike.re ⟪ψ, T ψ⟫_𝕜) (hθh : θh * ‖ψh‖ ^ 2 = RCLike.re ⟪ψh, T ψh⟫_𝕜)
+    (he : ‖ψ - ψh‖ ≤ e) (hlt : e < ‖ψh‖) :
+    |θ - θh| ≤ (2 * ‖T ψh - (θh : 𝕜) • ψh‖ * e + (nH + |θh|) * e ^ 2) / (‖ψh‖ - e) ^ 2 := by
+  obtain ⟨d, rfl⟩ : ∃ d, ψ = ψh + d := ⟨ψ - ψh, by abel⟩
+  have hd : ‖d‖ ≤ e := by simpa using he
+  have he0 : 0 ≤ e := (norm_nonneg _).trans hd
+  have hpos : 0 < ‖ψh‖ - e := by linarith
+  have hψn : ‖ψh‖ - e ≤ ‖ψh + d‖ := by
+    have := norm_sub_le (ψh + d) d
+    rw [add_sub_cancel_right] at this
+    linarith
+  -- the identity `(θ - θ̂) ‖ψ‖² = 2 re⟨d, (T - θ̂) ψ̂⟩ + re⟨d, (T - θ̂) d⟩`
+  have hsym : RCLike.re ⟪ψh, T d⟫_𝕜 = RCLike.re ⟪d, T ψh⟫_𝕜 := by
+    rw [← hT ψh d, inner_re_symm]
+  have e1 : RCLike.re ⟪ψh + d, T (ψh + d)⟫_𝕜 = RCLike.re ⟪ψh, T ψh⟫_𝕜 +
+      2 * RCLike.re ⟪d, T ψh⟫_𝕜 + RCLike.re ⟪d, T d⟫_𝕜 := by
+    simp only [map_add, inner_add_left, inner_add_right]
+    rw [hsym]
+    ring
+  have e2 : ‖ψh + d‖ ^ 2 = ‖ψh‖ ^ 2 + 2 * RCLike.re ⟪d, ψh⟫_𝕜 + ‖d‖ ^ 2 := by
+    rw [@norm_add_sq 𝕜, inner_re_symm (𝕜 := 𝕜)]
+  have e3 : RCLike.re ⟪d, T ψh - (θh : 𝕜) • ψh⟫_𝕜 = RCLike.re ⟪d, T ψh⟫_𝕜 - θh * RCLike.re ⟪d, ψh⟫_𝕜 := by
+    rw [inner_sub_right, inner_smul_right, map_sub, RCLike.re_ofReal_mul]
+  have e4 : RCLike.re ⟪d, T d - (θh : 𝕜) • d⟫_𝕜 = RCLike.re ⟪d, T d⟫_𝕜 - θh * ‖d‖ ^ 2 := by
+    rw [inner_sub_right, inner_smul_right, map_sub, RCLike.re_ofReal_mul, inner_self_eq_norm_sq]
+  have key : (θ - θh) * ‖ψh + d‖ ^ 2 = 2 * RCLike.re ⟪d, T ψh - (θh : 𝕜) • ψh⟫_𝕜 +
+      RCLike.re ⟪d, T d - (θh : 𝕜) • d⟫_𝕜 := by
+    rw [e3, e4]
+    have : (θ - θh) * ‖ψh + d‖ ^ 2 = θ * ‖ψh + d‖ ^ 2 - θh * ‖ψh + d‖ ^ 2 := by ring
+    rw [this, hθ, e1, e2]
+    linarith
+  -- the two terms
+  have b1 : |2 * RCLike.re ⟪d, T ψh - (θh : 𝕜) • ψh⟫_𝕜| ≤ 2 * ‖T ψh - (θh : 𝕜) • ψh‖ * e := by
+    rw [abs_mul, abs_two]
+    have := (RCLike.abs_re_le_norm ⟪d, T ψh - (θh : 𝕜) • ψh⟫_𝕜).trans
+      (norm_inner_le_norm d (T ψh - (θh : 𝕜) • ψh))
+    nlinarith [norm_nonneg (T ψh - (θh : 𝕜) • ψh)]
+  have hTd : ‖T d - (θh : 𝕜) • d‖ ≤ (nH + |θh|) * ‖d‖ := by
+    refine (norm_sub_le _ _).trans ?_
+    rw [norm_smul, RCLike.norm_ofReal]
+    linarith [hnH d]
+  have b2 : |RCLike.re ⟪d, T d - (θh : 𝕜) • d⟫_𝕜| ≤ (nH + |θh|) * e ^ 2 := by
+    have h1 := (RCLike.abs_re_le_norm ⟪d, T d - (θh : 𝕜) • d⟫_𝕜).trans
+      (norm_inner_le_norm d (T d - (θh : 𝕜) • d))
+    have h2 : ‖d‖ * ‖T d - (θh : 𝕜) • d‖ ≤ ‖d‖ * ((nH + |θh|) * ‖d‖) :=
+      mul_le_mul_of_nonneg_left hTd (norm_nonneg _)
+    have hc : 0 ≤ nH + |θh| := by positivity
+    have h3 : ‖d‖ ^ 2 ≤ e ^ 2 := pow_le_pow_left₀ (norm_nonneg _) hd 2
+    nlinarith [mul_le_mul_of_nonneg_left h3 hc]
+  have hX : |θ - θh| * ‖ψh + d‖ ^ 2 ≤ 2 * ‖T ψh - (θh : 𝕜) • ψh‖ * e + (nH + |θh|) * e ^ 2 := by
+    have : |θ - θh| * ‖ψh + d‖ ^ 2 = |(θ - θh) * ‖ψh + d‖ ^ 2| := by
+      rw [abs_mul, abs_of_nonneg (sq_nonneg ‖ψh + d‖)]
+    rw [this, key]
+    exact (abs_add_le _ _).trans (add_le_add b1 b2)
+  rw [le_div_iff₀ (by positivity)]
+  have hsq : (‖ψh‖ - e) ^ 2 ≤ ‖ψh + d‖ ^ 2 := pow_le_pow_left₀ hpos.le hψn 2
+  exact (mul_le_mul_of_nonneg_left hsq (abs_nonneg _)).trans hX
+
+end RayleighPerturb
+
+/-- **E-05, Lemma 3 (iii)** (the quotient step): with the numerator in `[N_lo, N_hi]` and the
+denominator in `[D_lo, D_hi] ⊂ (0, ∞)`, the quotient lies between the smallest and the largest of the
+four corner quotients. -/
+theorem quotient_mem_corners {N D Nl Nh Dl Dh : ℝ} (hNl : Nl ≤ N) (hNh : N ≤ Nh) (hDl : Dl ≤ D)
+    (hDh : D ≤ Dh) (hD0 : 0 < Dl) :
+    min (min (Nl / Dl) (Nl / Dh)) (min (Nh / Dl) (Nh / Dh)) ≤ N / D ∧
+      N / D ≤ max (max (Nl / Dl) (Nl / Dh)) (max (Nh / Dl) (Nh / Dh)) := by
+  have hD : 0 < D := lt_of_lt_of_le hD0 hDl
+  have hDh0 : 0 < Dh := lt_of_lt_of_le hD hDh
+  have h1 : Nl / D ≤ N / D := div_le_div_of_nonneg_right hNl hD.le
+  have h2 : N / D ≤ Nh / D := div_le_div_of_nonneg_right hNh hD.le
+  constructor
+  · refine le_trans ?_ h1
+    refine min_le_of_left_le ?_
+    rcases le_total 0 Nl with h | h
+    · exact min_le_of_right_le (div_le_div_of_nonneg_left h hD hDh)
+    · refine min_le_of_left_le ?_
+      rw [div_le_div_iff₀ hD0 hD]
+      nlinarith
+  · refine le_trans h2 ?_
+    refine le_max_of_le_right ?_
+    rcases le_total 0 Nh with h | h
+    · exact le_max_of_le_left (div_le_div_of_nonneg_left h hD0 hDl)
+    · refine le_max_of_le_right ?_
+      rw [div_le_div_iff₀ hD hDh0]
+      nlinarith
 
 end CertifyMathlib.Enclosure
