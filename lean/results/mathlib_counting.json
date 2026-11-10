@@ -6,22 +6,37 @@
  "modules": [
   "CertifyMathlib.Counting.QuadForm",
   "CertifyMathlib.Counting.Inertia",
-  "CertifyMathlib.Counting.Lemma4",
   "CertifyMathlib.Counting.Completeness",
   "CertifyMathlib.Counting.Assembly",
+  "CertifyMathlib.Counting.Lemma4",
+  "CertifyMathlib.Counting.Parameter",
   "CertifyMathlib.Counting.Thermo",
   "CertifyMathlib.Counting.Eigenspace",
-  "CertifyMathlib.Counting.Parameter",
   "CertifyMathlib.Counting.Norms",
   "CertifyMathlib.Counting.Variance",
+  "CertifyMathlib.Counting.Compose",
+  "CertifyMathlib.Counting.DavisKahan",
+  "CertifyMathlib.Counting.Theorem6",
+  "CertifyMathlib.Counting.E07",
+  "CertifyMathlib.Counting.Ostrowski",
+  "CertifyMathlib.Counting.Truncated",
+  "CertifyMathlib.Counting.Observables",
+  "CertifyMathlib.Counting.Sorted",
+  "CertifyMathlib.Counting.Labels",
+  "CertifyMathlib.Counting.D01Float",
+  "CertifyMathlib.Counting.P15Float",
   "CertifyMathlib.Counting"
  ],
  "toolchain": "leanprover/lean4:v4.35.0",
  "mathlib": "v4.35.0",
+ "imports_from_other_parts": [
+  "CertifyMathlib.Enclosure.Cluster (the polar factor polarQ and polarQ_residual_le; imported by Compose)",
+  "CertifyMathlib.Enclosure.FloatAccounting and, through it, CertifyMathlib.Enclosure.FloatModel (the floating-point model; imported by D01Float and P15Float)"
+ ],
  "build": {
   "command": "lake build CertifyMathlib.Counting",
   "exit_code": 0,
-  "result": "Build completed successfully (2736 jobs)",
+  "result": "Build completed successfully (2763 jobs)",
   "date": "10 November 2026",
   "module_seconds": {
    "QuadForm": 74,
@@ -34,25 +49,38 @@
    "Parameter": 91,
    "Norms": 90,
    "Variance": 57,
-   "Counting (root)": 59
+   "Truncated": 70.0,
+   "DavisKahan": 96.0,
+   "Theorem6": 64.0,
+   "Ostrowski": 69.0,
+   "E07": 80.0,
+   "Sorted": 64.0,
+   "Observables": 70.0,
+   "Counting (root)": 56.0,
+   "Labels": 63.0,
+   "P15Float": 90.0,
+   "D01Float": 97.0,
+   "Compose": 69.0
   },
-  "module_seconds_note": "elaboration times reported by lake in the builds of 10 November 2026, each module's last build after its last edit; machine shared with other builds",
-  "warnings": "one per build: QuadForm imports a Mathlib module designed for the module system (no `module` keyword); no other warning",
-  "total_seconds_last_build": 222
+  "module_seconds_note": "elaboration times reported by lake, each module's last build after its last edit (10 November 2026); machine shared with other builds",
+  "warnings": "QuadForm and Theorem6 import Mathlib modules designed for the module system (no `module` keyword); no other warning from the counting files",
+  "total_seconds_last_build": 176
  },
  "level_K_check": {
-  "files_searched": 11,
+  "files_searched": 22,
+  "draft_files_searched": 4,
   "sorry": 0,
   "admit": 0,
   "native_decide": 0,
   "axiom_declarations": 0,
-  "method": "text search of the eleven files (root and ten modules)"
+  "set_option": 0,
+  "method": "text search of the 22 library files (root and 21 modules) and of the four Lean files in Drafts/Counting"
  },
  "axioms_check": {
   "script": "reverification_lean/Drafts/Counting/PrintAxioms.lean",
   "command": "lake env lean Drafts/Counting/PrintAxioms.lean",
   "output": "reverification_lean/Drafts/Counting/print_axioms_output.txt",
-  "theorems": 98,
+  "theorems": 291,
   "all_depend_on": [
    "Classical.choice",
    "Quot.sound",
@@ -80,7 +108,8 @@
    "exit_code": 0,
    "seconds": 2091.1,
    "output": "none",
-   "date": "10 November 2026"
+   "date": "10 November 2026",
+   "trust_level": "K+"
   },
   {
    "tool": "leanchecker (toolchain lean-4.35.0-windows)",
@@ -92,13 +121,919 @@
    "exit_code": 0,
    "seconds": 875.6,
    "output": "none",
-   "date": "10 November 2026"
+   "date": "10 November 2026",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Counting.Compose CertifyMathlib.Counting.DavisKahan CertifyMathlib.Counting.Theorem6 CertifyMathlib.Counting.E07 CertifyMathlib.Counting.Ostrowski CertifyMathlib.Counting.Truncated CertifyMathlib.Counting.Observables CertifyMathlib.Counting.Sorted CertifyMathlib.Counting.Labels CertifyMathlib.Counting",
+   "modules": [
+    "CertifyMathlib.Counting.Compose",
+    "CertifyMathlib.Counting.DavisKahan",
+    "CertifyMathlib.Counting.Theorem6",
+    "CertifyMathlib.Counting.E07",
+    "CertifyMathlib.Counting.Ostrowski",
+    "CertifyMathlib.Counting.Truncated",
+    "CertifyMathlib.Counting.Observables",
+    "CertifyMathlib.Counting.Sorted",
+    "CertifyMathlib.Counting.Labels",
+    "CertifyMathlib.Counting (root, before D01Float and P15Float were added)"
+   ],
+   "exit_code": 0,
+   "seconds": 2101.7,
+   "output": "none",
+   "date": "10 November 2026",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Counting.D01Float CertifyMathlib.Counting.P15Float CertifyMathlib.Counting",
+   "modules": [
+    "CertifyMathlib.Counting.D01Float",
+    "CertifyMathlib.Counting.P15Float",
+    "CertifyMathlib.Counting (root, final)"
+   ],
+   "exit_code": 0,
+   "seconds": 1316.6,
+   "output": "none",
+   "date": "10 November 2026",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "nanoda (nanoda_bin of toolchain lean-4.35.0-windows, input from leanexport)",
+   "command": "leanexport <module> -- <theorem> > export.ndjson; nanoda_bin config.json (permitted_axioms propext, Classical.choice, Quot.sound; unpermitted_axiom_hard_error, nat_extension, string_extension true)",
+   "driver": "reverification_lean/Drafts/Counting/nanoda_counting.py",
+   "procedure": "one theorem per run; the export contains the theorem and every declaration it depends on, including the Lean core and Mathlib declarations; LEAN_PATH as given by lake env; a run is stopped when a process exceeds 4 GiB (4096 MiB) of private memory or 30 minutes; the export file is removed after each run",
+   "theorems": 71,
+   "accepted": 71,
+   "rejected": 0,
+   "not_run": 0,
+   "seconds": 10318.8,
+   "date": "10 November 2026",
+   "note": "every run printed \"Checked N declarations with no typechecker errors, 1 pretty printer errors: [Unable to print axioms]\"; the pretty printer error concerns the printing of the axiom list, not type checking. leanexport needed 3877 to 4023 MiB of private memory, nanoda_bin at most 384 MiB; export files 25.9 to 211.2 MB; 6955 to 36149 declarations per export; no run reached the 4096 MiB or 1800 s limit",
+   "runs": [
+    {
+     "theorem": "CertifyMathlib.Counting.lemma4_doc",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 111.2,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 202354489,
+     "result": "accepted",
+     "declarations": 35378,
+     "check_seconds": 112.4,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35378 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cntLt_eq_of_factor",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 92.5,
+     "export_peak_private_mib": 3979,
+     "export_bytes": 201757417,
+     "result": "accepted",
+     "declarations": 35281,
+     "check_seconds": 114.8,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35281 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.sylvester_inertia",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 100.5,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 202414083,
+     "result": "accepted",
+     "declarations": 35371,
+     "check_seconds": 95.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35371 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.finrank_le_cntLt",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 92.4,
+     "export_peak_private_mib": 3978,
+     "export_bytes": 201076105,
+     "result": "accepted",
+     "declarations": 35242,
+     "check_seconds": 107.3,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35242 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.exists_negOn_cntLt",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 96.8,
+     "export_peak_private_mib": 3978,
+     "export_bytes": 200558863,
+     "result": "accepted",
+     "declarations": 35218,
+     "check_seconds": 119.8,
+     "check_peak_private_mib": 203,
+     "output": "Checked 35218 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.finrank_le_cntLe",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 93.4,
+     "export_peak_private_mib": 3978,
+     "export_bytes": 201322669,
+     "result": "accepted",
+     "declarations": 35265,
+     "check_seconds": 123.5,
+     "check_peak_private_mib": 207,
+     "output": "Checked 35265 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.exists_nonposOn_cntLe",
+     "module": "CertifyMathlib.Counting.Inertia",
+     "export_seconds": 126.1,
+     "export_peak_private_mib": 3978,
+     "export_bytes": 200247657,
+     "result": "accepted",
+     "declarations": 35197,
+     "check_seconds": 152.1,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35197 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.weyl_opNorm",
+     "module": "CertifyMathlib.Counting.Norms",
+     "export_seconds": 78.0,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 201906248,
+     "result": "accepted",
+     "declarations": 35303,
+     "check_seconds": 86.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35303 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.weyl_sorted_opNorm",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 70.8,
+     "export_peak_private_mib": 3986,
+     "export_bytes": 202200814,
+     "result": "accepted",
+     "declarations": 35383,
+     "check_seconds": 87.6,
+     "check_peak_private_mib": 203,
+     "output": "Checked 35383 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.abs_qf_le_of_toEuclideanLin",
+     "module": "CertifyMathlib.Counting.Norms",
+     "export_seconds": 51.0,
+     "export_peak_private_mib": 3917,
+     "export_bytes": 85821904,
+     "result": "accepted",
+     "declarations": 19598,
+     "check_seconds": 28.5,
+     "check_peak_private_mib": 103,
+     "output": "Checked 19598 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.lemma4_opNorm",
+     "module": "CertifyMathlib.Counting.Norms",
+     "export_seconds": 77.4,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 202450895,
+     "result": "accepted",
+     "declarations": 35378,
+     "check_seconds": 91.3,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35378 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.lemma4_hermitian",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 72.4,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 201817171,
+     "result": "accepted",
+     "declarations": 35285,
+     "check_seconds": 96.5,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35285 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.lemma4_perm",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 77.6,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 202936123,
+     "result": "accepted",
+     "declarations": 35404,
+     "check_seconds": 97.0,
+     "check_peak_private_mib": 203,
+     "output": "Checked 35404 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cntLt_fin_two",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 84.9,
+     "export_peak_private_mib": 3987,
+     "export_bytes": 208154757,
+     "result": "accepted",
+     "declarations": 36149,
+     "check_seconds": 105.4,
+     "check_peak_private_mib": 207,
+     "output": "Checked 36149 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cor5_model",
+     "module": "CertifyMathlib.Counting.Completeness",
+     "export_seconds": 78.8,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 202349445,
+     "result": "accepted",
+     "declarations": 35321,
+     "check_seconds": 90.3,
+     "check_peak_private_mib": 203,
+     "output": "Checked 35321 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cor5_eigAsc",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 80.8,
+     "export_peak_private_mib": 3983,
+     "export_bytes": 196372640,
+     "result": "accepted",
+     "declarations": 34691,
+     "check_seconds": 90.0,
+     "check_peak_private_mib": 207,
+     "output": "Checked 34691 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cor5_model_eigAsc",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 76.5,
+     "export_peak_private_mib": 3987,
+     "export_bytes": 203008867,
+     "result": "accepted",
+     "declarations": 35426,
+     "check_seconds": 93.2,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35426 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_a",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 48.5,
+     "export_peak_private_mib": 3926,
+     "export_bytes": 53620986,
+     "result": "accepted",
+     "declarations": 13739,
+     "check_seconds": 18.0,
+     "check_peak_private_mib": 100,
+     "output": "Checked 13739 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_b",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 52.1,
+     "export_peak_private_mib": 3939,
+     "export_bytes": 53633102,
+     "result": "accepted",
+     "declarations": 13740,
+     "check_seconds": 17.9,
+     "check_peak_private_mib": 98,
+     "output": "Checked 13740 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_a_c",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 44.5,
+     "export_peak_private_mib": 3935,
+     "export_bytes": 63820746,
+     "result": "accepted",
+     "declarations": 15637,
+     "check_seconds": 18.6,
+     "check_peak_private_mib": 102,
+     "output": "Checked 15637 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_b_c",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 44.8,
+     "export_peak_private_mib": 3936,
+     "export_bytes": 63828334,
+     "result": "accepted",
+     "declarations": 15638,
+     "check_seconds": 22.2,
+     "check_peak_private_mib": 132,
+     "output": "Checked 15638 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_count",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 75.9,
+     "export_peak_private_mib": 4019,
+     "export_bytes": 204630233,
+     "result": "accepted",
+     "declarations": 35572,
+     "check_seconds": 86.2,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35572 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_count_c",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 75.9,
+     "export_peak_private_mib": 4023,
+     "export_bytes": 206000839,
+     "result": "accepted",
+     "declarations": 35647,
+     "check_seconds": 96.2,
+     "check_peak_private_mib": 207,
+     "output": "Checked 35647 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.lambda_r1",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 37.9,
+     "export_peak_private_mib": 3915,
+     "export_bytes": 29849189,
+     "result": "accepted",
+     "declarations": 7669,
+     "check_seconds": 10.9,
+     "check_peak_private_mib": 53,
+     "output": "Checked 7669 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.lambda_r2",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 38.6,
+     "export_peak_private_mib": 3916,
+     "export_bytes": 29947711,
+     "result": "accepted",
+     "declarations": 7678,
+     "check_seconds": 10.9,
+     "check_peak_private_mib": 51,
+     "output": "Checked 7678 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_c",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 43.1,
+     "export_peak_private_mib": 3936,
+     "export_bytes": 62595133,
+     "result": "accepted",
+     "declarations": 14349,
+     "check_seconds": 18.6,
+     "check_peak_private_mib": 110,
+     "output": "Checked 14349 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.d01_count_fl",
+     "module": "CertifyMathlib.Counting.D01Float",
+     "export_seconds": 80.9,
+     "export_peak_private_mib": 4020,
+     "export_bytes": 211185754,
+     "result": "accepted",
+     "declarations": 35657,
+     "check_seconds": 152.3,
+     "check_peak_private_mib": 384,
+     "output": "Checked 35657 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.cnt_blockDiagonal'",
+     "module": "CertifyMathlib.Counting.Assembly",
+     "export_seconds": 102.6,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 202351664,
+     "result": "accepted",
+     "declarations": 35320,
+     "check_seconds": 173.6,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35320 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm8_sectors",
+     "module": "CertifyMathlib.Counting.Compose",
+     "export_seconds": 119.4,
+     "export_peak_private_mib": 3989,
+     "export_bytes": 208051698,
+     "result": "accepted",
+     "declarations": 35740,
+     "check_seconds": 108.6,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35740 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm8_opNorm_sorted",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 78.7,
+     "export_peak_private_mib": 3989,
+     "export_bytes": 204175215,
+     "result": "accepted",
+     "declarations": 35490,
+     "check_seconds": 88.1,
+     "check_peak_private_mib": 203,
+     "output": "Checked 35490 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm8_polar_sorted",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 72.8,
+     "export_peak_private_mib": 3990,
+     "export_bytes": 208058422,
+     "result": "accepted",
+     "declarations": 35777,
+     "check_seconds": 93.4,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35777 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.eigAsc_mem_of_counts",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 68.5,
+     "export_peak_private_mib": 3983,
+     "export_bytes": 195871927,
+     "result": "accepted",
+     "declarations": 34666,
+     "check_seconds": 79.8,
+     "check_peak_private_mib": 208,
+     "output": "Checked 34666 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.sorted_of_thm8_counts",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 68.4,
+     "export_peak_private_mib": 3984,
+     "export_bytes": 195971833,
+     "result": "accepted",
+     "declarations": 34667,
+     "check_seconds": 80.9,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34667 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm6_proj",
+     "module": "CertifyMathlib.Counting.DavisKahan",
+     "export_seconds": 71.7,
+     "export_peak_private_mib": 3994,
+     "export_bytes": 204574949,
+     "result": "accepted",
+     "declarations": 35328,
+     "check_seconds": 93.1,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35328 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm6_ritz",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 71.7,
+     "export_peak_private_mib": 3998,
+     "export_bytes": 203773767,
+     "result": "accepted",
+     "declarations": 35291,
+     "check_seconds": 91.1,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35291 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm6_X",
+     "module": "CertifyMathlib.Counting.Theorem6",
+     "export_seconds": 71.5,
+     "export_peak_private_mib": 3989,
+     "export_bytes": 200340830,
+     "result": "accepted",
+     "declarations": 35035,
+     "check_seconds": 88.3,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35035 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thm6_trace",
+     "module": "CertifyMathlib.Counting.Theorem6",
+     "export_seconds": 71.3,
+     "export_peak_private_mib": 3990,
+     "export_bytes": 204378462,
+     "result": "accepted",
+     "declarations": 35479,
+     "check_seconds": 87.8,
+     "check_peak_private_mib": 262,
+     "output": "Checked 35479 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.e07_lemma1",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 71.8,
+     "export_peak_private_mib": 3993,
+     "export_bytes": 201500713,
+     "result": "accepted",
+     "declarations": 35223,
+     "check_seconds": 85.9,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35223 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.e07_lemma2_i",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 72.0,
+     "export_peak_private_mib": 3988,
+     "export_bytes": 198051209,
+     "result": "accepted",
+     "declarations": 34724,
+     "check_seconds": 87.3,
+     "check_peak_private_mib": 208,
+     "output": "Checked 34724 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.e07_lemma2_ii",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 72.0,
+     "export_peak_private_mib": 3992,
+     "export_bytes": 198171039,
+     "result": "accepted",
+     "declarations": 34728,
+     "check_seconds": 85.0,
+     "check_peak_private_mib": 208,
+     "output": "Checked 34728 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.e07_prop1_proj",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 71.5,
+     "export_peak_private_mib": 3999,
+     "export_bytes": 205222957,
+     "result": "accepted",
+     "declarations": 35397,
+     "check_seconds": 94.6,
+     "check_peak_private_mib": 209,
+     "output": "Checked 35397 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.e07_lemma3",
+     "module": "CertifyMathlib.Counting.E07",
+     "export_seconds": 70.8,
+     "export_peak_private_mib": 3993,
+     "export_bytes": 200341253,
+     "result": "accepted",
+     "declarations": 34946,
+     "check_seconds": 87.7,
+     "check_peak_private_mib": 209,
+     "output": "Checked 34946 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c12_prop2_b",
+     "module": "CertifyMathlib.Counting.Labels",
+     "export_seconds": 73.0,
+     "export_peak_private_mib": 4002,
+     "export_bytes": 208830576,
+     "result": "accepted",
+     "declarations": 35763,
+     "check_seconds": 95.4,
+     "check_peak_private_mib": 208,
+     "output": "Checked 35763 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c13_prop3",
+     "module": "CertifyMathlib.Counting.Labels",
+     "export_seconds": 63.3,
+     "export_peak_private_mib": 3967,
+     "export_bytes": 150293222,
+     "result": "accepted",
+     "declarations": 28921,
+     "check_seconds": 62.3,
+     "check_peak_private_mib": 262,
+     "output": "Checked 28921 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.bracket_count",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 75.8,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 195456007,
+     "result": "accepted",
+     "declarations": 34574,
+     "check_seconds": 86.1,
+     "check_peak_private_mib": 203,
+     "output": "Checked 34574 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.bracket_exact",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 77.2,
+     "export_peak_private_mib": 3976,
+     "export_bytes": 195515153,
+     "result": "accepted",
+     "declarations": 34578,
+     "check_seconds": 86.1,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34578 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.bracket_ge",
+     "module": "CertifyMathlib.Counting.Lemma4",
+     "export_seconds": 77.0,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 195510530,
+     "result": "accepted",
+     "declarations": 34578,
+     "check_seconds": 87.2,
+     "check_peak_private_mib": 202,
+     "output": "Checked 34578 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.summed_bound",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 46.6,
+     "export_peak_private_mib": 3891,
+     "export_bytes": 46513871,
+     "result": "accepted",
+     "declarations": 12429,
+     "check_seconds": 15.6,
+     "check_peak_private_mib": 67,
+     "output": "Checked 12429 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.modulusUpper_ge",
+     "module": "CertifyMathlib.Counting.P15Float",
+     "export_seconds": 47.2,
+     "export_peak_private_mib": 3927,
+     "export_bytes": 51388087,
+     "result": "accepted",
+     "declarations": 13221,
+     "check_seconds": 17.5,
+     "check_peak_private_mib": 55,
+     "output": "Checked 13221 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.dotFlC_error",
+     "module": "CertifyMathlib.Counting.P15Float",
+     "export_seconds": 48.4,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 63375118,
+     "result": "accepted",
+     "declarations": 15543,
+     "check_seconds": 22.0,
+     "check_peak_private_mib": 101,
+     "output": "Checked 15543 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.p15_fl",
+     "module": "CertifyMathlib.Counting.P15Float",
+     "export_seconds": 49.6,
+     "export_peak_private_mib": 3925,
+     "export_bytes": 65851081,
+     "result": "accepted",
+     "declarations": 15639,
+     "check_seconds": 21.8,
+     "check_peak_private_mib": 102,
+     "output": "Checked 15639 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.p15_fl_zero",
+     "module": "CertifyMathlib.Counting.P15Float",
+     "export_seconds": 47.7,
+     "export_peak_private_mib": 3914,
+     "export_bytes": 56391013,
+     "result": "accepted",
+     "declarations": 14658,
+     "check_seconds": 18.7,
+     "check_peak_private_mib": 100,
+     "output": "Checked 14658 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thermo_Z",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 77.8,
+     "export_peak_private_mib": 3976,
+     "export_bytes": 194865560,
+     "result": "accepted",
+     "declarations": 34576,
+     "check_seconds": 162.6,
+     "check_peak_private_mib": 212,
+     "output": "Checked 34576 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thermo_energy",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 274.7,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 194889212,
+     "result": "accepted",
+     "declarations": 34576,
+     "check_seconds": 101.0,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34576 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.thermo_second",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 77.6,
+     "export_peak_private_mib": 3976,
+     "export_bytes": 194890935,
+     "result": "accepted",
+     "declarations": 34576,
+     "check_seconds": 87.7,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34576 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.free_energy_bounds",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 49.7,
+     "export_peak_private_mib": 3899,
+     "export_bytes": 67162786,
+     "result": "accepted",
+     "declarations": 16604,
+     "check_seconds": 22.7,
+     "check_peak_private_mib": 101,
+     "output": "Checked 16604 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.heat_capacity_bounds",
+     "module": "CertifyMathlib.Counting.Variance",
+     "export_seconds": 38.5,
+     "export_peak_private_mib": 3877,
+     "export_bytes": 25914574,
+     "result": "accepted",
+     "declarations": 6955,
+     "check_seconds": 9.5,
+     "check_peak_private_mib": 28,
+     "output": "Checked 6955 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.variance_shift",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 37.6,
+     "export_peak_private_mib": 3879,
+     "export_bytes": 26638597,
+     "result": "accepted",
+     "declarations": 7011,
+     "check_seconds": 8.8,
+     "check_peak_private_mib": 51,
+     "output": "Checked 7011 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.tail_weight",
+     "module": "CertifyMathlib.Counting.Thermo",
+     "export_seconds": 74.6,
+     "export_peak_private_mib": 3976,
+     "export_bytes": 194832766,
+     "result": "accepted",
+     "declarations": 34567,
+     "check_seconds": 86.3,
+     "check_peak_private_mib": 203,
+     "output": "Checked 34567 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.phiT_ge_min",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 44.1,
+     "export_peak_private_mib": 3894,
+     "export_bytes": 56178243,
+     "result": "accepted",
+     "declarations": 13978,
+     "check_seconds": 19.4,
+     "check_peak_private_mib": 132,
+     "output": "Checked 13978 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.psiT_ge_min",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 45.1,
+     "export_peak_private_mib": 3893,
+     "export_bytes": 56445305,
+     "result": "accepted",
+     "declarations": 14003,
+     "check_seconds": 19.6,
+     "check_peak_private_mib": 98,
+     "output": "Checked 14003 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.phiT_le_max",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 43.5,
+     "export_peak_private_mib": 3893,
+     "export_bytes": 55998561,
+     "result": "accepted",
+     "declarations": 13973,
+     "check_seconds": 18.7,
+     "check_peak_private_mib": 101,
+     "output": "Checked 13973 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.psiT_le_max",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 43.8,
+     "export_peak_private_mib": 3894,
+     "export_bytes": 56859904,
+     "result": "accepted",
+     "declarations": 14087,
+     "check_seconds": 19.4,
+     "check_peak_private_mib": 132,
+     "output": "Checked 14087 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c06_sums_noM",
+     "module": "CertifyMathlib.Counting.Truncated",
+     "export_seconds": 75.3,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 195905972,
+     "result": "accepted",
+     "declarations": 34605,
+     "check_seconds": 85.1,
+     "check_peak_private_mib": 207,
+     "output": "Checked 34605 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c04_conclusion",
+     "module": "CertifyMathlib.Counting.Observables",
+     "export_seconds": 76.1,
+     "export_peak_private_mib": 3999,
+     "export_bytes": 206724246,
+     "result": "accepted",
+     "declarations": 35569,
+     "check_seconds": 99.4,
+     "check_peak_private_mib": 228,
+     "output": "Checked 35569 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c07_lemma2",
+     "module": "CertifyMathlib.Counting.Observables",
+     "export_seconds": 77.6,
+     "export_peak_private_mib": 3998,
+     "export_bytes": 206160042,
+     "result": "accepted",
+     "declarations": 35555,
+     "check_seconds": 97.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35555 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c07_prop2_identity",
+     "module": "CertifyMathlib.Counting.Observables",
+     "export_seconds": 43.2,
+     "export_peak_private_mib": 3902,
+     "export_bytes": 50506763,
+     "result": "accepted",
+     "declarations": 13250,
+     "check_seconds": 17.2,
+     "check_peak_private_mib": 53,
+     "output": "Checked 13250 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.c07_prop2_bounds",
+     "module": "CertifyMathlib.Counting.Observables",
+     "export_seconds": 63.0,
+     "export_peak_private_mib": 3963,
+     "export_bytes": 149259562,
+     "result": "accepted",
+     "declarations": 28876,
+     "check_seconds": 67.1,
+     "check_peak_private_mib": 206,
+     "output": "Checked 28876 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.weyl_affine_right",
+     "module": "CertifyMathlib.Counting.Parameter",
+     "export_seconds": 120.7,
+     "export_peak_private_mib": 3979,
+     "export_bytes": 201900022,
+     "result": "accepted",
+     "declarations": 35302,
+     "check_seconds": 87.1,
+     "check_peak_private_mib": 204,
+     "output": "Checked 35302 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.sampling_criterion",
+     "module": "CertifyMathlib.Counting.Parameter",
+     "export_seconds": 35.2,
+     "export_peak_private_mib": 3879,
+     "export_bytes": 28473576,
+     "result": "accepted",
+     "declarations": 7533,
+     "check_seconds": 9.1,
+     "check_peak_private_mib": 51,
+     "output": "Checked 7533 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.Counting.weyl_affine_sorted",
+     "module": "CertifyMathlib.Counting.Sorted",
+     "export_seconds": 73.0,
+     "export_peak_private_mib": 3987,
+     "export_bytes": 202376661,
+     "result": "accepted",
+     "declarations": 35394,
+     "check_seconds": 84.3,
+     "check_peak_private_mib": 207,
+     "output": "Checked 35394 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    }
+   ]
   }
  ],
  "status_counts": {
-  "proved": 9,
+  "proved": 18,
   "partial": 7,
-  "not attempted": 5
+  "not attempted": 2
+ },
+ "level_counts": {
+  "K2": 25
  },
  "statements": [
   {
@@ -110,11 +1045,25 @@
     "CertifyMathlib.Counting.cntLt_eq_of_factor",
     "CertifyMathlib.Counting.sylvester_card"
    ],
-   "file": "CertifyMathlib/Counting/QuadForm.lean, Inertia.lean",
+   "main": [
+    "CertifyMathlib.Counting.cntLt_eq_of_factor",
+    "CertifyMathlib.Counting.sylvester_inertia"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, CertifyMathlib/Counting/QuadForm.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "Document: A = L D L^H, L invertible, D real diagonal => #negative eigenvalues of A = #negative entries of D. Lean: sylvester_inertia gives cntLt hA 0 = #{d<0} and cntLe hA 0 = #{d<=0}; cntLt_eq_of_factor at a shift t and for rectangular L with a two-sided inverse of L^H; sylvester_card compares two factorizations without eigenvalues."
+   "correspondence": "Document: A = L D L^H, L invertible, D real diagonal => #negative eigenvalues of A = #negative entries of D. Lean: sylvester_inertia gives cntLt hA 0 = #{d<0} and cntLe hA 0 = #{d<=0}; cntLt_eq_of_factor at a shift t and for rectangular L with a two-sided inverse of L^H; sylvester_card compares two factorizations without eigenvalues.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.cntLt_eq_of_factor": "accepted",
+    "CertifyMathlib.Counting.sylvester_inertia": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "MINMAX",
@@ -127,26 +1076,60 @@
     "CertifyMathlib.Counting.exists_nonposOn_cntLe",
     "CertifyMathlib.Counting.finrank_add_finrank_le"
    ],
-   "file": "CertifyMathlib/Counting/QuadForm.lean, Inertia.lean",
+   "main": [
+    "CertifyMathlib.Counting.finrank_le_cntLt",
+    "CertifyMathlib.Counting.exists_negOn_cntLt",
+    "CertifyMathlib.Counting.finrank_le_cntLe",
+    "CertifyMathlib.Counting.exists_nonposOn_cntLe"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, CertifyMathlib/Counting/QuadForm.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "Not a numbered statement of the documents; the min-max fact in subspace form on which all counts rest. Mathlib v4.35.0 has no Courant-Fischer theorem for matrices."
+   "correspondence": "Not a numbered statement of the documents; the min-max fact in subspace form on which all counts rest. Mathlib v4.35.0 has no Courant-Fischer theorem for matrices.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.finrank_le_cntLt": "accepted",
+    "CertifyMathlib.Counting.exists_negOn_cntLt": "accepted",
+    "CertifyMathlib.Counting.finrank_le_cntLe": "accepted",
+    "CertifyMathlib.Counting.exists_nonposOn_cntLe": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "WEYL",
-   "name": "Weyl's inequality, counting form",
+   "name": "Weyl's inequality, counting and sorted form",
    "source": "code/certify-ed/docs/proofs/cor5_pairing.md Step 4; thm8_rho.md Steps 3-4",
    "lean": [
     "CertifyMathlib.Counting.weyl_cntLt",
     "CertifyMathlib.Counting.weyl_cntLe",
-    "CertifyMathlib.Counting.weyl_opNorm"
+    "CertifyMathlib.Counting.weyl_opNorm",
+    "CertifyMathlib.Counting.weyl_sorted",
+    "CertifyMathlib.Counting.weyl_sorted_opNorm"
    ],
-   "file": "CertifyMathlib/Counting/Inertia.lean, Norms.lean",
+   "main": [
+    "CertifyMathlib.Counting.weyl_opNorm",
+    "CertifyMathlib.Counting.weyl_sorted_opNorm"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, CertifyMathlib/Counting/Norms.lean, CertifyMathlib/Counting/Sorted.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "Document: |lambda_j(A) - lambda_j(B)| <= rho for Hermitian A, B with ||A-B|| <= rho. Lean: cntLt hA t <= cntLt hB (t+rho) and cntLe hA t <= cntLe hB (t+rho) under |x^H (A-B) x| <= rho ||x||^2 (weyl_opNorm: under the operator-norm bound), which is the sorted statement in counting form."
+   "correspondence": "Document: |lambda_j(A) - lambda_j(B)| <= rho for Hermitian A, B with ||A-B|| <= rho. Lean: counting form cntLt hA t <= cntLt hB (t+rho) and cntLe hA t <= cntLe hB (t+rho) under |x^H (A-B) x| <= rho ||x||^2 (weyl_cntLt, weyl_cntLe; weyl_opNorm under the operator-norm bound), and the sorted form |eigAsc hA j - eigAsc hB j| <= rho with eigAsc the ascending eigenvalues (weyl_sorted, weyl_sorted_opNorm).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.weyl_opNorm": "accepted",
+    "CertifyMathlib.Counting.weyl_sorted_opNorm": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "NORM",
@@ -157,11 +1140,23 @@
     "CertifyMathlib.Counting.lemma4_opNorm",
     "CertifyMathlib.Counting.thm8_opNorm"
    ],
+   "main": [
+    "CertifyMathlib.Counting.abs_qf_le_of_toEuclideanLin"
+   ],
    "file": "CertifyMathlib/Counting/Norms.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "||M z|| <= rho ||z|| for all z in EuclideanSpace implies |x^H M x| <= rho ||x||^2 (Cauchy-Schwarz); Lemma 4, Weyl and Theorem 8 restated with the norm hypotheses of the documents."
+   "correspondence": "||M z|| <= rho ||z|| for all z in EuclideanSpace implies |x^H M x| <= rho ||x||^2 (Cauchy-Schwarz); Lemma 4, Weyl and Theorem 8 restated with the norm hypotheses of the documents.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.abs_qf_le_of_toEuclideanLin": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "L4",
@@ -174,11 +1169,29 @@
     "CertifyMathlib.Counting.lemma4_hermitian",
     "CertifyMathlib.Counting.lemma4_perm"
    ],
-   "file": "CertifyMathlib/Counting/Lemma4.lean, Norms.lean",
+   "main": [
+    "CertifyMathlib.Counting.lemma4_doc",
+    "CertifyMathlib.Counting.lemma4_opNorm",
+    "CertifyMathlib.Counting.lemma4_hermitian",
+    "CertifyMathlib.Counting.lemma4_perm"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean, CertifyMathlib/Counting/Norms.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "Document: ||L D L^H - P(A - sigma I)P^T|| <= beta, L unit lower triangular, D block diagonal with nu negative eigenvalues => #{lambda < sigma-beta} <= nu <= #{lambda <= sigma+beta} (theory.md) or < (manuscript v4). Lean: lemma4 gives the strict (manuscript) form for any L whose conjugate transpose has a two-sided inverse and diagonal D, with E = L D L^H - (A - sigma I) bounded in quadratic form; lemma4_doc the theory.md form; lemma4_opNorm with the spectral norm; lemma4_hermitian for Hermitian (block) D with nu = its negative eigenvalue count; lemma4_perm with P any unitary matrix. Unit triangularity is not needed."
+   "correspondence": "Document: ||L D L^H - P(A - sigma I)P^T|| <= beta, L unit lower triangular, D block diagonal with nu negative eigenvalues => #{lambda < sigma-beta} <= nu <= #{lambda <= sigma+beta} (theory.md) or < (manuscript v4). Lean: lemma4 gives the strict (manuscript) form for any L whose conjugate transpose has a two-sided inverse and diagonal D, with E = L D L^H - (A - sigma I) bounded in quadratic form; lemma4_doc the theory.md form; lemma4_opNorm with the spectral norm; lemma4_hermitian for Hermitian (block) D with nu = its negative eigenvalue count; lemma4_perm with P any unitary matrix. Unit triangularity is not needed.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.lemma4_doc": "accepted",
+    "CertifyMathlib.Counting.lemma4_opNorm": "accepted",
+    "CertifyMathlib.Counting.lemma4_hermitian": "accepted",
+    "CertifyMathlib.Counting.lemma4_perm": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "L4-2x2",
@@ -187,11 +1200,23 @@
    "lean": [
     "CertifyMathlib.Counting.cntLt_fin_two"
    ],
+   "main": [
+    "CertifyMathlib.Counting.cntLt_fin_two"
+   ],
    "file": "CertifyMathlib/Counting/Lemma4.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "Hermitian 2x2 D: det<0 => exactly one negative eigenvalue; det>0 => two or none by the sign of the trace. With cnt_blockDiagonal' the count of block-diagonal D is the sum over blocks."
+   "correspondence": "Hermitian 2x2 D: det<0 => exactly one negative eigenvalue; det>0 => two or none by the sign of the trace. With cnt_blockDiagonal' the count of block-diagonal D is the sum over blocks.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.cntLt_fin_two": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "COR5",
@@ -204,15 +1229,33 @@
     "CertifyMathlib.Counting.cor5_lt",
     "CertifyMathlib.Counting.cor5_sorted",
     "CertifyMathlib.Counting.cor5_model",
+    "CertifyMathlib.Counting.cor5_eigAsc",
+    "CertifyMathlib.Counting.cor5_model_eigAsc",
     "CertifyMathlib.Counting.card_le_cntLt_of_match",
     "CertifyMathlib.Counting.count_le_cntLe_of_match",
     "CertifyMathlib.Counting.cntLt_le_count_of_match"
    ],
-   "file": "CertifyMathlib/Counting/Completeness.lean",
+   "main": [
+    "CertifyMathlib.Counting.cor5_model",
+    "CertifyMathlib.Counting.cor5_eigAsc",
+    "CertifyMathlib.Counting.cor5_model_eigAsc"
+   ],
+   "file": "CertifyMathlib/Counting/Completeness.lean, CertifyMathlib/Counting/Sorted.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "(H1) as group map, radii constant on groups, disjoint group hulls [lo g, hi g], injection phi with |lambda(phi j) - mu j| <= r j (injective_of_groups builds it from group-wise injections); (H2) as cntLt hA (sigma-beta) <= k; (H3) mu j + r j < sigma - beta. Conclusions in counting form: exactly k eigenvalues below the cut and they are the matched ones (image_eq_of_match); #{mu l <= mu j} <= cntLe (mu j + r j) and cntLt (mu j - r j) <= #{mu l < mu j}; for sorted mu : Fin k -> R, j+1 <= cntLe (mu j + r j) and cntLt (mu j - r j) <= j, i.e. lambda_{j+1} in [mu_j - r_j, mu_j + r_j]; cor5_model: model shift Delta with the document's (H3), exactly k eigenvalues of A_m below sigma-beta-Delta and pairing within r_j + Delta. The gap bound is the difference of the two bounds and is not stated separately."
+   "correspondence": "(H1) as group map, radii constant on groups, disjoint group hulls [lo g, hi g], injection phi with |lambda(phi j) - mu j| <= r j (injective_of_groups builds it from group-wise injections); (H2) as cntLt hA (sigma-beta) <= k; (H3) mu j + r j < sigma - beta. Conclusions in counting form: exactly k eigenvalues below the cut and they are the matched ones (image_eq_of_match); #{mu l <= mu j} <= cntLe (mu j + r j) and cntLt (mu j - r j) <= #{mu l < mu j}; for sorted mu : Fin k -> R, j+1 <= cntLe (mu j + r j) and cntLt (mu j - r j) <= j, i.e. lambda_{j+1} in [mu_j - r_j, mu_j + r_j]; cor5_model: model shift Delta with the document's (H3), exactly k eigenvalues of A_m below sigma-beta-Delta and pairing within r_j + Delta. The gap bound is the difference of the two bounds and is not stated separately. Sorted form (Sorted.lean): cor5_eigAsc gives |eigAsc hA j - mu_j| <= r_j for j < k and eigAsc hA k >= c; cor5_model_eigAsc gives |eigAsc hAm j - mu_j| <= r_j + Delta and eigAsc hAm k >= sigma - beta - Delta for the declared model.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.cor5_model": "accepted",
+    "CertifyMathlib.Counting.cor5_eigAsc": "accepted",
+    "CertifyMathlib.Counting.cor5_model_eigAsc": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "D-01",
@@ -220,13 +1263,67 @@
    "source": "code/certify-ed/docs/proofs/D-01_sparse-residual.md",
    "lean": [
     "CertifyMathlib.Counting.abs_qf_le_rowSum",
-    "CertifyMathlib.Counting.lemma4_rowSum"
+    "CertifyMathlib.Counting.lemma4_rowSum",
+    "CertifyMathlib.Counting.nsq_conjTranspose_mulVec",
+    "CertifyMathlib.Counting.ldl_apply",
+    "CertifyMathlib.Counting.lemma4_perm_rowSum",
+    "CertifyMathlib.Counting.abs_le_rnd_div",
+    "CertifyMathlib.Counting.norm_le_crnd_div",
+    "CertifyMathlib.Counting.two_u_le_gam_two",
+    "CertifyMathlib.Counting.d01_a",
+    "CertifyMathlib.Counting.d01_b",
+    "CertifyMathlib.Counting.d01_a_c",
+    "CertifyMathlib.Counting.d01_b_c",
+    "CertifyMathlib.Counting.d01_count",
+    "CertifyMathlib.Counting.d01_count_c",
+    "CertifyMathlib.Counting.rnd_zero",
+    "CertifyMathlib.Counting.comp_ge_pow",
+    "CertifyMathlib.Counting.comp_ge_sum",
+    "CertifyMathlib.Counting.mul_le_gam",
+    "CertifyMathlib.Counting.lambda_r1",
+    "CertifyMathlib.Counting.lambda_r2",
+    "CertifyMathlib.Counting.small_mul_u",
+    "CertifyMathlib.Counting.pow3_mul_ge",
+    "CertifyMathlib.Counting.d01_c_resid",
+    "CertifyMathlib.Counting.d01_c_round",
+    "CertifyMathlib.Counting.d01_c",
+    "CertifyMathlib.Counting.d01_count_fl"
    ],
-   "file": "CertifyMathlib/Counting/Lemma4.lean",
+   "main": [
+    "CertifyMathlib.Counting.d01_a",
+    "CertifyMathlib.Counting.d01_b",
+    "CertifyMathlib.Counting.d01_a_c",
+    "CertifyMathlib.Counting.d01_b_c",
+    "CertifyMathlib.Counting.d01_count",
+    "CertifyMathlib.Counting.d01_count_c",
+    "CertifyMathlib.Counting.lambda_r1",
+    "CertifyMathlib.Counting.lambda_r2",
+    "CertifyMathlib.Counting.d01_c",
+    "CertifyMathlib.Counting.d01_count_fl"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean, CertifyMathlib/Counting/D01Float.lean",
    "status": "partial",
+   "missing": "part (c) and the sandwich with the computed beta for complex data (the rounded moduli fl(|z|) of the complex residual entries and the complex matrix-vector products of G1); the underflow hypothesis of the document is replaced by the standard model without underflow (eta = 0)",
+   "correspondence": "Standard model of CertifyMathlib.Enclosure.FloatModel (eta = 0), every sum along an arbitrary summation tree. Real data: d01_a is (a), |E_ij| <= |E_c,ij|/(1 - u) + gamma_{w+1} G_ij for w >= t_ij; d01_b is (b) as absolute row sums (with Lemma R1, abs_qf_le_rowSum, for the 2-norm). Complex data: d01_a_c and d01_b_c with gamma_{t+3} <= g_{t+1} = 2 gamma_{t+5}. d01_count, d01_count_c: the sandwich with beta = R + s from (b) (lemma4_perm_rowSum, P unitary). Part (c), real data: the code of sparse_ldl_residual_bound (certify_ed/ldl_residual.py lines 108 to 161) as residInfFl, roundInfFl, shiftFl, betaFl; lambda_r1, lambda_r2 are (Lambda-R1), (Lambda-R2) in the form the proof uses (m <= 2^27, n <= 2^26); d01_c: sum_j |E_ij| + 2u |S_ii| <= beta for all i; d01_count_fl: #{lambda(A) < sigma - beta} <= nu <= #{lambda(A) <= sigma + beta} with the stored S = A - sigma I + diag Delta, |Delta_i| <= 2u |S_ii|.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.d01_a": "accepted",
+    "CertifyMathlib.Counting.d01_b": "accepted",
+    "CertifyMathlib.Counting.d01_a_c": "accepted",
+    "CertifyMathlib.Counting.d01_b_c": "accepted",
+    "CertifyMathlib.Counting.d01_count": "accepted",
+    "CertifyMathlib.Counting.d01_count_c": "accepted",
+    "CertifyMathlib.Counting.lambda_r1": "accepted",
+    "CertifyMathlib.Counting.lambda_r2": "accepted",
+    "CertifyMathlib.Counting.d01_c": "accepted",
+    "CertifyMathlib.Counting.d01_count_fl": "accepted"
+   },
    "level": "K2",
-   "missing": "binary64 rounding model with the standard inner-product error bound (Higham 2002, Lemma 3.1) for parts (a) to (c), Steps 1 to 4",
-   "correspondence": "Lemma R1 (||E||_2 <= ||E||_inf for Hermitian E) in quadratic-form form, and Step 5 (diagonal shift rounding s plus row-sum bound R gives Lemma 4 with beta = R + s). The floating-point Steps 1 to 4 are not attempted."
+   "trust_level": "K2"
   },
   {
    "id": "BLOCK",
@@ -237,66 +1334,335 @@
     "CertifyMathlib.Counting.isHermitian_blockDiagonal'",
     "CertifyMathlib.Counting.card_filter_sigma"
    ],
+   "main": [
+    "CertifyMathlib.Counting.cnt_blockDiagonal'"
+   ],
    "file": "CertifyMathlib/Counting/Assembly.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "For B = blockDiagonal' H: cntLt hB t = sum_s cntLt (hH s) t and the same for cntLe, for every t, which is equality of eigenvalue multisets."
+   "correspondence": "For B = blockDiagonal' H: cntLt hB t = sum_s cntLt (hH s) t and the same for cntLe, for every t, which is equality of eigenvalue multisets.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.cnt_blockDiagonal'": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "THM8",
    "name": "Theorem 8, sector assembly",
-   "source": "code/certify-ed/docs/proofs/thm8_rho.md; manuscript_v4/sections/s3_math.tex thm:compose",
+   "source": "code/certify-ed/docs/proofs/thm8_rho.md; manuscript_v4/sections/s3_math.tex thm:compose; code/certify-ed/docs/proofs/thm2_polar-factor.md",
    "lean": [
     "CertifyMathlib.Counting.thm8_blocks",
     "CertifyMathlib.Counting.thm8",
     "CertifyMathlib.Counting.thm8_opNorm",
     "CertifyMathlib.Counting.cnt_conj",
-    "CertifyMathlib.Counting.isHermitian_conj"
+    "CertifyMathlib.Counting.isHermitian_conj",
+    "CertifyMathlib.Counting.polarMat",
+    "CertifyMathlib.Counting.polarMat_conjTranspose_mul",
+    "CertifyMathlib.Counting.polarMat_mul_conjTranspose",
+    "CertifyMathlib.Counting.polarMat_residual",
+    "CertifyMathlib.Counting.polarMat_qf",
+    "CertifyMathlib.Counting.thm8_polar",
+    "CertifyMathlib.Counting.blockColumns",
+    "CertifyMathlib.Counting.frob_blockColumns",
+    "CertifyMathlib.Counting.thm8_sectors",
+    "CertifyMathlib.Counting.thm8_sorted",
+    "CertifyMathlib.Counting.thm8_opNorm_sorted",
+    "CertifyMathlib.Counting.thm8_polar_sorted"
    ],
-   "file": "CertifyMathlib/Counting/Assembly.lean, Norms.lean",
-   "status": "partial",
+   "main": [
+    "CertifyMathlib.Counting.thm8_sectors",
+    "CertifyMathlib.Counting.thm8_opNorm_sorted",
+    "CertifyMathlib.Counting.thm8_polar_sorted"
+   ],
+   "file": "CertifyMathlib/Counting/Assembly.lean, CertifyMathlib/Counting/Norms.lean, CertifyMathlib/Counting/Inertia.lean, CertifyMathlib/Counting/Compose.lean, CertifyMathlib/Counting/Sorted.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "Steps 1-2 (thm8_blocks: uniform radius r, sector counts cntLt (H_s) (E_cut - beta_s) <= k_s give exactly K eigenvalues of B below E_cut - max beta and the pooled pairing) and Steps 3-5 (thm8: square Q with Q^H Q = Q Q^H = 1, |y^H (Q^H H Q - B) y| <= rho ||y||^2, |x^H (H - H_spec) x| <= m_b ||x||^2). Polar step: polarMat W is the matrix of the enclosure part's polar factor (Enclosure.polarQ via toEuclideanLin.symm); for square W with ||W^H W - I|| <= eta < 1 it is unitary (polarMat_conjTranspose_mul, polarMat_mul_conjTranspose) and ||H Q - Q B|| <= D + (||H|| + ||B||) delta with delta = 1 - sqrt(1 - eta) (polarMat_residual, from Enclosure.polarQ_residual_le), hence |y^H (Q^H H Q - B) y| <= rho ||y||^2 (polarMat_qf). thm8_polar: the conclusion with rho = D + (||H|| + ||B||) delta and epsilon = rho + m_b; thm8_sectors: W = [V_1 ... V_m] and D >= (sum_s ||H V_s - V_s H_s||_F^2)^(1/2) as compose.certify_low_energy computes it. Sorted form: with e : Fin K ~ (sum s, kappa s) listing the claimed values increasingly, |lambda_j(H_spec) - c_(j)| <= r + epsilon for j <= K and lambda_(K+1)(H_spec) >= E_cut - max beta - epsilon (thm8_sorted, thm8_opNorm_sorted, thm8_polar_sorted). With m_b = 0 this is thm:compose of the manuscript with rho as in thm8_rho.md.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.thm8_sectors": "accepted",
+    "CertifyMathlib.Counting.thm8_opNorm_sorted": "accepted",
+    "CertifyMathlib.Counting.thm8_polar_sorted": "accepted"
+   },
    "level": "K2",
-   "missing": "polar-factor lemma for the square W = [V_1 ... V_m] (thm2_polar-factor.md (a), (c), (d)) giving a matrix Q with Q^H Q = Q Q^H = 1 and ||Q^H H Q - B|| <= rho = D + (||H|| + ||B||) delta; kernel-checked in operator form as CertifyMathlib.Enclosure.polarQ_residual_le but not joined here",
-   "correspondence": "Steps 1-2 (thm8_blocks, uniform radius r, sector counts at E_cut - beta_s) and Steps 3-5 (thm8) given a square unitary Q and the bounds on Q^H H Q - B (rho) and H - H_spec (m_b): pairing within r + rho + m_b and lambda_{K+1}(H_spec) >= E_cut - max beta - (rho + m_b). m_b = 0 gives the manuscript form."
+   "trust_level": "K2"
+  },
+  {
+   "id": "SORTED",
+   "name": "sorted-index forms of the j-th eigenvalue statements",
+   "source": "COUNTING.md, convention 'counting form'; theory.md §3",
+   "lean": [
+    "CertifyMathlib.Counting.eigAsc",
+    "CertifyMathlib.Counting.ascEquiv",
+    "CertifyMathlib.Counting.eigAsc_monotone",
+    "CertifyMathlib.Counting.eigAsc_eq",
+    "CertifyMathlib.Counting.cntLe_eq",
+    "CertifyMathlib.Counting.cntLt_eq",
+    "CertifyMathlib.Counting.succ_le_card_le",
+    "CertifyMathlib.Counting.card_lt_le",
+    "CertifyMathlib.Counting.eigAsc_le_iff",
+    "CertifyMathlib.Counting.le_eigAsc_iff",
+    "CertifyMathlib.Counting.eigAsc_mem_of_counts",
+    "CertifyMathlib.Counting.sorted_of_thm8_counts",
+    "CertifyMathlib.Counting.radius_nonneg",
+    "CertifyMathlib.Counting.weyl_affine_sorted"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.eigAsc_mem_of_counts",
+    "CertifyMathlib.Counting.sorted_of_thm8_counts"
+   ],
+   "file": "CertifyMathlib/Counting/Sorted.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "eigAsc hA j := hA.eigenvalues0 (Fin.rev j) is the (j+1)-th smallest eigenvalue with multiplicity (Mathlib's eigenvalues0 is decreasing). eigAsc hA j <= t iff j + 1 <= cntLe hA t, and t <= eigAsc hA j iff cntLt hA t <= j; eigAsc_mem_of_counts turns the two halves of a pairing into an interval for eigAsc. sorted_of_thm8_counts derives the sorted form of Theorem 8 from its counting conclusions. Sorted forms are stated for Weyl, E-04, Corollary 5 (and its model transfer) and Theorem 8 (three variants).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.eigAsc_mem_of_counts": "accepted",
+    "CertifyMathlib.Counting.sorted_of_thm8_counts": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "THM6",
    "name": "Theorem 6, projector bound",
-   "source": "code/certify-ed/docs/theory.md §4; manuscript_v4/sections/s3_math.tex thm:dk",
-   "lean": [],
-   "file": null,
-   "status": "not attempted",
-   "level": null,
-   "missing": "polar factor, Kahan's theorem and a spectral-norm sin Theta theorem",
-   "correspondence": "Not attempted; effort went first to the counting statements used by S3 and S5."
+   "source": "code/certify-ed/docs/theory.md §4; manuscript_v4/sections/s3_math.tex thm:dk; notation of code/certify-ed/docs/proofs/E-07_davis_kahan.md",
+   "lean": [
+    "CertifyMathlib.Counting.sinTheta_core",
+    "CertifyMathlib.Counting.spec",
+    "CertifyMathlib.Counting.specProj",
+    "CertifyMathlib.Counting.eigCols",
+    "CertifyMathlib.Counting.eigCols_conjTranspose_mul",
+    "CertifyMathlib.Counting.eigCols_mul_conjTranspose",
+    "CertifyMathlib.Counting.sinTheta",
+    "CertifyMathlib.Counting.proj_sub_le",
+    "CertifyMathlib.Counting.thm6_proj",
+    "CertifyMathlib.Counting.thm6_ritz",
+    "CertifyMathlib.Counting.polarSqrt",
+    "CertifyMathlib.Counting.polarSqrtInv",
+    "CertifyMathlib.Counting.thm6_X",
+    "CertifyMathlib.Counting.norm_trace_mul_le",
+    "CertifyMathlib.Counting.thm6_trace"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.thm6_proj",
+    "CertifyMathlib.Counting.thm6_ritz",
+    "CertifyMathlib.Counting.thm6_X",
+    "CertifyMathlib.Counting.thm6_trace"
+   ],
+   "file": "CertifyMathlib/Counting/DavisKahan.lean, CertifyMathlib/Counting/E07.lean, CertifyMathlib/Counting/Theorem6.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "specProj hA T = U diag(1_T) U^H is the spectral projector of A on the eigen-indices T, = eigCols eigCols^H. sinTheta (Davis-Kahan sin Theta theorem, spectral norm, interval form): for Q^H Q = 1 and any Lambda with ||Lambda - c I|| <= w, if every eigenvalue of A outside T satisfies |lambda - c| >= w + sep, then ||(I - P) Q|| <= ||A Q - Q Lambda|| / sep. proj_sub_le: for equal ranks and s < 1, ||Q2 Q2^H - Q1 Q1^H|| <= s. thm6_proj: ||Qhat Qhat^H - P|| <= s = rho/sep with rho = ||R|| + (||A|| + ||Lambda||) delta and the separation measured from [c - w, c + w] (for Lambda = diag(mu), c and w the midpoint and half-width of [min mu, max mu]). thm6_ritz: the same with the separation measured from the hull of the Ritz values (eigenvalues of H' = Qhat^H A Qhat), the wording of thm:dk. thm6_X: ||X X^H - P|| <= s + eta. thm6_trace: |tr(X^H O X) - tr(P O)| <= (g + #T) ||X X^H - P|| ||O||, i.e. 2 g ||O|| (s + eta) when #T = g; Mathlib v4.35.0 has no trace norm, so the rank bound |tr(E O)| <= #{nonzero eigenvalues of E} ||E|| ||O|| (norm_trace_mul_le) replaces Hoelder.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.thm6_proj": "accepted",
+    "CertifyMathlib.Counting.thm6_ritz": "accepted",
+    "CertifyMathlib.Counting.thm6_X": "accepted",
+    "CertifyMathlib.Counting.thm6_trace": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "E-07-L1",
-   "name": "E-07 Lemma 1, Frobenius sin Theta (separation inequality)",
+   "name": "E-07 Lemma 1, Frobenius sin Theta",
    "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
    "lean": [
     "CertifyMathlib.Counting.frob_sylvester",
-    "CertifyMathlib.Counting.frob_eq_re_trace",
-    "CertifyMathlib.Counting.frob_conjTranspose_mul",
-    "CertifyMathlib.Counting.frob_mul_conjTranspose"
+    "CertifyMathlib.Counting.mul_one_sub_specProj_comm",
+    "CertifyMathlib.Counting.coord_one_sub_specProj",
+    "CertifyMathlib.Counting.e07_lemma1_sharp",
+    "CertifyMathlib.Counting.e07_lemma1"
    ],
-   "file": "CertifyMathlib/Counting/Eigenspace.lean",
-   "status": "partial",
+   "main": [
+    "CertifyMathlib.Counting.e07_lemma1"
+   ],
+   "file": "CertifyMathlib/Counting/Eigenspace.lean, CertifyMathlib/Counting/E07.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "e07_lemma1_sharp: delta'^2 ||(I - P) Qhat||_F^2 <= ||(I - P)(A Qhat - Qhat Lambda)||_F^2 for any Hermitian Lambda whose eigenvalues are at distance >= delta' from every eigenvalue of A outside T (with Lambda = H' the first inequality of the document); e07_lemma1: <= ||A Qhat - Qhat Lambda||_F^2 (the second). Proof through the projector identity (I - P)(A Qhat - Qhat Lambda) = A Y - Y Lambda, Y = (I - P) Qhat, and frob_sylvester. Qhat need not be orthonormal in the Lean statement.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.e07_lemma1": "accepted"
+   },
    "level": "K2",
-   "missing": "the projector identity (I - P) R' = A_perp Y - Y H' (spectral projector P as a matrix, commuting with A)",
-   "correspondence": "frob_sylvester: Hermitian A, H, any Y; if every nonzero coordinate of Y in the two eigenbases pairs eigenvalues at distance >= delta >= 0, then delta^2 ||Y||_F^2 <= ||A Y - Y H||_F^2. For Y = (I-P)Q-hat the cluster coordinates vanish, which is the hypothesis of Lemma 1."
+   "trust_level": "K2"
   },
   {
-   "id": "E-07-rest",
-   "name": "E-07 Lemma 2, Proposition 1, Lemma 3; C-12; C-13",
+   "id": "E-07-L2",
+   "name": "E-07 Lemma 2, polar identities",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.polar_identity_i",
+    "CertifyMathlib.Counting.e07_lemma2_i",
+    "CertifyMathlib.Counting.polar_identity_ii",
+    "CertifyMathlib.Counting.e07_lemma2_ii"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.e07_lemma2_i",
+    "CertifyMathlib.Counting.e07_lemma2_ii"
+   ],
+   "file": "CertifyMathlib/Counting/E07.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "(i) A Qhat - Qhat H' = (I - Qhat Qhat^H) R M^-1 and ||A Qhat - Qhat H'||_F^2 <= ||R||_F^2 / (1 - eta) (e07_lemma2_i, any Lambda). (ii) ||H' - Lambda|| <= ||X^H R|| / (1 - eta) + 2 delta w / sqrt(1 - eta) for ||Lambda - c I|| <= w (e07_lemma2_ii); with c the midpoint of [min mu, max mu], 2 w = spread(mu), which is the document's w'.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.e07_lemma2_i": "accepted",
+    "CertifyMathlib.Counting.e07_lemma2_ii": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
+  },
+  {
+   "id": "E-07-P1",
+   "name": "E-07 Proposition 1, s_DK",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.e07_prop1",
+    "CertifyMathlib.Counting.e07_prop1_proj"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.e07_prop1_proj"
+   ],
+   "file": "CertifyMathlib/Counting/E07.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "e07_prop1: ||(I - P) Qhat|| <= ||R||_F / (sqrt(1 - eta) (dist - w')) when every other eigenvalue lies at distance >= dist from [c - w, c + w] (= [min mu, max mu]), ||Lambda - c I|| <= w and ||H' - Lambda|| <= w' < dist. e07_prop1_proj: ||Qhat Qhat^H - P|| <= s_DK for #T = g and s_DK < 1 (for s_DK >= 1 the bound holds because two orthogonal projectors differ by at most 1 in norm; that case is not stated).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.e07_prop1_proj": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
+  },
+  {
+   "id": "E-07-L3",
+   "name": "E-07 Lemma 3, alignment",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.e07_lemma3"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.e07_lemma3"
+   ],
+   "file": "CertifyMathlib/Counting/E07.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "For isometries Q1 (n x k) and Q2 (n x g) with k = g and ||(I - Q1 Q1^H) Q2|| <= s < 1, the polar factor U of Q1^H Q2 is unitary and ||Q2 - Q1 U|| <= s + s^2. With Q1 = Q, Q2 = Qhat this is the document's statement (s >= sin theta_max).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.e07_lemma3": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
+  },
+  {
+   "id": "C-12",
+   "name": "E-07 Proposition 2 (C-12), approximate-symmetry labels",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.ostrowski_pos",
+    "CertifyMathlib.Counting.ostrowski_neg",
+    "CertifyMathlib.Counting.ostrowski_polar",
+    "CertifyMathlib.Counting.ostrowski_sorted",
+    "CertifyMathlib.Counting.eigAsc_conj",
+    "CertifyMathlib.Counting.abs_eigAsc_le",
+    "CertifyMathlib.Counting.c12_prop2_b"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.c12_prop2_b"
+   ],
+   "file": "CertifyMathlib/Counting/Ostrowski.lean, CertifyMathlib/Counting/Labels.lean",
+   "status": "partial",
+   "missing": "part (a) (an eigenvalue of S within (c + ||S|| w/2)/gamma_0 of each m_i, from the commutator bound) and the combined bound D",
+   "correspondence": "Part (b): for the sorted eigenvalues m_hat_j of X^H S X and m_j of the exact compression Q^H S Q (Q with Q^H Q = 1 spanning range P, ||(I - Q Q^H) Qhat|| <= s < 1, S Hermitian), |m_hat_j - m_j| <= (2 s + 2 s^2 + eta) ||S|| (c12_prop2_b), from Lemma 3, Weyl, the unitary invariance of sorted eigenvalues (eigAsc_conj) and Ostrowski's theorem for X^H S X = M (Qhat^H S Qhat) M (ostrowski_polar in counting form, ostrowski_sorted: |m_hat_j - k_j| <= eta |k_j|).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.c12_prop2_b": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
+  },
+  {
+   "id": "C-13",
+   "name": "E-07 Proposition 3 (C-13), overlap of two certified eigenspaces",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.norm_apply_le_sqrt",
+    "CertifyMathlib.Counting.norm_trace_le_card",
+    "CertifyMathlib.Counting.c13_prop3"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.c13_prop3"
+   ],
+   "file": "CertifyMathlib/Counting/Labels.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "For P_i = Q_i Q_i^H with Q_2^H Q_2 = 1 (rank k2), ||X_i X_i^H - P_i|| <= e_i and ||X_1^H X_1 - I|| <= eta_1: |tr(P_1 P_2) - tr(X_1 X_1^H X_2 X_2^H)| <= k2 e_1 + g (1 + eta_1) e_2 and Re tr(X_1 X_1^H X_2 X_2^H) = ||X_1^H X_2||_F^2. With e_i = s_i + eta_i (thm6_X) and k2 = g this is the document's bound.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.c13_prop3": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
+  },
+  {
+   "id": "E-07-L5",
+   "name": "E-07 Lemma 5, rounding",
    "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
    "lean": [],
+   "main": [],
    "file": null,
    "status": "not attempted",
+   "missing": "Lemma 5 (floating-point evaluation of the commutator, the labels and the fidelity); not attempted, the floating-point parts formalized so far are those of D-01 and Proposition 15, and the standard model of CertifyMathlib.Enclosure.FloatModel would serve for it",
+   "correspondence": "Statements about the floating-point evaluation of the commutator, the labels and the fidelity; not attempted, for the reason given under D-01.",
+   "nanoda": {},
    "level": null,
-   "missing": "polar identities, s_DK, alignment lemma, Ostrowski",
-   "correspondence": "Not attempted."
+   "trust_level": null
   },
   {
    "id": "P14",
@@ -309,35 +1675,84 @@
     "CertifyMathlib.Counting.card_Ioo_add_cntLe",
     "CertifyMathlib.Counting.cntLe_le_cntLt_add"
    ],
+   "main": [
+    "CertifyMathlib.Counting.bracket_count",
+    "CertifyMathlib.Counting.bracket_exact",
+    "CertifyMathlib.Counting.bracket_ge"
+   ],
    "file": "CertifyMathlib/Counting/Lemma4.lean",
    "status": "proved",
-   "level": "K2",
    "missing": null,
-   "correspondence": "(a), (b) as #I_in + nu_lo <= nu_hi and nu_hi <= nu_lo + #I_out with the hypothesis sigma_lo + beta_lo < sigma_hi - beta_hi (I_in non-empty, as in part (b) of the derivation document; theory.md §9.1 omits it and the inequality is false without it); (c) bracket_exact; (e) bracket_ge; (d) is (a). (H1) as g distinct eigen-indices with eigenvalues in I_in."
+   "correspondence": "(a), (b) as #I_in + nu_lo <= nu_hi and nu_hi <= nu_lo + #I_out with the hypothesis sigma_lo + beta_lo < sigma_hi - beta_hi (I_in non-empty, as in part (b) of the derivation document; theory.md §9.1 omits it and the inequality is false without it); (c) bracket_exact; (e) bracket_ge; (d) is (a). (H1) as g distinct eigen-indices with eigenvalues in I_in.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.bracket_count": "accepted",
+    "CertifyMathlib.Counting.bracket_exact": "accepted",
+    "CertifyMathlib.Counting.bracket_ge": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "C-16",
    "name": "C-16 exact bracket",
    "source": "code/certify-ed/docs/proofs/C16_exact_bracket.md",
    "lean": [],
+   "main": [],
    "file": null,
    "status": "not attempted",
-   "level": null,
    "missing": "Sturm's theorem and Yun's squarefree factorization on Mathlib; hypothesis (H2) (exactness of python-flint) is outside Lean",
-   "correspondence": "Not attempted."
+   "correspondence": "Not attempted.",
+   "nanoda": {},
+   "level": null,
+   "trust_level": null
   },
   {
    "id": "P15",
    "name": "Proposition 15, summed bounds",
    "source": "code/certify-ed/docs/proofs/P15_summed_bounds.md",
    "lean": [
-    "CertifyMathlib.Counting.summed_bound"
+    "CertifyMathlib.Counting.summed_bound",
+    "CertifyMathlib.Counting.le_upFl",
+    "CertifyMathlib.Counting.norm_eq_sqrt_re_im",
+    "CertifyMathlib.Counting.modulusUpper_ge",
+    "CertifyMathlib.Counting.modulusUpper_nonneg",
+    "CertifyMathlib.Counting.dotFlC_error",
+    "CertifyMathlib.Counting.foldl_addUp_ge",
+    "CertifyMathlib.Counting.sumUp_ge",
+    "CertifyMathlib.Counting.up_mul_ge",
+    "CertifyMathlib.Counting.p15_fl",
+    "CertifyMathlib.Counting.p15_fl_zero"
    ],
-   "file": "CertifyMathlib/Counting/Thermo.lean",
-   "status": "partial",
+   "main": [
+    "CertifyMathlib.Counting.summed_bound",
+    "CertifyMathlib.Counting.modulusUpper_ge",
+    "CertifyMathlib.Counting.dotFlC_error",
+    "CertifyMathlib.Counting.p15_fl",
+    "CertifyMathlib.Counting.p15_fl_zero"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean, CertifyMathlib/Counting/P15Float.lean",
+   "status": "proved",
+   "missing": null,
+   "correspondence": "Inequality (1), exact, for any RCLike field (summed_bound). Corollary (2) and Lemmas A and B in the standard model of CertifyMathlib.Enclosure.FloatModel (eta = 0, u <= 2^-10): modulusUpper is modulus_upper of certify_ed/correlations.py with its three branches and modulusUpper_ge is Lemma A (no underflow hypothesis is needed in this model); dotFlC is numpy.sum(a * v) as complex products from four real products and two real sums summed along any tree with componentwise rounding, and dotFlC_error is Lemma B with gamma_{m+2}; add_up is modelled by any succ with z <= succ(fl(z)) (numpy.nextafter); p15_fl is (2) for the bound returned by combine_certified, m >= 1, and p15_fl_zero the case m = 0 (value 0, bound add_up(0, 0)).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.summed_bound": "accepted",
+    "CertifyMathlib.Counting.modulusUpper_ge": "accepted",
+    "CertifyMathlib.Counting.dotFlC_error": "accepted",
+    "CertifyMathlib.Counting.p15_fl": "accepted",
+    "CertifyMathlib.Counting.p15_fl_zero": "accepted"
+   },
    "level": "K2",
-   "missing": "binary64 model for the floating-point corollary (2) and Lemmas A, B",
-   "correspondence": "Inequality (1), exact, for any RCLike field."
+   "trust_level": "K2"
   },
   {
    "id": "P16",
@@ -353,48 +1768,158 @@
     "CertifyMathlib.Counting.weighted_sq_le",
     "CertifyMathlib.Counting.variance_nonneg",
     "CertifyMathlib.Counting.variance_bounds",
-    "CertifyMathlib.Counting.heat_capacity_bounds"
+    "CertifyMathlib.Counting.heat_capacity_bounds",
+    "CertifyMathlib.Counting.mean_shift",
+    "CertifyMathlib.Counting.variance_shift"
    ],
-   "file": "CertifyMathlib/Counting/Thermo.lean; CertifyMathlib/Counting/Variance.lean",
+   "main": [
+    "CertifyMathlib.Counting.thermo_Z",
+    "CertifyMathlib.Counting.thermo_energy",
+    "CertifyMathlib.Counting.thermo_second",
+    "CertifyMathlib.Counting.free_energy_bounds",
+    "CertifyMathlib.Counting.heat_capacity_bounds",
+    "CertifyMathlib.Counting.variance_shift"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean, CertifyMathlib/Counting/Variance.lean, CertifyMathlib/Counting/Truncated.lean",
    "status": "partial",
+   "missing": "dyadic interval arithmetic of Lemma 17 (outward-rounded exp and ln; enclosure part)",
+   "correspondence": "(H) as an assignment kappa of eigen-indices to intervals with fibre sizes c_k; enclosures of Z e^{beta E0}, sum e_i e^{-beta e_i}, sum e_i^2 e^{-beta e_i}; quotient enclosure; F = E0 - T ln Z-tilde. Z is the sum over Mathlib's eigenvalues. Var(e) = <e^2> - <e>^2 >= 0 by a weighted Cauchy-Schwarz inequality; variance interval [max(0, a2 - b1^2), b2 - a1^2] from enclosures of <e> >= 0 and <e^2>; C = beta^2 Var(E) in beta^2 times that interval. Shift identity of the proof: mean_shift (<e + c> = <e> + c) and variance_shift (Var(e + c) = Var(e)), so U = E_0 + <e> and Var(E) = Var(e).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.thermo_Z": "accepted",
+    "CertifyMathlib.Counting.thermo_energy": "accepted",
+    "CertifyMathlib.Counting.thermo_second": "accepted",
+    "CertifyMathlib.Counting.free_energy_bounds": "accepted",
+    "CertifyMathlib.Counting.heat_capacity_bounds": "accepted",
+    "CertifyMathlib.Counting.variance_shift": "accepted"
+   },
    "level": "K2",
-   "missing": "dyadic arithmetic of Lemma 17",
-   "correspondence": "(H) as an assignment kappa of eigen-indices to intervals with fibre sizes c_k; enclosures of Z e^{beta E0}, sum e_i e^{-beta e_i}, sum e_i^2 e^{-beta e_i}; quotient enclosure; F = E0 - T ln Z-tilde. Z is the sum over Mathlib's eigenvalues. Var(e) = <e^2> - <e>^2 >= 0 by a weighted Cauchy-Schwarz inequality; variance interval [max(0, a2 - b1^2), b2 - a1^2] from enclosures of <e> >= 0 and <e^2>; C = beta^2 Var(E) in beta^2 times that interval."
+   "trust_level": "K2"
   },
   {
    "id": "C-06",
-   "name": "C-06 truncated thermodynamics",
+   "name": "C-06 truncated thermodynamics (Proposition 16')",
    "source": "code/certify-ed/docs/proofs/C06_truncated_thermodynamics.md",
    "lean": [
-    "CertifyMathlib.Counting.tail_weight"
+    "CertifyMathlib.Counting.tail_weight",
+    "CertifyMathlib.Counting.phiT",
+    "CertifyMathlib.Counting.psiT",
+    "CertifyMathlib.Counting.psiT_eq",
+    "CertifyMathlib.Counting.phiT_le_max",
+    "CertifyMathlib.Counting.phiT_at_peak",
+    "CertifyMathlib.Counting.phiT_mono",
+    "CertifyMathlib.Counting.phiT_anti",
+    "CertifyMathlib.Counting.phiT_ge_min",
+    "CertifyMathlib.Counting.phiT_le_left",
+    "CertifyMathlib.Counting.phiT_le_right",
+    "CertifyMathlib.Counting.psiT_le_max",
+    "CertifyMathlib.Counting.psiT_mono",
+    "CertifyMathlib.Counting.psiT_anti",
+    "CertifyMathlib.Counting.psiT_ge_min",
+    "CertifyMathlib.Counting.psiT_le_left",
+    "CertifyMathlib.Counting.psiT_le_right",
+    "CertifyMathlib.Counting.sum_fiber_bounds_on",
+    "CertifyMathlib.Counting.c06_tail_phi",
+    "CertifyMathlib.Counting.c06_tail_psi",
+    "CertifyMathlib.Counting.sum_split_bounds",
+    "CertifyMathlib.Counting.c06_sums",
+    "CertifyMathlib.Counting.c06_sums_noM"
    ],
-   "file": "CertifyMathlib/Counting/Thermo.lean",
+   "main": [
+    "CertifyMathlib.Counting.tail_weight",
+    "CertifyMathlib.Counting.phiT_ge_min",
+    "CertifyMathlib.Counting.psiT_ge_min",
+    "CertifyMathlib.Counting.phiT_le_max",
+    "CertifyMathlib.Counting.psiT_le_max",
+    "CertifyMathlib.Counting.c06_sums_noM"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean, CertifyMathlib/Counting/Truncated.lean",
    "status": "partial",
+   "missing": "the outward-rounded evaluation of the interval ends by Lemma 17 (dyadic exp and ln) in (iii), and the statement that phi and psi tend to 0 at infinity (not needed by the Lean form of the case without M)",
+   "correspondence": "Lemma C: phi(e) = e e^{-beta e} increasing on [0, 1/beta], decreasing on [1/beta, inf), maximum e^{-1}/beta at 1/beta; psi(e) = e^2 e^{-beta e} increasing on [0, 2/beta], decreasing after, maximum 4 e^{-2}/beta^2; on [l, mu] the infimum is min(phi(l), phi(mu)) and the supremum phi(l) for l >= 1/beta or phi(mu) for mu <= 1/beta (phiT_le_left, phiT_le_right; psi likewise; phi(clamp(1/beta, l, mu)) in the remaining case is phiT_le_max). (i) tail_weight. (ii) c06_tail_phi, c06_tail_psi: the omitted moments lie in (n - k)[lo, hi] for any bounds valid on [l, mu]. (iii) c06_sums: the three sums for Z e^{beta E0}, sum e_i e^{-beta e_i} and sum e_i^2 e^{-beta e_i} lie between the sums of the claimed intervals' bounds and the tail bounds; c06_sums_noM: the same without M (mu = inf) with lower tail ends 0; the quotients, the variance and C then follow by quotient_bounds, variance_bounds and heat_capacity_bounds. Real-number statements; no rounding.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.tail_weight": "accepted",
+    "CertifyMathlib.Counting.phiT_ge_min": "accepted",
+    "CertifyMathlib.Counting.psiT_ge_min": "accepted",
+    "CertifyMathlib.Counting.phiT_le_max": "accepted",
+    "CertifyMathlib.Counting.psiT_le_max": "accepted",
+    "CertifyMathlib.Counting.c06_sums_noM": "accepted"
+   },
    "level": "K2",
-   "missing": "Lemma C (envelopes of e e^{-beta e}, e^2 e^{-beta e}) and the assembled intervals (iii)",
-   "correspondence": "Part (i), the omitted weight in [(n-k) e^{-beta(M-E0)}, (n-k) e^{-beta(L-E0)}] with n - k = #{lambda >= L}."
+   "trust_level": "K2"
   },
   {
    "id": "C-04",
    "name": "C-04 correlation lift",
    "source": "code/certify-ed/docs/proofs/C-04_correlation_lift.md",
-   "lean": [],
-   "file": null,
-   "status": "not attempted",
-   "level": null,
-   "missing": "trace norm, Hoelder for traces, polar factor",
-   "correspondence": "Not attempted."
+   "lean": [
+    "CertifyMathlib.Counting.c04_lemma0",
+    "CertifyMathlib.Counting.mul_conjTranspose_eq_polar",
+    "CertifyMathlib.Counting.c04_prop1",
+    "CertifyMathlib.Counting.c04_conclusion"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.c04_conclusion"
+   ],
+   "file": "CertifyMathlib/Counting/Observables.lean",
+   "status": "partial",
+   "missing": "Lemma 1 (compression rounding, a binary64 statement; not attempted, the standard model of CertifyMathlib.Enclosure.FloatModel would serve for it)",
+   "correspondence": "Lemma 0: tr(P_s V^H O V) = tr(V P_s V^H O) (c04_lemma0). Proposition 1: |tr(Pi_V O) - tr(Pi_Q O)| <= 2 g ||O|| delta (1 + sqrt(1 + iota)) with V = Q M the polar decomposition (Q = polarMat V), Pi_V = V P_s V^H, Pi_Q = Q P_s Q^H and P_s = Q1 Q1^H an orthogonal projector of rank g (c04_prop1). Conclusion without rounding: from |v - tr(P_s V^H O V)| <= b_6, |v - tr(Pi_V O)| <= b_6 and |v - tr(Pi_Q O)| <= b_6 + 2 g ||O|| delta (1 + sqrt(1 + iota)) (c04_conclusion); the term g r_c of Lemma 1 is the rounding of the compression and is not formalized.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.c04_conclusion": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "C-07",
-   "name": "C-07 moments",
+   "name": "C-07 moments and sum rules",
    "source": "code/certify-ed/docs/proofs/C-07_moments.md",
-   "lean": [],
-   "file": null,
-   "status": "not attempted",
-   "level": null,
-   "missing": "trace norm, Hoelder for traces, Theorem 6",
-   "correspondence": "Not attempted."
+   "lean": [
+    "CertifyMathlib.Counting.norm_trace_herm_le",
+    "CertifyMathlib.Counting.rank_conj_le",
+    "CertifyMathlib.Counting.c07_lemma1",
+    "CertifyMathlib.Counting.trace_mul_conjTranspose_eq",
+    "CertifyMathlib.Counting.norm_pow_apply_le",
+    "CertifyMathlib.Counting.c07_lemma2",
+    "CertifyMathlib.Counting.c07_prop2_identity",
+    "CertifyMathlib.Counting.c07_prop2_bounds"
+   ],
+   "main": [
+    "CertifyMathlib.Counting.c07_lemma2",
+    "CertifyMathlib.Counting.c07_prop2_identity",
+    "CertifyMathlib.Counting.c07_prop2_bounds"
+   ],
+   "file": "CertifyMathlib/Counting/Observables.lean",
+   "status": "partial",
+   "missing": "Lemmas 3 and 4 (floating-point accounting of the repeated products, binary64 statements; not attempted, the standard model of CertifyMathlib.Enclosure.FloatModel would serve for them)",
+   "correspondence": "Lemma 1: |tr(P M) - tr(X X^H M)| <= ((#T + g) s + g eta) ||M|| for any M (the document's (2 g s + g eta) ||M|| when #T = g), from the rank bound on traces (norm_trace_herm_le). Lemma 2: tr(X X^H O H^k O) = sum_i <O x_i, H^k O x_i> for Hermitian O, ||O H^k O|| <= ||O||^2 ||H||^k, and the moment bound (c07_lemma2). Proposition 1 (M2) is Theorem 6 applied to O^2 (thm6_trace) and needs nothing new. Proposition 2 (M3, f-sum form): for an orthogonal projector P commuting with H, tr(P O H O) - tr(P H P O^2) = tr(P [O, [H, O]])/2 (c07_prop2_identity), and a Re tr(P O^2) <= Re tr(P H P O^2) <= b Re tr(P O^2) when a ||P x||^2 <= Re <P x, H P x> <= b ||P x||^2, with Re tr(P O^2) = sum_i ||P O e_i||^2 >= 0 (c07_prop2_bounds).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.c07_lemma2": "accepted",
+    "CertifyMathlib.Counting.c07_prop2_identity": "accepted",
+    "CertifyMathlib.Counting.c07_prop2_bounds": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   },
   {
    "id": "E-04",
@@ -405,13 +1930,30 @@
     "CertifyMathlib.Counting.weyl_affine_right",
     "CertifyMathlib.Counting.qf_triangle",
     "CertifyMathlib.Counting.sampling_criterion",
-    "CertifyMathlib.Counting.qf_smul"
+    "CertifyMathlib.Counting.qf_smul",
+    "CertifyMathlib.Counting.weyl_affine_sorted"
    ],
-   "file": "CertifyMathlib/Counting/Inertia.lean, Parameter.lean",
+   "main": [
+    "CertifyMathlib.Counting.weyl_affine_right",
+    "CertifyMathlib.Counting.sampling_criterion",
+    "CertifyMathlib.Counting.weyl_affine_sorted"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, CertifyMathlib/Counting/Parameter.lean, CertifyMathlib/Counting/Sorted.lean",
    "status": "partial",
-   "level": "K2",
    "missing": "Lemma 4 of the document (term-wise bound on ||H1||_2, norms of Kronecker products) and the continuity argument for crossings",
-   "correspondence": "Proposition 1 both tubes and Proposition 2 in counting form; Lemma 3 for a margin 2B-Lipschitz on the whole sample interval (the hypothesis fails across a tube jump, the case of the ERROR verdict in VERDICTS.md)."
+   "correspondence": "Proposition 1 both tubes and Proposition 2 in counting form; Lemma 3 for a margin 2B-Lipschitz on the whole sample interval (the hypothesis fails across a tube jump, the case of the ERROR verdict in VERDICTS.md). Sorted form of Proposition 1: |lambda_j(F) - lambda_j(H0)| <= B |s| (weyl_affine_sorted).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "nanoda": {
+    "CertifyMathlib.Counting.weyl_affine_right": "accepted",
+    "CertifyMathlib.Counting.sampling_criterion": "accepted",
+    "CertifyMathlib.Counting.weyl_affine_sorted": "accepted"
+   },
+   "level": "K2",
+   "trust_level": "K2"
   }
  ],
  "theorems": [
@@ -430,9 +1972,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -440,9 +1982,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -450,9 +1992,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -460,9 +2002,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -470,9 +2012,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -480,9 +2022,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -490,9 +2032,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -505,9 +2047,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -525,9 +2067,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -540,9 +2082,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -550,9 +2092,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -560,9 +2102,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -570,9 +2112,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -580,9 +2122,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -590,9 +2132,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -600,9 +2142,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -610,9 +2152,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -620,9 +2162,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -630,9 +2172,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -640,9 +2182,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -650,9 +2192,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -665,9 +2207,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -675,9 +2217,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -685,9 +2227,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -695,9 +2237,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -705,9 +2247,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -715,9 +2257,9 @@
    "module": "CertifyMathlib.Counting.QuadForm",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -735,9 +2277,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -745,9 +2287,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -755,9 +2297,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -765,9 +2307,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -775,9 +2317,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -785,9 +2327,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -795,9 +2337,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -805,9 +2347,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -815,9 +2357,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -825,9 +2367,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -835,9 +2377,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -845,9 +2387,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -855,9 +2397,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -865,9 +2407,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -875,9 +2417,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -885,9 +2427,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -895,9 +2437,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -905,9 +2447,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -915,9 +2457,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -925,9 +2467,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -935,129 +2477,9 @@
    "module": "CertifyMathlib.Counting.Inertia",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.lemma4",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.lemma4_doc",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.lemma4_hermitian",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.lemma4_perm",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.abs_qf_le_rowSum",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.lemma4_rowSum",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.card_Ioo_add_cntLe",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.cntLe_le_cntLt_add",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.bracket_count",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.bracket_exact",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.bracket_ge",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.cntLt_fin_two",
-   "module": "CertifyMathlib.Counting.Lemma4",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1065,9 +2487,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1075,9 +2497,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1085,9 +2507,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1095,9 +2517,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1105,9 +2527,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1115,9 +2537,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1125,9 +2547,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1135,9 +2557,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1145,9 +2567,9 @@
    "module": "CertifyMathlib.Counting.Completeness",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1155,9 +2577,9 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1165,9 +2587,9 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1175,9 +2597,9 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1185,9 +2607,9 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1195,9 +2617,9 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1205,9 +2627,159 @@
    "module": "CertifyMathlib.Counting.Assembly",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_doc",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_hermitian",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_perm",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_qf_le_rowSum",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_rowSum",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_Ioo_add_cntLe",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_le_cntLt_add",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_count",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_exact",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_ge",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_fin_two",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_triangle",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_affine_right",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sampling_criterion",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1215,9 +2787,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1225,9 +2797,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1235,9 +2807,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1245,9 +2817,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1255,9 +2827,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1265,9 +2837,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1275,9 +2847,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1285,9 +2857,9 @@
    "module": "CertifyMathlib.Counting.Thermo",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1300,9 +2872,9 @@
    "module": "CertifyMathlib.Counting.Eigenspace",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1310,9 +2882,9 @@
    "module": "CertifyMathlib.Counting.Eigenspace",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1320,9 +2892,9 @@
    "module": "CertifyMathlib.Counting.Eigenspace",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1330,39 +2902,9 @@
    "module": "CertifyMathlib.Counting.Eigenspace",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.qf_triangle",
-   "module": "CertifyMathlib.Counting.Parameter",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.weyl_affine_right",
-   "module": "CertifyMathlib.Counting.Parameter",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
-   ]
-  },
-  {
-   "name": "CertifyMathlib.Counting.sampling_criterion",
-   "module": "CertifyMathlib.Counting.Parameter",
-   "kind": "theorem",
-   "axioms": [
-    "propext",
-    "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1370,9 +2912,9 @@
    "module": "CertifyMathlib.Counting.Norms",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1380,9 +2922,9 @@
    "module": "CertifyMathlib.Counting.Norms",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1390,9 +2932,9 @@
    "module": "CertifyMathlib.Counting.Norms",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1400,9 +2942,9 @@
    "module": "CertifyMathlib.Counting.Norms",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1410,9 +2952,9 @@
    "module": "CertifyMathlib.Counting.Variance",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1420,9 +2962,9 @@
    "module": "CertifyMathlib.Counting.Variance",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1430,9 +2972,9 @@
    "module": "CertifyMathlib.Counting.Variance",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
    ]
   },
   {
@@ -1440,16 +2982,2106 @@
    "module": "CertifyMathlib.Counting.Variance",
    "kind": "theorem",
    "axioms": [
-    "propext",
     "Classical.choice",
-    "Quot.sound"
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_one_apply",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_mul_apply",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.conjTranspose_mul_self_of_isometry",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mul_conjTranspose_self_of_isometry",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_conjTranspose_apply",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_toEuclideanLin_le_frob",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_polarMat",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_norm",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_conjTranspose_mul",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_mul_conjTranspose",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_residual",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_qf",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_polar",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.blockColumns",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_blockColumns",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_sectors",
+   "module": "CertifyMathlib.Counting.Compose",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sinTheta_core",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.inner_conjTranspose_apply",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.inner_apply_conjTranspose",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_apply_of_isometry",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_conjTranspose_le",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.inner_isometry_orth",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_sq_proj",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.conjTranspose_lower",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.proj_sub_le",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ind",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.dg_mul_dg",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.dg_sub",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.dg_const",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_dg_apply",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_dg_sq",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_dg_le",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.spec",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.specProj",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.spec_mul",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.spec_sub",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.spec_one",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.one_sub_specProj",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sub_smul_eq_spec",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_spec_apply",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_conjTranspose_unitary",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_one_sub_specProj_le",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.gap_one_sub_specProj",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.specProj_comm",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sinTheta",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigCols",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigCols_conjTranspose_mul",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sum_coe_sort_ind",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigCols_mul_conjTranspose",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm6_proj",
+   "module": "CertifyMathlib.Counting.DavisKahan",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrt",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrtInv",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_polarSqrt",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_polarSqrtInv",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.conjTranspose_eq_of_isSymmetric",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrt_conjTranspose",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrtInv_conjTranspose",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_eq",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrt_mul_inv",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrtInv_mul",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarMat_mul_polarSqrt",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrt_mul_self",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrtInv_le",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polarSqrt_sub_le",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mul_conjTranspose_sub_polar",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.trace_eq_sum_inner_matrix",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_trace_mul_le",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.rank_sub_le'",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm6_X",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm6_trace",
+   "module": "CertifyMathlib.Counting.Theorem6",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.toEuclideanLin_single_apply",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_eq_sum_cols",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_conjTranspose",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_mul_le",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_mul_right_le",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.le_of_sq_le_sq'",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_one_sub_proj_le",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mul_one_sub_specProj_comm",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.coord_one_sub_specProj",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_lemma1_sharp",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_lemma1",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polar_identity_i",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_lemma2_i",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.polar_identity_ii",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_mul3_le",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_add_sub_le",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_lemma2_ii",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_prop1",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_prop1_proj",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.e07_lemma3",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm6_ritz",
+   "module": "CertifyMathlib.Counting.E07",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_one",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.nsq_mulVec",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_le_of_transport",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_congr",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_MKM",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ostrowski_pos",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ostrowski_neg",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ostrowski_polar",
+   "module": "CertifyMathlib.Counting.Ostrowski",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_eq",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_nonneg",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_nonneg",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_le_max",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_at_peak",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_mono",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_anti",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_ge_min",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_le_left",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.phiT_le_right",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_le_max",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_mono",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_anti",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_ge_min",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_le_left",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.psiT_le_right",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sum_fiber_bounds_on",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sum_const_bounds",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c06_tail_phi",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c06_tail_psi",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sum_split_bounds",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c06_sums",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c06_sums_noM",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mean_shift",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.variance_shift",
+   "module": "CertifyMathlib.Counting.Truncated",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_trace_herm_le",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.rank_conj_le",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.rank_conj_le'",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mul_conjTranspose_eq_polar",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c07_lemma1",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.trace_mul_conjTranspose_eq",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_pow_apply_le",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c07_lemma2",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c04_lemma0",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c04_prop1",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c04_conclusion",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c07_prop2_identity",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c07_prop2_bounds",
+   "module": "CertifyMathlib.Counting.Observables",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.succ_le_card_le",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_lt_le",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.le_of_succ_le_card",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.le_of_card_lt_le",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc_monotone",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ascEquiv",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc_eq",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_eq",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_eq",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_le_card",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc_le_iff",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.le_eigAsc_iff",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc_mem_of_counts",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_sorted",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_sorted_opNorm",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_affine_sorted",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_eigAsc",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_model_eigAsc",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sorted_of_thm8_counts",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.radius_nonneg",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_sorted",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_opNorm_sorted",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_polar_sorted",
+   "module": "CertifyMathlib.Counting.Sorted",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.eigAsc_conj",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_eigAsc_le",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ostrowski_sorted",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c12_prop2_b",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_apply_le_sqrt",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_trace_le_card",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.c13_prop3",
+   "module": "CertifyMathlib.Counting.Labels",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.nsq_conjTranspose_mulVec",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ldl_apply",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_perm_rowSum",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_le_rnd_div",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_le_crnd_div",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.two_u_le_gam_two",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.prodFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.residFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.Gabs",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.PatternTrees",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_a",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_b",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.prodFlC",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.residFlC",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_a_c",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_b_c",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_count",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_count_c",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.rnd_zero",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.comp_ge_pow",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.comp_ge_sum",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mul_le_gam",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lambda_r1",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lambda_r2",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.ecLow",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.rowsAbs",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.colsumFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.G1Fl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.residInfFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.roundInfFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.shiftFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.betaFl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.small_mul_u",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.pow3_mul_ge",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_c_resid",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_c_round",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_c",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.d01_count_fl",
+   "module": "CertifyMathlib.Counting.D01Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.upFl",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.modulusUpper",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.le_upFl",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.norm_eq_sqrt_re_im",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.modulusUpper_ge",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.modulusUpper_nonneg",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.dotFlC",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.dotFlC_error",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sumUp",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.foldl_addUp_ge",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sumUp_ge",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.combineBound",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.up_mul_ge",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.p15_fl",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.p15_fl_zero",
+   "module": "CertifyMathlib.Counting.P15Float",
+   "kind": "theorem",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
    ]
   }
  ],
  "drafts": {
   "reverification_lean/Drafts/Counting/Part1.lean": "first single-file draft of QuadForm, Inertia and Lemma 4; its content was replaced by a comment pointing to the modules (not part of the library)",
   "reverification_lean/Drafts/Counting/Probe.lean": "Mathlib API probe (#check only)",
-  "reverification_lean/Drafts/Counting/Bridge.lean": "probe of the EuclideanSpace inner product and norm used in Norms.lean"
+  "reverification_lean/Drafts/Counting/Bridge.lean": "probe of the EuclideanSpace inner product and norm used in Norms.lean",
+  "reverification_lean/Drafts/Counting/PrintAxioms.lean": "the #print axioms command for each of the 291 theorems",
+  "reverification_lean/Drafts/Counting/print_axioms_output.txt": "its output",
+  "reverification_lean/Drafts/Counting/nanoda_counting.py": "the nanoda driver (one theorem per run, memory and time limits)"
  },
- "second_checker_note": "every theorem of the eleven files was replayed by leanchecker in one of the two runs and accepted; level K2"
+ "trust_note": "Every theorem listed is level K: kernel-checked by the build, no sorry, admit or native_decide, axioms printed. Every module, and the root module, was replayed and accepted by leanchecker (four runs, see second_checker), so every theorem is at least K+. Level K2 means that the theorem, exported with all its dependencies by leanexport, was accepted by the independent kernel nanoda; nanoda was run on the main theorems of each statement (field main) and a statement is K2 when all its main theorems were accepted. A theorem that is only used inside an accepted export is still listed as K+.",
+ "floating_point_note": "D01Float and P15Float use the standard model of CertifyMathlib.Enclosure.FloatModel with eta = 0 (no underflow) and arbitrary summation trees; constants 1 + 4u and 1 + 8u exact, every product rounded; gamma(k) as gamHat of FloatAccounting; add_up as any succ with z <= succ(fl(z)).",
+ "second_checker_note": "every module and the root module were replayed by leanchecker in one of four runs and accepted (level K+ for every theorem); nanoda accepted all 71 main theorems (level K2 for the 25 statements that are proved or partial)"
 }
