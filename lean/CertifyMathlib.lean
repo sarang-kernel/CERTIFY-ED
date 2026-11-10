@@ -2,3 +2,4 @@
 import CertifyMathlib.Smoke
 import CertifyMathlib.Enclosure
 import CertifyMathlib.Counting
+import CertifyMathlib.Apps

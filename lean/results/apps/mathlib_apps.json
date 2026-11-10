@@ -1,0 +1,625 @@
+{
+ "module": "CertifyMathlib.Apps",
+ "root_import_note": "the root CertifyMathlib.lean does not import it yet; the lead adds it",
+ "date": "10 November 2026",
+ "lean": "4.35.0",
+ "mathlib": "v4.35.0",
+ "files": [
+  {
+   "path": "reverification_lean/CertifyMathlib/Apps.lean",
+   "sha256": "04a18c6a335ac94a9dff2e5a9d0e3dbd106aaa39030058efe1cbc30ef2aa61e7"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Apps/Bordered.lean",
+   "sha256": "3f5908f843c8a3594bc6df8796233583fe4ee7bdf3b8417358b27960de8412cb"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Apps/Kernel.lean",
+   "sha256": "2ae88d8ccda4b5442d3ca368b6418cebfb5a6cbad2b4244ba327779a76fecc14"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Apps/Criterion.lean",
+   "sha256": "096ddf9fffd1984f34a66aed65ca2f22872a28443f1cebf512c6ac3c2b9f8c74"
+  }
+ ],
+ "forbidden_tokens": {
+  "sorry": 0,
+  "admit": 0,
+  "native_decide": 0,
+  "axiom": 0
+ },
+ "build": {
+  "command": "lake build CertifyMathlib.Apps",
+  "seconds": 143.0
+ },
+ "axioms": {
+  "command": "lake env lean apps_export/PrintAxiomsApps.lean",
+  "theorems": 37,
+  "all_standard": true,
+  "standard": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ]
+ },
+ "nanoda": {
+  "command": "python apps_export/nanoda_apps.py --theorems apps_export/nanoda_apps_theorems.txt",
+  "accepted": 15,
+  "rejected": 0,
+  "not_run": 0,
+  "main_theorems": 15
+ },
+ "leanchecker": {
+  "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+  "command": "lake env leanchecker CertifyMathlib.Apps.Bordered CertifyMathlib.Apps.Kernel CertifyMathlib.Apps.Criterion CertifyMathlib.Apps",
+  "modules": [
+   "CertifyMathlib.Apps.Bordered",
+   "CertifyMathlib.Apps.Kernel",
+   "CertifyMathlib.Apps.Criterion",
+   "CertifyMathlib.Apps"
+  ],
+  "exit_code": 0,
+  "seconds": 1087.6,
+  "output": "none",
+  "trust_level": "K+"
+ },
+ "theorems": [
+  {
+   "name": "CertifyMathlib.Apps.qf_real",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.nsq_real",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.nsq_pos",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.qf_smul_real",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.qf_smul_one_real",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.qf_smul_vec",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.transpose_eq_of_isHermitian",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.dotProduct_mulVec_symm",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.isUnit_det_of_qf_ge",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.exists_negOn_zero",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.finrank_le_cntLt_zero",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.cntLt_le_of_qf_le",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.cntLt_congr",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.cntLt_zero_of_nonneg",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.cntLt_fromBlocks",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.isHermitian_smul_real",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.bordered_isHermitian",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.schur_isHermitian",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.bordered_eq",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.bordered_inertia",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "Haynsworth inertia additivity for the bordered matrix [[X, -q C], [-q C^H, q G]] with G > 0: its negative eigenvalues are those of the Schur complement X - q C G^-1 C^H",
+   "covers": "E10, the bordered matrix of eta.py",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35445,
+    "export_seconds": 86.2,
+    "check_seconds": 97.3,
+    "export_peak_private_mib": 3981,
+    "check_peak_private_mib": 261,
+    "export_bytes": 203008157,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.bordered_pencil",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "the bordered matrix with X = p G_A has as many negative eigenvalues as (p/q) G_A - C G_B^-1 C^H, the number of pencil eigenvalues above p/q",
+   "covers": "E10, the bordered-pencil lemma",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35460,
+    "export_seconds": 123.0,
+    "check_seconds": 133.8,
+    "export_peak_private_mib": 3981,
+    "check_peak_private_mib": 208,
+    "export_bytes": 203188191,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.var_le",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.qf_inv_shift",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "G^-1 <= (1 + beta/mu) (G + beta I)^-1 in the quadratic form for G >= mu > 0, beta >= 0",
+   "covers": "E10, the inequality (G_B + beta)^-1 >= G_B^-1 / (1 + beta/mu)",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 20918,
+    "export_seconds": 445.7,
+    "check_seconds": 51.4,
+    "export_peak_private_mib": 3922,
+    "check_peak_private_mib": 107,
+    "export_bytes": 97222180,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.qf_bordered_shift",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.eta_count",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "a symmetric N' within q beta of the bordered matrix has at least as many negative eigenvalues as there are pencil eigenvalues above t' = (1 + beta/mu)(p/q + beta/nu)",
+   "covers": "E10, the certified count of eta.py",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35959,
+    "export_seconds": 209.4,
+    "check_seconds": 115.4,
+    "export_peak_private_mib": 3989,
+    "check_peak_private_mib": 203,
+    "export_bytes": 208602067,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.linearIndependent_int_of_zmod",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "integer vectors independent modulo a prime are independent over Z",
+   "covers": "E10, ranks modulo p",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 7924,
+    "export_seconds": 62.7,
+    "check_seconds": 12.0,
+    "export_peak_private_mib": 3399,
+    "check_peak_private_mib": 51,
+    "export_bytes": 30286552,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.rank_zmod_le_rank_rat",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "the rank of an integer matrix modulo a prime is at most its rank over Q",
+   "covers": "E10, ranks modulo p (unit cosines, kernel check)",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 17253,
+    "export_seconds": 90.6,
+    "check_seconds": 25.6,
+    "export_peak_private_mib": 3426,
+    "check_peak_private_mib": 131,
+    "export_bytes": 80210275,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.psd_sum_mulVec_eq_zero",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "a vector killed by a sum of positive semidefinite matrices is killed by every term",
+   "covers": "E10, kernel of a projector Hamiltonian",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 14380,
+    "export_seconds": 47.8,
+    "check_seconds": 23.2,
+    "export_peak_private_mib": 3410,
+    "check_peak_private_mib": 100,
+    "export_bytes": 55479853,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.aklt_kernel_certificate",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "T_e = D^-1 P_e D with P_e >= 0, T_e U = 0, rank_p U >= r and nullity_p of the stacked T_e <= r give ker (sum T_e) = range U of dimension r over Q",
+   "covers": "E10, the kernel equality",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 24434,
+    "export_seconds": 107.9,
+    "check_seconds": 42.8,
+    "export_peak_private_mib": 3452,
+    "check_peak_private_mib": 199,
+    "export_bytes": 119852529,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.cntLt_smul_one_sub",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+",
+   "main": false
+  },
+  {
+   "name": "CertifyMathlib.Apps.pencil_count_eq",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "for G_A = F F^H and K = F^-1 C G_B^-1 C^H F^-H, the negative eigenvalues of t G_A - C G_B^-1 C^H are the eigenvalues of K above t",
+   "covers": "E10, pencil count as count of squared cosines",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35400,
+    "export_seconds": 112.9,
+    "check_seconds": 114.5,
+    "export_peak_private_mib": 3981,
+    "check_peak_private_mib": 261,
+    "export_bytes": 202265406,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.eig_le_of_count",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "if at most u values exceed t' < 1 and at least u equal 1, every value below 1 is at most t'",
+   "covers": "E10, unit cosines",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 7356,
+    "export_seconds": 62.2,
+    "check_seconds": 10.5,
+    "export_peak_private_mib": 3881,
+    "check_peak_private_mib": 51,
+    "export_bytes": 28150109,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.e10_eta_bound",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "composed: residual bound, pivot count u and at least u unit cosines give eta^2 <= t'",
+   "covers": "E10, eta bound of each lattice",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35968,
+    "export_seconds": 97.2,
+    "check_seconds": 122.2,
+    "export_peak_private_mib": 3989,
+    "check_peak_private_mib": 203,
+    "export_bytes": 208820274,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.e10_criterion",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "composed: with t' < 1/z^2 and z >= 1 every cosine other than 1 is below 1/z",
+   "covers": "E10, criterion of star, cross and the decorated lattices",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 35978,
+    "export_seconds": 100.4,
+    "check_seconds": 101.6,
+    "export_peak_private_mib": 3989,
+    "check_peak_private_mib": 208,
+    "export_bytes": 208930452,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.criterion_of_eta_sq",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "eta^2 <= t' and t' < 1/z^2 give eta < 1/z",
+   "covers": "E10, rational criterion test",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 7503,
+    "export_seconds": 56.0,
+    "check_seconds": 10.9,
+    "export_peak_private_mib": 3881,
+    "check_peak_private_mib": 52,
+    "export_bytes": 28301115,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.sqrt_le_isqrt_div",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "sqrt(num/den) <= (isqrt(num den) + 1)/den",
+   "covers": "E10, square-root bound of __init__.py",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 11712,
+    "export_seconds": 85.4,
+    "check_seconds": 16.5,
+    "export_peak_private_mib": 3890,
+    "check_peak_private_mib": 56,
+    "export_bytes": 44425132,
+    "reason": null
+   }
+  },
+  {
+   "name": "CertifyMathlib.Apps.square_octagon_criterion",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "main": true,
+   "statement": "eta_perp^2 <= a, eta_par^2 <= b, a <= s_perp^2, b <= s_par^2, 4 s_perp + 2 s_par < 1 give 4 eta_perp + 2 eta_par < 1",
+   "covers": "E10, square-octagon criterion",
+   "nanoda": {
+    "result": "accepted",
+    "declarations": 7507,
+    "export_seconds": 54.7,
+    "check_seconds": 11.1,
+    "export_peak_private_mib": 3881,
+    "check_peak_private_mib": 51,
+    "export_bytes": 28280423,
+    "reason": null
+   }
+  }
+ ],
+ "counts": {
+  "theorems": 37,
+  "main": 15,
+  "K2": 15,
+  "K+": 22,
+  "K": 0
+ }
+}

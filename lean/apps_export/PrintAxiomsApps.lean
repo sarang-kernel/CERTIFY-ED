@@ -1,0 +1,40 @@
+-- Axioms of every theorem of CertifyMathlib.Apps: lake env lean apps_export/PrintAxiomsApps.lean
+import CertifyMathlib.Apps
+
+#print axioms CertifyMathlib.Apps.qf_real
+#print axioms CertifyMathlib.Apps.nsq_real
+#print axioms CertifyMathlib.Apps.nsq_pos
+#print axioms CertifyMathlib.Apps.qf_smul_real
+#print axioms CertifyMathlib.Apps.qf_smul_one_real
+#print axioms CertifyMathlib.Apps.qf_smul_vec
+#print axioms CertifyMathlib.Apps.transpose_eq_of_isHermitian
+#print axioms CertifyMathlib.Apps.dotProduct_mulVec_symm
+#print axioms CertifyMathlib.Apps.isUnit_det_of_qf_ge
+#print axioms CertifyMathlib.Apps.exists_negOn_zero
+#print axioms CertifyMathlib.Apps.finrank_le_cntLt_zero
+#print axioms CertifyMathlib.Apps.cntLt_le_of_qf_le
+#print axioms CertifyMathlib.Apps.cntLt_congr
+#print axioms CertifyMathlib.Apps.cntLt_zero_of_nonneg
+#print axioms CertifyMathlib.Apps.cntLt_fromBlocks
+#print axioms CertifyMathlib.Apps.isHermitian_smul_real
+#print axioms CertifyMathlib.Apps.bordered_isHermitian
+#print axioms CertifyMathlib.Apps.schur_isHermitian
+#print axioms CertifyMathlib.Apps.bordered_eq
+#print axioms CertifyMathlib.Apps.bordered_inertia
+#print axioms CertifyMathlib.Apps.bordered_pencil
+#print axioms CertifyMathlib.Apps.var_le
+#print axioms CertifyMathlib.Apps.qf_inv_shift
+#print axioms CertifyMathlib.Apps.qf_bordered_shift
+#print axioms CertifyMathlib.Apps.eta_count
+#print axioms CertifyMathlib.Apps.linearIndependent_int_of_zmod
+#print axioms CertifyMathlib.Apps.rank_zmod_le_rank_rat
+#print axioms CertifyMathlib.Apps.psd_sum_mulVec_eq_zero
+#print axioms CertifyMathlib.Apps.aklt_kernel_certificate
+#print axioms CertifyMathlib.Apps.cntLt_smul_one_sub
+#print axioms CertifyMathlib.Apps.pencil_count_eq
+#print axioms CertifyMathlib.Apps.eig_le_of_count
+#print axioms CertifyMathlib.Apps.e10_eta_bound
+#print axioms CertifyMathlib.Apps.e10_criterion
+#print axioms CertifyMathlib.Apps.criterion_of_eta_sq
+#print axioms CertifyMathlib.Apps.sqrt_le_isqrt_div
+#print axioms CertifyMathlib.Apps.square_octagon_criterion

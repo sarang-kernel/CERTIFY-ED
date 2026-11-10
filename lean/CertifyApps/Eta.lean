@@ -535,13 +535,18 @@ def runSquareOctagonCriterion (perpPath parPath recordPath outPath : String) : I
   let some tq := get b | return 2
   let okA := ((a.path? ["lean", "certified"]).bind (·.bool?)).getD false
   let okB := ((b.path? ["lean", "certified"]).bind (·.bool?)).getD false
-  let total := 4 * sqrtUp tp + 2 * sqrtUp tq
-  let holds := okA && okB && total < 1
+  let sp := sqrtUp tp
+  let sq := sqrtUp tq
+  -- the rational square-root bounds are checked exactly: t' <= s^2 and s >= 0
+  let sqrtOk := sp ≥ 0 && sq ≥ 0 && tp ≤ sp * sp && tq ≤ sq * sq
+  let total := 4 * sp + 2 * sq
+  let holds := okA && okB && sqrtOk && total < 1
   let recSum := (rec_.path? ["square_octagon", "sum_upper"]).bind jvNumRat
   let recHolds := (rec_.path? ["square_octagon", "criterion_holds"]).bind (·.bool?)
   let agree := recHolds == some holds
   writeJson outPath (jobj [("target", jstr "E10 square-octagon criterion 4 eta_perp + 2 eta_par < 1"),
     ("sum_upper_lean", jrat total), ("criterion_holds_lean", jbool holds),
+    ("sqrt_upper_perp", jrat sp), ("sqrt_upper_par", jrat sq), ("square_root_bounds_checked", jbool sqrtOk),
     ("record", jobj [("sum_upper", (recSum.map jrat).getD .null), ("criterion_holds", (recHolds.map jbool).getD .null)]),
     ("lean_sum_at_most_record_sum", jbool (match recSum with | some r => total ≤ r | none => false)),
     ("agreement", jbool agree)])

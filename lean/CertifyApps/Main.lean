@@ -83,6 +83,7 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["aklt", name, recPath, out, ts] => runAklt name recPath out ts.toNat!
   | ["aklt-so-criterion", perp, par, recPath, out] => runSquareOctagonCriterion perp par recPath out
+  | ["aklt-kernels", recPath, out] => runAkltKernels recPath out
   | ["export-aklt", name, out] => exportAklt name out
   | ["export-aklt-ham", name, out] => exportAkltHam name out
   | ["export", key, out] => exportHeis key out

@@ -24,6 +24,7 @@ REC = {
     "e7": ("e7_exact_benchmarks_20261105_092337", "e7_exact_benchmarks_20261022_193038"),
     "e9": ("e9_pyrochlore_20261105_084835", "e9_pyrochlore_20261022_185936"),
     "e10": ("e10_aklt_20261105_071106", "e10_aklt_20261022_170609"),
+    "e10k": ("e10_aklt_20261105_071106", "e10_aklt_20261022_170609"),
 }
 
 # id, record group, ceapps arguments (record path and output path are filled in)
@@ -40,6 +41,7 @@ TARGETS = [
     ("e10_cross", "e10", ["aklt", "cross", "{rec}", "{out}", "1"]),
     ("e10_decorated_honeycomb", "e10", ["aklt", "decorated_honeycomb", "{rec}", "{out}", "1"]),
     ("e10_decorated_square", "e10", ["aklt", "decorated_square", "{rec}", "{out}", "1"]),
+    ("e10_kernels", "e10k", ["aklt-kernels", "{rec}", "{out}"]),
 ]
 
 
@@ -85,7 +87,8 @@ def records_identical(archive):
     for grp, (new, old) in REC.items():
         a = json.load(open(os.path.join(archive, RUN_NEW, new, "data.json")))
         b = json.load(open(os.path.join(archive, RUN_OLD, old, "data.json")))
-        keys = {"e7": ["E7"], "e9": ["spin_half", "spin1_printed"], "e10": ["lattices", "square_octagon"]}[grp]
+        keys = {"e7": ["E7"], "e9": ["spin_half", "spin1_printed"], "e10": ["lattices", "square_octagon"],
+                "e10k": ["kernel"]}[grp]
         out[grp] = all(strip_timing(a[k]) == strip_timing(b[k]) for k in keys)
     return out
 
@@ -134,6 +137,18 @@ def headline(tid, r):
                                "unit_cosines": L["unit_cosines_at_least"], "criterion_holds": r["criterion_holds_lean"],
                                "record_t_prime_recertified": r["record_t_prime_recertified"]},
                 "agreement": r["agreement"]}
+    if tid == "e10_kernels":
+        regs = r["regions"]
+        rec = [x["record"] for x in regs if isinstance(x.get("record"), dict) and x["record"]]
+        return {"quantity": "ker H_X = range U_X for Gamma_i = L u C and Gamma_j = C u R of the six lattices",
+                "record_value": {"regions_checked": len(rec),
+                                 "entries": [x["record_entry"] for x in rec],
+                                 "all_equal": all(x.get("kernel_equals_vbs_range") for x in rec)},
+                "lean_value": {"regions_checked": len(regs),
+                               "all_kernels_equal_vbs_range": r["all_kernels_equal_vbs_range"],
+                               "largest_dimension": max(x["lean"]["dim"] for x in regs),
+                               "record_checks_agree": r["record_checks_agree"]},
+                "agreement": bool(r["all_kernels_equal_vbs_range"] and r["record_checks_agree"])}
     if tid == "e10_square_octagon_criterion":
         return {"quantity": "4 eta_perp + 2 eta_par < 1",
                 "record_value": {"sum_upper": dec(r["record"]["sum_upper"]), "criterion_holds": r["record"]["criterion_holds"]},
@@ -195,10 +210,28 @@ def main():
         else:
             entry.update({"agreement": None, "skipped_reason": "not run", "seconds": None, "peak_memory_bytes": None})
         rows.append(entry)
+    checks = {}
+    for name, key in (("compare_models.json", "all_equal"), ("compare_aklt.json", "all_equal"),
+                      ("compare_chain20.json", "all_equal")):
+        path = os.path.join(a.out, name)
+        if os.path.exists(path):
+            j = json.load(open(path))
+            checks[name[:-5]] = {"file": f"results/apps/{name}", "all_equal": j.get(key)}
+    st = os.path.join(a.out, "selftest.txt")
+    if os.path.exists(st):
+        text = open(st).read()
+        checks["selftest"] = {"file": "results/apps/selftest.txt", "all_agree": "DISAGREE" not in text and "agree" in text}
+    mathlib = None
+    mp = os.path.join(a.out, "mathlib_apps.json")
+    if os.path.exists(mp):
+        j = json.load(open(mp))
+        mathlib = {k: j[k] for k in ("module", "theorems", "axioms", "forbidden_tokens", "nanoda", "leanchecker") if k in j}
     summary = {"description": "Recomputation of the certified application numbers of certify-ed in compiled core Lean "
                               "(trust level N); see reverification_lean/APPS.md",
                "lean_program": "ceapps (reverification_lean/CertifyApps/Main.lean)",
                "targets": rows,
+               "model_checks": checks,
+               "mathlib_lemmas": mathlib,
                "agreeing": sum(1 for r in rows if r.get("agreement") is True),
                "disagreeing": sum(1 for r in rows if r.get("agreement") is False),
                "skipped": sum(1 for r in rows if r.get("skipped_reason"))}

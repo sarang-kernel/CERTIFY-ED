@@ -11,7 +11,12 @@ comparison itself is made in exact rational arithmetic inside the program. The r
 values (JSON equality with the timing fields removed, checked by `apps_export/run_all.py`: true for E7, E9 and E10).
 Paths of record files are relative to `sources/archive_v5/`; every other path is relative to `reverification_lean/`.
 
-The outcome in one sentence: 13 of 13 targets agree with the records, 0 disagree and 0 were skipped (`results/apps/summary.json`).
+The lemmas that turn the E10 counts into the certified statement are, in addition, written as theorems on
+Mathlib in the module `CertifyMathlib.Apps` (section 9), and the kernel equality on which every E10 number rests
+is checked exactly for all twelve subgraphs (section 8). Section 9 states, for every certified number, which
+Lean theorems compose it and which steps remain informal.
+
+The outcome in one sentence: 14 of 14 targets agree with the records, 0 disagree and 0 were skipped (`results/apps/summary.json`).
 
 ## 1 How to run
 
@@ -29,8 +34,20 @@ set PYTHONDONTWRITEBYTECODE=1
 python apps_export\compare_models.py --exe .lake\build\bin\ceapps.exe --code %A%\code\certify-ed --work work\apps\export --out results\apps\compare_models.json
 python apps_export\compare_aklt.py --exe .lake\build\bin\ceapps.exe --code %A%\code\certify-ed --work work\apps\export --out results\apps\compare_aklt.json
 python apps_export\run_all.py --exe .lake\build\bin\ceapps.exe --archive %A% --out results\apps --work work\apps\final
+python apps_export\compare_big.py --exe .lake\build\bin\ceapps.exe --code %A%\code\certify-ed --work work\apps\big --out work\apps\big\measure_square4_J2.json square4_J2
+python apps_export\compare_big.py --exe .lake\build\bin\ceapps.exe --code %A%\code\certify-ed --work work\apps\big --out work\apps\big\full_chain20_J2.json chain20_J2
+python apps_export\compare_big.py --merge results\apps\compare_chain20.json work\apps\big\measure_chain12_J2.json work\apps\big\measure_square4_J2.json work\apps\big\full_chain20.json work\apps\big\full_chain20_J2.json
+lake build CertifyMathlib.Apps
+lake env lean apps_export\PrintAxiomsApps.lean > results\apps\mathlib_axioms.txt
+python apps_export\nanoda_apps.py --lean-bin <toolchain bin> --work work\apps\nanoda --theorems apps_export\nanoda_apps_theorems.txt --out results\apps\nanoda_apps.jsonl
+python apps_export\run_leanchecker_apps.py
+python apps_export\make_mathlib_record.py
 python apps_export\make_apps_md.py --lean . --archive %A%
 ```
+
+`compare_big.py` is run once per model (`chain12_J2` and `square4_J2` to measure, then `chain20` and
+`chain20_J2`), so that each peak memory belongs to one model. `run_all.py` includes the kernel check of section 8
+(`ceapps aklt-kernels <E10 record> out.json`).
 
 One target is run by itself with, for example,
 `ceapps e7 chain_J2=0 %A%\code\certify-ed\results\run_full_20261105\e7_exact_benchmarks_20261105_092337\data.json out.json 1`, `ceapps crown-half <E9 record> out.json 1`,
@@ -81,10 +98,11 @@ is never below the exact sum. Section 3 checks the matrices themselves.
 
 Two further theorems enter: Theorem 1 of certify-ed (for a nonzero vector `v`, some eigenvalue lies within
 `|| H v - mu v || / || v ||` of `mu`), used for the E7 and spin-1 enclosures, and the bordered-pencil lemma
-for E10. They are used as stated (`docs/math/exact_layer.md` and `docs/applications/aklt_pomata_wei.md` of this
-repository describe them); the vectors are computed here by inverse iteration, first in floating point and
-then with integer arithmetic and iterative refinement, so that the radii are limited by the vector only far
-below the record's radii.
+for E10 (`docs/math/exact_layer.md` and `docs/applications/aklt_pomata_wei.md` describe them). Both are Lean
+theorems on Mathlib: Theorem 1 is `CertifyMathlib.Enclosure.residual_enclosure` (`ENCLOSURE.md`), and the
+bordered-pencil lemma is `CertifyMathlib.Apps.bordered_pencil`, with its perturbed form `eta_count` (section 9).
+The vectors are computed here by inverse iteration, first in floating point and then with integer arithmetic
+and iterative refinement, so that the radii are limited by the vector only far below the record's radii.
 
 ## 3 The models rebuilt in Lean and the check against the Python builder
 
@@ -141,9 +159,21 @@ spins 1 is the bilinear-biquadratic form `1/3 + X/2 + X^2/6` in `X = S_u . S_v`.
 
 How the instrument was checked, and what it shows. The comparison is a set equality of exact entries, so a
 single changed coupling, sign or state would make it fail. Every case is equal (`results/apps/compare_models.json`,
-`results/apps/compare_aklt.json`). The full E7 chains of 20 sites were not exported (184756 states); they are
-built by the same Lean code as the chains of 8 and 12 sites, and the E7 runs check their sector dimensions
-against the record (section 4).
+`results/apps/compare_aklt.json`).
+
+The full E7 chains. The two chains of 20 sites (184756 states of `S^z = 0`) are compared by
+`apps_export/compare_big.py`, which holds the entries in sorted integer arrays instead of dictionaries of
+fractions and tests equality of the rational entries by exact cross products. The cost was measured first:
+the model `square4_J2` (449462 entries) took 19.2 s with a peak of 191 MiB,
+which scaled by the number of entries gives about 1649 MiB and 166 s for the chain with
+next-nearest bonds, well inside the limits of 6 GiB and 2 h, so both chains were run.
+
+| model | states | nonzero entries (Lean / Python) | seconds (Lean export, Python build) | peak MiB (Lean, Python) | equal |
+|---|---|---|---|---|---|
+| `chain20`, `S^z = 0` | 184756 | 2066052 / 2066052 | 11.9, 30.4 | 15, 678 | yes |
+| `chain20_J2`, `S^z = 0` | 184756 | 4048556 / 4048556 | 19.9, 41.1 | 15, 1285 | yes |
+
+Both full chains are equal entry by entry (`results/apps/compare_chain20.json`): yes.
 
 ## 4 E7: the four benchmark ground energies
 
@@ -283,26 +313,128 @@ cosine bounds and the numbers of positive pivots are the record's (`results/apps
 by the placement of `t`, which is the record's.
 
 What it shows and does not show. The five E10 criteria of the record are recomputed from the geometry. The
-criterion itself, the kernel lemma (ground space equals VBS range) and the bordered-pencil lemma are used as
-stated; the bordered-pencil lemma is new mathematics of the project and awaits Sarang Vehale's check under
-D-12. The exact kernel check of the record (`kernel` in the E10 record) was not repeated; the Lean check
-`H U = 0` of section 3 covers one of its two directions for the star and the square-octagon.
+kernel equality (ground space equals VBS range) is checked exactly for both subgraphs of every lattice in
+section 8, and the bordered-pencil lemma and the steps from the count to the criterion are Lean theorems on
+Mathlib (section 9). The bordered-pencil lemma is new mathematics of the project; its formalization does not
+replace Sarang Vehale's reading under D-12, which is still recorded as pending. The theorem of Pomata and Wei,
+that the criterion implies a spectral gap of the infinite lattice, is taken from the paper.
 
-## 8 What was not recomputed
+## 8 E10: the kernel equality for every subgraph
+
+Why. Every E10 number assumes that the ground space of the subgraph Hamiltonian `H_X`, a sum of projectors onto
+the largest spin of each edge, is the range of the VBS map `U_X`, for `X = Gamma_i = L u C` and `X = Gamma_j =
+C u R` (`project_docs/notes/aklt_kernel_lemma.md`). The record confirms this by exact computation for four
+subgraphs (`kernel` in the E10 record); the cross and the decorated square, with 16777216 and 4100625 states,
+relied on the general argument alone, which is marked for Sarang Vehale's check under D-12. A second ground
+state outside the VBS range would make the computed `eta` describe the wrong subspaces.
+
+What was done. `ceapps aklt-kernels` (`CertifyApps/Kernel.lean`) shows both directions for all twelve
+subgraphs. The inclusion: every edge term, as the integer matrix of `kernel.py` in the scaled basis, annihilates
+every reduced VBS column (checked in integers, edge by edge), and the rank of `U_X` is at least the rank of its
+Gram matrix modulo `p = 2^31 - 1`. The bound on the kernel: the common null space of the edge terms modulo `p`
+is computed site by site, keeping at each step only the frontier sites (those with an edge to a site not yet
+added) explicitly and the interior through a set of coordinates on which the subspace is determined; this
+replaces the elimination of the full `S^z` blocks of `kernel.py`, which is out of reach at 16777216 states, and
+needs equations with at most a few thousand rows and unknowns per step. Over the rationals the kernel of `H_X`
+is the common kernel of the edge terms, whose dimension is at most its dimension modulo `p`; when that bound
+equals the rank of `U_X`, the kernel is the VBS range (`CertifyMathlib.Apps.aklt_kernel_certificate`).
+
+| lattice | subgraph | sites | states | VBS rank at least | kernel dimension at most (mod p) | edge terms annihilate U | kernel = VBS range | record (rank / bound) | seconds |
+|---|---|---|---|---|---|---|---|---|---|
+| `star` | LC | 6 | 4096 | 16 | 16 | yes | yes | 16 / 16, blocks equal: yes | 1.042 |
+| `star` | CR | 6 | 4096 | 16 | 16 | yes | yes | not in the record | 0.973 |
+| `square_octagon_par` | LC | 8 | 65536 | 64 | 64 | yes | yes | 64 / 64, blocks equal: yes | 2.33 |
+| `square_octagon_par` | CR | 8 | 65536 | 64 | 64 | yes | yes | not in the record | 2.482 |
+| `square_octagon_perp` | LC | 8 | 65536 | 64 | 64 | yes | yes | not in the record | 2.487 |
+| `square_octagon_perp` | CR | 8 | 65536 | 64 | 64 | yes | yes | not in the record | 2.491 |
+| `cross` | LC | 12 | 16777216 | 64 | 64 | yes | yes | not in the record | 103.136 |
+| `cross` | CR | 12 | 16777216 | 64 | 64 | yes | yes | not in the record | 152.54 |
+| `decorated_honeycomb` | LC | 9 | 62208 | 36 | 36 | yes | yes | 36 / 36, blocks equal: yes | 0.674 |
+| `decorated_honeycomb` | CR | 9 | 62208 | 36 | 36 | yes | yes | 36 / 36, blocks equal: yes | 0.624 |
+| `decorated_square` | LC | 12 | 4100625 | 144 | 144 | yes | yes | not in the record | 33.317 |
+| `decorated_square` | CR | 12 | 4100625 | 144 | 144 | yes | yes | not in the record | 30.632 |
+
+All twelve kernels equal the VBS range: yes; the four subgraphs of the record give
+the record's rank, bound and per-block dimensions: yes (`results/apps/e10_kernels.json`;
+333.9 s and 94 MiB for all twelve).
+The rank equals the number of reduced VBS columns, the product over the sites of `z_v - deg(v) + 1`, in every
+case (yes), as the lemma states.
+
+What it shows and does not show. The ground spaces used by every E10 bound are now established by exact
+computation for all six lattices, so the E10 numbers no longer depend on the general kernel lemma, which remains
+a re-derived argument for arbitrary graphs. The step from the computed facts to the equality is a Lean theorem;
+that the program computes the null space modulo `p` correctly, and that the integer edge terms are the scaled
+projectors (they equal the matrices of `kernel.py` entry by entry for the star and the square-octagon, section
+3), are not part of it.
+
+## 9 How each certified number is composed
+
+Why. A recomputation at level N shows that a compiled program finds the same numbers; it does not by itself
+say which mathematics turns those numbers into the certified statement. This section names, for every
+certified number, the computed facts, the Lean theorems that turn them into the statement, and the steps that
+are still informal. `Counting` and `Enclosure` are the modules `CertifyMathlib.Counting` (`COUNTING.md`) and
+`CertifyMathlib.Enclosure` (`ENCLOSURE.md`); `Apps` is `CertifyMathlib.Apps`, written for this part.
+
+| number | computed by `ceapps` (level N) | Lean theorems that turn it into the statement | steps that remain informal |
+|---|---|---|---|
+| E7, the four ground energies | the sector matrices; per sector `Gt`, `S` and the exact residual of the weighted factorization with its Frobenius bound; the counts at the count point; the exact radius around the recorded `E0` | `Counting.sylvester_inertia` (the count of `Gt S Gt^T` is the number of negative entries of `S`), `Apps.cntLt_congr` (the diagonal weights are a congruence), `Counting.weyl_cntLt` with `Counting.abs_qf_le_of_toEuclideanLin` (the residual moves the count by at most `beta`) and the spectral norm bounded by the Frobenius norm (`Counting.norm_toEuclideanLin_le_frob` of `Counting/Compose.lean`, a file of the counting part that is not yet committed), `Counting.cnt_blockDiagonal'` with `Counting.cnt_conj` (counts add over the sectors of an orthonormal symmetry basis), `Enclosure.residual_enclosure` (Theorem 1) | that the program computes these facts; that the orbit sums form an orthogonal basis in which the Hamiltonian is block diagonal (the program checks commutation and Hermiticity); the one-line step from count and enclosure to the lowest eigenvalue |
+| E9, spin-1/2 lower bound | the 128 sector matrices; their counts at the shift with the Weyl slack `delta` | as for E7, without Theorem 1 | as for E7; the Anderson decomposition and the reduced model are taken from the paper of Kránitz and Penc |
+| E9, spin-1 upper bound | the spin-1 ring, its count and the exact radius; the two pair-singlet identities | `Enclosure.residual_enclosure`, `Counting.sylvester_inertia`, `Counting.weyl_cntLt` | that the all-singlet class of the crown is `-12 c1 + c17 H_ring` (derivation of `spin_one.py`, of which only the two identities are recomputed); that an eigenvalue of an invariant block is one of the crown |
+| E10, eta bound of each lattice | Gram matrices and their certified lower bounds `mu`, `nu`; the bordered matrices of every block and character, their counts and residual bound `beta`; the rank modulo `p` of the union VBS states; `t'` | `Apps.e10_eta_bound`, composed of `Apps.eta_count`, `Apps.bordered_inertia`, `Apps.qf_inv_shift`, `Apps.pencil_count_eq` and `Apps.eig_le_of_count`; `Apps.rank_zmod_le_rank_rat` (unit cosines); `Counting.sylvester_inertia` (pivots and the lower bounds `mu`, `nu`) | that the program computes these facts; the reduction to the coordinates of `V = range U_L (x) range U_C (x) range U_R` (docstring of `eta.py`); the block decomposition by symmetry characters (`W = Q N`, `N >= I`, docstring of `eta.py`); that the union VBS states lie in `A n B`; that the eigenvalues of `K` are the squared cosines (the definition used) |
+| E10, the criterion | `t' < 1/z^2` in rationals; for the square-octagon lattice `4 s_perp + 2 s_par < 1` with rational upper bounds of the square roots | `Apps.e10_criterion`, `Apps.criterion_of_eta_sq`, `Apps.square_octagon_criterion`, `Apps.sqrt_le_isqrt_div` | none for the arithmetic (`ceapps` checks `t' <= s^2` for both square-root bounds `s` in rationals, field `square_root_bounds_checked`); the theorem of Pomata and Wei that the criterion gives a gap |
+| E10, the kernel equality | for all twelve subgraphs: edge terms times VBS columns in integers, rank of the VBS Gram matrix and dimension of the common null space modulo `p` | `Apps.aklt_kernel_certificate`, with `Apps.rank_zmod_le_rank_rat` and `Apps.psd_sum_mulVec_eq_zero` | that the site-by-site elimination computes the null space modulo `p` of the stacked edge terms (`CertifyApps/Kernel.lean`, docstring); that the integer edge terms are `D^-1` times a positive multiple of the projector times `D` |
+
+The module `CertifyMathlib.Apps`. It has three files, `Bordered.lean`, `Kernel.lean` and `Criterion.lean`, and the
+root `CertifyMathlib/Apps.lean`; it imports Mathlib v4.35.0 and `CertifyMathlib.Counting.Inertia`. Its 37
+theorems use no `sorry`, `admit`, `native_decide` or new axiom (word search: sorry 0, admit 0, native_decide 0, axiom 0),
+and `#print axioms` shows only `propext`, `Classical.choice` and `Quot.sound` for every one of them (`results/apps/mathlib_axioms.txt`).
+leanchecker replayed the three files and the root (exit code 0, 1087.6 s, `results/apps/leanchecker_apps.json`).
+nanoda accepted 15 of the 15 main theorems, each exported with all its dependencies
+(rejected 0, not run 0; `results/apps/nanoda_apps.jsonl`). Trust levels as in `README.md`: K kernel-checked by
+the build, K+ also replayed by leanchecker, K2 also accepted by nanoda (`results/apps/mathlib_apps.json`).
+
+| theorem | statement | covers | declarations checked by nanoda | level |
+|---|---|---|---|---|
+| `Apps.bordered_inertia` | Haynsworth inertia additivity for the bordered matrix [[X, -q C], [-q C^H, q G]] with G > 0: its negative eigenvalues are those of the Schur complement X - q C G^-1 C^H | E10, the bordered matrix of eta.py | 35445 | K2 |
+| `Apps.bordered_pencil` | the bordered matrix with X = p G_A has as many negative eigenvalues as (p/q) G_A - C G_B^-1 C^H, the number of pencil eigenvalues above p/q | E10, the bordered-pencil lemma | 35460 | K2 |
+| `Apps.qf_inv_shift` | G^-1 <= (1 + beta/mu) (G + beta I)^-1 in the quadratic form for G >= mu > 0, beta >= 0 | E10, the inequality (G_B + beta)^-1 >= G_B^-1 / (1 + beta/mu) | 20918 | K2 |
+| `Apps.eta_count` | a symmetric N' within q beta of the bordered matrix has at least as many negative eigenvalues as there are pencil eigenvalues above t' = (1 + beta/mu)(p/q + beta/nu) | E10, the certified count of eta.py | 35959 | K2 |
+| `Apps.linearIndependent_int_of_zmod` | integer vectors independent modulo a prime are independent over Z | E10, ranks modulo p | 7924 | K2 |
+| `Apps.rank_zmod_le_rank_rat` | the rank of an integer matrix modulo a prime is at most its rank over Q | E10, ranks modulo p (unit cosines, kernel check) | 17253 | K2 |
+| `Apps.psd_sum_mulVec_eq_zero` | a vector killed by a sum of positive semidefinite matrices is killed by every term | E10, kernel of a projector Hamiltonian | 14380 | K2 |
+| `Apps.aklt_kernel_certificate` | T_e = D^-1 P_e D with P_e >= 0, T_e U = 0, rank_p U >= r and nullity_p of the stacked T_e <= r give ker (sum T_e) = range U of dimension r over Q | E10, the kernel equality | 24434 | K2 |
+| `Apps.pencil_count_eq` | for G_A = F F^H and K = F^-1 C G_B^-1 C^H F^-H, the negative eigenvalues of t G_A - C G_B^-1 C^H are the eigenvalues of K above t | E10, pencil count as count of squared cosines | 35400 | K2 |
+| `Apps.eig_le_of_count` | if at most u values exceed t' < 1 and at least u equal 1, every value below 1 is at most t' | E10, unit cosines | 7356 | K2 |
+| `Apps.e10_eta_bound` | composed: residual bound, pivot count u and at least u unit cosines give eta^2 <= t' | E10, eta bound of each lattice | 35968 | K2 |
+| `Apps.e10_criterion` | composed: with t' < 1/z^2 and z >= 1 every cosine other than 1 is below 1/z | E10, criterion of star, cross and the decorated lattices | 35978 | K2 |
+| `Apps.criterion_of_eta_sq` | eta^2 <= t' and t' < 1/z^2 give eta < 1/z | E10, rational criterion test | 7503 | K2 |
+| `Apps.sqrt_le_isqrt_div` | sqrt(num/den) <= (isqrt(num den) + 1)/den | E10, square-root bound of __init__.py | 11712 | K2 |
+| `Apps.square_octagon_criterion` | eta_perp^2 <= a, eta_par^2 <= b, a <= s_perp^2, b <= s_par^2, 4 s_perp + 2 s_par < 1 give 4 eta_perp + 2 eta_par < 1 | E10, square-octagon criterion | 7507 | K2 |
+
+What it shows and does not show. Every E10 number now rests on Lean theorems from the computed facts to the
+criterion on `eta`, and on an exact computation for the kernel equality; the general kernel lemma is no longer
+needed for the six lattices. Three kinds of step remain outside Lean: the correctness of the compiled programs
+(level N, not K: no theorem says that `ceapps` computes what the hypotheses state), the geometric reductions of
+`eta.py` listed in the table, and the theorem of Pomata and Wei itself.
+
+## 10 What was not recomputed
 
 Every target named for this part was run to the end; none was skipped for time or memory.
 Floating-point values that the records do not certify are not targets: the two crown sectors named by the
 paper, the values of the 92 pair-spin classes at the re-optimised couplings, and the floating-point `eta` of each lattice. The honeycomb
-lattice (Method III of Pomata and Wei) was not attempted by certify-ed and is not attempted here.
+lattice (Method III of Pomata and Wei) was not attempted by certify-ed and is not attempted here. The general
+kernel lemma (any graph, any spins) and the theorem of Pomata and Wei are not formalized.
 
-## 9 Files
+## 11 Files
 
 | path | contents |
 |---|---|
-| `CertifyApps.lean`, `CertifyApps/` | the library: `Engine` (counting), `SpinHalf` (spin-1/2 models and sectors), `Models` (the E7 and E9 models and the spin-1 ring), `Vector` (inverse iteration and exact radii), `Report` (records and JSON), `Apps` (E7 and E9), `Vbs` and `Eta` (E10), `AkltHam` (AKLT projector Hamiltonians), `Export`, `ExportAklt`, `Main` (the program) |
-| `apps_export/` | the comparison with the Python builder, the driver of all runs, this document's generator |
-| `results/apps/summary.json` | per target: record value, Lean value, agreement, seconds, peak memory, skipped reason |
-| `results/apps/<target>.json`, `.log` | the full output of each run and its log |
+| `CertifyApps.lean`, `CertifyApps/` | the library: `Engine` (counting), `SpinHalf` (spin-1/2 models and sectors), `Models` (the E7 and E9 models and the spin-1 ring), `Vector` (inverse iteration and exact radii), `Report` (records and JSON), `Apps` (E7 and E9), `Vbs` and `Eta` (E10), `AkltHam` (AKLT projector Hamiltonians), `Kernel` (the kernel equality), `Export`, `ExportAklt`, `Main` (the program) |
+| `CertifyMathlib/Apps.lean`, `CertifyMathlib/Apps/` | the Mathlib module of section 9: `Bordered`, `Kernel`, `Criterion` |
+| `apps_export/` | the comparisons with the Python builder (`compare_models.py`, `compare_aklt.py`, `compare_big.py`), the driver of all runs (`run_all.py`), the axiom listing (`PrintAxiomsApps.lean`), the second checkers (`nanoda_apps.py`, `nanoda_apps_theorems.txt`, `run_leanchecker_apps.py`), the module record (`make_mathlib_record.py`) and this document's generator |
+| `results/apps/summary.json` | per target: record value, Lean value, agreement, seconds, peak memory, skipped reason; the model checks and the module record |
+| `results/apps/<target>.json`, `.log` | the full output of each run and its log, including `e10_kernels` |
 | `results/apps/measurements.json` | wall time, exit code and peak working set of each run |
-| `results/apps/compare_models.json`, `compare_aklt.json`, `selftest.txt` | the checks of sections 2 and 3 |
+| `results/apps/compare_models.json`, `compare_aklt.json`, `compare_chain20.json`, `selftest.txt` | the checks of sections 2 and 3 |
+| `results/apps/mathlib_apps.json`, `mathlib_axioms.txt`, `nanoda_apps.jsonl`, `leanchecker_apps.json` | the record of the Mathlib module |
 

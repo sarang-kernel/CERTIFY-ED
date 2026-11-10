@@ -17,6 +17,12 @@
   "peak_memory_bytes": 853786624,
   "seconds": 2468.4
  },
+ "e10_kernels": {
+  "exit_code": 0,
+  "log": "e10_kernels.log",
+  "peak_memory_bytes": 98377728,
+  "seconds": 333.9
+ },
  "e10_square_octagon_criterion": {
   "exit_code": 0,
   "peak_memory_bytes": 12890112,
