@@ -1,0 +1,1455 @@
+{
+ "part": "Mathlib formalization: counting, assembly and eigenspace statements",
+ "document": "reverification_lean/COUNTING.md",
+ "root_module": "CertifyMathlib.Counting",
+ "root_file": "reverification_lean/CertifyMathlib/Counting.lean",
+ "modules": [
+  "CertifyMathlib.Counting.QuadForm",
+  "CertifyMathlib.Counting.Inertia",
+  "CertifyMathlib.Counting.Lemma4",
+  "CertifyMathlib.Counting.Completeness",
+  "CertifyMathlib.Counting.Assembly",
+  "CertifyMathlib.Counting.Thermo",
+  "CertifyMathlib.Counting.Eigenspace",
+  "CertifyMathlib.Counting.Parameter",
+  "CertifyMathlib.Counting.Norms",
+  "CertifyMathlib.Counting.Variance",
+  "CertifyMathlib.Counting"
+ ],
+ "toolchain": "leanprover/lean4:v4.35.0",
+ "mathlib": "v4.35.0",
+ "build": {
+  "command": "lake build CertifyMathlib.Counting",
+  "exit_code": 0,
+  "result": "Build completed successfully (2736 jobs)",
+  "date": "10 November 2026",
+  "module_seconds": {
+   "QuadForm": 74,
+   "Inertia": 67,
+   "Completeness": 78,
+   "Assembly": 84,
+   "Eigenspace": 80,
+   "Lemma4": 90,
+   "Thermo": 87,
+   "Parameter": 91,
+   "Norms": 90,
+   "Variance": 57,
+   "Counting (root)": 59
+  },
+  "module_seconds_note": "elaboration times reported by lake in the builds of 10 November 2026, each module's last build after its last edit; machine shared with other builds",
+  "warnings": "one per build: QuadForm imports a Mathlib module designed for the module system (no `module` keyword); no other warning",
+  "total_seconds_last_build": 222
+ },
+ "level_K_check": {
+  "files_searched": 11,
+  "sorry": 0,
+  "admit": 0,
+  "native_decide": 0,
+  "axiom_declarations": 0,
+  "method": "text search of the eleven files (root and ten modules)"
+ },
+ "axioms_check": {
+  "script": "reverification_lean/Drafts/Counting/PrintAxioms.lean",
+  "command": "lake env lean Drafts/Counting/PrintAxioms.lean",
+  "output": "reverification_lean/Drafts/Counting/print_axioms_output.txt",
+  "theorems": 98,
+  "all_depend_on": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "sorryAx": 0,
+  "date": "10 November 2026"
+ },
+ "second_checker": [
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Counting.QuadForm CertifyMathlib.Counting.Inertia CertifyMathlib.Counting.Lemma4 CertifyMathlib.Counting.Completeness CertifyMathlib.Counting.Assembly CertifyMathlib.Counting.Thermo CertifyMathlib.Counting.Eigenspace CertifyMathlib.Counting.Parameter CertifyMathlib.Counting.Norms CertifyMathlib.Counting",
+   "modules": [
+    "CertifyMathlib.Counting.QuadForm",
+    "CertifyMathlib.Counting.Inertia",
+    "CertifyMathlib.Counting.Lemma4",
+    "CertifyMathlib.Counting.Completeness",
+    "CertifyMathlib.Counting.Assembly",
+    "CertifyMathlib.Counting.Thermo",
+    "CertifyMathlib.Counting.Eigenspace",
+    "CertifyMathlib.Counting.Parameter",
+    "CertifyMathlib.Counting.Norms",
+    "CertifyMathlib.Counting (root, before Variance was added)"
+   ],
+   "exit_code": 0,
+   "seconds": 2091.1,
+   "output": "none",
+   "date": "10 November 2026"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Counting.Variance CertifyMathlib.Counting",
+   "modules": [
+    "CertifyMathlib.Counting.Variance",
+    "CertifyMathlib.Counting (root, with the Variance import)"
+   ],
+   "exit_code": 0,
+   "seconds": 875.6,
+   "output": "none",
+   "date": "10 November 2026"
+  }
+ ],
+ "status_counts": {
+  "proved": 9,
+  "partial": 7,
+  "not attempted": 5
+ },
+ "statements": [
+  {
+   "id": "SYL",
+   "name": "Sylvester's law of inertia",
+   "source": "code/certify-ed/docs/theory.md §3; code/certify-ed/docs/proofs/D-01_sparse-residual.md Step 5",
+   "lean": [
+    "CertifyMathlib.Counting.sylvester_inertia",
+    "CertifyMathlib.Counting.cntLt_eq_of_factor",
+    "CertifyMathlib.Counting.sylvester_card"
+   ],
+   "file": "CertifyMathlib/Counting/QuadForm.lean, Inertia.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "Document: A = L D L^H, L invertible, D real diagonal => #negative eigenvalues of A = #negative entries of D. Lean: sylvester_inertia gives cntLt hA 0 = #{d<0} and cntLe hA 0 = #{d<=0}; cntLt_eq_of_factor at a shift t and for rectangular L with a two-sided inverse of L^H; sylvester_card compares two factorizations without eigenvalues."
+  },
+  {
+   "id": "MINMAX",
+   "name": "eigenvalue count = largest dimension of a negative subspace",
+   "source": "used by every count of code/certify-ed/docs/theory.md §3",
+   "lean": [
+    "CertifyMathlib.Counting.finrank_le_cntLt",
+    "CertifyMathlib.Counting.exists_negOn_cntLt",
+    "CertifyMathlib.Counting.finrank_le_cntLe",
+    "CertifyMathlib.Counting.exists_nonposOn_cntLe",
+    "CertifyMathlib.Counting.finrank_add_finrank_le"
+   ],
+   "file": "CertifyMathlib/Counting/QuadForm.lean, Inertia.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "Not a numbered statement of the documents; the min-max fact in subspace form on which all counts rest. Mathlib v4.35.0 has no Courant-Fischer theorem for matrices."
+  },
+  {
+   "id": "WEYL",
+   "name": "Weyl's inequality, counting form",
+   "source": "code/certify-ed/docs/proofs/cor5_pairing.md Step 4; thm8_rho.md Steps 3-4",
+   "lean": [
+    "CertifyMathlib.Counting.weyl_cntLt",
+    "CertifyMathlib.Counting.weyl_cntLe",
+    "CertifyMathlib.Counting.weyl_opNorm"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, Norms.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "Document: |lambda_j(A) - lambda_j(B)| <= rho for Hermitian A, B with ||A-B|| <= rho. Lean: cntLt hA t <= cntLt hB (t+rho) and cntLe hA t <= cntLe hB (t+rho) under |x^H (A-B) x| <= rho ||x||^2 (weyl_opNorm: under the operator-norm bound), which is the sorted statement in counting form."
+  },
+  {
+   "id": "NORM",
+   "name": "spectral-norm hypotheses imply quadratic-form hypotheses",
+   "source": "code/certify-ed/docs/theory.md §3 and §5 (norm bounds)",
+   "lean": [
+    "CertifyMathlib.Counting.abs_qf_le_of_toEuclideanLin",
+    "CertifyMathlib.Counting.lemma4_opNorm",
+    "CertifyMathlib.Counting.thm8_opNorm"
+   ],
+   "file": "CertifyMathlib/Counting/Norms.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "||M z|| <= rho ||z|| for all z in EuclideanSpace implies |x^H M x| <= rho ||x||^2 (Cauchy-Schwarz); Lemma 4, Weyl and Theorem 8 restated with the norm hypotheses of the documents."
+  },
+  {
+   "id": "L4",
+   "name": "Lemma 4, inertia with backward error",
+   "source": "code/certify-ed/docs/theory.md §3; manuscript_v4/sections/s3_math.tex lem:inertia",
+   "lean": [
+    "CertifyMathlib.Counting.lemma4",
+    "CertifyMathlib.Counting.lemma4_doc",
+    "CertifyMathlib.Counting.lemma4_opNorm",
+    "CertifyMathlib.Counting.lemma4_hermitian",
+    "CertifyMathlib.Counting.lemma4_perm"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean, Norms.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "Document: ||L D L^H - P(A - sigma I)P^T|| <= beta, L unit lower triangular, D block diagonal with nu negative eigenvalues => #{lambda < sigma-beta} <= nu <= #{lambda <= sigma+beta} (theory.md) or < (manuscript v4). Lean: lemma4 gives the strict (manuscript) form for any L whose conjugate transpose has a two-sided inverse and diagonal D, with E = L D L^H - (A - sigma I) bounded in quadratic form; lemma4_doc the theory.md form; lemma4_opNorm with the spectral norm; lemma4_hermitian for Hermitian (block) D with nu = its negative eigenvalue count; lemma4_perm with P any unitary matrix. Unit triangularity is not needed."
+  },
+  {
+   "id": "L4-2x2",
+   "name": "count of a 2 x 2 pivot block",
+   "source": "code/certify-ed/docs/theory.md §3 (2 x 2 blocks by the sign of a rational determinant)",
+   "lean": [
+    "CertifyMathlib.Counting.cntLt_fin_two"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "Hermitian 2x2 D: det<0 => exactly one negative eigenvalue; det>0 => two or none by the sign of the trace. With cnt_blockDiagonal' the count of block-diagonal D is the sum over blocks."
+  },
+  {
+   "id": "COR5",
+   "name": "Corollary 5, completeness and sorted pairing",
+   "source": "code/certify-ed/docs/proofs/cor5_pairing.md; manuscript_v4/sections/s3_math.tex cor:complete",
+   "lean": [
+    "CertifyMathlib.Counting.image_eq_of_match",
+    "CertifyMathlib.Counting.injective_of_groups",
+    "CertifyMathlib.Counting.cor5_le",
+    "CertifyMathlib.Counting.cor5_lt",
+    "CertifyMathlib.Counting.cor5_sorted",
+    "CertifyMathlib.Counting.cor5_model",
+    "CertifyMathlib.Counting.card_le_cntLt_of_match",
+    "CertifyMathlib.Counting.count_le_cntLe_of_match",
+    "CertifyMathlib.Counting.cntLt_le_count_of_match"
+   ],
+   "file": "CertifyMathlib/Counting/Completeness.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "(H1) as group map, radii constant on groups, disjoint group hulls [lo g, hi g], injection phi with |lambda(phi j) - mu j| <= r j (injective_of_groups builds it from group-wise injections); (H2) as cntLt hA (sigma-beta) <= k; (H3) mu j + r j < sigma - beta. Conclusions in counting form: exactly k eigenvalues below the cut and they are the matched ones (image_eq_of_match); #{mu l <= mu j} <= cntLe (mu j + r j) and cntLt (mu j - r j) <= #{mu l < mu j}; for sorted mu : Fin k -> R, j+1 <= cntLe (mu j + r j) and cntLt (mu j - r j) <= j, i.e. lambda_{j+1} in [mu_j - r_j, mu_j + r_j]; cor5_model: model shift Delta with the document's (H3), exactly k eigenvalues of A_m below sigma-beta-Delta and pairing within r_j + Delta. The gap bound is the difference of the two bounds and is not stated separately."
+  },
+  {
+   "id": "D-01",
+   "name": "a-posteriori backward error of the sparse factorization",
+   "source": "code/certify-ed/docs/proofs/D-01_sparse-residual.md",
+   "lean": [
+    "CertifyMathlib.Counting.abs_qf_le_rowSum",
+    "CertifyMathlib.Counting.lemma4_rowSum"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "binary64 rounding model with the standard inner-product error bound (Higham 2002, Lemma 3.1) for parts (a) to (c), Steps 1 to 4",
+   "correspondence": "Lemma R1 (||E||_2 <= ||E||_inf for Hermitian E) in quadratic-form form, and Step 5 (diagonal shift rounding s plus row-sum bound R gives Lemma 4 with beta = R + s). The floating-point Steps 1 to 4 are not attempted."
+  },
+  {
+   "id": "BLOCK",
+   "name": "spectrum of a block-diagonal matrix is the union of the block spectra",
+   "source": "code/certify-ed/docs/proofs/thm8_rho.md Step 2",
+   "lean": [
+    "CertifyMathlib.Counting.cnt_blockDiagonal'",
+    "CertifyMathlib.Counting.isHermitian_blockDiagonal'",
+    "CertifyMathlib.Counting.card_filter_sigma"
+   ],
+   "file": "CertifyMathlib/Counting/Assembly.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "For B = blockDiagonal' H: cntLt hB t = sum_s cntLt (hH s) t and the same for cntLe, for every t, which is equality of eigenvalue multisets."
+  },
+  {
+   "id": "THM8",
+   "name": "Theorem 8, sector assembly",
+   "source": "code/certify-ed/docs/proofs/thm8_rho.md; manuscript_v4/sections/s3_math.tex thm:compose",
+   "lean": [
+    "CertifyMathlib.Counting.thm8_blocks",
+    "CertifyMathlib.Counting.thm8",
+    "CertifyMathlib.Counting.thm8_opNorm",
+    "CertifyMathlib.Counting.cnt_conj",
+    "CertifyMathlib.Counting.isHermitian_conj"
+   ],
+   "file": "CertifyMathlib/Counting/Assembly.lean, Norms.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "polar-factor lemma for the square W = [V_1 ... V_m] (thm2_polar-factor.md (a), (c), (d)) giving a matrix Q with Q^H Q = Q Q^H = 1 and ||Q^H H Q - B|| <= rho = D + (||H|| + ||B||) delta; kernel-checked in operator form as CertifyMathlib.Enclosure.polarQ_residual_le but not joined here",
+   "correspondence": "Steps 1-2 (thm8_blocks, uniform radius r, sector counts at E_cut - beta_s) and Steps 3-5 (thm8) given a square unitary Q and the bounds on Q^H H Q - B (rho) and H - H_spec (m_b): pairing within r + rho + m_b and lambda_{K+1}(H_spec) >= E_cut - max beta - (rho + m_b). m_b = 0 gives the manuscript form."
+  },
+  {
+   "id": "THM6",
+   "name": "Theorem 6, projector bound",
+   "source": "code/certify-ed/docs/theory.md §4; manuscript_v4/sections/s3_math.tex thm:dk",
+   "lean": [],
+   "file": null,
+   "status": "not attempted",
+   "level": null,
+   "missing": "polar factor, Kahan's theorem and a spectral-norm sin Theta theorem",
+   "correspondence": "Not attempted; effort went first to the counting statements used by S3 and S5."
+  },
+  {
+   "id": "E-07-L1",
+   "name": "E-07 Lemma 1, Frobenius sin Theta (separation inequality)",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [
+    "CertifyMathlib.Counting.frob_sylvester",
+    "CertifyMathlib.Counting.frob_eq_re_trace",
+    "CertifyMathlib.Counting.frob_conjTranspose_mul",
+    "CertifyMathlib.Counting.frob_mul_conjTranspose"
+   ],
+   "file": "CertifyMathlib/Counting/Eigenspace.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "the projector identity (I - P) R' = A_perp Y - Y H' (spectral projector P as a matrix, commuting with A)",
+   "correspondence": "frob_sylvester: Hermitian A, H, any Y; if every nonzero coordinate of Y in the two eigenbases pairs eigenvalues at distance >= delta >= 0, then delta^2 ||Y||_F^2 <= ||A Y - Y H||_F^2. For Y = (I-P)Q-hat the cluster coordinates vanish, which is the hypothesis of Lemma 1."
+  },
+  {
+   "id": "E-07-rest",
+   "name": "E-07 Lemma 2, Proposition 1, Lemma 3; C-12; C-13",
+   "source": "code/certify-ed/docs/proofs/E-07_davis_kahan.md §1",
+   "lean": [],
+   "file": null,
+   "status": "not attempted",
+   "level": null,
+   "missing": "polar identities, s_DK, alignment lemma, Ostrowski",
+   "correspondence": "Not attempted."
+  },
+  {
+   "id": "P14",
+   "name": "Proposition 14, degeneracy bracketing",
+   "source": "code/certify-ed/docs/proofs/P14_degeneracy_bracketing.md; theory.md §9.1",
+   "lean": [
+    "CertifyMathlib.Counting.bracket_count",
+    "CertifyMathlib.Counting.bracket_exact",
+    "CertifyMathlib.Counting.bracket_ge",
+    "CertifyMathlib.Counting.card_Ioo_add_cntLe",
+    "CertifyMathlib.Counting.cntLe_le_cntLt_add"
+   ],
+   "file": "CertifyMathlib/Counting/Lemma4.lean",
+   "status": "proved",
+   "level": "K2",
+   "missing": null,
+   "correspondence": "(a), (b) as #I_in + nu_lo <= nu_hi and nu_hi <= nu_lo + #I_out with the hypothesis sigma_lo + beta_lo < sigma_hi - beta_hi (I_in non-empty, as in part (b) of the derivation document; theory.md §9.1 omits it and the inequality is false without it); (c) bracket_exact; (e) bracket_ge; (d) is (a). (H1) as g distinct eigen-indices with eigenvalues in I_in."
+  },
+  {
+   "id": "C-16",
+   "name": "C-16 exact bracket",
+   "source": "code/certify-ed/docs/proofs/C16_exact_bracket.md",
+   "lean": [],
+   "file": null,
+   "status": "not attempted",
+   "level": null,
+   "missing": "Sturm's theorem and Yun's squarefree factorization on Mathlib; hypothesis (H2) (exactness of python-flint) is outside Lean",
+   "correspondence": "Not attempted."
+  },
+  {
+   "id": "P15",
+   "name": "Proposition 15, summed bounds",
+   "source": "code/certify-ed/docs/proofs/P15_summed_bounds.md",
+   "lean": [
+    "CertifyMathlib.Counting.summed_bound"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "binary64 model for the floating-point corollary (2) and Lemmas A, B",
+   "correspondence": "Inequality (1), exact, for any RCLike field."
+  },
+  {
+   "id": "P16",
+   "name": "Proposition 16, thermodynamic intervals",
+   "source": "code/certify-ed/docs/proofs/P16_thermo_intervals.md; theory.md §9.3",
+   "lean": [
+    "CertifyMathlib.Counting.thermo_Z",
+    "CertifyMathlib.Counting.thermo_energy",
+    "CertifyMathlib.Counting.thermo_second",
+    "CertifyMathlib.Counting.quotient_bounds",
+    "CertifyMathlib.Counting.free_energy_bounds",
+    "CertifyMathlib.Counting.sum_fiber_bounds",
+    "CertifyMathlib.Counting.weighted_sq_le",
+    "CertifyMathlib.Counting.variance_nonneg",
+    "CertifyMathlib.Counting.variance_bounds",
+    "CertifyMathlib.Counting.heat_capacity_bounds"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean; CertifyMathlib/Counting/Variance.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "dyadic arithmetic of Lemma 17",
+   "correspondence": "(H) as an assignment kappa of eigen-indices to intervals with fibre sizes c_k; enclosures of Z e^{beta E0}, sum e_i e^{-beta e_i}, sum e_i^2 e^{-beta e_i}; quotient enclosure; F = E0 - T ln Z-tilde. Z is the sum over Mathlib's eigenvalues. Var(e) = <e^2> - <e>^2 >= 0 by a weighted Cauchy-Schwarz inequality; variance interval [max(0, a2 - b1^2), b2 - a1^2] from enclosures of <e> >= 0 and <e^2>; C = beta^2 Var(E) in beta^2 times that interval."
+  },
+  {
+   "id": "C-06",
+   "name": "C-06 truncated thermodynamics",
+   "source": "code/certify-ed/docs/proofs/C06_truncated_thermodynamics.md",
+   "lean": [
+    "CertifyMathlib.Counting.tail_weight"
+   ],
+   "file": "CertifyMathlib/Counting/Thermo.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "Lemma C (envelopes of e e^{-beta e}, e^2 e^{-beta e}) and the assembled intervals (iii)",
+   "correspondence": "Part (i), the omitted weight in [(n-k) e^{-beta(M-E0)}, (n-k) e^{-beta(L-E0)}] with n - k = #{lambda >= L}."
+  },
+  {
+   "id": "C-04",
+   "name": "C-04 correlation lift",
+   "source": "code/certify-ed/docs/proofs/C-04_correlation_lift.md",
+   "lean": [],
+   "file": null,
+   "status": "not attempted",
+   "level": null,
+   "missing": "trace norm, Hoelder for traces, polar factor",
+   "correspondence": "Not attempted."
+  },
+  {
+   "id": "C-07",
+   "name": "C-07 moments",
+   "source": "code/certify-ed/docs/proofs/C-07_moments.md",
+   "lean": [],
+   "file": null,
+   "status": "not attempted",
+   "level": null,
+   "missing": "trace norm, Hoelder for traces, Theorem 6",
+   "correspondence": "Not attempted."
+  },
+  {
+   "id": "E-04",
+   "name": "E-04 parameter intervals",
+   "source": "code/certify-ed/docs/proofs/E-04_parameter_intervals.md; theory.md §10.3",
+   "lean": [
+    "CertifyMathlib.Counting.weyl_affine",
+    "CertifyMathlib.Counting.weyl_affine_right",
+    "CertifyMathlib.Counting.qf_triangle",
+    "CertifyMathlib.Counting.sampling_criterion",
+    "CertifyMathlib.Counting.qf_smul"
+   ],
+   "file": "CertifyMathlib/Counting/Inertia.lean, Parameter.lean",
+   "status": "partial",
+   "level": "K2",
+   "missing": "Lemma 4 of the document (term-wise bound on ||H1||_2, norms of Kronecker products) and the continuity argument for crossings",
+   "correspondence": "Proposition 1 both tubes and Proposition 2 in counting form; Lemma 3 for a margin 2B-Lipschitz on the whole sample interval (the hypothesis fails across a tube jump, the case of the ERROR verdict in VERDICTS.md)."
+  }
+ ],
+ "theorems": [
+  {
+   "name": "CertifyMathlib.Counting.qf",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.nsq",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.nsq_nonneg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_add",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_sub",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.re_star_dotProduct_self",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_smul_one",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_sub_smul_one",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_congr",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.NegOn",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.NonposOn",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_add_finrank_le",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.coordSub",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.mem_coordSub",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_le_finrank_coordSub",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.exists_ne_zero_apply",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.negOn_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.nonneg_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.nonposOn_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.pos_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_of_negOn_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_of_nonposOn_dg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_map_equiv",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.negOn_map",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.nonposOn_map",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.mulVecEquiv",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.mulVecEquiv_apply",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_card_neg",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_card_nonpos",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.exists_negOn",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.exists_nonposOn",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sylvester_card",
+   "module": "CertifyMathlib.Counting.QuadForm",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.unitary_mul_conjTranspose",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.conjTranspose_mul_unitary",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sub_smul_one_eq",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_cntLt",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.finrank_le_cntLe",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.exists_negOn_cntLt",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.exists_nonposOn_cntLe",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_eq_of_factor",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.isUnit_det_conjTranspose",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sylvester_inertia",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cnt_conj",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.isHermitian_conj",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_mono",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_mono",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_le_cntLe",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_le_cntLt",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_qf_sub_comm",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_cntLt",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_cntLe",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_smul",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_affine",
+   "module": "CertifyMathlib.Counting.Inertia",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_doc",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_hermitian",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_perm",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_qf_le_rowSum",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_rowSum",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_Ioo_add_cntLe",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLe_le_cntLt_add",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_count",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_exact",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.bracket_ge",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_fin_two",
+   "module": "CertifyMathlib.Counting.Lemma4",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.count_le_cntLe_of_match",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_le_cntLt_of_match",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.image_eq_of_match",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cntLt_le_count_of_match",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.injective_of_groups",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_le",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_lt",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_sorted",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cor5_model",
+   "module": "CertifyMathlib.Counting.Completeness",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.isHermitian_blockDiagonal'",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.blockDiagonal'_sub_smul_one",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.card_filter_sigma",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.cnt_blockDiagonal'",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_blocks",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8",
+   "module": "CertifyMathlib.Counting.Assembly",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.summed_bound",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sum_fiber_bounds",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thermo_Z",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thermo_energy",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thermo_second",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.tail_weight",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.quotient_bounds",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.free_energy_bounds",
+   "module": "CertifyMathlib.Counting.Thermo",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob",
+   "module": "CertifyMathlib.Counting.Eigenspace",
+   "kind": "definition"
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_eq_re_trace",
+   "module": "CertifyMathlib.Counting.Eigenspace",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_conjTranspose_mul",
+   "module": "CertifyMathlib.Counting.Eigenspace",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_mul_conjTranspose",
+   "module": "CertifyMathlib.Counting.Eigenspace",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.frob_sylvester",
+   "module": "CertifyMathlib.Counting.Eigenspace",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.qf_triangle",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_affine_right",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.sampling_criterion",
+   "module": "CertifyMathlib.Counting.Parameter",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.abs_qf_le_of_toEuclideanLin",
+   "module": "CertifyMathlib.Counting.Norms",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.lemma4_opNorm",
+   "module": "CertifyMathlib.Counting.Norms",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weyl_opNorm",
+   "module": "CertifyMathlib.Counting.Norms",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.thm8_opNorm",
+   "module": "CertifyMathlib.Counting.Norms",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.weighted_sq_le",
+   "module": "CertifyMathlib.Counting.Variance",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.variance_nonneg",
+   "module": "CertifyMathlib.Counting.Variance",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.variance_bounds",
+   "module": "CertifyMathlib.Counting.Variance",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  },
+  {
+   "name": "CertifyMathlib.Counting.heat_capacity_bounds",
+   "module": "CertifyMathlib.Counting.Variance",
+   "kind": "theorem",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  }
+ ],
+ "drafts": {
+  "reverification_lean/Drafts/Counting/Part1.lean": "first single-file draft of QuadForm, Inertia and Lemma 4; its content was replaced by a comment pointing to the modules (not part of the library)",
+  "reverification_lean/Drafts/Counting/Probe.lean": "Mathlib API probe (#check only)",
+  "reverification_lean/Drafts/Counting/Bridge.lean": "probe of the EuclideanSpace inner product and norm used in Norms.lean"
+ },
+ "second_checker_note": "every theorem of the eleven files was replayed by leanchecker in one of the two runs and accepted; level K2"
+}
