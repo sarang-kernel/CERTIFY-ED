@@ -1,0 +1,335 @@
+[
+ {
+  "id": "T1",
+  "name": "Theorem 1 (residual enclosure)",
+  "source": "code/certify-ed/docs/theory.md §2; manuscript_v4/sections/s3_math.tex thm:residual",
+  "lean": [
+   "CertifyMathlib.Enclosure.residual_enclosure",
+   "CertifyMathlib.Enclosure.EigenData.exists_eig_near"
+  ],
+  "file": "CertifyMathlib/Enclosure/Residual.lean",
+  "status": "proved",
+  "correspondence": "Document: for Hermitian A, x != 0 and real mu some eigenvalue satisfies |lambda - mu| <= ||Ax - mu x||/||x||. Lean: the same over RCLike (real or complex), x in EuclideanSpace with the Euclidean norm, eigenvalues hA.eigenvalues (Mathlib's unsorted indexing). No difference beyond the field being any RCLike field.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "T1-family",
+  "name": "Theorem 1, multi-pair form used by S2",
+  "source": "code/certify-ed/docs/theory.md §2 (existence only for each pair)",
+  "lean": [
+   "CertifyMathlib.Enclosure.residual_enclosure_family",
+   "CertifyMathlib.Enclosure.EigenData.exists_eig_near_family"
+  ],
+  "file": "CertifyMathlib/Enclosure/Residual.lean",
+  "status": "proved",
+  "correspondence": "Document: every claimed pair gets its own interval; distinctness is not claimed (two copies of one vector share an eigenvalue). Lean: a function f from the pair index to eigenvalue indices with each bound; f is not claimed injective.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "T1-shift",
+  "name": "Theorem 1 with the S1 model shift sigma",
+  "source": "code/certify-ed/docs/theory.md §2 step 6; docs/proofs/appA_model-shift.md §5 (v)",
+  "lean": [
+   "CertifyMathlib.Enclosure.residual_enclosure_of_shift",
+   "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm",
+   "CertifyMathlib.Enclosure.EigenData.exists_eig_near_of_shift"
+  ],
+  "file": "CertifyMathlib/Enclosure/Residual.lean",
+  "status": "proved",
+  "correspondence": "Document: radius add_up(r, sigma) for the eigenvalues of H with ||H - A|| <= sigma. Lean: radius ||Ax - mu x||/||x|| + sigma for the eigenvalues of Hermitian H, with the hypothesis either pointwise (||(H - A)v|| <= sigma ||v|| for all v) or as Mathlib's spectral norm ||H - A|| <= sigma (scope Matrix.Norms.L2Operator). Proved by the triangle inequality and Theorem 1 for H; the outward rounding of add_up is not part of the statement.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "T3",
+  "name": "Theorem 3 (Kato-Temple)",
+  "source": "code/certify-ed/docs/theory.md §2; manuscript_v4/sections/s3_math.tex thm:kato",
+  "lean": [
+   "CertifyMathlib.Enclosure.kato_temple",
+   "CertifyMathlib.Enclosure.EigenData.kato_temple_upper",
+   "CertifyMathlib.Enclosure.EigenData.kato_temple_lower",
+   "CertifyMathlib.Enclosure.EigenData.kato_temple_upper_mul",
+   "CertifyMathlib.Enclosure.EigenData.kato_temple_lower_mul"
+  ],
+  "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+  "status": "proved",
+  "correspondence": "Document: ||x|| = 1, theta = x^H A x, r = ||Ax - theta x||, (alpha, beta) containing theta and exactly one eigenvalue lambda: theta - r^2/(beta - theta) <= lambda <= theta + r^2/(theta - alpha). Lean (kato_temple): the same, theta written as re<x, Ax> (inner_apply_self_eq_re shows it equals <x, Ax>), 'exactly one eigenvalue' as: every eigenvalue in (alpha, beta) equals lambda (multiplicity allowed). The abstract forms need only lambda in [alpha, beta], use alpha < theta for the upper and theta < beta for the lower bound, and include division-free forms that need no hypothesis on theta.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "Gershgorin",
+  "name": "Gershgorin for Hermitian matrices and the norm bound ||A||_2 <= ||A||_inf",
+  "source": "Mathlib eigenvalue_mem_ball; code/certify-ed/docs/proofs/thm2_polar-factor.md §3 (inf_norm_upper(A) >= ||A||_inf >= ||A||_2 for Hermitian A)",
+  "lean": [
+   "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin",
+   "CertifyMathlib.Enclosure.abs_eigenvalue_le_row_sum",
+   "CertifyMathlib.Enclosure.norm_toEuclideanLin_le_of_row_sum",
+   "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum"
+  ],
+  "file": "CertifyMathlib/Enclosure/Residual.lean",
+  "status": "proved",
+  "correspondence": "Mathlib's disc theorem is stated for an eigenvalue of toLin' A over a normed field; eigenvalue_mem_gershgorin applies it to each hA.eigenvalues i through the eigenvector eigenvectorBasis i. The statement the code uses is the consequence ||A v|| <= R ||v|| (and Mathlib's spectral norm ||A|| <= R) for Hermitian A and any R >= 0 above every row sum; Lean adds the harmless hypothesis R >= 0.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "Weyl",
+  "name": "Weyl's inequality (sorted and counting forms)",
+  "source": "code/certify-ed/docs/proofs/appA_model-shift.md Theorem A5 (Horn-Johnson Cor. 4.3.15)",
+  "lean": [
+   "CertifyMathlib.Enclosure.weyl_eigenvalues₀",
+   "CertifyMathlib.Enclosure.sorted_weyl",
+   "CertifyMathlib.Enclosure.card_le_le_card_le_add",
+   "CertifyMathlib.Enclosure.card_lt_le_card_lt_add",
+   "CertifyMathlib.Enclosure.card_ge_le_card_ge_sub"
+  ],
+  "file": "CertifyMathlib/Enclosure/Weyl.lean",
+  "status": "proved",
+  "correspondence": "Document: |lambda_j(H_spec) - lambda_j(H_h)| <= Delta for every sorted index j when ||H_h - H_spec||_2 <= Delta. Lean: the same for Mathlib's sorted eigenvalues eigenvalues₀ (decreasing order; the document's increasing order is the reversal of both sequences, which leaves the statement unchanged), with the norm hypothesis pointwise. The counting forms #{lambda(T) <= t} <= #{lambda(S) <= t + eps} and the strict form are proved first, by a Courant-Fischer dimension count.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "A1-A2",
+  "name": "Appendix A, Lemmas A1 and A2 (builder rounding, symmetrisation rounding)",
+  "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+  "lean": [],
+  "file": "",
+  "status": "not attempted",
+  "correspondence": "Statements about binary64 rounding in the builder (Higham's gamma constants applied to products and sums of monomial amplitudes). They need a formal floating-point model, which this track does not have; the core-Lean track decodes IEEE-754 values but proves no rounding-error lemmas of this kind.",
+  "gap": "formal binary64 rounding model (fl(a o b) = (a o b)(1 + delta), |delta| <= u) and Higham Lemmas 3.1 and 3.3 in Lean",
+  "axioms": [],
+  "trust_level": null
+ },
+ {
+  "id": "A3",
+  "name": "Appendix A, Lemma A3 (||E||_2^2 <= ||E||_1 ||E||_inf <= max^2)",
+  "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+  "lean": [
+   "CertifyMathlib.Enclosure.schur_bound",
+   "CertifyMathlib.Enclosure.norm_le_max_of_row_col"
+  ],
+  "file": "CertifyMathlib/Enclosure/Weyl.lean",
+  "status": "proved",
+  "correspondence": "Document: ||E||_2 <= sqrt(||E||_1 ||E||_inf) <= max(||E||_1, ||E||_inf) for any (rectangular) E. Lean: ||E x||^2 <= R C ||x||^2 and ||E x|| <= max(R, C) ||x|| for any upper bounds R >= 0, C >= 0 on the row and column sums. The proof is the Schur test with Cauchy-Schwarz instead of the document's route through lambda_max(E^H E); the inequality is the same.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "A4",
+  "name": "Appendix A, Theorem A4 (the model shift Delta)",
+  "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+  "lean": [
+   "CertifyMathlib.Enclosure.model_shift_bound"
+  ],
+  "file": "CertifyMathlib/Enclosure/Weyl.lean",
+  "status": "partial",
+  "correspondence": "Document: ||H_h - H_spec||_2 <= max(||D||_1, ||D||_inf) + Delta_builder with D = H_h - H_ref. Lean: the same composition with Delta_builder taken as the hypothesis ||(H_ref - H_spec) x|| <= Delta_b ||x||. The bound Delta_builder >= ||H_ref - H_spec||_2 itself rests on Lemmas A1 and A2 (floating point) and is not formalized.",
+  "gap": "Delta_builder = gamma_W sqrt(r c) >= ||H_ref - H_spec||_2 (Lemmas A1, A2 and the second part of A3 applied to the builder error), which needs the floating-point model",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "A5",
+  "name": "Appendix A, Theorem A5 (Weyl transfer for S2 and S3)",
+  "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+  "lean": [
+   "CertifyMathlib.Enclosure.weyl_transfer_enclosure",
+   "CertifyMathlib.Enclosure.weyl_transfer_count"
+  ],
+  "file": "CertifyMathlib/Enclosure/Weyl.lean",
+  "status": "proved",
+  "correspondence": "Document: (S2) an enclosure of radius r for H_h becomes one of radius r + Delta for H_spec at the same sorted index, so a matching to distinct indices stays a matching; (S3) #{lambda(H_h) < sigma - beta} <= nu <= #{lambda(H_h) <= sigma + beta} becomes the same with beta + Delta. Lean: both, with the S2 part for a family of claims mapped to sorted indices of eigenvalues₀; S4 (separations shrink by 2 Delta) is not stated separately; it follows from the S2 part.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "polar",
+  "name": "Polar-factor lemma (a) to (d)",
+  "source": "code/certify-ed/docs/proofs/thm2_polar-factor.md §1; manuscript_v4/sections/s3_math.tex lem:polar",
+  "lean": [
+   "CertifyMathlib.Enclosure.polarQ_norm",
+   "CertifyMathlib.Enclosure.polarM_sub_le",
+   "CertifyMathlib.Enclosure.polarMinv_le",
+   "CertifyMathlib.Enclosure.sub_polarQ_le",
+   "CertifyMathlib.Enclosure.polarQ_residual_le",
+   "CertifyMathlib.Enclosure.sqrt_dev_le"
+  ],
+  "file": "CertifyMathlib/Enclosure/Cluster.lean",
+  "status": "proved",
+  "correspondence": "Document: M = G^(1/2), Q = X M^-1 with G = X^H X, ||G - I|| = eta < 1: (a) Q^H Q = I, (b) ||M - I|| <= delta and ||M^-1|| <= (1 - eta)^(-1/2), (c) ||X - Q|| <= delta, (d) ||AQ - Q Lambda|| <= rho. Lean: X a linear map F -> E, G given by <Xu, Xv> = <Gu, v>, M and M^-1 built in an orthonormal eigenbasis of G; (a) is stated as norm preservation ||Qz|| = ||z|| (inner products are preserved too, polarQ_inner in ClusterPrime.lean); the norms in (d) are any upper bounds nR, nA >= 0, nLambda; the hypothesis 0 <= eta is added (eta is a norm in the document).",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "Kahan",
+  "name": "Kahan's inclusion theorem (general Hermitian block)",
+  "source": "code/certify-ed/docs/proofs/thm2_polar-factor.md §1 and §2",
+  "lean": [
+   "CertifyMathlib.Enclosure.kahan",
+   "CertifyMathlib.Enclosure.kahan_antitone",
+   "CertifyMathlib.Enclosure.kahan_interval_count",
+   "CertifyMathlib.Enclosure.exists_strictMono_matching"
+  ],
+  "file": "CertifyMathlib/Enclosure/Kahan.lean",
+  "status": "proved",
+  "correspondence": "Document: Q with orthonormal columns, H Hermitian with eigenvalues theta_j, r = ||AQ - QH||: g distinct indices with |lambda_{i_j} - theta_j| <= r. Lean: Q an isometry, eigenvalues of A and H sorted; the conclusion is a strictly increasing (so injective) index map, which is stronger. Step 1 (interval lemma) is the document's; Step 2 replaces Hall's marriage theorem by an explicit greedy order-preserving matching on the real line.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "T2",
+  "name": "Theorem 2 (clusters, radius rho)",
+  "source": "code/certify-ed/docs/theory.md §2; docs/proofs/thm2_polar-factor.md; manuscript_v4/sections/s3_math.tex thm:cluster",
+  "lean": [
+   "CertifyMathlib.Enclosure.cluster_enclosure",
+   "CertifyMathlib.Enclosure.cluster_rho"
+  ],
+  "file": "CertifyMathlib/Enclosure/Cluster.lean",
+  "status": "proved",
+  "correspondence": "Document: X n x g, eta = ||X^H X - I|| < 1, Lambda Hermitian with eigenvalues mu_j, R = AX - X Lambda, delta = 1 - sqrt(1 - eta), rho = ||R|| + (||A|| + ||Lambda||) delta: g distinct indices with |lambda_{i_j} - mu_j| <= rho. Lean (cluster_enclosure): X : Matrix n m, Lambda : Matrix m m Hermitian, the norm hypotheses pointwise with any upper bounds nR, nA >= 0, nLambda (as the manuscript allows), 0 <= eta added; the conclusion pairs Mathlib's sorted eigenvalues eigenvalues₀ of Lambda with those of A through a strictly increasing index map.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "T2prime",
+  "name": "Theorem 2' (sharper radius eps*) and min(rho, eps*)",
+  "source": "code/certify-ed/docs/theory.md §2; docs/proofs/thm2prime_eps-star.md; manuscript_v4/sections/s3_math.tex lem:epsstar",
+  "lean": [
+   "CertifyMathlib.Enclosure.cluster_enclosure_eps_star",
+   "CertifyMathlib.Enclosure.cluster_eps_star",
+   "CertifyMathlib.Enclosure.cluster_min",
+   "CertifyMathlib.Enclosure.rayleigh_residual_le",
+   "CertifyMathlib.Enclosure.rayleigh_sub_le"
+  ],
+  "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+  "status": "proved",
+  "correspondence": "Document: eps* = ||R||/sqrt(1 - eta) + ||X^H R||/(1 - eta) + delta spread(Lambda)/sqrt(1 - eta), g distinct indices within eps*; min(rho, eps*) is a valid common radius. Lean: the same with upper bounds nR >= 0 and nXR >= 0 on ||R|| and ||X^H R|| (X^H R written as the matrix Xᴴ * (A * X - X * Λ) or the adjoint of X applied to R), and spread(Lambda) replaced by hi - lo for any lo <= mu_j <= hi (equal to the document's for lo = mu_min, hi = mu_max). cluster_min takes the two matchings and returns one with radius min(rho, eps*).",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "E-05",
+  "name": "E-05 variational certificates",
+  "source": "code/certify-ed/docs/proofs/E-05_variational.md §1",
+  "lean": [
+   "CertifyMathlib.Enclosure.rayleigh_ritz_matrix",
+   "CertifyMathlib.Enclosure.temple_matrix",
+   "CertifyMathlib.Enclosure.EigenData.residual_sq_eq",
+   "CertifyMathlib.Enclosure.EigenData.norm_apply_sq_eq",
+   "CertifyMathlib.Enclosure.EigenData.temple"
+  ],
+  "file": "CertifyMathlib/Enclosure/Variational.lean",
+  "status": "partial",
+  "correspondence": "Lemma 1 (lambda_min <= theta <= lambda_max), Lemma 2 (an eigenvalue within r of theta, which is Theorem 1 at mu = theta, and r^2 = <psi, H^2 psi>/<psi, psi> - theta^2) and Proposition 1 (Temple: theta < rho <= lambda_2 gives lambda_1 >= theta - r^2/(rho - theta)) are kernel-checked; 'rho <= lambda_2' is written as 'at most one eigenvalue, counted with multiplicity, is below rho'. Lemmas 3 and 4 (floating-point enclosure of theta and r, MPS contraction error) and Lemma 5 (Rayleigh quotient of the source state) are not formalized.",
+  "gap": "Lemma 5 of E-05 (|theta(psi) - theta(psi_hat)| bound for ||psi - psi_hat|| <= e), an exact statement not attempted; Lemmas 3 and 4 need the floating-point model",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "D-02",
+  "name": "D-02 matrix-free residual bounds",
+  "source": "code/certify-ed/docs/proofs/D-02_matrix-free.md",
+  "lean": [],
+  "file": "",
+  "status": "not attempted",
+  "correspondence": "The theorem counts roundings of the matrix-free product (a floating-point statement); its exact part, ||H||_2 <= sum_t |c_t| prod_l ||o_{t,l}||_2 through Kronecker products and Jordan-Wigner strings, was not attempted within the time of this track.",
+  "gap": "Kronecker-product norm identity ||A (x) B||_2 = ||A||_2 ||B||_2 and the term-wise triangle bound; the rounding count W needs the floating-point model",
+  "axioms": [],
+  "trust_level": null
+ },
+ {
+  "id": "E-03",
+  "name": "E-03 generalized eigenproblems (Cholesky reduction)",
+  "source": "code/certify-ed/docs/proofs/E-03_generalized.md",
+  "lean": [
+   "CertifyMathlib.Enclosure.generalized_residual_enclosure",
+   "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
+   "CertifyMathlib.Enclosure.norm_inv_le_of_lower_bound",
+   "CertifyMathlib.Enclosure.norm_sq_adjoint_eq",
+   "CertifyMathlib.Enclosure.reducedOp_isSymmetric",
+   "CertifyMathlib.Enclosure.pencil_eigenpair_of_reduced"
+  ],
+  "file": "CertifyMathlib/Enclosure/Generalized.lean",
+  "status": "partial",
+  "correspondence": "Lemma 2 of E-03 (|lambda - mu| <= ||Ax - mu Bx||_{B^-1}/||x||_B <= ||Ax - mu Bx||_2/(sqrt(beta_c) ||x||_B) for 0 < beta_c <= lambda_min(B)) is kernel-checked for the eigenvalues of C = L^-1 A L^-H, with B = L L^H for an invertible L (Cholesky in the document; any invertible L in Lean), ||L^-1 s|| standing for ||s||_{B^-1} and ||L^H x|| = ||x||_B (norm_sq_adjoint_eq), and lambda_min(B) >= beta_c written as beta_c ||w||^2 <= w^H B w for all w. Of Lemma 1, C Hermitian and 'an eigenpair (y, lambda) of C gives the pencil eigenpair (L^-H y, lambda)' are kernel-checked; the converse, that the pencil eigenvalues (roots of det(A - lambda B)) are exactly those of C with multiplicity, is not.",
+  "gap": "the pencil eigenvalues, roots of det(A - lambda B), are exactly the eigenvalues of C with multiplicity (converse half of Lemma 1 of E-03); Lemma 3 and Propositions 1 to 3 (inertia, floating point)",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K2"
+ },
+ {
+  "id": "L17",
+  "name": "Lemma 17 (dyadic exp and ln enclosures)",
+  "source": "code/certify-ed/docs/proofs/L17_dyadic_exp_ln.md",
+  "lean": [],
+  "file": "",
+  "status": "not attempted",
+  "correspondence": "Not attempted within the time of this track; the statement is about integer arithmetic on a 2^-192 grid together with Taylor and atanh remainders of real exp and ln.",
+  "gap": "real remainder bounds 0 <= exp(t) - sum_{k<=N} t^k/k! <= t^(N+1)/(N+1)! / (1 - t/(N+2)) and the atanh series remainder, then the grid rounding of each step",
+  "axioms": [],
+  "trust_level": null
+ }
+]
