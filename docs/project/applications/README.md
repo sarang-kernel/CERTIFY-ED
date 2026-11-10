@@ -9,8 +9,8 @@ path is relative to `sources/archive_v5/`; the code is `code/certify-ed/` at com
 | file | contents |
 |---|---|
 | [crown_kranitz_penc.md](crown_kranitz_penc.md) | the 18-site pyrochlore crown: the certified lower bound for the reduced spin-1/2 model, what it confirms and what it does not (the reduced-model value, not the nine-coupling headline value), the certified spin-1 eigenvalue below the published bound at the printed couplings, and the floating-point values of the named sectors and of the 92 pair-spin classes |
-| [aklt_pomata_wei.md](aklt_pomata_wei.md) | the AKLT gap criteria of Pomata and Wei: certified upper bounds on $\eta$ for five lattices, the kernel lemma and the bordered-pencil lemma, the checks, the honeycomb lattice (not attempted) and a numerical discrepancy in the paper's honeycomb proof |
-| [exact_benchmarks_e7.md](exact_benchmarks_e7.md) | experiment E7: four benchmark ground energies of dimension 9 252 and 12 870 certified by the exact symmetry-sector path |
+| [aklt_pomata_wei.md](aklt_pomata_wei.md) | the AKLT gap criteria of Pomata and Wei: certified upper bounds on $\eta$ for five lattices, the kernel lemma and the bordered-pencil lemma, the checks, the first certification scripts of 17 October 2026 and their two formulations, the honeycomb lattice (not attempted) and a numerical discrepancy in the paper's honeycomb proof |
+| [exact_benchmarks_e7.md](exact_benchmarks_e7.md) | experiment E7: four benchmark ground energies of dimension 9 252 and 12 870 certified by the exact symmetry-sector path, with the radii and times of the earlier runs on two platforms |
 | [symveig_e8.md](symveig_e8.md) | symveig 1.0.0: what it does, the audit, the conditions under which a whole-spectrum enclosure may claim counts, its replacement `certify_ed.spectrum`, experiment E8, and the decision about the preprint |
 | [c_verifier.md](c_verifier.md) | the C verifier `verifier/src/cev.c`: scope, checks, what it does not check, and its validation (55 of 55 certificates, 18 of 18 FAILED statuses reproduced, 80 of 80 forgeries caught) |
 

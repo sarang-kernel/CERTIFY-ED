@@ -320,7 +320,8 @@ rest on it.
 
 The exact layer re-derives S2 and S3 with no floating-point hypothesis. Its results are written in
 `code/certify-ed/docs/theory.md`, section 7, and in `manuscript_v4/sections/s3_math.tex`; their proofs in
-`manuscript_v4/sections/appB_exact.tex`. None of them has a derivation document among the 22.
+`manuscript_v4/sections/appB_exact.tex`. None of them has a derivation document among the 22. What each step computes,
+by which function and at which sizes, and what remains trusted, is in [exact_layer.md](exact_layer.md).
 
 ### Lemma 10, the scaled basis (`lem:scaled`)
 
@@ -573,6 +574,55 @@ does not by itself imply the 2-norm bound for an asymmetric $\lvert H \rvert_{\r
 correctly uses the symmetric form). The derivation made three bounds of the code looser: the factor $1/(1 - \gamma_W)$
 in `_builder_shift`, the adapter width $m + 2L_{\max} + 2$ for spec operators, and the explicit symmetrisation
 `hermitian_part` of the built reference.
+
+## The size of the bounds in the evidence runs
+
+How far a certified bound lies from the true error is measured by experiment E3 (`experiments/e3_tightness.py` of the
+code repository); the experiments documents of this repository give the full account
+([E3_tightness.md](../experiments/E3_tightness.md), [E4_workflows.md](../experiments/E4_workflows.md)). This section
+collects the numbers that bear on the theorems above, from the 3.2.1 evidence run
+(`code/certify-ed/results/run_full_20261105/E3.log`, `E4.log` and the E4 record
+`e4_workflows_W1W2W3W4_20261105_095402/data.json`). Like every floating-point value they are run-stack values; the
+corresponding values of the 21 October 2026 run are in row E3 of `project_docs/notes/claims_evidence_map.md`.
+
+**Theorem 1 against Theorem 3.** For the J1-J2 chain of N = 12 sites at $J_2$ = 0.2 in the $S^z = 0$ block (dimension
+924, gap 0.318156), the ground state is computed by `eigsh` with decreasing tolerance:
+
+| solver tolerance | actual error | Theorem 1 radius | Kato-Temple half-width |
+|---|---|---|---|
+| 1e-01 | 6.16e-04 | 4.09e-02 | 2.63e-03 |
+| 1e-03 | 1.41e-08 | 1.33e-04 | 2.76e-08 |
+| 1e-06 | 1.60e-14 | 2.57e-07 | 1.26e-13 |
+| 1e-08 | 1.07e-14 | 1.34e-10 | 2.22e-14 |
+| 0 | 1.07e-14 | 3.10e-14 | 2.22e-14 |
+
+The Theorem 1 radius is the residual norm, which is much larger than the error of the eigenvalue when the vector is
+inaccurate, while the Kato-Temple half-width uses the squared residual divided by a gap bound and follows the actual
+error, as Theorem 3 predicts. At full solver accuracy both are at the level of rounding. The rounding allowance of the
+floating-point form of Theorem 1 costs a factor between 2.5 and 5.7 against residuals computed in interval arithmetic
+with Arb (E3.log, "float64 bound / Arb residual: min 2.5, max 5.7"); experiment E0 compares the bound with Arb on 273
+matrices and 6391 pairs, with no violation, a median ratio of 1.00 and a maximum of 130.97 (`E0.log`).
+
+**Corollary 5.** In every case of E3(c) the log reports "certified gap/true gap = 0.900" with one factorization. This
+ratio is a design constant, not a measure of tightness: the shift of the count is placed at 0.9 of the estimated gap
+(row E3 of the claims map, finding MS-N07).
+
+**Theorem 8.** Assembled from sectors for N = 12, the 19 lowest eigenvalues equal the pooled sector values within
+1.22e-10, against an actual maximum error of 5.24e-14, and the next eigenvalue is certified to be at least -3.841534229,
+against a true value of -3.7511828271 (E3.log). The claims map calls E3(d) "the weakest point on tightness". The
+assembly radius contains the term $(\lVert H \rVert + \lVert B \rVert)(1 - \sqrt{1 - \eta})$, which grows with the
+orthonormality defect $\eta$ of the pooled sector bases (`compose.py`); in the workflow W1 of E4 (242 blocks) the record
+gives $\eta$ = 2.916908986400575e-10 and a common radius of 3.2086660317048632e-09.
+
+**Theorem 6, the Davis-Kahan bound (E-07) and Proposition 7.** In the workflow W2 of E4, the Haldane triplet of a spin-1
+Heisenberg ring of N = 8 sites (dimension 6561), the cluster has $\rho$ = 7.39670325789772e-13, $\eta$ =
+8.271574999533854e-15 and a separation lower bound of 0.5935552543740519. The projector bound of Theorem 6 is
+1.2461692830430924e-12, the Davis-Kahan bound of E-07 is 5.781853358347986e-13, and the smaller one is used. The $S^z$
+labels are certified to be exactly -1, 0 and 1 (bound 1.7642776128941573e-11, Proposition 7), and
+$\mathrm{tr}(P S^z_0 S^z_1)$ lies in [-1.34292510294487, -1.34292510293566], while the expectation in a single vector of
+the triplet ranges from -0.6637555135906547 to -0.32148966294999903 as the vector is rotated within the level. All five
+statements of W2 (S1, S2, S3, S4, S8) are CERTIFIED, with a maximum certified radius of 4.68e-13 and a certified gap of
+at least 1.03 (`E4.log`).
 
 ## Check status of every result
 

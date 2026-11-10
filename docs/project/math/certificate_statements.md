@@ -32,6 +32,45 @@ arrays sidecar; the statuses shown are an example, not a record) and in panel (b
 depend on each other: S1 fixes the matrix to which the enclosures refer, S2 encloses each claimed value, and S3 counts
 eigenvalues below a shift and orders the enclosures.
 
+## What goes in, and what each statement is about
+
+A certificate has two inputs (`manuscript_v4/sections/s2_certificates.tex`). The *claim* (`certify_ed/certify.py`, class
+`Claim`) holds the eigenvalues and, optionally, the eigenvectors, the operator (dense, sparse or matrix-free), the basis
+(a set of basis states or a sector isometry V) and the kind. The eigenvectors may have any normalization and need not be
+orthonormal: a valid but non-orthogonal basis of a degenerate level is accepted, and when only the orthonormality defect
+misses the target the status is INCONCLUSIVE, not FAILED (findings IMP-13 and M-02). If the claim states no accuracy
+target, an accuracy of $10^{-8} \max(1, \lVert H \rVert)$ is presumed (decision D-19; `certify.DEFAULT_REL_ACCURACY`),
+so a true but loose enclosure whose radius, with the model shift, exceeds that target is FAILED. The *model
+specification* (`certify_ed/spec.py`, class `ModelSpec`) gives the local space (spin S, spinless fermions with a
+Jordan-Wigner order, bosons with a cutoff) and the operator strings and couplings in the `static` format of QuSpin. It
+is serialized as canonical JSON (sorted keys, fixed separators, shortest round-trip floats, no NaN;
+`spec.canonical_json`) and hashed with SHA-256 (`ModelSpec.sha256`), so that a certificate binds to exactly one model
+definition.
+
+A certified statement always refers to a definite operator. The column "About" of the manuscript's table of statements
+says which:
+
+| statement | asserts | rests on | about |
+|---|---|---|---|
+| S1 | producer operator equals the declared model (entrywise; for a sector, isometry and invariance defects; matrix-free, random probes, marked probabilistic); model errors are attributed to terms by a least-squares fit | independent construction | producer against model |
+| S2 | each claimed value lies within $r_i$ of an eigenvalue with a distinct index, eigenvalues counted with multiplicity (finding MS-M09) | Theorems 1 and 2 (Theorem 3 reported in addition) | declared model (the radius includes the model shift) |
+| S3 | no eigenvalue is missing below the top claimed one; certified next eigenvalue | Lemma 4, Corollary 5 | block of the claim |
+| S4 | projector distance, $\mathrm{tr}(PO)$, quantum numbers of degenerate levels; correlations, structure factors | Theorem 6, Proposition 7, Proposition 15 | block of the claim |
+| S5 | recomputation by solvers with declared shared components | none (evidence, not proof) | none |
+| S6 | the k lowest re-derived in integer arithmetic: single values within exact radii, multiplets within count brackets, next eigenvalue bounded; claimed vectors nonzero, checked exactly (finding IMP-18) | Lemmas 10 and 11, Proposition 13 | declared model, no floating-point assumption |
+| S7 | thermodynamic functions at declared temperatures, enclosed from a complete whole-spectrum enclosure | Propositions 9 and 16 | declared model (block or whole) |
+| S8 | exactly g eigenvalues in the inner bracket of a level | Proposition 14 | block of the claim |
+
+The rows S1 to S7 follow the table of `s2_certificates.tex`; the row S8 is added from `code/certify-ed/docs/theory.md`,
+section 9.1, where the counts are made on the operator of the claim and the S1 model shift is added to both backward
+errors, as in S3. The least-squares attribution of S1 (`certify._diagnose_mismatch`) fits the difference between the
+producer matrix and the reference matrix by changed coefficients of all the couplings of the spec on the producer's
+basis, and reports whether the difference is fully explained by changed coefficients or is not expressible in the spec's
+operator strings (wrong operator content, a basis or ordering convention, missing term types). In the injected-error
+experiment E1, for example, a coupling sign typo is attributed to the term `zz` on sites 7 and 8, changed by
+-2.0000000000000164 with a residual of 8.3e-15, and a missing Jordan-Wigner sign to the two hopping terms across the
+periodic boundary (`code/certify-ed/results/run_full_20261105/E1.log`).
+
 ## Statuses
 
 A statement has one of four main statuses (`what_certified_means.md`). CERTIFIED means that the statement holds for the
@@ -55,6 +94,13 @@ certificate, and two correct runs on different machines agree on them. Floating-
 gap bounds, model shifts, backward errors, timings) depends on the operating system, the BLAS library and the library
 versions, and may differ in its last digits between runs; each such value is a valid bound for the run that produced it
 (`what_certified_means.md`, section "Run-stack values").
+
+Two rules apply to every statement. Non-finite inputs (NaN or an infinity in the claimed values, the vectors or the
+operator entries) are rejected at entry and every statement is INCONCLUSIVE, and the comparisons are written so that a
+NaN cannot pass them (findings IMP-21 and IMP-22; `enclosure.enclose`, `certify.certify`, `spectrum.enclose_spectrum`).
+And if the run-time probe `fp.probe_float_environment` finds a non-standard floating-point environment, every CERTIFIED
+statement except S6 is downgraded to INCONCLUSIVE, because S6 uses no floating point (`tests/test_fp_environment.py`;
+[exact_layer.md](exact_layer.md)).
 
 ## S1, model fidelity
 
@@ -146,6 +192,8 @@ eigenvectors, python-flint and a dimension of at most `Options.exact_max_dim` = 
 claims have no exact path (`UNSUPPORTED_CLAIM`). Implemented in `checker.exact_recheck_lowest`,
 `checker.certify_by_counts` and, for symmetry-adapted claims, `exact_sectors.exact_recheck_sector_lowest`. The
 mathematics of this layer (`theory.md`, section 7) is marked UNVERIFIED and has no derivation document among the 22.
+What exactly is recomputed, by which function, at which sizes, and what remains trusted is set out in
+[exact_layer.md](exact_layer.md).
 
 ## S7, thermodynamics
 
@@ -174,6 +222,20 @@ equal eigenvalues", because exact equality cannot be decided in floating point. 
 multiplicities of the eigenvalues of the declared model in a rational bracket, from the characteristic polynomial, its
 squarefree factorization and Sturm sequences, with no floating-point hypothesis, for dimensions up to 600
 (`exact_degeneracy.exact_bracket`). Only then can a certificate say "exactly g eigenvalues in [a, b], all equal".
+
+## Symmetry sectors and assembly
+
+A claim made in one symmetry block certifies that block and nothing more; this is why the column "about" of the table
+above reads "block of the claim" for S3, S4 and S8. Statements about the whole model come from the assembly step of
+Theorem 8 ([theorems.md](theorems.md)), implemented in `compose.certify_low_energy`. It checks that every sector basis
+is an orthonormal, H-invariant subspace (`sectors.audit_sector`), that the sectors are mutually orthogonal and that
+their dimensions add up to the dimension of the space, and it counts the eigenvalues of every block below a cut; the
+pooled claimed values then enclose the K lowest eigenvalues of H, and the next eigenvalue is bounded from below
+(`manuscript_v4/sections/s2_certificates.tex`). A missing sector, a phase error in one basis vector, or an unreported
+state below the cut each gives FAILED (`tests/test_certify.py::test_global_spectrum_from_sectors`). In the workflow W1
+of experiment E4 of the 3.2.1 run (a J1-J2 chain of N = 16 sites at $J_2$ = 0.3, every $(N_\uparrow, k)$ block computed
+with QuSpin, 242 blocks), the 13 lowest eigenvalues of H equal the pooled sector values within 3.21e-09 and the next
+eigenvalue is at least -5.708271753 (`code/certify-ed/results/run_full_20261105/E4.log`).
 
 ## The statements added in 3.2
 
@@ -213,17 +275,18 @@ hypothesis `declared_lambda_min_B`.
 
 ## What no certificate states
 
-Every certificate lists, under `not_verified`, what it does not claim (`what_certified_means.md`): that the declared
-model is the Hamiltonian the authors intend; that the producer's code is correct in general (only this result is
-checked); an interval-arithmetic proof, unless S6 ran (the other bounds rely on the standard model of floating-point
-arithmetic, [arithmetic_model.md](arithmetic_model.md)); anything outside the certified window, and completeness at all
-for a `subset` claim; eigenvector subspaces of isolated pairs beyond their residuals unless `eigenspaces="all"` was
-requested. Dynamical response, time evolution, level statistics, finite-size extrapolation and phase boundaries are
-listed in `scope.out_of_scope` with the reason codes `OUT_OF_SCOPE_DYNAMICS`, `OUT_OF_SCOPE_EXTRAPOLATION` or
-`NOT_IMPLEMENTED`; the three tools of 3.2 that read saved certificates (`certify-ed levelstats`, `certify-ed crossing`,
-`certify-ed extrapolate`) add no statement, and an extrapolated value is never certified. `SCOPE_MATRIX.md` names, for
-every quantity that ED papers report, what a certificate states about it today and what mathematics would be needed for
-the rest.
+Every certificate lists, under `not_verified`, what it does not claim (`what_certified_means.md`; the list is built in
+`certify.certify`). The first two entries below are always present, the third is present unless S6 is CERTIFIED, and the
+others depend on the claim and the options: that the declared model is the Hamiltonian the authors intend; that the
+producer's code is correct in general (only this result is checked); an interval-arithmetic proof, unless S6 ran (the
+other bounds rely on the standard model of floating-point arithmetic, [arithmetic_model.md](arithmetic_model.md));
+anything outside the certified window, and completeness at all for a `subset` claim; eigenvector subspaces of isolated
+pairs beyond their residuals unless `eigenspaces="all"` was requested. Dynamical response, time evolution, level
+statistics, finite-size extrapolation and phase boundaries are listed in `scope.out_of_scope` with the reason codes
+`OUT_OF_SCOPE_DYNAMICS`, `OUT_OF_SCOPE_EXTRAPOLATION` or `NOT_IMPLEMENTED`; the three tools of 3.2 that read saved
+certificates (`certify-ed levelstats`, `certify-ed crossing`, `certify-ed extrapolate`) add no statement, and an
+extrapolated value is never certified. `SCOPE_MATRIX.md` names, for every quantity that ED papers report, what a
+certificate states about it today and what mathematics would be needed for the rest.
 
 A radius is a bound, not an error estimate: the true eigenvalue lies within it, and the radius is typically some orders
 of magnitude larger than the solver's actual error.

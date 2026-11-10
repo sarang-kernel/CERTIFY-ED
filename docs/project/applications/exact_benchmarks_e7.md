@@ -71,6 +71,29 @@ implementation, subject to them" (finding RA-20). In the 3.2.1 run the floating-
 benchmarks were certified under the 5 GiB cap of experiment E4 (`code/certify-ed/RESULT_evidence_run_3.2.1.md`), so the
 specific gap of the 3.1.0 run is now also closed in floating point.
 
+## Earlier runs
+
+The archive holds nine E7 records in `code/certify-ed/results/`. The exact radius depends on the claimed floating-point
+vector and therefore on the machine stack, while the status and the integer evidence do not. The table gives the exact
+radius and the time of each certification as printed in `E7.log` of the runs on the two platforms recorded in
+`manifest.json`:
+
+| system | `run_full_20261018` and `run_full_20261021` (linux) | `run_candidate_20261021` (win32, started 22 October 2026) | `run_full_20261022` and `run_full_20261105` (win32) |
+|---|---|---|---|
+| Heisenberg chain, N = 20 | 3.6345230555176985e-14 (198 s, 214 s) | 3.8493462260434025e-14 (787 s) | 3.719300427741141e-14 (598 s, 584 s) |
+| J1-J2 chain, N = 20, $J_2 = 0.5$ | 4.2052889238651513e-14 (245 s, 264 s) | 3.961693965992654e-14 (938 s) | 3.392663354321801e-14 (615 s, 684 s) |
+| Heisenberg square 4 x 4 | 1.203101297864281e-14 (77 s, 92 s) | 1.8719702767382392e-14 (329 s) | 1.768521922198284e-14 (201 s, 238 s) |
+| J1-J2 square 4 x 4, $J_2 = 0.5$ | 4.346872439596962e-14 (94 s, 116 s) | 3.273146905871673e-14 (414 s) | 1.099862660492978e-14 (236 s, 289 s) |
+
+Every certification in the nine records is CERTIFIED. The two linux runs give identical radii, and so do the two win32
+evidence runs; the largest difference between the linux run of 21 October and the candidate run, for the Heisenberg
+square, matches the figure of up to 56 % quoted by finding SS-19. The note `project_docs/notes/exact_checker.md` reports
+an earlier run, 20261017_105514, with radii 1.2e-14, 4.3e-14, 3.6e-14 and 3.4e-14 and times of 103 s, 127 s, 212 s and
+271 s for the square, the J1-J2 square, the chain and the J1-J2 chain; its record is not in the archive. The claims map
+gives the values of the 21 October run rounded up, 3.7e-14, 4.3e-14, 1.3e-14 and 4.4e-14 with 92 s to 264 s each (row C3
+of `project_docs/notes/claims_evidence_map.md`). What each step of the exact path computes is described in
+[exact_layer.md](../math/exact_layer.md).
+
 ## Reproducing
 
 From the root of the code clone: `python run.py --only E7` runs the experiment; the exact sector path is

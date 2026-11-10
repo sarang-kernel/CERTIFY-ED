@@ -161,8 +161,8 @@ decorated square, on the kernel lemma without a computational confirmation. Olde
 in `legacy/applications_2026-10-17` also contain runs at $t = 1/\tilde z^2$; their $t'$ exceeds $1/\tilde z^2$ by a few
 times $10^{-8}$, so those runs alone do not prove the strict inequality, and their "certified" flag records only the
 eigenvalue count. The bounds of that day (for example 0.1110450359 for the star and 0.2203633381 for the decorated
-square, after 46 minutes) were valid but looser; the unified pipeline of 18 October 2026 and the threshold ladder of 21
-October 2026 gave the values above (`report/07_applications.md`).
+square, after 46 minutes) were valid but looser; the unified pipeline of 18 October 2026 reproduced them, and the
+threshold ladder of 21 October 2026 gave the values above (`report/07_applications.md`; next section).
 
 ![Certified upper bounds on eta against the published values, and the certified criterion
 values](figures/fig_aklt_eta.png)
@@ -172,6 +172,38 @@ the certified upper bound on $\eta$ of each lattice as a bar and the published v
 $1/\tilde z$ in orange; the bounds are printed to ten decimals, rounded to nearest. Panel (b) shows the certified
 criterion values, which are below 1 for every lattice; they are printed rounded to nearest, while the table above rounds
 them up, which is why the star appears as 0.44417 in the figure and 0.44418 in the table.
+
+## The first certification scripts (17 October 2026)
+
+The first AKLT certificates of the project were made with standalone scripts, kept in
+`code/certify-ed/legacy/applications_2026-10-17/aklt_gap/` with their logs and certificate files and summarized in
+`project_docs/notes/aklt_results.md` (version 0.2 of 21 October 2026). They used two formulations of the pencil count.
+For the star, the square-octagon and the cross lattice the count is made on an integer matrix scaled with adjugates
+(`pw_general.py`): the inverse of $G_B = G_L \otimes G_j$ is the Kronecker product of the two inverses, which are made
+integer by multiplying with $\det G_L$ and $\det G_j$, so that $\det(G_L) \det(G_j)\, C G_B^{-1} C^T$ is an integer
+matrix. For the two decorated lattices the scripts use the bordered matrix with Haynsworth inertia additivity, which
+needs no inverse (`pw_reduced.py`, `pw_symm.py`, the latter with the lattice mirror and the spin flip as signed
+permutations); this is the formulation that `apps/aklt/eta.py` now uses for every lattice. The table gives the state of
+that day (`aklt_results.md`):
+
+| lattice | certified upper bound, 17 October 2026 | kernel equality on that day | script |
+|---|---|---|---|
+| star [3.12.12] | 0.1110450359 | lemma and exact check (6 sites) | `star_certify.py`, `kernel_modp.py` |
+| square-octagon | 0.1589685504 / 0.1061461257 (sum 0.84817) | lemma and exact check (8 sites) | `so_certify.py` |
+| cross [4.6.12] | 0.1997398308 | lemma only (12 sites, 16.7M states) | `cross_certify.py` |
+| decorated honeycomb | 0.1530359435 | lemma and exact check (both subgraphs, 9 sites) | `ds_certify.py` with `pw_symm` |
+| decorated square | 0.2203633381 | lemma only (12 sites, 4.1M states) | `ds_certify.py` with `pw_symm` (mirror and spin flip; largest exact block 4034) |
+
+The logs show the thresholds of these runs: the star was counted at $t$ = 12331/1000000 and at $t$ = 1/16, the latter
+being $1/\tilde z^2$ (`star_certify.log`), and the decorated square took 2757 s in blocks of up to 4034 rows
+(`ds_certify_square.log`). Every criterion held on that day. The unified code of 18 October 2026 reproduced these bounds
+to 9 or 10 digits: 0.1110450359, 0.1589685504, 0.1061461257 and 0.1530359435 again, 0.1997398311 for the cross and
+0.2203633377 for the decorated square (`code/certify-ed/results/run_full_final/E10.log`). The threshold
+$t = \eta_{\rm float}^2 (1 + 10^{-9})$ of 21 October 2026 gave the sharper bounds of the table above; the `E10.log`
+files of the run of that day (`code/certify-ed/results/run_full_20261021`), of the 3.1.0 run and of the 3.2.1 run print
+the same six bounds. The kernel lemma is written out in `project_docs/notes/aklt_kernel_lemma.md`; the note of 21
+October 2026 still lists it for Sarang Vehale's check under D-12, while the later review finding M-11 classifies it as
+classical and takes it off that list (section "The kernel lemma" above).
 
 ## The honeycomb lattice and a note on the paper
 
