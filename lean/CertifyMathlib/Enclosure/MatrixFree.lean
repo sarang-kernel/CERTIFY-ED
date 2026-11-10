@@ -21,9 +21,14 @@ source entry `x_j`, and adds the contributions to `y_i` in some order.
   (`norm_diagonal_unit`), and the term-wise triangle bound `‖Σ_t c_t O_t‖ ≤ Σ_t |c_t| ‖O_t‖`
   (`norm_sum_terms_le`, `norm_list_prod_le`).
 
+* **Theorem D-02 (b)** (`d02b_radius`, real data): the radius of `residuals` evaluated with
+  `adapter.width = W - 2` bounds `‖H_spec x - μ x‖ / ‖x‖`, given (a) and the second pass of
+  Lemma M3 as a hypothesis. The accounting has no spare `γ` index: the residual error index
+  `γ_{W-1} + u (1 + γ_{W-1})` is covered by `γ_W` and the code's rounding factors only with a
+  margin of second order in `u` (`d02b_key`, reduced to the polynomial inequality `d02b_poly`).
+
 The count of contributions per output entry (Lemma M1) is a hypothesis (the size of the summation
-tree), and part (b), the Theorem 1 radius with `adapter.width = W - 2`, is not formalized: its
-margin is of second order (see `ENCLOSURE.md`).
+tree).
 -/
 
 open Finset Matrix
@@ -410,5 +415,235 @@ theorem norm_sum_terms_le {τ : Type*} [Fintype τ] (O : τ → E →ₗ[𝕂] E
   exact mul_le_mul_of_nonneg_left (hO t z) (norm_nonneg _)
 
 end Terms
+
+/-! ### Part (b): the Theorem 1 radius with `adapter.width = W - 2` -/
+
+section PartB
+
+theorem d02b_poly {x u : ℝ} (hx0 : 0 ≤ x) (hx : x ≤ 1 / 10 ^ 7) (hu : 0 ≤ u)
+    (hu1 : u ≤ 1 / 10 ^ 15) :
+    (1 - x - x * (1 - u) ^ 2) * (1 + u) * (1 - x - u) ≤
+      (1 - x) * (1 - 2 * x) * ((1 - u) ^ 7 * (1 + 4 * u) ^ 2) := by
+  have h7 := one_sub_mul_le_pow hu (by linarith) 7
+  push_cast at h7
+  have h16 : 1 + 8 * u ≤ (1 + 4 * u) ^ 2 := by nlinarith only [hu]
+  have hP : 1 + u - 56 * u ^ 2 ≤ (1 - u) ^ 7 * (1 + 4 * u) ^ 2 := by
+    have := mul_le_mul h7 h16 (by linarith) (pow_nonneg (by linarith) 7)
+    nlinarith only [this]
+  have hA : 0 ≤ (1 - x) * (1 - 2 * x) := mul_nonneg (by linarith) (by linarith)
+  have hR := mul_le_mul_of_nonneg_left hP hA
+  have hsq : 1 - 2 * u ≤ (1 - u) ^ 2 := by nlinarith only [hu]
+  have hL1 : 1 - x - x * (1 - u) ^ 2 ≤ 1 - 2 * x + 2 * x * u := by
+    nlinarith only [mul_le_mul_of_nonneg_left hsq hx0]
+  have hB : 0 ≤ (1 + u) * (1 - x - u) := mul_nonneg (by linarith) (by linarith)
+  have hL : (1 - x - x * (1 - u) ^ 2) * (1 + u) * (1 - x - u) ≤
+      (1 - 2 * x + 2 * x * u) * (1 + u) * (1 - x - u) := by
+    have := mul_le_mul_of_nonneg_right hL1 hB
+    linarith only [this]
+  have hk : 0 ≤ 1 - 4 * x + 2 * x ^ 2 - 55 * u + 166 * x * u - 110 * x ^ 2 * u + 2 * x * u ^ 2 := by
+    have hx2 : x ^ 2 ≤ 1 := by nlinarith only [hx0, hx]
+    have a1 : x ^ 2 * u ≤ u := by
+      have := mul_le_mul_of_nonneg_right hx2 hu
+      linarith only [this]
+    nlinarith only [hx0, hx, hu, hu1, mul_nonneg hx0 hu, mul_nonneg (mul_nonneg hx0 hu) hu,
+      sq_nonneg x, a1]
+  have hd : (1 - 2 * x + 2 * x * u) * (1 + u) * (1 - x - u) ≤
+      (1 - x) * (1 - 2 * x) * (1 + u - 56 * u ^ 2) := by
+    have e : (1 - x) * (1 - 2 * x) * (1 + u - 56 * u ^ 2) -
+        (1 - 2 * x + 2 * x * u) * (1 + u) * (1 - x - u) =
+        u * (1 - 4 * x + 2 * x ^ 2 - 55 * u + 166 * x * u - 110 * x ^ 2 * u + 2 * x * u ^ 2) := by
+      ring
+    nlinarith only [e, mul_nonneg hu hk]
+  linarith only [hL, hd, hR]
+
+/-- **The second-order inequality of D-02 (b).** With `k = W - 1`, `2 ≤ k ≤ 2²⁶ + 1` and
+`u ≤ 2⁻⁵³`, the residual error index `γ_k + u (1 + γ_k)` is covered by the code's factor:
+`(γ_k + u (1 + γ_k)) (1 - γ_k (1 - u)²)(1 + u) ≤ γ_{k+1} (1 - u)⁷ (1 + 4u)² (1 - γ_k)`.
+The margin is of second order in `u`: `γ_k + u (1 + γ_k)` and `γ_{k+1}` differ by about
+`k u²`, and the code's factors give `1 + O(u²)`. -/
+theorem d02b_key {u : ℝ} (hu : 0 ≤ u) (hu53 : u ≤ (2 : ℝ)⁻¹ ^ 53) {k : ℕ} (hk : k ≤ 2 ^ 26 + 1) :
+    (gam u k + u * (1 + gam u k)) * ((1 - gam u k * (1 - u) ^ 2) * (1 + u)) ≤
+      gam u (k + 1) * ((1 - u) ^ 7 * (1 + 4 * u) ^ 2) * (1 - gam u k) := by
+  obtain ⟨hk1, -, -⟩ := gam_regime hu hu53 (k := k + 1) (by omega)
+  have hu1 : u ≤ 1 / 10 ^ 15 := hu53.trans (by norm_num)
+  push_cast at hk1
+  set x := (k : ℝ) * u with hx
+  have hx0 : 0 ≤ x := mul_nonneg (Nat.cast_nonneg k) hu
+  have hxs : x ≤ 1 / 10 ^ 7 := by rw [hx]; nlinarith only [hk1, hu]
+  have hA : 0 < 1 - x := by linarith
+  have hB : 0 < 1 - x - u := by rw [hx]; nlinarith only [hk1, hu]
+  have hg : gam u k = x / (1 - x) := by unfold gam; rw [hx]
+  have hG : gam u (k + 1) = (x + u) / (1 - x - u) := by
+    unfold gam; rw [hx]; push_cast; ring
+  rw [hg, hG]
+  have e1 : x / (1 - x) + u * (1 + x / (1 - x)) = (x + u) / (1 - x) := by
+    field_simp; ring
+  have e2 : 1 - x / (1 - x) * (1 - u) ^ 2 = (1 - x - x * (1 - u) ^ 2) / (1 - x) := by
+    field_simp
+  have e3 : 1 - x / (1 - x) = (1 - 2 * x) / (1 - x) := by
+    field_simp; ring
+  rw [e1, e2, e3]
+  set P := (1 - u) ^ 7 * (1 + 4 * u) ^ 2 with hP
+  have eL : (x + u) / (1 - x) * ((1 - x - x * (1 - u) ^ 2) / (1 - x) * (1 + u)) =
+      (x + u) * (1 - x - x * (1 - u) ^ 2) * (1 + u) / ((1 - x) * (1 - x)) := by
+    field_simp
+  have eR : (x + u) / (1 - x - u) * P * ((1 - 2 * x) / (1 - x)) =
+      (x + u) * P * (1 - 2 * x) / ((1 - x - u) * (1 - x)) := by
+    field_simp
+  rw [eL, eR, div_le_div_iff₀ (by positivity) (by positivity)]
+  have hpoly := d02b_poly hx0 hxs hu hu1
+  have hc : 0 ≤ (x + u) * (1 - x) := mul_nonneg (by linarith) hA.le
+  have := mul_le_mul_of_nonneg_left hpoly hc
+  calc (x + u) * (1 - x - x * (1 - u) ^ 2) * (1 + u) * ((1 - x - u) * (1 - x))
+      = (x + u) * (1 - x) * ((1 - x - x * (1 - u) ^ 2) * (1 + u) * (1 - x - u)) := by ring
+    _ ≤ (x + u) * (1 - x) * ((1 - x) * (1 - 2 * x) * P) := this
+    _ = (x + u) * P * (1 - 2 * x) * ((1 - x) * (1 - x)) := by ring
+
+/-- `_rounding_bound` from a given computed `(|H| |x|)_i` entry `ah`. -/
+noncomputable def roundBoundOf (R : Rounding ℝ) (w : ℕ) (ah x μ : ℝ) : ℝ :=
+  R.rnd (R.rnd (R.rnd (R.rnd (R.rnd (ah / R.rnd (1 - gamHat R (w + 1))) * (1 + 4 * R.u)) +
+    R.rnd (|x| * |μ|)) * gamHat R (w + 2)) * (1 + 4 * R.u))
+
+/-- **D-02 (b), one entry.** If the computed product entry has error `γ_{w+1} a` (Theorem D-02
+(a) with `w = W - 2`) and the computed `(|H| |x|)_i` is at least `a (1 - γ_{w+1})` (Lemma M3),
+the rounding bound evaluated with width `w` covers the residual entry. -/
+theorem d02b_entry (R : Rounding ℝ) (h0 : R.eta = 0) (hu53 : R.u ≤ (2 : ℝ)⁻¹ ^ 53) {w : ℕ}
+    (hw1 : 1 ≤ w) (hw : w ≤ 2 ^ 26) {y yh a ah x μ : ℝ} (ha0 : 0 ≤ a)
+    (hy : |yh - y| ≤ gam R.u (w + 1) * a) (hya : |y| ≤ a)
+    (hah : a * (1 - gam R.u (w + 1)) ≤ ah) :
+    |R.rnd (yh - R.rnd (x * μ)) - (y - μ * x)| ≤ roundBoundOf R w ah x μ := by
+  have hu := R.u_nonneg
+  obtain ⟨hu1, hkw, hgw0, hgw1, hgw2, hGw, hGw2⟩ := small_consts hu hu53 hw
+  have hu1' : R.u ≤ 1 := by linarith
+  set g := gam R.u (w + 1) with hg
+  set G := gam R.u (w + 2) with hG
+  have hg0 : 0 ≤ g := by linarith
+  have hG0 : 0 ≤ G := by linarith
+  set q := |x| * |μ| with hq
+  have hq0 : 0 ≤ q := by positivity
+  have h1 := R.resid_entry h0 (x := x) (μ := μ) g hy hya
+  -- the computed bound from below
+  have hw1u : ((w + 1 : ℕ) : ℝ) * R.u ≤ 1 / 2 := by
+    have : ((w + 1 : ℕ) : ℝ) * R.u ≤ ((w + 2 : ℕ) : ℝ) * R.u :=
+      mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : w + 1 ≤ w + 2)) hu
+    linarith
+  have hw2u : ((w + 2 : ℕ) : ℝ) * R.u ≤ 1 / 2 := by linarith
+  obtain ⟨hgh1, hgh1'⟩ := gamHat_bounds R h0 (by linarith) (k := w + 1) hw1u
+  obtain ⟨hgh2, -⟩ := gamHat_bounds R h0 (by linarith) (k := w + 2) hw2u
+  have hsq1 : (1 - R.u) ^ 2 ≤ 1 := by nlinarith
+  have hC0 : 0 ≤ 1 - g * (1 - R.u) ^ 2 := by nlinarith [mul_le_mul_of_nonneg_left hsq1 hg0]
+  set dh := (1 - g * (1 - R.u) ^ 2) * (1 + R.u) with hdh
+  have hd : R.rnd (1 - gamHat R (w + 1)) ≤ dh := R.rnd_le_of_le h0 hu1' (by linarith) hC0
+  have hd0 : 0 < R.rnd (1 - gamHat R (w + 1)) := by
+    have := R.le_rnd_of_le h0 hu1' (w := 1 - gamHat R (w + 1)) (z := 1 - 3 * g)
+      (by linarith) (by linarith)
+    nlinarith
+  have hdh0 : 0 < dh := lt_of_lt_of_le hd0 hd
+  have hag : 0 ≤ a * (1 - g) := mul_nonneg ha0 (by linarith)
+  have hz1 : a * (1 - g) / dh ≤ ah / R.rnd (1 - gamHat R (w + 1)) :=
+    (div_le_div_of_nonneg_left hag hd0 hd).trans (div_le_div_of_nonneg_right hah hd0.le)
+  have hX0 : 0 ≤ a * (1 - g) / dh := div_nonneg hag hdh0.le
+  have hb1 := R.le_rnd_of_le h0 hu1' hz1 hX0
+  have h1u : 0 ≤ 1 - R.u := by linarith
+  have h4 : 0 ≤ 1 + 4 * R.u := by linarith
+  have hb2 := R.le_rnd_mul h0 hu1' (mul_nonneg hX0 h1u) h4 hb1 le_rfl
+  set B2 := a * (1 - g) / dh * (1 - R.u) * (1 + 4 * R.u) * (1 - R.u) with hB2
+  have hB20 : 0 ≤ B2 := by rw [hB2]; positivity
+  have hqh := R.le_rnd_of_le h0 hu1' (w := |x| * |μ|) (z := q) le_rfl hq0
+  have hz3 : B2 + q * (1 - R.u) ≤ R.rnd (R.rnd (ah / R.rnd (1 - gamHat R (w + 1))) *
+      (1 + 4 * R.u)) + R.rnd (|x| * |μ|) := add_le_add hb2 hqh
+  have hz30 : 0 ≤ B2 + q * (1 - R.u) := add_nonneg hB20 (mul_nonneg hq0 h1u)
+  have hb3 := R.le_rnd_of_le h0 hu1' hz3 hz30
+  have hG2 : 0 ≤ G * (1 - R.u) ^ 2 := by positivity
+  have hb4 := R.le_rnd_mul h0 hu1' (mul_nonneg hz30 h1u) hG2 hb3 hgh2
+  have hb5 := R.le_rnd_mul h0 hu1' (mul_nonneg (mul_nonneg (mul_nonneg hz30 h1u) hG2) h1u) h4
+    hb4 le_rfl
+  -- the two coefficients
+  have hkey := d02b_key hu hu53 (k := w + 1) (by omega)
+  have hka : (g + R.u * (1 + g)) * a ≤ G * (1 - R.u) ^ 5 * (1 + 4 * R.u) * B2 := by
+    have e : G * (1 - R.u) ^ 5 * (1 + 4 * R.u) * B2 =
+        (G * ((1 - R.u) ^ 7 * (1 + 4 * R.u) ^ 2) * (1 - g)) * a / dh := by
+      rw [hB2]; field_simp
+    rw [e, le_div_iff₀ hdh0]
+    have := mul_le_mul_of_nonneg_left hkey ha0
+    calc (g + R.u * (1 + g)) * a * dh = a * ((g + R.u * (1 + g)) * dh) := by ring
+      _ ≤ a * (G * ((1 - R.u) ^ 7 * (1 + 4 * R.u) ^ 2) * (1 - g)) := this
+      _ = _ := by ring
+  have hkq : (2 * R.u + R.u ^ 2) * q ≤ G * (1 - R.u) ^ 6 * (1 + 4 * R.u) * q := by
+    apply mul_le_mul_of_nonneg_right _ hq0
+    have h3u : 3 * R.u ≤ G := by
+      have hku : ((w + 2 : ℕ) : ℝ) * R.u ≤ G := by
+        rw [hG]; unfold gam
+        rw [le_div_iff₀ (by linarith)]
+        have : 0 ≤ ((w + 2 : ℕ) : ℝ) * R.u := by positivity
+        nlinarith only [this]
+      have : 3 * R.u ≤ ((w + 2 : ℕ) : ℝ) * R.u :=
+        mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : 3 ≤ w + 2)) hu
+      linarith
+    have h6 := one_sub_mul_le_pow hu hu1' 6
+    push_cast at h6
+    have hX : 1 - 3 * R.u ≤ (1 - R.u) ^ 6 * (1 + 4 * R.u) := by
+      have := mul_le_mul_of_nonneg_right h6 h4
+      nlinarith only [this, hu, hu1]
+    have h3 : 0 ≤ 1 - 3 * R.u := by linarith
+    nlinarith only [mul_le_mul_of_nonneg_left hX hG0, mul_le_mul_of_nonneg_right h3u h3, hu,
+      mul_le_mul_of_nonneg_left hu1 hu]
+  unfold roundBoundOf
+  refine h1.trans (le_trans ?_ hb5)
+  calc (g + R.u * (1 + g)) * a + (2 * R.u + R.u ^ 2) * (|x| * |μ|)
+      ≤ G * (1 - R.u) ^ 5 * (1 + 4 * R.u) * B2 + G * (1 - R.u) ^ 6 * (1 + 4 * R.u) * q := by
+        rw [← hq]; linarith only [hka, hkq]
+    _ = (B2 + q * (1 - R.u)) * (1 - R.u) * (G * (1 - R.u) ^ 2) * (1 - R.u) * (1 + 4 * R.u) *
+        (1 - R.u) := by ring
+
+end PartB
+
+section PartBRadius
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- The radius `rel` of `residuals` from a computed product `yh` and a computed `|H| |x|`
+vector `ah` (any operator adapter). -/
+noncomputable def residualRadiusOf (R : Rounding ℝ) (yh ah : ι → ℝ) (TR TE TX : STree ι)
+    (w : ℕ) (x : ι → ℝ) (μ tR tE tX c1 c0 : ℝ) : ℝ :=
+  R.rnd (R.rnd (R.rnd (R.rnd (R.rnd (norm2Up R TR tR (fun i => R.rnd (yh i - R.rnd (x i * μ))) +
+    norm2Up R TE tE (fun i => roundBoundOf R w (ah i) (x i) μ)) + c1) / norm2Low R TX tX x) *
+      (1 + 4 * R.u)) + c0)
+
+/-- **Theorem D-02 (b)** (real data, standard model). If the computed product has entrywise error
+`γ_{W-1} a_i` (Theorem D-02 (a), `matrixfree_entry_error`, with `a_i = (|H_spec|_abs |x|)_i`) and
+the computed `|H| |x|` is at least `a_i (1 - γ_{W-1})` (Lemma M3), the radius of `residuals`
+evaluated with `adapter.width = W - 2` bounds `‖H_spec x - μ x‖ / ‖x‖`. -/
+theorem d02b_radius (R : Rounding ℝ) (h0 : R.eta = 0) (hu53 : R.u ≤ (2 : ℝ)⁻¹ ^ 53) {W : ℕ}
+    (hW3 : 3 ≤ W) (hW : W ≤ 2 ^ 26 + 2) (hn : Fintype.card ι ≤ 2 ^ 26) (H : ι → ι → ℝ)
+    (x : ι → ℝ) (μ : ℝ) {a yh ah : ι → ℝ} (hya : ∀ i, |∑ j, H i j * x j| ≤ a i)
+    (hy : ∀ i, |yh i - ∑ j, H i j * x j| ≤ gam R.u (W - 1) * a i)
+    (hah : ∀ i, a i * (1 - gam R.u (W - 1)) ≤ ah i) {TR TE TX : STree ι} (hTR : FullTree TR)
+    (hTE : FullTree TE) (hTX : FullTree TX) {tR tE tX c1 c0 : ℝ} (htR : 0 ≤ tR) (htE : 0 ≤ tE)
+    (htX : 0 ≤ tX) (hc1 : 0 ≤ c1) (hc0 : 0 ≤ c0) (hxl : 0 < norm2Low R TX tX x) :
+    l2 (fun i => ∑ j, H i j * x j - μ * x i) / l2 x ≤
+      residualRadiusOf R yh ah TR TE TX (W - 2) x μ tR tE tX c1 c0 := by
+  have hu := R.u_nonneg
+  have hu1 : R.u ≤ 1 / 1000 := hu53.trans (by norm_num)
+  have hWe : W - 1 = W - 2 + 1 := by omega
+  rw [hWe] at hy hah
+  have hentry : ∀ i, |R.rnd (yh i - R.rnd (x i * μ)) - (∑ j, H i j * x j - μ * x i)| ≤
+      roundBoundOf R (W - 2) (ah i) (x i) μ := fun i =>
+    d02b_entry R h0 hu53 (by omega) (by omega) (le_trans (abs_nonneg _) (hya i)) (hy i) (hya i)
+      (hah i)
+  have hr : l2 (fun i => ∑ j, H i j * x j - μ * x i) ≤
+      l2 (fun i => R.rnd (yh i - R.rnd (x i * μ))) +
+        l2 (fun i => roundBoundOf R (W - 2) (ah i) (x i) μ) := by
+    refine (l2_le_add _ (fun i => R.rnd (yh i - R.rnd (x i * μ)))).trans
+      (add_le_add le_rfl (l2_le_of_abs_le ?_))
+    intro i
+    rw [abs_sub_comm]
+    exact hentry i
+  exact R.chain_final h0 (by linarith) hr (l2_nonneg _) (l2_nonneg _)
+    (norm2Up_ge R h0 hu53 hn hTR htR _) (norm2Up_ge R h0 hu53 hn hTE htE _) hc1 hc0 hxl
+    (norm2Low_le R h0 hu53 hn hTX htX x) (by linarith) (num_final hu hu1)
+
+end PartBRadius
+
 
 end CertifyMathlib.Enclosure.FP

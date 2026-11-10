@@ -1,4 +1,5 @@
 import CertifyMathlib.Enclosure.Residual
+import CertifyMathlib.Counting.Inertia
 
 /-!
 # E-03: generalized eigenproblems through the Cholesky reduction (exact part)
@@ -20,7 +21,14 @@ polynomials (`pencil_det_eq_charpoly`), so the roots of `det(A - X B)` counted w
 are the eigenvalues of the Hermitian `C` (`pencil_roots_eq_eigenvalues`), and a pencil eigenpair
 `(x, λ)` gives the eigenpair `(Lᴴ x, λ)` of `C` (`reduced_eigenpair_of_pencil`).
 
-Not formalized: Lemma 3 and Propositions 1 to 3 (inertia and floating point).
+**Lemma 3** (counting by inertia), with Sylvester's law of inertia and the counts `cntLt`, `cntLe`
+of `CertifyMathlib.Counting.Inertia`: `A - σB = L (C - σI) Lᴴ` (`pencil_sub_eq`), so the numbers of
+negative and non-positive eigenvalues of `A - σB` are the numbers of eigenvalues of `C` below and at
+or below `σ` (`pencil_inertia`); for a Hermitian `M'` with `|xᴴ(M' - (A - σB))x| ≤ b ‖x‖²` and
+`B ⪰ β_c I`, `N(σ - b/β_c) ≤ ν(M') ≤ N(σ + b/β_c) ≤ #{λ_j ≤ σ + b/β_c}` (`pencil_count_perturbed`,
+through the Loewner monotonicity `cntLt_anti`).
+
+Not formalized: Propositions 1 to 3 (floating point).
 -/
 
 open scoped InnerProductSpace ComplexConjugate
@@ -235,5 +243,104 @@ theorem reduced_eigenpair_of_pencil {L : Matrix n n 𝕜} (hL : IsUnit L.det) {A
     ← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hL, Matrix.one_mul]
 
 end MatrixPencil
+
+section PencilInertia
+
+open Matrix CertifyMathlib.Counting
+
+variable {𝕜 : Type*} [RCLike 𝕜] {n : Type*} [Fintype n] [DecidableEq n]
+
+/-- Loewner monotonicity of the counts: `X ⪯ Y` gives `#{λ(Y) < t} ≤ #{λ(X) < t}`. -/
+theorem cntLt_anti {X Y : Matrix n n 𝕜} (hX : X.IsHermitian) (hY : Y.IsHermitian)
+    (h : ∀ x, qf X x ≤ qf Y x) (t : ℝ) : cntLt hY t ≤ cntLt hX t := by
+  obtain ⟨V, h1, h2⟩ := exists_negOn_cntLt hY t
+  refine h1.trans (finrank_le_cntLt hX t V ?_)
+  intro x hx hx0
+  have h3 := h2 x hx hx0
+  rw [qf_sub_smul_one] at h3 ⊢
+  linarith [h x]
+
+/-- The congruence `A - σB = L (C - σI) Lᴴ` for `B = L Lᴴ` and `C = L⁻¹ A L⁻ᴴ`. -/
+theorem pencil_sub_eq {L : Matrix n n 𝕜} (hL : IsUnit L.det) (A : Matrix n n 𝕜) (σ : ℝ) :
+    A - (σ : 𝕜) • (L * Lᴴ) =
+      L * (reducedMat L A - (σ : 𝕜) • (1 : Matrix n n 𝕜)) * Lᴴ := by
+  rw [Matrix.mul_sub, Matrix.sub_mul, reducedMat_conj hL, Matrix.mul_smul, Matrix.mul_one,
+    Matrix.smul_mul]
+
+omit [DecidableEq n] in
+/-- `A - σ B` is Hermitian for real `σ`. -/
+theorem pencil_shift_isHermitian (L : Matrix n n 𝕜) {A : Matrix n n 𝕜} (hA : A.IsHermitian)
+    (σ : ℝ) : (A - (σ : 𝕜) • (L * Lᴴ)).IsHermitian := by
+  unfold Matrix.IsHermitian
+  rw [conjTranspose_sub, conjTranspose_smul, conjTranspose_mul, conjTranspose_conjTranspose,
+    hA.eq, RCLike.star_def, RCLike.conj_ofReal]
+
+/-- **E-03, Lemma 3 (first part).** For real `σ` and `B = L Lᴴ` with `L` invertible, the number
+of negative (non-positive) eigenvalues of `A - σB` is the number of eigenvalues of
+`C = L⁻¹ A L⁻ᴴ` (the pencil eigenvalues, `pencil_roots_eq_eigenvalues`) below (at or below) `σ`:
+`ν(A - σB) = N(σ)`. Sylvester's law of inertia from the counting track. -/
+theorem pencil_inertia {L : Matrix n n 𝕜} (hL : IsUnit L.det) {A : Matrix n n 𝕜}
+    (hA : A.IsHermitian) (σ : ℝ) :
+    cntLt (pencil_shift_isHermitian L hA σ) 0 = cntLt (reducedMat_isHermitian L hA) σ ∧
+      cntLe (pencil_shift_isHermitian L hA σ) 0 = cntLe (reducedMat_isHermitian L hA) σ := by
+  have hC := reducedMat_isHermitian L hA
+  have hfac : A - (σ : 𝕜) • (L * Lᴴ) =
+      (L * (hC.eigenvectorUnitary : Matrix n n 𝕜)) * dg (fun i => hC.eigenvalues i - σ) *
+        (L * (hC.eigenvectorUnitary : Matrix n n 𝕜))ᴴ := by
+    rw [pencil_sub_eq hL A σ, sub_smul_one_eq hC σ, conjTranspose_mul]
+    simp only [Matrix.mul_assoc]
+  have hunit : IsUnit (L * (hC.eigenvectorUnitary : Matrix n n 𝕜)) := by
+    have hLu : IsUnit L := (Matrix.isUnit_iff_isUnit_det L).mpr hL
+    have hUu : IsUnit (hC.eigenvectorUnitary : Matrix n n 𝕜) :=
+      ⟨⟨_, _, unitary_mul_conjTranspose hC.eigenvectorUnitary,
+        conjTranspose_mul_unitary hC.eigenvectorUnitary⟩, rfl⟩
+    exact hLu.mul hUu
+  obtain ⟨h1, h2⟩ := sylvester_inertia (pencil_shift_isHermitian L hA σ) _ hunit _ hfac
+  refine ⟨h1.trans ?_, h2.trans ?_⟩
+  · simp only [cntLt, sub_neg]
+  · simp only [cntLe, sub_nonpos]
+
+omit [DecidableEq n] in
+/-- The quadratic form of `A - c B`. -/
+theorem qf_pencil (L A : Matrix n n 𝕜) (c : ℝ) (x : n → 𝕜) :
+    qf (A - (c : 𝕜) • (L * Lᴴ)) x = qf A x - c * qf (L * Lᴴ) x := by
+  rw [qf_sub, qf_smul]
+
+/-- **E-03, Lemma 3 (second part).** Let `B = L Lᴴ ⪰ β_c I` with `β_c > 0`, and let a Hermitian
+`M'` satisfy `|xᴴ (M' - (A - σB)) x| ≤ b ‖x‖²` for all `x` (which `‖M' - (A - σB)‖₂ ≤ b` gives).
+Then the number `ν` of negative eigenvalues of `M'` satisfies
+`N(σ - b/β_c) ≤ ν ≤ N(σ + b/β_c) ≤ #{j : λ_j ≤ σ + b/β_c}`. -/
+theorem pencil_count_perturbed {L : Matrix n n 𝕜} (hL : IsUnit L.det) {A M' : Matrix n n 𝕜}
+    (hA : A.IsHermitian) (hM' : M'.IsHermitian) {σ b βc : ℝ} (hb : 0 ≤ b) (hβ : 0 < βc)
+    (hB : ∀ x, βc * nsq x ≤ qf (L * Lᴴ) x)
+    (hpert : ∀ x, |qf (M' - (A - (σ : 𝕜) • (L * Lᴴ))) x| ≤ b * nsq x) :
+    cntLt (reducedMat_isHermitian L hA) (σ - b / βc) ≤ cntLt hM' 0 ∧
+      cntLt hM' 0 ≤ cntLt (reducedMat_isHermitian L hA) (σ + b / βc) ∧
+      cntLt hM' 0 ≤ cntLe (reducedMat_isHermitian L hA) (σ + b / βc) := by
+  have hc : ∀ x, b * nsq x ≤ b / βc * qf (L * Lᴴ) x := by
+    intro x
+    have h1 := mul_le_mul_of_nonneg_left (hB x) (div_nonneg hb hβ.le)
+    have e : b / βc * (βc * nsq x) = b * nsq x := by field_simp
+    linarith
+  have hq : ∀ x, |qf M' x - qf (A - (σ : 𝕜) • (L * Lᴴ)) x| ≤ b * nsq x := by
+    intro x
+    rw [← qf_sub]
+    exact hpert x
+  have hlo : cntLt (pencil_shift_isHermitian L hA (σ - b / βc)) 0 ≤ cntLt hM' 0 := by
+    refine cntLt_anti hM' (pencil_shift_isHermitian L hA (σ - b / βc)) (fun x => ?_) 0
+    have h1 := (abs_le.mp (hq x)).2
+    have h2 := hc x
+    rw [qf_pencil] at h1 ⊢
+    nlinarith
+  have hhi : cntLt hM' 0 ≤ cntLt (pencil_shift_isHermitian L hA (σ + b / βc)) 0 := by
+    refine cntLt_anti (pencil_shift_isHermitian L hA (σ + b / βc)) hM' (fun x => ?_) 0
+    have h1 := (abs_le.mp (hq x)).1
+    have h2 := hc x
+    rw [qf_pencil] at h1 ⊢
+    nlinarith
+  rw [(pencil_inertia hL hA _).1] at hlo hhi
+  exact ⟨hlo, hhi, hhi.trans (cntLt_le_cntLe _ _)⟩
+
+end PencilInertia
 
 end CertifyMathlib.Enclosure

@@ -139,8 +139,7 @@
   ],
   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
   "status": "proved",
-  "correspondence": "The computation of residuals is modelled operation by operation: y_i as the rounded products A_ij x_j summed along a tree T_i with at most w leaves covering the stored entries of row i, R_i = fl(y_i - fl(x_i mu)), the bound E_i = fl(fl(fl(fl(fl(a_i / fl(1 - gamma_hat_(w+1))) (1 + 4u)) + fl(|x_i||mu|)) gamma_hat_(w+2)) (1 + 4u)) with a_i the computed |A||x| along a second tree and gamma_hat_k = fl(ku / fl(1 - ku)) (fp.gamma, ku exact), norm2_upper and norm2_lower with fl(||v||) = fl(sqrt(sum of rounded squares along a tree over all entries)), the factors fl(1 +- gamma_hat_(n+2)), the guard 1 + 8u and arbitrary nonnegative tails, and rel = fl(fl(fl(fl(fl(R_up + E_up) + c1) / x_low)(1 + 4u)) + c0) with c0, c1 >= 0 (the INT-05 terms of the code). Hypotheses: standard model (eta = 0), u <= 2^-53, 1 <= w <= 2^26, n <= 2^26, x_low > 0. Conclusion: ||Ax - mu x|| / ||x|| <= rel (residual_radius_fl), and for a real symmetric matrix some eigenvalue lies within rel of mu (residual_enclosure_fl). The summation order is arbitrary; products are rounded separately (no fused multiply-add). The per-stage slack is as in the document: norm2_upper >= (1 + u)||v|| and norm2_lower <= (1 - u)||v||, which absorbs the fourth rounding of the final quotient.",
-  "gap": "Theorem 1 under the underflow-tolerant model (eta = 2^-1075, Lemma U5 of int05_underflow.md) is not formalized; the theorem holds in the standard model and allows the code additive terms as arbitrary nonnegative additions.",
+  "correspondence": "The computation of residuals is modelled operation by operation: y_i as the rounded products A_ij x_j summed along a tree T_i with at most w leaves covering the stored entries of row i, R_i = fl(y_i - fl(x_i mu)), the bound E_i = fl(fl(fl(fl(fl(a_i / fl(1 - gamma_hat_(w+1))) (1 + 4u)) + fl(|x_i||mu|)) gamma_hat_(w+2)) (1 + 4u)) with a_i the computed |A||x| along a second tree and gamma_hat_k = fl(ku / fl(1 - ku)) (fp.gamma, ku exact), norm2_upper and norm2_lower with fl(||v||) = fl(sqrt(sum of rounded squares along a tree over all entries)), the factors fl(1 +- gamma_hat_(n+2)), the guard 1 + 8u and arbitrary nonnegative tails, and rel = fl(fl(fl(fl(fl(R_up + E_up) + c1) / x_low)(1 + 4u)) + c0) with c0, c1 >= 0 (the INT-05 terms of the code). Hypotheses: standard model (eta = 0), u <= 2^-53, 1 <= w <= 2^26, n <= 2^26, x_low > 0. Conclusion: ||Ax - mu x|| / ||x|| <= rel (residual_radius_fl), and for a real symmetric matrix some eigenvalue lies within rel of mu (residual_enclosure_fl). The summation order is arbitrary; products are rounded separately (no fused multiply-add). The per-stage slack is as in the document: norm2_upper >= (1 + u)||v|| and norm2_lower <= (1 - u)||v||, which absorbs the fourth rounding of the final quotient. The underflow-tolerant model of INT-05, with the additive terms of the code computed as in fp.py, is the statement T1-fl-int05.",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -184,6 +183,53 @@
   "nanoda": {
    "CertifyMathlib.Enclosure.FP.residual_radius_fl_c": "accepted",
    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c": "accepted"
+  }
+ },
+ {
+  "id": "T1-fl-int05",
+  "name": "Theorem 1 floating-point accounting under the underflow-tolerant model (INT-05, Theorem U5), real data",
+  "source": "code/certify-ed/docs/proofs/int05_underflow.md (model M-U, Lemmas U3 and U4, Theorem U5); docs/proofs/thm1_fp-accounting.md; certify_ed/fp.py norm_underflow_term, residual_entry_count, residual_additive_term, ULP_MIN, norm2_upper, norm2_lower, gamma; certify_ed/enclosure.py residuals, _rounding_bound",
+  "lean": [
+   "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+   "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
+   "CertifyMathlib.Enclosure.FP.resid_le_roundBound_U",
+   "CertifyMathlib.Enclosure.FP.resid_entry_U",
+   "CertifyMathlib.Enclosure.FP.addTerm_ge",
+   "CertifyMathlib.Enclosure.FP.cwHat_ge",
+   "CertifyMathlib.Enclosure.FP.cw_bridge",
+   "CertifyMathlib.Enclosure.FP.normUnder_ge",
+   "CertifyMathlib.Enclosure.FP.norm2Up_ge_U",
+   "CertifyMathlib.Enclosure.FP.norm2Low_le_U",
+   "CertifyMathlib.Enclosure.FP.matvec_error_U",
+   "CertifyMathlib.Enclosure.FP.absMatvec_ge_U",
+   "CertifyMathlib.Enclosure.FP.roundBound_ge_U",
+   "CertifyMathlib.Enclosure.FP.chain_final_U",
+   "CertifyMathlib.Enclosure.FP.UModel.le_rnd_normal",
+   "CertifyMathlib.Enclosure.FP.UModel.gamHat_bounds",
+   "CertifyMathlib.Enclosure.FP.UModel",
+   "CertifyMathlib.Enclosure.FP.normUnder",
+   "CertifyMathlib.Enclosure.FP.addTerm",
+   "CertifyMathlib.Enclosure.FP.cwHat",
+   "CertifyMathlib.Enclosure.FP.cwExact",
+   "CertifyMathlib.Enclosure.FP.normalMin"
+  ],
+  "main": [
+   "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+   "CertifyMathlib.Enclosure.FP.residual_enclosure_int05"
+  ],
+  "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+  "status": "proved",
+  "correspondence": "Model: a Rounding on the reals with |rnd z - z| <= u|z| + eta for every exact result and no absolute term for the sum of two representable numbers (FloatModel.lean), and UModel: u = 2^-53, eta <= 2^-1075 (u_min), no absolute term for an exact result with |z| >= 2^-1022 (normalMin, the normal range), and representable numbers closed under negation. The computation is that of T1-fl (the same summation trees and the same order of operations), every rounding now with its absolute term, together with the additive terms of the code, each computed with every operation rounded: T_N = norm_underflow_term(N) = fl(sqrt(N/2) 2^-537 (1 + 2 gamma_hat_(N+2)) (1 + 8u)(1 + 8u)) (normUnder), added by norm2_upper to R_up and E_up and subtracted by norm2_lower in x_low (N = n); A_(n,w) = residual_additive_term(n, w) = fl(ldexp(fl(sqrt(n) c_w (1 + 8u)(1 + 8u)), -1075) + ULP_MIN) with c_w = residual_entry_count(w) as computed (addTerm, cwHat), added to R_up + E_up; and 2 ULP_MIN = 2^-1073, added to the quotient fl(fl(upper / x_low)(1 + 4u)). Hypotheses: 1 <= w <= 2^26, n <= 2^26, x_low > 0; no hypothesis on the magnitude of A, x or mu. Conclusion: ||Ax - mu x|| / ||x|| <= rel (residual_radius_int05), and for a real symmetric matrix some eigenvalue lies within rel of mu (residual_enclosure_int05). Why the terms suffice: Lemma U4 holds as |R_hat_i - r_i| <= E_hat_i + c_w eta with the exact c_w = (w + 1)(1 + gamma_(w+1)) + 2 gamma_(w+2) w (1 + gamma_w)(1 + 4u) + 3 gamma_(w+2)(1 + 4u)^2 + 2(1 + 4u) (resid_le_roundBound_U, cwExact), the formula of residual_entry_count; the computed A_(n,w) is at least sqrt(n) c_w (1 + u) u_min (addTerm_ge), because the computed c_w is bounded below term by term (cwHat_ge, cw_bridge) and ULP_MIN covers the rounding of ldexp to the subnormal grid; norm2_upper(v) >= (1 + u)||v|| and norm2_lower(v) <= (1 - u)||v|| for vectors of any magnitude, T_N covering the squares lost to underflow (normUnder_ge, norm2Up_ge_U, norm2Low_le_U); and 2^-1073 covers the absolute terms of the division and of the product by (1 + 4u) (chain_final_U). Document note: the proof of Theorem U5 states fl(sqrt(n) c_w (1 + 8u)^2) >= sqrt(n) c_w (1 - u)^k (1 + 8u)^2 >= sqrt(n) c_w (1 + 10u) for k <= 12 roundings, but (1 - u)^12 (1 + 8u)^2 is about 1 + 4u; the conclusion is unaffected, since the proof needs only A_(n,w) >= sqrt(n) c_w (1 + u) u_min, which addTerm_ge proves.",
+  "gap": "Complex data under the underflow-tolerant model (residual_entry_count with 4w + 2 real products, T_N with N = 2n) is not formalized; the complex accounting T1-fl-complex is proved in the standard model only. That binary64 arithmetic and NumPy satisfy UModel (in particular that the sum of two binary64 values is exact when it underflows, and that ldexp rounds to the subnormal grid with error at most u_min) is part of the correspondence and is not checked by Lean.",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "trust_level": "K+",
+  "nanoda": {
+   "CertifyMathlib.Enclosure.FP.residual_radius_int05": "accepted",
+   "CertifyMathlib.Enclosure.FP.residual_enclosure_int05": "not run"
   }
  },
  {
@@ -281,17 +327,23 @@
    "CertifyMathlib.Enclosure.FP.sym_entry_error",
    "CertifyMathlib.Enclosure.FP.symmetrised_error",
    "CertifyMathlib.Enclosure.FP.monoFl",
-   "CertifyMathlib.Enclosure.FP.EntryBuilt"
+   "CertifyMathlib.Enclosure.FP.EntryBuilt",
+   "CertifyMathlib.Enclosure.FP.abs_sum_error",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex"
   ],
   "main": [
    "CertifyMathlib.Enclosure.FP.builder_error",
    "CertifyMathlib.Enclosure.FP.symmetrised_error",
-   "CertifyMathlib.Enclosure.FP.mono_error"
+   "CertifyMathlib.Enclosure.FP.mono_error",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex"
   ],
   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
-  "status": "partial",
-  "correspondence": "A monomial amplitude is modelled as fl(...fl(fl(c f1_hat) f2_hat)... fL_hat) with f_hat = fl(f) for every factor (an exact factor is a special case of the bound) over R or C; a product of a complex number with a real or purely imaginary one is one rounding of relative error u in modulus, which is the Rounding hypothesis on C. mono_error: |t_hat - t| <= gamma_2L |t|. An entry of H_ref is the computed amplitudes of its monomials S_ij summed along a tree with at most m leaves, or 0 when S_ij is empty (leak = 0 is the hypothesis that S_ij lists exactly the monomials from j to i). Lemma A1 (builder_error): |H_ref - H_spec|_ij <= gamma_(m+2L-1) (|H|_abs)_ij. Lemma A2 (symmetrised_error): for Hermitian H_spec, |fl(H_ij + conj H_ji)/2 - H_spec,ij| <= gamma_(m+2L)((|H|_abs)_ij + (|H|_abs)_ji)/2 <= gamma_(m+2L) max(...), the halving exact; the unitarily invariant part of A2 is used through schur_split (Lemma A3 row).",
-  "gap": "The second sentence of Lemma A1 (the computed abs_matvec(ones) and abs_rmatvec(ones) row and column sums of |H|_abs are within a factor 1 +- gamma_(m+2L-1) of the exact sums) is not formalized.",
+  "status": "proved",
+  "correspondence": "A monomial amplitude is modelled as fl(...fl(fl(c f1_hat) f2_hat)... fL_hat) with f_hat = fl(f) for every factor (an exact factor is a special case of the bound) over R or C; a product of a complex number with a real or purely imaginary one is one rounding of relative error u in modulus, which is the Rounding hypothesis on C. mono_error: |t_hat - t| <= gamma_2L |t|. An entry of H_ref is the computed amplitudes of its monomials S_ij summed along a tree with at most m leaves, or 0 when S_ij is empty (leak = 0 is the hypothesis that S_ij lists exactly the monomials from j to i). Lemma A1 (builder_error): |H_ref - H_spec|_ij <= gamma_(m+2L-1) (|H|_abs)_ij. Lemma A2 (symmetrised_error): for Hermitian H_spec, |fl(H_ij + conj H_ji)/2 - H_spec,ij| <= gamma_(m+2L)((|H|_abs)_ij + (|H|_abs)_ji)/2 <= gamma_(m+2L) max(...), the halving exact; the unitarily invariant part of A2 is used through schur_split (Lemma A3 row). Second sentence of Lemma A1: a row sum of abs_matvec(ones) (a column sum of abs_rmatvec(ones)) is modelled as the computed moduli of the amplitudes of the monomials of that row (column), multiplied by the entries 1.0 of ones without rounding (a product with 1.0 is exact in binary64), summed in any order along a tree with at most m leaves (EntryBuilt). With |t_hat - t| <= gamma_2L |t| (mono_error), the computed sum lies in [(1 - gamma_(m+2L-1)) sum |t_k|, (1 + gamma_(m+2L-1)) sum |t_k|] for real amplitudes, where np.abs is exact (abs_sum_bounds_real), and in [(1 - gamma_(m+2L)) sum |t_k|, (1 + gamma_(m+2L)) sum |t_k|] for complex amplitudes, where np.abs rounds the modulus once (abs_sum_bounds_complex); abs_sum_error is the general form for moduli of relative error gamma_a.",
+  "gap": "Document note: for complex amplitudes the factor of the second sentence of Lemma A1 is 1 +- gamma_(m+2L), one index more than the document states, because np.abs of a complex number is rounded. That a row or column of the operator has at most m monomials is the size of the summation tree (a hypothesis, as for an entry).",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -301,7 +353,9 @@
   "nanoda": {
    "CertifyMathlib.Enclosure.FP.builder_error": "accepted",
    "CertifyMathlib.Enclosure.FP.symmetrised_error": "accepted",
-   "CertifyMathlib.Enclosure.FP.mono_error": "accepted"
+   "CertifyMathlib.Enclosure.FP.mono_error": "accepted",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real": "accepted",
+   "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex": "accepted"
   }
  },
  {
@@ -351,7 +405,7 @@
   "file": "CertifyMathlib/Enclosure/Weyl.lean; CertifyMathlib/Enclosure/FloatAccounting.lean",
   "status": "proved",
   "correspondence": "model_shift_fl: ||(H_h - H_spec) x|| <= (max(R, C) + gamma_W sqrt(r c)) ||x|| with R, C bounds of the row and column sums of D = H_h - H_ref, H_ref built as in Lemma A1, W >= m + 2L, r, c bounds of the exact row and column sums of |H|_abs; weyl_transfer_fl composes it with Theorem A5 for the sorted eigenvalues.",
-  "gap": "The code-level evaluation (computed r and c from abs_matvec(ones), the rounding of up(g sqrt(row col)/(1 - gamma(width))(1 + 4u)), inf_norm_upper of the computed D) is not formalized; the theorem takes r, c, R, C as upper bounds.",
+  "gap": "The theorem takes r, c, R, C as upper bounds. For r and c computed from abs_matvec(ones) and abs_rmatvec(ones), the second sentence of Lemma A1 (A1-A2, abs_sum_bounds_real, abs_sum_bounds_complex) gives exact sum <= computed sum / (1 - gamma_(m+2L-1)) (gamma_(m+2L) for complex amplitudes); the rounding of up(g sqrt(row col)/(1 - gamma(width))(1 + 4u)) and inf_norm_upper of the computed D are not formalized.",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -554,17 +608,25 @@
    "CertifyMathlib.Enclosure.FP.norm_one_kron_le",
    "CertifyMathlib.Enclosure.FP.norm_diagonal_unit",
    "CertifyMathlib.Enclosure.FP.norm_sum_terms_le",
-   "CertifyMathlib.Enclosure.FP.norm_list_prod_le"
+   "CertifyMathlib.Enclosure.FP.norm_list_prod_le",
+   "CertifyMathlib.Enclosure.FP.d02b_poly",
+   "CertifyMathlib.Enclosure.FP.d02b_key",
+   "CertifyMathlib.Enclosure.FP.d02b_entry",
+   "CertifyMathlib.Enclosure.FP.d02b_radius",
+   "CertifyMathlib.Enclosure.FP.roundBoundOf",
+   "CertifyMathlib.Enclosure.FP.residualRadiusOf"
   ],
   "main": [
    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error",
    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c",
-   "CertifyMathlib.Enclosure.FP.norm_kronecker_le"
+   "CertifyMathlib.Enclosure.FP.norm_kronecker_le",
+   "CertifyMathlib.Enclosure.FP.d02b_key",
+   "CertifyMathlib.Enclosure.FP.d02b_radius"
   ],
   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
   "status": "partial",
-  "correspondence": "Theorem D-02 (a): every contribution is a chain of products from the exact coupling with stored factors of relative error gamma_(e_l) (e_l = 0 exact letter, 1 rounded amplitude), each product rounded (real, error gamma_1) or formed by cmul (complex, gamma_3), then multiplied by the source entry; at most w_row contributions are summed along a tree. matrixfree_entry_error: |fl(Hx)_i - (H_spec x)_i| <= gamma_(w_row + L + rho)(|H_spec|_abs |x|)_i = gamma_(W-1)(...), W = w_row + L + rho + 1; matrixfree_entry_error_c: gamma_(w_row + 3L + rho + 2) = gamma_(W-1), W = w_row + 3L + rho + 3. Lemma N: ||(A (x) B) x|| <= a b ||x|| for pointwise bounds a, b (norm_kronecker_le, via A (x) B = (A (x) 1)(1 (x) B)), a diagonal sign factor preserves norms, a product of operators is bounded by the product of bounds and sum_t c_t O_t by sum_t |c_t| n_t.",
-  "gap": "Lemma M1 (at most w_row contributions per output entry) enters as the size of the summation tree. Part (b), the Theorem 1 radius with adapter.width = W - 2, is not formalized: with |fl(Hx) - H_spec x| <= gamma_(W-1)|H_spec||x| the residual error is <= (gamma_(W-1) + u(1 + gamma_(W-1))) a + (2u + u^2) q and the code bound gives gamma_W s (1 - u)^5 (1 + 4u) a with s = (1 - g)(1 - u)^2(1 + 4u)/((1 - g(1 - u)^2)(1 + u)) and g = gamma_(W-1); exact rational evaluation (u = 2^-53, W = 3, 10, 1000, 2^20, 2^26) gives a margin of about W u^2, so (b) holds by a second-order margin, not by the spare index the document mentions; a Lean proof needs that second-order inequality. Lemma M3 (the second pass), the reverse inequality ||A (x) B|| >= ||A|| ||B|| of the Kronecker identity and the rounding of norm_bound() are not formalized.",
+  "correspondence": "Theorem D-02 (a): every contribution is a chain of products from the exact coupling with stored factors of relative error gamma_(e_l) (e_l = 0 exact letter, 1 rounded amplitude), each product rounded (real, error gamma_1) or formed by cmul (complex, gamma_3), then multiplied by the source entry; at most w_row contributions are summed along a tree. matrixfree_entry_error: |fl(Hx)_i - (H_spec x)_i| <= gamma_(w_row + L + rho)(|H_spec|_abs |x|)_i = gamma_(W-1)(...), W = w_row + L + rho + 1; matrixfree_entry_error_c: gamma_(w_row + 3L + rho + 2) = gamma_(W-1), W = w_row + 3L + rho + 3. Lemma N: ||(A (x) B) x|| <= a b ||x|| for pointwise bounds a, b (norm_kronecker_le, via A (x) B = (A (x) 1)(1 (x) B)), a diagonal sign factor preserves norms, a product of operators is bounded by the product of bounds and sum_t c_t O_t by sum_t |c_t| n_t. Part (b), real data, standard model: residualRadiusOf is the radius of residuals computed from a given product vector yh and a given computed |H||x| vector ah (any operator adapter), with the entrywise bound _rounding_bound evaluated with adapter.width = W - 2 (roundBoundOf). d02b_radius: for 3 <= W <= 2^26 + 2 and n <= 2^26, if |yh_i - (H_spec x)_i| <= gamma_(W-1) a_i with a_i >= |(H_spec x)_i| (part (a), matrixfree_entry_error, with a = |H_spec|_abs |x|) and ah_i >= a_i (1 - gamma_(W-1)) (the second pass of Lemma M3), then ||H_spec x - mu x|| / ||x|| <= rel. The entry step d02b_entry rests on the second-order inequality d02b_key: with k = W - 1 <= 2^26 + 1 and u <= 2^-53, (gamma_k + u(1 + gamma_k))(1 - gamma_k (1 - u)^2)(1 + u) <= gamma_(k+1) (1 - u)^7 (1 + 4u)^2 (1 - gamma_k), reduced to the polynomial inequality d02b_poly in x = k u; the margin is of order k u^2.",
+  "gap": "Lemma M1 (at most w_row contributions per output entry) enters as the size of the summation tree; Lemma M3 (the second pass, computed |H||x| >= a (1 - gamma_(W-1))) is a hypothesis of d02b_radius; part (b) is proved for real data in the standard model only (complex data and the INT-05 additive terms on the matrix-free path are not formalized). The reverse inequality ||A (x) B|| >= ||A|| ||B|| of the Kronecker identity and the rounding of norm_bound() are not formalized. Document note: the argument of the document that (b) holds by the slack of one gamma index should be replaced by the second-order inequality d02b_key: with adapter.width = W - 2 the residual error index gamma_(W-1) + u(1 + gamma_(W-1)) is covered by gamma_W and the rounding factors of the code only with a margin of about W u^2.",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -574,7 +636,9 @@
   "nanoda": {
    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error": "accepted",
    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c": "accepted",
-   "CertifyMathlib.Enclosure.FP.norm_kronecker_le": "accepted"
+   "CertifyMathlib.Enclosure.FP.norm_kronecker_le": "accepted",
+   "CertifyMathlib.Enclosure.FP.d02b_key": "accepted",
+   "CertifyMathlib.Enclosure.FP.d02b_radius": "accepted"
   }
  },
  {
@@ -592,16 +656,24 @@
    "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
    "CertifyMathlib.Enclosure.reduced_eigenpair_of_pencil",
    "CertifyMathlib.Enclosure.reducedMat_isHermitian",
-   "CertifyMathlib.Enclosure.reducedMat_conj"
+   "CertifyMathlib.Enclosure.reducedMat_conj",
+   "CertifyMathlib.Enclosure.pencil_sub_eq",
+   "CertifyMathlib.Enclosure.pencil_shift_isHermitian",
+   "CertifyMathlib.Enclosure.pencil_inertia",
+   "CertifyMathlib.Enclosure.qf_pencil",
+   "CertifyMathlib.Enclosure.cntLt_anti",
+   "CertifyMathlib.Enclosure.pencil_count_perturbed"
   ],
   "main": [
    "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
-   "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues"
+   "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
+   "CertifyMathlib.Enclosure.pencil_inertia",
+   "CertifyMathlib.Enclosure.pencil_count_perturbed"
   ],
   "file": "CertifyMathlib/Enclosure/Generalized.lean",
   "status": "partial",
-  "correspondence": "Lemma 2 of E-03 (|lambda - mu| <= ||Ax - mu Bx||_{B^-1}/||x||_B <= ||Ax - mu Bx||_2/(sqrt(beta_c) ||x||_B) for 0 < beta_c <= lambda_min(B)) is kernel-checked for the eigenvalues of C = L^-1 A L^-H, with B = L L^H for an invertible L (Cholesky in the document; any invertible L in Lean), ||L^-1 s|| standing for ||s||_{B^-1} and ||L^H x|| = ||x||_B (norm_sq_adjoint_eq), and lambda_min(B) >= beta_c written as beta_c ||w||^2 <= w^H B w for all w. Of Lemma 1, C Hermitian and 'an eigenpair (y, lambda) of C gives the pencil eigenpair (L^-H y, lambda)' are kernel-checked; the converse, that the pencil eigenvalues (roots of det(A - lambda B)) are exactly those of C with multiplicity, is not. The converse half of Lemma 1 is stated for matrices: with B = L L^H, L invertible and C = L^-1 A L^-H, det(A - X B) = det B (-1)^n charpoly C as polynomials (pencil_det_eq_charpoly), so the roots of det(A - X B) with multiplicity are the eigenvalues of the Hermitian C (pencil_roots_eq_eigenvalues), and a pencil eigenpair (x, lambda) gives the eigenpair (L^H x, lambda) of C (reduced_eigenpair_of_pencil).",
-  "gap": "Lemma 3 (inertia of A - sigma B) and Propositions 1 to 3 (Bunch-Kaufman, floating point) are not formalized.",
+  "correspondence": "Lemma 2 of E-03 (|lambda - mu| <= ||Ax - mu Bx||_{B^-1}/||x||_B <= ||Ax - mu Bx||_2/(sqrt(beta_c) ||x||_B) for 0 < beta_c <= lambda_min(B)) is kernel-checked for the eigenvalues of C = L^-1 A L^-H, with B = L L^H for an invertible L (Cholesky in the document; any invertible L in Lean), ||L^-1 s|| standing for ||s||_{B^-1} and ||L^H x|| = ||x||_B (norm_sq_adjoint_eq), and lambda_min(B) >= beta_c written as beta_c ||w||^2 <= w^H B w for all w. Of Lemma 1, C Hermitian and 'an eigenpair (y, lambda) of C gives the pencil eigenpair (L^-H y, lambda)' are kernel-checked; the converse, that the pencil eigenvalues (roots of det(A - lambda B)) are exactly those of C with multiplicity, is not. The converse half of Lemma 1 is stated for matrices: with B = L L^H, L invertible and C = L^-1 A L^-H, det(A - X B) = det B (-1)^n charpoly C as polynomials (pencil_det_eq_charpoly), so the roots of det(A - X B) with multiplicity are the eigenvalues of the Hermitian C (pencil_roots_eq_eigenvalues), and a pencil eigenpair (x, lambda) gives the eigenpair (L^H x, lambda) of C (reduced_eigenpair_of_pencil). Lemma 3 uses Sylvester's law of inertia of the counting track (CertifyMathlib.Counting.Inertia, sylvester_inertia, cntLt, cntLe; imported unchanged): with B = L L^H and C = L^-1 A L^-H, A - sigma B = L (C - sigma I) L^H (pencil_sub_eq), so the number of negative eigenvalues of A - sigma B is the number of eigenvalues of C below sigma, N(sigma), and the number of non-positive ones is the number of eigenvalues of C at or below sigma (pencil_inertia; the eigenvalues of C are the pencil eigenvalues with multiplicity by pencil_roots_eq_eigenvalues). For a Hermitian M' with |x^H (M' - (A - sigma B)) x| <= b ||x||^2 for all x (which ||M' - (A - sigma B)||_2 <= b gives), b >= 0, and beta_c ||x||^2 <= x^H B x with beta_c > 0: N(sigma - b/beta_c) <= nu(M') <= N(sigma + b/beta_c) <= #{j : lambda_j <= sigma + b/beta_c} (pencil_count_perturbed); the middle bound, with the strict count, is stronger than the document's upper bound. The monotonicity of the count under the Loewner order (cntLt_anti, from the subspace characterisation of the counting track) takes the place of the cited Weyl monotonicity theorem.",
+  "gap": "Propositions 1 to 3 (the Bunch-Kaufman count of B - beta I and of fl(A - fl(sigma B)), and the floating-point residual radii) are not formalized; the step from ||M' - (A - sigma B)||_2 <= b to the quadratic-form bound is not stated in Lean.",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -610,7 +682,9 @@
   "trust_level": "K2",
   "nanoda": {
    "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta": "accepted",
-   "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues": "accepted"
+   "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues": "accepted",
+   "CertifyMathlib.Enclosure.pencil_inertia": "accepted",
+   "CertifyMathlib.Enclosure.pencil_count_perturbed": "accepted"
   }
  },
  {
@@ -630,17 +704,44 @@
    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
    "CertifyMathlib.Enclosure.Dyadic.pwDn_le",
    "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
-   "CertifyMathlib.Enclosure.Dyadic.log_eq_atanh_form"
+   "CertifyMathlib.Enclosure.Dyadic.log_eq_atanh_form",
+   "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div",
+   "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div_div",
+   "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+   "CertifyMathlib.Enclosure.Dyadic.div_mem_corners",
+   "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+   "CertifyMathlib.Enclosure.Dyadic.pwUp_ge",
+   "CertifyMathlib.Enclosure.Dyadic.atanh_tail_le",
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+   "CertifyMathlib.Enclosure.Dyadic.atanh_form_mono",
+   "CertifyMathlib.Enclosure.Dyadic.log_two_eq_atanh_form",
+   "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+   "CertifyMathlib.Enclosure.Dyadic.u_grid_bounds",
+   "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec",
+   "CertifyMathlib.Enclosure.Dyadic.from_fraction_tiny",
+   "CertifyMathlib.Enclosure.Dyadic.two_pow_neg_1074_grid",
+   "CertifyMathlib.Enclosure.Dyadic.halveIter",
+   "CertifyMathlib.Enclosure.Dyadic.pwUp",
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp"
   ],
   "main": [
    "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem",
    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
-   "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le"
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+   "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+   "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+   "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+   "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec"
   ],
   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
   "status": "partial",
-  "correspondence": "Integers stand for grid points k 2^-P; Python floor and ceiling division by a positive integer are the floor and ceiling of the real quotient. Proved for any P and N: (i) from_fraction encloses its argument; (ii) the grid product with the four corner products rounded outward, and the squaring step of a nonnegative interval; (iii) the floor-rounded and ceiling-rounded Taylor terms bound 2^P tau^k/k! from below and above, so (S_N_lo(t), S_N_hi(t) + rem) contains exp(t 2^-P) for 0 <= t <= 2^P (remainder from Real.exp_bound, 2 tau^(N+1)/(N+1)! for tau <= 1), s squarings give exp(2^s y), which with t_lo <= x/2^s <= t_hi gives exp(x 2^-P) for x >= 0, and the reciprocal step gives x < 0; (iv) the lower atanh sum A_lo(u) 2^-P <= log(1 + x) - log(1 - x) for x = u 2^-P < 1, and log m = log(1 + x) - log(1 - x) for x = (m - 1)/(m + 1).",
-  "gap": "Not formalized: the upper atanh sum with the tail term ceil(ceil(8 pw_(M+1)/7)/(2M+3)), the decomposition with k ln 2 and the enclosure of ln 2, the halving identity ceil(ceil(a/b)/c) = ceil(a/(bc)), the quotient X/Y of (ii), and (v) the conversion to binary64.",
+  "correspondence": "Integers stand for grid points k 2^-P; Python floor and ceiling division by a positive integer are the floor and ceiling of the real quotient. Proved for any P and N: (i) from_fraction encloses its argument; (ii) the grid product with the four corner products rounded outward, and the squaring step of a nonnegative interval; (iii) the floor-rounded and ceiling-rounded Taylor terms bound 2^P tau^k/k! from below and above, so (S_N_lo(t), S_N_hi(t) + rem) contains exp(t 2^-P) for 0 <= t <= 2^P (remainder from Real.exp_bound, 2 tau^(N+1)/(N+1)! for tau <= 1), s squarings give exp(2^s y), which with t_lo <= x/2^s <= t_hi gives exp(x 2^-P) for x >= 0, and the reciprocal step gives x < 0; (iv) the lower atanh sum A_lo(u) 2^-P <= log(1 + x) - log(1 - x) for x = u 2^-P < 1, and log m = log(1 + x) - log(1 - x) for x = (m - 1)/(m + 1). Added in this round: the halving identity ceil(ceil(x)/c) = ceil(x/c) for a positive integer c, in the form ceil(ceil(a/b)/c) = ceil(a/(bc)) (ceil_ceil_div, ceil_ceil_div_div), so the loop t <- ceil(t/2) started at x gives t = ceil(x/2^s) = t_hi after s steps (halveIter_eq); the quotient X/Y of (ii) for 0 not in Y, the four corner quotients x_i 2^P / y_j floored and ceiled (div_mem_corners, grid_div_mem); the upper atanh sum A_up(u) = 2 (sum_(j<=M) ceil(pw_j/(2j+1)) + ceil(ceil(8 pw_(M+1)/7)/(2M+3))) with pw_(j+1) = ceil(pw_j ceil(u^2/2^P)/2^P) satisfies log(1 + x) - log(1 - x) <= A_up(u) 2^-P for x = u 2^-P <= 0.35 (pwUp_ge, atanh_tail_le with the tail bound 8/7 for x^2 <= 1/8, lnSeriesUp_ge); the enclosure of ln 2, A_lo(floor(2^P/3)) <= 2^P ln 2 <= A_up(ceil(2^P/3)) for P >= 6 (ln2_mem); the grid arguments u_lo = max(0, floor((m_lo - 2^P) 2^P/(m_lo + 2^P))) and u_hi = max(0, ceil((m_hi - 2^P) 2^P/(m_hi + 2^P))) bracket 2^P (m - 1)/(m + 1) and u_hi <= 0.35 2^P (u_grid_bounds); the assembly of _ln_point: for z = 2^k m, 2^P log z lies in (A_lo(u_lo), A_up(u_hi)) + k L2 with k L2 the scale_int of L2 (ends swapped for k < 0) (ln_point_mem); and (v): with F a set of reals standing for the finite binary64 values, f in F nearest to q and nextafter given as the neighbour of f in F, to_float_down returns the largest element of F at or below q and to_float_up the smallest at or above (to_float_down_spec, to_float_up_spec).",
+  "gap": "Not formalized: the bit-length decomposition of _ln_point (k = bitlength(v) - 1 - P and m_lo <= m 2^P <= m_hi <= 2 2^P), which enters ln_point_mem and u_grid_bounds as hypotheses; the binary64 facts of (v) (float(Fraction) correctly rounded to nearest, nextafter the adjacent binary64), which enter as hypotheses on F; the argument guards of exp_interval (the shortcut for arguments <= -1000 and the limit 2^16). P >= 6 is a hypothesis of ln2_mem (the code has P = 192). Document note: from_float is exact (width 0) only when f 2^P is an integer; for a binary64 below the grid resolution, for example 2^-1074 with P = 192, from_fraction returns (0, 1) (from_fraction_tiny, two_pow_neg_1074_grid); the enclosure property is unaffected.",
   "axioms": [
    "Classical.choice",
    "Quot.sound",
@@ -650,7 +751,14 @@
   "nanoda": {
    "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem": "accepted",
    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem": "accepted",
-   "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le": "accepted"
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.ln2_mem": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.ln_point_mem": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.halveIter_eq": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.grid_div_mem": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec": "accepted",
+   "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec": "accepted"
   }
  }
 ]

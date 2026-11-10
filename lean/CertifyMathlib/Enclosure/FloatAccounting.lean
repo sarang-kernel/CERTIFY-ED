@@ -42,7 +42,12 @@ rounded products (`monoFl`, `mono_error`: `γ_{2L}`), an entry of `H_ref` as a r
 symmetrised build `fl(H_ij + conj H_ji) / 2` (Lemma A2, `symmetrised_error`), the bound
 `Δ_builder = γ_W √(r c)` of `‖H_ref - H_spec‖₂` and of `‖fl(Ĥ) - H_spec‖₂` (Lemma A3 with the Schur
 test, `builder_shift`, `symmetrised_shift`, `schur_split`), and Theorem A4 with this `Δ_builder`
-(`model_shift_fl`) and its Weyl transfer (`weyl_transfer_fl`).
+(`model_shift_fl`) and its Weyl transfer (`weyl_transfer_fl`). The second sentence of Lemma A1:
+the computed row and column sums of `|H|_abs` (`abs_matvec(ones)`, `abs_rmatvec(ones)`, sums of the
+computed moduli of at most `m` monomials in any order, the products with the entries `1.0` of
+`ones` exact) are within the factor `1 ± γ_{m+2L-1}` of the exact sums for real amplitudes
+(`abs_sum_bounds_real`) and `1 ± γ_{m+2L}` for complex ones, where `np.abs` rounds the modulus once
+(`abs_sum_bounds_complex`); `abs_sum_error` is the general form.
 -/
 
 open Finset Matrix
@@ -2036,5 +2041,120 @@ theorem rayleigh_numerator_bound (R : Rounding ℝ) (h0 : R.eta = 0) {T : ι →
     _ ≤ eN + gam R.u w * ∑ i, |ψ i| * ∑ j, |A i j| * |ψ j| := add_le_add hN h
 
 end RayleighNumerator
+
+section AbsSums
+
+variable {𝕂 : Type*} [RCLike 𝕂]
+
+/-- **Lemma A1, second sentence** (the computed `|H|_abs` sums). A row sum of
+`abs_matvec(ones)` (or a column sum of `abs_rmatvec(ones)`) is the sum, in any order along a
+tree with at most `m` leaves, of the computed moduli `m̂_k` of the monomial amplitudes; the
+multiplication by the entry `1.0` of `ones` is exact. If each modulus is within `γ_a |t_k|` of the
+exact `|t_k|`, the computed sum is within `γ_{m+a-1} Σ |t_k|` of the exact sum. -/
+theorem abs_sum_error (R : Rounding ℝ) (h0 : R.eta = 0) {m a : ℕ}
+    (hW : ((m + a : ℕ) : ℝ) * R.u < 1) {κ : Type*} [DecidableEq κ] (t : κ → 𝕂) (mh : κ → ℝ)
+    (S : Finset κ) (hmh : ∀ k ∈ S, |mh k - ‖t k‖| ≤ gam R.u a * ‖t k‖) {s : ℝ}
+    (hb : EntryBuilt R m mh S s) :
+    |s - ∑ k ∈ S, ‖t k‖| ≤ gam R.u (m + a - 1) * ∑ k ∈ S, ‖t k‖ := by
+  have hu := R.u_nonneg
+  rcases hb with ⟨hS, hh⟩ | ⟨T, hnd, hmem, hlen, hh⟩
+  · subst hS
+    subst hh
+    simp
+  · have hW1 : ((m + a - 1 : ℕ) : ℝ) * R.u < 1 := lt_of_le_of_lt
+      (mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : m + a - 1 ≤ m + a)) hu) hW
+    have hT : ((a + T.adds : ℕ) : ℝ) * R.u < 1 := lt_of_le_of_lt
+      (mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : a + T.adds ≤ m + a)) hu) hW
+    have ha : ((a : ℕ) : ℝ) * R.u < 1 := lt_of_le_of_lt
+      (mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : a ≤ m + a)) hu) hW
+    let t0 : κ → ℝ := fun k => if k ∈ S then ‖t k‖ else mh k
+    have hleaf : ∀ k, ‖mh k - t0 k‖ ≤ gam R.u a * ‖t0 k‖ + 0 := by
+      intro k
+      by_cases hk : k ∈ S
+      · simp only [t0, hk, ↓reduceIte, add_zero, Real.norm_eq_abs, abs_norm]
+        exact hmh k hk
+      · simp only [t0, hk, ↓reduceIte, sub_self, norm_zero, add_zero]
+        exact mul_nonneg (gam_nonneg hu ha) (norm_nonneg _)
+    have herr := STree.comp_error (R.std h0) le_rfl t0 mh hleaf (fun _ => trivial) T hT
+    have hfs : T.leaves.toFinset = S := Finset.ext fun k => by simp [hmem]
+    have he : T.eval t0 = ∑ k ∈ S, ‖t k‖ := by
+      rw [STree.eval_eq_sum, ← List.sum_toFinset _ hnd, hfs]
+      exact Finset.sum_congr rfl fun k hk => by simp [t0, hk]
+    have hae : T.absEval t0 = ∑ k ∈ S, ‖t k‖ := by
+      rw [STree.absEval_eq_sum, ← List.sum_toFinset _ hnd, hfs]
+      exact Finset.sum_congr rfl fun k hk => by simp [t0, hk]
+    have hg : gam R.u (a + T.adds) ≤ gam R.u (m + a - 1) := gam_mono hu (by omega) hW1
+    have hs0 : 0 ≤ ∑ k ∈ S, ‖t k‖ := Finset.sum_nonneg fun k _ => norm_nonneg _
+    rw [hh]
+    calc |T.comp R.rnd mh - ∑ k ∈ S, ‖t k‖| = ‖T.comp (R.std h0).rnd mh - T.eval t0‖ := by
+          rw [he, Real.norm_eq_abs]
+          rfl
+      _ ≤ gam R.u (a + T.adds) * T.absEval t0 +
+            ((T.adds : ℝ) + 1) * (1 + gam R.u T.adds) * 0 := herr
+      _ ≤ gam R.u (m + a - 1) * ∑ k ∈ S, ‖t k‖ := by
+          rw [hae, mul_zero, add_zero]
+          exact mul_le_mul_of_nonneg_right hg hs0
+
+/-- The factor form: `(1 - γ_{m+a-1}) Σ |t_k| ≤ ŝ ≤ (1 + γ_{m+a-1}) Σ |t_k|`. -/
+theorem abs_sum_bounds (R : Rounding ℝ) (h0 : R.eta = 0) {m a : ℕ}
+    (hW : ((m + a : ℕ) : ℝ) * R.u < 1) {κ : Type*} [DecidableEq κ] (t : κ → 𝕂) (mh : κ → ℝ)
+    (S : Finset κ) (hmh : ∀ k ∈ S, |mh k - ‖t k‖| ≤ gam R.u a * ‖t k‖) {s : ℝ}
+    (hb : EntryBuilt R m mh S s) :
+    (1 - gam R.u (m + a - 1)) * ∑ k ∈ S, ‖t k‖ ≤ s ∧
+      s ≤ (1 + gam R.u (m + a - 1)) * ∑ k ∈ S, ‖t k‖ := by
+  have h := abs_le.mp (abs_sum_error R h0 hW t mh S hmh hb)
+  constructor <;> nlinarith [h.1, h.2]
+
+/-- Real amplitudes (`np.abs` exact): with `|t̂_k - t_k| ≤ γ_{2L} |t_k|` (`mono_error`), the
+computed sums of `|t̂_k|` are within the factor `1 ± γ_{m+2L-1}` of Lemma A1. -/
+theorem abs_sum_bounds_real (R : Rounding ℝ) (h0 : R.eta = 0) {m L : ℕ}
+    (hW : ((m + 2 * L : ℕ) : ℝ) * R.u < 1) {κ : Type*} [DecidableEq κ] (t th : κ → ℝ)
+    (S : Finset κ) (hth : ∀ k ∈ S, |th k - t k| ≤ gam R.u (2 * L) * |t k|) {s : ℝ}
+    (hb : EntryBuilt R m (fun k => |th k|) S s) :
+    (1 - gam R.u (m + 2 * L - 1)) * ∑ k ∈ S, |t k| ≤ s ∧
+      s ≤ (1 + gam R.u (m + 2 * L - 1)) * ∑ k ∈ S, |t k| := by
+  have h := abs_sum_bounds R h0 hW t (fun k => |th k|) S (fun k hk => by
+    rw [Real.norm_eq_abs]
+    exact (abs_abs_sub_abs_le_abs_sub _ _).trans (hth k hk)) hb
+  simpa [Real.norm_eq_abs] using h
+
+/-- Complex amplitudes (`np.abs` is one rounding of the modulus): the factor is
+`1 ± γ_{m+2L}`, one index more than the document states for real amplitudes. -/
+theorem abs_sum_bounds_complex (R : Rounding ℝ) (h0 : R.eta = 0) {m L : ℕ}
+    (hW : ((m + 2 * L + 1 : ℕ) : ℝ) * R.u < 1) {κ : Type*} [DecidableEq κ] (t th : κ → ℂ)
+    (S : Finset κ) (hth : ∀ k ∈ S, ‖th k - t k‖ ≤ gam R.u (2 * L) * ‖t k‖) {s : ℝ}
+    (hb : EntryBuilt R m (fun k => R.rnd ‖th k‖) S s) :
+    (1 - gam R.u (m + 2 * L)) * ∑ k ∈ S, ‖t k‖ ≤ s ∧
+      s ≤ (1 + gam R.u (m + 2 * L)) * ∑ k ∈ S, ‖t k‖ := by
+  have hu := R.u_nonneg
+  have hk : ((2 * L + 1 : ℕ) : ℝ) * R.u < 1 := lt_of_le_of_lt
+    (mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : 2 * L + 1 ≤ m + 2 * L + 1)) hu) hW
+  have hmh : ∀ k ∈ S, |R.rnd ‖th k‖ - ‖t k‖| ≤ gam R.u (2 * L + 1) * ‖t k‖ := by
+    intro k hk'
+    have h1 := hth k hk'
+    have hs := gam_succ hu hk
+    have hk0 : ((2 * L : ℕ) : ℝ) * R.u < 1 := lt_of_le_of_lt
+      (mul_le_mul_of_nonneg_right (by exact_mod_cast (by omega : 2 * L ≤ 2 * L + 1)) hu) hk
+    have g0 := gam_nonneg hu hk0
+    have hr := R.abs_rnd_sub_le h0 ‖th k‖
+    rw [abs_norm] at hr
+    have hn : |‖th k‖ - ‖t k‖| ≤ gam R.u (2 * L) * ‖t k‖ :=
+      (abs_norm_sub_norm_le _ _).trans h1
+    have hth' : ‖th k‖ ≤ (1 + gam R.u (2 * L)) * ‖t k‖ := by
+      have := (abs_le.mp hn).2
+      linarith
+    have hsp := mul_le_mul_of_nonneg_right hs (norm_nonneg (t k))
+    calc |R.rnd ‖th k‖ - ‖t k‖| = |(R.rnd ‖th k‖ - ‖th k‖) + (‖th k‖ - ‖t k‖)| := by ring_nf
+      _ ≤ |R.rnd ‖th k‖ - ‖th k‖| + |‖th k‖ - ‖t k‖| := abs_add_le _ _
+      _ ≤ R.u * ((1 + gam R.u (2 * L)) * ‖t k‖) + gam R.u (2 * L) * ‖t k‖ :=
+          add_le_add (hr.trans (mul_le_mul_of_nonneg_left hth' hu)) hn
+      _ ≤ gam R.u (2 * L + 1) * ‖t k‖ := by nlinarith
+  have h := abs_sum_bounds R h0 (a := 2 * L + 1) (m := m) (by simpa [add_assoc] using hW) t
+    (fun k => R.rnd ‖th k‖) S hmh hb
+  have e : m + (2 * L + 1) - 1 = m + 2 * L := by omega
+  rw [e] at h
+  exact h
+
+end AbsSums
 
 end CertifyMathlib.Enclosure.FP
