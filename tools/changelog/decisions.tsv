@@ -1,0 +1,62 @@
+id	date_recorded	title
+D-01	2026-05	direction C2 is stopped
+D-02	2026-05/06	the target of direction C1
+D-03	2026-07-13	C1 is put aside
+D-04	2026-06/07	no rebuttal to the SciPost referees
+D-05	2026-07-13	the failure of v1 was a mismatch of scope and claim
+D-06	2026-07-13	broaden to a general checking layer
+D-07	2026-07-13	enumerate everything first
+D-08	2026-07-13	no constraints in the scope document
+D-09	2026-07-13	no preliminary list from Sarang
+D-10	2026-07-13	the engineering plan follows the enumeration
+D-11	2026-07-13	talk to producer authors after the scope exists
+D-12	2026-07-13	new mathematics needs a person who re-derives it
+D-13	2026-07-13	documentation is mandatory
+D-14	2026-07-13	one idea taken from an unsolicited e-mail
+D-15	2026-07-21	no response to the third rejecting report
+D-16	2026-07-21	Sarang drafts the prose of every manuscript
+D-17	2026-09-25/10-04	a revised manuscript and a v2 core, as an exception to D-10
+D-18	2026-09	five statements, four statuses and a not-checked list
+D-19	2026-09	a default accuracy target for S2
+D-20	2026-09	completeness by Sylvester's law of inertia
+D-21	2026-10-04	the direction of the Jordan-Wigner string is an option
+D-22	2026-10-04	radii refer to the declared model
+D-23	2026-10-04	an ordering condition for the assembly of sectors
+D-24	2026-10-04	every number of the paper is generated from records
+D-25	2026-10-04	no claim of mathematical novelty
+D-26	2026-10-04	every iterative solver call is seeded
+D-27	2026-10-04	the ARPACK multiplet truncation becomes experiment E5
+D-28	2026-10-04	the below-top probe accounts for the backward error
+D-29	2026-10-11	records of interrupted runs are never read
+D-30	2026-10-11	a table of the contribution by kind
+D-31	2026-10-11	a visual check of every rendered figure
+D-32	2026-10-15	no target venue; a survey of neighbouring practice
+D-33	2026-10-17	symveig belongs to the project and joins one paper
+D-34	2026-10-17	the first application is the pyrochlore bound of Kránitz and Penc
+D-35	2026-10-17	mutation analysis is evidence, with classified survivors
+D-36	2026-10-17	the second application is the AKLT gap criteria
+D-37	2026-10-17	the AKLT kernel equality is a lemma, also checked by computation
+D-38	2026-10-17	the bordered pencil for the decorated lattices
+D-39	2026-10-17	all inspected survivors of the first E6 run resolved
+D-40	2026-10-17	the S = 1 contradiction is certified, the corrected optimum is an estimate
+D-41	2026-10-17	the decorated square is certified
+D-42	2026-10-18	symveig is merged as a capability
+D-43	2026-10-18	one codebase, certify-ed 3.0.0
+D-44	2026-10-18, later	provenance by computational source, and one run per cited version
+D-45	2026-10-21	the one-paper manuscript as a scaffold
+D-46	2026-10-21	writing the proofs against the code found two soundness gaps
+D-47	2026-10-21	Sarang's decisions on four open items
+D-48	2026-10-21, evening	the history of the code repository is rewritten before the 3.1.0 run
+D-49	2026-10-21, evening	certify everything a laboratory run produces, and declare the scope
+D-50	2026-10-21, evening	a pre-registered survey of published ED practice
+D-51	2026-10-21, evening	the note to Kránitz and Penc is corrected before sending
+D-52	2026-10-21, evening	Theorem 2 is restated through Kahan's theorem
+D-53	2026-10-21, evening	a corrected replacement of the symveig preprint and deprecation of its code
+D-54	2026-10-22	the Windows workstation is the primary machine
+D-55	2026-10-22	the four v1 figures are not carried into ms_v4
+D-56	2026-10-22	the public repository is extended, not rewritten
+D-57	2026-10-22, night	the 3.1.0 run stands; four integration findings are known issues
+D-58	2026-10-29	the expansion roadmap, executed on dev/3.2
+D-59	2026-10-30, recorded 2026-11-03	clearing the D-12 backlog with derivation documents
+D-60	2026-11-03	certify-ed 3.2.0 gets its own full run
+D-61	2026-11-06	the 3.2 evidence run is the 3.2.1 run
