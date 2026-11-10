@@ -33,7 +33,10 @@ on eight threads; under a committed-memory cap an allocation failure inside SciP
 process instead of raising MemoryError. With one thread the case certifies S3 under the cap (gap >= 0.287), uncapped both settings
 certify. 3.2.1 (CHANGELOG) makes one thread the default (`CERTIFY_ED_RESIDUAL_THREADS` opts in). The bound does not depend on the
 thread count: `compare_runs` of the 3.2.1 run against the 3.2.0 run gives 3472 identical leaves, 0 float differences, 0 MISMATCH
-(the remaining classes are timings, the sample-dependent E5/E6 records and the 64 leaves E4 lacks in the 3.2.0 record).
+(the remaining classes are timings, the sample-dependent E5/E6 records and 64 leaves missing on one side: 16 in E4, which the
+3.2.0 record lacks after the crash, and 48 in E2, the certifier fields of the momentum blocks N = 22 and N = 24, where the 3.2.0
+certifier reached the 900 s limit and the 3.2.1 certifier finished with S3 NOT_CHECKED; corrected 10 Nov 2026, an earlier text
+attributed all 64 to E4).
 
 Cost of the single-threaded residual: the S3 step of the E2 points at dimension 12870 takes 250-800 s instead of 60-180 s in 3.1.0
 (the measured residual is the price of D-01; 3.1.0 used the a-priori bound), and two E2 points - chain N = 18 (d = 48620) and the
@@ -50,7 +53,7 @@ float-differs 19, stack-dependent 77, fp-statistic 13, text-numbers 19, sample-d
 |---|---|---|
 | E2 `rows[*].certifier.fill_nnz` (7) | the sparse inertia record counts the fill as 2 nnz(L) - n (one factor of the symmetric factorization) instead of nnz(L) + nnz(U) | CHANGELOG, Scale track (D-01); inertia.py |
 | E3 `c_gap[2].certified_lb`, `c_gap[7].certified_lb` (2) | the certified lower bound of the next eigenvalue moves up by 1.0e-9 and 1.3e-9 relative: the measured backward error beta of the sparse factorization is smaller than the 3.1 a-priori bound (4-50x on the chain blocks) | docs/proofs/D-01_sparse-residual.md (tighter bound with its proof document; independent verdict AGREES-WITH-REMARKS, Sarang's check pending) |
-| E6 `copy.files` (1) | the mutation harness copies every tracked file (915) instead of five directories (215) | CHANGELOG 3.2.0.dev0 (integration note) |
+| E6 `copy.files` (1) | the mutation harness copies every file git tracks (`copy.source` = `git ls-files` in both runs); the repository tracks 215 files at `v3.1.0` and 915 at `v3.2.1` (corrected 10 Nov 2026: an earlier text attributed the difference to a change of the copy rule) | `git ls-tree -r --name-only v3.1.0` and `v3.2.1`; E6 `data.json` of both runs |
 
 The certified application results are unchanged: **E9 (Kranitz-Penc crown) 893 of 893 compared leaves identical; E10 (Pomata-Wei
 AKLT) 333 of 333 identical** - the exact lower bound -0.5501582988212038 for the S = 1/2 reduced model, the all-singlet upper bound

@@ -55,6 +55,14 @@ checked exactly over n, w ∈ {1, …, 2·10⁴} ∪ {2^j : 15 ≤ j ≤ 26} by 
   u/γ_{w+2} = (1 − (w+2)u)/(w + 2) ≥ 2u·(1 + 16u)/(1 − 2u − 16u²) whenever (w + 2)·2u(1 + …) ≤ 1 − (w + 2)u, i.e. for
   (w + 2)u ≤ 1/3.
 
+  *Erratum (10 Nov 2026, found by the Lean formalization `CertifyCore.Theorems.Thm1`, theorems `lambda6` and
+  `lambda6_fails_at_boundary`, certify-ed-project reverification_lean/CORE.md section 8).* The closing condition
+  (w + 2)u ≤ 1/3 admits exactly one value, w + 2 = 3002399751580330 = ⌊2⁵³/3⌋, at which Λ6 fails; a correct closing
+  condition is (w + 2)u ≤ (1 − 5u)/3. Λ6 as stated, for 1 ≤ w ≤ 2²⁶, holds (kernel-checked). Likewise the upper
+  norm guard Λ4 with N = 2n holds for n ≤ 2²⁶ as stated and fails from n = 84886744 (exact computation). The code
+  (`enclosure.py` `_rounding_bound`, `fp.py` norm guards) does not check w ≤ 2²⁶ or n ≤ 2²⁶; no stored operator comes
+  near these sizes (largest dimension in the run records 1116229), and enforcing the range is a candidate for 3.2.2.
+
 **Step 1: the residual vector** (`enclosure.py` lines 343–346: `HX = adapter.matvec(Xb)`, `Rb = HX − Xb * mub`).
 Real data. fl(Ax)_i is a sum of at most w exact products a_{ij}x_j in some order with w products and ≤ w − 1
 additions (or ≤ w FMAs): each term carries a factor (1 + θ_w) (Λ1), so |fl(Ax)_i − (Ax)_i| ≤ γ_w a_i (Higham eq.

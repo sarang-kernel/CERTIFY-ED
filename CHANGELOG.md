@@ -19,6 +19,13 @@ an E2 row whose certifier hit the experiment's S3 limit and left its certificate
 `docs/figures_run_3.2.1/` holds the record-driven figures of the 3.2.1 run; `RESULT_evidence_run_3.2.1.md` records the
 run and its comparison with 3.1.0 (10 MISMATCH leaves, all documented changes) and with 3.2.0 (none).
 
+Documentation corrections of 10 Nov 2026 (non-computational; source hash `cb73dec3e4433a3b` unchanged): two explanations in
+`RESULT_evidence_run_3.2.1.md` (the E6 `copy.files` leaf reflects the number of tracked files, 215 at `v3.1.0` and 915 at
+`v3.2.1`; the 64 leaves missing against the 3.2.0 run are 48 in E2 and 16 in E4); the non-empty-interval hypothesis of
+Proposition 14 in `docs/theory.md` 9.1; an erratum to the closing condition of the guard Lambda6 in
+`docs/proofs/thm1_fp-accounting.md`. The last two were found by the Lean formalization in the separate repository
+certify-ed-project (`reverification_lean/COUNTING.md`, `CORE.md`).
+
 ## [3.2.0] — 2026-11-04 (tag `v3.2.0` on `dev/3.2`; evidence run pending, see RESULT_integration_3.2.md)
 
 `__version__` = 3.2.0 (3.2.0.dev0 during development: every entry below was written under that name). Summary of the release: the

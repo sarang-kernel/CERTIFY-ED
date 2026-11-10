@@ -360,7 +360,10 @@ level enclosure J = [J_L, J_U] containing all g enclosures. Two inertia counts (
 σ_lo < J_L and σ_hi > J_U give ν_lo, β_lo and ν_hi, β_hi.
 
 **Proposition 14 (bracketing count).** Put I_in = (σ_lo + β_lo, σ_hi − β_hi) and
-I_out = [σ_lo − β_lo, σ_hi + β_hi]. Then
+I_out = [σ_lo − β_lo, σ_hi + β_hi], and assume σ_lo + β_lo < σ_hi − β_hi (I_in is not empty; without this
+hypothesis the first inequality fails, see the 1 × 1 example in the Lean formalization, certify-ed-project
+reverification_lean/COUNTING.md; corrected 10 Nov 2026, the hypothesis is in docs/proofs/P14_degeneracy_bracketing.md and the
+code uses the inequality only when J ⊂ I_in, which implies it). Then
 
   #{λ ∈ I_in} ≤ ν_hi − ν_lo ≤ #{λ ∈ I_out}.
 
