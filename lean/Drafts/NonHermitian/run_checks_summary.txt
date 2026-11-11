@@ -1,0 +1,8 @@
+run started 2026-11-11 18:10
+build exit=0 seconds=492 date=2026-11-11 18:19
+axioms exit=0 seconds=227 date=2026-11-11 18:22
+textsearch exit=0 seconds=1 date=2026-11-11 18:22
+leanchecker exit=0 seconds=2989 date=2026-11-11 19:12
+nanoda exit=0 seconds=1 date=2026-11-11 19:12
+nanoda exit=0 seconds=3553 date=2026-11-11 20:16
+nanoda exit=0 seconds=1300 date=2026-11-11 20:43

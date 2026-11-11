@@ -1,0 +1,402 @@
+{
+ "part": "Mathlib formalization: Bauer-Fike and the residual forms of E-02 (non-Hermitian eigenproblems)",
+ "document": "reverification_lean/NONHERMITIAN.md",
+ "root_module": "CertifyMathlib.NonHermitian",
+ "root_file": "reverification_lean/CertifyMathlib/NonHermitian.lean",
+ "modules": [
+  "CertifyMathlib.NonHermitian.BauerFike",
+  "CertifyMathlib.NonHermitian"
+ ],
+ "toolchain": "leanprover/lean4:v4.35.0",
+ "mathlib": "v4.35.0",
+ "imports_from_other_parts": [],
+ "statement_source": "docs/proofs/E-02_non_hermitian.md of the code repository, commit 167940a on branch track/non-hermitian (from dev/3.2 at fa86456); not yet in sources/archive_v5",
+ "build": {
+  "command": "lake build CertifyMathlib.NonHermitian",
+  "exit_code": 0,
+  "result": "Build completed successfully (2484 jobs)",
+  "date": "11 November 2026",
+  "module_seconds": {
+   "BauerFike": 173,
+   "NonHermitian": 103
+  },
+  "step_seconds": 492,
+  "warnings": "two notes that BauerFike.lean imports Mathlib modules designed for the module system; no other warning",
+  "log": "reverification_lean/Drafts/NonHermitian/check_build.log"
+ },
+ "level_K_check": {
+  "files_searched": 3,
+  "sorry": 0,
+  "admit": 0,
+  "native_decide": 0,
+  "axiom_declarations": 0,
+  "set_option": 0,
+  "method": "text search of CertifyMathlib/NonHermitian/BauerFike.lean, CertifyMathlib/NonHermitian.lean and Drafts/NonHermitian/PrintAxioms.lean (run_checks.ps1, step textsearch)"
+ },
+ "axioms_check": {
+  "script": "reverification_lean/Drafts/NonHermitian/PrintAxioms.lean",
+  "command": "lake env lean Drafts/NonHermitian/PrintAxioms.lean",
+  "output": "reverification_lean/Drafts/NonHermitian/check_axioms.log",
+  "theorems": 16,
+  "all_depend_on": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "sorryAx": 0,
+  "seconds": 227,
+  "date": "11 November 2026"
+ },
+ "second_checker": [
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.NonHermitian.BauerFike CertifyMathlib.NonHermitian",
+   "modules": [
+    "CertifyMathlib.NonHermitian.BauerFike",
+    "CertifyMathlib.NonHermitian"
+   ],
+   "exit_code": 0,
+   "seconds": 2989,
+   "output": "none",
+   "date": "11 November 2026",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "nanoda (nanoda_bin of toolchain lean-4.35.0-windows, input from leanexport)",
+   "command": "leanexport <module> -- <theorem> > export.ndjson; nanoda_bin config.json (permitted_axioms propext, Classical.choice, Quot.sound; unpermitted_axiom_hard_error, nat_extension, string_extension true)",
+   "driver": "reverification_lean/Drafts/Counting/nanoda_counting.py",
+   "theorem_list": "reverification_lean/Drafts/NonHermitian/nanoda_theorems.txt",
+   "procedure": "one theorem per run; the export contains the theorem and every declaration it depends on, including the Lean core and Mathlib declarations; a run is stopped when a process exceeds 4096 MiB of private memory or 1800 s; the export file is removed after each run",
+   "theorems": 6,
+   "accepted": 6,
+   "rejected": 0,
+   "not_run": 0,
+   "seconds": 4650.9,
+   "date": "11 November 2026",
+   "runs": [
+    {
+     "theorem": "CertifyMathlib.NonHermitian.disc_inclusion_certified",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 566.3,
+     "export_peak_private_mib": 3711,
+     "export_bytes": 110161782,
+     "result": "accepted",
+     "declarations": 23576,
+     "check_seconds": 123.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 23576 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.NonHermitian.bauerFike_matrix",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 513.1,
+     "export_peak_private_mib": 3695,
+     "export_bytes": 86414003,
+     "result": "accepted",
+     "declarations": 19702,
+     "check_seconds": 90.3,
+     "check_peak_private_mib": 105,
+     "output": "Checked 19702 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.NonHermitian.bauerFike_residual_matrix",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 661.4,
+     "export_peak_private_mib": 3695,
+     "export_bytes": 86325151,
+     "result": "accepted",
+     "declarations": 19700,
+     "check_seconds": 105.0,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19700 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.NonHermitian.disc_inclusion_matrix",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 630.0,
+     "export_peak_private_mib": 3695,
+     "export_bytes": 86270181,
+     "result": "accepted",
+     "declarations": 19694,
+     "check_seconds": 95.6,
+     "check_peak_private_mib": 105,
+     "output": "Checked 19694 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.NonHermitian.backward_error",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 585.6,
+     "export_peak_private_mib": 3688,
+     "export_bytes": 69810239,
+     "result": "accepted",
+     "declarations": 16657,
+     "check_seconds": 90.3,
+     "check_peak_private_mib": 131,
+     "output": "Checked 16657 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    },
+    {
+     "theorem": "CertifyMathlib.NonHermitian.bauerFike_matrix_sharp",
+     "module": "CertifyMathlib.NonHermitian",
+     "export_seconds": 1098.3,
+     "export_peak_private_mib": 3695,
+     "export_bytes": 86293755,
+     "result": "accepted",
+     "declarations": 19696,
+     "check_seconds": 91.5,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19696 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+    }
+   ]
+  }
+ ],
+ "statements": [
+  {
+   "statement": "Lemma 1, backward error of a right residual",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.backward_error"
+   ],
+   "status": "partial",
+   "missing": "equality of the norm of E (Lean has the upper bound), the singular value form, the left residual form and the two by two example",
+   "level": "K2"
+  },
+  {
+   "statement": "Theorem 2, Bauer-Fike",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.bauerFike_core",
+    "CertifyMathlib.NonHermitian.bauerFike",
+    "CertifyMathlib.NonHermitian.bauerFike_matrix",
+    "CertifyMathlib.NonHermitian.bauerFike_matrix_sharp"
+   ],
+   "status": "proved",
+   "level": "K2"
+  },
+  {
+   "statement": "Theorem 2, residual form",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.bauerFike_residual",
+    "CertifyMathlib.NonHermitian.bauerFike_residual_matrix"
+   ],
+   "status": "proved",
+   "level": "K2"
+  },
+  {
+   "statement": "Lemma 3, the inverse from a computed inverse",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.neumann_bound",
+    "CertifyMathlib.NonHermitian.neumann_inverse"
+   ],
+   "status": "partial",
+   "missing": "invertibility of W and the formula for the inverse of V (the code uses only the bound)",
+   "level": "K2"
+  },
+  {
+   "statement": "Theorem 4 (a), similarity",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [],
+   "status": "not attempted",
+   "missing": "not needed by the Lean proof of (b)",
+   "level": "none"
+  },
+  {
+   "statement": "Theorem 4 (b), discs",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.similarity_inclusion",
+    "CertifyMathlib.NonHermitian.disc_inclusion_matrix"
+   ],
+   "status": "proved",
+   "level": "K2"
+  },
+  {
+   "statement": "Theorem 4 (b) with Lemma 3, statements N2 and N3 of the code",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [
+    "CertifyMathlib.NonHermitian.disc_inclusion_certified"
+   ],
+   "status": "proved",
+   "level": "K2"
+  },
+  {
+   "statement": "Theorem 4 (c) to (e), counting",
+   "source": "docs/proofs/E-02_non_hermitian.md section 1",
+   "theorems": [],
+   "status": "not attempted",
+   "missing": "continuity of polynomial roots in a real parameter with multiplicity",
+   "level": "none"
+  },
+  {
+   "statement": "Propositions 5 to 7, floating-point accounting",
+   "source": "docs/proofs/E-02_non_hermitian.md sections 1 and 2",
+   "theorems": [],
+   "status": "not attempted",
+   "missing": "floating-point model of ENCLOSURE.md not yet applied",
+   "level": "none"
+  }
+ ],
+ "theorems": [
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike_core",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike_residual",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_residual_matrix"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.similarity_inclusion",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.disc_inclusion_matrix, CertifyMathlib.NonHermitian.disc_inclusion_certified, CertifyMathlib.NonHermitian.bauerFike_matrix_sharp"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.neumann_bound",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.disc_inclusion_certified"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.neumann_inverse",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.disc_inclusion_certified"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.backward_error",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.diag_lower",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix, CertifyMathlib.NonHermitian.bauerFike_residual_matrix, CertifyMathlib.NonHermitian.disc_inclusion_matrix, CertifyMathlib.NonHermitian.disc_inclusion_certified"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.toEuclideanLin_diagonal_apply",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix, CertifyMathlib.NonHermitian.disc_inclusion_certified"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.toEuclideanLin_mul_apply",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix, CertifyMathlib.NonHermitian.disc_inclusion_certified"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.toEuclideanLin_one_apply",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted as a dependency in the export of CertifyMathlib.NonHermitian.bauerFike_matrix, CertifyMathlib.NonHermitian.disc_inclusion_matrix"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike_matrix",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike_residual_matrix",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.disc_inclusion_matrix",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.bauerFike_matrix_sharp",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  },
+  {
+   "name": "CertifyMathlib.NonHermitian.disc_inclusion_certified",
+   "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "level": "K2",
+   "nanoda": "accepted (own export)"
+  }
+ ]
+}
