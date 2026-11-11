@@ -81,6 +81,31 @@ enumerations).
   certify-ed-project (`reverification_lean/NONHERMITIAN.md`). The counting statement of N4 and the floating-point
   accounting are not.
 
+### Lean product track: external verifiers (roadmap item N-04; track/external-verifier)
+
+- `certify-ed verify CERT.json` checks the integrity of a saved certificate (body hash, array hashes, scope block, as
+  `Certificate.load` does) and prints its summary. With `--external CMD`, or the environment variable
+  `CERTIFY_ED_EXTERNAL_VERIFIER`, it then runs a configured external verifier on the certificate, for example the exact
+  checker `cecheck` of the Lean re-verification through its driver `Verify/cecheck_bundle.py` in certify-ed-project, or
+  the C verifier of `verifier/`. The command is a template with the placeholders `{certificate}`, `{sidecar}`,
+  `{bundle}`, `{operator}` and `{report}`; it runs without a shell. Exit code 0 of the program is recorded as PASS, 1
+  as FAIL, any other as ERROR, and a run past `--timeout` as TIMEOUT.
+- The verdict goes to a separate external-verification record (schema `certify-ed/external-verification/1`, default
+  `CERT.external.json`): the hashes and statuses of the certificate as read, the command and the SHA-256 of the
+  program, exit code, run time, the tails of its output, and the verifier's JSON report (hashed; its `verdict`, `level`
+  and `statements` copied as the verifier's words). The certificate file is not modified and no status, bound or count
+  depends on the verdict; the record states this in `status_effect`. The command exits with 0 when the integrity
+  check passed and the verifier (if any) reported PASS, 1 when the integrity check failed (no verifier is then run),
+  and 2 when the verifier reported FAIL, ERROR or TIMEOUT.
+- API: `certify_ed.external.verify_external(certificate, command, bundle=, operator=, sidecar=, report=, record=,
+  timeout=)`, also importable from `certify_ed.api`. `certify_ed/external.py` is listed in
+  `provenance.NON_COMPUTATIONAL`, and no module that computes a status imports it (test
+  `test_no_status_code_imports_the_external_module`), so the computational source hash is unchanged.
+- Tests: `tests/test_external_verifier.py` (stub verifiers for PASS, FAIL, ERROR, TIMEOUT and a missing program; the
+  certificate bytes and statuses unchanged after every outcome; an unset placeholder stops the run before the program
+  starts; CLI exit codes and the environment variable; no verifier runs on a certificate that fails its integrity
+  check). `docs/api.md` regenerated (`docs/make_api.py` gains the section on external verifiers).
+
 ## [3.2.2] — 2026-11-11 (branch `track/hardening-3.2.2` on `dev/3.2` fa86456; the tag `v3.2.2` and its evidence run follow the merge)
 
 Hardening release (Wave 5 of the development roadmap, items N-01, N-02, N-03, H-02). No bound changes inside the range of the

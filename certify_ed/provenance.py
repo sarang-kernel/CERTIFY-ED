@@ -21,6 +21,9 @@ NON_COMPUTATIONAL = ("certify_ed/cli.py", "certify_ed/testing.py", "certify_ed/p
                      "certify_ed/viewer.py",
                      # schema validation and conformance: they read certificates and bundles, never write a number
                      "certify_ed/schema.py", "certify_ed/conformance.py",
+                     # external verifiers (N-04): run a configured program on a saved certificate and write its verdict
+                     # to a separate record; the verdict is never read back into a status, a bound or a count
+                     "certify_ed/external.py",
                      # producer-side helpers (3.2): the record hook writes the producer's arrays unchanged into a
                      # bundle; the integrations build Claims and ModelSpecs and call certify()
                      "certify_ed/recorder.py", "certify_ed/integrations/__init__.py",

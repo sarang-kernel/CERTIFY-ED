@@ -83,6 +83,14 @@ for g, names in GROUPS.items():
     lines += [""]
 lines += ["## Exact layer (module level)", "", entry("exact_sectors.exact_count_below", exact_sectors.exact_count_below),
           entry("checker.inertia_exact", checker.inertia_exact), entry("checker.is_hermitian_exact", checker.is_hermitian_exact), ""]
+from certify_ed import external as _ext  # noqa: E402
+lines += ["## External verifiers (module level, 3.3, N-04)", "", entry("external.verify_external", _ext.verify_external),
+          entry("external.split_command", _ext.split_command), entry("external.expand_command", _ext.expand_command),
+          entry("external.verdict_from_exit_code", _ext.verdict_from_exit_code),
+          "  `certify-ed verify CERT.json --external CMD` runs a configured external verifier (for example the exact "
+          "checker `cecheck` through its driver in certify-ed-project) and writes its verdict to a separate record "
+          f"(schema `{_ext.SCHEMA}`); no status, bound or count depends on it. `verify_external` is also importable "
+          "from `certify_ed.api`.", ""]
 lines += ["## Applications", "", entry("apps.aklt.certify_lattice", aklt.certify_lattice),
           entry("apps.aklt.eta_float", aklt.eta_float), entry("apps.aklt.square_octagon_criterion", aklt.square_octagon_criterion),
           entry("apps.aklt.kernel.kernel_check", kernel.kernel_check),
