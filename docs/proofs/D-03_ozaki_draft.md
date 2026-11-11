@@ -158,7 +158,7 @@ complete (every E2 point below).
 - **Random cases (1000):** splits (sum of slices plus remainder equal to the input, slice entries integers of at
   most β bits times their unit, every slice product equal to its exact value), Gram matrices, column dots and
   residuals of sparse and dense, real and complex Hermitian matrices with dyadic and non-dyadic entries, exact and
-  perturbed eigenvectors, n up to 80, magnitudes from 2⁻³⁰⁰ to 2³⁰⁰ and columns spanning 40 orders of magnitude,
+  perturbed eigenvectors, n up to 80, magnitudes from 2⁻³⁰⁰ to 2³⁰⁰ and columns spanning up to 39 orders of magnitude,
   1 to 8 slices (so that remainders are exercised); for residuals also `upper` against the exact ‖r_c‖₂.
 - **Adversarial cases (14):** worst-case slice magnitudes 2^β − 1 at n = 2000; entries just below 2⁴⁸⁰; exactly
   orthogonal columns; subnormal entries; a zero column; exact rint ties; purely imaginary data; 53-bit significands;
@@ -225,9 +225,11 @@ show: any gain for spec or matrix-free operators (not supported), for S3 (unchan
 2⁻²Z and X = e_j), the split has one slice, every product is exact, T = 1 or 2 and E = u|R̂| + O(2⁻¹⁰⁷⁴): for an
 exact eigenvector R̂ = 0 and the radius is 2·2⁻¹⁰⁷⁴ (the adversarial "exact eigenvectors" case).
 
-(ii) *Reduction to the default bound.* With K = 0 slices everything is remainder: R_X = X, R_H = H, r_μ = μ, and
-the remainder bound becomes |H||X| + |H||X| + |X||μ| + |X||μ| times (1 + γ_{w+6}): the structure of the default E
-(twice its leading term), so the draft contains the default accounting as its worst case.
+(ii) *No slice formed.* If no slice is formed (all data below the unit floor), R_X = X, R_H = H, r_μ = μ and X_s = 0:
+R̂ = 0 and the bound is (|H||X| + |X||μ|)(1 + γ_{w+6})(1 + 8u)² plus underflow terms, the trivial bound |R| ≤
+|H||X| + |X||μ|. One slice already leaves |R_X| ≤ 2^{s_1−1} entrywise, about 2^{−β} of the column's largest entry,
+and every further slice another factor 2^{−β}; the default E (a factor γ_{w+2} ≈ (w + 2)u on the same quantity) is
+reached after about 53/β slices, and the bound then keeps shrinking until the split is complete.
 
 (iii) *Gram of one vector.* For g = h = 1 and a complete split, G = fl(Σ_{p,q} x_p^T x_q) by Sum2 and E ≈ u|G|,
 the same accuracy as `fp.exact_dot` (2u|s|).
