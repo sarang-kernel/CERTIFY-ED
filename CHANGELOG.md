@@ -23,9 +23,10 @@ enumerations).
   cases), an independent second derivation and adversarial script under `docs/proofs/independent/` (verdict
   AGREES-WITH-REMARKS, `docs/proofs/VERDICTS.md`), the cases in `corpus/nonhermitian/` (11 cases, 0 unsound, 0 alarms)
   and `tests/test_nonhermitian.py` (14 tests).
-- The exact parts (Lemma 1, Theorem 2 with its residual form, Lemma 3, Theorem 4 (b) with Lemma 3) are formalized in
-  Lean 4 with Mathlib in the separate repository certify-ed-project (`reverification_lean/NONHERMITIAN.md`). The counting
-  statement and the floating-point accounting are not.
+- The exact parts that N1 to N3 use (the bound of Lemma 1, Theorem 2 with its residual form, the bound of Lemma 3, and
+  Theorem 4 (b) combined with Lemma 3) are formalized in Lean 4 with Mathlib in the separate repository
+  certify-ed-project (`reverification_lean/NONHERMITIAN.md`). The counting statement of N4 and the floating-point
+  accounting are not.
 
 ## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
 
