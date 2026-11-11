@@ -20,11 +20,14 @@ or the document's statement may not be what the code needs. These three gaps are
 `correspondence` of `results/mathlib_enclosure.json` and `results/mathlib_counting.json` describes in words, and that a
 reader has to check by reading.
 
-The findings of the formalization show that the gaps are real in both directions. The Lean work found statements of
-the documents that are false as written (the closing condition of guard 6 of Theorem 1, the constant 9/8 of the 3.1
-logarithm bound, the missing hypothesis of Proposition 14, the size range of guard 4) and one argument whose margin is
-of second order rather than of the kind the document gives (D-02 part b); `docs/failures/07_found_while_formalizing.md`
-lists them. None of them changes a stored certificate. Each one would have been found by a careful human re-derivation
+The findings of the formalization show that the gaps are real. The Lean work found sentences of the documents that
+are false as written (the closing condition of guard 6 of Theorem 1, which admits one failing value beyond the stated
+range; the display of Proposition 14 without its hypothesis; one inequality in the proof of Theorem U5), an argument
+that holds for a different reason than the one given (D-02 part b, by a second-order margin), and two statements that
+are slightly too strong (the exactness of `from_float`, the index of Lemma A1 for complex data). It also confirmed a
+remark the documents already make (the constant 9/8 of the 3.1 logarithm bound) and showed that guard 4, true in its
+stated range, fails just beyond it, a range that the code does not check. `docs/failures/07_found_while_formalizing.md`
+lists all eleven. None of them changes a stored certificate. Each one would have been found by a careful human re-derivation
 as well, and each was found here because the Lean kernel does not accept an argument that only nearly holds.
 
 ## The options
