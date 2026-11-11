@@ -13,16 +13,17 @@ and the exact re-check (checker.inertia_exact: an object matrix, the dense LDL^T
 FLINT matrices, and the row-block residual products) from two constants measured on this machine, bytes per entry
 and seconds per n^3, which the caller may replace.
 """
-import itertools
 from math import comb
 
 import numpy as np
 
 from .graph import Graph, slot_reduction, union_coords
 
-# Exact inertia (checker.inertia_exact) on this machine: placeholders replaced by measured values in
-# experiments/n12_honeycomb_estimate.py (see its record).
-EXACT_BYTES_PER_ENTRY = 80.0
+# Exact inertia (checker.inertia_exact) of a dense block: about 100 bytes per entry at the peak (the object matrix with
+# one Python integer per entry, the binary64 factors L and D, their int64 copies, the transient list of L^T and the two
+# FLINT matrices), and seconds per n^3 calibrated by experiments/n12_honeycomb_estimate.py on the E10 blocks of the
+# 3.2.1 evidence run; both can be passed explicitly.
+EXACT_BYTES_PER_ENTRY = 100.0
 EXACT_SECONDS_PER_N3 = 1.0e-8
 
 
@@ -114,7 +115,8 @@ def plan_eta(g: Graph, L, C, R, sigmas=(), use_flip=True, bytes_per_entry=None, 
             f["rows_with_site_symmetry"] = -(-f["rows"] // nsig)
     big = max(factored, key=lambda f: f.get("rows_with_site_symmetry", f["rows"]))
     n = big.get("rows_with_site_symmetry", big["rows"])
-    tot_n3 = sum(f["factorizations"] * float(f.get("rows_with_site_symmetry", f["rows"])) ** 3 for f in factored)
+    tot_n3 = sum(f["factorizations"] * (nsig if nsig > 1 else 1) * float(f.get("rows_with_site_symmetry", f["rows"])) ** 3
+                 for f in factored)
     return {
         "sites": len(g.z), "edges": len(g.edges),
         "phys_dims": {"L": rL["phys"], "C": rC["phys"], "R": rR["phys"]},
@@ -129,7 +131,7 @@ def plan_eta(g: Graph, L, C, R, sigmas=(), use_flip=True, bytes_per_entry=None, 
         "largest_block": {"rows": n, "float_layer_MiB": dense_inertia_mb(n), "float_layer_seconds": dense_inertia_seconds(n),
                           "exact_GiB": bpe * n * n / 2 ** 30, "exact_seconds": spn * float(n) ** 3,
                           "dense_float64_copy_GiB": 8.0 * n * n / 2 ** 30},
-        "all_blocks_exact_seconds": spn * tot_n3,
+        "sum_n3": tot_n3, "all_blocks_exact_seconds": spn * tot_n3,
         "model": {"exact_bytes_per_entry": bpe, "exact_seconds_per_n3": spn},
         "binomial_check": {"C(22,11)": comb(22, 11)},
     }
