@@ -62,6 +62,11 @@ The source hash changes (computational files: `fp.py`, `enclosure.py`, `ldl_resi
 `enclosure.py`, `inertia.py` and `certify.py` grows, so the E6 sample of the 3.2.2 run differs from that of 3.2.1 although the
 seed is the same.
 
+Full test suite at ddf83e1 (Windows, Python 3.11.17, numpy 2.4.4, scipy 1.17.1, hypothesis 6.170.15; a machine shared with other work): 1210 passed, 16 skipped (no C compiler for
+the verifier, the Linux .so probe, figure scripts without run records, the 12870 fixture, a check that needs a primary git
+checkout), 0 failed, in 3 h 04 min. The eight mutants of N-02 were re-run against that head with `experiments/e6_pin_check.py`:
+all killed.
+
 ## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
 
 One robustness fix found by the 3.2.0 evidence run; no bound, status rule or record field changes.
