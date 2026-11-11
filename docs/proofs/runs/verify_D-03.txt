@@ -1,2 +1,2 @@
-D-03 verification: 1000 random + 13 adversarial cases (3 refused as hypothesis not met), scalar grid 8044 values; 4 negative controls, 0 of them failed to detect
-violations: {'split': 0, 'gram': 0, 'coldots': 0, 'residual_entries': 0, 'residual_norms': 0, 'scalar': 0} total 0 (75 s)
+D-03 verification: 1000 random + 14 adversarial cases (2 refused as hypothesis not met), scalar grid 8044 values; 4 negative controls, 0 of them failed to detect
+violations: {'split': 0, 'gram': 0, 'coldots': 0, 'residual_entries': 0, 'residual_norms': 0, 'scalar': 0} total 0 (35 s)

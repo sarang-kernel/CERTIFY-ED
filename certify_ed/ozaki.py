@@ -21,10 +21,11 @@ What the module returns, with u = 2^-53:
   Theorem-1 quantities (upper bound on ||H x_c - mu_c x_c||_2, radius) built from them as enclosure.residuals does.
 
 Hypotheses the code checks and refuses otherwise (`NotApplicable`): finite data, |entries| < 2^480 (no overflow
-anywhere), at most 2^26 terms per inner product and dimension at most 2^26, every slice unit s >= -1074 (slicing stops
-there and leaves the rest to the remainder) and every unit pair s + s' >= -1074 (slice products are exact also in the
-subnormal range), a real claimed spectrum mu, and a stored dense or sparse operator (spec and black-box operators are
-not supported).
+anywhere), at most 2^26 terms per inner product and dimension at most 2^26, a real claimed spectrum mu, and a stored
+dense or sparse operator (spec and black-box operators are not supported). Slices are formed only with units
+s >= -537, so every unit pair has s + s' >= -1074 and the slice products are exact also in the subnormal range; what
+lies below 2^-537 times the unit stays in the remainder, which is bounded, not summed (the pair check is kept as a
+second guard).
 """
 
 from __future__ import annotations
@@ -41,6 +42,8 @@ from .fp import U, ULP_MIN, _GUARD, gamma, norm2_upper, norm2_lower, up
 DEFAULT_MAX_SLICES = 8
 MAX_EXPONENT = 480          # |entries| < 2^480: products of two slices and their sums stay far below 2^1024
 MIN_UNIT_SUM = -1074        # s + s' >= -1074: an integer of at most 53 bits times 2^(s + s') is a binary64 number
+MIN_UNIT = -537             # slices are formed only with units >= -537, so that every pair of units has s + s' >= -1074;
+#                             what lies below stays in the remainder (bounded, not summed)
 
 
 class NotApplicable(ValueError):
@@ -107,12 +110,14 @@ def _slice_values(v: np.ndarray, t, beta: int, max_slices: int):
     out, units = [], []
     for p in range(1, max(1, int(max_slices)) + 1):
         s = np.asarray(t - p * beta)
-        if s.size and int(np.min(s)) < MIN_UNIT_SUM:
-            break                             # Lemma S1 needs s >= -1074: the rest stays in the remainder
-        s = s.astype(np.int32)
+        active = s >= MIN_UNIT                # entries (columns, rows) whose slice p is formed; the others keep r
+        if not np.any(active):
+            break
+        s = np.maximum(s, MIN_UNIT).astype(np.int32)
         m = np.rint(np.ldexp(r, -s))          # |m| <= 2^beta; the scaling by a power of two is exact where m != 0
-        xp = np.ldexp(m, s)                   # exact: an integer of at most beta + 1 bits times 2^s, s >= -1074
-        r = r - xp                            # exact (Lemma S2)
+        m = np.where(active, m, 0.0)
+        xp = np.ldexp(m, s)                   # exact: an integer of at most beta + 1 bits times 2^s, s >= -537
+        r = r - xp                            # exact (Lemma S2; r unchanged where the slice is not formed)
         out.append(xp)
         units.append(s)
         if not np.any(r):
@@ -569,4 +574,4 @@ def residual_report(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES):
 
 __all__ = ["NotApplicable", "split_beta", "split_columns", "split_complex_columns", "split_rows", "Split",
            "RowSplit", "ozaki_gram", "ozaki_column_dots", "ozaki_residual", "GramResult", "OzakiResidual",
-           "DEFAULT_MAX_SLICES", "MIN_UNIT_SUM", "MAX_EXPONENT", "MAX_TERMS", "residual_report", "sum2_coefficient"]
+           "DEFAULT_MAX_SLICES", "MIN_UNIT", "MIN_UNIT_SUM", "MAX_EXPONENT", "MAX_TERMS", "residual_report", "sum2_coefficient"]

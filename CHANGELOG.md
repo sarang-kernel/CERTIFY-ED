@@ -15,10 +15,11 @@ moved into a function).
   `ozaki_column_dots` (X^H Y with an entrywise bound), `ozaki_residual` (H X - X diag(mu) with an entrywise bound
   without the gamma_w (|H||X| + |X||mu|) term), `residual_report` for the new keyword
   `enclosure.enclose(..., residual_report=None)` (None, the value of every caller, keeps the 3.2 path bit for bit).
-  Refused with `NotApplicable`: non-finite data, entries >= 2^480, more than 2^26 terms, slice units below -1074,
-  spec and black-box operators. Draft derivation `docs/proofs/D-03_ozaki_draft.md` (Theorems G and R, status
-  UNVERIFIED, independent re-derivation not done, Sarang's check pending); `docs/proofs/verify_D-03.py`: 1000
-  random + 13 adversarial cases against exact rationals (python-flint), 4 negative controls detected, 0 violations
+  Refused with `NotApplicable`: non-finite data, entries >= 2^480, more than 2^26 terms, spec and black-box
+  operators; slices are formed only with units >= 2^-537 (every unit pair then sums to >= -1074), smaller parts are
+  bounded as remainder. Draft derivation `docs/proofs/D-03_ozaki_draft.md` (Theorems G and R, status UNVERIFIED,
+  independent re-derivation not done, Sarang's check pending); `docs/proofs/verify_D-03.py`: 1000 random + 14
+  adversarial cases against exact rationals (python-flint), 4 negative controls detected, 0 violations
   (`docs/proofs/runs/verify_D-03.txt`); `tests/test_ozaki.py` (14). Measurement on the eleven E2 points of the 3.2.1
   run (`experiments/d03_ozaki_tightness.py`, record `docs/proofs/runs/D-03_tightness.json`; the default radii
   reproduce the run's records): Theorem-1 radii 0.32 to 0.62 of the default, largest enclosure radius 0.24 to 0.64,

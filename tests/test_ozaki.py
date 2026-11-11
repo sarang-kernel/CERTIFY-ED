@@ -204,8 +204,6 @@ def test_refusals():
     with pytest.raises(oz.NotApplicable):
         oz.ozaki_gram(np.array([[2.0 ** 500], [1.0]]))
     with pytest.raises(oz.NotApplicable):
-        oz.ozaki_gram(np.array([[1e-300], [1e-301]]))                 # slice units below 2^-1074 / 2
-    with pytest.raises(oz.NotApplicable):
         oz.ozaki_gram(np.array([[np.nan], [1.0]]))
     with pytest.raises(oz.NotApplicable):
         oz.ozaki_residual(object(), [0.0], np.ones((2, 1)))
@@ -217,9 +215,10 @@ def test_refusals():
 def test_subnormal_and_zero_columns():
     X = np.zeros((6, 3))
     X[:, 1] = [1.0, 2.0 ** -1060, 5e-324, 0.0, -3.0, 2.0 ** -500]
-    X[:, 2] = [1e-310, 0.0, 0.0, 0.0, 0.0, 0.0]                      # a subnormal-only column: units too small
-    with pytest.raises(oz.NotApplicable):
-        oz.ozaki_gram(X)
-    r = oz.ozaki_gram(X[:, :2])
-    ex_re, ex_im = exact_gram(X[:, :2], X[:, :2])
-    assert violations(r.G, r.E, ex_re, ex_im) == 0
+    X[:, 2] = [1e-310, 0.0, 0.0, 0.0, 0.0, 0.0]                      # a subnormal-only column: no slice above 2^-537
+    for Y in (X, X[:, :2], np.array([[1e-300], [1e-301]])):
+        r = oz.ozaki_gram(Y)                                           # the tiny parts are bounded as remainder
+        ex_re, ex_im = exact_gram(Y, Y)
+        assert violations(r.G, r.E, ex_re, ex_im) == 0
+    S = oz.split_columns(X, 25)
+    assert min(int(u.min()) for u in S.units) >= oz.MIN_UNIT and not np.any(S.slices[0][:, 2])

@@ -26,9 +26,10 @@ operands, by multiplications, additions or FMAs in any order (no Strassen-type a
 recorded in `fp.float_env_record`.
 
 **Hypotheses (checked by the code, `NotApplicable` otherwise).** (H1) all data finite; (H2) every entry of
-magnitude < 2^480; (H3) n ≤ 2²⁶ and w ≤ 2²⁶ (the range of finding L-3); (H4) every slice unit s used satisfies
-s ≥ −1074, and every pair of units multiplied satisfies s + s′ ≥ −1074 (slicing stops before a unit below −1074;
-the rest stays in the remainder, which is bounded, not summed).
+magnitude < 2^480; (H3) n ≤ 2²⁶ and w ≤ 2²⁶ (the range of finding L-3); (H4) slices are formed only with units
+s ≥ −537 (`MIN_UNIT`), so that every pair of units multiplied satisfies s + s′ ≥ −1074; an entry whose next slice
+would have a smaller unit keeps its remainder, which is bounded, not summed (the pair check is kept as a second
+guard).
 
 **Construction.** β(L) := ⌊(53 − ⌈log₂ L⌉)/2⌋ (`split_beta`), the largest β with L·2^{2β} ≤ 2⁵³. A vector a with
 exponent t is split into slices a_1, …, a_K and a remainder r_K: r_0 = a, s_p = t − pβ, a_p = 2^{s_p}·rint(r_{p−1}
@@ -69,11 +70,13 @@ claim is the nearest-integer property. ∎
 53. If e ≥ s, r·2^{−s} is an integer and x = r. If e < s, both r and x are multiples of 2^e, so r − x = d·2^e with an
 integer |d| ≤ 2^{s−1−e} ≤ 2⁵², and d·2^e ∈ F. ∎
 
-**Lemma S3 (split).** For a vector with exponent t and slices p = 1, …, K with s_p = t − pβ ≥ −1074: a = a_1 + … +
-a_K + r_K exactly, (a_p)_i = m 2^{s_p} with |m| ≤ 2^β, and |(r_p)_i| ≤ 2^{s_p−1}.
+**Lemma S3 (split).** For a vector with exponent t and slices p = 1, …, K: a = a_1 + … + a_K + r_K exactly; where
+s_p = t − pβ ≥ −537, (a_p)_i = m 2^{s_p} with |m| ≤ 2^β and |(r_p)_i| ≤ 2^{s_p−1}; where s_p < −537, a_p = 0 and
+r_p = r_{p−1} (the slice is not formed, and since s_p decreases with p it is not formed later either).
 
-*Proof.* Induction on p with S1 and S2: |r_0| < 2^t = 2^{s_1+β}; for p ≥ 2, |r_{p−1}| ≤ 2^{s_{p−1}−1} =
-2^{s_p+β−1} < 2^{s_p+β}. Each r_p = r_{p−1} − a_p is computed exactly (S2), so the identity telescopes. ∎
+*Proof.* Induction on p with S1 and S2 for the formed slices: |r_0| < 2^t = 2^{s_1+β}; for p ≥ 2, |r_{p−1}| ≤
+2^{s_{p−1}−1} = 2^{s_p+β−1} < 2^{s_p+β}. Each r_p = r_{p−1} − a_p is computed exactly (S2, or a_p = 0), so the
+identity telescopes. ∎
 
 **Lemma P (exact slice products).** Let a_l = m_l 2^σ, b_l = m′_l 2^τ (l = 1, …, L) with integers |m_l|, |m′_l| ≤
 2^β, L·2^{2β} ≤ 2⁵³, σ + τ ≥ −1074 and σ + τ + 53 < 1024. Every evaluation of Σ_l a_l b_l by products, additions and
@@ -86,7 +89,7 @@ every operation has an exact result in F and returns it. ∎
 For H X the L = w_i terms of entry (i, c) of a slice product H_q X_p share the unit σ_iq + τ_cp (row exponent of H,
 column exponent of X); β = β(w) gives w·2^{2β} ≤ 2⁵³. For X_p^T Y_q the n terms of entry (a, b) share τ_ap + τ′_bq;
 β = β(n). The terms μ_c x_ic are single products (L = 1). (H2) and β ≥ 13 give σ + τ + 53 ≤ 2·(480 − 13) + 53 <
-1024; (H4) is checked on the smallest units of the two operands (`_units_ok`).
+1024; (H4) gives σ + τ ≥ −1074 (and `_units_ok` checks it again on the smallest units of the two operands).
 
 **Lemma A (Sum2).** For t_1, …, t_T ∈ F with Tu < 1, Sum2 (Ogita, Rump and Oishi, SIAM J. Sci. Comput. 26, 2005,
 Algorithm 4.4: TwoSum chain, the errors added in floating point, one final addition) returns v with
@@ -133,18 +136,18 @@ complete (every E2 point below).
 
 | proof object | code (`certify_ed/ozaki.py`) | rounding direction |
 |---|---|---|
-| β(L), (H3) | `split_beta`, line 53 | exact integer arithmetic |
-| exponents t | `_exponent`, line 65 (frexp) | exact |
-| slices and remainder (S1, S2, S3), stop at units below −1074 (H4) | `_slice_values`, lines 103 and 110 | exact |
-| column / row splits | `split_columns` 123, `split_complex_columns` 137, `split_rows` 194 | exact |
-| unit-pair check (H4) | `_units_ok`; raised at lines 358, 406, 484 | refusal |
-| Sum2 (Lemma A) and its bound | `_Sum2.add` 262, `_Sum2.result` 275, `sum2_coefficient` 285 | upward |
-| Gram slice products (Lemma P) | `ozaki_gram`, line 370 | exact |
-| Gram remainder | `_remainder_gram`, line 332 | upward |
-| residual slice products, μ terms | `ozaki_residual`, lines 505 and 513 | exact |
-| residual remainder | `ozaki_residual`, line 537 | upward |
-| Theorem-1 upper bound and radius | `ozaki_residual`, lines 544 and 546 | upward |
-| hook into Theorems 1, 2, 2′ | `residual_report` 553; `enclosure.enclose(..., residual_report=...)` | as the default path |
+| β(L), (H3) | `split_beta`, line 56 | exact integer arithmetic |
+| exponents t | `_exponent`, line 68 (frexp) | exact |
+| slices and remainder (S1, S2, S3), the floor 2⁻⁵³⁷ of (H4) | `_slice_values`, lines 106 and 113 | exact |
+| column / row splits | `split_columns` 128, `split_complex_columns` 142, `split_rows` 199 | exact |
+| unit-pair check (second guard of (H4)) | `_units_ok`; raised at lines 363, 411, 489 | refusal |
+| Sum2 (Lemma A) and its bound | `_Sum2.add` 267, `_Sum2.result` 280, `sum2_coefficient` 290 | upward |
+| Gram slice products (Lemma P) | `ozaki_gram`, line 375 | exact |
+| Gram remainder | `_remainder_gram`, line 337 | upward |
+| residual slice products, μ terms | `ozaki_residual`, lines 510 and 518 | exact |
+| residual remainder | `ozaki_residual`, line 542 | upward |
+| Theorem-1 upper bound and radius | `ozaki_residual`, lines 549 and 551 | upward |
+| hook into Theorems 1, 2, 2′ | `residual_report` 558; `enclosure.enclose(..., residual_report=...)` | as the default path |
 
 ## 4 Computational verification
 
@@ -157,15 +160,16 @@ complete (every E2 point below).
   residuals of sparse and dense, real and complex Hermitian matrices with dyadic and non-dyadic entries, exact and
   perturbed eigenvectors, n up to 80, magnitudes from 2⁻³⁰⁰ to 2³⁰⁰ and columns spanning 40 orders of magnitude,
   1 to 8 slices (so that remainders are exercised); for residuals also `upper` against the exact ‖r_c‖₂.
-- **Adversarial cases (13):** worst-case slice magnitudes 2^β − 1 at n = 2000; entries just below 2⁴⁸⁰; exactly
+- **Adversarial cases (14):** worst-case slice magnitudes 2^β − 1 at n = 2000; entries just below 2⁴⁸⁰; exactly
   orthogonal columns; subnormal entries; a zero column; exact rint ties; purely imaginary data; 53-bit significands;
-  exact eigenvectors (residual exactly zero); a dense row width; the scalar grids of Lemma P (β rule for L up to 2²⁶)
-  and of Lemma A (c_T). Three inputs outside (H2) or (H4) or non-finite are refused, as required.
+  columns below 2⁻⁵³⁷ (remainder only); exact eigenvectors (residual exactly zero); a dense row width; the scalar
+  grids of Lemma P (β rule for L up to 2²⁶) and of Lemma A (c_T). Two inputs outside (H1) or (H2) are refused, as
+  required.
 - **Negative controls (4), each detected:** slices four bits wider than β(n) make the BLAS inner product round; the
   plain floating-point residual violates a zero error bound; the remainder bound of a truncated split (one slice)
   shrunk 1000-fold is violated; the same for the Gram bound.
-- **Result:** 1000 random + 13 adversarial cases, 3 refused (hypothesis not met), 4 negative controls detected,
-  **0 violations** (75 s). `tests/test_ozaki.py` (14 tests) repeats the main checks in the suite.
+- **Result:** 1000 random + 14 adversarial cases, 2 refused (hypothesis not met), 4 negative controls detected,
+  **0 violations** (35 s). `tests/test_ozaki.py` (14 tests) repeats the main checks in the suite.
 
 **Tightness and cost on the E2 points of the 3.2.1 run** (`experiments/d03_ozaki_tightness.py`, record
 `docs/proofs/runs/D-03_tightness.json`, minimum of three runs, one thread). The producer of `experiments/e2_cost.py`
@@ -230,6 +234,6 @@ the same accuracy as `fp.exact_dot` (2u|s|).
 
 ## 6 Status
 
-Derived 11 November 2026 (draft); machine-checked (1000 random + 13 adversarial cases, 4 negative controls detected,
+Derived 11 November 2026 (draft); machine-checked (1000 random + 14 adversarial cases, 4 negative controls detected,
 0 violations); independent re-derivation: not done; Sarang's check (D-12): pending. UNVERIFIED: not used by
 `certify()`; no default changes.

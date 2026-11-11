@@ -176,6 +176,7 @@ def main(argv=None):
     adv.append(("rint ties (half units)", np.ldexp(np.array([[1.5], [2.5], [-0.5], [3.0]]), -30) + 1.0, None))
     adv.append(("complex with zero real part", 1j * np.array([[1.0], [1e-9], [3.0]]), None))
     adv.append(("53-bit significands", np.array([[1.0 + 2.0 ** -52], [1.0 - 2.0 ** -53], [np.pi]]), None))
+    adv.append(("columns below 2^-537 (remainder only)", np.array([[1e-300, 1.0], [1e-301, 2.0 ** -600]]), None))
     for _name, X, Y in adv:
         try:
             r = oz.ozaki_gram(X, Y)
@@ -200,7 +201,7 @@ def main(argv=None):
     viol["residual_norms"] += bad_norms(r.upper, *ex)
     counts["adversarial"] += 1
     # refusal paths (hypotheses not met): counted, not checked
-    for X in (np.array([[2.0 ** 481], [1.0]]), np.array([[1e-300], [1e-301]]), np.array([[np.inf], [1.0]])):
+    for X in (np.array([[2.0 ** 481], [1.0]]), np.array([[np.inf], [1.0]])):
         try:
             oz.ozaki_gram(X)
             viol["gram"] += 1                                   # must refuse
