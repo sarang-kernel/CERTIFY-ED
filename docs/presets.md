@@ -60,6 +60,12 @@ time and memory per statement first; `certify-ed plan` prints it without running
   S1 reference build `dim x terms x 2 entries x 32 B`, S3/S8 dense factorization `2 n^2` entries (only when
   the dense path would be used), S6 `48 n^2` bytes. A factorization that fails for memory at run time is
   also NOT_CHECKED (`resource_failure`), not an exception.
+* **No budget, a memory cap** (3.2.2). Without `--budget-mb`, the memory left under the process's memory cap
+  (a Windows job object with a per-process or job memory limit, or `RLIMIT_AS` on POSIX, the caps the evidence
+  runs set; `certify_ed.cost.process_memory_cap`) takes the place of the budget: a statement whose estimate
+  exceeds it, and a factorization whose predicted peak (`cost.sparse_inertia_mb`, `cost.dense_inertia_mb`)
+  exceeds it, is NOT_CHECKED with `BUDGET_MEMORY` before it starts. The note names the mechanism, the cap and
+  the memory in use. Without a cap nothing is gated; a given budget is used as before and the cap is not read.
 * **`budget_seconds="auto"` / `--budget auto`** (3.2) sets the time budget from an advisory cost model
   (`certify_ed.cost`): wall seconds of S1+S2+S3 against the dimension, fitted to the E2 records of the 3.1.0
   evidence run (chain U(1) blocks 924/3432/12870: 0.7/2.9/65.5 s; k = 0 blocks 810/2704/9252: 0.9/2.7/17.8 s;
@@ -91,7 +97,7 @@ Used in `statements[].evidence.reason_code` and in `scope.out_of_scope[].reason_
 | `DEFAULT_SELECTION` | not part of the default selection; switched on by its option, a preset or --only |
 | `DEPENDENCY_NARROWED` | the statement needs another statement that the user excluded |
 | `BUDGET_TIME` | the time budget was spent before the statement could start |
-| `BUDGET_MEMORY` | the statement's estimated memory exceeds the memory budget |
+| `BUDGET_MEMORY` | the statement's estimated memory exceeds the memory budget, or without a budget the memory left under the process memory cap (since 3.2.2) |
 | `NEEDS_EIGENVECTORS` | the claim has eigenvalues only |
 | `NEEDS_SPEC` | no model specification was declared |
 | `NEEDS_MATRIX` | the operator is matrix-free and no stored reference matrix exists |
@@ -109,6 +115,7 @@ Used in `statements[].evidence.reason_code` and in `scope.out_of_scope[].reason_
 | `OUT_OF_SCOPE_DYNAMICS` | dynamical response and time evolution are not statements about eigenpairs of one matrix |
 | `OUT_OF_SCOPE_EXTRAPOLATION` | finite-size extrapolation and phase boundaries are not statements about any finite matrix |
 | `NOT_APPLICABLE` | the statement does not apply to this input |
+| `FP_GUARD_RANGE` | n, a row width or the length of a normed vector exceeds 2^26, the range of the floating-point guards (since 3.2.2; INCONCLUSIVE, not NOT_CHECKED) |
 
 ## The scope block
 

@@ -1237,6 +1237,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                 summ = ev.get("reason", "counts at the window edges could not be made exact")
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
+            if st == "NOT_CHECKED":
+                # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or
+                # could not be completed (MemoryError): the code is explicit, not read from the wording
+                code3 = "BUDGET_MEMORY"
             statements.append(_stmt("S3.completeness", st, summ, ev,
                                     ["Sylvester inertia of a computed LDL^T factorization with explicitly bounded "
                                      "backward error (Lemma 4 at three shifts per window edge; the count inequality "
@@ -1268,6 +1272,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                         "NOT_CHECKED": ev.get("reason", "")}[st]
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
+            if st == "NOT_CHECKED":
+                # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or
+                # could not be completed (MemoryError): the code is explicit, not read from the wording
+                code3 = "BUDGET_MEMORY"
             statements.append(_stmt("S3.completeness", st, summ, ev,
                                     ["Sylvester inertia of a computed LDL^T factorization with explicitly "
                                      "bounded backward error; standard floating-point model"],

@@ -236,22 +236,146 @@ def available_memory_mb() -> Optional[float]:
     return None
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Memory gate without a budget (3.2.2, roadmap N-03). When Options.budget_mb is None, the memory cap of the process
+# decides whether a statement or a factorization is attempted: the cap the evidence runs set (experiments/portable.py:
+# a Windows job object with JOB_OBJECT_LIMIT_PROCESS_MEMORY, which counts committed private memory, or RLIMIT_AS on
+# POSIX, which counts address space). The 3.2.0 run showed that an allocation beyond such a cap can end the process
+# instead of raising MemoryError (E4 W4 under 5 GiB); with the gate, a factorization whose estimate exceeds the memory
+# left under the cap is NOT_CHECKED before it starts. Advisory like the rest of this module: it never makes a
+# statement CERTIFIED or FAILED, and without a cap (or with a budget) nothing changes.
+# ---------------------------------------------------------------------------------------------------------------
+
+def _windows_job_memory_limit() -> Optional[Tuple[float, str]]:
+    """(limit in bytes, kind) of the job object the process belongs to (the innermost one when jobs are nested), or None
+    when the process is in no job or the job sets no memory limit."""
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    class IO_COUNTERS(ctypes.Structure):
+        _fields_ = [(n, ctypes.c_ulonglong) for n in ("ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
+                                                       "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+
+    class BASIC(ctypes.Structure):
+        _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                    ("LimitFlags", wintypes.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                    ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wintypes.DWORD),
+                    ("Affinity", ctypes.c_size_t), ("PriorityClass", wintypes.DWORD), ("SchedulingClass", wintypes.DWORD)]
+
+    class EXTENDED(ctypes.Structure):
+        _fields_ = [("BasicLimitInformation", BASIC), ("IoInfo", IO_COUNTERS), ("ProcessMemoryLimit", ctypes.c_size_t),
+                    ("JobMemoryLimit", ctypes.c_size_t), ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                    ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+    k32.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+                                              ctypes.POINTER(wintypes.DWORD)]
+    k32.QueryInformationJobObject.restype = wintypes.BOOL
+    info = EXTENDED()
+    if not k32.QueryInformationJobObject(None, 9, ctypes.byref(info), ctypes.sizeof(info), None):   # Extended
+        return None
+    flags = int(info.BasicLimitInformation.LimitFlags)
+    limits = []
+    if flags & 0x00000100:                                   # JOB_OBJECT_LIMIT_PROCESS_MEMORY
+        limits.append((float(info.ProcessMemoryLimit), "job object (per-process memory limit)"))
+    if flags & 0x00000200:                                   # JOB_OBJECT_LIMIT_JOB_MEMORY
+        limits.append((float(info.JobMemoryLimit), "job object (job memory limit)"))
+    return min(limits) if limits else None
+
+
+def _windows_private_bytes() -> Optional[float]:
+    """Committed private memory of this process (what a job object's memory limit counts), in bytes."""
+    import ctypes
+    from ctypes import wintypes
+
+    class PMC(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.GetCurrentProcess.restype = wintypes.HANDLE
+    k32.K32GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD]
+    c = PMC()
+    c.cb = ctypes.sizeof(c)
+    if not k32.K32GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(c), c.cb):
+        return None
+    return float(c.PagefileUsage)
+
+
+def process_memory_cap() -> Optional[dict]:
+    """The memory cap of this process, or None when there is none (or the platform does not say).
+
+    Returns {'mechanism', 'cap_mb', 'in_use_mb', 'headroom_mb'}: the job object's memory limit and the committed private
+    memory of the process (Windows), or the soft RLIMIT_AS and the address space in use, VmSize from /proc/self/statm
+    (POSIX; 0 when /proc is missing). headroom_mb = cap_mb - in_use_mb is what a new allocation may still use. A job
+    memory limit is shared by every process of the job; the headroom then counts this process only (an upper bound)."""
+    import sys
+    try:
+        if sys.platform == "win32":
+            lim = _windows_job_memory_limit()
+            if lim is None:
+                return None
+            cap, mech = lim
+            used = _windows_private_bytes() or 0.0
+        else:
+            import resource
+            soft, _hard = resource.getrlimit(resource.RLIMIT_AS)
+            if soft == resource.RLIM_INFINITY or soft <= 0:
+                return None
+            cap, mech, used = float(soft), "RLIMIT_AS", 0.0
+            try:
+                import os
+                with open("/proc/self/statm") as f:
+                    used = float(f.read().split()[0]) * os.sysconf("SC_PAGE_SIZE")
+            except (OSError, ValueError, IndexError):
+                used = 0.0
+    except Exception:
+        return None
+    mb = 2.0 ** 20
+    return {"mechanism": mech, "cap_mb": cap / mb, "in_use_mb": used / mb, "headroom_mb": max(0.0, (cap - used) / mb)}
+
+
+def memory_limit_mb(budget_mb: Optional[float]) -> Tuple[Optional[float], Optional[dict]]:
+    """(limit in MB, cap record) for the memory gates: budget_mb when given (record None); else the headroom under the
+    process memory cap (process_memory_cap), or (None, None) when there is no cap."""
+    if budget_mb is not None:
+        return float(budget_mb), None
+    cap = process_memory_cap()
+    if cap is None:
+        return None, None
+    return float(cap["headroom_mb"]), cap
+
+
+def memory_cap_note(cap: dict) -> str:
+    return (f"the memory left under the process memory cap ({cap['mechanism']}: cap {cap['cap_mb']:.0f} MB, "
+            f"{cap['in_use_mb']:.0f} MB in use, {cap['headroom_mb']:.0f} MB left; no memory budget was given)")
+
+
 def recommend_inertia_method(n: int, nnz: Optional[int], dense_operator: bool, complex_: bool = False,
                              budget_mb: Optional[float] = None, dense_max: int = 2500) -> Tuple[str, str]:
     """(method, reason) for Options.inertia_method='auto'.
 
     The rule of 3.1 (inertia.inertia): dense for a dense operator or a sparse one of dimension <= dense_max,
     else sparse. New in 3.2: when that rule picks dense for a SPARSE operator and the predicted dense peak
-    (dense_inertia_mb) exceeds the memory limit -- budget_mb when given, else the available physical memory --
-    the sparse path is taken instead. A dense operator has no sparse factorization to fall back to."""
+    (dense_inertia_mb) exceeds the memory limit -- budget_mb when given, else the available physical memory or, when
+    smaller, the memory left under the process memory cap (3.2.2) -- the sparse path is taken instead. A dense
+    operator has no sparse factorization to fall back to."""
     if dense_operator:
         return "dense", "dense operator: Bunch-Kaufman on the stored matrix"
     if n > dense_max:
         return "sparse", f"dimension {n} > {dense_max}: SuperLU in symmetric mode"
     need = dense_inertia_mb(n, complex_)
     limit = budget_mb if budget_mb is not None else available_memory_mb()
+    what = "budget" if budget_mb is not None else "available"
+    if budget_mb is None:
+        # 3.2.2 (N-03): under a process memory cap the headroom below it is a limit too
+        cap_limit, _cap = memory_limit_mb(None)
+        if cap_limit is not None and (limit is None or cap_limit < limit):
+            limit, what = cap_limit, "left under the process memory cap"
     if limit is not None and need > limit:
-        return "sparse", (f"dense LDL^T would need about {need:.0f} MB > {'budget' if budget_mb is not None else 'available'} "
+        return "sparse", (f"dense LDL^T would need about {need:.0f} MB > {what} "
                           f"{limit:.0f} MB: SuperLU in symmetric mode")
     return "dense", f"dimension {n} <= {dense_max}: Bunch-Kaufman (about {need:.0f} MB)"
 
@@ -428,4 +552,4 @@ def plan_for_claim(claim, spec, options) -> Plan:
 __all__ = ["E2_RECORDS", "COEFFICIENTS", "AUTO_FACTOR", "AUTO_FLOOR_SECONDS", "estimate_seconds", "auto_budget",
            "resolve_budget_seconds", "RATES", "DENSE_LDL_ARRAYS", "SPARSE_FILL_FIT", "sparse_fill_estimate",
            "dense_inertia_mb", "sparse_inertia_mb", "sparse_residual_mb", "RESIDUAL_BLOCK_FACTOR", "dense_inertia_seconds", "sparse_inertia_seconds",
-           "available_memory_mb", "recommend_inertia_method", "Plan", "PlanRow", "plan_certification", "plan_for_claim"]
+           "available_memory_mb", "process_memory_cap", "memory_limit_mb", "memory_cap_note", "recommend_inertia_method", "Plan", "PlanRow", "plan_certification", "plan_for_claim"]

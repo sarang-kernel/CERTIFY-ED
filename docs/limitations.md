@@ -30,7 +30,10 @@ inertia count that is not attempted to completion are reported the same way (the
 not attempted and why). Under an operating-system memory cap the outcome of a borderline S3 can differ
 between machines: the 3.1.0 evidence run certified a 4 × 4 J2 = 0.5 completeness check that the Linux run
 left NOT_CHECKED, because a Windows job object counts committed memory where RLIMIT_AS counts address
-space (`CHANGELOG`, 3.1.0). Neither outcome is wrong; a NOT_CHECKED statement is not a claim.
+space (`CHANGELOG`, 3.1.0). Neither outcome is wrong; a NOT_CHECKED statement is not a claim. Since 3.2.2 a
+factorization whose predicted peak exceeds the memory left under such a cap is not started when no
+`budget_mb` is given (`docs/presets.md`, rules); the prediction is the fill model of `certify_ed.cost`, so a
+factorization it overestimates is NOT_CHECKED although it would have fitted.
 
 ## The exact layer
 

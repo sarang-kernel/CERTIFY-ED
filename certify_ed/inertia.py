@@ -202,7 +202,9 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
     residual bound (D-01); method='sparse-apriori' the 3.1 bound.
 
     Memory gate (D-01): a sparse factorization whose predicted peak (cost.sparse_inertia_mb, fill model plus the
-    residual's own arrays) exceeds `budget_mb` is not attempted and is reported as a resource failure."""
+    residual's own arrays) exceeds `budget_mb` is not attempted and is reported as a resource failure. Without a
+    budget (3.2.2, N-03) the limit is the memory left under the process memory cap (cost.process_memory_cap: job
+    object or RLIMIT_AS), for the dense path (cost.dense_inertia_mb) as well; without a cap nothing is gated."""
     if method == "auto":
         from .cost import recommend_inertia_method
         method, _why = recommend_inertia_method(int(A.shape[0]), int(A.nnz) if sp.issparse(A) else None,
@@ -221,6 +223,22 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
                                  f"factorization not attempted: predicted peak {need:.0f} MB exceeds the memory "
                                  f"budget {budget_mb:.0f} MB (cost.sparse_inertia_mb; out-of-core factorization "
                                  f"is not implemented)", resource_failure=True)
+    if budget_mb is None:
+        # 3.2.2 (N-03): without a budget the memory left under the process memory cap (job object / RLIMIT_AS) is the
+        # limit, for the dense and the sparse path, so that a factorization that cannot fit is not started
+        from .cost import dense_inertia_mb, memory_cap_note, memory_limit_mb, sparse_inertia_mb
+        limit, cap = memory_limit_mb(None)
+        if cap is not None:
+            n_ = int(A.shape[0])
+            nnz_ = int(A.nnz) if sp.issparse(A) else n_ * n_
+            cplx_ = bool(np.iscomplexobj(A.data if sp.issparse(A) else A))
+            need, est = ((dense_inertia_mb(n_, cplx_), "cost.dense_inertia_mb") if method == "dense"
+                         else (sparse_inertia_mb(n_, nnz_, cplx_), "cost.sparse_inertia_mb"))
+            if need > limit:
+                return InertiaResult(float(sigma), None, float("inf"), label, time.time() - t0, False,
+                                     f"factorization not attempted: predicted peak {need:.0f} MB exceeds "
+                                     f"{memory_cap_note(cap)} ({est}; out-of-core factorization is not implemented)",
+                                     resource_failure=True)
     try:
         if method == "dense":
             return inertia_dense(A.toarray() if sp.issparse(A) else np.asarray(A), sigma)

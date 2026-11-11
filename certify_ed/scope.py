@@ -19,7 +19,8 @@ REASON_CODES: Dict[str, str] = {
     "DEFAULT_SELECTION": "not part of the default selection; switched on by its option, a preset or --only",
     "DEPENDENCY_NARROWED": "the statement needs another statement that the user excluded",
     "BUDGET_TIME": "the time budget was spent before the statement could start",
-    "BUDGET_MEMORY": "the statement's estimated memory exceeds the memory budget",
+    "BUDGET_MEMORY": ("the statement's estimated memory exceeds the memory budget (Options.budget_mb), or without a "
+                      "budget the memory left under the process memory cap (job object / RLIMIT_AS, since 3.2.2)"),
     "NEEDS_EIGENVECTORS": "the claim has eigenvalues only",
     "NEEDS_SPEC": "no model specification was declared",
     "NEEDS_MATRIX": "the operator is matrix-free and no stored reference matrix exists",
@@ -100,8 +101,19 @@ class Budget:
         return True, ""
 
     def memory_ok(self, sid: str, estimate_mb: Optional[float], what: str = ""):
-        if self.mb is None or estimate_mb is None:
+        if estimate_mb is None:
             return True, ""
+        if self.mb is None:
+            # 3.2.2 (N-03): without a budget, the memory left under the process memory cap (job object / RLIMIT_AS,
+            # certify_ed.cost.process_memory_cap) decides; without a cap the statement may start
+            from .cost import memory_cap_note, process_memory_cap
+            cap = process_memory_cap()
+            if cap is None or not estimate_mb > cap["headroom_mb"]:
+                return True, ""
+            note = f"estimated {estimate_mb:.0f} MB for {what or sid} exceeds {memory_cap_note(cap)}"
+            self.events.append({"statement": sid, "code": "BUDGET_MEMORY", "note": note, "estimate_mb": estimate_mb,
+                                "memory_cap": cap})
+            return False, note
         if estimate_mb > self.mb:
             note = f"estimated {estimate_mb:.0f} MB for {what or sid} exceeds the memory budget {self.mb:g} MB"
             self.events.append({"statement": sid, "code": "BUDGET_MEMORY", "note": note, "estimate_mb": estimate_mb})
