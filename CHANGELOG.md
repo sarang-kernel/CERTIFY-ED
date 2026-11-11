@@ -48,6 +48,34 @@ moved into a function).
   `experiments/bench_table.py` tabulates certify() time, S3 and S8 time and peak memory of any measurement against
   a run's E2 record (Markdown, CSV, JSON).
 
+### New statements track (roadmap E-02, N-13; track/non-hermitian)
+
+A new claim kind for non-Hermitian eigenproblems. Everything below is UNVERIFIED (D-12, Sarang's check pending) and
+additive: no existing bound, status rule or record field changes. The source hash changes (new module, extended
+enumerations).
+
+- `certify_ed/nonhermitian.py` (`certify_nonhermitian`, `format_nonhermitian`; record schema
+  `certify-ed/nonhermitian/1.0`) and the command `certify-ed nonhermitian`. Four statements for claimed eigenpairs
+  `(mu_i, v_i)` of a dense real or complex `A` of dimension at most 2000: N1 backward errors (each `mu_i` is an exact
+  eigenvalue of some `A + E_i` with `||E_i||_2 <= eps_i`); N2 a bound on `||V^-1||_2` from a computed inverse `W`
+  (Neumann); N3 Bauer-Fike inclusion (every eigenvalue of `A` lies in a disc of radius `rho = beta ||R||_F` about some
+  `mu_i`; `A` need not be diagonalizable); N4 counting (each connected group of discs holds exactly as many eigenvalues
+  as centres, with algebraic multiplicity). N2 to N4 need the whole spectrum; the record says NOT_CHECKED with
+  NEEDS_WHOLE_SPECTRUM for a subset and NEEDS_DEPENDENCY when N2 fails.
+- New reason code `ILL_CONDITIONED_EIGENVECTORS` (N2 inconclusive: `||I - W V||` not provably below 1); its next action
+  in `diagnostics.py`; the record schema and the certificate schema list the new kind and reason code
+  (`schema/*.json` regenerated). `docs/SCOPE_MATRIX.md` has the new rows.
+- `docs/proofs/E-02_non_hermitian.md` (derivation, floating-point accounting with an opt-out for subnormal inputs),
+  `docs/proofs/verify_E-02.py` with the recorded run `docs/proofs/runs/verify_E-02.txt` (2696 random and 547
+  adversarial cases in exact arithmetic, 0 violations; negative controls detected in 36/36, 36/36, 34/36 and 200/200
+  cases), an independent second derivation and adversarial script under `docs/proofs/independent/` (verdict
+  AGREES-WITH-REMARKS, `docs/proofs/VERDICTS.md`), the cases in `corpus/nonhermitian/` (11 cases, 0 unsound, 0 alarms)
+  and `tests/test_nonhermitian.py` (14 tests).
+- The exact parts that N1 to N3 use (the bound of Lemma 1, Theorem 2 with its residual form, the bound of Lemma 3, and
+  Theorem 4 (b) combined with Lemma 3) are formalized in Lean 4 with Mathlib in the separate repository
+  certify-ed-project (`reverification_lean/NONHERMITIAN.md`). The counting statement of N4 and the floating-point
+  accounting are not.
+
 ## [3.2.2] — 2026-11-11 (branch `track/hardening-3.2.2` on `dev/3.2` fa86456; the tag `v3.2.2` and its evidence run follow the merge)
 
 Hardening release (Wave 5 of the development roadmap, items N-01, N-02, N-03, H-02). No bound changes inside the range of the

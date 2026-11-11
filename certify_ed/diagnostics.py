@@ -69,6 +69,11 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
                               "the dynamical quantity as uncertified (docs/SCOPE_MATRIX.md)"),
     "OUT_OF_SCOPE_EXTRAPOLATION": ("certify each finite size separately and cite the certificates by hash; the "
                                    "extrapolation itself is not a statement about any finite matrix"),
+    "ILL_CONDITIONED_EIGENVECTORS": ("the eigenvector matrix could not be certified invertible: check whether the matrix "
+                                     "is defective (a Jordan block) or nearly so; for a nearly defective cluster no "
+                                     "eigenvalue statement with this method is possible in binary64, so report the N1 "
+                                     "backward errors only, or certify a better conditioned similar problem (balancing, "
+                                     "a rescaled basis) and transfer the result"),
     "DECLARED_ESTIMATE": ("report the declared estimate as the producer's own (with its sample count and method); the "
                           "certified statements of the record (Rayleigh upper bound, existence radius, Temple lower bound) "
                           "come from the trial vector, not from the samples"),
@@ -259,7 +264,8 @@ def entanglement_next_action(rec: dict) -> str:
 
 
 # ---- standalone statement records (3.2): variational records (E-05, variational.py), generalized eigenproblem records
-# (E-03, generalized.py) and moment records (C-07, moments.py) carry their own next_action per statement
+# (E-03, generalized.py) and moment records (C-07, moments.py) carry their own next_action per statement; since 3.3.0.dev0
+# also the non-Hermitian records (E-02, nonhermitian.py)
 def record_next_action(stmt: dict) -> Optional[str]:
     """Next action for a statement of a standalone record (status not CERTIFIED): keyed on the reason code, then on
     the wording of the summary. None for CERTIFIED and DECLARED-with-nothing-to-do statements."""
@@ -283,6 +289,16 @@ def record_next_action(stmt: dict) -> Optional[str]:
             return ("the MPS contracts to a vector above the 2^22 limit: contract it yourself to a dense vector on a machine "
                     "that holds it, or reduce the system; a residual bound without the dense vector is not implemented")
         return "raise the dimension limit named in the summary (max_dim), or restrict to a smaller block"
+    if sid.startswith("N") and sid[1:2].isdigit():
+        # non-Hermitian records (E-02, nonhermitian.py)
+        if code == "NEEDS_DEPENDENCY":
+            return "N2 (the certified bound on ||V^-1||) must be CERTIFIED first: see the next action of N2.eigenvector_inverse"
+        if code == "NEEDS_WHOLE_SPECTRUM":
+            return ("claim all n eigenpairs (kind 'all', a square eigenvector matrix): the inclusion and count statements of a "
+                    "non-normal matrix need the whole eigenvector matrix; a partial claim gets the backward errors (N1) only")
+        if code == "NOT_APPLICABLE":
+            return ("rescale the claimed vectors (multiply by a power of two) so that their norms are normal binary64 numbers, "
+                    "or the matrix so that the residual bound does not overflow")
     if code == "NEEDS_DEPENDENCY" and sid.startswith("V3"):
         return ("declare a lower bound on lambda_2 with its source (gap_hypothesis, gap_source) or supply a certificate of an "
                 "ED run on the same operator (gap_certificate) for a certified Temple bound")

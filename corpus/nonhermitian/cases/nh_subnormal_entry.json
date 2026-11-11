@@ -1,0 +1,38 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_subnormal_entry",
+ "error_class": "subnormal_entry",
+ "note": "the smallest eigenvector entry replaced by 1e-310 (no-underflow hypothesis not established; a model with gradual underflow may certify)",
+ "dimension": 5,
+ "n_pairs": 5,
+ "must_certify": [],
+ "must_not_certify": [
+  "N1.backward_errors",
+  "N2.eigenvector_inverse",
+  "N3.inclusion",
+  "N4.counting"
+ ],
+ "conditional": true,
+ "exact_eigenvalues": [
+  [
+   "-7/4",
+   "0"
+  ],
+  [
+   "-1/2",
+   "0"
+  ],
+  [
+   "1/4",
+   "0"
+  ],
+  [
+   "3/2",
+   "0"
+  ],
+  [
+   "13/4",
+   "0"
+  ]
+ ]
+}

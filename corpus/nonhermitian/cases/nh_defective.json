@@ -1,0 +1,35 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_defective",
+ "error_class": "defective",
+ "note": "a Jordan block of size 3: no claim of three simple eigenvalues near 1/2 may be certified",
+ "dimension": 5,
+ "n_pairs": 5,
+ "must_certify": [
+  "N1.backward_errors"
+ ],
+ "must_not_certify": [],
+ "conditional": false,
+ "exact_eigenvalues": [
+  [
+   "1/2",
+   "0"
+  ],
+  [
+   "1/2",
+   "0"
+  ],
+  [
+   "1/2",
+   "0"
+  ],
+  [
+   "-2",
+   "0"
+  ],
+  [
+   "5/4",
+   "0"
+  ]
+ ]
+}

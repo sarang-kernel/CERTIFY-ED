@@ -411,10 +411,12 @@ def _bundle_schema() -> dict:
     }
 
 
-# standalone statement records (3.2): variational (E-05), generalized eigenproblem (E-03), moments (C-07). They are
+# standalone statement records (3.2): variational (E-05), generalized eigenproblem (E-03), moments (C-07); since
+# 3.3.0.dev0 non-Hermitian eigenproblems (E-02, UNVERIFIED). They are
 # not certificates: their status vocabulary adds CERTIFIED_UNDER_HYPOTHESIS (a bound that rests on a named, declared
 # hypothesis) and DECLARED (a producer value that nothing rests on), and every statement under hypothesis lists it.
-RECORD_SCHEMAS = ("certify-ed/variational/1.0", "certify-ed/generalized/1.0", "certify-ed/moments/1.0")
+RECORD_SCHEMAS = ("certify-ed/variational/1.0", "certify-ed/generalized/1.0", "certify-ed/moments/1.0",
+                  "certify-ed/nonhermitian/1.0")
 RECORD_STATUSES = ("CERTIFIED", "CERTIFIED_UNDER_HYPOTHESIS", "DECLARED", "INCONCLUSIVE", "NOT_CHECKED", "FAILED")
 
 
@@ -423,8 +425,8 @@ def _record_schema() -> dict:
         "$schema": DRAFT,
         "$id": "urn:certify-ed:schema:statement-record:1.0",
         "title": "CERTIFY-ED standalone statement record, schema 1.0",
-        "description": ("JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03) and "
-                        "certify_ed.moments (C-07). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one "
+        "description": ("JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03), "
+                        "certify_ed.moments (C-07) and certify_ed.nonhermitian (E-02). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one "
                         "hypothesis; DECLARED marks a producer value that is recorded, not certified."),
         "type": "object",
         "required": ["schema", "statements", "record_sha256"],
@@ -585,7 +587,7 @@ def validate_bundle_meta(meta: dict, spec: Optional[dict] = None, require: bool 
 
 
 def validate_record(rec: dict, require: bool = False) -> Optional[bool]:
-    """Validate a standalone statement record (variational / generalized / moments) against
+    """Validate a standalone statement record (variational / generalized / moments / nonhermitian) against
     STATEMENT_RECORD_SCHEMA plus the structural rule that a CERTIFIED_UNDER_HYPOTHESIS statement names a hypothesis
     and that the recorded hash matches the body. Returns True, or None without jsonschema (unless require)."""
     problems = []
