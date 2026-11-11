@@ -8,6 +8,9 @@
     certify-ed import BUNDLE_DIR [same flags]        the same, bundle first (docs/producer_bundle.md)
     certify-ed statement CERT.json [--style latex] [-o FILE]   methods paragraph + BibTeX from a certificate
     certify-ed view CERT.json [-o CERT.html]         offline HTML page of a certificate (docs/viewer.md)
+    certify-ed verify CERT.json [--external CMD] [--bundle DIR] [--operator FILE] [--record FILE]
+                                                     integrity check; optionally an external verifier, whose
+                                                     verdict is recorded apart and changes no status
     certify-ed presets                               the presets and statements table (docs/presets.md)
     certify-ed plan CLAIM.npz [--spec SPEC.json] [--kind ...] [--preset ...]   predicted time and memory per statement
     certify-ed spectrum MATRIX.npz [--sectors KEY]   enclose a whole spectrum (the former symveig)
@@ -719,6 +722,43 @@ def cmd_numbers(a):
     return 0 if all(r.get("status") != "failed" for k, r in res.items() if k != "provenance") else 1
 
 
+def cmd_verify(a):
+    """Integrity check of a saved certificate and, optionally, an external verifier (certify_ed.external, N-04).
+
+    Exit code 0: the integrity check passed (or was skipped) and the external verifier, if one ran, reported PASS;
+    1: the integrity check failed; 2: the external verifier reported FAIL, ERROR or TIMEOUT. The external verdict
+    is written to its own record; the certificate and its statuses are never changed."""
+    from .certificate_v2 import Certificate
+    from .external import ENV_VAR, verify_external
+    if a.no_verify:
+        print("integrity: not checked (--no-verify)")
+    else:
+        try:
+            cert = Certificate.load(a.certificate, verify=True)
+        except ValueError as e:
+            print(f"integrity: FAILED ({e})")
+            return 1
+        print("integrity: OK (body hash, array hashes, scope block)")
+        print(cert.summary())
+    command = a.external or os.environ.get(ENV_VAR)
+    if not command:
+        return 0
+    record = a.record or ((a.certificate[:-5] if a.certificate.endswith(".json") else a.certificate) + ".external.json")
+    rec = verify_external(a.certificate, command, bundle=a.bundle, operator=a.operator, sidecar=a.sidecar,
+                          report=a.report, record=record, timeout=a.timeout)
+    run = rec["run"]
+    print(f"external verifier: {rec['verdict']} (exit code {run['exit_code']}, {run['seconds']} s"
+          + (f", {run['error']}" if run["error"] else "") + ")")
+    rep = rec.get("report") or {}
+    st = rep.get("statements")
+    if isinstance(st, dict):
+        for sid in sorted(st):
+            v = st[sid]
+            print(f"  {sid}: {v.get('verdict') if isinstance(v, dict) else v}")
+    print(f"external record: {record} (statuses unchanged: {rec['status_effect'].split(':')[0]})")
+    return 0 if rec["verdict"] == "PASS" else 2
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="certify-ed", description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -839,6 +879,19 @@ def main(argv=None):
     vw.add_argument("--max-pairs", type=int, dest="max_pairs", default=None,
                     help="show at most this many rows of the enclosure table (default: all)")
     vw.set_defaults(fn=cmd_view)
+    vf = sub.add_parser("verify", help="integrity check of a saved certificate; optionally run an external verifier "
+                        "and record its verdict apart (no status changes)")
+    vf.add_argument("certificate", help="certificate JSON written by Certificate.save / certify-ed certify")
+    vf.add_argument("--no-verify", action="store_true", dest="no_verify", help="skip the integrity check")
+    vf.add_argument("--external", help="external verifier command template (placeholders {certificate}, {sidecar}, "
+                    "{bundle}, {operator}, {report}; default: $CERTIFY_ED_EXTERNAL_VERIFIER)")
+    vf.add_argument("--bundle", help="producer bundle directory, for {bundle}")
+    vf.add_argument("--operator", help="operator file, for {operator}")
+    vf.add_argument("--sidecar", help="array sidecar, for {sidecar} (default: the certificate's own)")
+    vf.add_argument("--report", help="file for the verifier's JSON report, for {report}")
+    vf.add_argument("--record", help="external-verification record (default: CERT.external.json)")
+    vf.add_argument("--timeout", type=float, help="seconds before the external verifier is stopped (TIMEOUT)")
+    vf.set_defaults(fn=cmd_verify)
     pr = sub.add_parser("presets", help="the presets and statements table")
     pr.add_argument("--markdown", action="store_true")
     pr.set_defaults(fn=cmd_presets)

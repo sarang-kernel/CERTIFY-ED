@@ -1,15 +1,18 @@
 """One-call entry point: `quick(H, w, V, spec, kind, **options)` builds the Claim and the Options and returns
 the Certificate. It adds no check of its own: everything it returns is what `certify()` returns for the same
-Claim and Options (provenance.NON_COMPUTATIONAL)."""
+Claim and Options (provenance.NON_COMPUTATIONAL). `verify_external(certificate, command, ...)` runs an optional
+external verifier on a saved certificate and returns its separate record (certify_ed.external); it changes no
+status."""
 from __future__ import annotations
 
 from dataclasses import fields
 from typing import Any, Optional
 
 from .certify import Claim, Options, certify
+from .external import verify_external
 from .spec import ModelSpec
 
-__all__ = ["quick"]
+__all__ = ["quick", "verify_external"]
 
 _CLAIM_KEYS = {f.name for f in fields(Claim)} - {"eigenvalues", "eigenvectors", "operator", "kind"}
 _OPTION_KEYS = {f.name for f in fields(Options)}
