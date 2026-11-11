@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased] (branch `track/applications`, for 3.3)
+
+Applications N-11 and N-12 of the development roadmap. New code only; no existing bound, status rule or record field
+changes. The source hash changes because files under `certify_ed/apps/` are added or extended.
+
+- `certify_ed/apps/pyrochlore/nine_coupling.py`: the nine-coupling spin-1/2 crown of Kránitz and Penc (Appendix D of
+  arXiv:2601.07800): Table V orbits, printed couplings with both readings of the digit in parentheses, exact matching
+  conditions, D3d automorphisms, the abelian subgroup {E, C2', i, σd} with the spin flip, a block-by-block exact count
+  (`count_below_by_block`, the construction of `exact_sectors.exact_count_below` with one block in memory at a time), a
+  floating-point-layer count on the exactly representable block congruence (`count_below_by_block_float`, via
+  `inertia.inertia_dense`), an integer Rayleigh-quotient upper bound, and `certify_nine(layer=...)`.
+- `experiments/n11_crown_nine.py`: record of the certificate at the printed couplings (`--float-layer` for the
+  floating-point layer, `--compare` for the other readings).
+- `certify_ed/apps/aklt/estimate.py` (`plan_eta`): the block sizes, memory and time of `eta.certify_eta` without forming
+  any matrix; `lattices.honeycomb_method3()`: the union of two Method III terms of Pomata and Wei for the honeycomb.
+- `experiments/n12_honeycomb_estimate.py`: the honeycomb estimate (largest bordered block 1,293,292 rows), calibrated on
+  the E10 blocks of the 3.2.1 run, and the exact product of the printed gap constants.
+- `tests/test_apps_applications_next.py`: 7 tests (orbit table against the reduced model, embedding, D3d, block counts
+  against `exact_count_below` with a non-symmetry as negative control, Rayleigh upper bound, plan against the E10 block
+  sizes, honeycomb geometry).
+
 ## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
 
 One robustness fix found by the 3.2.0 evidence run; no bound, status rule or record field changes.
