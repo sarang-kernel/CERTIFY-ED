@@ -246,7 +246,7 @@ def estimate(c, seed=12345, k=1, tol=1e-12):
     return w[order], V[:, order], st
 
 
-def count_below_by_block(spec, states, gens, g, log=None):
+def count_below_by_block(spec, states, gens, g, log=None, only=None, on_block=None):
     """Exact count of eigenvalues of the spec's matrix below g on the states, block by block.
 
     The same construction as exact_sectors.exact_count_below (group closure, exact commutation check,
@@ -254,7 +254,12 @@ def count_below_by_block(spec, states, gens, g, log=None):
     with each block formed, counted and released before the next, so that memory is that of one block. For
     characters with values +-1 and phases +-1 the blocks are real; the count is then that of
     exact_sectors._count_sector_below with factor 1. Returns {count, delta, sectors}: with delta the largest
-    block delta, #(eig < g - delta) <= count <= #(eig < g + delta) on the states."""
+    block delta, #(eig < g - delta) <= count <= #(eig < g + delta) on the states.
+
+    With only (block indices in the order of the characters) only those blocks are counted, and count and
+    delta refer to them; "blocks_total" and "complete" say whether the result covers the states. on_block is
+    called as on_block(row, info) when a block is done, info holding blocks_total, group_order and den (for
+    records written block by block)."""
     from ...checker import exact_matrix, inertia_exact
     from ...exact_sectors import FiniteGroup, _unit, check_commutes, orbit_columns, sector_integer_matrix
     g = Fraction(g)
@@ -278,9 +283,17 @@ def count_below_by_block(spec, states, gens, g, log=None):
             chars.append((dict(zip([x.name for x in gens], js)), chi, len(cols)))
     if sum(d for _, _, d in chars) != states.size:
         raise ValueError(f"1D irreps cover {sum(d for _, _, d in chars)} of {states.size} dimensions")
+    if only is not None:
+        only = sorted(set(int(i) for i in only))
+        if not all(0 <= i < len(chars) for i in only):
+            raise ValueError(f"block indices {only} outside 0..{len(chars) - 1}")
     a, b = g.numerator, g.denominator
     total, dmax, rows = 0, Fraction(0), []
-    for qn, chi, dim in chars:
+    info = {"group_order": group.order, "den": int(ex.den), "blocks_total": len(chars),
+            "complete": only is None or len(only) == len(chars)}
+    for index, (qn, chi, dim) in enumerate(chars):
+        if only is not None and index not in only:
+            continue
         t0 = time.time()
         cols = orbit_columns(group, chi)
         Are, Aim, D = sector_integer_matrix(ex, cols)
@@ -295,16 +308,19 @@ def count_below_by_block(spec, states, gens, g, log=None):
         nu, _, beta = inertia_exact(M)
         del M
         if nu is None:
-            return {"count": None, "delta": None, "sectors": rows, "group_order": group.order, "den": int(ex.den)}
-        delta = beta / (b * ex.den)
+            return dict(info, count=None, delta=None, sectors=rows)
+        delta = Fraction(beta) / (b * ex.den)
         total += nu
         dmax = max(dmax, delta)
-        rows.append({"quantum_numbers": qn, "dim": dim, "count": int(nu), "delta": float(delta),
-                     "seconds": time.time() - t0})
+        row = {"index": index, "quantum_numbers": qn, "dim": dim, "count": int(nu), "delta": float(delta),
+               "delta_exact": f"{delta.numerator}/{delta.denominator}", "seconds": time.time() - t0}
+        rows.append(row)
+        if on_block:
+            on_block(row, info)
         if log:
             log(f"    block {qn} (dim {dim}): {nu} below {float(g):.12g}, delta {float(delta):.2e}, "
                 f"{time.time() - t0:.0f}s")
-    return {"count": total, "delta": dmax, "sectors": rows, "group_order": group.order, "den": int(ex.den)}
+    return dict(info, count=total, delta=dmax, sectors=rows)
 
 
 def rayleigh_upper(spec, states, v, bits=30):
@@ -375,6 +391,66 @@ def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8),
     return rec
 
 
+# shift (in units of H_0) of the floating-point-layer enclosure at the appended reading, margin 1e-10
+SHIFT_APPENDED = "-23061663926287/41943040000000"
+
+
+def certify_blocks(blocks, shift=SHIFT_APPENDED, reading="appended", log=print, on_block=None):
+    """Exact count (count_below_by_block) of the selected blocks of the nine-coupling crown at a given shift.
+
+    The blocks are indices 0..7 in the order of certify_nine; shift is a rational in units of H_0. Runs over
+    disjoint sets of blocks, in separate processes or on separate machines, are joined by combine_blocks. No
+    Lanczos estimate is needed: the shift is given."""
+    t0 = time.time()
+    from ...basis import magnetization_state_set
+    c = couplings(reading=reading)
+    K = scale_for(c)
+    spec_K = spec_for(c, scale=K)
+    st = magnetization_state_set(spec_K, 0)
+    gens = symmetry_generators(spec_K)
+    s = Fraction(shift)
+    cb = None
+    if on_block:
+        def cb(row, info):
+            on_block(row, dict(info, reading=reading, K=int(K), dim_Sz0=int(st.size), shift=str(s)))
+    r = count_below_by_block(spec_K, st, gens, s * K, log=log, only=blocks, on_block=cb)
+    return {"layer": "exact", "reading": reading, "K": int(K), "dim_Sz0": int(st.size), "shift": str(s),
+            "blocks": sorted(set(int(i) for i in blocks)), "blocks_total": r["blocks_total"],
+            "group_order": r["group_order"], "count": r["count"], "sectors": r["sectors"],
+            "no_floating_point_assumption": True, "seconds": time.time() - t0}
+
+
+def combine_blocks(records):
+    """Join block records of certify_blocks (or the per-block rows they carry) into one exact lower bound.
+
+    Every record must have the same reading, K and shift; the block indices together must be 0..blocks_total-1,
+    each once, with dimensions summing to the S^z = 0 dimension, and every count must be 0. Then no eigenvalue
+    of H_0 on S^z = 0 lies below shift - max(delta)/K, which is the lower bound (exact rational)."""
+    if not records:
+        raise ValueError("no block records")
+    keys = {(r["reading"], int(r["K"]), str(Fraction(r["shift"])), int(r["blocks_total"]), int(r["dim_Sz0"]))
+            for r in records}
+    if len(keys) != 1:
+        raise ValueError(f"block records disagree on reading, K, shift or dimensions: {sorted(keys)}")
+    reading, K, shift, total, dim = keys.pop()
+    rows = [row for r in records for row in r["sectors"]]
+    idx = [int(row["index"]) for row in rows]
+    if sorted(idx) != list(range(total)):
+        raise ValueError(f"block indices {sorted(idx)} are not 0..{total - 1} once each")
+    if sum(int(row["dim"]) for row in rows) != dim:
+        raise ValueError("block dimensions do not sum to the S^z = 0 dimension")
+    if any(int(row["count"]) != 0 for row in rows):
+        raise ValueError("a block has an eigenvalue below the shift")
+    dmax = max(Fraction(row["delta_exact"]) for row in rows)
+    lb = Fraction(shift) - dmax / K
+    return {"layer": "exact", "reading": reading, "K": K, "shift": shift, "n_blocks": total,
+            "sectors": sorted(rows, key=lambda row: int(row["index"])), "delta": float(dmax / K),
+            "lower_bound": float(np.nextafter(float(lb), -np.inf)),
+            "lower_bound_rounded_down": float(Fraction(math.floor(lb * 10 ** 9), 10 ** 9)),
+            "lower_bound_exact": f"{lb.numerator}/{lb.denominator}", "no_floating_point_assumption": True,
+            "seconds_blocks": sum(float(row["seconds"]) for row in rows)}
+
+
 def count_below_by_block_float(spec, states, gens, g, log=None):
     """The same block decomposition as count_below_by_block, counted with the floating-point layer of certify-ed
     (inertia.inertia_dense: LDL^T with a bound beta on its backward error under the binary64 model).
@@ -423,7 +499,7 @@ def count_below_by_block_float(spec, states, gens, g, log=None):
         t0 = time.time()
         r_, c_, v_ = [], [], []
         for k, col in enumerate(cols):
-            for i, (re_, im_) in col.items():
+            for i, (re_, _im) in col.items():
                 r_.append(i); c_.append(k); v_.append(float(re_))
         m = len(cols)
         V = sp.csr_matrix((v_, (r_, c_)), shape=(n, m))

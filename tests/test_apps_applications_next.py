@@ -87,6 +87,44 @@ def test_count_by_block_agrees_with_exact_count_below():
 
 
 @needs_flint
+def test_block_runs_combine_to_the_full_count():
+    from certify_ed.apps.pyrochlore import nine_coupling as nc
+    from certify_ed.construct import build_bitwise
+    from certify_ed.exact_sectors import site_permutation
+    c = nc.couplings()
+    K, spec, st = _small_sector(nc, c)
+    a, b = nc.c2h_generators()
+    gens = [site_permutation(spec, [x - 1 for x in a], "C2prime"), site_permutation(spec, [x - 1 for x in b], "inv")]
+    w = np.linalg.eigvalsh(build_bitwise(nc.spec_for(c), st).toarray())
+    g = Fraction(int(np.floor((w[0] - 1e-6) * K * 2 ** 20)), 2 ** 20)
+    full = nc.count_below_by_block(spec, st, gens, g)
+    n = full["blocks_total"]
+    assert full["complete"] and full["count"] == 0 and n == len(full["sectors"]) > 1
+    seen = []
+    parts = [nc.count_below_by_block(spec, st, gens, g, only=[i], on_block=lambda row, info: seen.append(row))
+             for i in range(n)]
+    assert not parts[0]["complete"] and seen == [p["sectors"][0] for p in parts]
+    for key in ("index", "quantum_numbers", "dim", "count", "delta_exact"):
+        assert [p["sectors"][0][key] for p in parts] == [s[key] for s in full["sectors"]]
+    recs = [{"reading": "appended", "K": K, "shift": str(g / K), "blocks_total": n, "dim_Sz0": st.size,
+             "sectors": p["sectors"]} for p in parts]
+    comb = nc.combine_blocks(recs[::-1])
+    assert Fraction(comb["lower_bound_exact"]) == (g - full["delta"]) / K
+    assert Fraction(comb["lower_bound_exact"]) < Fraction(float(w[0]))
+    # negative controls: a missing block, a repeated block, a different shift, a nonzero count
+    with pytest.raises(ValueError):
+        nc.combine_blocks(recs[:-1])
+    with pytest.raises(ValueError):
+        nc.combine_blocks(recs + recs[:1])
+    with pytest.raises(ValueError):
+        nc.combine_blocks(recs[:-1] + [dict(recs[-1], shift=str(g / K - Fraction(1, 2 ** 30)))])
+    with pytest.raises(ValueError):
+        nc.combine_blocks(recs[:-1] + [dict(recs[-1], sectors=[dict(recs[-1]["sectors"][0], count=1)])])
+    with pytest.raises(ValueError):
+        nc.count_below_by_block(spec, st, gens, g, only=[n])
+
+
+@needs_flint
 def test_rayleigh_upper_is_an_upper_bound():
     from certify_ed.apps.pyrochlore import nine_coupling as nc
     from certify_ed.construct import build_bitwise
