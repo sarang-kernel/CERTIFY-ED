@@ -1,0 +1,9 @@
+# module theorem (input of Drafts/Counting/nanoda_counting.py)
+# Each export holds the theorem with every declaration it depends on, so npz_S2 also re-checks checkLowest_S2 and
+# pairOK_theorem1_shift_rad, npz_theorem1 also checkLowest_theorem1, and count_of_gaussQ also cntLt_of_pivots,
+# ldl_of_pivots and pivots_of_gaussQ. One export takes about 4 GiB and 12 minutes on this machine.
+CertifyMathlib.Refine.Residual CertifyMathlib.Refine.pairOK_theorem1
+CertifyMathlib.Refine.Residual CertifyMathlib.Refine.pairOK_theorem1_shift_rad
+CertifyMathlib.Refine.Small CertifyMathlib.Refine.npz_S2
+CertifyMathlib.Refine.Small CertifyMathlib.Refine.npz_theorem1
+CertifyMathlib.Refine.Inertia CertifyMathlib.Refine.count_of_gaussQ

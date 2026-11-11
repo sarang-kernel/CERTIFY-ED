@@ -1,0 +1,556 @@
+{
+ "part": "Lean checks as part of the product (Wave 6: N-04, N-05, N-06)",
+ "document": "reverification_lean/LEAN_PRODUCT.md",
+ "date": "11 November 2026",
+ "toolchain": "leanprover/lean4:v4.35.0",
+ "mathlib": "v4.35.0",
+ "driver": {
+  "script": "reverification_lean/Verify/cecheck_bundle.py",
+  "tests": {
+   "file": "reverification_lean/Verify/test_cecheck_bundle.py",
+   "result": "5 passed",
+   "certify_ed_code": "sources/archive_v5/code/certify-ed (a814d28)"
+  },
+  "cecheck_sha256": "43f3505b8d448a64cf4d23f10cf49db27e0ed5558add4dd1e895c534b838fd27",
+  "certificates_from": "verifier/make_validation_set.py of the code at fa86456 (dev/3.2), 6 corpus cases and 3 conformance fixtures",
+  "export_byte_identical_to_export_certs": {
+   "certificates": 9,
+   "identical": 9,
+   "with_operator_file": 7,
+   "with_operator_file_identical_except_manifest": 7
+  },
+  "rows": [
+   {
+    "certificate": "dense-arrays",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 0.5,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "CONFIRMED",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_correct",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 5.1,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "CONFIRMED",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_mislabeled_sector",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 1.2,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "FAILED",
+     "S4.eigenspaces": "NOT_CHECKED",
+     "S8.degeneracy": "NOT_CHECKED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "REFUTED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NO_CLAIM",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_subnormal_entries",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 0.7,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "INCONCLUSIVE",
+     "S3.completeness": "INCONCLUSIVE",
+     "S4.eigenspaces": "INCONCLUSIVE",
+     "S8.degeneracy": "INCONCLUSIVE"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "NO_CLAIM",
+     "S3.completeness": "NO_CLAIM",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NO_CLAIM",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_swapped_pairs",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 2.5,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "FAILED",
+     "S3.completeness": "INCONCLUSIVE",
+     "S4.eigenspaces": "NOT_CHECKED",
+     "S8.degeneracy": "INCONCLUSIVE"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "REPRODUCED",
+     "S3.completeness": "NO_CLAIM",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NO_CLAIM",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_wrong_eigenvalue_large",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 1.9,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "FAILED",
+     "S3.completeness": "INCONCLUSIVE",
+     "S4.eigenspaces": "NOT_CHECKED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "REFUTED",
+     "S3.completeness": "NO_CLAIM",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "CONFIRMED",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "heis8_wrong_window_count",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 1.8,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "FAILED",
+     "S4.eigenspaces": "NOT_CHECKED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "REFUTED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "CONFIRMED",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "matrix-free",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 0.5,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "NOT_CHECKED",
+     "S8.degeneracy": "NOT_CHECKED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NO_CLAIM",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "npz",
+    "kind": "genuine",
+    "exit_code": 0,
+    "verdict": "PASS",
+    "cecheck_seconds": 0.7,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "CONFIRMED",
+     "S3.completeness": "CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "CONFIRMED",
+     "integrity": "PASS"
+    }
+   },
+   {
+    "certificate": "f_body_tamper",
+    "kind": "forgery",
+    "exit_code": 1,
+    "verdict": "FAIL",
+    "cecheck_seconds": 1.4,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "NOT_CONFIRMED",
+     "S3.completeness": "NOT_CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NOT_CONFIRMED",
+     "integrity": "FAIL"
+    },
+    "failed_checks": [
+     "H1.body_sha256"
+    ]
+   },
+   {
+    "certificate": "f_radius",
+    "kind": "forgery",
+    "exit_code": 1,
+    "verdict": "FAIL",
+    "cecheck_seconds": 1.2,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "NOT_CONFIRMED",
+     "S3.completeness": "NOT_CONFIRMED",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NOT_CONFIRMED",
+     "integrity": "PASS"
+    },
+    "failed_checks": [
+     "E2.existence_radius",
+     "S2.status.exact",
+     "S3.status.exact",
+     "S8.C0.exact"
+    ]
+   },
+   {
+    "certificate": "f_status_s2",
+    "kind": "forgery",
+    "exit_code": 1,
+    "verdict": "FAIL",
+    "cecheck_seconds": 0.7,
+    "recorded": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "INCONCLUSIVE",
+     "S4.eigenspaces": "INCONCLUSIVE",
+     "S8.degeneracy": "INCONCLUSIVE"
+    },
+    "statement_verdicts": {
+     "S1.model_fidelity": "NOT_RECHECKED",
+     "S2.eigenpairs": "NOT_CONFIRMED",
+     "S3.completeness": "NO_CLAIM",
+     "S4.eigenspaces": "NOT_RECHECKED",
+     "S8.degeneracy": "NO_CLAIM",
+     "integrity": "PASS"
+    },
+    "failed_checks": [
+     "S2.status.rule"
+    ]
+   }
+  ],
+  "external_records": [
+   {
+    "record": "f_radius.external.json",
+    "verdict": "FAIL",
+    "exit_code": 1,
+    "report_verdict": "FAIL",
+    "status_effect": "none: the verdict of an external verifier is recorded only; no status, bound or count of the certificate depends on it, and the certificate file is not modified",
+    "statuses": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    }
+   },
+   {
+    "record": "heis8_correct.external.json",
+    "verdict": "PASS",
+    "exit_code": 0,
+    "report_verdict": "PASS",
+    "status_effect": "none: the verdict of an external verifier is recorded only; no status, bound or count of the certificate depends on it, and the certificate file is not modified",
+    "statuses": {
+     "S1.model_fidelity": "CERTIFIED",
+     "S2.eigenpairs": "CERTIFIED",
+     "S3.completeness": "CERTIFIED",
+     "S4.eigenspaces": "CERTIFIED",
+     "S8.degeneracy": "CERTIFIED"
+    }
+   }
+  ]
+ },
+ "code_branch": {
+  "name": "track/external-verifier",
+  "base": "fa86456",
+  "head": "d704471",
+  "commits": 2,
+  "tests": "tests/test_external_verifier.py: 10 passed; tests/test_driver.py::test_source_fingerprint_ignores_the_command_line passed; tests/test_core_api.py passed",
+  "source_hash": "cb73dec3e4433a3b",
+  "source_hash_unchanged": true
+ },
+ "modules": [
+  "CertifyMathlib.Refine.Residual",
+  "CertifyMathlib.Refine.Small",
+  "CertifyMathlib.Refine.Inertia"
+ ],
+ "build": {
+  "command": "lake build CertifyMathlib.Refine.Residual CertifyMathlib.Refine.Small CertifyMathlib.Refine.Inertia",
+  "exit_code": 0,
+  "module_seconds": {
+   "Residual": 121,
+   "Small": 1445,
+   "Inertia": "built through lake build of SmallCount (olean 11 November 2026 18:24 local time); the draft file checked with lake env lean in 213 s"
+  },
+  "note": "machine shared with four other tracks; times vary by a factor of ten"
+ },
+ "drafts": {
+  "Drafts/LeanProduct/SmallCount.lean": "not built: the kernel evaluation of gaussQ on the three 64 x 64 data had not finished after 67 minutes and was abandoned"
+ },
+ "axioms": {
+  "file": "reverification_lean/Drafts/LeanProduct/AxiomsLeanProduct.lean",
+  "exit_code": 0,
+  "theorems": {
+   "CertifyMathlib.Refine.pairOK_theorem1": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.pairOK_theorem1_shift": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.pairOK_theorem1_shift_rad": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.checkLowest_theorem1": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.checkLowest_S2": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.matrixFree_theorem1": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.denseArrays_theorem1": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.npz_theorem1": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.matrixFree_S2": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.denseArrays_S2": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.npz_S2": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.symOK_rejects_asymmetric": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.vecOK_rejects_zero_vector": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.ldl_of_pivots": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.cntLt_of_pivots": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.pivots_of_gaussQ": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "CertifyMathlib.Refine.count_of_gaussQ": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ]
+  }
+ },
+ "leanchecker": {
+  "command": "lake env leanchecker CertifyMathlib.Refine",
+  "exit_code": 0,
+  "seconds": 1844,
+  "output": "",
+  "modules_covered": [
+   "CertifyMathlib.Refine.Residual",
+   "CertifyMathlib.Refine.Small",
+   "CertifyMathlib.Refine.Inertia"
+  ]
+ },
+ "nanoda": {
+  "driver": "reverification_lean/Drafts/Counting/nanoda_counting.py",
+  "theorem_list": "reverification_lean/Drafts/LeanProduct/nanoda_theorems.txt",
+  "mem_mib": 4096,
+  "timeout_seconds": 1800,
+  "rows": [
+   {
+    "theorem": "CertifyMathlib.Refine.pairOK_theorem1",
+    "module": "CertifyMathlib.Refine.Residual",
+    "result": "accepted",
+    "declarations": 34729,
+    "export_seconds": 733.5,
+    "export_peak_private_mib": 3983,
+    "export_bytes": 197102929,
+    "check_seconds": 265.9,
+    "check_peak_private_mib": 262,
+    "reason": null
+   },
+   {
+    "theorem": "CertifyMathlib.Refine.pairOK_theorem1_shift_rad",
+    "module": "CertifyMathlib.Refine.Residual",
+    "result": "accepted",
+    "declarations": 35119,
+    "export_seconds": 743.1,
+    "export_peak_private_mib": 3985,
+    "export_bytes": 200155775,
+    "check_seconds": 192.3,
+    "check_peak_private_mib": 203,
+    "reason": null
+   },
+   {
+    "theorem": "CertifyMathlib.Refine.npz_S2",
+    "module": "CertifyMathlib.Refine.Small",
+    "result": "not run",
+    "declarations": 0,
+    "export_seconds": 619.0,
+    "export_peak_private_mib": 3990,
+    "export_bytes": 200841864,
+    "check_seconds": 663.8,
+    "check_peak_private_mib": 4223,
+    "reason": "memory"
+   },
+   {
+    "theorem": "CertifyMathlib.Refine.npz_theorem1",
+    "module": "CertifyMathlib.Refine.Small",
+    "result": "not run",
+    "declarations": 0,
+    "export_seconds": 749.9,
+    "export_peak_private_mib": 3988,
+    "export_bytes": 197562923,
+    "check_seconds": 398.4,
+    "check_peak_private_mib": 4224,
+    "reason": "memory"
+   },
+   {
+    "theorem": "CertifyMathlib.Refine.count_of_gaussQ",
+    "module": "CertifyMathlib.Refine.Inertia",
+    "result": "accepted",
+    "declarations": 35878,
+    "export_seconds": 791.1,
+    "export_peak_private_mib": 3991,
+    "export_bytes": 206101515,
+    "check_seconds": 254.3,
+    "check_peak_private_mib": 262,
+    "reason": null
+   }
+  ]
+ },
+ "levels": {
+  "K2": [
+   "pairOK_theorem1",
+   "pairOK_theorem1_shift_rad",
+   "count_of_gaussQ (with ldl_of_pivots, cntLt_of_pivots, pivots_of_gaussQ)"
+  ],
+  "K+": [
+   "pairOK_theorem1_shift",
+   "checkLowest_theorem1",
+   "checkLowest_S2",
+   "matrixFree_theorem1",
+   "denseArrays_theorem1",
+   "npz_theorem1",
+   "matrixFree_S2",
+   "denseArrays_S2",
+   "npz_S2",
+   "symOK_rejects_asymmetric",
+   "vecOK_rejects_zero_vector"
+  ]
+ },
+ "not_done": [
+  "N-05: per-certificate count theorems (Drafts/LeanProduct/SmallCount.lean) and the refinement of CertifyCore.K.bareiss (Sylvester's determinant identity)",
+  "N-06: Theorem U5 complex, D-01 (c) complex, C-12 (a), E-07 Lemma 5: not attempted"
+ ],
+ "findings": [
+  "checkLowest does not test symmetry of the decoded matrix (cecheck does, H5.symmetric); the refinement theorems take symOK as a hypothesis",
+  "pairOK and the single-group check accept a zero vector (cecheck rejects it in E2); the refinement theorems take vecOK as a hypothesis"
+ ]
+}
