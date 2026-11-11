@@ -1,5 +1,67 @@
 # Changelog
 
+## [3.2.2] — 2026-11-11 (branch `track/hardening-3.2.2` on `dev/3.2` fa86456; the tag `v3.2.2` and its evidence run follow the merge)
+
+Hardening release (Wave 5 of the development roadmap, items N-01, N-02, N-03, H-02). No bound changes inside the range of the
+floating-point guards: on ten fixture certificates (dense and sparse operators, real and complex data, spec and matrix-free
+operators, kinds lowest/window/all, a vectorless window, S6, S7, an UNDERFLOW_RISK input) every statement record of this
+version equals that of fa86456 except for the timings. What changes is that the code now refuses to bound where the proof does
+not reach, and that without a memory budget the process memory cap decides whether a factorization is started. No new
+mathematics: the range is the hypothesis already stated in `docs/proofs/thm1_fp-accounting.md` and `D-01_sparse-residual.md`.
+
+- **Range of the floating-point guards (N-01, finding L-3 of the Lean formalization).** The guards of Theorem 1 (Lambda4 for the
+  norms, Lambda5 for |A||x|, Lambda6 for E) and the residual of D-01 (hypothesis H3) are established for vectors of n <= 2^26
+  entries and row widths w <= 2^26 only; Lambda4 with N = 2n fails from n = 84886744 on, and the sentence that extended Lambda6
+  beyond 2^26 fails at w + 2 = floor(2^53 / 3) (erratum of 10 Nov 2026). New: `fp.GUARD_RANGE_MAX = 2**26`,
+  `fp.GuardRangeError` (a `ValueError`), `fp.check_guard_range`, `fp.guard_range_findings`. `fp.norm2_upper` and `fp.norm2_lower`
+  (and through them `fro_upper`), `enclosure._rounding_bound`, `enclosure.rayleigh_interval` and
+  `ldl_residual.sparse_ldl_residual_bound` raise it above the range before computing anything. `certify()` checks the dimension
+  and `adapter.width` before S2: above the range S2 and the statements resting on its enclosures or on the factorization bounds
+  (S3 for kinds lowest/window/all, S4, S7, S8) are INCONCLUSIVE with the new reason code `FP_GUARD_RANGE` and a `guard_range`
+  evidence record. A `GuardRangeError` from a norm of more than 2^26 entries inside that range (for example ||X_g||_F of a
+  cluster with n g > 2^26) is reported the same way by S2 and by S1; an S4 cluster record then carries FP_GUARD_RANGE, and
+  `inertia.inertia` reports no count (for example ||R||_F of a dense LDL^T with n > 8192), which makes S3 INCONCLUSIVE with
+  FP_GUARD_RANGE and an S8 record INCONCLUSIVE. `scope.REASON_CODES`, `diagnostics.NEXT_ACTION_BY_CODE`, the schemas
+  (re-rendered), `docs/SCOPE_MATRIX.md`, `docs/faq_inconclusive.md` and `docs/presets.md` name the code. Status changes against
+  3.2.1: only above the range, where 3.2.1 returned bounds outside the range in which they are established. The largest
+  dimension in the 3.2.1 run record is 1116229 (E9); whether a normed array of that run exceeded 2^26 entries is shown by the
+  3.2.2 run (a FP_GUARD_RANGE status in the comparison). Tests: `tests/test_guard_range.py` (2^26 allowed, 2^26 + 1 refused with
+  a zero-stride view and a fake adapter, no large allocation; certify() with the limit lowered; a spec whose row width bound is
+  2^25 + 52 against one with 2^26 + 54).
+- **Pinning tests for the E6 survivors (N-02).** `tests/test_e6_pins.py` pins the formula at each of the seven soundness-relevant
+  survivors of the 3.2 mutation sample (`E6_inspection_worksheet_3.2.0.md`) and at the `checker.py:535` gap: the complex flag of
+  `sectors.audit_sector`, the rounding term, kappa and the observable main term of `eigenspace.py`, the count of a complex block
+  from its real embedding in `exact_sectors.py`, the fermion letter amplitudes in `localops.py`, the counted flag of
+  `spectrum.merge_intervals` and the separation test of the witness count in `checker.certify_by_counts`. Each of the eight
+  mutants of `experiments/e6_mutation.py` (same site indices as in the 3.2.0 and 3.2.1 runs) fails these tests;
+  `experiments/e6_pin_check.py` repeats that check. The `localops.py:189` mutant changes no matrix: every builder (bitwise,
+  `SpecOperator`, `MatrixFreeOperator`, `checker.exact_matrix`) masks amplitudes whose output digit is out of range, so the
+  worksheet's reading 'the built matrix changes' does not hold; the test pins the contract of `shift_components` instead.
+- **Memory gate from the process memory cap (N-03).** `cost.process_memory_cap()` reads the cap the evidence runs set (a Windows
+  job object with a per-process or job memory limit, `RLIMIT_AS` on POSIX) and the memory in use; `cost.memory_limit_mb`,
+  `cost.memory_cap_note`. Without `Options.budget_mb` the memory left under the cap takes the place of the budget in
+  `scope.Budget.memory_ok` (statement gate), in `inertia.inertia` (dense and sparse factorizations, `cost.dense_inertia_mb` /
+  `cost.sparse_inertia_mb`) and in `cost.recommend_inertia_method`. A factorization predicted above it is NOT_CHECKED with
+  `BUDGET_MEMORY` before it starts, instead of a process that ends at the cap (3.2.0 run, E4 W4). With a budget, or without a cap,
+  nothing changes. `certify()` now sets `BUDGET_MEMORY` explicitly on an S3 that is NOT_CHECKED because a factorization was not
+  attempted or not completed (`scope.classify_not_checked` read the words 'memory budget' of such a summary as `BUDGET_TIME`;
+  with a budget the statement gate refuses first, so this mattered only for a refusal inside the factorization). Status changes
+  against 3.2.1: under a cap and without a budget, an S3 or S8 whose fill-model prediction exceeds the headroom is NOT_CHECKED
+  although it may have fitted (the fill model is fitted to the Heisenberg chain); the 3.2.2 run's comparison shows any such
+  leaf. Test: `tests/test_memory_gate.py` caps a child process (job object, 326 MB on the development machine) above its own
+  usage and certifies a diagonal operator of dimension 10000 whose predicted sparse factorization (856 MB) exceeds the headroom.
+- **Property-based tests (H-02).** `tests/test_properties_fp.py` compares fp.py and enclosure.py with exact rational arithmetic
+  (`fractions.Fraction`) on inputs drawn by hypothesis (derandomized; magnitudes 2^-600 to 2^200, real and complex, dense and
+  sparse): the gamma constants, the norm guards for every magnitude and with the 3u slack in the normal range, `exact_dot`,
+  `fro_upper`, `inf_norm_upper`, the entrywise bound E, `upper`, `xnorm_lower`, the Theorem 1 radius against the exact residual
+  norm, the Rayleigh interval and the cluster bound's eta. hypothesis is added to the `test` and `dev` extras; the module is
+  skipped without it.
+
+The source hash changes (computational files: `fp.py`, `enclosure.py`, `ldl_residual.py`, `inertia.py`, `certify.py`, `cost.py`,
+`scope.py`, `diagnostics.py`, `__init__.py`, and `experiments/e6_pin_check.py`). The number of mutation sites of `fp.py`,
+`enclosure.py`, `inertia.py` and `certify.py` grows, so the E6 sample of the 3.2.2 run differs from that of 3.2.1 although the
+seed is the same.
+
 ## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
 
 One robustness fix found by the 3.2.0 evidence run; no bound, status rule or record field changes.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "certify-ed"
-version = "3.2.1"
+version = "3.2.2"
 description = "Certificates for exact-diagonalization results: rigorous enclosures, completeness, labels and exact re-checks, with applications to published proofs"
 readme = "README.md"
 license = "MIT"
@@ -30,8 +30,8 @@ quspin = ["quspin>=1.0"]               # importers, label audits, QuSpin cross-c
 hdf5 = ["h5py>=3.0"]
 plots = ["matplotlib>=3.5"]
 schema = ["jsonschema>=4.18"]          # validate certificates against schema/certificate-2.1.schema.json (draft 2020-12)
-test = ["pytest>=7.0"]
-dev = ["pytest>=7.0", "pytest-cov", "ruff", "build", "jsonschema>=4.18"]
+test = ["pytest>=7.0", "hypothesis>=6"]     # hypothesis: property tests (tests/test_properties_fp.py)
+dev = ["pytest>=7.0", "hypothesis>=6", "pytest-cov", "ruff", "build", "jsonschema>=4.18"]
 all = ["python-flint>=0.6", "quspin>=1.0", "h5py>=3.0", "matplotlib>=3.5", "jsonschema>=4.18", "pytest>=7.0"]
 
 [project.scripts]
