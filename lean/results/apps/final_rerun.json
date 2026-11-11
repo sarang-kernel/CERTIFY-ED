@@ -1,0 +1,111 @@
+{
+ "description": "Re-run of every ceapps target with one binary built from commit 324c418 after the last change of CertifyApps; lean_value of every target compared with the committed results/apps/<id>.json",
+ "date": "10 November 2026",
+ "binary_sha256": "635dfbc225f351eecbe60673fd93e91d259accc318d21538a37721680478b176",
+ "source_commit": "324c418",
+ "command": "python apps_export/run_all.py --exe work/apps_final/bin/ceapps_final.exe --archive ../sources/archive_v5 --out work/apps_final/out --work work/apps_final/work",
+ "agreeing": 14,
+ "disagreeing": 0,
+ "skipped": 0,
+ "targets": [
+  {
+   "id": "e7_chain_J2_0",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 587.2,
+   "peak_memory_bytes": 132415488
+  },
+  {
+   "id": "e7_chain_J2_0.5",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 657.0,
+   "peak_memory_bytes": 135057408
+  },
+  {
+   "id": "e7_square_J2_0",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 132.4,
+   "peak_memory_bytes": 36290560
+  },
+  {
+   "id": "e7_square_J2_0.5",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 147.7,
+   "peak_memory_bytes": 45563904
+  },
+  {
+   "id": "e9_crown_spin_half_lower_bound",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 1491.1,
+   "peak_memory_bytes": 290123776
+  },
+  {
+   "id": "e9_crown_spin_one_upper_bound",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 5.0,
+   "peak_memory_bytes": 24571904
+  },
+  {
+   "id": "e10_star",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 0.2,
+   "peak_memory_bytes": 13561856
+  },
+  {
+   "id": "e10_square_octagon_perp",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 2.5,
+   "peak_memory_bytes": 22290432
+  },
+  {
+   "id": "e10_square_octagon_par",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 2.2,
+   "peak_memory_bytes": 22306816
+  },
+  {
+   "id": "e10_cross",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 81.3,
+   "peak_memory_bytes": 142835712
+  },
+  {
+   "id": "e10_decorated_honeycomb",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 5.6,
+   "peak_memory_bytes": 28729344
+  },
+  {
+   "id": "e10_decorated_square",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 2322.6,
+   "peak_memory_bytes": 853909504
+  },
+  {
+   "id": "e10_kernels",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 437.9,
+   "peak_memory_bytes": 89251840
+  },
+  {
+   "id": "e10_square_octagon_criterion",
+   "agreement": true,
+   "lean_value_identical_to_committed": true,
+   "seconds": 0.3,
+   "peak_memory_bytes": 12668928
+  }
+ ],
+ "note": "machine shared with two Lean builds and nanoda runs; times are indicative"
+}

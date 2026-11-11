@@ -1,0 +1,42 @@
+⚠ [2754/2826] Replayed CertifyMathlib.Enclosure.FloatModel
+warning: CertifyMathlib\Enclosure\FloatModel.lean: imports `Mathlib.Analysis.Normed.Field.Basic` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Enclosure\FloatModel.lean: imports `Mathlib.Analysis.SpecialFunctions.Pow.Real` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Enclosure\FloatModel.lean: imports `Mathlib.Analysis.Complex.Basic` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Enclosure\FloatModel.lean: imports `Mathlib.Algebra.Order.BigOperators.Ring.Finset` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2785/2826] Replayed CertifyMathlib.Smoke
+warning: CertifyMathlib\Smoke.lean: imports `Mathlib.Analysis.Matrix.Spectrum` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2786/2826] Replayed CertifyMathlib.Enclosure.Spectral
+warning: CertifyMathlib\Enclosure\Spectral.lean: imports `Mathlib.Analysis.Matrix.Spectrum` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2787/2826] Replayed CertifyMathlib.Enclosure.Residual
+warning: CertifyMathlib\Enclosure\Residual.lean: imports `Mathlib.LinearAlgebra.Matrix.Gershgorin` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Enclosure\Residual.lean: imports `Mathlib.Analysis.CStarAlgebra.Matrix` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2791/2826] Replayed CertifyMathlib.Counting.QuadForm
+warning: CertifyMathlib\Counting\QuadForm.lean: imports `Mathlib.Analysis.Matrix.Spectrum` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2802/2829] Replayed CertifyMathlib.Enclosure.MatrixFree
+warning: CertifyMathlib\Enclosure\MatrixFree.lean: imports `Mathlib.LinearAlgebra.Matrix.Kronecker` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2803/2829] Replayed CertifyMathlib.Enclosure.ExpLn
+warning: CertifyMathlib\Enclosure\ExpLn.lean: imports `Mathlib.Analysis.SpecialFunctions.Log.Deriv` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Enclosure\ExpLn.lean: imports `Mathlib.Analysis.Complex.Exponential` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2804/2829] Replayed CertifyMathlib.Enclosure.FloatUnderflow
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:215:70: exponent 537 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:230:27: exponent 537 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:256:48: exponent 1075 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:308:74: exponent 537 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:1627:8: exponent 1075 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+warning: CertifyMathlib/Enclosure/FloatUnderflow.lean:1722:12: exponent 1073 exceeds the threshold 256, exponentiation operation was not evaluated, use `set_option exponentiation.threshold <num>` to set a new threshold
+⚠ [2825/2843] Replayed CertifyMathlib.Counting.Theorem6
+warning: CertifyMathlib\Counting\Theorem6.lean: imports `Mathlib.Analysis.InnerProductSpace.Trace` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [2874/2883] Replayed CertifyMathlib.Apps.Kernel
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.LinearAlgebra.Matrix.PosDef` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.LinearAlgebra.Matrix.Rank` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.RingTheory.Localization.Module` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.Algebra.GCDMonoid.Finset` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.Data.ZMod.Basic` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.Algebra.Field.ZMod` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.Analysis.RCLike.Basic` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\Apps\Kernel.lean: imports `Mathlib.Algebra.Order.Star.Real` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+✔ [2879/2883] Built CertifyMathlib.Counting.P15Float (76s)
+✔ [2880/2883] Built CertifyMathlib.Counting.D01Float (91s)
+✔ [2881/2883] Built CertifyMathlib.Counting (48s)
+✔ [2882/2883] Built CertifyMathlib (49s)
+Build completed successfully (2883 jobs).

@@ -189,9 +189,9 @@
    "command": "leanexport <module> -- <theorem> > export.ndjson; nanoda_bin config.json (permitted_axioms propext, Classical.choice, Quot.sound; unpermitted_axiom_hard_error, nat_extension, string_extension true)",
    "procedure": "one theorem per run; the export contains the theorem and every declaration it depends on, including the Lean core and Mathlib declarations; LEAN_PATH as given by lake env; a run is stopped when a process exceeds 4 GiB of private memory or 30 minutes; the export file is removed after each run; the round 2 runs used the round 2 build; the round 3 edits add declarations at the ends of the files, the import of CertifyMathlib.Counting.Inertia in Generalized and documentation, and leave the checked declarations as they were; leanchecker run 4 covers the current build",
    "theorems": 63,
-   "accepted": 62,
+   "accepted": 63,
    "rejected": 0,
-   "not_run": 1,
+   "not_run": 0,
    "runs": [
     {
      "theorem": "CertifyMathlib.Enclosure.FP.higham_lemma_3_1",
@@ -831,18 +831,6 @@
      "round": 3
     },
     {
-     "theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
-     "module": "CertifyMathlib.Enclosure.FloatUnderflow",
-     "result": "not run",
-     "why": "leanexport stopped at the 4 GiB private-memory limit of this check: 4099 MiB after 86.6 s, and 4101 MiB after 85.1 s in a second run; the theorem is residual_radius_int05 (accepted) composed with residual_enclosure (accepted in round 2)",
-     "declarations": 0,
-     "export_seconds": 86.6,
-     "export_peak_private_mib": 4099,
-     "export_bytes": null,
-     "output": "",
-     "round": 3
-    },
-    {
      "theorem": "CertifyMathlib.Enclosure.FP.d02b_key",
      "module": "CertifyMathlib.Enclosure.MatrixFree",
      "result": "accepted",
@@ -1010,6 +998,20 @@
      "check_peak_private_mib": 35,
      "output": "Checked 7016 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
      "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
+     "module": "CertifyMathlib.Enclosure.FloatUnderflow",
+     "export_seconds": 50.3,
+     "export_peak_private_mib": 4099,
+     "export_bytes": 273051368,
+     "result": "accepted",
+     "declarations": 34948,
+     "check_seconds": 52.6,
+     "check_peak_private_mib": 463,
+     "output": "Checked 34948 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+     "round": "integration",
+     "note": "re-run on 11 November 2026 after the final build with a memory limit of 6 GiB (Audit/run_final_checks.py); the export needed 4099 MiB, just above the earlier limit of 4 GiB"
     }
    ]
   }
@@ -1242,10 +1244,10 @@
     "Quot.sound",
     "propext"
    ],
-   "trust_level": "K+",
+   "trust_level": "K2",
    "nanoda": {
     "CertifyMathlib.Enclosure.FP.residual_radius_int05": "accepted",
-    "CertifyMathlib.Enclosure.FP.residual_enclosure_int05": "not run"
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_int05": "accepted"
    }
   },
   {
@@ -5325,7 +5327,7 @@
     "Quot.sound",
     "propext"
    ],
-   "trust_level": "K+"
+   "trust_level": "K2"
   }
  ],
  "trust_note": "Every theorem listed is level K: kernel-checked by the build, no sorry, admit or native_decide, axioms printed. Every module, and the root module, was replayed and accepted by leanchecker (four runs, see second_checker; the fourth after the round 3 edits), so every theorem is at least K+. Level K2 means that the theorem, exported with all its dependencies by leanexport, was accepted by the independent kernel nanoda; nanoda was run on the main theorems of each statement (field main) and a statement is K2 when all its main theorems were accepted. A theorem that is only used inside an accepted export is still listed as K+."
