@@ -12,6 +12,8 @@ Checks (the script exits with status 1 if one fails):
   marked with a leading "~";
   every commit of commits.tsv, every decision, every run record and every handover is cited by at least one row;
   dates lie between 18 December 2025 and 6 November 2026 and do not go backwards within a month;
+  the optional after.tsv (work after archive v5, 7 to 30 November 2026) cites paths of this repository (repo:),
+  the documentation commits of the code repository (code:) or notes (~);
   no table cell contains a pipe character, no text contains an em or en dash.
 Also writes changelog_sources_bundle.txt (the text of every cited file, the member lists of cited zip and tar files
 and the tables of this folder), for `python tools/lint_docs.py --bundle tools/changelog/changelog_sources_bundle.txt`.
@@ -25,6 +27,7 @@ import tarfile
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+CODE_COMMITS_AFTER = {"40d59f4", "fa86456"}  # documentation commits of dev/3.2 after archive v5
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 
 
@@ -151,6 +154,51 @@ def main():
                              f"{render_sources(e['sources'], where)} |")
             lines.append("")
         ym = (ym[0] + (ym[1] == 12), 1 if ym[1] == 12 else ym[1] + 1)
+    # Work after archive v5 (this repository and the documentation commits of the code repository).
+    after_path = os.path.join(HERE, "after.tsv")
+    if os.path.exists(after_path):
+        lines.append("## After archive v5: the documentation and the Lean re-verification")
+        lines.append("")
+        if "after" not in months:
+            probs.append(("months.tsv", "no paragraph for after"))
+        lines.append(months.get("after", ""))
+        lines.append("")
+        lines.append("| Date | Area | Change | Source |")
+        lines.append("|---|---|---|---|")
+        last = ""
+        for i, e in enumerate(tsv("after.tsv"), 2):
+            where = f"after.tsv line {i}"
+            d = e["date"].strip()
+            if not re.fullmatch(r"2026-11-\d\d", d) or not ("2026-11-07" <= d <= "2026-11-30"):
+                probs.append((where, "date outside 7 to 30 November 2026 " + d))
+            if d < last:
+                probs.append((where, "date goes backwards " + d))
+            last = d
+            if e["area"] not in AREAS:
+                probs.append((where, "unknown area " + e["area"]))
+            out = []
+            for s in [x.strip() for x in e["sources"].split(";") if x.strip()]:
+                if s.startswith("repo:"):
+                    p = s[5:]
+                    if not os.path.exists(os.path.join(ROOT, *p.rstrip("/").split("/"))):
+                        probs.append((where, "missing path in this repository " + p))
+                    out.append("`" + p + "` (this repository)")
+                elif s.startswith("code:"):
+                    h = s[5:]
+                    if h not in CODE_COMMITS_AFTER:
+                        probs.append((where, "unknown code commit " + h))
+                    out.append("`" + h + "` (code repository, `sources/certify-ed_dev-3.2.bundle`)")
+                elif s.startswith("~"):
+                    out.append(s[1:].strip())
+                else:
+                    probs.append((where, "source must start with repo:, code: or ~ " + s))
+            if not out:
+                probs.append((where, "row without a source"))
+            for cell in (e["change"], e["sources"]):
+                if "|" in cell:
+                    probs.append((where, "pipe in a cell"))
+            lines.append(f"| {show_date(d)} | {e['area']} | {e['change'].strip()} | {'; '.join(out)} |")
+        lines.append("")
     lines.append("## Version index")
     lines.append("")
     lines.append(months.get("versions", ""))
