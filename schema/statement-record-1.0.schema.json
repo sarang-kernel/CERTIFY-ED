@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:certify-ed:schema:statement-record:1.0",
   "title": "CERTIFY-ED standalone statement record, schema 1.0",
-  "description": "JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03) and certify_ed.moments (C-07). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one hypothesis; DECLARED marks a producer value that is recorded, not certified.",
+  "description": "JSON record written by certify_ed.variational (E-05), certify_ed.generalized (E-03), certify_ed.moments (C-07) and certify_ed.nonhermitian (E-02). A statement with status CERTIFIED_UNDER_HYPOTHESIS names at least one hypothesis; DECLARED marks a producer value that is recorded, not certified.",
   "type": "object",
   "required": [
     "schema",
@@ -14,7 +14,8 @@
       "enum": [
         "certify-ed/variational/1.0",
         "certify-ed/generalized/1.0",
-        "certify-ed/moments/1.0"
+        "certify-ed/moments/1.0",
+        "certify-ed/nonhermitian/1.0"
       ]
     },
     "description": {
@@ -73,6 +74,7 @@
                   "DECLARED_ESTIMATE",
                   "DEFAULT_SELECTION",
                   "DEPENDENCY_NARROWED",
+                  "ILL_CONDITIONED_EIGENVECTORS",
                   "MISSING_DEPENDENCY",
                   "NARROWED_BY_USER",
                   "NEEDS_DEPENDENCY",

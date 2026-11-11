@@ -1,0 +1,26 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_bauer_fike_tight",
+ "error_class": "correct",
+ "note": "control: defective 2 x 2 matrix with two pseudo-eigenpairs at distance b tau = ||V^-1 R||_2 (Bauer-Fike is an equality)",
+ "dimension": 2,
+ "n_pairs": 2,
+ "must_certify": [
+  "N1.backward_errors",
+  "N2.eigenvector_inverse",
+  "N3.inclusion",
+  "N4.counting"
+ ],
+ "must_not_certify": [],
+ "conditional": false,
+ "exact_eigenvalues": [
+  [
+   "1",
+   "0"
+  ],
+  [
+   "1",
+   "0"
+  ]
+ ]
+}

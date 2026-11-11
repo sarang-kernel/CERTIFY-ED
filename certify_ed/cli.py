@@ -360,6 +360,37 @@ def cmd_variational(a):
     return 0
 
 
+def cmd_nonhermitian(a):
+    """E-02: backward errors, Bauer-Fike discs and their counts for a non-Hermitian matrix (certify_ed.nonhermitian;
+    every statement UNVERIFIED)."""
+    import numpy as np
+    from .io.formats import read_array, read_operator
+    from .nonhermitian import certify_nonhermitian, format_nonhermitian
+
+    def _left(path):
+        if path.lower().endswith(".npz"):
+            with np.load(path, allow_pickle=False) as z:
+                if "left_eigenvectors" in z.files:
+                    return read_array(path, key="left_eigenvectors", role="eigenvectors")
+        return read_array(path, role="eigenvectors")
+    A = read_operator(a.operator)
+    mu = read_array(a.eigenvalues or a.operator, role="eigenvalues")
+    X = read_array(a.eigenvectors or a.eigenvalues or a.operator, role="eigenvectors")
+    Y = _left(a.left_eigenvectors) if a.left_eigenvectors else None
+    try:
+        rec = certify_nonhermitian(A, mu, X, kind=a.kind, left_eigenvectors=Y, max_dim=a.max_dim,
+                                   underflow_check=not a.assume_no_underflow, description=a.description or "")
+    except ValueError as e:
+        print(f"nonhermitian: refused: {e}")
+        return 2
+    print(format_nonhermitian(rec))
+    if a.json:
+        from .certificate_v2 import _jsonable
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(_jsonable({k: v for k, v in rec.items() if not k.startswith("_")}), f, indent=1)
+    return 0
+
+
 def cmd_levelstats(a):
     """C-09: interval r-ratios and spacing histogram of a complete, counted spectrum (certify_ed.levelstats)."""
     from .certificate_v2 import Certificate
@@ -814,6 +845,20 @@ def main(argv=None):
     va.add_argument("--description")
     va.add_argument("--json", help="write the record to this file")
     va.set_defaults(fn=cmd_variational)
+    nh = sub.add_parser("nonhermitian", help="backward errors, Bauer-Fike discs and counts for a non-Hermitian matrix "
+                                              "(E-02, UNVERIFIED)")
+    nh.add_argument("--operator", required=True, help="the stored square matrix (npy/npz/HDF5/Matrix Market/...)")
+    nh.add_argument("--eigenvalues", help="claimed eigenvalues (complex allowed; default: the operator file)")
+    nh.add_argument("--eigenvectors", help="claimed right eigenvectors, one column per value (default: the eigenvalue file)")
+    nh.add_argument("--left-eigenvectors", dest="left_eigenvectors", help="optional left eigenvectors (y^H A = mu y^H), "
+                    "one column per value; an npz may hold them under the key left_eigenvectors")
+    nh.add_argument("--kind", default="auto", choices=["auto", "all", "subset"],
+                    help="'all': n pairs (N1 to N4); 'subset': backward errors only (N1); auto: 'all' when k = n")
+    nh.add_argument("--max-dim", type=int, dest="max_dim", default=2000, help="dense size limit (default 2000)")
+    nh.add_argument("--assume-no-underflow", action="store_true", dest="assume_no_underflow")
+    nh.add_argument("--description")
+    nh.add_argument("--json", help="write the record to this file")
+    nh.set_defaults(fn=cmd_nonhermitian)
     ls = sub.add_parser("levelstats", help="interval r-ratios and spacing histogram of a complete counted spectrum (C-09)")
     ls.add_argument("certificate", help="certificate JSON of a kind 'all' claim with S3 CERTIFIED")
     ls.add_argument("--unfold", default="none", help="'none' (default) or 'poly:D': polynomial unfolding of degree D "

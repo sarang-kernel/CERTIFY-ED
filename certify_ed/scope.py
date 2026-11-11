@@ -42,6 +42,10 @@ REASON_CODES: Dict[str, str] = {
     "UNDERFLOW_RISK": ("a nonzero operand, radius or residual bound has magnitude below 2^-900: the no-underflow "
                        "hypothesis of the floating-point model is not established for this input "
                        "(Options(underflow_check=False) assumes it instead)"),
+    "ILL_CONDITIONED_EIGENVECTORS": ("the claimed eigenvector matrix V of a non-Hermitian claim could not be certified "
+                                     "invertible (no bound ||I - W V||_2 < 1 for its computed inverse W): the matrix is "
+                                     "defective or close to a defective matrix, or V is too ill-conditioned for binary64 "
+                                     "(E-02, certify_ed.nonhermitian; UNVERIFIED)"),
     "DECLARED_ESTIMATE": ("a producer-declared stochastic estimate (an energy or a variance from samples): recorded as "
                           "DECLARED, never certified; no statement rests on it (variational records, E-05)"),
 }
