@@ -68,31 +68,16 @@ def _win_extended_limits():
 def process_memory_cap_mb() -> Optional[float]:
     """The memory limit of this process in MiB, or None when there is none.
 
-    Windows: the job object the process belongs to (innermost), JOB_OBJECT_LIMIT_PROCESS_MEMORY (committed private
-    memory of one process) and JOB_OBJECT_LIMIT_JOB_MEMORY (of all processes of the job); the smaller when both are
-    set. POSIX: the soft RLIMIT_AS (address space). The two caps measure different things (D-07); both make an
-    allocation beyond them fail."""
-    try:
-        if WINDOWS:
-            ctypes, wintypes, EXTENDED = _win_extended_limits()
-            k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-            k32.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
-                                                      ctypes.c_void_p]
-            info = EXTENDED()
-            if not k32.QueryInformationJobObject(None, 9, ctypes.byref(info), ctypes.sizeof(info), None):
-                return None                               # not in a job (or no access): no cap
-            flags = info.BasicLimitInformation.LimitFlags
-            caps = []
-            if flags & 0x100 and info.ProcessMemoryLimit:
-                caps.append(info.ProcessMemoryLimit)
-            if flags & 0x200 and info.JobMemoryLimit:
-                caps.append(info.JobMemoryLimit)
-            return min(caps) / 2 ** 20 if caps else None
-        import resource
-        soft, _ = resource.getrlimit(resource.RLIMIT_AS)
-        return None if soft in (resource.RLIM_INFINITY, -1) else soft / 2 ** 20
-    except Exception:
+    The cap is read by `cost.process_memory_cap`, the reader of the memory gate (3.2.2, N-03), so that the gate and the
+    worker budgets see the same limit. Windows: the job object the process belongs to (innermost),
+    JOB_OBJECT_LIMIT_PROCESS_MEMORY (committed private memory of one process) and JOB_OBJECT_LIMIT_JOB_MEMORY (of all
+    processes of the job); the smaller when both are set. POSIX: the soft RLIMIT_AS (address space). The two caps
+    measure different things (D-07); both make an allocation beyond them fail."""
+    from .cost import process_memory_cap
+    cap = process_memory_cap()
+    if cap is None or not cap.get("cap_mb"):
         return None
+    return float(cap["cap_mb"])
 
 
 def process_memory_mb() -> Optional[float]:

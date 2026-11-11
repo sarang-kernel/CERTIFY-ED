@@ -2,6 +2,11 @@
 
 ## [3.3.0.dev0] — unreleased (dev/3.3)
 
+`dev/3.3` starts at `v3.2.2` and carries everything of [3.2.2] below. The integration sets the version to
+3.3.0.dev0, lets `parallel.process_memory_cap_mb` read the cap through `cost.process_memory_cap` (the reader of the
+3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
+`tests/test_review_fixes.py`.
+
 ### Scale track (roadmap D-03, D-04, H-04, groundwork of G-10; track/scale)
 
 No bound, status rule or record field of `certify()` changes; the computational source hash changes (new modules
