@@ -158,7 +158,7 @@ def test_cli_exit_codes_and_env_var(saved, tmp_path, monkeypatch, capsys):
     with open(rec, encoding="utf-8") as f:
         assert json.load(f)["verdict"] == "ERROR"
     out = capsys.readouterr().out
-    assert "statuses unchanged" in out
+    assert "no status of the certificate depends on it" in out
     assert _statuses(path) == before
 
 

@@ -755,7 +755,7 @@ def cmd_verify(a):
         for sid in sorted(st):
             v = st[sid]
             print(f"  {sid}: {v.get('verdict') if isinstance(v, dict) else v}")
-    print(f"external record: {record} (statuses unchanged: {rec['status_effect'].split(':')[0]})")
+    print(f"external record: {record} (recorded only: no status of the certificate depends on it)")
     return 0 if rec["verdict"] == "PASS" else 2
 
 
