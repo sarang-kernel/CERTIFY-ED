@@ -43,7 +43,7 @@ checks invariants instead of rows (no incorrect result certified).
 | correct runs flagged by P2 (false alarms) | 2 | 3 | 3 |
 | correct runs | 9 | 9 | 9 |
 | incomplete runs with S3 FAILED under P3 | 3 | 3 | 3 |
-| S3 of the correct runs under P3 | \st{INCONCLUSIVE} | \st{INCONCLUSIVE} | \st{INCONCLUSIVE} |
+| S3 of the correct runs under P3 | INCONCLUSIVE | INCONCLUSIVE | INCONCLUSIVE |
 | factorizations until S3 FAILED | 4 | 4 | 4 |
 | k chosen by P3k in a correct run | 7 | 7 | 7 |
 | k chosen by P3k in an incomplete run | 6 | 6 | 6 |

@@ -56,7 +56,8 @@ bound below the verifier's lower bound is unsound, and one between its lower and
 underflow scan U1 (informational; a finding forbids CERTIFIED S2 and S3). And the status logic of S2 and S3 for the
 claim kinds `lowest`, `window` and `all`: CERTIFIED is permitted only if the stored data permit it (Lemma 4 and
 Corollary 5 for the counts), and a FAILED status is reproduced from the stored data when possible. For sector
-certificates S3 is re-checked with the pre-lift radii of the sector block, as certify-ed does.
+certificates S3 is re-checked with the pre-lift radii of the sector block, as certify-ed does; the validation corpus
+has no sector certificate, so this path is written but untested (`review/completion/RESULT_verifier.md`).
 
 ## What it does not check
 

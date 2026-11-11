@@ -78,3 +78,15 @@ is Sarang's (decision D-16): v4 carries scaffold captions only, and every sectio
 
 Writing these documents found a few inaccuracies in the record and limits of one instrument. They are listed in
 `06_found_while_documenting.md`; none changes a statement or status of any run.
+
+## Items found by the Lean formalization
+
+The Lean re-verification found that the code does not check the size range under which the floating-point guards of
+Theorem 1 hold: `_rounding_bound` in `certify_ed/enclosure.py` and the norm guards of `certify_ed/fp.py` accept any row
+width w and dimension n, while Lambda6 and Lambda4 are established for w and n up to 2^26 only (finding L-3 of
+[07_found_while_formalizing.md](07_found_while_formalizing.md)). No stored operator comes near that size, so no
+certificate is affected; a check that refuses to certify above the range, with a test, is a candidate for 3.2.2 together
+with the E6 pinning tests and the memory gate. The other findings of that document are corrected by documentation
+commits or need no change. The statements that the formalization left partial or did not take up are listed in
+`reverification_lean/VERIFICATION_REPORT.md`; whether a Lean theorem can stand in for Sarang's re-derivation is the
+subject of the proposal `docs/decisions/05_proposed_d62_lean.md`, which is not adopted.

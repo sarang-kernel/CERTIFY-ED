@@ -15,7 +15,7 @@ technical term the first time it appears in a document, or point to the document
 undergraduate linear algebra and some programming must be able to follow.
 
 Rule 4. Say exactly how strongly something has been checked. A statement is "kernel-checked in Lean" (a Lean theorem
-with no sorry, accepted by the Lean kernel), "re-accepted by a second checker" (leanchecker or lean4lean), "recomputed
+with no sorry, accepted by the Lean kernel), "re-accepted by a second checker" (the independent kernel nanoda, level K2; or a replay by leanchecker, level K+), "recomputed
 in Lean" (a compiled Lean program reproduced the number), "machine-checked" (a script tested it on random and
 adversarial cases), or "checked by" a named person. The words `verified` and `proven` are not used, because under the
 project's decision D-12 new mathematics counts as established only after a person has re-derived it, and that check

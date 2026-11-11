@@ -13,7 +13,8 @@ repository and the run records.
 | `03_review_and_derivation_findings.md` | the 179 findings of the independent review of 21 October 2026, with its critical and major findings, and the verdicts of the independent re-derivation of the 22 derivation documents, with the two ERROR rows and the five GAP rows |
 | `04_failed_runs_and_attempts.md` | every failed run, build and attempt: seeding, the first E5 run, an empty figure, memory failures, the provenance check, the candidate run, attempt 1 of the 3.1.0 run, the 3.2.0 release sample, the E4 crash of the 3.2.0 run, the number-script check of 3.2.1, the figure index, the toolchains |
 | `05_open_items.md` | what is still open: Sarang's check of the derivations, the E6 verdicts and the seven soundness-relevant test gaps, the memory gate, the cited version, the known issues of 3.1.0, and the acts outside the code |
-| `06_found_while_documenting.md` | inaccuracies of the result files and limits of the comparison script found while these documents were written |
+| `06_found_while_documenting.md` | inaccuracies of the result files and limits of the comparison script found while these documents were written, a figure caption, the scope wording of the C verifier |
+| `07_found_while_formalizing.md` | eleven places where a derivation document and its Lean statement differ: guard ranges, a missing hypothesis, arguments that hold for another reason; none changes a certificate |
 
 ## How the defects were found
 

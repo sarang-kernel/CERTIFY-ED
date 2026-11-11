@@ -664,3 +664,34 @@ The counts of `int05_underflow.md` are, as its status line gives them, 2 500 res
 dot-product, 5 000 `exact_dot` and 5 000 norm cases and 18 992 model operations (random), and 373 adversarial cases. The
 statements added in 3.2 (C-03, C-04, C-07, C-12, C-13, C-16, D-02, E-03, E-04, E-05, E-07) are not theorems of the
 manuscript; their status rows are in [derivation_documents.md](derivation_documents.md).
+
+<!-- lean-status begin -->
+
+## Lean status of every result
+
+The Lean re-verification in `reverification_lean/` (repository certify-ed-project) states the results below as Lean theorems on Mathlib. The columns give the Lean statement ids of `reverification_lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; the column "Sarang's check" above is unchanged.
+
+| result | Lean statements | Lean | level | findings |
+|---|---|---|---|---|
+| Theorem 1 (residual bound) | T1 (complete), T1-family (complete), T1-shift (complete) | complete | K2 | none |
+| Theorem 1-fl (floating-point radius) | FP-model (complete), T1-fl (complete), T1-fl-complex (complete) | complete; guards of CertifyCore at level K2 | K2 | L-1, L-2, L-3 |
+| Theorem 1 under underflow (INT-05) | T1-fl-int05 (complete) | complete; real data only | K2 | L-7 |
+| polar-factor lemma | polar (complete) | complete | K2 | none |
+| Theorem 2 (cluster radius) | T2 (complete), Kahan (complete) | complete | K2 | none |
+| Theorem 2' | T2prime (complete) | complete | K2 | none |
+| Theorem 3 (Kato-Temple) | T3 (complete) | complete | K2 | none |
+| Lemma 4 (inertia) | SYL (complete), MINMAX (complete), L4 (complete), L4-2x2 (complete), NORM (complete) | complete | K2 | none |
+| Corollary 5 and sorted pairing | COR5 (complete), SORTED (complete) | complete | K2 | none |
+| Theorem 6 (projector) | THM6 (complete) | complete | K2 | L-11 |
+| Proposition 7 (quantum numbers) | none | not formalized; not taken up | none | none |
+| Theorem 8 (sector assembly) | BLOCK (complete), THM8 (complete) | complete | K2 | none |
+| Proposition 9 (whole spectrum) | none | not formalized; not taken up | none | none |
+| Lemmas 10 to 12, Proposition 13 (exact layer) | none | not formalized; no theorem; `cecheck` recomputes the counts (level N) | none | none |
+| Proposition 14 (bracketing count) | P14 (complete) | complete | K2 | L-5 |
+| Proposition 15 (summed bounds) | P15 (complete) | complete | K2 | none |
+| Proposition 16 (thermodynamics) | P16 (partial) | partial | K2 | none |
+| Proposition 16' (C-06) | C-06 (partial) | partial | K2 | none |
+| Lemma 17 (dyadic exp and ln) | L17 (partial) | partial; constants also in CertifyCore at level K2 | K2 | L-4, L-8 |
+| Appendix A (model shift) | A1-A2 (complete), A3 (complete), A4 (complete), A5 (complete), Weyl (complete), Gershgorin (complete) | complete | K2 | L-9 |
+
+<!-- lean-status end -->

@@ -51,8 +51,10 @@ the decision log. `docs/failures/` records every defect, failed run and open gap
 commands that recreate every result from the sources. `docs/CODE_INDEX.md` lists every program file of the code
 repository with what it does, what it defines, the arguments of a script, the files it reads and writes where the code
 names them, the package modules it imports, its place in the source and test fingerprints, and the statements or
-experiments its docstring names. Outside `docs/`, `reverification_lean/` holds the Lean 4 re-verification of the exact
-checker, the kernel theorems and the application numbers, with its own report.
+experiments its docstring names. Outside `docs/`, `reverification_lean/` holds the Lean 4 re-verification: an exact
+checker of the certificates, kernel theorems about the arithmetic, formal proofs of the statements on Mathlib and the
+recomputed application numbers, with its own report `reverification_lean/VERIFICATION_REPORT.md`; what the
+formalization found in the derivation documents is in [failures/07_found_while_formalizing.md](failures/07_found_while_formalizing.md).
 
 Every number in these documents is copied from a file of the project archive v5 of 6 November 2026, unpacked in
 `sources/archive_v5/` (not tracked by git; see `sources/SOURCES.md`), and the file is named, by its path relative to

@@ -568,3 +568,36 @@ puts first the documents that changed a bound (`thm2_polar-factor.md`, `thm1_fp-
 
 The exact layer of statement S6 (Lemmas 10 to 12 and Proposition 13), Theorem 6, Proposition 7 and Proposition 9 have no
 derivation document; they remain marked UNVERIFIED (see the table at the end of [theorems.md](theorems.md)).
+
+<!-- lean-status begin -->
+
+## Lean status of every derivation document
+
+The Lean re-verification in `reverification_lean/` (repository certify-ed-project) states the statements of the derivation documents as Lean theorems on Mathlib. The columns give the Lean statement ids of `reverification_lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; every document keeps the status "Sarang's check pending".
+
+| derivation document | Lean statements | Lean | level | findings |
+|---|---|---|---|---|
+| `thm1_fp-accounting.md` | FP-model (complete), T1-fl (complete), T1-fl-complex (complete) | complete | K2 | L-1, L-2 |
+| `int05_underflow.md` | T1-fl-int05 (complete) | complete | K2 | L-7 |
+| `appA_model-shift.md` | A1-A2 (complete), A3 (complete), A4 (complete), A5 (complete) | complete | K2 | L-9 |
+| `L17_dyadic_exp_ln.md` | L17 (partial) | partial | K2 | L-4, L-8 |
+| `thm2_polar-factor.md` | polar (complete), T2 (complete) | complete | K2 | none |
+| `thm2prime_eps-star.md` | T2prime (complete) | complete | K2 | none |
+| `cor5_pairing.md` | COR5 (complete), SORTED (complete) | complete | K2 | none |
+| `thm8_rho.md` | THM8 (complete) | complete | K2 | none |
+| `P14_degeneracy_bracketing.md` | P14 (complete) | complete | K2 | L-5 |
+| `P15_summed_bounds.md` | P15 (complete) | complete | K2 | none |
+| `P16_thermo_intervals.md` | P16 (partial) | partial | K2 | none |
+| `C06_truncated_thermodynamics.md` | C-06 (partial) | partial | K2 | none |
+| `C16_exact_bracket.md` | C-16 (not formalized) | not formalized | none | none |
+| `C-03_entanglement.md` | none | not formalized | none | none |
+| `C-04_correlation_lift.md` | C-04 (partial) | partial | K2 | none |
+| `C-07_moments.md` | C-07 (partial) | partial | K2 | none |
+| `E-03_generalized.md` | E-03 (partial) | partial | K2 | none |
+| `E-04_parameter_intervals.md` | E-04 (partial) | partial | K2 | none |
+| `E-05_variational.md` | E-05 (partial) | partial | K2 | none |
+| `E-07_davis_kahan.md` | E-07-L1 (complete), E-07-L2 (complete), E-07-P1 (complete), E-07-L3 (complete), C-12 (partial), C-13 (complete), E-07-L5 (not formalized) | partial | K2 | L-11 |
+| `D-01_sparse-residual.md` | D-01 (partial) | partial | K2 | L-10 |
+| `D-02_matrix-free.md` | D-02 (partial) | partial | K2 | L-6 |
+
+<!-- lean-status end -->
