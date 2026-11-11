@@ -122,3 +122,50 @@ def star():
     tri = lambda a: [(a, a + 1), (a + 1, a + 2), (a, a + 2)]
     g = Graph([3] * 9, tri(0) + tri(3) + tri(6) + [(2, 3), (4, 6)])
     return g, [0, 1, 2], [3, 4, 5], [6, 7, 8]
+
+
+def honeycomb_method3():
+    """Honeycomb lattice, Method III of Pomata and Wei (arXiv:1911.01410): the plaquettes (hexagons) are the points
+    (i, j) of the dual triangular lattice, tripartitioned by (i - j) mod 3 into A, B, C. For p in A, Gamma_p is the
+    union of the hexagons of p and of its three B neighbours (18 sites, 21 edges). Two terms Gamma_p, Gamma_p'
+    with p, p' nearest neighbours of the triangular lattice formed by A overlap in one B hexagon, C; L and R are the
+    other two B hexagons of each term, joined by one edge of p (resp. p'). Each term overlaps with 6 others, so the
+    criterion is eta < 1/6. The 30 sites carry spin 3/2 (z = 3). The union graph has the 36 edges of the two terms;
+    the one lattice edge between L and R belongs to neither term and is not included.
+    Returns (g, L, C, R) like the other builders; site labels are sorted triangles ('u'|'d', a, b)."""
+    def tri(t):
+        k, a, b = t
+        return {(a, b), (a + 1, b), (a, b + 1)} if k == "u" else {(a + 1, b), (a, b + 1), (a + 1, b + 1)}
+
+    def hexagon(P):
+        i, j = P
+        return [("u", i, j), ("u", i - 1, j), ("u", i, j - 1), ("d", i - 1, j - 1), ("d", i - 1, j), ("d", i, j - 1)]
+
+    def hex_edges(P):
+        ts = hexagon(P)
+        return {tuple(sorted((x, y))) for k, x in enumerate(ts) for y in ts[k + 1:]
+                if len(tri(x) & tri(y)) == 2 and P in (tri(x) & tri(y))}
+
+    color = lambda P: (P[0] - P[1]) % 3
+    nbrs = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+
+    def term(P):
+        Bs = [(P[0] + a, P[1] + b) for a, b in nbrs if color((P[0] + a, P[1] + b)) == 1]
+        sites, edges = set(), set()
+        for Q in [P] + Bs:
+            sites |= set(hexagon(Q)); edges |= hex_edges(Q)
+        return sites, edges, set(Bs)
+
+    p, q = (0, 0), (1, 1)                          # both in A; nearest neighbours in the A sublattice
+    Sp, Ep, Bp = term(p)
+    Sq, Eq, Bq = term(q)
+    (shared,) = Bp & Bq
+    Csites = set(hexagon(shared))
+    assert Sp & Sq == Csites and len(Sp) == len(Sq) == 18 and len(Ep) == len(Eq) == 21
+    names = sorted(Sp | Sq)
+    ix = {s: k for k, s in enumerate(names)}
+    g = Graph([3] * len(names), sorted((ix[x], ix[y]) for x, y in Ep | Eq))
+    L = sorted(ix[s] for s in Sp - Csites)
+    C = sorted(ix[s] for s in Csites)
+    R = sorted(ix[s] for s in Sq - Csites)
+    return g, L, C, R

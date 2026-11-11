@@ -106,6 +106,31 @@ enumerations).
   starts; CLI exit codes and the environment variable; no verifier runs on a certificate that fails its integrity
   check). `docs/api.md` regenerated (`docs/make_api.py` gains the section on external verifiers).
 
+### Applications track (roadmap N-11, N-12; track/applications)
+
+Applications N-11 and N-12 of the development roadmap. New code only; no existing bound, status rule or record field
+changes. The source hash changes because files under `certify_ed/apps/` are added or extended.
+
+- `certify_ed/apps/pyrochlore/nine_coupling.py`: the nine-coupling spin-1/2 crown of Kránitz and Penc (Appendix D of
+  arXiv:2601.07800): Table V orbits, printed couplings with both readings of the digit in parentheses, exact matching
+  conditions, D3d automorphisms, the abelian subgroup {E, C2', i, σd} with the spin flip, a block-by-block exact count
+  (`count_below_by_block`, the construction of `exact_sectors.exact_count_below` with one block in memory at a time), a
+  floating-point-layer count on the exactly representable block congruence (`count_below_by_block_float`, via
+  `inertia.inertia_dense`), an integer Rayleigh-quotient upper bound, `certify_nine(layer=...)`, and the exact count of
+  selected blocks at a given shift (`certify_blocks`) with `combine_blocks`, which joins disjoint block records into
+  the exact lower bound.
+- `experiments/n11_crown_nine.py`: record of the certificate at the printed couplings (`--float-layer` for the
+  floating-point layer, `--compare` for the other readings, `--blocks` and `--combine` for an exact re-check split
+  over processes or machines).
+- `certify_ed/apps/aklt/estimate.py` (`plan_eta`): the block sizes, memory and time of `eta.certify_eta` without forming
+  any matrix; `lattices.honeycomb_method3()`: the union of two Method III terms of Pomata and Wei for the honeycomb.
+- `experiments/n12_honeycomb_estimate.py`: the honeycomb estimate (largest bordered block 1,293,292 rows), calibrated on
+  the E10 blocks of the 3.2.1 run, and the exact product of the printed gap constants.
+- `tests/test_apps_applications_next.py`: 8 tests (orbit table against the reduced model, embedding, D3d, block counts
+  against `exact_count_below` with a non-symmetry as negative control, single-block counts joined by `combine_blocks`
+  with a missing block, a repeated block, a changed shift and a nonzero count as negative controls, Rayleigh upper
+  bound, plan against the E10 block sizes, honeycomb geometry).
+
 ## [3.2.2] — 2026-11-11 (branch `track/hardening-3.2.2` on `dev/3.2` fa86456; the tag `v3.2.2` and its evidence run follow the merge)
 
 Hardening release (Wave 5 of the development roadmap, items N-01, N-02, N-03, H-02). No bound changes inside the range of the

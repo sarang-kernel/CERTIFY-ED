@@ -20,6 +20,35 @@ c1 = n1/10⁷ and c3 = n3/10⁷, and c17 is fixed by the embedding constraint
 The S = 1 discrepancy may come from an unprinted coupling (c5). The authors should be asked before
 anything about it is stated publicly.
 
+### Nine-coupling model, S = 1/2 (roadmap item N-11)
+
+The paper's headline −0.549832(8) is λ_min of the general crown Hamiltonian of its Appendix D: 19 D3d
+orbits of site pairs (Table V, `nine_coupling.ORBITS`, 153 pairs), the matching conditions with
+J = 1 and J2 = J3a = J3b = 0 (which fix c13, c15, c17, c18, c19 and set c8, c9, c10, c14, c16 to 0), and
+the nine printed couplings of Eq. (D4). The table, the explicit form (D3) and the printed values were
+compared with the arXiv source; they determine the model once the digit in parentheses is read as one
+more decimal (c1 = 0.037416(7) → 0.0374167; the same reading gives the E9 ratio 381414/817957 from the
+printed reduced couplings). Without the pair swaps the usable symmetry is {E, C2', i, σd} × spin flip
+(characters ±1 only; the order-3 elements of D3d need non-Gaussian characters): 8 blocks of 5961 to 6194
+states of S^z = 0.
+
+| Layer | Result | Code |
+|---|---|---|
+| floating point (inertia_dense, binary64 model) | −0.5498329145683885 ≤ λ_min ≤ −0.5498329144473251 (upper side: integer Rayleigh quotient); 3018 s, peak 2637 MiB | `nine_coupling.certify_nine(layer="float")` |
+| exact (inertia_exact, no FP assumption) | same shift; on the shared development machine 3 of the 8 blocks were counted (dimensions 6194, 6066, 6031; count 0 in each; 5568 s, 7424 s, 12240 s) before the run was stopped, so the exact lower bound is open | `nine_coupling.certify_nine()`; per block `certify_blocks`, joined by `combine_blocks` |
+
+So e_GS ≥ −0.549832915 at the printed couplings, 3.25e-4 above the reduced-model bound. The printed
+−0.549832(8) (and the abstract's six decimals −0.549832) lie slightly above λ_min: the paper cuts the
+eigenvalue toward zero instead of rounding it down (overstatement below 1e-6). Floating-point values for
+the other readings: −0.5498335636261985 (digits dropped) and −0.5498328933843968 (c4 = 0.0000415, the
+review's reading, which reproduces its −0.54983289). Run `python experiments/n11_crown_nine.py appended
+[--float-layer]`. The exact re-check can be split: `python experiments/n11_crown_nine.py appended --blocks
+0,1,2,3` counts the named blocks at the shift of the floating-point enclosure (`nine_coupling.SHIFT_APPENDED`)
+and rewrites its record after every block; `python experiments/n11_crown_nine.py --combine DIR1 DIR2` joins
+records whose blocks together are 0 to 7, each once, into the exact lower bound. Each block holds one dense
+object matrix (peak commit 3.4 GiB in the run above, under the 5 GiB cap), so disjoint block sets can run
+in parallel where memory allows.
+
 ## 2. AKLT spectral gaps on 2D lattices (Pomata & Wei, arXiv:1911.01410)
 
 
@@ -76,11 +105,22 @@ certificate files in `legacy/applications_2026-10-17` also contain runs at t = 1
 flag only records the eigenvalue count. In every run the floating-point factorizations only propose
 factors, and an exact computation checks them.
 
-### Not attempted: honeycomb (Method III)
-Its V has dimension 2²⁶ (paper, Table I). The final gap bound 0.00266 also uses three further
-numerical constants (γ_p, γ^[2p], γ^[4p]), which are separate eigenvalue computations on plaquette
-clusters. Each of those would itself need a certificate. Too large for this machine. It is listed as
-the natural next target.
+### Not attempted: honeycomb (Method III); size estimate (roadmap item N-12)
+Its V has dimension 2²⁶ (paper, Table I). `lattices.honeycomb_method3()` builds the union of two terms
+(30 spin-3/2 sites, 36 edges; Γ_p is a plaquette of the A third of the dual lattice with its three B
+neighbours, and two terms overlap in one B hexagon), and `estimate.plan_eta` counts what `certify_eta`
+would form without forming it: dim A = dim B = 2²², a bordered matrix of 8,388,608 rows, no site
+permutation that preserves L, C and R, and a largest flip-reduced block of 1,293,292 rows (one binary64
+copy about 12,462 GiB; all blocks about 6.5e10 s of one core at the rate measured on the E10 blocks).
+The plan reproduces the logged largest blocks of the star (70), cross (1584) and decorated honeycomb
+(673). It does not fit any single machine with dense exact inertia; a reduction by total spin (largest
+block 355,300 rows) or a matrix-free certified bound would be needed. Run
+`python experiments/n12_honeycomb_estimate.py`. The final gap bound also uses three constants
+(γ_p = 0.3130520508, γ^[2p] = 0.02571076873, γ^[4p] = 0.7784203312), each its own eigenvalue computation;
+the product γ^[2p] γ^[4p] (1 − 6η) of the printed values is 0.0026603333944698595, which is the
+paper's final equation (0.002660333395), while its conclusion prints 0.002550333395. The companion
+paper of Lemm, Sandvik and Wang (PRL 124, 177204) uses another criterion, on a 36-site patch (4³⁶
+states) evaluated by DMRG.
 
 ### Remaining caveats
 * The subgraph geometry for each lattice is inferred from the paper's text. It is confirmed by
