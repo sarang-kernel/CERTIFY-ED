@@ -50,7 +50,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from .fp import U, gamma_dot, up, fro_upper
+from .fp import U, GuardRangeError, gamma_dot, up, fro_upper
 
 
 @dataclass
@@ -231,6 +231,11 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
         return InertiaResult(float(sigma), None, float("inf"), label, time.time() - t0, False,
                              f"factorization could not be completed ({type(e).__name__}: {msg})",
                              resource_failure=True)
+    except GuardRangeError as e:
+        # 3.2.2 (finding L-3): the backward-error bound would use a floating-point guard outside the range in which
+        # it is established (a norm of more than 2^26 entries, or a row width above 2^26); no count is reported
+        return InertiaResult(float(sigma), None, float("inf"), label, time.time() - t0, False,
+                             f"backward-error bound not formed: {e}")
 
 
 def count_bounds(res: InertiaResult):

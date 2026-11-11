@@ -61,6 +61,9 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
                        "enclosures back), or flush entries below 2^-900 to zero if they are numerical noise; to "
                        "assume the no-underflow hypothesis instead, pass Options(underflow_check=False) / "
                        "--assume-no-underflow (recorded in the certificate)"),
+    "FP_GUARD_RANGE": ("reduce the problem below 2^26 (a symmetry sector of smaller dimension, or a spec whose row "
+                       "width bound is smaller: Options(matrix_free=True) counts the monomials per row); the guards are "
+                       "not established above 2^26 (docs/proofs/thm1_fp-accounting.md)"),
     "NOT_APPLICABLE": "the statement does not apply to this input; see docs/SCOPE_MATRIX.md",
     "OUT_OF_SCOPE_DYNAMICS": ("no statement of certify-ed covers dynamics; cite the per-eigenpair certificate and report "
                               "the dynamical quantity as uncertified (docs/SCOPE_MATRIX.md)"),
@@ -97,6 +100,8 @@ def _cluster_reasons(stmt: dict) -> List[str]:
 
 def _inconclusive(stmt: dict, ctx: dict) -> str:
     sid, text = stmt["id"], _text(stmt)
+    if (stmt.get("evidence") or {}).get("reason_code") == "FP_GUARD_RANGE":
+        return NEXT_ACTION_BY_CODE["FP_GUARD_RANGE"]
     if "floating-point environment" in text and "standard model" in text:
         return ("run on a platform where the floating-point probe passes (no fast-math, no flush-to-zero; see "
                 "arithmetic.runtime_probe.failed): the bounds are not certified under this environment")
@@ -271,8 +276,8 @@ def record_next_action(stmt: dict) -> Optional[str]:
                 "same operator (certify-ed certify, kind 'lowest') and pass the certificate as gap_certificate / --gap-certificate")
     if code == "DECLARED_ESTIMATE":
         return NEXT_ACTION_BY_CODE["DECLARED_ESTIMATE"]
-    if code == "UNDERFLOW_RISK":
-        return NEXT_ACTION_BY_CODE["UNDERFLOW_RISK"]
+    if code in ("UNDERFLOW_RISK", "FP_GUARD_RANGE"):
+        return NEXT_ACTION_BY_CODE[code]
     if code == "SIZE_LIMIT":
         if "contracted vector" in text or sid.startswith("V"):
             return ("the MPS contracts to a vector above the 2^22 limit: contract it yourself to a dense vector on a machine "

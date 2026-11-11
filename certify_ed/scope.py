@@ -42,6 +42,9 @@ REASON_CODES: Dict[str, str] = {
     "UNDERFLOW_RISK": ("a nonzero operand, radius or residual bound has magnitude below 2^-900: the no-underflow "
                        "hypothesis of the floating-point model is not established for this input "
                        "(Options(underflow_check=False) assumes it instead)"),
+    "FP_GUARD_RANGE": ("the dimension, a row width or the length of a normed vector exceeds 2^26: the floating-point "
+                       "guards of Theorem 1 (Lambda4 to Lambda6) and of the sparse residual are established for at most "
+                       "2^26 only, so no bound is formed (3.2.2)"),
     "DECLARED_ESTIMATE": ("a producer-declared stochastic estimate (an energy or a variance from samples): recorded as "
                           "DECLARED, never certified; no statement rests on it (variational records, E-05)"),
 }

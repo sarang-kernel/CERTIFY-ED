@@ -66,7 +66,7 @@ import scipy.sparse as sp
 
 from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
-                 sub_down, add_up, sub_up)
+                 sub_down, add_up, sub_up, check_guard_range)
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -295,7 +295,11 @@ class ResidualReport:
 def _rounding_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray, absHX: Optional[np.ndarray] = None):
     """E = gamma_dot(w+2) (|H||X| / (1 - gamma_{w+1}) (1 + 4u) + |X| |mu|) (1 + 4u), componentwise, as in the
     Theorem-1 accounting (docs/theory.md section 1); for complex data gamma_{w+3} replaces gamma_{w+1} (the two extra
-    modulus roundings). Computed in place on `absHX` when given."""
+    modulus roundings). Computed in place on `absHX` when given.
+
+    The guards Lambda5 and Lambda6 behind these constants are established for row widths w <= 2^26 and the norms
+    that follow for n <= 2^26 entries; outside that range fp.GuardRangeError is raised (3.2.2, finding L-3)."""
+    check_guard_range(n=int(np.shape(X)[0]), w=adapter.width, where="enclosure._rounding_bound")
     cplx = adapter.complex or np.iscomplexobj(X)
     g = gamma_dot(adapter.width + 2, cplx)
     # real data: |H||x| is formed with w products and w - 1 additions (gamma_{w+1} covers them). Complex data: the
@@ -680,6 +684,8 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     one product each); the bound is the same function of them.
     """
     x = np.asarray(x).ravel()
+    # the |A||x| guard below is the one of Theorem 1 (Lambda5): established for w <= 2^26 and n <= 2^26 (3.2.2)
+    check_guard_range(n=x.size, w=adapter.width, where="enclosure.rayleigh_interval")
     cplx = adapter.complex or np.iscomplexobj(x)
     Ax = adapter.matvec(x) if Ax is None else np.asarray(Ax).ravel()
     num_c, num_e = exact_dot(x, Ax)

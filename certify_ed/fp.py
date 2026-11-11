@@ -46,6 +46,46 @@ _SQRT_HALF_2M537 = math.sqrt(0.5) * 2.0 ** -537      # sqrt(u_min) = sqrt(0.5) 2
 # between 2^-900 and 2^-1022 is what the hypothesis leaves for the intermediate quantities of the bounds.
 UNDERFLOW_THRESHOLD = 2.0 ** -900
 
+# Range of the floating-point guards (3.2.2, roadmap N-01, finding L-3 of the Lean formalization). The guards of
+# Theorem 1 (docs/proofs/thm1_fp-accounting.md: Lambda4 for the norms, Lambda5 for |A||x|, Lambda6 for E) and of the
+# sparse residual (docs/proofs/D-01_sparse-residual.md, hypothesis H3) are established for vectors of 1 <= n <= 2^26
+# entries and row widths 1 <= w <= 2^26 only: Lambda4 with N = 2n fails from n = 84886744 on, and the sentence that
+# extended Lambda6 beyond 2^26 fails at w + 2 = floor(2^53 / 3) (erratum of 10 Nov 2026 in thm1_fp-accounting.md).
+# Outside the range no bound is returned: the guarded functions raise GuardRangeError, and certify() reports the
+# statements that rest on them as INCONCLUSIVE with reason code FP_GUARD_RANGE. Inside the range nothing changes.
+GUARD_RANGE_MAX = 2 ** 26
+
+
+class GuardRangeError(ValueError):
+    """A floating-point guard is applied outside the range in which it is established (GUARD_RANGE_MAX)."""
+
+    def __init__(self, quantity: str, value: int, where: str = ""):
+        self.quantity, self.value, self.where = str(quantity), int(value), str(where)
+        self.limit = int(GUARD_RANGE_MAX)
+        super().__init__(f"{self.quantity} = {self.value} exceeds {self.limit} = 2^26, the range of the floating-point "
+                         f"guards{' in ' + self.where if self.where else ''} (docs/proofs/thm1_fp-accounting.md, "
+                         f"Lambda4 to Lambda6)")
+
+    def to_dict(self) -> dict:
+        return {"quantity": self.quantity, "value": self.value, "limit": self.limit, "where": self.where}
+
+
+def guard_range_findings(n=None, w=None, where: str = "") -> list:
+    """[{'quantity', 'value', 'limit', 'where'}] for each of n (entries of a normed vector, or the dimension) and w
+    (row width) that exceeds GUARD_RANGE_MAX (read at call time); [] when both are inside the range or None."""
+    out = []
+    for name, val in (("n", n), ("w", w)):
+        if val is not None and int(val) > GUARD_RANGE_MAX:
+            out.append(GuardRangeError(name, int(val), where).to_dict())
+    return out
+
+
+def check_guard_range(n=None, w=None, where: str = "") -> None:
+    """Raise GuardRangeError when n or w exceeds GUARD_RANGE_MAX (see guard_range_findings)."""
+    for name, val in (("n", n), ("w", w)):
+        if val is not None and int(val) > GUARD_RANGE_MAX:
+            raise GuardRangeError(name, int(val), where)
+
 
 def gamma(n: float) -> float:
     """gamma_n = n u / (1 - n u) (Higham 2002, Lemma 3.1)."""
@@ -149,15 +189,20 @@ def gram_additive_term(g: int, n: int, complex_arith: bool) -> float:
 def norm2_upper(v: np.ndarray) -> float:
     """Upper bound on the exact 2-norm of a stored float vector (any magnitude: the standard-model factor
     (1 + gamma_{n+2})(1 + 8u) undoes the relative errors of the squares, the sum and the square root; the
-    additive norm_underflow_term covers the squares that underflow, INT-05)."""
+    additive norm_underflow_term covers the squares that underflow, INT-05). The guard (1 + gamma_{n+2})(1 + 8u) is
+    established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised before anything is
+    computed (3.2.2)."""
     n = v.size
+    check_guard_range(n=n, where="fp.norm2_upper")
     s = float(np.linalg.norm(v))
     return s * (1.0 + gamma(n + 2)) * _GUARD + norm_underflow_term(_real_components(v))
 
 
 def norm2_lower(v: np.ndarray) -> float:
-    """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve)."""
+    """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve).
+    Established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised (3.2.2)."""
     n = v.size
+    check_guard_range(n=n, where="fp.norm2_lower")
     s = float(np.linalg.norm(v))
     if not math.isfinite(s):
         # the sum of squares overflowed (||v|| > ~1.3e154): inf is not a lower bound; 0 makes every quotient by

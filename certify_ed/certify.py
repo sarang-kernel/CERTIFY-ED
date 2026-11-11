@@ -50,8 +50,8 @@ from .eigenspace import (certify_eigenspace, certify_quantum_numbers,
                          commutes_diagonal, rotation_spread)
 from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, _cluster_bound, cluster_groups,
                         is_streamed, nonfinite_columns, read_columns)
-from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, float_env_record, inf_norm_upper, probe_float_environment,
-                 sub_down, underflow_scan, up)
+from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float_env_record,
+                 guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .presets import STATEMENTS, preset_options, resolve_selection
@@ -296,6 +296,16 @@ def _underflow_statement_note(findings):
     return (f"no-underflow hypothesis not established: nonzero magnitudes below 2^-900 in {where}; the "
             "floating-point bounds assume operands and radii above 2^-900 (Options(underflow_check=False) "
             "assumes it)")
+
+
+def _guard_range_note(findings):
+    what = ", ".join(f"{f['quantity']} = {f['value']} ({f['where']})" for f in findings)
+    return (f"outside the range of the floating-point guards: {what} exceeds {findings[0]['limit']}; the guards of "
+            "Theorem 1 (Lambda4 to Lambda6, docs/proofs/thm1_fp-accounting.md) and of the sparse residual (D-01, H3) "
+            "are established for n, w <= 2^26 only")
+
+
+_GUARD_RANGE_MARK = "the range of the floating-point guards"
 
 
 def _subspace_shift(iso: float, inv: float, H_norm: float, M_norm: float) -> Optional[float]:
@@ -943,6 +953,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         t_s1 = time.time()
         try:
             s1, Href_or_full, audit = check_model_fidelity(claim, spec, opts)
+        except GuardRangeError as e:
+            # 3.2.2 (finding L-3): a bound of the comparison would use a floating-point guard outside its range
+            s1 = _stmt("S1.model_fidelity", "INCONCLUSIVE", f"model fidelity bound not formed: {e}",
+                       {"spec_sha256": spec.sha256(), "guard_range": {"findings": [e.to_dict()]}},
+                       [], time.time() - t_s1, reason_code="FP_GUARD_RANGE")
+            Href_or_full, audit = None, None
         except MemoryError as e:
             s1 = _stmt("S1.model_fidelity", "NOT_CHECKED",
                        f"reference build did not fit in memory ({type(e).__name__})",
@@ -1029,6 +1045,13 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         uf_record["scanned"] += [p[0] for p in parts]
         uf_findings += underflow_scan(parts)
     underflow = bool(uf_findings)
+    # 3.2.2 (roadmap N-01, finding L-3): the guards of Theorem 1 (docs/proofs/thm1_fp-accounting.md, Lambda4 to
+    # Lambda6) and of the sparse residual (D-01, H3) are established for dimensions n <= 2^26 and row widths
+    # w <= 2^26 only. Above that S2 and every statement that rests on its enclosures or on the factorization bounds
+    # are INCONCLUSIVE with reason code FP_GUARD_RANGE (never CERTIFIED); fp.GuardRangeError raised by a guarded
+    # function inside the range of n and w (a norm of more than 2^26 entries) is reported the same way.
+    gr_findings = guard_range_findings(n=int(adapter.shape[0]), w=adapter.width if adapter.rigorous else None,
+                                       where="certify: dimension and row width of the operator")
     if s2_gate is not None:
         statements.append(s2_gate)
     elif nonfinite:
@@ -1044,7 +1067,16 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                 "eigenvalue-only claim: no vectors to bound (see S3 for counts)",
                                 reason_code="NEEDS_EIGENVECTORS"))
     else:
-        enc = enclose(adapter, mu, X, block_mb=block_mb)
+        if not gr_findings:
+            try:
+                enc = enclose(adapter, mu, X, block_mb=block_mb)
+            except GuardRangeError as e:
+                gr_findings = [e.to_dict()]
+    if s2_gate is None and not nonfinite and X is not None and gr_findings:
+        statements.append(_stmt("S2.eigenpairs", "INCONCLUSIVE", _guard_range_note(gr_findings),
+                                {"n_pairs": int(mu.size), "guard_range": {"findings": gr_findings}},
+                                [], time.time() - t0, reason_code="FP_GUARD_RANGE"))
+    elif enc is not None:
         ev = {"n_pairs": int(mu.size), "max_radius": float(enc.radius.max()),
               "median_radius": float(np.median(enc.radius)),
               "max_existence_radius": float(enc.existence_radius.max()),
@@ -1146,6 +1178,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                                 "counts are not matched to the claimed set",
                                 {"n_claimed": int(mu.size), "underflow": {"findings": uf_findings}},
                                 reason_code="UNDERFLOW_RISK"))
+    elif gr_findings and claim.kind in ("lowest", "window", "all"):
+        statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
+                                "S3 rests on bounds outside the range of the floating-point guards: "
+                                + _guard_range_note(gr_findings),
+                                {"n_claimed": int(mu.size), "guard_range": {"findings": gr_findings}},
+                                reason_code="FP_GUARD_RANGE"))
     elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
         # a zero claimed vector has an infinite Theorem-1 radius: there is no enclosure to count against
         # (the shift sigma = inf would otherwise crash the factorization, IMP-23)
@@ -1197,12 +1235,14 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                          f"at least {ev['spurious_at_least']} claimed value(s) are not eigenvalues in the window"))
             else:
                 summ = ev.get("reason", "counts at the window edges could not be made exact")
+            code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
+                                                                    for c in ev.get("counts", [])) else None)
             statements.append(_stmt("S3.completeness", st, summ, ev,
                                     ["Sylvester inertia of a computed LDL^T factorization with explicitly bounded "
                                      "backward error (Lemma 4 at three shifts per window edge; the count inequality "
                                      "of Proposition 14 on the edge collars); standard floating-point model; no "
                                      "eigenvectors: the count is not paired with the claimed values"],
-                                    time.time() - t0))
+                                    time.time() - t0, reason_code=code3))
         elif enc is None:
             statements.append(_stmt("S3.completeness", "NOT_CHECKED",
                                     "eigenvalue-only claim: completeness needs certified intervals",
@@ -1226,10 +1266,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                         "FAILED": f"at least {ev.get('missing_at_least')} eigenvalue(s) in the window are not claimed",
                         "INCONCLUSIVE": "counts could not be matched to the claimed set",
                         "NOT_CHECKED": ev.get("reason", "")}[st]
+            code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
+                                                                    for c in ev.get("counts", [])) else None)
             statements.append(_stmt("S3.completeness", st, summ, ev,
                                     ["Sylvester inertia of a computed LDL^T factorization with explicitly "
                                      "bounded backward error; standard floating-point model"],
-                                    time.time() - t0))
+                                    time.time() - t0, reason_code=code3))
     else:
         statements.append(_stmt("S3.completeness", "NOT_CHECKED", "claim kind 'subset' makes no completeness claim",
                                 reason_code="NO_COMPLETENESS_CLAIM"))
@@ -1294,6 +1336,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     s4_clusters = []
     if s4_gate is not None:
         statements.append(s4_gate)
+    elif gr_findings and X is not None and opts.eigenspaces != "none":
+        statements.append(_stmt("S4.eigenspaces", "INCONCLUSIVE",
+                                "S2 inconclusive under FP_GUARD_RANGE: no certified separations or projector bounds",
+                                {"guard_range": {"findings": gr_findings}},
+                                reason_code="FP_GUARD_RANGE"))
     elif enc is None or opts.eigenspaces == "none":
         statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "not requested or no eigenvectors",
                                 reason_code="NEEDS_EIGENVECTORS" if enc is None else "NARROWED_BY_USER"))
@@ -1311,102 +1358,110 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         n_ok = 0
         rad = enc.radius
         for C in groups:
-            Cset = set(C)
-            a_ = min(enc.mu[i] for i in C)
-            b_ = max(enc.mu[i] for i in C)
-            rec = {"members": C, "claimed": [float(enc.mu[i]) for i in C], "splitting": float(b_ - a_)}
-            cb = _cluster_bound(adapter, enc.mu, X, enc.residual, C)
-            if cb is None:
-                rec.update(status="INCONCLUSIVE", reason="cluster vectors too far from orthonormal")
-                eig_records.append(rec)
-                continue
-            eps, eta, rho, _bound = cb
-            if eps_s3 > 0:
-                # statements refer to the declared model: replacing the operator used for the bounds by
-                # H_spec changes the residual by at most shift*||X|| <= shift*sqrt(1+eta), ||A|| by at most
-                # shift, hence rho by at most (sqrt(1+eta) + delta) * shift < 2.5 * shift, and w by at most
-                # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift.
-                # eps* (Theorem 2') grows by at most (sqrt((1+eta)/(1-eta)) + (1+eta)/(1-eta)) * shift
-                # (||R|| by sqrt(1+eta) shift, ||X^H R|| by (1+eta) shift); min(eps, eps*) by the larger factor
-                lip = max(3.5, math.sqrt((1 + eta) / (1 - eta)) + (1 + eta) / (1 - eta))
-                rho = up(rho + 2.5 * eps_s3)
-                eps = up(eps + lip * eps_s3)
-            rad_m = add_up(rad, eps_s3)
-            JL = min(sub_down(a_, eps), min(sub_down(enc.mu[i], rad_m[i]) for i in C))
-            JU = max(add_up(b_, eps), max(add_up(enc.mu[i], rad_m[i]) for i in C))
-            # the other claimed pairs' outward-rounded endpoints, as arrays (C-17: the per-pair Python loops of
-            # 3.1 were O(k) numpy-scalar calls per cluster; add_up / sub_down are elementwise, so the values are
-            # the same bit for bit)
-            mask = np.ones(enc.mu.size, dtype=bool)
-            mask[list(Cset)] = False
-            mu_o, rad_o = enc.mu[mask], rad_m[mask]
-            hi_o, lo_o = add_up(mu_o, rad_o), sub_down(mu_o, rad_o)
-            clash = int(np.count_nonzero(~((hi_o < JL) | (lo_o > JU))))
-            if clash or not (JL > window[0] and JU < window[1]):
-                rec.update(status="INCONCLUSIVE",
-                           reason="cluster interval overlaps other claimed pairs or the window edge")
-                eig_records.append(rec)
-                continue
-            U_below = max(float(hi_o[mu_o < a_].max()) if np.any(mu_o < a_) else -np.inf, window[0])
-            L_above = min(float(lo_o[mu_o > b_].min()) if np.any(mu_o > b_) else np.inf, window[1])
-            # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
-            # of the claimed values, to the remaining eigenvalues
-            dist = float(min(sub_down(a_, U_below), sub_down(L_above, b_)))
-            sep = float(sub_down(dist, eps))
-            rec["separation_lower_bound"] = float(sep)
-            # E-07: the Davis-Kahan sin(theta) bound with the residual ||R||_F / sqrt(1 - eta) and the Ritz-value
-            # deviation w' (davis_kahan.py); S4 uses min(Theorem 6, Davis-Kahan), both proven and both recorded
-            from .davis_kahan import sin_theta_davis_kahan
-            s_dk = sin_theta_davis_kahan(_bound["R_fro"], _bound["XR"], eta, _bound["delta"], _bound["spread"], dist,
-                                         model_shift=eps_s3)
-            ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep, sin_theta_alt=s_dk)
-            if ec is None:
-                rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
-                eig_records.append(rec)
-                continue
-            for name, O in observables.items():
-                # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
-                from .correlations import certify_observable_general, certify_observable_lifted
-                if (claim.sector_isometry is not None and audit is not None and audit.passed
-                        and O.shape[0] == claim.sector_isometry.shape[0] != X.shape[0]):
-                    # C-04: an observable given in the full space is lifted through the sector isometry
-                    certify_observable_lifted(ec, X, claim.sector_isometry, O, name, audit.isometry_defect,
-                                              audit.invariance_defect)
+            rec = None
+            try:
+                Cset = set(C)
+                a_ = min(enc.mu[i] for i in C)
+                b_ = max(enc.mu[i] for i in C)
+                rec = {"members": C, "claimed": [float(enc.mu[i]) for i in C], "splitting": float(b_ - a_)}
+                cb = _cluster_bound(adapter, enc.mu, X, enc.residual, C)
+                if cb is None:
+                    rec.update(status="INCONCLUSIVE", reason="cluster vectors too far from orthonormal")
+                    eig_records.append(rec)
                     continue
-                r_obs = certify_observable_general(ec, X, O, name)
-                O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
-                ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
-            corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
-            for name, (sdiag, lattice) in opts.symmetries.items():
-                if isinstance(sdiag, str) and sdiag == "su2":
-                    _total_spin(ec, X, name, spec, claim, rec)
+                eps, eta, rho, _bound = cb
+                if eps_s3 > 0:
+                    # statements refer to the declared model: replacing the operator used for the bounds by
+                    # H_spec changes the residual by at most shift*||X|| <= shift*sqrt(1+eta), ||A|| by at most
+                    # shift, hence rho by at most (sqrt(1+eta) + delta) * shift < 2.5 * shift, and w by at most
+                    # shift; epsilon is 1-Lipschitz in w and in rho, so it grows by at most 3.5 * shift.
+                    # eps* (Theorem 2') grows by at most (sqrt((1+eta)/(1-eta)) + (1+eta)/(1-eta)) * shift
+                    # (||R|| by sqrt(1+eta) shift, ||X^H R|| by (1+eta) shift); min(eps, eps*) by the larger factor
+                    lip = max(3.5, math.sqrt((1 + eta) / (1 - eta)) + (1 + eta) / (1 - eta))
+                    rho = up(rho + 2.5 * eps_s3)
+                    eps = up(eps + lip * eps_s3)
+                rad_m = add_up(rad, eps_s3)
+                JL = min(sub_down(a_, eps), min(sub_down(enc.mu[i], rad_m[i]) for i in C))
+                JU = max(add_up(b_, eps), max(add_up(enc.mu[i], rad_m[i]) for i in C))
+                # the other claimed pairs' outward-rounded endpoints, as arrays (C-17: the per-pair Python loops of
+                # 3.1 were O(k) numpy-scalar calls per cluster; add_up / sub_down are elementwise, so the values are
+                # the same bit for bit)
+                mask = np.ones(enc.mu.size, dtype=bool)
+                mask[list(Cset)] = False
+                mu_o, rad_o = enc.mu[mask], rad_m[mask]
+                hi_o, lo_o = add_up(mu_o, rad_o), sub_down(mu_o, rad_o)
+                clash = int(np.count_nonzero(~((hi_o < JL) | (lo_o > JU))))
+                if clash or not (JL > window[0] and JU < window[1]):
+                    rec.update(status="INCONCLUSIVE",
+                               reason="cluster interval overlaps other claimed pairs or the window edge")
+                    eig_records.append(rec)
                     continue
-                # [A, S] = 0 is needed for the operator the statement refers to: the reference built
-                # from the spec when there is one, else the operator used for the bounds
-                comm_op = Href if Href is not None else (op if is_matrix(op) else None)
-                okc = commutes_diagonal(comm_op, sdiag) if comm_op is not None else False
-                certify_quantum_numbers(ec, X, sp.diags(sdiag), name, lattice=lattice,
-                                        commutation_certified=okc)
-                ec.quantum_numbers[name]["commutation_checked_on"] = (
-                    "reference matrix built from the spec" if Href is not None else
-                    "operator used for the bounds" if comm_op is not None else "not checked")
-            if opts.approximate_symmetries:
-                # C-12: labels of approximately conserved operators, hypothesis ||[H, S]|| <= c recorded (davis_kahan.py)
-                from .davis_kahan import labels_hook
-                labels_hook(ec, X, opts.approximate_symmetries, Href if Href is not None else (op if is_matrix(op) else None),
-                            (JL, JU))
-            r = ec.to_dict()
-            r["splitting"] = rec["splitting"]
-            r["status"] = "CERTIFIED"
-            if corr_recs:
-                r["correlations"] = corr_recs
-            if opts.entanglement:
-                # C-03: certified entanglement entropy and spectrum across declared cuts (entanglement.py)
-                from .entanglement import entanglement_records
-                r["entanglement"] = entanglement_records(ec, X, spec, claim, opts.entanglement)
-            n_ok += 1
-            eig_records.append(r)
-            s4_clusters.append(C)
+                U_below = max(float(hi_o[mu_o < a_].max()) if np.any(mu_o < a_) else -np.inf, window[0])
+                L_above = min(float(lo_o[mu_o > b_].min()) if np.any(mu_o > b_) else np.inf, window[1])
+                # Theorem 4 needs the distance from the Ritz values of range(X), which lie within w <= eps
+                # of the claimed values, to the remaining eigenvalues
+                dist = float(min(sub_down(a_, U_below), sub_down(L_above, b_)))
+                sep = float(sub_down(dist, eps))
+                rec["separation_lower_bound"] = float(sep)
+                # E-07: the Davis-Kahan sin(theta) bound with the residual ||R||_F / sqrt(1 - eta) and the Ritz-value
+                # deviation w' (davis_kahan.py); S4 uses min(Theorem 6, Davis-Kahan), both proven and both recorded
+                from .davis_kahan import sin_theta_davis_kahan
+                s_dk = sin_theta_davis_kahan(_bound["R_fro"], _bound["XR"], eta, _bound["delta"], _bound["spread"], dist,
+                                             model_shift=eps_s3)
+                ec = certify_eigenspace(X, C, enc.mu, rho, eta, sep, sin_theta_alt=s_dk)
+                if ec is None:
+                    rec.update(status="INCONCLUSIVE", reason="residual not small relative to separation")
+                    eig_records.append(rec)
+                    continue
+                for name, O in observables.items():
+                    # C-05: a non-Hermitian observable is certified through its Hermitian decomposition
+                    from .correlations import certify_observable_general, certify_observable_lifted
+                    if (claim.sector_isometry is not None and audit is not None and audit.passed
+                            and O.shape[0] == claim.sector_isometry.shape[0] != X.shape[0]):
+                        # C-04: an observable given in the full space is lifted through the sector isometry
+                        certify_observable_lifted(ec, X, claim.sector_isometry, O, name, audit.isometry_defect,
+                                                  audit.invariance_defect)
+                        continue
+                    r_obs = certify_observable_general(ec, X, O, name)
+                    O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
+                    ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
+                corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
+                for name, (sdiag, lattice) in opts.symmetries.items():
+                    if isinstance(sdiag, str) and sdiag == "su2":
+                        _total_spin(ec, X, name, spec, claim, rec)
+                        continue
+                    # [A, S] = 0 is needed for the operator the statement refers to: the reference built
+                    # from the spec when there is one, else the operator used for the bounds
+                    comm_op = Href if Href is not None else (op if is_matrix(op) else None)
+                    okc = commutes_diagonal(comm_op, sdiag) if comm_op is not None else False
+                    certify_quantum_numbers(ec, X, sp.diags(sdiag), name, lattice=lattice,
+                                            commutation_certified=okc)
+                    ec.quantum_numbers[name]["commutation_checked_on"] = (
+                        "reference matrix built from the spec" if Href is not None else
+                        "operator used for the bounds" if comm_op is not None else "not checked")
+                if opts.approximate_symmetries:
+                    # C-12: labels of approximately conserved operators, hypothesis ||[H, S]|| <= c recorded (davis_kahan.py)
+                    from .davis_kahan import labels_hook
+                    labels_hook(ec, X, opts.approximate_symmetries, Href if Href is not None else (op if is_matrix(op) else None),
+                                (JL, JU))
+                r = ec.to_dict()
+                r["splitting"] = rec["splitting"]
+                r["status"] = "CERTIFIED"
+                if corr_recs:
+                    r["correlations"] = corr_recs
+                if opts.entanglement:
+                    # C-03: certified entanglement entropy and spectrum across declared cuts (entanglement.py)
+                    from .entanglement import entanglement_records
+                    r["entanglement"] = entanglement_records(ec, X, spec, claim, opts.entanglement)
+                n_ok += 1
+                eig_records.append(r)
+                s4_clusters.append(C)
+            except GuardRangeError as e:
+                # 3.2.2 (finding L-3): a bound of this cluster would use a floating-point guard outside its range
+                rec = rec if rec is not None else {"members": C}
+                rec.update(status="INCONCLUSIVE", reason=f"bound not formed: {e}", reason_code="FP_GUARD_RANGE")
+                if not any(r is rec for r in eig_records):
+                    eig_records.append(rec)
         if not groups:
             statements.append(_stmt("S4.eigenspaces", "NOT_CHECKED", "no clusters among the claimed pairs",
                                     {}, [], time.time() - t0, reason_code="NO_CLUSTERS"))
@@ -1466,6 +1521,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         s7_gate = _gate(sel, budget, "S7")
         if s7_gate is not None:
             statements.append(s7_gate)
+        elif gr_findings and claim.kind in ("all", "lowest") and X is not None:
+            statements.append(_stmt("S7.thermodynamics", "INCONCLUSIVE",
+                                    "S2 inconclusive under FP_GUARD_RANGE: no complete enclosure to sum over",
+                                    {"guard_range": {"findings": gr_findings}},
+                                    reason_code="FP_GUARD_RANGE"))
         elif underflow and claim.kind in ("all", "lowest") and enc is not None:
             statements.append(_stmt("S7.thermodynamics", "INCONCLUSIVE",
                                     "S2 inconclusive under UNDERFLOW_RISK: no complete enclosure to sum over",
@@ -1527,6 +1587,11 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
                         else "sparse LU factorizations (estimate from the fill model, certify_ed.cost)")
         if s8_gate is not None:
             statements.append(s8_gate)
+        elif gr_findings and X is not None:
+            statements.append(_stmt("S8.degeneracy", "INCONCLUSIVE",
+                                    "S2 inconclusive under FP_GUARD_RANGE: no level enclosures to count against",
+                                    {"guard_range": {"findings": gr_findings}},
+                                    reason_code="FP_GUARD_RANGE"))
         elif enc is None:
             statements.append(_stmt("S8.degeneracy", "NOT_CHECKED", "eigenvalue-only claim: no clusters to count",
                                     reason_code="NEEDS_EIGENVECTORS"))

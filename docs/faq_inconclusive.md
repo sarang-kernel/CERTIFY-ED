@@ -16,6 +16,7 @@ will meet, what each means and the next action. The examples at the end were run
 | `certified radius of pair i is not finite` | a zero (or all-zero) claimed eigenvector | fix the producer's output |
 | `claim contains non-finite values` | NaN or inf in the eigenvalues or eigenvectors | fix the producer's output; nothing is enclosed |
 | `no-underflow hypothesis not established: nonzero magnitudes below 2^-900 in ...` (`UNDERFLOW_RISK`) | an input or a reported radius is below 2⁻⁹⁰⁰ in magnitude; the floating-point model does not cover it | look at the named location (`evidence.underflow.findings`): a planted or garbage entry should be removed, a genuinely tiny scale rescaled; or pass `Options(underflow_check=False)` to assume the hypothesis, which the certificate records |
+| `outside the range of the floating-point guards: n = ... exceeds 2^26` (`FP_GUARD_RANGE`) | the dimension or the row width bound of the operator is above 2^26, where the guards of Theorem 1 are not established (since 3.2.2) | certify a smaller block (a symmetry sector), or with a spec pass `Options(matrix_free=True)`, whose row width counts the monomials per row |
 | `the floating-point environment of this process violates the standard model (failed probes: ...)` | a library switched on flush-to-zero / denormals-are-zero, or changed the rounding mode | run in a clean process (import order matters; `-ffast-math` binaries are the usual cause); `certify-ed env` shows the probe |
 
 ### S3.completeness
@@ -30,6 +31,7 @@ will meet, what each means and the next action. The examples at the end were run
 | `counts could not be matched to the claimed set` (window claims) | the certified intervals do not all lie strictly inside the window, or touch its edges | widen the window beyond the enclosures, or shrink the claim |
 | `some claimed pair has no finite enclosure (zero eigenvector)` | a zero vector | fix the producer's output |
 | `S2 inconclusive under UNDERFLOW_RISK` | S3 rests on the S2 enclosures | see S2 |
+| `S3 rests on bounds outside the range of the floating-point guards` (`FP_GUARD_RANGE`) | n or w above 2^26 | see S2 |
 
 ### S4.eigenspaces, S8.degeneracy, S7.thermodynamics
 
@@ -58,7 +60,7 @@ will meet, what each means and the next action. The examples at the end were run
 | `BUDGET_TIME`, `BUDGET_MEMORY` | the budget was spent or the estimate exceeds it | raise the budget or narrow the scope deliberately |
 | `UNSUPPORTED_CLAIM`, `UNSUPPORTED_MODEL`, `NOT_APPLICABLE` | not implemented for this claim kind / sector form / model | see the [scope matrix](SCOPE_MATRIX.md) |
 
-`UNDERFLOW_RISK` is the one reason code attached to an INCONCLUSIVE statement rather than a NOT_CHECKED one.
+`UNDERFLOW_RISK` and, since 3.2.2, `FP_GUARD_RANGE` are the reason codes attached to an INCONCLUSIVE statement rather than a NOT_CHECKED one.
 
 ## Examples
 

@@ -37,7 +37,7 @@ from typing import Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, gamma, gamma_dot, up, _GUARD
+from .fp import U, gamma, gamma_dot, up, _GUARD, check_guard_range
 
 DEFAULT_BLOCK_MB = 64.0      # memory for the sparse temporaries of one row block (F block, |E| block, S block)
 _MIN_BLOCK_ROWS = 64
@@ -95,6 +95,8 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     t0 = time.time()
     L = sp.csr_matrix(L)
     n = L.shape[0]
+    # hypothesis (H3) of docs/proofs/D-01_sparse-residual.md: n <= 2^26 and w <= 2^26 (3.2.2, finding L-3)
+    check_guard_range(n=n, w=int(np.diff(L.indptr).max()) if n else None, where="ldl_residual.sparse_ldl_residual_bound")
     D = np.asarray(D)
     cplx = np.iscomplexobj(L.data) or np.iscomplexobj(S.data if sp.issparse(S) else S)
     Dr = np.real(D).astype(float)
