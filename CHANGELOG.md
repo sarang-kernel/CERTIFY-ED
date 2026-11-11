@@ -1,5 +1,52 @@
 # Changelog
 
+## [3.3.0.dev0] — unreleased (dev/3.3)
+
+### Scale track (roadmap D-03, D-04, H-04, groundwork of G-10; track/scale)
+
+No bound, status rule or record field of `certify()` changes; the computational source hash changes (new modules
+`ozaki.py` and `parallel.py`, a keyword of `enclosure.enclose`, the sector loop of `compose.certify_low_energy`
+moved into a function).
+
+- **D-03 error-free residual and Gram products (prototype, UNVERIFIED, not the default).** `certify_ed/ozaki.py`
+  splits operands into slices of beta bits that share one power of two per row (H) or column (X, mu), so that every
+  slice product on BLAS or SciPy's sparse kernels is exact (Lemma P: L 2^(2 beta) <= 2^53 and units >= -1074), sums
+  the slice products with Sum2 (Ogita, Rump and Oishi 2005) and bounds the remainders: `ozaki_gram` /
+  `ozaki_column_dots` (X^H Y with an entrywise bound), `ozaki_residual` (H X - X diag(mu) with an entrywise bound
+  without the gamma_w (|H||X| + |X||mu|) term), `residual_report` for the new keyword
+  `enclosure.enclose(..., residual_report=None)` (None, the value of every caller, keeps the 3.2 path bit for bit).
+  Refused with `NotApplicable`: non-finite data, entries >= 2^480, more than 2^26 terms, slice units below -1074,
+  spec and black-box operators. Draft derivation `docs/proofs/D-03_ozaki_draft.md` (Theorems G and R, status
+  UNVERIFIED, independent re-derivation not done, Sarang's check pending); `docs/proofs/verify_D-03.py`: 1000
+  random + 13 adversarial cases against exact rationals (python-flint), 4 negative controls detected, 0 violations
+  (`docs/proofs/runs/verify_D-03.txt`); `tests/test_ozaki.py` (14). Measurement on the eleven E2 points of the 3.2.1
+  run (`experiments/d03_ozaki_tightness.py`, record `docs/proofs/runs/D-03_tightness.json`; the default radii
+  reproduce the run's records): Theorem-1 radii 0.32 to 0.62 of the default, largest enclosure radius 0.24 to 0.64,
+  the reported S2 radius 0.81 to 0.93 on U(1) blocks (the S1 model shift dominates) and 0.37 to 0.54 on k = 0 blocks;
+  the residual costs 9.5 to 29 times the default (at most 2.24 s at dimension 112720); the Gram defect eta is
+  unchanged and the D-03 Gram is 0.76 to 1.66 times as fast as `fp.exact_gram` on the E2 clusters (g = 4 to 7),
+  up to 24.6 times on 32 random columns.
+- **D-04 parallel certification with a memory budget per worker.** `certify_ed/parallel.py`: `run_tasks` runs
+  independent tasks on W worker processes (default W = 1: the plain loop in this process, no worker). Budget per
+  worker = (process cap - memory held) x 0.9 / W, the cap read from the job object (Windows) or RLIMIT_AS (POSIX),
+  else the available physical memory; each worker caps itself at it, so the workers together stay inside the cap
+  (the 3.2.0 E4 crash). A task predicted above the budget, failing in a worker (exception, dead worker) or showing a
+  resource limit (NOT_CHECKED for memory or time, an inertia `resource_failure`) runs afterwards in this process, so
+  its result is the serial one. Workers exchange pickles through files (no pipes; `multiprocessing` pools need named
+  pipes, which the sandbox of the development machine refuses). `certify_many(jobs, workers)` for (claim, spec,
+  options) triples; `compose.certify_low_energy(..., workers=1, cap_mb=None)` for sectors (the parallel path follows
+  the serial loop's choice between a sector's U(1) restriction and the full matrix; the scheduling record is under
+  `parallel`). `tests/test_parallel.py`: every status and every recorded number (timings excluded) identical for 1,
+  2 and 4 workers; deferral, retry after MemoryError, a dying worker, the worker cap.
+- **H-04 performance regression tests and G-10 groundwork.** `experiments/perf_points.py` measures E2 rows exactly as
+  `experiments/e2_cost.py` does (producer and certifier processes, 4.5 GiB cap, one thread, seeds of the runs) or
+  copies them from a run record (`--from-run`); `tests/fixtures/perf_baseline.json` holds the four small rows of
+  the 3.2.1 run (dimensions 810 to 3432). `tests/test_perf_regression.py` is skipped unless pytest runs with `--perf`
+  (new option in `tests/conftest.py`) or `CERTIFY_ED_PERF=1`: statuses equal to the baseline's, time <= 2 x baseline
+  + 2 s, peak memory <= 1.5 x baseline + 64 MB (factors settable by environment variables).
+  `experiments/bench_table.py` tabulates certify() time, S3 and S8 time and peak memory of any measurement against
+  a run's E2 record (Markdown, CSV, JSON).
+
 ## [3.2.1] — 2026-11-04 (tag `v3.2.1`; the version of the 3.2 evidence run)
 
 One robustness fix found by the 3.2.0 evidence run; no bound, status rule or record field changes.
