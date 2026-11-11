@@ -24,4 +24,9 @@ needs_quspin = pytest.mark.skipif(not HAVE_QUSPIN, reason="QuSpin not installed"
 needs_flint = pytest.mark.skipif(not HAVE_FLINT, reason="python-flint not installed")
 
 
+def pytest_addoption(parser):
+    parser.addoption("--perf", action="store_true", default=False,
+                     help="run the performance regression tests (tests/test_perf_regression.py, roadmap H-04)")
+
+
 from certify_ed.testing import LOCALS, random_spec  # noqa: E402,F401  (re-exported for the tests)

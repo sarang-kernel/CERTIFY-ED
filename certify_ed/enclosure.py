@@ -544,11 +544,14 @@ def nonfinite_columns(X, block_mb: Optional[float] = None) -> List[int]:
     return bad
 
 
-def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional[float] = None) -> EnclosureSet:
+def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional[float] = None,
+            residual_report: Optional[ResidualReport] = None) -> EnclosureSet:
     """Certified intervals for claimed eigenpairs (mu_i, x_i) of the stored operator.
 
     X: ndarray (n x k), or a numpy memmap / HDF5 dataset that is read in column blocks (`block_mb`, see
-    `residuals`); with a dense operator the vectors are read whole."""
+    `residuals`); with a dense operator the vectors are read whole. `residual_report`: a ResidualReport for
+    (adapter, mu, X) computed elsewhere (3.3.0.dev0, roadmap D-03: `ozaki.residual_report`, UNVERIFIED and not the
+    default); when None (every caller in the package) the report is `residuals(adapter, mu, X, block_mb)`."""
     mu = np.asarray(mu, dtype=float)
     k = mu.size
     if X is None:
@@ -568,7 +571,7 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional
         raise ValueError("claimed eigenvectors must be finite (non-finite entries in columns "
                          f"{bad_cols[:8]})")
     order = np.argsort(mu, kind="stable")
-    res = residuals(adapter, mu, X, block_mb=block_mb)
+    res = residuals(adapter, mu, X, block_mb=block_mb) if residual_report is None else residual_report
     gram_cache: Dict[tuple, tuple] = {}
     radius = res.rel_bound.copy() if res.rigorous else res.rel_estimate.copy()
 

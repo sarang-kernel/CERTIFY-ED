@@ -1,0 +1,252 @@
+{
+ "machine": {
+  "certify_ed": "3.2.1",
+  "cpu_count": 8,
+  "cpu_model": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+  "date": "2026-11-05",
+  "git_commit": "f3c478b42a88249dfb942cb72c1e771434575cdd",
+  "memory_GiB": 15.8,
+  "platform": "Windows-10-10.0.26200-SP0",
+  "record": "e2_cost_20261105_142518/data.json",
+  "source_hash": "cb73dec3e4433a3b",
+  "started": "2026-11-05T14:25:19",
+  "threads_env": {
+   "MKL_NUM_THREADS": "1",
+   "OMP_NUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1"
+  }
+ },
+ "points": {
+  "chain N=12 u1 J2=0.0": {
+   "certifier": {
+    "fill_nnz": [
+     96232
+    ],
+    "gap_lower_bound": 0.24451727772858864,
+    "k_claimed": 5,
+    "max_radius": 2.1293132219055432e-13,
+    "maxrss_mb": 66.9140625,
+    "memory_cap": "job object",
+    "statements": {
+     "S1.model_fidelity": {
+      "seconds": 0.089734,
+      "status": "CERTIFIED",
+      "summary": "producer matrix equals the spec matrix entrywise (max |diff| 0.0e+00 <= 5.3e-13)"
+     },
+     "S2.eigenpairs": {
+      "seconds": 0.005497,
+      "status": "CERTIFIED",
+      "summary": "5 claimed values matched to distinct eigenvalues; max radius 6.31e-14 (+1.5e-13 model shift)"
+     },
+     "S3.completeness": {
+      "seconds": 0.347001,
+      "status": "CERTIFIED",
+      "summary": "exactly 5 eigenvalues below -4.324857133; certified gap to the next >= 2.445e-01"
+     },
+     "S4.eigenspaces": {
+      "seconds": 0.013762,
+      "status": "CERTIFIED",
+      "summary": "1/1 clusters certified at projector level"
+     },
+     "S8.degeneracy": {
+      "seconds": 0.230611,
+      "status": "CERTIFIED",
+      "summary": "1/1 clusters: eigenvalue count in the level enclosure certified by bracketing inertia counts; degeneracies [2]"
+     }
+    },
+    "total": 1.5855908393859863,
+    "true_gap_estimate": 0.27168586424538255
+   },
+   "cfg": {
+    "N": 12,
+    "block": "u1",
+    "model": "chain"
+   },
+   "dim": 924,
+   "label": "chain N=12 u1 J2=0.0",
+   "nnz": 6572,
+   "producer": {
+    "dim": 924,
+    "maxrss_mb": 165.9765625,
+    "memory_cap": "job object",
+    "nnz": 6572,
+    "t_build": 3.3818435668945312,
+    "t_solve": 0.04551506042480469
+   }
+  },
+  "chain N=14 u1 J2=0.0": {
+   "certifier": {
+    "fill_nnz": [
+     1666352
+    ],
+    "gap_lower_bound": 0.22215757975941217,
+    "k_claimed": 5,
+    "max_radius": 2.8033678719785623e-13,
+    "maxrss_mb": 165.47265625,
+    "memory_cap": "job object",
+    "statements": {
+     "S1.model_fidelity": {
+      "seconds": 0.202446,
+      "status": "CERTIFIED",
+      "summary": "producer matrix equals the spec matrix entrywise (max |diff| 0.0e+00 <= 8.2e-13)"
+     },
+     "S2.eigenpairs": {
+      "seconds": 0.013051,
+      "status": "CERTIFIED",
+      "summary": "5 claimed values matched to distinct eigenvalues; max radius 7.75e-14 (+2.0e-13 model shift)"
+     },
+     "S3.completeness": {
+      "seconds": 4.365567,
+      "status": "CERTIFIED",
+      "summary": "exactly 5 eigenvalues below -5.336405253; certified gap to the next >= 2.222e-01"
+     },
+     "S4.eigenspaces": {
+      "seconds": 0.010653,
+      "status": "CERTIFIED",
+      "summary": "1/1 clusters certified at projector level"
+     },
+     "S8.degeneracy": {
+      "seconds": 8.540792,
+      "status": "CERTIFIED",
+      "summary": "1/1 clusters: eigenvalue count in the level enclosure certified by bracketing inertia counts; degeneracies [2]"
+     }
+    },
+    "total": 14.048712015151978,
+    "true_gap_estimate": 0.2468417579438027
+   },
+   "cfg": {
+    "N": 14,
+    "block": "u1",
+    "model": "chain"
+   },
+   "dim": 3432,
+   "label": "chain N=14 u1 J2=0.0",
+   "nnz": 29304,
+   "producer": {
+    "dim": 3432,
+    "maxrss_mb": 165.78515625,
+    "memory_cap": "job object",
+    "nnz": 29304,
+    "t_build": 3.387406587600708,
+    "t_solve": 0.10001039505004883
+   }
+  },
+  "chain N=16 k0 J2=0.0": {
+   "certifier": {
+    "fill_nnz": [
+     120328
+    ],
+    "gap_lower_bound": 0.44381944135638024,
+    "k_claimed": 4,
+    "max_radius": 1.7311472611579278e-11,
+    "maxrss_mb": 81.65625,
+    "memory_cap": "job object",
+    "statements": {
+     "S1.model_fidelity": {
+      "seconds": 0.699153,
+      "status": "CERTIFIED",
+      "summary": "producer sector block is an invariant, orthonormal restriction of the spec operator (isometry defect 1.4e-12, invariance defect 3.7e-13)"
+     },
+     "S2.eigenpairs": {
+      "seconds": 0.002503,
+      "status": "CERTIFIED",
+      "summary": "4 claimed values matched to distinct eigenvalues; max radius 3.21e-14 (sector block); 1.73e-11 for the full operator"
+     },
+     "S3.completeness": {
+      "seconds": 0.314081,
+      "status": "CERTIFIED",
+      "summary": "exactly 4 eigenvalues below -5.14747105; certified gap to the next >= 4.438e-01"
+     },
+     "S4.eigenspaces": {
+      "seconds": 0.0,
+      "status": "NOT_CHECKED",
+      "summary": "no clusters among the claimed pairs"
+     },
+     "S8.degeneracy": {
+      "seconds": 0.0,
+      "status": "NOT_CHECKED",
+      "summary": "no clusters among the claimed pairs"
+     }
+    },
+    "total": 1.980060338973999,
+    "true_gap_estimate": 0.49313271299901107
+   },
+   "cfg": {
+    "N": 16,
+    "block": "k0",
+    "model": "chain"
+   },
+   "dim": 810,
+   "label": "chain N=16 k0 J2=0.0",
+   "nnz": 7333,
+   "producer": {
+    "dim": 810,
+    "maxrss_mb": 166.09765625,
+    "memory_cap": "job object",
+    "nnz": 7333,
+    "t_build": 3.23336124420166,
+    "t_solve": 0.02462005615234375
+   }
+  },
+  "chain N=18 k0 J2=0.0": {
+   "certifier": {
+    "fill_nnz": [
+     1517900
+    ],
+    "gap_lower_bound": 0.4213399098508432,
+    "k_claimed": 4,
+    "max_radius": 7.157575541907776e-11,
+    "maxrss_mb": 170.8046875,
+    "memory_cap": "job object",
+    "statements": {
+     "S1.model_fidelity": {
+      "seconds": 1.420931,
+      "status": "CERTIFIED",
+      "summary": "producer sector block is an invariant, orthonormal restriction of the spec operator (isometry defect 5.4e-12, invariance defect 7.9e-13)"
+     },
+     "S2.eigenpairs": {
+      "seconds": 0.002399,
+      "status": "CERTIFIED",
+      "summary": "4 claimed values matched to distinct eigenvalues; max radius 4.48e-14 (sector block); 7.16e-11 for the full operator"
+     },
+     "S3.completeness": {
+      "seconds": 2.897809,
+      "status": "CERTIFIED",
+      "summary": "exactly 4 eigenvalues below -6.108152527; certified gap to the next >= 4.213e-01"
+     },
+     "S4.eigenspaces": {
+      "seconds": 0.0,
+      "status": "NOT_CHECKED",
+      "summary": "no clusters among the claimed pairs"
+     },
+     "S8.degeneracy": {
+      "seconds": 0.0,
+      "status": "NOT_CHECKED",
+      "summary": "no clusters among the claimed pairs"
+     }
+    },
+    "total": 4.96340799331665,
+    "true_gap_estimate": 0.4681554560135357
+   },
+   "cfg": {
+    "N": 18,
+    "block": "k0",
+    "model": "chain"
+   },
+   "dim": 2704,
+   "label": "chain N=18 k0 J2=0.0",
+   "nnz": 28390,
+   "producer": {
+    "dim": 2704,
+    "maxrss_mb": 164.93359375,
+    "memory_cap": "job object",
+    "nnz": 28390,
+    "t_build": 2.9656777381896973,
+    "t_solve": 0.07522273063659668
+   }
+  }
+ },
+ "repeat": 1,
+ "schema": "certify-ed/perf-points/1.0",
+ "source": "evidence run record"
+}
