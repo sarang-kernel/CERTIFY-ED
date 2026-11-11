@@ -6,7 +6,10 @@ and with the floating-point reproduction -0.54983289 of the review (finding B2-1
 Lanczos values are also recorded for the two other readings of the printed digits ("truncated", and the review's
 reading with c4 = 0.0000415).
 
-usage: python experiments/n11_crown_nine.py [appended|truncated] [--compare] [--cap-gib X]
+With --float-layer the blocks are counted with the floating-point layer (inertia.inertia_dense under the binary64
+model) instead of the exact re-check; the record key is then nine_coupling_float.
+
+usage: python experiments/n11_crown_nine.py [appended|truncated] [--compare] [--float-layer] [--cap-gib X]
 """
 import sys
 from fractions import Fraction
@@ -35,7 +38,8 @@ def main(argv):
                 cmp[name] = [float(x) for x in w]
                 run.log(f"floating point, reading {name}: lowest two {w[0]:.12f} {w[1]:.12f}")
             run.record("float_readings", cmp)
-        r = nc.certify_nine(reading=reading, log=run.log)
+        layer = "float" if "--float-layer" in argv else "exact"
+        r = nc.certify_nine(reading=reading, log=run.log, layer=layer)
         pub = nc.printed_value(nc.PUBLISHED_BOUND, "appended")
         r["published_bound"] = nc.PUBLISHED_BOUND
         r["published_appended"] = float(pub)
@@ -47,7 +51,7 @@ def main(argv):
         r["reduced_model_bound"] = -0.5501582988212038      # spin_half record, 3.2.1 run (E9)
         r["gain_over_reduced_model"] = float(lb - Fraction(-0.5501582988212038))
         r["peak_rss_mb"] = peak_rss_mb()
-        run.record("nine_coupling", r)
+        run.record("nine_coupling" if layer == "exact" else "nine_coupling_float", r)
         run.log(f"certified {r['lower_bound_rounded_down']:.9f} <= lambda_min <= {r['upper_bound_rounded_up']:.9f}; "
                 f"published {nc.PUBLISHED_BOUND}; peak {r['peak_rss_mb']:.0f} MiB")
 

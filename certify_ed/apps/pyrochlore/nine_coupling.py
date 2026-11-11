@@ -325,9 +325,15 @@ def rayleigh_upper(spec, states, v, bits=30):
     return Fraction(num, den)
 
 
-def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8), log=print):
+def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8), log=print, layer="exact"):
     """Certified enclosure lower <= lambda_min(H_0) <= upper for the nine-coupling crown at the printed couplings
-    (or at the given free couplings), in exact arithmetic. Record fields follow spin_half.certify_crown."""
+    (or at the given free couplings). layer "exact" counts with exact arithmetic (count_below_by_block, no
+    floating-point assumption); layer "float" with the floating-point layer (count_below_by_block_float, under the
+    binary64 model). The upper bound is the integer Rayleigh quotient in both. Record fields follow
+    spin_half.certify_crown."""
+    if layer not in ("exact", "float"):
+        raise ValueError(f"unknown layer {layer!r}")
+    counter = count_below_by_block if layer == "exact" else count_below_by_block_float
     t0 = time.time()
     c = couplings(free=free, reading=reading)
     K = scale_for(c)
@@ -342,7 +348,7 @@ def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8),
     tried, r, g = [], None, None
     for m in margins_rel:
         g = Fraction(int(np.floor((e0 - m * abs(e0)) * K * grid)), grid)           # in K H_0 units
-        r = count_below_by_block(spec_K, st, gens, g, log=log)
+        r = counter(spec_K, st, gens, g, log=log)
         tried.append({"margin_rel": m, "shift": str(g / K), "count": r["count"]})
         if r["count"] == 0:
             break
@@ -352,9 +358,9 @@ def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8),
     lb = (g - r["delta"]) / K
     if not lb <= upper:
         raise RuntimeError("lower bound above the Rayleigh quotient")
-    rec = {"reading": reading, "couplings": {f"c{m}": str(c[m]) for m in sorted(c)},
+    rec = {"layer": layer, "reading": reading, "couplings": {f"c{m}": str(c[m]) for m in sorted(c)},
            "printed": {f"c{k}": PRINTED[k] for k in FREE} if free is None else None, "K": int(K),
-           "dim_Sz0": int(st.size), "group_order": r["group_order"], "n_sectors": len(r["sectors"]),
+           "dim_Sz0": int(st.size), "group_order": r.get("group_order", 8), "n_sectors": len(r["sectors"]),
            "sectors": r["sectors"], "largest_sector": max(s["dim"] for s in r["sectors"]), "e0_estimate": e0,
            "shift": str(g / K), "shifts_tried": tried, "delta": float(r["delta"] / K),
            "lower_bound": float(np.nextafter(float(lb), -np.inf)),
@@ -363,7 +369,85 @@ def certify_nine(reading="appended", free=None, margins_rel=(1e-10, 1e-9, 1e-8),
            "upper_bound": float(np.nextafter(float(upper), np.inf)),
            "upper_bound_rounded_up": float(Fraction(math.ceil(upper * 10 ** 9), 10 ** 9)),
            "upper_bound_exact": f"{upper.numerator}/{upper.denominator}", "upper_seconds": t_upper,
-           "width": float(upper - lb), "no_floating_point_assumption": True, "seconds": time.time() - t0}
+           "width": float(upper - lb), "no_floating_point_assumption": layer == "exact", "seconds": time.time() - t0}
     log(f"  nine-coupling crown ({reading}): e0 estimate {e0:.12f}; certified {float(lb):.12f} <= lambda_min <= "
         f"{float(upper):.12f} ({rec['n_sectors']} blocks, largest {rec['largest_sector']}, {rec['seconds']:.0f}s)")
     return rec
+
+
+def count_below_by_block_float(spec, states, gens, g, log=None):
+    """The same block decomposition as count_below_by_block, counted with the floating-point layer of certify-ed
+    (inertia.inertia_dense: LDL^T with a bound beta on its backward error under the binary64 model).
+
+    The matrix A of the spec is built in binary64 (build_bitwise); for spin 1/2 and integer spec couplings every
+    entry is an integer below 2^53 and is checked to be one, so A is exact. Every generator is checked to commute
+    with A exactly (P A P^T == A, integer entries). For each real character the orbit sums V (entries integers,
+    disjoint supports) give Ab = V^T A V and Db = V^T V exactly (integer sums below 2^53, checked), and
+    M = Ab - g Db is formed exactly (g dyadic, checked entry by entry). If inertia_dense finds no negative pivot,
+    M + beta I >= 0, and with Db >= d_min I this gives V^T (A - (g - beta / d_min)) V >= 0, so no eigenvalue of A on
+    the block lies below g - beta / d_min. Returns {count, delta, sectors} with delta = max beta / d_min."""
+    import scipy.sparse as sp
+    from ...construct import build_bitwise
+    from ...exact_sectors import FiniteGroup, _unit, orbit_columns
+    from ...inertia import inertia_dense
+    g = Fraction(g)
+    A = build_bitwise(spec, states).tocsr()
+    if np.iscomplexobj(A.data) or not np.all(A.data == np.rint(A.data)) or np.max(np.abs(A.data)) >= 2 ** 52:
+        raise ValueError("the binary64 matrix is not an integer matrix below 2^52")
+    group = FiniteGroup(gens, states)
+    n = states.size
+    for gi, (idx, ph) in enumerate(group.gen_maps):
+        P = sp.csr_matrix((ph.astype(float), (idx, np.arange(n))), shape=(n, n))
+        if (P @ A @ P.T - A).count_nonzero() != 0:
+            raise ValueError(f"{group.gens[gi].name} does not commute with the matrix")
+    chars = []
+    for js in itertools.product(*[range(x.order) for x in gens]):
+        vals = [_unit(x.order, j) for x, j in zip(gens, js)]
+        if any(v is None for v in vals):
+            continue
+        chi = group.character(vals)
+        if chi is None:
+            continue
+        if any(ci != 0 for _, ci in chi):
+            raise ValueError("count_below_by_block_float handles real characters only")
+        cols = orbit_columns(group, chi)
+        if cols:
+            chars.append((dict(zip([x.name for x in gens], js)), cols))
+    if sum(len(c) for _, c in chars) != n:
+        raise ValueError("1D irreps do not cover the states")
+    gf = float(g)
+    if Fraction(gf) != g:
+        raise ValueError("shift not exact in binary64")
+    total, dmax, rows = 0, Fraction(0), []
+    for qn, cols in chars:
+        t0 = time.time()
+        r_, c_, v_ = [], [], []
+        for k, col in enumerate(cols):
+            for i, (re_, im_) in col.items():
+                r_.append(i); c_.append(k); v_.append(float(re_))
+        m = len(cols)
+        V = sp.csr_matrix((v_, (r_, c_)), shape=(n, m))
+        Ab = (V.T @ (A @ V)).toarray()
+        Db = np.asarray((V.T @ V).diagonal()).ravel()
+        if np.max(np.abs(Ab)) >= 2 ** 52 or not np.all(Ab == np.rint(Ab)) or not np.allclose(Ab, Ab.T, rtol=0, atol=0):
+            raise ValueError("block matrix not exact")
+        M = Ab
+        for i in range(m):
+            x = Fraction(float(Ab[i, i])) - g * Fraction(float(Db[i]))
+            M[i, i] = float(x)
+            if Fraction(M[i, i]) != x:
+                raise ValueError("diagonal of the shifted block not exact in binary64")
+        res = inertia_dense(M, 0.0)
+        del M, Ab, V
+        if not res.conclusive or res.negative is None:
+            return {"count": None, "delta": None, "sectors": rows}
+        dmin = float(np.min(Db))
+        delta = Fraction(res.beta) / Fraction(dmin)
+        total += res.negative
+        dmax = max(dmax, delta)
+        rows.append({"quantum_numbers": qn, "dim": m, "count": int(res.negative), "beta": res.beta, "d_min": dmin,
+                     "delta": float(delta), "seconds": time.time() - t0})
+        if log:
+            log(f"    float block {qn} (dim {m}): {res.negative} below {gf:.12g}, delta {float(delta):.2e}, "
+                f"{time.time() - t0:.0f}s")
+    return {"count": total, "delta": dmax, "sectors": rows, "group_order": group.order}

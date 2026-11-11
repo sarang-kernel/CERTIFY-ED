@@ -73,13 +73,17 @@ def test_count_by_block_agrees_with_exact_count_below():
     for x in (w[0] - 1e-6, (w[0] + w[1]) / 2, (w[4] + w[5]) / 2):
         g = Fraction(int(np.floor(x * K * 2 ** 20)), 2 ** 20)
         mine = nc.count_below_by_block(spec, st, gens, g)
+        fl = nc.count_below_by_block_float(spec, st, gens, g)
         ref, info = exact_count_below(spec, st, gens, {}, [g])
-        assert mine["count"] == ref[0]["count"] == int(np.sum(w * K < float(g)))
+        assert mine["count"] == fl["count"] == ref[0]["count"] == int(np.sum(w * K < float(g)))
+        assert [s["dim"] for s in fl["sectors"]] == [s["dim"] for s in mine["sectors"]]
         assert sum(s["dim"] for s in mine["sectors"]) == st.size == info["dim"]
     # negative control: the swap of an outer pair is a symmetry of the reduced model only
     swap = list(range(18)); swap[0], swap[1] = 1, 0
     with pytest.raises(ValueError):
         nc.count_below_by_block(spec, st, [site_permutation(spec, swap, "swap1-2")], Fraction(0))
+    with pytest.raises(ValueError):
+        nc.count_below_by_block_float(spec, st, [site_permutation(spec, swap, "swap1-2")], Fraction(0))
 
 
 @needs_flint
