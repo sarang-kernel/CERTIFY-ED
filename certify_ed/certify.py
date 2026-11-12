@@ -229,7 +229,7 @@ class _StatementLog(list):
                 self._sink(line)
 
 
-def _gate(sel, budget, short, estimate_mb=None, what=""):
+def _gate(sel, budget, short, estimate_mb=None, what="", use_cap=True):
     """None when the statement may run; else a NOT_CHECKED statement with its reason code."""
     sid = STATEMENTS[short]["id"]
     nar = sel.narrowing_of(short)
@@ -240,7 +240,7 @@ def _gate(sel, budget, short, estimate_mb=None, what=""):
     ok, note = budget.time_left(sid)
     if not ok:
         return _stmt(sid, "NOT_CHECKED", note, {"budget": budget.to_dict()}, reason_code="BUDGET_TIME")
-    ok, note = budget.memory_ok(sid, estimate_mb, what)
+    ok, note = budget.memory_ok(sid, estimate_mb, what, use_cap=use_cap)
     if not ok:
         return _stmt(sid, "NOT_CHECKED", note, {"estimate_mb": estimate_mb}, reason_code="BUDGET_MEMORY")
     return None
@@ -946,7 +946,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     s1_gate = _gate(sel, budget, "S1",
                     estimate_mb=(_mb((claim.states.size if claim.states is not None else spec.dim) * max(1, spec.n_terms)
                                      * 2, 32) if spec is not None else None),
-                    what="reference matrix from the spec (estimate: dim x terms x 2 entries)")
+                    what="reference matrix from the spec (estimate: dim x terms x 2 entries)",
+                    # 3.2.3: the estimate is a coarse upper bound (the 3.2.2 run refused S1 at 16896 MB for a block the
+                    # 3.2.1 run certified at a peak of 2989 MB under a 4608 MB cap), and a reference build that does not
+                    # fit ends in a caught MemoryError (NOT_CHECKED); so the process memory cap does not gate S1, only
+                    # an explicit budget does
+                    use_cap=False)
     if s1_gate is not None and spec is not None:
         statements.append(s1_gate)
     elif spec is not None and opts.model_fidelity:

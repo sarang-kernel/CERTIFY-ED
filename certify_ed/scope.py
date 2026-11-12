@@ -100,12 +100,16 @@ class Budget:
             return False, note
         return True, ""
 
-    def memory_ok(self, sid: str, estimate_mb: Optional[float], what: str = ""):
+    def memory_ok(self, sid: str, estimate_mb: Optional[float], what: str = "", use_cap: bool = True):
         if estimate_mb is None:
             return True, ""
         if self.mb is None:
             # 3.2.2 (N-03): without a budget, the memory left under the process memory cap (job object / RLIMIT_AS,
-            # certify_ed.cost.process_memory_cap) decides; without a cap the statement may start
+            # certify_ed.cost.process_memory_cap) decides; without a cap the statement may start. 3.2.3: a caller
+            # whose estimate is only a coarse upper bound and whose allocation fails cleanly (use_cap=False, the S1
+            # reference build) is gated by an explicit budget only
+            if not use_cap:
+                return True, ""
             from .cost import memory_cap_note, process_memory_cap
             cap = process_memory_cap()
             if cap is None or not estimate_mb > cap["headroom_mb"]:

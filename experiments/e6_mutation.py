@@ -148,7 +148,10 @@ def main():
         run.record("copy", {"files": len(tracked), "source": "git ls-files" if tracked else "fallback directories"})
         copies = []
         for w in range(workers):
-            d = tempfile.mkdtemp(prefix=f"mut{w}_")
+            # 3.2.3: the copies live next to the repository (or in CERTIFY_ED_E6_COPY_DIR), not in the system temp
+            # directory: in the sandbox of the 3.2.2 run git could not create a repository under the temp directory,
+            # so test_imp05 of tests/test_review_fixes.py failed in the copy and the baseline was refused
+            d = tempfile.mkdtemp(prefix=f"mut{w}_", dir=os.environ.get("CERTIFY_ED_E6_COPY_DIR") or os.path.dirname(ROOT))
             if tracked:
                 for rel in tracked:
                     os.makedirs(os.path.dirname(os.path.join(d, rel)) or d, exist_ok=True)

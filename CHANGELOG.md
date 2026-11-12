@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.2.3] — 2026-11-12 (branch `fix/3.2.3` on `v3.2.2`; found by the 3.2.2 evidence run `run_full_20261112`)
+
+Two corrections found by the 3.2.2 evidence run; no bound changes. The comparison of that run with the 3.2.1 run
+(`run_full_20261105`) has no MISMATCH leaf in E0, E1, E3, E5, E7, E8, E9 and E10; its E2 and E4 leaves and the abort of E6
+are explained in `RESULT_evidence_run_3.2.2.md`.
+
+- **S1 and the memory gate of 3.2.2.** Without `budget_mb`, 3.2.2 let the memory left under the process memory cap gate
+  every statement, S1 included. The S1 estimate (dimension x terms x 2 entries of 32 bytes, made for a budget) is a coarse
+  upper bound: under the experiments' job-object cap of 4608 MB the 3.2.2 run refused S1 (NOT_CHECKED, `BUDGET_MEMORY`) for
+  the E2 block chain N=22, k = 0, at an estimate of 16896 MB, where the 3.2.1 run had certified S1 at a peak of 2989 MB for
+  the whole certifier process, and for the second case of E4 W4 (J1-J2 chain, J2 = 0.5, N=20, k = 0, estimate
+  7680 MB; the first case, J2 = 0, estimates 3840 MB and was certified in both runs). A reference build that does not
+  fit ends in a caught `MemoryError` and an S1 NOT_CHECKED, as in 3.2.1 (E2 chain N=24, k = 0). `scope.Budget.memory_ok`
+  gains `use_cap` and `certify._gate` passes it; S1 is gated by an explicit budget only, and the factorizations and the
+  other statements keep the gate of 3.2.2. Test: `tests/test_memory_gate.py::test_cap_does_not_gate_s1_but_still_gates_factorizations`.
+- **E6 copies next to the repository.** `experiments/e6_mutation.py` made its copies of the repository in the system temp
+  directory. In the sandbox of the 3.2.2 run git could not create a repository there, so
+  `tests/test_review_fixes.py::test_imp05_source_fingerprint_ignores_lost_executable_bit` failed in the copy, the
+  unmutated baseline counted as killed and E6 stopped before its first mutant. The copies are now made next to the
+  repository (or in `CERTIFY_ED_E6_COPY_DIR`), and the test skips when git can work neither in its temp directory nor next to
+  the package, as it already did without git.
+
 ## [3.2.2] — 2026-11-11 (branch `track/hardening-3.2.2` on `dev/3.2` fa86456; the tag `v3.2.2` and its evidence run follow the merge)
 
 Hardening release (Wave 5 of the development roadmap, items N-01, N-02, N-03, H-02). No bound changes inside the range of the
