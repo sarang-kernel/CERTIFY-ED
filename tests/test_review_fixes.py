@@ -341,6 +341,11 @@ def _git_scratch(tmp_path):
         shutil.rmtree(tmp_path / ".git")
         return tmp_path, None
     base = tempfile.mkdtemp(prefix="gitscratch_", dir=os.path.dirname(os.path.dirname(os.path.abspath(ce.__file__))))
+    if subprocess.run(["git", "init", "-q"], cwd=base, capture_output=True).returncode != 0:
+        # 3.2.3: a copy of the repository inside the temp directory (E6 of the 3.2.2 run) leaves git no place to work
+        shutil.rmtree(base, ignore_errors=True)
+        pytest.skip("git cannot create a repository in the temp directory nor next to the package")
+    shutil.rmtree(os.path.join(base, ".git"))
     return base, base
 
 

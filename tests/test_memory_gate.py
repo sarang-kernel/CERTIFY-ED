@@ -112,3 +112,32 @@ def test_memory_limit_prefers_the_budget():
     assert (lim is None) == (cap is None)
     if cap is not None:
         assert lim == cap["headroom_mb"] and cap["cap_mb"] >= cap["in_use_mb"] >= 0
+
+
+def test_cap_does_not_gate_s1_but_still_gates_factorizations(monkeypatch):
+    """3.2.3: the S1 estimate (dim x terms x 2 entries of 32 bytes) is a coarse upper bound, and the 3.2.2 evidence run
+    refused S1 under the experiments' cap for blocks that 3.2.1 certified (E2 chain N=22 k=0, E4 W4). Without a
+    budget the process memory cap no longer gates S1; it still gates the factorizations, and a given budget still
+    gates S1."""
+    import scipy.linalg as la
+
+    import certify_ed as ce
+    from certify_ed import cost
+    from certify_ed.scope import Budget
+
+    fake = {"mechanism": "job object (per-process memory limit)", "cap_mb": 1.0, "in_use_mb": 0.999,
+            "headroom_mb": 0.001}
+    monkeypatch.setattr(cost, "process_memory_cap", lambda: dict(fake))
+    assert Budget().memory_ok("S1.model_fidelity", 10.0, "reference", use_cap=False) == (True, "")
+    ok, note = Budget().memory_ok("S3.completeness", 10.0, "factorization")
+    assert ok is False and "process memory cap" in note
+    ok, note = Budget(mb=1.0).memory_ok("S1.model_fidelity", 10.0, "reference", use_cap=False)
+    assert ok is False and "memory budget" in note
+    spec = ce.heisenberg_chain(6)
+    H = ce.build_bitwise(spec)
+    w, V = la.eigh(H.toarray())
+    cert = ce.certify(ce.Claim(eigenvalues=w[:1], eigenvectors=V[:, :1], operator=H, kind="lowest"), spec,
+                      ce.Options())
+    st = {s["id"]: (s["status"], s["evidence"].get("reason_code")) for s in cert.statements}
+    assert st["S1.model_fidelity"][0] == "CERTIFIED", st
+    assert st["S3.completeness"] == ("NOT_CHECKED", "BUDGET_MEMORY"), st
