@@ -3,7 +3,8 @@
 The prose is in this file; the item table is generated from the roadmap CSV of the archive
 (sources/archive_v5/project_docs/roadmap/ROADMAP_expansion_items.csv, column status_2026-11-03) and from the list NEW
 below, which holds the candidates that appeared after that CSV (from the Lean re-verification and the applications).
-Run from the repository root: python tools/make_development_roadmap.py
+The outcomes of the first phase are the dict OUTCOME. Run from the repository root:
+python tools/make_development_roadmap.py
 """
 import csv
 import os
@@ -162,6 +163,16 @@ prototypes D-03 and D-04 and adds H-04. Features go to a branch `dev/3.3` (3.3.0
 tag `v3.2.2`, the 3.2.2 evidence run, a rebuild of the Lean libraries and a refresh of the documentation of this
 repository. Items marked "now" or "part now" in the table are in it.
 
+## What the first phase did
+
+The five tracks of the first phase ended on 11 November 2026; the column "Outcome" of the table gives the result of each
+item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
+3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
+3.2.2 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
+and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
+(`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
+started on 12 November 2026 (`run_full_20261112`).
+
 ## Every item
 
 The table lists every open item of the expansion roadmap with its score and effort from the CSV, and the new candidates
@@ -170,6 +181,22 @@ old items. Two words of the CSV titles are replaced by plainer ones to keep
 to the writing rules of `STYLE.md`.
 
 """
+
+
+# result of the items of the first phase (11 November 2026)
+OUTCOME = {
+    "H-02": "done in 3.2.2", "N-01": "done in 3.2.2 (reason code `FP_GUARD_RANGE`)",
+    "N-02": "done in 3.2.2; each of the 8 mutants fails the tests", "N-03": "done in 3.2.2",
+    "B-05": "part: see N-05", "E-02": "on `dev/3.3`, UNVERIFIED, Sarang's check pending",
+    "D-03": "prototype on `dev/3.3`, not the default, draft without independent re-derivation",
+    "D-04": "on `dev/3.3`, one worker by default, no speed-up measured yet",
+    "H-04": "on `dev/3.3`, behind `pytest --perf`", "G-10": "script on `dev/3.3`, table of 4 small points",
+    "N-04": "done: driver in `reverification_lean/Verify/`, `verify --external` on `dev/3.3`",
+    "N-05": "partial: the radius check is refined (K2 and K+); for the count only the general theorem",
+    "N-06": "not reached", "N-11": "floating-point layer certified; exact re-check 3 of 8 blocks",
+    "N-12": "estimate only (largest block 1293292 rows), not run",
+    "N-13": "done for Theorem 2, its residual form and Theorem 4 (b) (K2); the count is not formalized",
+}
 
 
 def clean(title):
@@ -181,7 +208,8 @@ def clean(title):
 
 def main():
     rows = list(csv.DictReader(open(CSV, encoding="utf-8")))
-    lines = ["| Id | Item | Wave | Release | Effort | Score | Needs D-12 | First phase |", "|---|---|---|---|---|---|---|---|"]
+    lines = ["| Id | Item | Wave | Release | Effort | Score | Needs D-12 | First phase | Outcome |",
+             "|---|---|---|---|---|---|---|---|---|"]
     order = {"5": 0, "6": 1, "7": 2, "8": 3, "community": 4}
     items = []
     for r in rows:
@@ -195,7 +223,7 @@ def main():
     items.sort(key=lambda x: (x[0], x[1]))
     for _, i, title, wave, rel, eff, score, d12, now, status in items:
         mark = f"{title} ({status})" if status not in ("not started", "new") else title
-        lines.append(f"| {i} | {mark} | {wave} | {rel} | {eff} | {score} | {d12} | {now} |")
+        lines.append(f"| {i} | {mark} | {wave} | {rel} | {eff} | {score} | {d12} | {now} | {OUTCOME.get(i, '')} |")
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(INTRO + "\n".join(lines) + "\n")

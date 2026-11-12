@@ -7,7 +7,8 @@ the explanatory prose. Run from the repository root:
 
 Inputs: results/core/summary.json, results/core/second_kernel.json, results/mathlib_enclosure.json,
 results/mathlib_counting.json, results/apps/summary.json, results/apps/mathlib_apps.json,
-results/apps/final_rerun.json, results/findings_documents.json, results/integration.json.
+results/apps/final_rerun.json, results/findings_documents.json, results/integration.json, and for the parts added on
+11 November 2026 results/mathlib_nonhermitian.json, results/lean_product.json and results/apps_next/*.json.
 """
 import json
 import os
@@ -34,7 +35,8 @@ def cell(text):
 
 
 def short(name):
-    for p in ("CertifyMathlib.Enclosure.", "CertifyMathlib.Counting.", "CertifyMathlib.Apps.", "CertifyMathlib."):
+    for p in ("CertifyMathlib.Enclosure.", "CertifyMathlib.Counting.", "CertifyMathlib.Apps.",
+              "CertifyMathlib.NonHermitian.", "CertifyMathlib.Refine.", "CertifyMathlib."):
         if name.startswith(p):
             return name[len(p):]
     return name
@@ -71,6 +73,23 @@ def main():
     rerun = load("apps", "final_rerun.json")
     finds = load("findings_documents.json")["findings"]
     integ = load("integration.json")
+    nh = load("mathlib_nonhermitian.json")
+    lp = load("lean_product.json")
+    n11 = load("apps_next", "n11_crown_nine_float.json")["nine_coupling_float"]
+    n11x = load("apps_next", "n11_crown_nine_exact_partial.json")
+    n12 = load("apps_next", "n12_honeycomb_estimate.json")
+
+    nh_st = nh["statements"]
+    nh_n = {k: sum(1 for s in nh_st if s["status"] == k) for k in STATUS}
+    nh_lc = [x for x in nh["second_checker"] if "leanchecker" in str(x.get("tool", ""))][0]
+    nh_nanoda = [x for x in nh["second_checker"] if "nanoda" in str(x.get("tool", ""))][0]
+    lp_nan = lp["nanoda"]["rows"]
+    lp_acc = sum(1 for r in lp_nan if r["result"] == "accepted")
+    lp_mem = sum(1 for r in lp_nan if r.get("reason") == "memory")
+    lp_rows = lp["driver"]["rows"]
+    lp_gen = sum(1 for r in lp_rows if r["kind"] == "genuine")
+    lp_forg = len(lp_rows) - lp_gen
+    lp_ident = lp["driver"]["export_byte_identical_to_export_certs"]
 
     enc_st = enc["statements"]
     cnt_st = cnt["statements"]
@@ -104,7 +123,10 @@ def main():
       "certificates, derivation documents and run records of CERTIFY-ED as they are in the project archive v5 "
       "(`sources/archive_v5/`, code at `dev/3.2` commit `a814d28`, source hash `cb73dec3e4433a3b`), and the "
       "documentation corrections of the code repository that this work led to (commits `40d59f4` and `fa86456`, "
-      "`sources/SOURCES.md`).")
+      "`sources/SOURCES.md`). The parts added on 11 November 2026 (the non-Hermitian statements of E-02, the "
+      "refinement of the kernel checks, the certificate driver and the applications N-11 and N-12) refer to the code "
+      "branches `fix/3.2.2` (tag `v3.2.2`) and `dev/3.3`, also described in `sources/SOURCES.md`; their accounts are "
+      "`NONHERMITIAN.md`, `LEAN_PRODUCT.md` and `APPS_NEXT.md`.")
     w("")
     w("## How to read the levels")
     w("")
@@ -126,7 +148,8 @@ def main():
     rows = [
         ["build", f"`{b['command']}`", f"exit code {b['exit_code']}, {b['jobs']} jobs, {b['errors']} errors; "
          f"warnings: {b['warnings_module_system']} about Mathlib's module system, {b['warnings_other']} about the "
-         "exponent threshold of `FloatUnderflow.lean`", "K"],
+         "exponent threshold of `FloatUnderflow.lean`; modules compiled by this build: "
+         + (", ".join(f"`{m}`" for m in b.get("rebuilt", [])) or "none") + ", the others replayed", "K"],
         ["axiom audit", "`Audit/AxiomAudit.lean`: every theorem of the three libraries", "; ".join(
             f"{r['library']}: {r['theorems']} named and {r['auxiliary']} auxiliary theorems, axioms "
             f"{', '.join(r['axioms'])}, {r['nonstandard']} with any other axiom" for r in au["libraries"]), "K"],
@@ -154,17 +177,42 @@ def main():
         ["CertifyMathlib.Apps", "bordered-pencil lemma, eta bound, finite-size criterion, AKLT kernel certificate",
          f"{mapps['counts']['theorems']} theorems; nanoda accepted {mapps['nanoda']['accepted']} of "
          f"{mapps['nanoda']['main_theorems']} main theorems", "K2"],
+        ["CertifyMathlib.NonHermitian", "Bauer-Fike, its residual form, and the disc inclusion of statements N2 and "
+         "N3 of E-02 (UNVERIFIED in the code)",
+         f"{len(nh_st)} statements: {nh_n['proved']} complete, {nh_n['partial']} partial, {nh_n['not attempted']} not "
+         f"formalized; {nh['axioms_check']['theorems']} theorems; nanoda accepted {nh_nanoda['accepted']} of "
+         f"{nh_nanoda['theorems']} main theorems", "K2"],
+        ["CertifyMathlib.Refine", "acceptance by the kernel checks `pairOK` and `checkLowest` of CertifyCore implies "
+         "the conclusion of `residual_enclosure` for the decoded rational data; the count from the pivots of a "
+         "rational elimination",
+         f"{len(lp['axioms']['theorems'])} theorems; nanoda accepted {lp_acc} of {len(lp_nan)} theorems tried "
+         f"({lp_mem} stopped at the memory limit of {lp['nanoda']['mem_mib']} MiB); the others replayed by leanchecker",
+         f"K2 for {len(lp['levels']['K2'])}, K+ for {len(lp['levels']['K+'])}"],
+        ["certificate driver", "`Verify/cecheck_bundle.py`: export of any certificate, `cecheck`, one verdict per "
+         "statement",
+         f"{sum(1 for r in lp_rows if r['kind'] == 'genuine' and r['exit_code'] == 0)} of {lp_gen} genuine "
+         f"certificates pass (exit code 0), {sum(1 for r in lp_rows if r['kind'] != 'genuine' and r['exit_code'] == 1)} "
+         f"of {lp_forg} forgeries rejected (exit code 1); exports "
+         f"byte-identical to `export/export_certs.py` on {lp_ident['identical']} of {lp_ident['certificates']}", "N"],
         ["`ceapps`", "the certified application numbers (E7, E9, E10)",
          f"{apps['agreeing']} of {apps['agreeing'] + apps['disagreeing'] + apps['skipped']} targets agree with the "
          f"3.2.1 records; a final re-run with one binary reproduced {sum(1 for t in rerun['targets'] if t['lean_value_identical_to_committed'])} "
          f"of {len(rerun['targets'])} results exactly", "N"],
-        ["final replay", f"`leanchecker` on all {lcf['modules']} modules of the three libraries after the final build",
-         f"exit code {lcf['exit_code']}, {lcf['seconds']} s", "K+"],
-        ["nanoda recheck", "main theorems of the modules rebuilt by the final build",
-         f"{nrc['accepted']} of {nrc['theorems']} accepted", "K2"],
+        ["final replay", f"`leanchecker` on all {lcf['modules']} modules of the three libraries as they were on "
+         f"{lcf.get('date')}; the modules added since were replayed by their tracks (rows above and the table of second "
+         "checkers)", f"exit code {lcf['exit_code']}, {lcf['seconds']} s", "K+"],
+        ["nanoda recheck", nrc["scope"], f"{nrc['accepted']} of {nrc['theorems']} accepted", "K2"],
     ]
     w(table(["Part", "What", "Result", "Level"], rows))
     w("")
+    la = integ.get("leanchecker_attempt")
+    if la:
+        w(f"A replay of all {la['modules']} modules after the build of {la['date']} did not run: {la['outcome']} "
+          f"({la['seconds']} s). The compiled files of the {lcf['modules']} modules replayed on {lcf.get('date')} are the ones "
+          "this build reused (it compiled only the modules listed in the first row), and the modules added since, "
+          "`CertifyMathlib.NonHermitian` and `CertifyMathlib.Refine`, were replayed by their tracks with exit code "
+          f"{nh_lc['exit_code']} and {lp['leanchecker']['exit_code']}.")
+        w("")
     w("The second checker `lean4lean` could not be used: its build reads no compiled file of Lean 4.35.0 "
       "(\"incompatible header\", `results/core/second_kernel.json`), so K2 rests on nanoda alone.")
     w("")
@@ -207,6 +255,44 @@ def main():
          "lemma for arbitrary graphs is not formalized and is not needed for the six lattices"],
         ["Pomata and Wei, criterion implies a gap", "not formalized", "none", "", "cited from the paper"],
     ]
+    w(table(["Statement", "Lean", "Level", "Main theorems", "Not formalized, and notes"], rows))
+    w("")
+    w("### Non-Hermitian eigenpairs (`CertifyMathlib.NonHermitian`, `NONHERMITIAN.md`)")
+    w("")
+    w("The statements are those of `docs/proofs/E-02_non_hermitian.md` on the code branch `dev/3.3`. The code marks "
+      "the claim kind UNVERIFIED, and the derivation document has the status of rule D-12 described below.")
+    w("")
+    rows = [[s["id"], s["statement"], STATUS[s["status"]], s.get("level") or "none", names(s.get("theorems")),
+             s.get("missing") or ""] for s in nh_st]
+    w(table(["Id", "Statement", "Lean", "Level", "Main theorems", "Not formalized"], rows))
+    w("")
+    w("### Refinement of the kernel checks (`CertifyMathlib.Refine`, `LEAN_PRODUCT.md`)")
+    w("")
+    w("These theorems connect two parts of the work. The kernel-reducible checks `pairOK` and `checkLowest` of "
+      "`CertifyCore/Kernel/Defs.lean` decide, for decoded rational data, the inequalities that `cecheck` tests; the "
+      "theorems below prove on Mathlib that acceptance implies the conclusion of `residual_enclosure` "
+      "(`CertifyMathlib.Enclosure`), so that the S2 re-check of the three certificates checked in the kernel holds as "
+      "a theorem about the decoded data. They concern the kernel definitions, not the compiled code of `cecheck` "
+      "itself, which stays at level N.")
+    w("")
+    rows = [
+        ["per-pair radius check implies Theorem 1, also with model shift and radius", "complete", "K2",
+         names(["pairOK_theorem1", "pairOK_theorem1_shift_rad"]), "cluster radii (Theorems 2 and 2') not refined"],
+        ["the lowest-window check implies Theorem 1 and the S2 conclusion", "complete", "K+",
+         names(["checkLowest_theorem1", "checkLowest_S2", "pairOK_theorem1_shift"]), ""],
+        ["the three kernel certificates (matrix-free, dense arrays, npz)", "complete", "K+",
+         names(["matrixFree_theorem1", "denseArrays_theorem1", "npz_theorem1", "matrixFree_S2", "denseArrays_S2",
+                "npz_S2"], limit=6),
+         "nanoda stopped at the memory limit for " + names([r["theorem"] for r in lp_nan if r.get("reason") == "memory"])],
+        ["the added checks of symmetry and nonzero vectors", "complete", "K+",
+         names(["symOK_rejects_asymmetric", "vecOK_rejects_zero_vector"]), ""],
+        ["pivots of an elimination give the Sylvester count", "partial", "K2", names(["count_of_gaussQ"]),
+         "; ".join(x for x in lp["not_done"] if x.startswith("N-05"))],
+    ]
+    lev = {k: {x.split(" ")[0] for x in v} for k, v in lp["levels"].items()}
+    for r in rows:
+        for nm in re.findall(r"`([^`]+)`", r[3]):
+            assert nm in lev[r[2]], (nm, r[2])
     w(table(["Statement", "Lean", "Level", "Main theorems", "Not formalized, and notes"], rows))
     w("")
 
@@ -268,6 +354,28 @@ def main():
     w("The models were also compared with the Python builder entry by entry, including the two 20-site chains of E7 "
       "(" + ", ".join(f"`{v['file']}`" for v in apps.get("model_checks", {}).values()) + "; all equal).")
     w("")
+    w("Two application items of the development roadmap were taken up with the code of `dev/3.3`; neither has a "
+      "Lean counterpart yet (`APPS_NEXT.md`, `results/apps_next/`). For N-11, the nine couplings that Kránitz and "
+      "Penc print for their headline bound fix the crown Hamiltonian once the digit in parentheses is appended. At "
+      f"those couplings the floating-point layer of certify-ed gives {n11['lower_bound']} <= lambda_min <= "
+      f"{n11['upper_bound']} for the S^z = 0 crown (dimension {n11['dim_Sz0']}, {n11['n_sectors']} blocks, the "
+      f"largest of dimension {n11['largest_sector']}, {round(n11['seconds'])} s). This layer rests on the binary64 "
+      "rounding model; the exact re-check without that model counted "
+      f"{len(n11x['blocks_logged'])} of {n11['n_sectors']} blocks (count "
+      + ", ".join(str(b["count"]) for b in n11x["blocks_logged"]) + ") before it was stopped, so the exact layer is "
+      f"not complete. The printed value {n11['published_bound']}, read as {n11['published_appended']}, lies "
+      + ("above the whole interval, " if n11["published_appended"] > n11["upper_bound"] else "")
+      + f"{-n11['lower_minus_published']:.3g} above its lower end, and the floating-point value "
+      f"{n11['review_float']} of the earlier review lies outside it. What this means for the paper's statement depends "
+      "on how its digit in parentheses is meant, which is for Sarang Vehale to judge. For N-12, the honeycomb "
+      f"criterion of Pomata and Wei (Method III, {n12['honeycomb_method3']['sites']} sites) needs a bordered block of "
+      f"{n12['honeycomb_method3']['largest_block_rows']} rows, "
+      f"{round(n12['honeycomb_method3']['largest_block_rows'] ** 2 * 8 / 2 ** 30)} GiB for one binary64 copy, so it "
+      "was not run. The exact product of the printed gap constants is "
+      f"{n12['gap_constants']['product']}; the value {n12['gap_constants']['final_equation']} of the final equation "
+      f"agrees with it, and the value {n12['gap_constants']['conclusion']} of the conclusion differs by "
+      f"{n12['gap_constants']['conclusion_minus_product']:.3g}.")
+    w("")
 
     w("## Second checkers and axioms")
     w("")
@@ -288,7 +396,12 @@ def main():
         ["CertifyMathlib.Apps", f"exit code {mapps['leanchecker']['exit_code']}, {mapps['leanchecker']['seconds']} s",
          f"{mapps['nanoda']['accepted']} of {mapps['nanoda']['main_theorems']} main theorems accepted",
          ", ".join(mapps["axioms"]["standard"])],
-        ["all three libraries, final build", f"exit code {lcf['exit_code']}, {lcf['seconds']} s, {lcf['modules']} modules",
+        ["CertifyMathlib.NonHermitian", f"exit code {nh_lc['exit_code']}, {nh_lc['seconds']} s",
+         f"{nh_nanoda['accepted']} of {nh_nanoda['theorems']} main theorems accepted", ", ".join(nh["axioms_check"]["all_depend_on"])],
+        ["CertifyMathlib.Refine", f"exit code {lp['leanchecker']['exit_code']}, {lp['leanchecker']['seconds']} s",
+         f"{lp_acc} of {len(lp_nan)} theorems accepted, {lp_mem} stopped at {lp['nanoda']['mem_mib']} MiB",
+         ", ".join(sorted({a for v in lp["axioms"]["theorems"].values() for a in v}))],
+        ["all three libraries", f"exit code {lcf['exit_code']}, {lcf['seconds']} s, {lcf['modules']} modules ({lcf.get('date')})",
          f"{nrc['accepted']} of {nrc['theorems']} rechecked ({nrc['scope']})", "see the axiom audit"],
     ]
     w(table(["Library", "leanchecker", "nanoda", "Axioms"], rows))
@@ -306,11 +419,15 @@ def main():
     w("Formalizing a statement forces every hypothesis and every range to be written down. Eleven places of the "
       "documents were found where the text and the Lean statement differ. None of them changes a stored certificate, "
       "a status or a published number; seven are corrected in the code repository by the documentation commits "
-      "`40d59f4` and `fa86456`, one (L-3) is an open check for 3.2.2, and three confirm a remark of the documents or "
-      "record a difference of form. `docs/failures/07_found_while_formalizing.md` describes each in prose.")
+      "`40d59f4` and `fa86456`, one (L-3) is closed by the range check of 3.2.2, and three confirm a remark of the "
+      "documents or record a difference of form. `docs/failures/07_found_while_formalizing.md` describes each in prose.")
     w("")
     rows = [[f["id"], f["document"], f["says"], f["holds"], f["found_by"], f["effect"], f["correction"]] for f in finds]
     w(table(["Id", "Place", "The document says", "What holds", "Found by", "Effect", "Correction"], rows))
+    w("")
+    w("The refinement of the kernel checks (`LEAN_PRODUCT.md`) found two places where the kernel-reducible checks of "
+      "`CertifyCore/Kernel/Defs.lean` accept more than `cecheck` does: " + "; ".join(lp["findings"]) + ". No stored "
+      "certificate is affected, because `cecheck` makes both tests.")
     w("")
 
     w("## What is not formalized, and why")
@@ -332,6 +449,11 @@ def main():
       "operator is the declared physical model) is outside the reach of any of these checks beyond the entrywise "
       "comparison of the rebuilt models. Lemmas 11 and 12 and Proposition 13 of the exact layer "
       "(`manuscript_v4/sections/appB_exact.tex`) have no Lean theorem; `cecheck` recomputes the counts they justify.")
+    w("")
+    w("Of the parts added on 11 November 2026, the following are not formalized: from E-02, "
+      + "; ".join(f"{s['statement']} ({s['missing']})" for s in nh_st if s["status"] != "proved")
+      + "; from the refinement of the kernel checks, " + "; ".join(lp["not_done"])
+      + ". The applications N-11 and N-12 have no Lean counterpart.")
     w("")
 
     w("## Relation to rule D-12")
@@ -360,7 +482,11 @@ def main():
     w("")
     w("The certificate checks with `cecheck` and the C verifier are the commands of `CORE.md` section 1; they need "
       "the certify-ed source of `sources/archive_v5/code/certify-ed` on `PYTHONPATH` to regenerate the validation "
-      "certificates.")
+      "certificates. A single certificate is re-checked with `python Verify/cecheck_bundle.py CERT.json --bundle DIR` "
+      "(or `--operator OPERATOR.npz`); from the code branch `dev/3.3` the same check runs as "
+      "`certify-ed verify CERT.json --bundle DIR --external \"python Verify/cecheck_bundle.py {certificate} --bundle "
+      "{bundle} --json {report}\"` (with the full path of the driver), "
+      "which writes a separate record and changes no status (`LEAN_PRODUCT.md`).")
     w("")
     w("The nanoda drivers are `export/second_kernel.py` (CertifyCore), `Drafts/Enclosure/nanoda_run.py`, "
       "`Drafts/Counting/nanoda_counting.py` and `apps_export/nanoda_apps.py`; each runs one theorem per process and "
@@ -378,7 +504,13 @@ def main():
          "part of the application, the final re-run"],
         ["`results/findings_documents.json`", "the findings table above"],
         ["`results/integration.json`", "final build, axiom audit, text search, final leanchecker run, nanoda recheck"],
-        ["`CORE.md`, `ENCLOSURE.md`, `COUNTING.md`, `APPS.md`", "the full account of each part"],
+        ["`results/mathlib_nonhermitian.json`", "statements, theorems, axioms and checker runs of the non-Hermitian "
+         "library"],
+        ["`results/lean_product.json`", "the certificate driver and its runs, the refinement theorems, their axioms "
+         "and checker runs, what is not done, the two findings on the kernel checks"],
+        ["`results/apps_next/`", "the records of the applications N-11 and N-12 and the values read from the papers"],
+        ["`CORE.md`, `ENCLOSURE.md`, `COUNTING.md`, `APPS.md`, `NONHERMITIAN.md`, `LEAN_PRODUCT.md`, `APPS_NEXT.md`",
+         "the full account of each part"],
     ]
     w(table(["File", "Contents"], rows))
     w("")

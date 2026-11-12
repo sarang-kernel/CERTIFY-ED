@@ -30,8 +30,10 @@ and the corrections only concern sentences that reach beyond it. The code is whe
 `_rounding_bound` in `certify_ed/enclosure.py` nor the norm guards of `certify_ed/fp.py` (lines 149 to 167) check that
 w and n stay below 2^26. No stored operator comes near (the largest dimension in the run records is 1116229), so no
 certificate is affected, but a certificate for a larger operator would rest on a guard outside the range in which it holds. The
-erratum of commit `40d59f4` records L-1 and L-2; the missing check (L-3) is open and listed as a candidate for 3.2.2 in
-[05_open_items.md](05_open_items.md).
+erratum of commit `40d59f4` records L-1 and L-2. The missing check (L-3) was added in 3.2.2 (commit `1f47d4c` on the
+branch `fix/3.2.2`, tag `v3.2.2`, section [3.2.2] of the code's `CHANGELOG.md`): outside w and n at most 2^26 the
+floating-point guards refuse to form a bound, and S2 with the statements that rest on it is INCONCLUSIVE with the
+reason code `FP_GUARD_RANGE`; see [05_open_items.md](05_open_items.md).
 
 ## Constants that the documents already discuss (L-4, L-10)
 

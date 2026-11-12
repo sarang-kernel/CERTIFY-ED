@@ -102,6 +102,16 @@ prototypes D-03 and D-04 and adds H-04. Features go to a branch `dev/3.3` (3.3.0
 tag `v3.2.2`, the 3.2.2 evidence run, a rebuild of the Lean libraries and a refresh of the documentation of this
 repository. Items marked "now" or "part now" in the table are in it.
 
+## What the first phase did
+
+The five tracks of the first phase ended on 11 November 2026; the column "Outcome" of the table gives the result of each
+item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
+3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
+3.2.2 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
+and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
+(`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
+started on 12 November 2026 (`run_full_20261112`).
+
 ## Every item
 
 The table lists every open item of the expansion roadmap with its score and effort from the CSV, and the new candidates
@@ -109,53 +119,53 @@ N-01 to N-13 with an effort estimated here (they have no score). "Needs D-12" is
 old items. Two words of the CSV titles are replaced by plainer ones to keep
 to the writing rules of `STYLE.md`.
 
-| Id | Item | Wave | Release | Effort | Score | Needs D-12 | First phase |
-|---|---|---|---|---|---|---|---|
-| B-03 | Release 3.1.1 with INT-02 (scope-block validator) and INT-03 (upward-rounded exported radii) merged, its own full run (D-44) and the INT-01 decision implemented (partial) | 5 | decision | M | 5 | no |  |
-| H-02 | Property-based tests (hypothesis) for fp.py and enclosure.py against exact rational arithmetic | 5 | 3.2.2 | S | 5 | no | now |
-| N-01 | Refuse to certify outside the range of the floating-point guards: check w <= 2^26 and n <= 2^26 in `enclosure._rounding_bound` and the norm guards of `fp.py` (finding L-3) | 5 | 3.2.2 | S |  | no | now |
-| N-02 | Pinning tests for the seven soundness-relevant E6 survivors and the `checker.py:535` gap | 5 | 3.2.2 | S |  | no | now |
-| N-03 | Memory gate that uses the process memory cap when no budget is given | 5 | 3.2.2 | S |  | no | now |
-| B-04 | Identify and measure the trusted computing base: split a `certify-ed-core` package (fp, enclosure, inertia, checker) with a counted line budget and no optional imports | 6 | 3.3 | M | 7 | no |  |
-| B-05 | Machine-checked proofs of Theorem 1 (residual enclosure) and Theorem 3 (Kato-Temple) including the rounding model (Lean/Isabelle with Flocq-style FP) | 6 | 3.3 | XL | 8 | yes | part now |
-| B-06 | Uniform rounding-error calculus module replacing the ad hoc (1+4u) factors, with property-based tests against exact rationals | 6 | 3.3 | M | 6 | yes |  |
-| N-04 | `cecheck` as a supported external verifier: a one-command driver in this repository and an optional `verify --external` path in certify-ed that records the verdict without trusting it | 6 | 3.3 | M |  | no | now |
-| N-05 | Refinement proofs: the exact radius check and the exact inertia count of `CertifyCore` imply the conclusions of the Mathlib theorems, which lifts those re-checks from level N to level K | 6 | 3.3 | L |  | no | now |
-| N-06 | Mechanical Lean gaps: Theorem U5 and D-01 part (c) for complex data, C-12 part (a), E-07 Lemma 5 | 6 | 3.3 | M |  | no | now |
-| N-07 | Sturm's theorem and squarefree factorization on Mathlib, then C-16 | 6 | 3.4 | L |  | no |  |
-| N-08 | Trace norm and Hölder's inequality for traces on Mathlib, then the floating-point lemmas of C-04 and C-07 | 6 | 3.4 | L |  | no |  |
-| N-09 | E-03 Propositions 1 to 3 (Bunch-Kaufman counts in floating point) in the Lean model | 6 | 3.4 | L |  | no |  |
-| N-10 | Kernel-checked certificates beyond dimension 64 (proof by reflection on exact data) | 6 | 3.4 | M |  | no |  |
-| C-07 | Dynamical response: certified Lanczos continued-fraction bounds (Kaniel-Paige-Saad with a posteriori residuals), certified moments tr(P O H^k O) and sum-rule checks (partial) | 7 | 3.4 | L | 9 | yes |  |
-| C-08 | Time evolution: a posteriori error bounds for Krylov/Chebyshev propagators; interval exponentiation on a certified full spectrum for small d | 7 | 3.4 | L | 6 | yes |  |
-| C-13 | Fidelity and overlaps between certified eigenvectors at two couplings (Davis-Kahan sin-theta bounds) (partial) | 7 | 3.3 | M | 5 | yes |  |
-| D-06 | Exact layer at larger n: multimodular (nmod + CRT) rational arithmetic through FLINT for S6, lifting the ~4000 dense limit | 7 | 3.4 | L | 7 | no |  |
-| E-02 | Non-Hermitian problems: left/right residuals, Bauer-Fike for diagonalizable matrices, pseudospectral radii; Lindbladians and non-Hermitian spin chains | 7 | 3.3 | L | 7 | yes | now |
-| N-11 | Certify the nine-coupling headline of the spin-1/2 crown if the printed couplings determine the problem | 7 | application | M |  | no | now |
-| N-12 | AKLT honeycomb lattice: size and memory estimate, and a run if it fits this machine | 7 | application | M |  | no | now |
-| N-13 | Bauer-Fike and the residual form of E-02 on Mathlib | 7 | 3.3 | M |  | no | now |
-| B-08 | Mutation testing in CI on a rotating sample with a survivor ledger and a verdict workflow (e6_classify/e6_recheck stamped) (partial) | 8 | 3.3 | M | 5 | no |  |
-| B-09 | Signed, reproducible releases (sigstore) and an SBOM; certificate records the package hash (partial) | 8 | 3.3 | S | 4 | no |  |
-| D-03 | Error-free dot products via the Ozaki scheme on BLAS (integer-split products) for compensated residual norms, 10-50x faster than fsum paths | 8 | 3.3 | M | 6 | no | now |
-| D-04 | Parallelism across pairs and sectors (multiprocessing; optional MPI via mpi4py) with memory caps per worker (portable.py job objects / RLIMIT_AS) | 8 | 3.3 | M | 4 | no | now |
-| D-05 | GPU residuals (CuPy) with a GPU floating-point model probe (FMA, FTZ, rounding) and the same strict bounds | 8 | needs a GPU | L | 6 | yes |  |
-| D-07 | macOS support and testing of the memory-cap mechanism; documented cap semantics per OS (address space vs committed memory, as seen on E4 W4) | 8 | needs macOS | S | 3 | no |  |
-| F-02 | Importers for HPhi, DiagHam, SPINPACK and ALPS output files (eigenvalues, vectors, sector labels) (partial) | 8 | 3.3 | M | 6 | no |  |
-| F-03 | Julia package (CertifyED.jl): the independent verifier (B-01) plus importers for Sunny.jl, KrylovKit, Expokit.jl results | 8 | 3.4 | L | 7 | no |  |
-| F-04 | PETSc/SLEPc importer (binary vectors, parallel layouts) and a shift-invert window example | 8 | 3.4 | M | 5 | no |  |
-| F-06 | TeNPy / ITensor adapters producing variational claims for E-05 (energy, variance, bond dimension in the record) | 8 | 3.4 | M | 7 | no |  |
-| F-07 | NetKet / NQS adapter: energy and variance estimates with sampling error declared; certificate states what is deterministic and what is not | 8 | 3.4 | M | 5 | no |  |
-| F-08 | Header-only C/C++ and a Fortran module writing the producer bundle from in-house codes (arrays, spec, environment) | 8 | 3.4 | M | 5 | no |  |
-| G-08 | Reproducibility tooling as its own package (run manifests, provenance hashes, compare_runs classes, two-stack reports) | 8 | 3.4 | M | 6 | no |  |
-| G-10 | Benchmark page: tightness and cost against Arb, VERSOFT verifyeig and INTLAB from E3, updated per release | 8 | 3.3 | S | 6 | no | part now |
-| H-03 | Type hints with mypy strict, a stable public API list and semantic versioning | 8 | 3.3 | M | 3 | no |  |
-| H-04 | Performance regression tests from E2 points, run per release | 8 | 3.3 | S | 4 | no | now |
-| H-06 | Deterministic environment capture in every certificate (library versions, FP probe, CPU model, cap mechanism) and a `certify-ed env --check` command | 8 | 3.3 | S | 5 | no |  |
-| B-10 | Invite an external soundness audit (two groups, written report) and publish it with the responses | community | Sarang | S | 6 | no |  |
-| G-01 | Public release of 3.1.0: GitHub push (D-56), Zenodo version under the concept DOI, release notes (blocked) | community | Sarang | S | 6 | no |  |
-| G-02 | Software paper (JOSS or SciPost Codebases) for the package, separate from the physics paper | community | Sarang | M | 7 | no |  |
-| G-04 | Tutorial notebooks and a 20-minute recorded walkthrough; a module for a summer school | community | after 3.3 | M | 5 | no |  |
-| G-06 | Journal engagement: a short proposal to SciPost/PRB editors for a 'certificate attached' statement in methods, backed by the practice survey | community | Sarang | S | 6 | no |  |
-| G-07 | Opt-in certificate deposit: a Zenodo community for certificates and bundles, with the hash in the paper | community | after 3.3 | M | 5 | no |  |
-| G-09 | Finish the hand coding of the practice survey (agreement below 80 % on 9 of 13 fields today) and publish it as a short preprint | community | Sarang | M | 6 | no |  |
-| G-11 | Pilot users: three external groups certify one published result each, with a write-up of what blocked them | community | Sarang | M | 7 | no |  |
+| Id | Item | Wave | Release | Effort | Score | Needs D-12 | First phase | Outcome |
+|---|---|---|---|---|---|---|---|---|
+| B-03 | Release 3.1.1 with INT-02 (scope-block validator) and INT-03 (upward-rounded exported radii) merged, its own full run (D-44) and the INT-01 decision implemented (partial) | 5 | decision | M | 5 | no |  |  |
+| H-02 | Property-based tests (hypothesis) for fp.py and enclosure.py against exact rational arithmetic | 5 | 3.2.2 | S | 5 | no | now | done in 3.2.2 |
+| N-01 | Refuse to certify outside the range of the floating-point guards: check w <= 2^26 and n <= 2^26 in `enclosure._rounding_bound` and the norm guards of `fp.py` (finding L-3) | 5 | 3.2.2 | S |  | no | now | done in 3.2.2 (reason code `FP_GUARD_RANGE`) |
+| N-02 | Pinning tests for the seven soundness-relevant E6 survivors and the `checker.py:535` gap | 5 | 3.2.2 | S |  | no | now | done in 3.2.2; each of the 8 mutants fails the tests |
+| N-03 | Memory gate that uses the process memory cap when no budget is given | 5 | 3.2.2 | S |  | no | now | done in 3.2.2 |
+| B-04 | Identify and measure the trusted computing base: split a `certify-ed-core` package (fp, enclosure, inertia, checker) with a counted line budget and no optional imports | 6 | 3.3 | M | 7 | no |  |  |
+| B-05 | Machine-checked proofs of Theorem 1 (residual enclosure) and Theorem 3 (Kato-Temple) including the rounding model (Lean/Isabelle with Flocq-style FP) | 6 | 3.3 | XL | 8 | yes | part now | part: see N-05 |
+| B-06 | Uniform rounding-error calculus module replacing the ad hoc (1+4u) factors, with property-based tests against exact rationals | 6 | 3.3 | M | 6 | yes |  |  |
+| N-04 | `cecheck` as a supported external verifier: a one-command driver in this repository and an optional `verify --external` path in certify-ed that records the verdict without trusting it | 6 | 3.3 | M |  | no | now | done: driver in `reverification_lean/Verify/`, `verify --external` on `dev/3.3` |
+| N-05 | Refinement proofs: the exact radius check and the exact inertia count of `CertifyCore` imply the conclusions of the Mathlib theorems, which lifts those re-checks from level N to level K | 6 | 3.3 | L |  | no | now | partial: the radius check is refined (K2 and K+); for the count only the general theorem |
+| N-06 | Mechanical Lean gaps: Theorem U5 and D-01 part (c) for complex data, C-12 part (a), E-07 Lemma 5 | 6 | 3.3 | M |  | no | now | not reached |
+| N-07 | Sturm's theorem and squarefree factorization on Mathlib, then C-16 | 6 | 3.4 | L |  | no |  |  |
+| N-08 | Trace norm and Hölder's inequality for traces on Mathlib, then the floating-point lemmas of C-04 and C-07 | 6 | 3.4 | L |  | no |  |  |
+| N-09 | E-03 Propositions 1 to 3 (Bunch-Kaufman counts in floating point) in the Lean model | 6 | 3.4 | L |  | no |  |  |
+| N-10 | Kernel-checked certificates beyond dimension 64 (proof by reflection on exact data) | 6 | 3.4 | M |  | no |  |  |
+| C-07 | Dynamical response: certified Lanczos continued-fraction bounds (Kaniel-Paige-Saad with a posteriori residuals), certified moments tr(P O H^k O) and sum-rule checks (partial) | 7 | 3.4 | L | 9 | yes |  |  |
+| C-08 | Time evolution: a posteriori error bounds for Krylov/Chebyshev propagators; interval exponentiation on a certified full spectrum for small d | 7 | 3.4 | L | 6 | yes |  |  |
+| C-13 | Fidelity and overlaps between certified eigenvectors at two couplings (Davis-Kahan sin-theta bounds) (partial) | 7 | 3.3 | M | 5 | yes |  |  |
+| D-06 | Exact layer at larger n: multimodular (nmod + CRT) rational arithmetic through FLINT for S6, lifting the ~4000 dense limit | 7 | 3.4 | L | 7 | no |  |  |
+| E-02 | Non-Hermitian problems: left/right residuals, Bauer-Fike for diagonalizable matrices, pseudospectral radii; Lindbladians and non-Hermitian spin chains | 7 | 3.3 | L | 7 | yes | now | on `dev/3.3`, UNVERIFIED, Sarang's check pending |
+| N-11 | Certify the nine-coupling headline of the spin-1/2 crown if the printed couplings determine the problem | 7 | application | M |  | no | now | floating-point layer certified; exact re-check 3 of 8 blocks |
+| N-12 | AKLT honeycomb lattice: size and memory estimate, and a run if it fits this machine | 7 | application | M |  | no | now | estimate only (largest block 1293292 rows), not run |
+| N-13 | Bauer-Fike and the residual form of E-02 on Mathlib | 7 | 3.3 | M |  | no | now | done for Theorem 2, its residual form and Theorem 4 (b) (K2); the count is not formalized |
+| B-08 | Mutation testing in CI on a rotating sample with a survivor ledger and a verdict workflow (e6_classify/e6_recheck stamped) (partial) | 8 | 3.3 | M | 5 | no |  |  |
+| B-09 | Signed, reproducible releases (sigstore) and an SBOM; certificate records the package hash (partial) | 8 | 3.3 | S | 4 | no |  |  |
+| D-03 | Error-free dot products via the Ozaki scheme on BLAS (integer-split products) for compensated residual norms, 10-50x faster than fsum paths | 8 | 3.3 | M | 6 | no | now | prototype on `dev/3.3`, not the default, draft without independent re-derivation |
+| D-04 | Parallelism across pairs and sectors (multiprocessing; optional MPI via mpi4py) with memory caps per worker (portable.py job objects / RLIMIT_AS) | 8 | 3.3 | M | 4 | no | now | on `dev/3.3`, one worker by default, no speed-up measured yet |
+| D-05 | GPU residuals (CuPy) with a GPU floating-point model probe (FMA, FTZ, rounding) and the same strict bounds | 8 | needs a GPU | L | 6 | yes |  |  |
+| D-07 | macOS support and testing of the memory-cap mechanism; documented cap semantics per OS (address space vs committed memory, as seen on E4 W4) | 8 | needs macOS | S | 3 | no |  |  |
+| F-02 | Importers for HPhi, DiagHam, SPINPACK and ALPS output files (eigenvalues, vectors, sector labels) (partial) | 8 | 3.3 | M | 6 | no |  |  |
+| F-03 | Julia package (CertifyED.jl): the independent verifier (B-01) plus importers for Sunny.jl, KrylovKit, Expokit.jl results | 8 | 3.4 | L | 7 | no |  |  |
+| F-04 | PETSc/SLEPc importer (binary vectors, parallel layouts) and a shift-invert window example | 8 | 3.4 | M | 5 | no |  |  |
+| F-06 | TeNPy / ITensor adapters producing variational claims for E-05 (energy, variance, bond dimension in the record) | 8 | 3.4 | M | 7 | no |  |  |
+| F-07 | NetKet / NQS adapter: energy and variance estimates with sampling error declared; certificate states what is deterministic and what is not | 8 | 3.4 | M | 5 | no |  |  |
+| F-08 | Header-only C/C++ and a Fortran module writing the producer bundle from in-house codes (arrays, spec, environment) | 8 | 3.4 | M | 5 | no |  |  |
+| G-08 | Reproducibility tooling as its own package (run manifests, provenance hashes, compare_runs classes, two-stack reports) | 8 | 3.4 | M | 6 | no |  |  |
+| G-10 | Benchmark page: tightness and cost against Arb, VERSOFT verifyeig and INTLAB from E3, updated per release | 8 | 3.3 | S | 6 | no | part now | script on `dev/3.3`, table of 4 small points |
+| H-03 | Type hints with mypy strict, a stable public API list and semantic versioning | 8 | 3.3 | M | 3 | no |  |  |
+| H-04 | Performance regression tests from E2 points, run per release | 8 | 3.3 | S | 4 | no | now | on `dev/3.3`, behind `pytest --perf` |
+| H-06 | Deterministic environment capture in every certificate (library versions, FP probe, CPU model, cap mechanism) and a `certify-ed env --check` command | 8 | 3.3 | S | 5 | no |  |  |
+| B-10 | Invite an external soundness audit (two groups, written report) and publish it with the responses | community | Sarang | S | 6 | no |  |  |
+| G-01 | Public release of 3.1.0: GitHub push (D-56), Zenodo version under the concept DOI, release notes (blocked) | community | Sarang | S | 6 | no |  |  |
+| G-02 | Software paper (JOSS or SciPost Codebases) for the package, separate from the physics paper | community | Sarang | M | 7 | no |  |  |
+| G-04 | Tutorial notebooks and a 20-minute recorded walkthrough; a module for a summer school | community | after 3.3 | M | 5 | no |  |  |
+| G-06 | Journal engagement: a short proposal to SciPost/PRB editors for a 'certificate attached' statement in methods, backed by the practice survey | community | Sarang | S | 6 | no |  |  |
+| G-07 | Opt-in certificate deposit: a Zenodo community for certificates and bundles, with the hash in the paper | community | after 3.3 | M | 5 | no |  |  |
+| G-09 | Finish the hand coding of the practice survey (agreement below 80 % on 9 of 13 fields today) and publish it as a short preprint | community | Sarang | M | 6 | no |  |  |
+| G-11 | Pilot users: three external groups certify one published result each, with a write-up of what blocked them | community | Sarang | M | 7 | no |  |  |

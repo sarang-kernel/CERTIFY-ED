@@ -26,7 +26,7 @@
    "holds": "the proofs need w <= 2^26 and n <= 2^26 (findings L-1 and L-2), and the code does not check either bound",
    "found_by": "reading the code against the Lean statements of CertifyCore.Theorems.Thm1",
    "effect": "none for the stored records (largest dimension 1116229)",
-   "correction": "open; a check of both bounds is a candidate for 3.2.2"
+   "correction": "closed in 3.2.2: commit 1f47d4c (branch fix/3.2.2, tag v3.2.2) refuses to form a bound outside n, w <= 2^26; S2 and the statements that rest on it become INCONCLUSIVE with the reason code FP_GUARD_RANGE"
   },
   {
    "id": "L-4",

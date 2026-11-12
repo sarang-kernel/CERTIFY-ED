@@ -599,5 +599,7 @@ The Lean re-verification in `reverification_lean/` (repository certify-ed-projec
 | `E-07_davis_kahan.md` | E-07-L1 (complete), E-07-L2 (complete), E-07-P1 (complete), E-07-L3 (complete), C-12 (partial), C-13 (complete), E-07-L5 (not formalized) | partial | K2 | L-11 |
 | `D-01_sparse-residual.md` | D-01 (partial) | partial | K2 | L-10 |
 | `D-02_matrix-free.md` | D-02 (partial) | partial | K2 | L-6 |
+| `E-02_non_hermitian.md` (branch `dev/3.3`, UNVERIFIED in the code) | E02-L1 (partial), E02-T2 (complete), E02-T2r (complete), E02-L3 (partial), E02-T4a (not formalized), E02-T4b (complete), E02-N2N3 (complete), E02-T4c (not formalized), E02-P5 (not formalized) | partial | K2 | none |
+| `D-03_ozaki_draft.md` (branch `dev/3.3`, draft, UNVERIFIED in the code) | none | not formalized | none | none |
 
 <!-- lean-status end -->

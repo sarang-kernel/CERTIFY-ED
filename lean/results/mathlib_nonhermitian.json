@@ -151,6 +151,7 @@
  ],
  "statements": [
   {
+   "id": "E02-L1",
    "statement": "Lemma 1, backward error of a right residual",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -161,6 +162,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-T2",
    "statement": "Theorem 2, Bauer-Fike",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -173,6 +175,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-T2r",
    "statement": "Theorem 2, residual form",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -183,6 +186,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-L3",
    "statement": "Lemma 3, the inverse from a computed inverse",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -194,6 +198,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-T4a",
    "statement": "Theorem 4 (a), similarity",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [],
@@ -202,6 +207,7 @@
    "level": "none"
   },
   {
+   "id": "E02-T4b",
    "statement": "Theorem 4 (b), discs",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -212,6 +218,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-N2N3",
    "statement": "Theorem 4 (b) with Lemma 3, statements N2 and N3 of the code",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [
@@ -221,6 +228,7 @@
    "level": "K2"
   },
   {
+   "id": "E02-T4c",
    "statement": "Theorem 4 (c) to (e), counting",
    "source": "docs/proofs/E-02_non_hermitian.md section 1",
    "theorems": [],
@@ -229,6 +237,7 @@
    "level": "none"
   },
   {
+   "id": "E02-P5",
    "statement": "Propositions 5 to 7, floating-point accounting",
    "source": "docs/proofs/E-02_non_hermitian.md sections 1 and 2",
    "theorems": [],

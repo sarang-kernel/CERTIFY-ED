@@ -54,6 +54,7 @@ def main():
              "errors": sum(1 for l in log if l.startswith("error:") or ": error" in l),
              "warnings_module_system": sum(1 for l in warns if "designed for use with the module system" in l),
              "warnings_other": sum(1 for l in warns if "designed for use with the module system" not in l),
+             "rebuilt": [m.group(1) for m in (re.search(r"\] Built (\S+)", l) for l in log) if m],
              "log": "results/integration_logs/lake_build.log"}
     audit = []
     for l in open(os.path.join(INT, "axiom_audit.log"), encoding="utf-8", errors="replace"):
@@ -76,13 +77,16 @@ def main():
                         "libraries": audit},
         "text_scan": text_scan(),
         "leanchecker_final": {"exit_code": lc["exit_code"], "seconds": lc["seconds"], "modules": lc["modules"],
-                              "module_list": lc["module_list"], "output": lc["output"]},
-        "nanoda_recheck": {"scope": "the main theorems of CertifyMathlib.Counting.D01Float and P15Float, which the final "
-                                    "build rebuilt because enclosure modules they import had changed",
+                              "module_list": lc["module_list"], "output": lc["output"],
+                              "date": lc.get("reused_date") or fc.get("date"), "reused_from": lc.get("reused_from")},
+        "leanchecker_attempt": fc.get("leanchecker_attempt"),
+        "nanoda_recheck": {"scope": "the main theorems of CertifyMathlib.Counting.D01Float and P15Float, which the build "
+                                    "of 11 November 2026 rebuilt because enclosure modules they import had changed",
                            "theorems": len(nrecs), "accepted": sum(1 for r in nrecs if r.get("result") == "accepted"),
                            "records": nrecs},
         "nanoda_int05": {"theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
                          "mem_limit_mib": ni.get("mem_limit_mib"), "exit_code": ni.get("exit_code"),
+                         "reused_date": ni.get("reused_date"), "reused_from": ni.get("reused_from"),
                          "records": ni.get("records", [])},
     }
     with open(os.path.join(HERE, "results", "integration.json"), "w", encoding="utf-8") as f:

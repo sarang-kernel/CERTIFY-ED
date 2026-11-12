@@ -1,8 +1,8 @@
 """make_lean_status_tables.py: insert the Lean status of every result into docs/math/theorems.md and
 docs/math/derivation_documents.md.
 
-The status and level of each Lean statement are read from reverification_lean/results/mathlib_enclosure.json and
-reverification_lean/results/mathlib_counting.json; the mapping from a result of the documents to the Lean statement
+The status and level of each Lean statement are read from reverification_lean/results/mathlib_enclosure.json,
+reverification_lean/results/mathlib_counting.json and reverification_lean/results/mathlib_nonhermitian.json; the mapping from a result of the documents to the Lean statement
 ids is the table MAP below. The text between the markers `<!-- lean-status begin -->` and `<!-- lean-status end -->`
 is replaced. Run from the repository root: python tools/make_lean_status_tables.py
 """
@@ -61,6 +61,9 @@ DERIVATIONS = [
     ("`E-07_davis_kahan.md`", ["E-07-L1", "E-07-L2", "E-07-P1", "E-07-L3", "C-12", "C-13", "E-07-L5"], "L-11"),
     ("`D-01_sparse-residual.md`", ["D-01"], "L-10"),
     ("`D-02_matrix-free.md`", ["D-02"], "L-6"),
+    ("`E-02_non_hermitian.md` (branch `dev/3.3`, UNVERIFIED in the code)",
+     ["E02-L1", "E02-T2", "E02-T2r", "E02-L3", "E02-T4a", "E02-T4b", "E02-N2N3", "E02-T4c", "E02-P5"], ""),
+    ("`D-03_ozaki_draft.md` (branch `dev/3.3`, draft, UNVERIFIED in the code)", [], ""),
 ]
 
 
@@ -75,6 +78,8 @@ def index():
         idx[s["id"]] = (s["status"], s.get("trust_level"))
     for s in load("mathlib_counting.json")["statements"]:
         idx[s["id"]] = (s["status"], s.get("level"))
+    for s in load("mathlib_nonhermitian.json")["statements"]:
+        idx[s["id"]] = (s["status"], s.get("level") if s.get("level") != "none" else None)
     return idx
 
 

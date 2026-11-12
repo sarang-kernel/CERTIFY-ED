@@ -90,3 +90,49 @@ with the E6 pinning tests and the memory gate. The other findings of that docume
 commits or need no change. The statements that the formalization left partial or did not take up are listed in
 `reverification_lean/VERIFICATION_REPORT.md`; whether a Lean theorem can stand in for Sarang's re-derivation is the
 subject of the proposal `docs/decisions/05_proposed_d62_lean.md`, which is not adopted.
+
+## After the first development phase (12 November 2026)
+
+The first phase of [the development roadmap](../roadmap/DEVELOPMENT_ROADMAP.md) closed three items of this document in
+code and opened others. Sources: the sections [3.2.2] and [3.3.0.dev0] of `CHANGELOG.md` on the code branches
+`fix/3.2.2` and `dev/3.3` (`sources/SOURCES.md`), and `reverification_lean/NONHERMITIAN.md`, `LEAN_PRODUCT.md`,
+`APPS_NEXT.md` and `VERIFICATION_REPORT.md`.
+
+Version 3.2.2 (tag `v3.2.2`) adds the range check of finding L-3, the pinning tests of the E6 survivors and the memory
+gate. Outside w and n at most 2^26 the floating-point guards form no bound, and S2 with the statements that rest on it
+is INCONCLUSIVE with the reason code `FP_GUARD_RANGE`. `tests/test_e6_pins.py` pins the seven survivors of the table
+above and the `checker.py:535` gap, and each of the eight mutants fails it. Without `budget_mb`, the memory left under
+the process memory cap now gates statements and factorizations (NOT_CHECKED with `BUDGET_MEMORY`). The pin tests do not
+replace the verdicts on the survivors, which remain Sarang's, and the worksheet's reading of `localops.py:189` does not
+hold: that mutant changes no built matrix, so its test pins the contract of `shift_components` instead. The evidence run
+of 3.2.2 (`run_full_20261112`) started on 12 November 2026; its comparison with the 3.2.1 run is the full check that no
+statement changed inside the range. Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.2) stays Sarang's decision.
+
+Two new derivation documents are on `dev/3.3`. `docs/proofs/E-02_non_hermitian.md` (non-Hermitian eigenpairs:
+backward errors, a bound on the inverse of the eigenvector matrix, Bauer-Fike discs and a count per group of discs) is
+derived, machine-checked (`docs/proofs/runs/verify_E-02.txt`: 2696 random and 547 adversarial cases, 0 violations) and
+independently re-derived (verdict AGREES-WITH-REMARKS in `docs/proofs/VERDICTS.md`), with Sarang's check pending; the
+claim kind stays UNVERIFIED until then. `docs/proofs/D-03_ozaki_draft.md` (error-free residual and Gram products) is a
+draft without an independent re-derivation, and no default path uses it.
+
+The applications left open questions for Sarang. At the nine couplings that Kránitz and Penc print, the floating-point
+layer gives -0.5498329145683885 <= lambda_min <= -0.5498329144473251 for the crown, but the exact re-check counted only 3
+of 8 blocks before it was stopped (`results/apps_next/n11_crown_nine_exact_partial.json`); the remaining blocks can be
+run separately with `experiments/n11_crown_nine.py --blocks`. The printed -0.549832(8), with its digit in parentheses
+appended, lies above that interval; whether this concerns the note to Kránitz and Penc (decisions D-34 and D-51) depends
+on how the digit is meant. The honeycomb criterion of Pomata and Wei needs a block of 1293292 rows and was not run, and
+the manuscript sentence that names only the companion paper for the honeycomb criterion is incomplete (prose under
+decision D-16).
+
+The Lean work left four mechanical gaps (Theorem U5 and D-01 part (c) for complex data, C-12 part (a), E-07 Lemma 5),
+the count theorems of the three kernel certificates and the refinement of `CertifyCore.K.bareiss`
+(`LEAN_PRODUCT.md`). It also found that the kernel checks `checkLowest` and `pairOK` of
+`CertifyCore/Kernel/Defs.lean` accept an asymmetric matrix and a zero vector, which `cecheck` rejects; no stored
+certificate is affected, and adding the two tests to the kernel checks is open. nanoda could not finish
+`npz_S2` and `npz_theorem1` under the limit of 4096 MiB.
+
+On the side of scale, the worker pool of D-04 has not shown a speed-up yet, because the machine had no free cores during
+the measurement, and the thresholds of the performance tests (`pytest --perf`) were not tried on an idle machine; the
+baseline is to be recorded again from the 3.2.2 run. One comparison at a relative tolerance of 1e-12 in
+`tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run again, which marks it as a test that
+can fail by chance.
