@@ -16,13 +16,14 @@ the width of `from_float` in `docs/proofs/L17_dyadic_exp_ln.md`, the index of Le
 hash stays `cb73dec3e4433a3b`. To recreate the clone: `git clone certify-ed_dev-3.2.bundle certify-ed`.
 
 `certify-ed_dev-3.3.bundle` is the code repository as a git bundle (all branches and tags) after the first development
-phase of 11 to 13 November 2026, SHA-256 `dae67f79290a2251c717ae2480008b6b7e8a3f015758d5215ac2c907c9991b45`. It holds every ref of `certify-ed_dev-3.2.bundle` and in
-addition `fix/3.2.2` at `a9b9838` (tag `v3.2.2`, source hash `746958b63a65b43e`), `fix/3.2.3` at `fec6f8c` (tag `v3.2.3` at
-`9f42adc`, source hash `bfc115e824386443`), `dev/3.3` at `6939734` (version 3.3.0.dev0, the merges of the five tracks and of
-`fix/3.2.3`; its full test suite at `6939734`: 1265 passed, 19 skipped, 0 failed) and the track branches `track/scale-wave8` at `eb82eb9`, `track/hardening-3.2.2` at `740d824`,
+phase of 11 to 13 November 2026, SHA-256 `52a2e64efa76bf0a0bbe1084616f4cd7308cb412fc4b0d709888bb8076cf9849`. It holds every ref of `certify-ed_dev-3.2.bundle` and in
+addition `fix/3.2.2` at `a9b9838` (tag `v3.2.2`, source hash `746958b63a65b43e`), `fix/3.2.3` at `31cdc58` (tag `v3.2.3` at
+`9f42adc`, source hash `bfc115e824386443`), `dev/3.3` at `c29e968` (version 3.3.0.dev0, the merges of the five tracks and of
+`fix/3.2.3`; its full test suite at `6939734`: 1265 passed, 19 skipped, 0 failed; `c29e968` changes only docstrings,
+comments and `docs/api.md`, and the tests of the files it touches pass) and the track branches `track/scale-wave8` at `eb82eb9`, `track/hardening-3.2.2` at `740d824`,
 `track/non-hermitian` at `e21eda8`, `track/external-verifier` at `d704471` and `track/applications` at `bf530ca`. On
 `fix/3.2.3`, commit `5dedf9d` changes only the number script `experiments/make_numbers.py` (the source hash stays
-`bfc115e824386443`) and commit `fec6f8c` adds `RESULT_evidence_run_3.2.3.md`. To recreate the clone:
+`bfc115e824386443`) and commits `fec6f8c` and `31cdc58` add `RESULT_evidence_run_3.2.3.md`. To recreate the clone:
 `git clone certify-ed_dev-3.3.bundle certify-ed`, then `git checkout dev/3.3`.
 
 `runs/` holds the run records of the two evidence runs of this phase, which the code repository does not track

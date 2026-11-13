@@ -45,10 +45,10 @@ case) are CERTIFIED again, and the E6 baseline passed (2312 s).
 E2 has 5 MISMATCH leaves, all summaries of S8 statements that are NOT_CHECKED in both runs: where 3.2.1 wrote "factorization
 skipped" or "no clusters among the claimed pairs", 3.2.3 names the memory gate ("estimated ... MB for sparse LU
 factorizations ... exceeds the memory left under the process memory cap"). Five S3 summaries of the same rows differ in the
-same way and are classed as explained, and 25 leaves are missing on the 3.2.1 side: 23 of the chain N=18 U(1) point, whose
-3.2.1 certifier reached the 900 s limit and whose 3.2.3 certifier ends with S1 and S2 CERTIFIED and S3, S4, S8 NOT_CHECKED by
-the gate, and the field `fill_nnz` of the N=22 and N=24 momentum rows, which 3.2.3 does not fill because no factorization
-started. The square N=16, J2 = 0 point is certified in all five statements as in 3.2.1 (876 s of the 900 s allowed, 759 s in
+same way and are classed as explained. 25 leaves are missing on one side. 23 are missing on the 3.2.1 side, all of the
+chain N=18 U(1) point, whose 3.2.1 certifier reached the 900 s limit and whose 3.2.3 certifier ends with S1 and S2 CERTIFIED
+and S3, S4, S8 NOT_CHECKED by the gate. 2 are missing on the 3.2.3 side: the entry `fill_nnz[0]` of the chain N=22 and N=24
+rows at k = 0, null in 3.2.1 and absent in 3.2.3, because no factorization started. The square N=16, J2 = 0 point is certified in all five statements as in 3.2.1 (876 s of the 900 s allowed, 759 s in
 3.2.1); the J2 = 0.5 point reaches the limit in both runs. No status changed between 3.2.1 and 3.2.3 except the N=18 U(1)
 point, from a time-out to NOT_CHECKED.
 
