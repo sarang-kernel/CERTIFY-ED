@@ -707,12 +707,22 @@ check(s_status(k24["certifier"], "S1.model_fidelity") == "NOT_CHECKED"
       and "memory" in k24["certifier"]["statements"]["S1.model_fidelity"]["summary"],
       "E2: N=24 momentum block: the S1 reference exceeds the memory cap and S1 is NOT_CHECKED")
 s3_mem = [r for r in rows2 if s_status(r["certifier"], "S3.completeness") == "NOT_CHECKED"]
-check(all("could not be completed" in r["certifier"]["statements"]["S3.completeness"]["summary"] for r in s3_mem),
-      "E2: every S3 NOT_CHECKED is a factorization that did not fit")
-if s3_mem:
-    worst_fail = max(s3_mem, key=lambda r: r["certifier"]["statements"]["S3.completeness"]["seconds"])
+# 3.2.2: without a budget the memory gate refuses a factorization predicted above the process memory cap before it
+# starts ("... exceeds the memory left under the process memory cap"); 3.2.1 started it and reported the failure
+# ("could not be completed")
+_GATE_TEXT = "exceeds the memory left under the process memory cap"
+check(all("could not be completed" in r["certifier"]["statements"]["S3.completeness"]["summary"]
+          or _GATE_TEXT in r["certifier"]["statements"]["S3.completeness"]["summary"] for r in s3_mem),
+      "E2: every S3 NOT_CHECKED is a factorization that did not fit or that the memory gate refused")
+s3_fail = [r for r in s3_mem if "could not be completed" in r["certifier"]["statements"]["S3.completeness"]["summary"]]
+if s3_fail:
+    worst_fail = max(s3_fail, key=lambda r: r["certifier"]["statements"]["S3.completeness"]["seconds"])
     macro("CfailSeconds", f"{worst_fail['certifier']['statements']['S3.completeness']['seconds']:.0f}")
     macro("CfailDim", thin(worst_fail["producer"]["dim"]))
+elif s3_mem:
+    macro("CfailSeconds", "---", note="E2: no factorization was started and failed; the memory gate (3.2.2) refused "
+          f"{len(s3_mem)} before starting")
+    macro("CfailDim", "---", note="E2: see CfailSeconds")
 sq = next(r for r in ok_rows if fam(r) == "square" and not r["cfg"].get("J2"))
 ch16 = next(r for r in s3_ok if fam(r) == "chain-u1" and r["cfg"]["N"] == 16)
 
