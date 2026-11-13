@@ -168,10 +168,12 @@ repository. Items marked "now" or "part now" in the table are in it.
 The five tracks of the first phase ended on 11 November 2026; the column "Outcome" of the table gives the result of each
 item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
 3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
-3.2.2 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
+3.2.3 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
 and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
 (`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
-started on 12 November 2026 (`run_full_20261112`).
+(`run_full_20261112`) did not complete; version 3.2.3 (branch `fix/3.2.3`, tag `v3.2.3`) removes its two causes, and the
+evidence run of 3.2.3 (`run_full_20261112b`) completed on 13 November 2026 with no change of status against the 3.2.1
+run except one E2 point that had reached the time limit.
 
 ## Every item
 
@@ -186,7 +188,7 @@ to the writing rules of `STYLE.md`.
 # result of the items of the first phase (11 November 2026)
 OUTCOME = {
     "H-02": "done in 3.2.2", "N-01": "done in 3.2.2 (reason code `FP_GUARD_RANGE`)",
-    "N-02": "done in 3.2.2; each of the 8 mutants fails the tests", "N-03": "done in 3.2.2",
+    "N-02": "done in 3.2.2; each of the 8 mutants fails the tests", "N-03": "done in 3.2.2; in 3.2.3 the cap no longer gates S1",
     "B-05": "part: see N-05", "E-02": "on `dev/3.3`, UNVERIFIED, Sarang's check pending",
     "D-03": "prototype on `dev/3.3`, not the default, draft without independent re-derivation",
     "D-04": "on `dev/3.3`, one worker by default, no speed-up measured yet",

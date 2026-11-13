@@ -107,10 +107,12 @@ repository. Items marked "now" or "part now" in the table are in it.
 The five tracks of the first phase ended on 11 November 2026; the column "Outcome" of the table gives the result of each
 item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
 3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
-3.2.2 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
+3.2.3 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
 and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
 (`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
-started on 12 November 2026 (`run_full_20261112`).
+(`run_full_20261112`) did not complete; version 3.2.3 (branch `fix/3.2.3`, tag `v3.2.3`) removes its two causes, and the
+evidence run of 3.2.3 (`run_full_20261112b`) completed on 13 November 2026 with no change of status against the 3.2.1
+run except one E2 point that had reached the time limit.
 
 ## Every item
 
@@ -125,7 +127,7 @@ to the writing rules of `STYLE.md`.
 | H-02 | Property-based tests (hypothesis) for fp.py and enclosure.py against exact rational arithmetic | 5 | 3.2.2 | S | 5 | no | now | done in 3.2.2 |
 | N-01 | Refuse to certify outside the range of the floating-point guards: check w <= 2^26 and n <= 2^26 in `enclosure._rounding_bound` and the norm guards of `fp.py` (finding L-3) | 5 | 3.2.2 | S |  | no | now | done in 3.2.2 (reason code `FP_GUARD_RANGE`) |
 | N-02 | Pinning tests for the seven soundness-relevant E6 survivors and the `checker.py:535` gap | 5 | 3.2.2 | S |  | no | now | done in 3.2.2; each of the 8 mutants fails the tests |
-| N-03 | Memory gate that uses the process memory cap when no budget is given | 5 | 3.2.2 | S |  | no | now | done in 3.2.2 |
+| N-03 | Memory gate that uses the process memory cap when no budget is given | 5 | 3.2.2 | S |  | no | now | done in 3.2.2; in 3.2.3 the cap no longer gates S1 |
 | B-04 | Identify and measure the trusted computing base: split a `certify-ed-core` package (fp, enclosure, inertia, checker) with a counted line budget and no optional imports | 6 | 3.3 | M | 7 | no |  |  |
 | B-05 | Machine-checked proofs of Theorem 1 (residual enclosure) and Theorem 3 (Kato-Temple) including the rounding model (Lean/Isabelle with Flocq-style FP) | 6 | 3.3 | XL | 8 | yes | part now | part: see N-05 |
 | B-06 | Uniform rounding-error calculus module replacing the ad hoc (1+4u) factors, with property-based tests against exact rationals | 6 | 3.3 | M | 6 | yes |  |  |

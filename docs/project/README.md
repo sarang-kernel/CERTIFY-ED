@@ -14,7 +14,7 @@ sources/ (see below). Nothing in this repository changes the software or its run
 | `CHANGELOG_PROJECT.md` | every recorded change of the project, dated, from the first work on it to 6 November 2026 |
 | `reverification_lean/` | the Lean 4 re-verification: a core-Lean exact checker and kernel theorems (`CertifyCore`), formal proofs on Mathlib (`CertifyMathlib`), the recomputation of the application numbers, and `VERIFICATION_REPORT.md` |
 | `tools/` | `lint_docs.py` (the style checker of STYLE.md) and the scripts that generate tables |
-| `sources/` | `archive_v5/` (the project archive v5 of 6 November 2026, unpacked; not tracked by git, see `sources/SOURCES.md`) and `certify-ed_dev-3.2.bundle` (the code repository as a git bundle) |
+| `sources/` | `archive_v5/` (the project archive v5 of 6 November 2026, unpacked; not tracked by git, see `sources/SOURCES.md`) `certify-ed_dev-3.2.bundle` and `certify-ed_dev-3.3.bundle` (the code repository as git bundles, before and after the first development phase), and `runs/` (the run records of the 3.2.2 and 3.2.3 evidence runs) |
 | `STYLE.md` | the writing rules every document follows |
 
 ## Trust levels

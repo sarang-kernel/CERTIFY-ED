@@ -38,7 +38,9 @@ where a mutant changes a bound or count that no test pins:
 None of them changes a statement of an evidence run, because the records were produced by the unmutated code. The
 remedy proposed in the worksheet is a test that pins each formula, as `tests/test_backlog_proofs.py` does for the
 cluster bound; the tests belong to a 3.2.2 together with the verdicts. One further survivor (`checker.py:535`) is a
-test gap through which a false FAILED, never a false CERTIFIED, would be possible.
+test gap through which a false FAILED, never a false CERTIFIED, would be possible. The 3.2.3 run drew a different sample
+of 64, because the number of mutation sites grew: 37 of its mutants were killed, and `make_numbers_apps.py` counts 19 of
+the 27 survivors as awaiting a verdict.
 
 ## The memory gate
 
@@ -91,7 +93,7 @@ commits or need no change. The statements that the formalization left partial or
 `reverification_lean/VERIFICATION_REPORT.md`; whether a Lean theorem can stand in for Sarang's re-derivation is the
 subject of the proposal `docs/decisions/05_proposed_d62_lean.md`, which is not adopted.
 
-## After the first development phase (12 November 2026)
+## After the first development phase (11 to 13 November 2026)
 
 The first phase of [the development roadmap](../roadmap/DEVELOPMENT_ROADMAP.md) closed three items of this document in
 code and opened others. Sources: the sections [3.2.2] and [3.3.0.dev0] of `CHANGELOG.md` on the code branches
@@ -105,8 +107,17 @@ above and the `checker.py:535` gap, and each of the eight mutants fails it. With
 the process memory cap now gates statements and factorizations (NOT_CHECKED with `BUDGET_MEMORY`). The pin tests do not
 replace the verdicts on the survivors, which remain Sarang's, and the worksheet's reading of `localops.py:189` does not
 hold: that mutant changes no built matrix, so its test pins the contract of `shift_components` instead. The evidence run
-of 3.2.2 (`run_full_20261112`) started on 12 November 2026; its comparison with the 3.2.1 run is the full check that no
-statement changed inside the range. Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.2) stays Sarang's decision.
+of 3.2.2 (`run_full_20261112`) did not complete: the memory gate refused S1 in two cases that the 3.2.1 run had
+certified (for the chain N=22 at k = 0 it estimated 16896 MB, where the 3.2.1 certifier peaked at 2989 MB), and the E6
+baseline failed because git could not create a repository under the temporary directory of the sandbox
+(`sources/runs/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
+cap (an explicit `budget_mb` still gates it) and makes E6 copy next to the repository. Its evidence run
+`run_full_20261112b` completed on 13 November 2026 at source `bfc115e824386443`, after a change of the number script
+alone (`5dedf9d`). Against the 3.2.1 run no record reached the guard range and no statement changed status, except one
+E2 point whose 3.2.1 certifier had reached the time limit and which now ends with S1 and S2 CERTIFIED and S3, S4 and S8
+NOT_CHECKED by the gate; the other differences are the summary texts of statements NOT_CHECKED in both runs and the size
+of the E6 copy (`sources/runs/RESULT_evidence_run_3.2.3.md`). Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.3)
+stays Sarang's decision.
 
 Two new derivation documents are on `dev/3.3`. `docs/proofs/E-02_non_hermitian.md` (non-Hermitian eigenpairs:
 backward errors, a bound on the inverse of the eigenvector matrix, Bauer-Fike discs and a count per group of discs) is
@@ -133,6 +144,6 @@ certificate is affected, and adding the two tests to the kernel checks is open. 
 
 On the side of scale, the worker pool of D-04 has not shown a speed-up yet, because the machine had no free cores during
 the measurement, and the thresholds of the performance tests (`pytest --perf`) were not tried on an idle machine; the
-baseline is to be recorded again from the 3.2.2 run. One comparison at a relative tolerance of 1e-12 in
+baseline is to be recorded again on an idle machine, since the 3.2.2 and 3.2.3 runs shared the machine with other work. One comparison at a relative tolerance of 1e-12 in
 `tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run again, which marks it as a test that
 can fail by chance.

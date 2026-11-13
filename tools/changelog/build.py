@@ -13,10 +13,10 @@ Checks (the script exits with status 1 if one fails):
   every commit of commits.tsv, every decision, every run record and every handover is cited by at least one row;
   dates lie between 18 December 2025 and 6 November 2026 and do not go backwards within a month;
   the optional after.tsv (work after archive v5, 7 to 30 November 2026) cites paths of this repository (repo:),
-  the documentation commits of the code repository (code:) or notes (~);
+  the commits of the code repository after archive v5 (code:, the dict CODE_COMMITS_AFTER) or notes (~);
   no table cell contains a pipe character, no text contains an em or en dash.
-Also writes changelog_sources_bundle.txt (the text of every cited file, the member lists of cited zip and tar files
-and the tables of this folder), for `python tools/lint_docs.py --bundle tools/changelog/changelog_sources_bundle.txt`.
+Also writes changelog_sources_bundle.txt (the text of every cited file of the archive and of this repository, the
+member lists of cited zip and tar files and the tables of this folder), for `python tools/lint_docs.py --bundle tools/changelog/changelog_sources_bundle.txt`.
 """
 import csv
 import datetime as dt
@@ -27,7 +27,18 @@ import tarfile
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CODE_COMMITS_AFTER = {"40d59f4", "fa86456"}  # documentation commits of dev/3.2 after archive v5
+# commits of the code repository after archive v5, with the bundle in sources/ that holds them: the two documentation
+# commits of dev/3.2 (10 and 11 November 2026) and the first development phase (11 to 13 November 2026: fix/3.2.2,
+# fix/3.2.3, dev/3.3)
+_B32, _B33 = "certify-ed_dev-3.2.bundle", "certify-ed_dev-3.3.bundle"
+CODE_COMMITS_AFTER = {"40d59f4": _B32, "fa86456": _B32}
+CODE_COMMITS_AFTER.update({h: _B33 for h in (
+    "d83fbe7", "1f47d4c", "a7c555e", "d45538f", "ddf83e1", "740d824", "a9b9838",             # fix/3.2.2, tag v3.2.2
+    "145cc00", "9f42adc", "5dedf9d", "fec6f8c",                                               # fix/3.2.3, tag v3.2.3
+    "917a34c", "b79ef7b", "ea9f92a", "b777fe5", "eb82eb9",                                   # track/scale
+    "167940a", "e21eda8", "908d269", "d704471",                                               # non-Hermitian, external verifier
+    "18f532b", "bd53c8b", "7e993c4", "eb1e346", "bf530ca",                                   # applications
+    "4bb91a1", "41ff8d6", "acd29d1", "4600d34", "3826b75", "f39652d", "6939734")})            # dev/3.3 merges
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 
 
@@ -156,8 +167,9 @@ def main():
         ym = (ym[0] + (ym[1] == 12), 1 if ym[1] == 12 else ym[1] + 1)
     # Work after archive v5 (this repository and the documentation commits of the code repository).
     after_path = os.path.join(HERE, "after.tsv")
+    repo_cited = set()
     if os.path.exists(after_path):
-        lines.append("## After archive v5: the documentation and the Lean re-verification")
+        lines.append("## After archive v5: the documentation, the Lean re-verification and the first development phase")
         lines.append("")
         if "after" not in months:
             probs.append(("months.tsv", "no paragraph for after"))
@@ -180,6 +192,7 @@ def main():
             for s in [x.strip() for x in e["sources"].split(";") if x.strip()]:
                 if s.startswith("repo:"):
                     p = s[5:]
+                    repo_cited.add(p.rstrip("/"))
                     if not os.path.exists(os.path.join(ROOT, *p.rstrip("/").split("/"))):
                         probs.append((where, "missing path in this repository " + p))
                     out.append("`" + p + "` (this repository)")
@@ -187,7 +200,7 @@ def main():
                     h = s[5:]
                     if h not in CODE_COMMITS_AFTER:
                         probs.append((where, "unknown code commit " + h))
-                    out.append("`" + h + "` (code repository, `sources/certify-ed_dev-3.2.bundle`)")
+                    out.append("`" + h + "` (code repository, `sources/" + CODE_COMMITS_AFTER.get(h, _B33) + "`)")
                 elif s.startswith("~"):
                     out.append(s[1:].strip())
                 else:
@@ -208,7 +221,7 @@ def main():
     for i, v in enumerate(versions, 2):
         where = f"versions.tsv line {i}"
         for c in re.findall(r"`([0-9a-f]{7})`", v["commit"]):
-            if c not in commits and "public repository" not in v["commit"]:
+            if c not in commits and c not in CODE_COMMITS_AFTER and "public repository" not in v["commit"]:
                 probs.append((where, "unknown commit " + c))
         for cell in v.values():
             if "|" in cell:
@@ -251,6 +264,14 @@ def main():
                     parts.append(open(fp, encoding="utf-8", errors="replace").read())
             except (OSError, zipfile.BadZipFile, tarfile.TarError) as exc:
                 probs.append((pth, "unreadable source: " + str(exc)[:60]))
+    # the files of this repository cited by after.tsv (text files only)
+    for pth in sorted(repo_cited):
+        full = os.path.join(ROOT, *pth.split("/"))
+        files = [full] if os.path.isfile(full) else [os.path.join(dp, n) for dp, _, ns in os.walk(full) for n in ns]
+        for fp in files:
+            if os.path.isfile(fp) and os.path.getsize(fp) < 3_000_000 and fp.endswith((".md", ".json", ".py", ".txt",
+                                                                                         ".lean", ".csv", ".log")):
+                parts.append(open(fp, encoding="utf-8", errors="replace").read())
     for name in ("commits.tsv", "decisions.tsv", "runs.tsv", "tags.tsv"):
         parts.append(open(os.path.join(HERE, name), encoding="utf-8").read())
     with open(BUNDLE, "w", encoding="utf-8", newline="\n") as f:
