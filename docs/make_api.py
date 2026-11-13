@@ -18,7 +18,15 @@ def entry(name, obj):
     except (TypeError, ValueError):
         sig = ""
     doc = (inspect.getdoc(obj) or "").split("\n\n")[0].replace("\n", " ")
-    return f"* `{name}{sig if len(sig) < 140 else '(...)'}`  \n  {doc}"
+    if len(sig) >= 140:
+        # too long for one line: the parameter names only
+        try:
+            ps = inspect.signature(obj).parameters.values()
+            star = {inspect.Parameter.VAR_POSITIONAL: "*", inspect.Parameter.VAR_KEYWORD: "**"}
+            sig = "(" + ", ".join(star.get(p.kind, "") + p.name for p in ps) + ")"
+        except (TypeError, ValueError):
+            sig = "(...)"
+    return f"* `{name}{sig}`  \n  {doc}"
 
 
 GROUPS = {

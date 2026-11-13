@@ -10,8 +10,9 @@ reported too.
 
 Memory and time of one block of n rows: the floating-point layer from cost.dense_inertia_mb / dense_inertia_seconds,
 and the exact re-check (checker.inertia_exact: an object matrix, the dense LDL^T, the dyadic factors as int64 and as
-FLINT matrices, and the row-block residual products) from two constants measured on this machine, bytes per entry
-and seconds per n^3, which the caller may replace.
+FLINT matrices, and the row-block residual products) from two constants, bytes per entry and seconds per n^3, which
+the caller may replace. The defaults below are round values, not measurements; experiments/n12_honeycomb_estimate.py
+calibrates seconds per n^3 on the E10 blocks and passes its value explicitly.
 """
 from math import comb
 
@@ -19,10 +20,11 @@ import numpy as np
 
 from .graph import Graph, slot_reduction, union_coords
 
-# Exact inertia (checker.inertia_exact) of a dense block: about 100 bytes per entry at the peak (the object matrix with
-# one Python integer per entry, the binary64 factors L and D, their int64 copies, the transient list of L^T and the two
-# FLINT matrices), and seconds per n^3 calibrated by experiments/n12_honeycomb_estimate.py on the E10 blocks of the
-# 3.2.1 evidence run; both can be passed explicitly.
+# Exact inertia (checker.inertia_exact) of a dense block: an estimate of about 100 bytes per entry at the peak (the
+# object matrix with one Python integer per entry, the binary64 factors L and D, their int64 copies, the transient list
+# of L^T and the two FLINT matrices), and a round default of seconds per n^3. Neither default is a measurement:
+# experiments/n12_honeycomb_estimate.py calibrates seconds per n^3 on the E10 blocks of the 3.2.1 evidence run and
+# passes the larger of its two values; both can be passed explicitly.
 EXACT_BYTES_PER_ENTRY = 100.0
 EXACT_SECONDS_PER_N3 = 1.0e-8
 

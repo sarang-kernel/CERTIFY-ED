@@ -3,9 +3,11 @@ eta machinery of certify-ed (certify_ed.apps.aklt.eta.certify_eta), before anyth
 
 The geometry is lattices.honeycomb_method3(); its dimensions are compared with Table I of the paper (rank E = 2^12,
 rank E ^ F = 2^18, dim H_L = dim H_R = 2^10, dim H_C = 2^6, D_tot = 2^26). The bordered blocks are counted with
-estimate.plan_eta, which reproduces the largest blocks that certify_eta logged for the other lattices in the E10 run of
-the 3.2.1 evidence run (code/certify-ed/results/run_full_20261105/E10.log: star 70, cross 1584, decorated honeycomb 673,
-decorated square 4034 and 3959 with the mirror). Seconds per n^3 of the exact re-check are calibrated on the cross and
+estimate.plan_eta, whose largest blocks are compared with those that certify_eta logged for the other lattices in the
+E10 run of the 3.2.1 evidence run (code/certify-ed/results/run_full_20261105/E10.log: star 70, cross 1584, decorated
+honeycomb 673, decorated square 4034 and 3959 with the mirror). They agree for the star, the cross and the decorated
+honeycomb; for the decorated square plan_eta gives 3997 rows against the logged 4034, so its block sizes are an
+estimate, not a reproduction, wherever the site symmetries enter. Seconds per n^3 of the exact re-check are calibrated on the cross and
 the decorated square of that log (time of the counting step = total minus the time before the blocks), and the larger
 of the two values is used.
 
