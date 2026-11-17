@@ -725,6 +725,10 @@
                   },
                   "budget": {
                     "$ref": "#/$defs/budget_record"
+                  },
+                  "device": {
+                    "type": "object",
+                    "description": "D-05 (gpu.py): where H X and |H| |X| were formed, when Options.device asked for a device (requested, used, reason or fallback, gpu)"
                   }
                 }
               }

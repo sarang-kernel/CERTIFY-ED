@@ -27,7 +27,7 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   after a failed probe or spot check, for a dense or matrix-free operator, an unsupported dtype or too little device
   memory, the CPU forms the products and S2's evidence `device` says why (`requested`, `used`, `reason` or `fallback`;
   for a device in use its name, compute capability, CUDA and CuPy versions, the number of products, the spot-checked
-  rows and the seconds). The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
+  rows and the seconds; the certificate schema documents the field). The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.

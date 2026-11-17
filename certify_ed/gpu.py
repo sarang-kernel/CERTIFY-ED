@@ -406,11 +406,19 @@ class DeviceCSR:
         return self.products(X, hx=True, ahx=False)[0]
 
     @staticmethod
-    def _rows_compact(M):
-        """The rows M (a CSR row selection) with their columns renamed 0..c-1 in the stored order of the entries, and
-        the original column indices: M_c @ X[cols] performs, row by row, the same operations as M @ X."""
-        cols, inv = np.unique(M.indices, return_inverse=True)
-        Mc = sp.csr_matrix((M.data, inv.astype(M.indices.dtype, copy=False), M.indptr), shape=(M.shape[0], cols.size))
+    def _rows_compact(M, rows):
+        """Rows `rows` of the CSR matrix M, entries in their stored order, with the columns renamed 0..c-1, and the
+        original column indices: M_c @ X[cols] performs, row by row, the same operations as (M @ X)[rows]. Costs
+        O(entries of the rows), not O(n)."""
+        ip = M.indptr
+        starts, ends = ip[rows].astype(np.int64), ip[rows + 1].astype(np.int64)
+        lens = ends - starts
+        pos = (np.concatenate([np.arange(s, e, dtype=np.int64) for s, e in zip(starts, ends)])
+               if rows.size else np.empty(0, dtype=np.int64))
+        ind = M.indices[pos]
+        cols, inv = np.unique(ind, return_inverse=True)
+        indptr = np.concatenate(([0], np.cumsum(lens))).astype(np.int64)
+        Mc = sp.csr_matrix((M.data[pos], inv.astype(np.int64, copy=False), indptr), shape=(rows.size, cols.size))
         return Mc, cols
 
     def _spot_check(self, X2, Y, Z):
@@ -418,12 +426,12 @@ class DeviceCSR:
         m = min(self.spot_rows, nrows)
         rows = np.sort(self.rng.choice(nrows, size=m, replace=False)) if m < nrows else np.arange(nrows)
         if Y is not None:
-            Mc, cols = self._rows_compact(self.A[rows])
+            Mc, cols = self._rows_compact(self.A, rows)
             ref = Mc @ X2[cols]
             if not same_bits(np.ascontiguousarray(Y[rows]), np.ascontiguousarray(ref.astype(Y.dtype, copy=False))):
                 raise GPUUnavailable("spot check: a row of H X formed on the GPU differs from the CPU product")
         if Z is not None:
-            Mc, cols = self._rows_compact(self.absA[rows])
+            Mc, cols = self._rows_compact(self.absA, rows)
             ref = Mc @ np.abs(X2[cols])
             if not same_bits(np.ascontiguousarray(Z[rows]), np.ascontiguousarray(ref.astype(np.float64, copy=False))):
                 raise GPUUnavailable("spot check: a row of |H| |X| formed on the GPU differs from the CPU product")
