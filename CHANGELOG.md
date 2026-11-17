@@ -7,6 +7,40 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### GPU products (roadmap D-05; track/gpu-d05)
+
+With `device` left at `"cpu"` no bound, status rule or record field of `certify()` changes. With `device="gpu"`, S2's
+evidence gains a `device` record and every other number of the certificate is the same bit for bit. The computational
+source hash changes (new module `gpu.py`, the device hook of `OperatorAdapter`, the products of `enclosure.residuals` and
+of the Kato-Temple step taken through `OperatorAdapter.both_products`).
+
+- **GPU products for S2 (`certify_ed/gpu.py`, `Options(device="gpu")`, default `"cpu"`).** For a stored sparse operator,
+  H X and |H| |X| are formed on a CUDA device by kernels that perform scipy's CSR operations in scipy's order: each row
+  sum starts from +0.0 and adds the products of the stored row in index order, every product and every sum rounded
+  once to nearest (`__dmul_rn`, `__dadd_rn`, NVRTC option `--fmad=false`), complex products as
+  (ar xr - ai xi) + i (ar xi + ai xr). One pass over the matrix forms both products for up to eight vectors, in numpy's
+  C layout. Under binary64 round to nearest with gradual underflow these are the operations of the CPU path, so the
+  products, and every bound built from them, are bit for bit those of the CPU path; no new rounding analysis enters.
+  Two guards: `gpu.probe()` (once per device: +, - and * against numpy on three magnitude ranges, gradual underflow on
+  fixed cases, the kernels against scipy on random real and complex CSR matrices with empty rows, unsorted indices,
+  subnormal and large entries) and a spot check of 64 rows of every product against scipy. Without CuPy or a device,
+  after a failed probe or spot check, for a dense or matrix-free operator, an unsupported dtype or too little device
+  memory, the CPU forms the products and S2's evidence `device` says why (`requested`, `used`, `reason` or `fallback`;
+  for a device in use its name, compute capability, CUDA and CuPy versions, the number of products, the spot-checked
+  rows and the seconds). The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
+  Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
+  memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
+  machines.
+- `enclosure.OperatorAdapter(op, norm_bound=None, device=None)`, `OperatorAdapter.both_products(X)` (the pair
+  `(matvec(X), abs_matvec(X))`, one pass on the GPU) and `enclosure.use_device(device)` (the default device of the
+  adapters created in a block; yields their device records). On the CPU `both_products` calls `matvec` and
+  `abs_matvec` as before, so the CPU path is unchanged.
+- `tests/test_gpu.py` (the tests that need a CUDA device skip without one; the fallback tests run everywhere),
+  `experiments/d05_fp_probe_gpu.py` (the binary64 arithmetic of a device: round to nearest of +, -, *, /, sqrt and fma,
+  directed rounding, subnormals, contraction of a*b + c under NVRTC's default flags) and `experiments/d05_gpu_bench.py`
+  (products and residual bounds against the CPU on Heisenberg chains, with a breakdown of the CPU time of
+  `residuals`, and `certify()` with S2 on both devices). Measurements on an NVIDIA H100 80GB HBM3 in `RESULT_D-05.md`.
+
 ### Scale track (roadmap D-03, D-04, H-04, groundwork of G-10; track/scale)
 
 No bound, status rule or record field of `certify()` changes; the computational source hash changes (new modules
