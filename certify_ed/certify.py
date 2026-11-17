@@ -902,7 +902,12 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
-    cert = _certify(claim, spec, opts)
+    first = claim
+    if (opts.device != "cpu" and sp.issparse(claim.operator)
+            and not getattr(claim.operator, "has_canonical_format", True)):
+        # a run may sum duplicates of the caller's sparse matrix in place; a recompute must see the matrix as given
+        first = replace(claim, operator=claim.operator.copy())
+    cert = _certify(first, spec, opts)
     s2 = cert.statement("S2.eigenpairs")
     rec = None if s2 is None else (s2.get("evidence") or {}).get("device")
     if rec is None:

@@ -281,3 +281,24 @@ def test_device_record_says_unused_without_products_and_after_any_setup_error(mo
     dev = c.statement("S2.eigenpairs")["evidence"]["device"]
     assert dev == {"requested": "gpu", "used": False, "reason": "MemoryError: out of device memory"}
     _same_certificate(ce.certify(claim, None, ce.Options(seed=1)), c)
+
+
+def test_recompute_sees_the_callers_matrix_with_duplicate_entries(monkeypatch):
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    monkeypatch.setattr(_StandIn, "fail_at", 2)
+    H = _small_claim().operator
+
+    def with_duplicates():                 # every entry stored twice as two exact halves, not canonical
+        C = H.tocoo()
+        rows, cols, vals = np.r_[C.row, C.row], np.r_[C.col, C.col], np.r_[C.data, C.data] * 0.5
+        o = np.lexsort((cols, rows))
+        indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=H.shape[0]))]
+        D = sp.csr_matrix((vals[o], cols[o], indptr), shape=H.shape)
+        assert not D.has_canonical_format
+        return D
+    w, V = np.linalg.eigh(H.toarray())
+    make = lambda: ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=with_duplicates(), kind="lowest")
+    b = ce.certify(make(), None, ce.Options(seed=1, device="gpu"))
+    assert b.statement("S2.eigenpairs")["evidence"]["device"]["recomputed_on_cpu"] is True
+    _same_certificate(ce.certify(make(), None, ce.Options(seed=1)), b)
