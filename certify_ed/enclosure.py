@@ -76,9 +76,12 @@ EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram boun
 # fallback to the CPU recorded in the adapter's device_record.
 
 
-def _device_error_text(err) -> str:
-    """The reason recorded for a device failure: the message of a GPUUnavailable, otherwise type and message."""
-    return str(err) if isinstance(err, GPUUnavailable) else f"{type(err).__name__}: {err}"
+def _device_error_text(err, limit: int = 300) -> str:
+    """The reason recorded for a device failure: the message of a GPUUnavailable, otherwise type and message, on one
+    line and at most `limit` characters (an NVRTC error carries the whole compiler log)."""
+    text = str(err) if isinstance(err, GPUUnavailable) else f"{type(err).__name__}: {err}"
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[:limit - 3] + "..."
 
 # ---------------------------------------------------------------------------
 # operator adapters
@@ -169,6 +172,7 @@ class OperatorAdapter:
         gpu_rec = self.device_record.get("gpu") or {}
         self.device_record["fallback"] = _device_error_text(err)
         self.device_record["gpu_products_at_fallback"] = int(gpu_rec.get("products", 0))
+        self.device_record["used"] = self.device_record["gpu_products_at_fallback"] > 0
         try:
             self._gpu.close()
         except Exception:

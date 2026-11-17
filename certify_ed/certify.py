@@ -902,6 +902,8 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
+    if opts.device not in ("cpu", "gpu"):
+        raise ValueError(f"Options.device must be 'cpu' or 'gpu', not {opts.device!r}")
     first = claim
     if (opts.device != "cpu" and sp.issparse(claim.operator)
             and not getattr(claim.operator, "has_canonical_format", True)):

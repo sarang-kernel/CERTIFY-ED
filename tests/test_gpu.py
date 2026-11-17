@@ -102,7 +102,7 @@ def test_spot_check_rejects_a_wrong_row():
     Y = A @ X
     Y[17, 1] = np.nextafter(Y[17, 1], np.inf)
     with pytest.raises(gpu.GPUUnavailable):
-        D._spot_check(X, Y, False)
+        D._spot_check(X, Y, None)
 
 
 def test_fallback_is_recorded_and_changes_no_bit(monkeypatch):
@@ -236,9 +236,18 @@ def _same_certificate(a, b):
     for s_a, s_b in zip(a.statements, b.statements):
         assert json.dumps(_without_timings(s_a), sort_keys=True, default=repr) == \
             json.dumps(_without_timings(s_b), sort_keys=True, default=repr), s_a["id"]
+    for key in ("kato_temple", "enclosures", "gaps"):
+        assert json.dumps(_without_timings(a.body[key]), sort_keys=True, default=repr) == \
+            json.dumps(_without_timings(b.body[key]), sort_keys=True, default=repr), key
     assert sorted(a.arrays) == sorted(b.arrays)
     for key in a.arrays:
         assert gpu.same_bits(np.asarray(a.arrays[key]), np.asarray(b.arrays[key])), key
+
+
+def test_options_device_must_be_cpu_or_gpu():
+    import certify_ed as ce
+    with pytest.raises(ValueError):
+        ce.certify(_small_claim(), None, ce.Options(device="cuda"))
 
 
 def test_stand_in_device_runs_residuals_and_kato_temple_through_it(monkeypatch):
