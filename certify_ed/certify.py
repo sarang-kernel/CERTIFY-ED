@@ -35,7 +35,7 @@ from __future__ import annotations
 import math
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
@@ -902,6 +902,26 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
+    cert = _certify(claim, spec, opts)
+    s2 = cert.statement("S2.eigenpairs")
+    rec = None if s2 is None else (s2.get("evidence") or {}).get("device")
+    if rec is None:
+        return cert
+    if rec.get("gpu_products_at_fallback", 0) > 0:
+        # D-05: the device failed (a spot check found a product unequal to the CPU product, or CuPy raised) after
+        # products had been taken from it. Those products are not trusted, so the whole certificate is computed again
+        # with the CPU products; the record keeps the failure.
+        cert = _certify(claim, spec, replace(opts, device="cpu"))
+        s2 = cert.statement("S2.eigenpairs")
+        if s2 is not None:
+            s2["evidence"]["device"] = dict(rec, used=False, recomputed_on_cpu=True)
+        return cert
+    rec["used"] = int((rec.get("gpu") or {}).get("products", 0)) > 0     # products of this certificate from the GPU
+    return cert
+
+
+def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
+    """The body of certify() for one device setting."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
@@ -1766,6 +1786,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         arrays["residual_bound"] = enc.residual.upper
     if opts.store_eigenvectors and X is not None:
         arrays["eigenvectors"] = np.asarray(X) if not is_streamed(X) else read_columns(X, slice(0, int(X.shape[1])))
+    if getattr(adapter, "_gpu", None) is not None:      # D-05: free the device copy of H for the next certificate
+        try:
+            adapter._gpu.close()
+        except Exception:
+            pass
+        adapter._gpu = None
     return Certificate(body, arrays)
 
 

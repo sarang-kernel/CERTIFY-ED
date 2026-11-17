@@ -6,7 +6,7 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
 from certify_ed import gpu
-from certify_ed.enclosure import OperatorAdapter, enclose, residuals, use_device
+from certify_ed.enclosure import OperatorAdapter, enclose, residuals
 
 
 def _device_or_skip():
@@ -91,15 +91,6 @@ def test_enclosure_on_gpu_equals_cpu_bit_for_bit(cplx):
     assert gpu.same_bits(g.existence_radius, cpu.existence_radius)
     assert ad.device_record["gpu"]["products"] >= 2
     assert "fallback" not in ad.device_record
-
-
-def test_use_device_sets_the_default_and_collects_records():
-    _device_or_skip()
-    H = _hermitian(500, 0.01, False, 5)
-    with use_device("gpu") as recs:
-        ad = OperatorAdapter(H)
-    assert ad.device_record["used"] and recs == [ad.device_record]
-    assert OperatorAdapter(H).device_record is None
 
 
 def test_spot_check_rejects_a_wrong_row():
@@ -199,3 +190,94 @@ def test_dense_and_unknown_devices_are_not_used():
     assert d["used"] is False and "sparse" in d["reason"]
     u = OperatorAdapter(H, device="tpu").device_record
     assert u["used"] is False and "unknown device" in u["reason"]
+
+
+class _StandIn:
+    """A stand-in for gpu.DeviceCSR that forms the scipy products (no CUDA device needed) and counts them, so the
+    wiring of residuals, Kato-Temple and the device record is tested everywhere. The call numbered fail_at and later
+    ones raise, as a failed spot check or a CuPy error would."""
+    fail_at = None
+
+    def __init__(self, A, absA=None):
+        self.A, self.absA = A, (abs(A) if absA is None else absA)
+        self.record = {"products": 0}
+        self.calls = 0
+
+    def _count(self):
+        self.calls += 1
+        if self.fail_at is not None and self.calls >= self.fail_at:
+            raise RuntimeError("injected device failure")
+        self.record["products"] += 1
+
+    def matmul(self, X, absolute=False):
+        self._count()
+        return (self.absA if absolute else self.A) @ X
+
+    def products(self, X):
+        self._count()
+        return self.A @ X, self.absA @ np.abs(X)
+
+    def close(self):
+        pass
+
+
+def _small_claim():
+    import certify_ed as ce
+    n = 300
+    A = sp.random(n, n, density=0.03, format="csr", random_state=np.random.RandomState(3))
+    H = ((A + A.T) * 0.5 + sp.diags(np.arange(n) * 0.01)).tocsr()
+    w, V = np.linalg.eigh(H.toarray())
+    return ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest")
+
+
+def _same_certificate(a, b):
+    import json
+    assert [(s["id"], s["status"]) for s in a.statements] == [(s["id"], s["status"]) for s in b.statements]
+    for s_a, s_b in zip(a.statements, b.statements):
+        assert json.dumps(_without_timings(s_a), sort_keys=True, default=repr) == \
+            json.dumps(_without_timings(s_b), sort_keys=True, default=repr), s_a["id"]
+    assert sorted(a.arrays) == sorted(b.arrays)
+    for key in a.arrays:
+        assert gpu.same_bits(np.asarray(a.arrays[key]), np.asarray(b.arrays[key])), key
+
+
+def test_stand_in_device_runs_residuals_and_kato_temple_through_it(monkeypatch):
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    claim = _small_claim()
+    a = ce.certify(claim, None, ce.Options(seed=1))
+    b = ce.certify(claim, None, ce.Options(seed=1, device="gpu"))
+    dev = b.statement("S2.eigenpairs")["evidence"]["device"]
+    assert dev == {"requested": "gpu", "used": True, "gpu": {"products": 2}}      # residuals and Kato-Temple
+    assert b.body["kato_temple"]
+    _same_certificate(a, b)
+
+
+def test_device_failure_after_products_recomputes_the_certificate_on_the_cpu(monkeypatch):
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    monkeypatch.setattr(_StandIn, "fail_at", 2)        # the Kato-Temple product fails after the residual product
+    claim = _small_claim()
+    a = ce.certify(claim, None, ce.Options(seed=1))
+    b = ce.certify(claim, None, ce.Options(seed=1, device="gpu"))
+    dev = b.statement("S2.eigenpairs")["evidence"]["device"]
+    assert dev["used"] is False and dev["recomputed_on_cpu"] is True
+    assert dev["gpu_products_at_fallback"] == 1 and dev["fallback"] == "RuntimeError: injected device failure"
+    _same_certificate(a, b)
+
+
+def test_device_record_says_unused_without_products_and_after_any_setup_error(monkeypatch):
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    claim = _small_claim()
+    values_only = ce.Claim(eigenvalues=claim.eigenvalues, operator=claim.operator, kind="lowest")
+    dev = ce.certify(values_only, None, ce.Options(device="gpu")).statement("S2.eigenpairs")["evidence"]["device"]
+    assert dev == {"requested": "gpu", "used": False, "gpu": {"products": 0}}
+
+    def broken(self, A, absA=None):
+        raise MemoryError("out of device memory")
+    monkeypatch.setattr(_StandIn, "__init__", broken)
+    c = ce.certify(claim, None, ce.Options(seed=1, device="gpu"))
+    dev = c.statement("S2.eigenpairs")["evidence"]["device"]
+    assert dev == {"requested": "gpu", "used": False, "reason": "MemoryError: out of device memory"}
+    _same_certificate(ce.certify(claim, None, ce.Options(seed=1)), c)

@@ -24,18 +24,23 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   Two guards: `gpu.probe()` (once per device: +, - and * against numpy on three magnitude ranges, gradual underflow on
   fixed cases, the kernels against scipy on random real and complex CSR matrices with empty rows, unsorted indices,
   subnormal and large entries) and a spot check of 64 rows of every product against scipy. Without CuPy or a device,
-  after a failed probe or spot check, for a dense or matrix-free operator, an unsupported dtype or too little device
-  memory, the CPU forms the products and S2's evidence `device` says why (`requested`, `used`, `reason` or `fallback`;
-  for a device in use its name, compute capability, CUDA and CuPy versions, the number of products, the spot-checked
-  rows and the seconds; the certificate schema documents the field). The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
+  after a failed probe or spot check or any other CuPy or CUDA error, for a dense or matrix-free operator, an
+  unsupported dtype or too little device memory, the CPU forms the products and S2's evidence `device` says why
+  (`requested`, `used`, `reason` or `fallback`; for a device in use its name, compute capability, CUDA and CuPy
+  versions, the number of products, the spot-checked rows and the seconds; the certificate schema documents the
+  field). `used` is true only when products of the certificate came from the device. When the device fails after
+  products were taken from it (`gpu_products_at_fallback` > 0), those products are not trusted and `certify()` computes
+  the whole certificate again with the CPU products (`recomputed_on_cpu`). The device copy of H is freed when
+  `certify()` returns. The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.
-- `enclosure.OperatorAdapter(op, norm_bound=None, device=None)`, `OperatorAdapter.both_products(X)` (the pair
-  `(matvec(X), abs_matvec(X))`, one pass on the GPU) and `enclosure.use_device(device)` (the default device of the
-  adapters created in a block; yields their device records). On the CPU `both_products` calls `matvec` and
-  `abs_matvec` as before, so the CPU path is unchanged.
-- `tests/test_gpu.py` (the tests that need a CUDA device skip without one; the fallback tests run everywhere),
+- `enclosure.OperatorAdapter(op, norm_bound=None, device=None)` and `OperatorAdapter.both_products(X)` (the pair
+  `(matvec(X), abs_matvec(X))`, one pass on the GPU). On the CPU `both_products` calls `matvec` and `abs_matvec` as
+  before, so the CPU path is unchanged.
+- `tests/test_gpu.py` (the tests that need a CUDA device skip without one; the fallback tests, and the tests of the
+  residual and Kato-Temple wiring and of the device record with a stand-in device that forms the scipy products, run
+  everywhere),
   `experiments/d05_fp_probe_gpu.py` (the binary64 arithmetic of a device: round to nearest of +, -, *, /, sqrt and fma,
   directed rounding, subnormals, contraction of a*b + c under NVRTC's default flags) and `experiments/d05_gpu_bench.py`
   (products and residual bounds against the CPU on Heisenberg chains, with a breakdown of the CPU time of

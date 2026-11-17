@@ -57,9 +57,7 @@ Used to sharpen isolated enclosures once inertia counts certify isolation.
 
 from __future__ import annotations
 
-import contextvars
 import math
-from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -73,26 +71,14 @@ from .gpu import GPUUnavailable
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
-# ---- device for the products H X and |H| |X| (roadmap D-05, gpu.py). None or 'cpu': scipy on the CPU; 'gpu': the
-# ordered CSR kernels of gpu.py, bit for bit equal to the CPU products, with a fallback to the CPU recorded in the
-# adapter's device_record. The default for adapters created without device= is set by use_device().
-_DEVICE = contextvars.ContextVar("certify_ed_device", default=None)
-_DEVICE_RECORDS = contextvars.ContextVar("certify_ed_device_records", default=None)
+# ---- device for the products H X and |H| |X| (roadmap D-05, gpu.py): OperatorAdapter(op, device=...). None or
+# 'cpu': scipy on the CPU; 'gpu': the ordered CSR kernels of gpu.py, bit for bit equal to the CPU products, with a
+# fallback to the CPU recorded in the adapter's device_record.
 
 
-@contextmanager
-def use_device(device: Optional[str]):
-    """Within the block, an OperatorAdapter created without device= uses `device` ('gpu', 'cpu' or None for the
-    CPU). Yields the list of the device records of the adapters created in the block that asked for a device."""
-    records: List[dict] = []
-    t1 = _DEVICE.set(device)
-    t2 = _DEVICE_RECORDS.set(records)
-    try:
-        yield records
-    finally:
-        _DEVICE.reset(t1)
-        _DEVICE_RECORDS.reset(t2)
-
+def _device_error_text(err) -> str:
+    """The reason recorded for a device failure: the message of a GPUUnavailable, otherwise type and message."""
+    return str(err) if isinstance(err, GPUUnavailable) else f"{type(err).__name__}: {err}"
 
 # ---------------------------------------------------------------------------
 # operator adapters
@@ -155,11 +141,9 @@ class OperatorAdapter:
         self._init_device(device)
 
     def _init_device(self, device):
-        """Set up the GPU products when asked for (device='gpu', or the use_device() default) and possible."""
+        """Set up the GPU products when asked for (device='gpu') and possible."""
         self._gpu = None
         self.device_record = None
-        if device is None:
-            device = _DEVICE.get()
         if device in (None, "cpu"):
             return
         rec: Dict[str, Any] = {"requested": str(device), "used": False}
@@ -174,18 +158,21 @@ class OperatorAdapter:
                 self._gpu = gpu.DeviceCSR(self.A, self._absA)
                 rec["used"] = True
                 rec["gpu"] = self._gpu.record
-            except gpu.GPUUnavailable as e:
-                rec["reason"] = str(e)
+            except Exception as e:          # GPUUnavailable, or any CuPy/CUDA error: the CPU forms the products
+                rec["reason"] = _device_error_text(e)
         self.device_record = rec
-        records = _DEVICE_RECORDS.get()
-        if records is not None:
-            records.append(rec)
 
     def _gpu_fallback(self, err):
-        """Stop using the GPU (every product so far was bit for bit the CPU product) and record why."""
-        self.device_record["fallback"] = str(err)
+        """Stop using the GPU and record why. If products had been taken from the device before the failure
+        (gpu_products_at_fallback > 0), they are not trusted: certify() then computes the certificate again with the
+        CPU products."""
+        gpu_rec = self.device_record.get("gpu") or {}
+        self.device_record["fallback"] = _device_error_text(err)
+        self.device_record["gpu_products_at_fallback"] = int(gpu_rec.get("products", 0))
         try:
             self._gpu.close()
+        except Exception:
+            pass
         finally:
             self._gpu = None
 
@@ -203,7 +190,7 @@ class OperatorAdapter:
             if getattr(self, "_gpu", None) is not None:
                 try:
                     return self._gpu.matmul(X)
-                except GPUUnavailable as e:
+                except Exception as e:
                     self._gpu_fallback(e)
             return self.A @ X
         if self.kind == "spec":
@@ -221,7 +208,7 @@ class OperatorAdapter:
             if getattr(self, "_gpu", None) is not None:
                 try:
                     return self._gpu.matmul(aX, absolute=True)
-                except GPUUnavailable as e:
+                except Exception as e:
                     self._gpu_fallback(e)
             return absA @ aX
         if self.kind == "spec":
@@ -234,7 +221,7 @@ class OperatorAdapter:
         if self.kind == "matrix" and getattr(self, "_gpu", None) is not None:
             try:
                 return self._gpu.products(X)
-            except GPUUnavailable as e:
+            except Exception as e:
                 self._gpu_fallback(e)
         return self.matvec(X), self.abs_matvec(X)
 
@@ -442,13 +429,13 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         if Xb.ndim == 1:
             Xb = Xb[:, None]
         mub = mu[a:b]
-        pair = None
-        if products is None and adapter.rigorous and getattr(adapter, "_gpu", None) is not None:
-            pair = adapter.both_products(Xb)        # D-05: both products in one pass, bit for bit the CPU ones
+        gpu_absHX = None
         if products is not None:
             HX = np.asarray(products[0])
+        elif adapter.rigorous and getattr(adapter, "_gpu", None) is not None:
+            HX, gpu_absHX = adapter.both_products(Xb)   # D-05: both products in one pass, bit for bit the CPU ones
         else:
-            HX = adapter.matvec(Xb) if pair is None else pair[0]
+            HX = adapter.matvec(Xb)
         if HX.ndim == 1:
             HX = HX[:, None]
         Rb = HX - Xb * mub[None, :]
@@ -459,8 +446,8 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             xl[a + i] = norm2_lower(Xb[:, i])
             R_up[a + i] = norm2_upper(Rb[:, i])
         if adapter.rigorous:
-            if pair is not None:
-                absHX = pair[1]
+            if gpu_absHX is not None:
+                absHX, gpu_absHX = gpu_absHX, None
             else:
                 absHX = None if products is None else np.asarray(products[1], dtype=float)
             Eb = _rounding_bound(adapter, mub, Xb, absHX)
@@ -474,7 +461,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             if R is not Rb:
                 R[:, a:b] = Rb
         del Rb
-        pair = None
+        gpu_absHX = None
     if adapter.rigorous:
         # ||A x - mu x|| <= ||R|| + ||E|| + sqrt(n) c_w u_min: the last term is the INT-05 additive term (the
         # per-entry shortfall of R and E under fl(z) = z(1 + delta) + eta); it is about 1e-160 and changes the

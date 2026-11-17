@@ -65,7 +65,8 @@ def _statement_evidence_defs() -> Dict[str, dict]:
             "radius_refers_to": {"type": "string"}, "accuracy_target": {"type": "object"},
             "groups": {"type": "array", "items": {"type": "object"}}, "budget": budget,
             "device": {"type": "object", "description": "D-05 (gpu.py): where H X and |H| |X| were formed, "
-                       "when Options.device asked for a device (requested, used, reason or fallback, gpu)"}}},
+                       "when Options.device asked for a device (requested, used, reason or fallback, "
+                       "gpu_products_at_fallback, recomputed_on_cpu, gpu)"}}},
         "S3.completeness": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"}, "reason": {"type": "string"},
             "dimension": {"type": "integer", "minimum": 0},

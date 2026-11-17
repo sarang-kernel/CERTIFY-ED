@@ -728,7 +728,7 @@
                   },
                   "device": {
                     "type": "object",
-                    "description": "D-05 (gpu.py): where H X and |H| |X| were formed, when Options.device asked for a device (requested, used, reason or fallback, gpu)"
+                    "description": "D-05 (gpu.py): where H X and |H| |X| were formed, when Options.device asked for a device (requested, used, reason or fallback, gpu_products_at_fallback, recomputed_on_cpu, gpu)"
                   }
                 }
               }
