@@ -905,8 +905,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     if opts.device not in ("cpu", "gpu"):
         raise ValueError(f"Options.device must be 'cpu' or 'gpu', not {opts.device!r}")
     first = claim
-    if (opts.device != "cpu" and sp.issparse(claim.operator)
-            and not getattr(claim.operator, "has_canonical_format", True)):
+    if (opts.device != "cpu" and sp.issparse(claim.operator) and claim.operator.format == "csr"
+            and not claim.operator.has_canonical_format):
         # a run may sum duplicates of the caller's sparse matrix in place; a recompute must see the matrix as given
         first = replace(claim, operator=claim.operator.copy())
     cert = _certify(first, spec, opts)
