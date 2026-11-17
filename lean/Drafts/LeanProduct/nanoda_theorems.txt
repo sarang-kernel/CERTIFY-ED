@@ -2,6 +2,10 @@
 # Each export holds the theorem with every declaration it depends on, so npz_S2 also re-checks checkLowest_S2 and
 # pairOK_theorem1_shift_rad, npz_theorem1 also checkLowest_theorem1, and count_of_gaussQ also cntLt_of_pivots,
 # ldl_of_pivots and pivots_of_gaussQ. One export takes about 4 GiB and 12 minutes on this machine.
+# matrixFree_S2 and denseArrays_S2 are not listed. They have the proof of npz_S2 (checkLowest_S2 applied to the kernel
+# evaluation CertifyCore.K.<name>_S2_S3, which nanoda accepted, results/core/second_kernel.json) on smaller data. The
+# npz_S2 run stopped at the memory limit, so all three stay at level K+ (results/lean_product.json). Running the two
+# smaller ones, which may fit under the limit, is open.
 CertifyMathlib.Refine.Residual CertifyMathlib.Refine.pairOK_theorem1
 CertifyMathlib.Refine.Residual CertifyMathlib.Refine.pairOK_theorem1_shift_rad
 CertifyMathlib.Refine.Small CertifyMathlib.Refine.npz_S2

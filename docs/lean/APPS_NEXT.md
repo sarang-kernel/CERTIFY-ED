@@ -261,7 +261,7 @@ What happened. The product is 0.0026603333944698595 (exact value in the record).
 0.002660333395, to 5.3e-13, the rounding of the printed factors, and lies above the conclusion's 0.002550333395 by
 0.00011.
 
-What it shows and does not show. The conclusion differs from the product of the printed constants in its fourth
+What it shows and does not show. The conclusion differs from the product of the printed constants in its second
 significant digit, so the conclusion is the misprint; being smaller, it remains a valid but weaker lower bound if the
 final equation holds. Only the arithmetic of the last step is checked; the constants are floating-point results of the
 paper. Each would need its own certificate: `gamma_p` from the six-site plaquette (4096 states), `gamma^[2p]` and
