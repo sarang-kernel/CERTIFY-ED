@@ -7,7 +7,7 @@ Writes, next to this script:
                  Standard Time (UTC+05:30), short and full id, number of parents, branch heads and tags at the commit,
                  the id before the history rewrite of 21 October 2026 (code/certify-ed/HASH_MAP.csv), subject
   tags.tsv       every tag: name, commit, tag date (IST), first line of the tag message
-  decisions.tsv  D-01 to D-61 of project_docs/DECISIONS_LOG.md: id, date as recorded, headline
+  decisions.tsv  D-01 to D-61 of project_docs/DECISIONS_LOG.md: id, date as recorded, title (docs/project/decisions/README.md)
   runs.tsv       every run record code/certify-ed/results/*/manifest.json: started, finished (clock of the machine),
                  commit (rewritten id where the record names an old one), source and tests fingerprints, platform,
                  versions, steps that did not end ok
@@ -82,9 +82,13 @@ def main():
         t = dt.datetime.fromisoformat(date).astimezone(IST)
         trows.append([name, peeled or obj, typ, t.strftime("%Y-%m-%d %H:%M"), subj])
     write("tags.tsv", ["tag", "commit", "type", "date_ist", "message"], trows)
+    # ids and dates from the decision log of the archive; the titles are the neutral ones of
+    # docs/project/decisions/README.md (the headlines of the log itself are working notes and are not published)
     log = open(os.path.join(ARCHIVE, "project_docs", "DECISIONS_LOG.md"), encoding="utf-8").read()
     drows = re.findall(r"^\*\*(D-\d+)\s*\(([^)]*)\)\s*\u2014\s*(.*?)\*\*", log, re.M)
-    write("decisions.tsv", ["id", "date_recorded", "headline"], [list(d) for d in drows])
+    readme = open(os.path.join(ROOT, "docs", "project", "decisions", "README.md"), encoding="utf-8").read()
+    titles = dict(re.findall(r"^\| (D-\d+) \| [^|]+ \| ([^|]+?) \|", readme, re.M))
+    write("decisions.tsv", ["id", "date_recorded", "title"], [[d, date, titles.get(d, "")] for d, date, _ in drows])
     res = os.path.join(ARCHIVE, "code", "certify-ed", "results")
     rrows = []
     short = {k[:7]: k for k in hashmap}
