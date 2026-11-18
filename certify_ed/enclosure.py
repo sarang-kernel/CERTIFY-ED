@@ -206,10 +206,12 @@ class OperatorAdapter:
             return np.column_stack([self.op.matvec(X[:, i]) for i in range(X.shape[1])])
         return self.op.matvec(X)
 
-    def abs_matvec(self, X):
+    def abs_matvec(self, X, aX=None):
+        """|A| |X| from upper moduli. `aX` = fp.modulus_up(X) may be passed when the caller has formed it already
+        (the same values; it is read, not changed)."""
         if self.kind == "matrix":
             absA = self._absA if self._absA is not None else abs_up(self.A)
-            aX = modulus_up(X)
+            aX = modulus_up(X) if aX is None else aX
             if getattr(self, "_gpu", None) is not None:
                 try:
                     return self._gpu.matmul(aX, absolute=True)
@@ -217,7 +219,7 @@ class OperatorAdapter:
                     self._gpu_fallback(e)
             return absA @ aX
         if self.kind == "spec":
-            return self.op.abs_matvec(modulus_up(X))
+            return self.op.abs_matvec(modulus_up(X) if aX is None else aX)
         raise RuntimeError("no |H| access for black-box operator")
 
     def both_products(self, X):
@@ -386,12 +388,12 @@ def _rounding_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray, abs
     # the moduli came from np.abs and were counted as one rounding each): two spare counts, Lambda5 holds a fortiori
     # (docs/proofs/thm1_fp-accounting.md, corrections of 2026-11-03 and 2026-11-18)
     gw = gamma(adapter.width + (3 if cplx else 1))
-    E = adapter.abs_matvec(X) if absHX is None else absHX
+    aX = modulus_up(X)                                   # formed once: for |H||X| here and for |X||mu| below
+    E = adapter.abs_matvec(X, aX) if absHX is None else absHX
     if E.ndim == 1:
         E = E[:, None]
     E /= (1.0 - gw)
     E *= (1 + 4 * U)
-    aX = modulus_up(X)
     aX *= np.abs(mu)[None, :]
     E += aX
     E *= g
@@ -795,9 +797,9 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     den = float(np.real(den_c))
     gdw = gamma_dot(adapter.width + 2, cplx)
     gw = gamma(adapter.width + 1)
-    absAx_raw = adapter.abs_matvec(x) if absAx is None else np.asarray(absAx).ravel()
-    absAx = absAx_raw / (1 - gw)
     xa = modulus_up(x)
+    absAx_raw = adapter.abs_matvec(x, xa) if absAx is None else np.asarray(absAx).ravel()
+    absAx = absAx_raw / (1 - gw)
     # |x^*(Ax - fl(Ax))| <= |x|^T gdw |A||x|, bounded with a guarded float dot of non-negatives
     num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
     den_err = up(den_e)

@@ -445,6 +445,29 @@ def test_rounding_bound_constant_and_moduli_bit_for_bit():
         assert np.array_equal(_rounding_bound(ad, mu, X), E)
 
 
+def test_the_s2_rounding_bound_forms_the_moduli_of_x_once(monkeypatch):
+    """_rounding_bound forms fp.modulus_up(X) once and passes it to abs_matvec (the same values as two calls; the
+    dearer step of a complex block is not repeated); rayleigh_interval forms |x| once for |A||x| and the dot, and once
+    more in the radius (_rounding_bound of the column x)."""
+    import certify_ed.enclosure as enc
+    calls = []
+    real = enc.modulus_up
+
+    def spy(z):
+        calls.append(np.shape(z))
+        return real(z)
+    monkeypatch.setattr(enc, "modulus_up", spy)
+    H = _hermitian(40, True, 7)
+    ad = enc.OperatorAdapter(H)
+    X = _vectors(40, 3, True, 8)
+    E = enc._rounding_bound(ad, np.array([0.5, 1.0, -2.0]), X)
+    assert calls == [(40, 3)]
+    calls.clear()
+    assert enc.rayleigh_interval(ad, X[:, 0]) is not None and calls == [(40,), (40, 1)]
+    monkeypatch.setattr(enc, "modulus_up", real)
+    assert np.array_equal(E, enc._rounding_bound(ad, np.array([0.5, 1.0, -2.0]), X))
+
+
 def test_rayleigh_interval_constants_and_moduli(monkeypatch):
     """enclosure.rayleigh_interval's own constants (finding S7 of the 18 Nov 2026 review): gamma_{w+1} for the division
     and gamma_{n+2} for the dot, for real and complex data alike once the moduli are upper bounds. The calls made before
