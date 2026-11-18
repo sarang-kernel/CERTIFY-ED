@@ -2,6 +2,7 @@
 certificate. A CSR matrix with duplicate entries used to be summed in place: by the adapter's absolute value without
 a model, and by the S1 comparison and the sector audit with one."""
 import collections
+import copy
 import json
 
 import numpy as np
@@ -47,6 +48,18 @@ def _without_timings(obj):
     if isinstance(obj, (list, tuple)):
         return [_without_timings(v) for v in obj]
     return obj
+
+
+def _same(a, b):
+    """The two certificates agree in every field of the body except the environment and the times, and in every array bit
+    for bit."""
+    body = lambda c: json.dumps(_without_timings({k: v for k, v in c.body.items() if k not in ("environment", "timing")}),
+                                sort_keys=True, default=repr)
+    assert body(a) == body(b)
+    assert sorted(a.arrays) == sorted(b.arrays)
+    for key in a.arrays:
+        x, y = np.asarray(a.arrays[key]), np.asarray(b.arrays[key])
+        assert x.dtype == y.dtype and x.tobytes() == y.tobytes(), key
 
 
 def _arrays(M):
@@ -126,3 +139,45 @@ def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow():
     cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=D, kind="lowest"), spec,
                       ce.Options(seed=1))
     assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED", cert.summary()
+
+
+def _total_sz(spec):
+    n_sites = int(round(np.log2(spec.dim)))
+    return np.array([sum(0.5 - ((b >> i) & 1) for i in range(n_sites)) for b in range(spec.dim)])
+
+
+@pytest.mark.parametrize("case", ["unsorted operator as observable", "split operator as observable",
+                                  "split operator as observable, model", "split matrix as observable and symmetry"])
+def test_a_matrix_given_in_two_places_gets_one_copy(case):
+    """A matrix given in two places is one object; a summation done through one place was seen through the other.
+    certify() must give the certificate of a run on the matrices themselves (here on a deep copy, which keeps one
+    object one object), not of a run with a separate copy for each place."""
+    from certify_ed.certify import _certify
+    if case == "split matrix as observable and symmetry":
+        spec = ce.heisenberg_chain(8)
+        H = ce.build_bitwise(spec)
+        w, V = np.linalg.eigh(H.toarray())
+        claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
+        Sz = _with_duplicates(sp.diags(_total_sz(spec)).tocsr())
+        opts = ce.Options(seed=1, eigenspaces="all", observables={"Sz": Sz}, approximate_symmetries={"Sz": (Sz, 1.0)})
+        given = [Sz]
+    else:
+        claim, spec = _model_claim(False) if case.endswith("model") else _random_claim()
+        if case.startswith("unsorted"):
+            D = claim.operator.copy()
+            D.sum_duplicates()
+            for r in range(D.shape[0]):                          # reverse the columns within each row
+                sl = slice(D.indptr[r], D.indptr[r + 1])
+                D.indices[sl], D.data[sl] = D.indices[sl][::-1].copy(), D.data[sl][::-1].copy()
+            D = sp.csr_matrix((D.data, D.indices, D.indptr), shape=D.shape)
+            claim = ce.Claim(eigenvalues=claim.eigenvalues, eigenvectors=claim.eigenvectors, operator=D, kind="lowest")
+        opts = ce.Options(seed=1, eigenspaces="all", observables={"H": claim.operator})
+        given = [claim.operator]
+    assert not any(M.has_canonical_format for M in given)
+    before = [_arrays(M) for M in given]
+    ref_claim, ref_opts = copy.deepcopy((claim, opts))
+    ref = _certify(ref_claim, spec, ref_opts)               # in place, on the deep copy
+    a = ce.certify(claim, spec, opts)
+    assert all(_unchanged(M, x) for M, x in zip(given, before))
+    _same(ref, a)
+    _same(a, ce.certify(claim, spec, opts))
