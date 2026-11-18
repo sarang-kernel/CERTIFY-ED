@@ -7,7 +7,7 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
-### GPU products (roadmap D-05; track/gpu-d05)
+### GPU products (roadmap D-05; branch feature/gpu-d05, first named track/gpu-d05)
 
 With `device` left at `"cpu"` no bound, status rule or record field of `certify()` changes. With `device="gpu"`, S2's
 evidence gains a `device` record and every other number of the certificate is the same bit for bit. The computational
@@ -32,6 +32,10 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   products were taken from it (`gpu_products_at_fallback` > 0), those products are not trusted and `certify()` computes
   the whole certificate again with the CPU products (`recomputed_on_cpu`). The device copy of H is freed when
   `certify()` returns. The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
+  `Options.device` must be `"cpu"` or `"gpu"`; any other value, `None` included, makes `certify()` raise
+  `ValueError`. A recorded device error is put on one line and cut to 300 characters. A CSR operator with duplicate
+  entries that is certified with its model is served by the CPU (`|A| does not share the pattern of A`), because the
+  S1 comparison compacts it in place before the products are formed.
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.

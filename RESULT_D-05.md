@@ -1,4 +1,7 @@
-# RESULT: D-05, GPU products for S2 (branch track/gpu-d05)
+# RESULT: D-05, GPU products for S2 (branch feature/gpu-d05, first named track/gpu-d05)
+
+The code as reviewed and merged is `937ae1e` (computational source hash `7fc028c29b1173fd`); its re-test on an H100 is
+the last paragraph of the section Tests. The rest of this document describes the first runs at `cc4af9e`.
 
 Date: 17 November 2026. Branch `track/gpu-d05` from `dev/3.3` at `c29e968`; the code commit is `cc4af9e` (computational
 source hash `9f190f7e9047d953`, tests hash `af3552384494fc84`), followed by a second commit with this document, a
@@ -64,7 +67,8 @@ complex, four claimed pairs, S2, S3 and Kato-Temple) and on the Heisenberg chain
 same statuses, the same records apart from timings and the `device` field, and the same arrays bit for bit, with the
 GPU products used (4, 4 and 2 products; spot checks on 128, 128 and 64 rows). For the same chain stored with every
 entry split into two halves the device was not used (`|A| does not share the pattern of A`), and the CPU products
-gave the same certificate as the CPU run.
+gave the same certificate as the CPU run. Such an operator is compacted in place by the S1 comparison
+before the products are formed, and the device refuses its arrays; using the device there is left for later.
 
 ## Products and residual bounds against the CPU (`experiments/d05_gpu_bench.py`)
 
