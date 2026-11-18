@@ -311,3 +311,36 @@ def test_recompute_sees_the_callers_matrix_with_duplicate_entries(monkeypatch):
     b = ce.certify(make(), None, ce.Options(seed=1, device="gpu"))
     assert b.statement("S2.eigenpairs")["evidence"]["device"]["recomputed_on_cpu"] is True
     _same_certificate(ce.certify(make(), None, ce.Options(seed=1)), b)
+
+
+@pytest.mark.parametrize("with_model", [False, True])
+def test_recompute_after_a_device_failure_leaves_every_matrix_as_given(monkeypatch, with_model):
+    """The CPU recompute of a failed device run works on fresh private copies of the operator and of the matrices in
+    Options, so that the caller's matrices stay as given and the certificate equals the CPU certificate."""
+    import dataclasses
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    monkeypatch.setattr(_StandIn, "fail_at", 2)
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec)
+    w, V = np.linalg.eigh(H.toarray())
+
+    def split(M):                          # every entry stored twice as two exact halves, not canonical
+        C = sp.csr_matrix(M).tocoo()
+        rows, cols, vals = np.r_[C.row, C.row], np.r_[C.col, C.col], np.r_[C.data, C.data] * 0.5
+        o = np.lexsort((cols, rows))
+        indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=M.shape[0]))]
+        return sp.csr_matrix((vals[o], cols[o], indptr), shape=M.shape)
+    z = np.array([sum(0.5 - ((b >> i) & 1) for i in range(8)) for b in range(spec.dim)])
+    mats = {"operator": split(H), "Sz": split(sp.diags(z)), "SzSz": split(sp.diags(z * z))}
+    before = {k: (M.indptr.copy(), M.indices.copy(), M.data.copy()) for k, M in mats.items()}
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=mats["operator"], kind="lowest")
+    opts = ce.Options(seed=1, device="gpu", eigenspaces="all", observables={"SzSz": mats["SzSz"]},
+                      approximate_symmetries={"Sz": (mats["Sz"], 1.0)})
+    model = spec if with_model else None
+    a = ce.certify(claim, model, opts)
+    assert a.statement("S2.eigenpairs")["evidence"]["device"]["recomputed_on_cpu"] is True
+    for k, M in mats.items():
+        assert all(np.array_equal(x, y) for x, y in zip(before[k], (M.indptr, M.indices, M.data))), k
+    _same_certificate(a, ce.certify(claim, model, opts))
+    _same_certificate(ce.certify(claim, model, dataclasses.replace(opts, device="cpu")), a)
