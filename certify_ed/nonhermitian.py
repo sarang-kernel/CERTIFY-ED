@@ -57,7 +57,7 @@ UNVERIFIED = ("UNVERIFIED: derived in docs/proofs/E-02_non_hermitian.md and re-d
               "check); Sarang's check (D-12) pending")
 STANDARD_MODEL = ("IEEE-754 binary64 round-to-nearest, standard model fl(a op b) = (a op b)(1 + delta), |delta| <= u, with "
                   "the additive term of the underflow-tolerant model (|eta| <= 2^-1075 per product); BLAS inner products "
-                  "within gamma_n (complex: 2 gamma_{n+4}); modulus of a complex number within 3u (H-mod); no-underflow "
+                  "within gamma_n (complex: 2 gamma_{n+4}); complex moduli rounded up (fp.modulus_up); no-underflow "
                   "scan of the stored inputs (nonzero magnitudes >= 2^-900)")
 _G8 = 1.0 + 8.0 * U          # exact binary64 numbers (1 + 4 * 2^-52 and 1 + 6 * 2^-52)
 _G12 = 1.0 + 12.0 * U
