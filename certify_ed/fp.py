@@ -135,6 +135,131 @@ def up(x: float) -> float:
     return float(x) * _GUARD + 0.0
 
 
+# Upper moduli (3.3.0.dev0, docs/proofs/fp_modulus-up.md; UNVERIFIED until Sarang's check, D-12). NumPy's complex
+# absolute value is not correctly rounded and no bound on its error is established: on the Windows reference host
+# (numpy 2.4.4, AVX512F) its relative error reaches 2.47u (z = 0.02019294356747192 - 0.5012539518584045j). modulus_up
+# forms the modulus of complex data from correctly rounded *, +, sqrt and exact scaling by powers of two; it is >= the
+# exact modulus, so a bound that takes its moduli from it needs no rounding count for them.
+_SMALLEST_NORMAL = 2.0 ** -1022
+_SAFE_LO, _SAFE_HI = 2.0 ** -500, 2.0 ** 500     # max(|x|, |y|) in this range: no scaling is needed
+_CHUNK = 1 << 18                                  # entries per pass of modulus_up (bounds its temporaries)
+
+
+def _modulus_up_scaled(x, y):
+    """modulus_up for components x, y >= 0 (or inf, nan) of any magnitude: scaled by the power of two 2^-e with
+    max(x, y) = f 2^e, f in [1/2, 1), and rescaled; zero, inf and nan components are handled by the caller."""
+    e = np.frexp(np.maximum(x, y))[1]
+    np.negative(e, out=e)
+    m = np.ldexp(x, e)                           # the larger component lands in [1/2, 1), exactly
+    b = np.ldexp(y, e)                           # the smaller one may round to the subnormal grid
+    np.multiply(m, m, out=m)
+    np.multiply(b, b, out=b)
+    np.add(m, b, out=m)
+    np.sqrt(m, out=m)
+    np.multiply(m, _GUARD, out=m)
+    np.negative(e, out=e)
+    np.ldexp(m, e, out=m)                        # exact unless the result overflows (inf) or is subnormal
+    small = m < _SMALLEST_NORMAL
+    if np.any(small):
+        m[small] = np.nextafter(m[small], np.inf)    # the rescaling may have rounded a subnormal result down
+    return m
+
+
+def modulus_up(z):
+    """m >= |z| for every entry of a real or complex array, same shape (float64 for complex input; a float for a
+    complex scalar).
+
+    Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
+    up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
+    Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M):
+    m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is in [2^-500, 2^500]; otherwise the same with
+    the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1) (np.frexp,
+    np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below 2^-1022, where the
+    rescaling may have rounded it down. The factor (1 + 8u) covers the five roundings and the rounding of a scaled
+    smaller component to the subnormal grid. A zero component gives the other's absolute value (exact); an infinite
+    component gives inf; otherwise a nan component gives nan (as np.abs does); an m above the largest float is inf,
+    never a smaller finite value. Tightness: a finite m satisfies m <= |z| (1 + 12u) + 2^-1073, and m <= |z| (1 + 12u)
+    when |z| >= 2^-1022. Floating-point warnings are off inside (np.errstate); nothing is raised for inf or nan.
+
+    Rejected with TypeError: scipy sparse matrices (use abs_up), object arrays (their entries need not be binary64
+    numbers) and complex types wider than complex128 (np.clongdouble where long double is wider than binary64), whose
+    components would be rounded on the way to float64. The array is processed in chunks of _CHUNK entries, so the
+    temporaries beyond the float64 result stay below about 6 _CHUNK float64 numbers (12 MiB)."""
+    if sp.issparse(z):
+        raise TypeError("modulus_up takes arrays and scalars; use fp.abs_up for a scipy sparse matrix")
+    z = np.asarray(z)
+    kind = z.dtype.kind
+    if kind == "f":
+        return np.abs(z)
+    if kind in "iub":
+        m = np.abs(z.astype(np.float64))
+        big = m >= 2.0 ** 53
+        if big.any():
+            m = np.where(big, np.nextafter(m, np.inf), m)
+        return m if m.shape else float(m)
+    if kind != "c":
+        raise TypeError(f"modulus_up: no upper modulus for dtype {z.dtype} (convert to a numeric dtype first)")
+    if np.finfo(z.dtype).nmant > 52:
+        raise TypeError(f"modulus_up: {z.dtype} is wider than complex128; its components are not binary64 numbers")
+    shape = z.shape
+    zz = z.reshape(-1)
+    m = np.empty(zz.size, dtype=np.float64)
+    for a in range(0, zz.size, _CHUNK):
+        c = zz[a:a + _CHUNK]
+        x = np.abs(c.real).astype(np.float64, copy=False)
+        y = np.abs(c.imag).astype(np.float64, copy=False)
+        _modulus_up_block(x, y, m[a:a + _CHUNK])
+    return m.reshape(shape) if shape else float(m[0])
+
+
+def _modulus_up_block(x, y, m):
+    """modulus_up of the complex numbers x + iy with x, y >= 0 float64 (the absolute values of the components, exact),
+    written into m (float64, same size)."""
+    with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+        big = np.maximum(x, y)
+        fast = (big >= _SAFE_LO) & (big <= _SAFE_HI)
+        del big
+        np.multiply(x, x, out=m)
+        b = np.multiply(y, y)
+        np.add(m, b, out=m)
+        del b
+        np.sqrt(m, out=m)
+        np.multiply(m, _GUARD, out=m)
+        if not fast.all():
+            i = np.flatnonzero(~fast)
+            m[i] = _modulus_up_scaled(x[i], y[i])
+            np.copyto(m, np.inf, where=np.isinf(x) | np.isinf(y))
+    zx, zy = x == 0.0, y == 0.0
+    if zx.any():
+        np.copyto(m, y, where=zx)
+    if zy.any():
+        np.copyto(m, x, where=zy)
+
+
+def abs_up(A):
+    """The entrywise moduli of a stored dense array or scipy sparse matrix, each rounded up: abs(A) for real data
+    (exact), modulus_up entrywise for complex data.
+
+    A sparse matrix in CSR, CSC, BSR or COO format has its duplicate entries summed in place first (A.sum_duplicates(),
+    in binary64), as abs(A) does for real data; the result, and every product formed with A afterwards, refer to that
+    summed matrix (docs/proofs/fp_modulus-up.md, section 1). DIA keeps its stored diagonals; LIL, DOK and other formats
+    are converted to CSR (a copy, so A itself is not changed). The result has A's format and type."""
+    if sp.issparse(A):
+        if A.format not in ("csr", "csc", "bsr", "coo", "dia"):
+            A = A.tocsr()
+        if not np.iscomplexobj(A.data):
+            return abs(A)
+        if A.format != "dia":
+            A.sum_duplicates()
+        data = modulus_up(A.data)
+        if A.format in ("csr", "csc", "bsr"):
+            return type(A)((data, A.indices.copy(), A.indptr.copy()), shape=A.shape)
+        if A.format == "coo":
+            return type(A)((data, tuple(c.copy() for c in A.coords)), shape=A.shape)
+        return type(A)((data, A.offsets.copy()), shape=A.shape)
+    return modulus_up(A)
+
+
 def norm_underflow_term(N: int) -> float:
     """T_N >= sqrt(N u_min) sqrt((1 + gamma_N)/(1 - gamma_N)): the mass the squares of N real components can lose
     to underflow in fl(||v||) = sqrt(sum fl(v_i^2)), expressed as a norm (docs/proofs/int05_underflow.md,
