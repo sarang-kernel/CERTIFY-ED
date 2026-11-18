@@ -4,6 +4,7 @@ This part of the repository holds the documentation of the whole project, the lo
 and the Lean re-verification of CERTIFY-ED, the software that issues certificates for exact-diagonalization results
 (Sarang Vehale, with Ritu Goel). Until 18 November 2026 it was a separate repository, certify-ed-project; its history
 was imported with every file moved to the place given below, so `git log --follow` shows each file's earlier commits.
+A few files were also edited in that history before the import; `docs/project/sources/SOURCES.md` lists them.
 Nothing in it changes the software or its run records.
 
 ## Layout
@@ -14,7 +15,7 @@ Nothing in it changes the software or its run records.
 | `docs/blog/` | `BLOG.md`, a long-form account of the project from its first version to 6 November 2026, with figures |
 | `docs/project/CHANGELOG_PROJECT.md` | every recorded change of the project, dated, from the first work on it |
 | `lean/` | the Lean 4 re-verification: a core-Lean exact checker and kernel theorems (`CertifyCore`), formal proofs on Mathlib (`CertifyMathlib`), the recomputation of the application numbers, and their result files |
-| `docs/lean/` | the reports of the Lean work, among them `VERIFICATION_REPORT.md`; paths in them without a folder are relative to `lean/` |
+| `docs/lean/` | the reports of the Lean work, among them `VERIFICATION_REPORT.md`; they name each other by file name, and a path of a file in `lean/` is written relative to `lean/` |
 | `tools/` | `lint_docs.py` (the style checker of `docs/project/STYLE.md`) and the scripts that generate tables and reports |
 | `docs/project/sources/` | `SOURCES.md` (where the research archive and the run records are, and how they were checked) and `runs/` (the result documents of the 3.2.2 and 3.2.3 evidence runs) |
 | `docs/project/STYLE.md` | the writing rules every document of the project record follows |
@@ -24,7 +25,9 @@ where the generators look for it.
 
 The documents were written while the code and the record were two repositories, so they speak of "the code
 repository". Since the import that means the code of this repository: a commit id cited with it is a commit of this
-repository, and a path of the form `code/certify-ed/...` is a path of the archived clone of the code at `a814d28`
+repository, except the ids of documents written before 21 October 2026, which the history rewrite of that day
+changed (`HASH_MAP.csv` at the root maps them), and four commits of the side branch `track/whole-spectrum`, which are
+only in the archived clone (`docs/project/sources/SOURCES.md`). A path of the form `code/certify-ed/...` is a path of the archived clone of the code at `a814d28`
 (`archive_v5/code/certify-ed/`). The folder `lean/` was named `reverification_lean/` before the import; comments in the
 Lean files keep the old name.
 
