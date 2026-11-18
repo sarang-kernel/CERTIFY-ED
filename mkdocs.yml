@@ -58,6 +58,9 @@ nav:
 
 exclude_docs: |
   make_api.py
+  project/
+  blog/
+  lean/
   README.md
   cookbook/snippets/
   requirements-docs.txt
