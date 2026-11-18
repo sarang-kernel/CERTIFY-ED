@@ -1,6 +1,8 @@
 # docs/project/STYLE.md: writing rules for the documents of this repository
 
-These rules hold for every Markdown document under docs/, blog/, lean/ and for docs/project/CHANGELOG_PROJECT.md.
+These rules hold for every Markdown document of the project record: under docs/project/, docs/blog/ and docs/lean/, and
+for lean/README.md if there is one. The documents of the code (docs/proofs/, docs/theory.md and the rest of docs/) follow
+their own conventions.
 The script tools/lint_docs.py rejects a document that breaks rules 1 to 5; rules 6 to 9 are checked by reading.
 
 Rule 1. No bullet points and no lists of any kind. No line may start with a dash, an asterisk, a plus sign, a bullet
