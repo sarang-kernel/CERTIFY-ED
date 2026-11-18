@@ -16,7 +16,9 @@ corpus/results/*/*/
 # mkdocs output (built locally, not committed)
 site/
 
-# project record (imported certify-ed-project): Lean build caches and generated bundles
+# project record (imported certify-ed-project): the Lean result files are tracked despite results/ above;
+# Lean build caches and generated bundles are not
+!lean/results/
 lean/.lake/
 *.olean
 *.ilean
