@@ -10,6 +10,7 @@ import pytest
 import scipy.sparse as sp
 
 import certify_ed as ce
+from certify_ed.variational import certify_variational
 
 
 def _with_duplicates(H):
@@ -199,3 +200,43 @@ def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls):
     H = _random_claim()[0].operator.copy()
     H.sum_duplicates()
     assert own(H) is H and own(None) is None
+
+
+def _record_without_times(rec):
+    return json.dumps(_without_timings({k: v for k, v in rec.items() if k not in ("environment", "record_sha256")}),
+                      sort_keys=True, default=repr)
+
+
+def test_certify_variational_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly():
+    claim, _ = _random_claim()
+    D = claim.operator
+    before = _arrays(D)
+    a = certify_variational(D, claim.eigenvectors[:, 0])
+    assert _unchanged(D, before)
+    b = certify_variational(D, claim.eigenvectors[:, 0])
+    assert _record_without_times(a) == _record_without_times(b)
+
+
+@pytest.mark.parametrize("entry", ["certify", "certify_variational"])
+def test_values_left_past_nnz_are_not_scanned_for_underflow(entry):
+    """A canonical matrix whose arrays still hold values past nnz (here 2^-950, left by summing it through another
+    object that shares its arrays): only the nnz stored values are the operator, and they are normal numbers."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec).tocsr()
+    C = H.tocoo()
+    rows, cols = np.r_[C.row, C.row], np.r_[C.col, C.col]
+    vals = np.r_[C.data, np.full(C.nnz, 2.0 ** -950)]
+    o = np.lexsort((cols, rows))
+    indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=H.shape[0]))]
+    D = sp.csr_matrix((vals[o], cols[o], indptr), shape=H.shape)
+    sp.csr_matrix(D).sum_duplicates()               # sums through shared arrays; D keeps the longer arrays
+    assert len(D.data) > D.nnz and D.has_canonical_format
+    w, V = np.linalg.eigh(H.toarray())
+    if entry == "certify":
+        cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=D, kind="lowest"), spec,
+                          ce.Options(seed=1))
+        assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED", cert.summary()
+    else:
+        rec = certify_variational(D, V[:, 0])
+        status = {s["id"]: s["status"] for s in rec["statements"]}
+        assert all(status[k] == "CERTIFIED" for k in status if k.startswith(("V1", "V2"))), status

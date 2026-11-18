@@ -252,7 +252,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
     declared: producer's stochastic estimates, e.g. {'energy': E, 'variance': v, 'samples': N, 'method': 'VMC'}:
       recorded as DECLARED (DECLARED_ESTIMATE), never certified.
     Returns a JSON-able record (schema VARIATIONAL_SCHEMA) with `statements` and `record_sha256`."""
-    from .certify import _builder_shift
+    from .certify import _builder_shift, _private_copies
     from .construct import SpecOperator
     statements: List[dict] = []
     rec: Dict[str, Any] = {"schema": VARIATIONAL_SCHEMA, "description": description or "variational trial state"}
@@ -275,6 +275,8 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
             raise ValueError("the operator must be a stored matrix (dense ndarray or scipy.sparse); matrix-free "
                              "operators have no rounding bound (docs/SCOPE_MATRIX.md)")
         A = operator.tocsr() if sp.issparse(operator) else np.asarray(operator)
+        if A is operator:
+            A = _private_copies()(A)       # the adapter sums duplicates in place: the caller's matrix stays as given
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError(f"the operator must be square, got shape {A.shape}")
         D = (A - A.conj().T)
