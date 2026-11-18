@@ -1237,6 +1237,48 @@
               }
             }
           }
+        },
+        "input_widening": {
+          "type": "object",
+          "required": [
+            "converted",
+            "exact"
+          ],
+          "description": "inputs converted exactly to binary64 before any product (precision.binary64); the statements concern the values as stored; hashes are of the converted data",
+          "properties": {
+            "converted": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "input",
+                  "dtype",
+                  "converted_to"
+                ],
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  },
+                  "dtype": {
+                    "type": "string"
+                  },
+                  "converted_to": {
+                    "enum": [
+                      "float64",
+                      "complex128"
+                    ]
+                  }
+                }
+              }
+            },
+            "exact": {
+              "const": true
+            },
+            "note": {
+              "type": "string"
+            }
+          }
         }
       }
     },

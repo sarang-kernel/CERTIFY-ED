@@ -31,6 +31,18 @@ __all__ = ["CERTIFICATE_SCHEMA", "PRODUCER_BUNDLE_SCHEMA", "STATEMENT_RECORD_SCH
 DRAFT = "https://json-schema.org/draft/2020-12/schema"
 SHA256 = {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 hex digest"}
 NULLABLE_SHA256 = {"oneOf": [SHA256, {"type": "null"}]}
+# 3.3.0.dev0 (precision.py): inputs stored in a narrower format than binary64 (or as integers), converted exactly before
+# any product; present only when there were any
+INPUT_WIDENING = {
+    "type": "object", "required": ["converted", "exact"],
+    "description": ("inputs converted exactly to binary64 before any product (precision.binary64); the statements concern "
+                    "the values as stored; hashes are of the converted data"),
+    "properties": {
+        "converted": {"type": "array", "minItems": 1, "items": {
+            "type": "object", "required": ["input", "dtype", "converted_to"],
+            "properties": {"input": {"type": "string"}, "dtype": {"type": "string"},
+                           "converted_to": {"enum": ["float64", "complex128"]}}}},
+        "exact": {"const": True}, "note": {"type": "string"}}}
 CLAIM_KINDS = ("subset", "lowest", "window", "all")
 NARROWING_BY = ("default", "dependency", "only", "skip", "preset")
 OPERATOR_KINDS = ("matrix", "spec", "blackbox", "stable")
@@ -268,7 +280,8 @@ def _certificate_schema() -> dict:
                     "runtime_probe": {"type": "object", "required": ["standard_model_hypotheses_hold"], "properties": {
                         "standard_model_hypotheses_hold": {"type": "boolean"},
                         "failed": {"type": "array", "items": {"type": "string"}},
-                        "checks": {"type": "object", "additionalProperties": {"type": "boolean"}}}}}},
+                        "checks": {"type": "object", "additionalProperties": {"type": "boolean"}}}},
+                    "input_widening": INPUT_WIDENING}},
             "environment": {
                 "type": "object", "required": ["python", "numpy", "scipy", "created_utc"],
                 "properties": {
@@ -439,6 +452,7 @@ def _record_schema() -> dict:
             "operator": {"type": "object"},
             "state": {"type": "object"},
             "basis": {"type": "string"},
+            "input_widening": INPUT_WIDENING,
             "record_sha256": SHA256,
             "statements": {"type": "array", "items": {
                 "type": "object", "required": ["id", "status", "summary", "evidence", "hypotheses"],
