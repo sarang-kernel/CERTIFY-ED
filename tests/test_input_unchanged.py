@@ -1,6 +1,7 @@
 """certify() leaves the caller's sparse matrix as given, so that certifying the same claim twice gives the same
 certificate. A CSR matrix with duplicate entries used to be summed in place: by the adapter's absolute value without
 a model, and by the S1 comparison and the sector audit with one."""
+import collections
 import json
 
 import numpy as np
@@ -82,7 +83,11 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
         assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
 
 
-def test_certify_leaves_matrices_of_the_options_as_given():
+SymmetryEntry = collections.namedtuple("SymmetryEntry", "S lattice")
+
+
+@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array"])
+def test_certify_leaves_matrices_of_the_options_as_given(shape):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
     w, V = np.linalg.eigh(H.toarray())
@@ -93,7 +98,9 @@ def test_certify_leaves_matrices_of_the_options_as_given():
     Obs = _with_duplicates(sp.diags(z * z).tocsr())
     before = {"Sz": _arrays(Sz), "Obs": _arrays(Obs)}
     opts = ce.Options(seed=1, eigenspaces="all", observables={"SzSz": Obs},
-                      approximate_symmetries={"Sz": (Sz, 1.0)})
+                      approximate_symmetries={"Sz": {"tuple": lambda: (Sz, 1.0),
+                                                     "namedtuple": lambda: SymmetryEntry(Sz, 1.0),
+                                                     "object array": lambda: np.array([Sz, 1.0], dtype=object)}[shape]()})
     a = ce.certify(claim, spec, opts)
     assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
     b = ce.certify(claim, spec, opts)
