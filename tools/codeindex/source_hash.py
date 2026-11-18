@@ -59,6 +59,9 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(os.environ.get("CERTIFYED_ARCHIVE") or os.path.join(here, "..", "archive", "archive_v5"), "code",
                                                                              "certify-ed")
+    if not os.path.isdir(repo):
+        sys.exit("code checkout not found at " + repo + ": set CERTIFYED_ARCHIVE to the unpacked archive v5, or pass a "
+                 "checkout of the code as the first argument (this repository works)")
     revs = args or ["v3.1.0", "v3.2.0", "v3.2.1", "HEAD"]
     for rev in revs:
         h = hashes(repo, rev)

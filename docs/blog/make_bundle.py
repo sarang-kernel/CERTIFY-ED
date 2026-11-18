@@ -64,6 +64,9 @@ def resolve(path):
 
 
 def main():
+    if not os.path.isdir(ARCHIVE):
+        print("archive v5 not found at " + ARCHIVE + ": unpack it there or set CERTIFYED_ARCHIVE (docs/project/sources/SOURCES.md)", file=sys.stderr)
+        return 2
     text = open(BLOG, encoding="utf-8").read()
     cited = []
     for span in re.findall(r"`([^`]+)`", text):

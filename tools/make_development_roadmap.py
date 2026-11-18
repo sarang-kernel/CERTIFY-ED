@@ -8,9 +8,12 @@ python tools/make_development_roadmap.py
 """
 import csv
 import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARCHIVE = os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5"))
+if not os.path.isdir(ARCHIVE):
+    sys.exit("archive v5 not found at " + ARCHIVE + ": unpack it there or set CERTIFYED_ARCHIVE (docs/project/sources/SOURCES.md)")
 CSV = os.path.join(ARCHIVE, "project_docs", "roadmap", "ROADMAP_expansion_items.csv")
 OUT = os.path.join(ROOT, "docs", "project", "roadmap", "DEVELOPMENT_ROADMAP.md")
 STATUS = "status_2026-11-03"

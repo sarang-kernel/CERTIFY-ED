@@ -391,6 +391,8 @@ def main(argv):
     args = list(argv)
     repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")), "code",
                                                                              "certify-ed")
+    if not os.path.isdir(repo):
+        sys.exit("code checkout not found at " + repo + ": set CERTIFYED_ARCHIVE to the unpacked archive v5, or pass a checkout of the code as the first argument (this repository works: . --rev a814d28)")
     rev = args[args.index("--rev") + 1] if "--rev" in args else "HEAD"
     out = args[args.index("--out") + 1] if "--out" in args else os.path.join(ROOT, "docs", "project", "CODE_INDEX.md")
     text = render(repo, rev)

@@ -33,6 +33,8 @@ def arg(name, default):
 
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 ARCHIVE = arg("--archive", os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")))
+if not os.path.isdir(ARCHIVE):
+    sys.exit("archive v5 not found at " + ARCHIVE + ": unpack it there or set CERTIFYED_ARCHIVE (docs/project/sources/SOURCES.md)")
 GITDIR = arg("--git", os.path.join(ARCHIVE, "code", "certify-ed"))
 GIT = os.environ.get("GIT", "git")
 

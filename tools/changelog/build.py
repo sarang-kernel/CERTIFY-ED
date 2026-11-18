@@ -47,6 +47,8 @@ def arg(name, default):
 
 
 ARCHIVE = arg("--archive", os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")))
+if not os.path.isdir(ARCHIVE):
+    sys.exit("archive v5 not found at " + ARCHIVE + ": unpack it there or set CERTIFYED_ARCHIVE (docs/project/sources/SOURCES.md)")
 OUT = arg("--out", os.path.join(ROOT, "docs/project/CHANGELOG_PROJECT.md"))
 BUNDLE = arg("--bundle-out", os.path.join(HERE, "changelog_sources_bundle.txt"))
 AREAS = ["code", "mathematics", "manuscript", "runs", "decisions", "applications", "documents", "archive"]
