@@ -303,6 +303,16 @@ def _underflow_statement_note(findings):
             "assumes it)")
 
 
+def _overflowed_pairs(enc, X):
+    """Claimed pairs whose certified radius is not finite although their vector is not zero: a bound of the
+    floating-point accounting overflowed (inf, or inf * 0 = nan, stored as inf). A zero vector has an infinite radius
+    by Theorem 1 and is not listed."""
+    bad = np.nonzero(~np.isfinite(enc.radius))[0].tolist()
+    if not bad or X is None:
+        return []
+    return [int(j) for j in bad if np.any(np.asarray(X[:, j]) != 0)]
+
+
 def _guard_range_note(findings):
     what = ", ".join(f"{f['quantity']} = {f['value']} ({f['where']})" for f in findings)
     return (f"outside the range of the floating-point guards: {what} exceeds {findings[0]['limit']}; the guards of "
@@ -1182,8 +1192,17 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
               "model_shift": model_shift,
               "radius_refers_to": ("declared model (spec)" if model_shift > 0 or (spec is not None and
                                    statements[0]["status"] == "CERTIFIED") else "producer operator")}
+        nf_pairs = _overflowed_pairs(enc, X)
+        code_nf = None
         if not enc.rigorous:
             st, summ = "INCONCLUSIVE", "residuals computed but rounding not boundable for this operator (estimates only)"
+        elif nf_pairs:
+            # a bound of the accounting overflowed: the radius of these pairs is infinite, and nothing is stated
+            # about them or the matching
+            st, code_nf = "INCONCLUSIVE", "NONFINITE_BOUND"
+            summ = (f"the certified radius of claimed pairs {nf_pairs[:8]} is not finite (a bound of the "
+                    f"floating-point accounting overflowed): no enclosure is stated for them")
+            ev["pairs_with_nonfinite_radius"] = nf_pairs[:16]
         elif not enc.all_distinct:
             st, summ = "INCONCLUSIVE", ("each claimed value has an eigenvalue within its radius, but some "
                                         "claimed pairs could not be matched to distinct eigenvalues "
@@ -1228,7 +1247,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
         # every magnitude of the intermediate quantities (docs/proofs/int05_underflow.md); the scan covers the
         # stored inputs and the model shift, on which the remaining standard-model bounds (inertia, Gram,
         # Rayleigh quotients) rest.
-        code2 = None
+        code2 = code_nf
         if underflow:
             st, code2 = "INCONCLUSIVE", "UNDERFLOW_RISK"
             summ = _underflow_statement_note(uf_findings) + "; would otherwise be: " + summ
@@ -1280,12 +1299,16 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
                                 {"n_claimed": int(mu.size), "guard_range": {"findings": gr_findings}},
                                 reason_code="FP_GUARD_RANGE"))
     elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
-        # a zero claimed vector has an infinite Theorem-1 radius: there is no enclosure to count against
-        # (the shift sigma = inf would otherwise crash the factorization, IMP-23)
+        # a zero claimed vector has an infinite Theorem-1 radius, and so has a pair whose accounting overflowed: there
+        # is no enclosure to count against (the shift sigma = inf would otherwise crash the factorization, IMP-23)
+        nf_pairs = _overflowed_pairs(enc, X)
         statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
-                                "some claimed pair has no finite enclosure (zero eigenvector): "
-                                "counts cannot be matched to the claimed set",
-                                {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]}))
+                                ("some claimed pair has no finite enclosure (a bound of the floating-point accounting "
+                                 "overflowed): counts cannot be matched to the claimed set" if nf_pairs else
+                                 "some claimed pair has no finite enclosure (zero eigenvector): "
+                                 "counts cannot be matched to the claimed set"),
+                                {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]},
+                                reason_code="NONFINITE_BOUND" if nf_pairs else None))
     elif claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",
