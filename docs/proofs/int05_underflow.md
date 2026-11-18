@@ -167,7 +167,7 @@ are covered as there ((1 + 4u) and the 3u slacks; A_{n,w} carries its own slack 
 (if upper/xl or the product is subnormal, each ≤ u_min) by 2ULP_MIN = 4u_min. With xl ≤ ‖x‖ (Lemma U3):
 rel ≥ (‖Rc‖ + ‖E‖ + √n c_w u_min)/‖x‖ ≥ ‖r‖/‖x‖. ∎
 
-  *Erratum (10 Nov 2026, found by the Lean formalization `CertifyMathlib.Enclosure.FP.residual_enclosure_int05`, certify-ed-project reverification_lean/ENCLOSURE.md).* The inequality (1 − u)^k (1 + 8u)² ≥ 1 + 10u for k ≤ 12 used above is false: (1 − u)¹² (1 + 8u)² is about 1 + 4u. The conclusion is unaffected, because the proof needs only A_{n,w} ≥ √n c_w (1 + u) u_min, which holds (Lean `addTerm_ge`); the slack of A_{n,w} is about 4u, not 10u. Theorem U5 itself is kernel-checked for real data in that formalization; complex data are not formalized.
+  *Erratum (10 Nov 2026, found by the Lean formalization `CertifyMathlib.Enclosure.FP.residual_enclosure_int05`, docs/lean/ENCLOSURE.md).* The inequality (1 − u)^k (1 + 8u)² ≥ 1 + 10u for k ≤ 12 used above is false: (1 − u)¹² (1 + 8u)² is about 1 + 4u. The conclusion is unaffected, because the proof needs only A_{n,w} ≥ √n c_w (1 + u) u_min, which holds (Lean `addTerm_ge`); the slack of A_{n,w} is about 4u, not 10u. Theorem U5 itself is kernel-checked for real data in that formalization; complex data are not formalized.
 
 **Theorem U6.** Monotonicity: fl is monotone (z ≤ z′ ⇒ fl(z) ≤ fl(z′)), T_N, A_{n,w}, ULP_MIN ≥ 0, and `norm2_lower`
 decreased or stayed (xl_new ≤ xl_old); so R_up_new ≥ R_up_old, E_up_new ≥ E_up_old, upper_new ≥ upper_old,

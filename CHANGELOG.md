@@ -78,7 +78,7 @@ enumerations).
   and `tests/test_nonhermitian.py` (14 tests).
 - The exact parts that N1 to N3 use (the bound of Lemma 1, Theorem 2 with its residual form, the bound of Lemma 3, and
   Theorem 4 (b) combined with Lemma 3) are formalized in Lean 4 with Mathlib in the separate repository
-  certify-ed-project (`reverification_lean/NONHERMITIAN.md`). The counting statement of N4 and the floating-point
+  certify-ed-project (`reverification_lean/NONHERMITIAN.md`, now `docs/lean/NONHERMITIAN.md` of this repository). The counting statement of N4 and the floating-point
   accounting are not.
 
 ### Lean product track: external verifiers (roadmap item N-04; track/external-verifier)
@@ -86,7 +86,7 @@ enumerations).
 - `certify-ed verify CERT.json` checks the integrity of a saved certificate (body hash, array hashes, scope block, as
   `Certificate.load` does) and prints its summary. With `--external CMD`, or the environment variable
   `CERTIFY_ED_EXTERNAL_VERIFIER`, it then runs a configured external verifier on the certificate, for example the exact
-  checker `cecheck` of the Lean re-verification through its driver `Verify/cecheck_bundle.py` in certify-ed-project, or
+  checker `cecheck` of the Lean re-verification through its driver `Verify/cecheck_bundle.py` in certify-ed-project (now `lean/Verify/`), or
   the C verifier of `verifier/`. The command is a template with the placeholders `{certificate}`, `{sidecar}`,
   `{bundle}`, `{operator}` and `{report}`; it runs without a shell. Exit code 0 of the program is recorded as PASS, 1
   as FAIL, any other as ERROR, and a run past `--timeout` as TIMEOUT.
@@ -244,9 +244,9 @@ Documentation corrections of 10 Nov 2026 (non-computational; source hash `cb73de
 `v3.2.1`; the 64 leaves missing against the 3.2.0 run are 48 in E2 and 16 in E4); the non-empty-interval hypothesis of
 Proposition 14 in `docs/theory.md` 9.1; an erratum to the closing condition of the guard Lambda6 in
 `docs/proofs/thm1_fp-accounting.md`. The last two were found by the Lean formalization in the separate repository
-certify-ed-project (`reverification_lean/COUNTING.md`, `CORE.md`).
+certify-ed-project (`reverification_lean/COUNTING.md`, `CORE.md`; now in `docs/lean/` of this repository).
 
-Further errata of 10 Nov 2026 from the same formalization (`reverification_lean/ENCLOSURE.md`; non-computational, source
+Further errata of 10 Nov 2026 from the same formalization (`reverification_lean/ENCLOSURE.md`, now `docs/lean/ENCLOSURE.md`; non-computational, source
 hash unchanged): one inequality in the proof of Theorem U5 (`docs/proofs/int05_underflow.md`; conclusion unaffected), the
 argument for part (b) of D-02 (a second-order margin, not a spare index; `docs/proofs/D-02_matrix-free.md`), the width of
 `from_float` below the grid resolution (`docs/proofs/L17_dyadic_exp_ln.md`), and the index of the computed |H|_abs sums for
