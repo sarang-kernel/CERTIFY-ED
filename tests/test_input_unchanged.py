@@ -100,3 +100,22 @@ def test_certify_leaves_matrices_of_the_options_as_given():
     for key in ("statements", "kato_temple", "enclosures", "gaps"):
         assert json.dumps(_without_timings(a.body.get(key)), sort_keys=True, default=repr) == \
             json.dumps(_without_timings(b.body.get(key)), sort_keys=True, default=repr), key
+
+
+def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow():
+    """Each entry stored as v and 2^-950: summed, the tiny parts vanish (v + 2^-950 == v), so the stored operator is H
+    and the no-underflow hypothesis holds. The scan must read the summed entries, not stale ones past nnz."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec).tocsr()
+    C = H.tocoo()
+    n = H.shape[0]
+    rows, cols = np.r_[C.row, C.row], np.r_[C.col, C.col]
+    vals = np.r_[C.data, np.full(C.nnz, 2.0 ** -950)]
+    o = np.lexsort((cols, rows))
+    indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=n))]
+    D = sp.csr_matrix((vals[o], cols[o], indptr), shape=H.shape)
+    assert not D.has_canonical_format               # the flag is read (and cached) before certify()
+    w, V = np.linalg.eigh(H.toarray())
+    cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=D, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED", cert.summary()

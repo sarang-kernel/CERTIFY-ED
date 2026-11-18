@@ -278,7 +278,7 @@ def _underflow_operands(mu, X, adapter, seed: int):
     if X is not None:
         parts.append(("claim.eigenvectors", X, T))
     if adapter.kind == "matrix":
-        parts.append(("operator.entries", adapter.A.data if sp.issparse(adapter.A) else adapter.A, T))
+        parts.append(("operator.entries", adapter.A.data[:adapter.A.nnz] if sp.issparse(adapter.A) else adapter.A, T))
     else:
         nb = adapter.norm_upper()
         if nb is not None:
