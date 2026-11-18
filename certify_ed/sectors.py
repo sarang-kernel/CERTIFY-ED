@@ -213,6 +213,10 @@ def symmetry_matrix(states, g) -> sp.csr_matrix:
     return sp.csr_matrix((ph, (idx, np.arange(n))), shape=(n, n))
 
 
+_SEP_NOTE = ("floating-point value of min |lambda_l - lambda_k| over the computed roots of unity, not a certified "
+             "lower bound; the leakage bound divides by it")
+
+
 def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     """Which eigenvalue of a cyclic symmetry g a sector carries, with a certified leakage bound.
 
@@ -221,7 +225,11 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     the lambda_k-eigenspace of norm at most delta / ((1 - iso) min_{l != k} |lambda_l - lambda_k|),
     where delta >= ||G V - lambda_k V||_2 and iso = ||V^+ V - I|| (a bound, from computed
     quantities plus their rounding). Labels are reported as the eigenvalue exp(2 pi i j / n) of g (for
-    translation, g maps site i to i+1) and as QuSpin's block index q."""
+    translation, g maps site i to i+1) and as QuSpin's block index q.
+
+    The separation min_{l != k} |lambda_l - lambda_k| is the floating-point value over the computed roots (np.exp, then
+    np.abs of the differences), not a certified lower bound; the record says so ("separation_note"). A lower bound on
+    it, and on the distance of the computed roots from the exact ones, is open (a D-12 item)."""
     from .basis import translation, spin_flip, reflection
     from .fp import fro_upper, gamma_dot, up
     gfun = {"translation": translation, "spin_flip": spin_flip, "reflection": reflection}[symmetry]
@@ -256,4 +264,5 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     return {"symmetry": symmetry, "order": n, "eigenvalue": [lam.real, lam.imag],
             "j_physics": k, "quspin_q": q_quspin, "defect_upper": float(delta),
             "isometry_defect_upper": float(iso), "leakage_bound": float(leak),
+            "separation": float(sep), "separation_note": _SEP_NOTE,
             "certified": bool(leak < 0.5)}
