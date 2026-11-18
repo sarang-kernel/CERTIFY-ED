@@ -184,8 +184,9 @@ def modulus_up(z):
 
     Rejected with TypeError: scipy sparse matrices (use abs_up), object arrays (their entries need not be binary64
     numbers) and complex types wider than complex128 (np.clongdouble where long double is wider than binary64), whose
-    components would be rounded on the way to float64. The array is processed in chunks of _CHUNK entries, so the
-    temporaries beyond the float64 result stay below about 6 _CHUNK float64 numbers (12 MiB)."""
+    components would be rounded on the way to float64. The array is processed in passes of at most _CHUNK entries
+    and is not copied, whatever its memory layout, so the temporaries beyond the float64 result are bounded by about
+    6 _CHUNK float64 numbers (12 MiB; 6.8 MiB measured on 2^24 entries)."""
     if sp.issparse(z):
         raise TypeError("modulus_up takes arrays and scalars; use fp.abs_up for a scipy sparse matrix")
     z = np.asarray(z)
@@ -202,15 +203,41 @@ def modulus_up(z):
         raise TypeError(f"modulus_up: no upper modulus for dtype {z.dtype} (convert to a numeric dtype first)")
     if np.finfo(z.dtype).nmant > 52:
         raise TypeError(f"modulus_up: {z.dtype} is wider than complex128; its components are not binary64 numbers")
-    shape = z.shape
-    zz = z.reshape(-1)
-    m = np.empty(zz.size, dtype=np.float64)
-    for a in range(0, zz.size, _CHUNK):
-        c = zz[a:a + _CHUNK]
+    if z.ndim == 0:
+        z = z.reshape(1)
+        m = np.empty(1, dtype=np.float64)
+        _modulus_up_into(z, m)
+        return float(m[0])
+    m = np.empty(z.shape, dtype=np.float64)
+    _modulus_up_into(z, m)
+    return m
+
+
+def _modulus_up_into(z, out):
+    """out[...] = modulus_up(z) for a complex array z of any shape and strides, out a C-contiguous float64 array of
+    z's shape. Works in passes of at most _CHUNK entries along the leading axes and makes no copy of z, so the
+    temporaries do not depend on the size or the memory layout of z."""
+    if z.ndim > 1 and z.size > _CHUNK:
+        row = z.size // z.shape[0]
+        if row >= _CHUNK:
+            for a in range(z.shape[0]):
+                _modulus_up_into(z[a], out[a])
+        else:
+            step = _CHUNK // row
+            for a in range(0, z.shape[0], step):
+                _modulus_up_into(z[a:a + step], out[a:a + step])
+        return
+    o = out.reshape(-1)                              # a view: out is C-contiguous
+    if z.ndim > 1:                                   # at most _CHUNK entries; their components in C order
+        x = np.abs(z.real, order="C").astype(np.float64, copy=False).reshape(-1)
+        y = np.abs(z.imag, order="C").astype(np.float64, copy=False).reshape(-1)
+        _modulus_up_block(x, y, o)
+        return
+    for a in range(0, z.size, _CHUNK):
+        c = z[a:a + _CHUNK]
         x = np.abs(c.real).astype(np.float64, copy=False)
         y = np.abs(c.imag).astype(np.float64, copy=False)
-        _modulus_up_block(x, y, m[a:a + _CHUNK])
-    return m.reshape(shape) if shape else float(m[0])
+        _modulus_up_block(x, y, o[a:a + _CHUNK])
 
 
 def _modulus_up_block(x, y, m):

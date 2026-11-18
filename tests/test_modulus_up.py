@@ -163,8 +163,8 @@ def test_dtypes_outside_binary64_components():
 
 
 def test_chunks_do_not_change_the_values():
-    """modulus_up processes the input in chunks of fp._CHUNK entries; every entry is computed by itself, so the result
-    equals the one-entry calls, at the chunk boundaries too."""
+    """modulus_up processes the input in passes of at most fp._CHUNK entries; every entry is computed by itself, so the
+    result equals the one-entry calls, at the pass boundaries too."""
     from certify_ed.fp import _CHUNK
     rng = np.random.default_rng(8)
     n = 2 * _CHUNK + 5
@@ -175,6 +175,30 @@ def test_chunks_do_not_change_the_values():
     for i in (0, _CHUNK - 1, _CHUNK, _CHUNK + 1, 2 * _CHUNK - 1, 2 * _CHUNK, n - 1):
         assert M[i] == modulus_up(Z[i:i + 1])[0] == modulus_up(complex(Z[i]))
     assert np.array_equal(M[_CHUNK - 3:_CHUNK + 3], modulus_up(Z[_CHUNK - 3:_CHUNK + 3]))
+
+
+def test_layouts_give_the_same_values_and_no_copy_of_the_input():
+    """modulus_up walks the input in passes of at most fp._CHUNK entries along its leading axes and makes no copy of it:
+    Fortran-ordered, transposed and sliced arrays larger than a pass give the values of the C-ordered array, and the
+    temporaries beyond the float64 result stay below 12 MiB (tracemalloc; a copy of the input would be 32 MiB)."""
+    import tracemalloc
+
+    from certify_ed.fp import _CHUNK
+    rng = np.random.default_rng(13)
+    X = rng.standard_normal((_CHUNK, 8)) + 1j * rng.standard_normal((_CHUNK, 8))
+    X[::5] = 0.0
+    M = modulus_up(X)
+    F = np.asfortranarray(X)
+    for z, ref in ((F, M), (X.T, M.T), (X[:, 2:5], M[:, 2:5]), (F[:, 3], M[:, 3]), (X[::-3, ::2], M[::-3, ::2]),
+                   (np.ascontiguousarray(X.T)[None], M.T[None])):
+        got = modulus_up(z)
+        assert got.shape == z.shape and np.array_equal(got, ref)
+        tracemalloc.start()
+        base = tracemalloc.get_traced_memory()[0]
+        got = modulus_up(z)
+        peak = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+        assert peak - base - got.nbytes < 12 * 2 ** 20, (z.shape, z.strides, peak - base - got.nbytes)
 
 
 def _nearest(t, p):
