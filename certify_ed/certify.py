@@ -899,17 +899,24 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
                  time.time() - t0)
 
 
+def _as_given(claim: Claim) -> Claim:
+    """The claim with a private copy of a CSR operator whose indices are unsorted or repeated.
+
+    Several steps (the S1 comparison, the sector audit, the absolute value taken by the adapter) sum duplicates and
+    sort indices in place, through arrays they share with the operator. On a copy the caller's matrix stays as given,
+    and certifying the same claim again gives the same certificate. The copy costs one more operator in memory."""
+    op = claim.operator
+    if sp.issparse(op) and op.format == "csr" and not op.has_canonical_format:
+        return replace(claim, operator=op.copy())
+    return claim
+
+
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
     if opts.device not in ("cpu", "gpu"):
         raise ValueError(f"Options.device must be 'cpu' or 'gpu', not {opts.device!r}")
-    first = claim
-    if (opts.device != "cpu" and sp.issparse(claim.operator) and claim.operator.format == "csr"
-            and not claim.operator.has_canonical_format):
-        # a run may sum duplicates of the caller's sparse matrix in place; a recompute must see the matrix as given
-        first = replace(claim, operator=claim.operator.copy())
-    cert = _certify(first, spec, opts)
+    cert = _certify(_as_given(claim), spec, opts)
     s2 = cert.statement("S2.eigenpairs")
     rec = None if s2 is None else (s2.get("evidence") or {}).get("device")
     if rec is None:
@@ -918,7 +925,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         # D-05: the device failed (a spot check found a product unequal to the CPU product, or CuPy raised) after
         # products had been taken from it. Those products are not trusted, so the whole certificate is computed again
         # with the CPU products; the record keeps the failure.
-        cert = _certify(claim, spec, replace(opts, device="cpu"))
+        cert = _certify(_as_given(claim), spec, replace(opts, device="cpu"))
         s2 = cert.statement("S2.eigenpairs")
         if s2 is not None:
             s2["evidence"]["device"] = dict(rec, used=False, recomputed_on_cpu=True)
