@@ -1,4 +1,4 @@
-# docs/project/STYLE.md: writing rules for the documents of this repository
+# docs/project/STYLE.md: writing rules for the documents of the project record
 
 These rules hold for every Markdown document of the project record: under docs/project/, docs/blog/ and docs/lean/, and
 for lean/README.md if there is one. The documents of the code (docs/proofs/, docs/theory.md and the rest of docs/) follow
