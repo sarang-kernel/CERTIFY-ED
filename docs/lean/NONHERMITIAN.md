@@ -80,7 +80,7 @@ Theorem 4 (a) is not stated because the Lean proof of (b) does not need it. Theo
 
 ## Commands
 
-From `lean/`, with the environment of `README.md`:
+From `lean/`, with the environment of `docs/lean/README.md`:
 
 ```
 lake build CertifyMathlib.NonHermitian

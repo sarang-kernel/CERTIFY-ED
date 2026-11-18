@@ -3,7 +3,7 @@
 Inputs (all from lean/): the module files (hashed and searched for forbidden tokens),
 results/apps/mathlib_axioms.txt (output of `lake env lean apps_export/PrintAxiomsApps.lean`),
 results/apps/nanoda_apps.jsonl (output of apps_export/nanoda_apps.py) and results/apps/leanchecker_apps.json
-(written by apps_export/run_leanchecker_apps.py). Trust levels as in README.md: K = kernel-checked by the
+(written by apps_export/run_leanchecker_apps.py). Trust levels as in docs/project/README.md: K = kernel-checked by the
 build with the standard axioms only; K+ = the module was also replayed by leanchecker; K2 = the theorem, exported
 with all its dependencies, was also accepted by nanoda.
 

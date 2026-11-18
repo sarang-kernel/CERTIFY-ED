@@ -36,7 +36,7 @@ manuscript cites is still 3.1.0 until Sarang decides whether 3.2.1 replaces it.
 | 3.2.1 | 4 November 2026 | 3.2.0 with the S3 residual on one thread by default; evidence run `run_full_20261105` of 5 November 2026, the 3.2 evidence run (decision D-61) |
 
 The dates are those of the release sections of `code/certify-ed/CHANGELOG.md` and of the decision log.
-`docs/project/CHANGELOG_PROJECT.md` at the root of this repository gives every recorded change of the project from its first work
+`docs/project/CHANGELOG_PROJECT.md` gives every recorded change of the project from its first work
 to 6 November 2026, and `docs/blog/BLOG.md` tells the same history as a narrative.
 
 ## How the documents are organised
@@ -60,8 +60,9 @@ Every number in these documents is copied from a file of the project archive v5 
 `archive_v5/` (not tracked by git; see `docs/project/sources/SOURCES.md`), and the file is named, by its path relative to
 that folder. The code repository is `code/certify-ed/` in the archive: branch `dev/3.2` at `a814d28`, with the tags
 `v3.1.0` = `e860a83`, `v3.2.0` = `55d9f61` and `v3.2.1` = `f3c478b`, and the run records in
-`code/certify-ed/results/`. Nothing in this repository changes the code repository; in particular the computational
-source hash of the 3.2.1 run, `cb73dec3e4433a3b`, is still the hash of its head (`docs/project/software/05_provenance.md`).
+`code/certify-ed/results/`. Since 18 November 2026 the code history is part of this repository; the documents of the
+project record change no file of the code, and the computational source hash of the 3.2.1 run, `cb73dec3e4433a3b`, is
+still the hash of the code at `a814d28` (`docs/project/software/05_provenance.md`).
 
 ## Reading order
 

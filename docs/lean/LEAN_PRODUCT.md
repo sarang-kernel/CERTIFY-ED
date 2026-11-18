@@ -8,7 +8,7 @@ without basing any status on it. The second is a set of refinement theorems on M
 when the kernel-reducible checks of `CertifyCore` accept the decoded rational data of a certificate, the conclusions
 of Theorem 1 and of Sylvester's law of inertia hold for those data. The third, the mechanical gaps of the
 floating-point model (item N-06), was not reached; section 5 says what each needs. The trust levels N, K and K2 are
-those of `README.md`: N is a compiled Lean program, K a theorem accepted by the Lean kernel with no `sorry`, no
+those of `docs/project/README.md`: N is a compiled Lean program, K a theorem accepted by the Lean kernel with no `sorry`, no
 `native_decide` and no new axiom, and K2 the same theorem accepted again by the independent kernel nanoda. Numbers
 produced here are in `lean/results/lean_product.json`; paths without a folder of this repository are
 relative to `archive_v5/`.

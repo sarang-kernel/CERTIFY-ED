@@ -4,7 +4,7 @@ This part of the re-verification recomputes the certified numbers of the three a
 certify-ed, E7 (exact benchmarks), E9 (the pyrochlore crown) and E10 (AKLT models), with a compiled Lean program
 that does not call the Python code. The program is `ceapps` (root `CertifyApps/Main.lean`) and its library is
 `CertifyApps`; it uses core Lean only, together with the exact binary64 decoding and the JSON reader of
-`CertifyCore` (`CORE.md`). Every result here is at trust level N in the scale of `README.md`: a compiled Lean
+`CertifyCore` (`CORE.md`). Every result here is at trust level N in the scale of `docs/project/README.md`: a compiled Lean
 program recomputed the number from the model specification and compared it with the run record, and the
 comparison itself is made in exact rational arithmetic inside the program. The record values are those of the
 3.2.1 evidence run, `code/certify-ed/results/run_full_20261105`; for every compared field the 3.1.0 evidence run `code/certify-ed/results/run_full_20261022` holds the same
@@ -390,7 +390,7 @@ theorems use no `sorry`, `admit`, `native_decide` or new axiom (word search: sor
 and `#print axioms` shows only `propext`, `Classical.choice` and `Quot.sound` for every one of them (`results/apps/mathlib_axioms.txt`).
 leanchecker replayed the three files and the root (exit code 0, 1087.6 s, `results/apps/leanchecker_apps.json`).
 nanoda accepted 15 of the 15 main theorems, each exported with all its dependencies
-(rejected 0, not run 0; `results/apps/nanoda_apps.jsonl`). Trust levels as in `README.md`: K kernel-checked by
+(rejected 0, not run 0; `results/apps/nanoda_apps.jsonl`). Trust levels as in `docs/project/README.md`: K kernel-checked by
 the build, K+ also replayed by leanchecker, K2 also accepted by nanoda (`results/apps/mathlib_apps.json`).
 
 | theorem | statement | covers | declarations checked by nanoda | level |

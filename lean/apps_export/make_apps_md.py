@@ -111,7 +111,7 @@ def main():
     w("certify-ed, E7 (exact benchmarks), E9 (the pyrochlore crown) and E10 (AKLT models), with a compiled Lean program")
     w("that does not call the Python code. The program is `ceapps` (root `CertifyApps/Main.lean`) and its library is")
     w("`CertifyApps`; it uses core Lean only, together with the exact binary64 decoding and the JSON reader of")
-    w("`CertifyCore` (`CORE.md`). Every result here is at trust level N in the scale of `README.md`: a compiled Lean")
+    w("`CertifyCore` (`CORE.md`). Every result here is at trust level N in the scale of `docs/project/README.md`: a compiled Lean")
     w("program recomputed the number from the model specification and compared it with the run record, and the")
     w("comparison itself is made in exact rational arithmetic inside the program. The record values are those of the")
     w(f"3.2.1 evidence run, `{RUN_NEW}`; for every compared field the 3.1.0 evidence run `{RUN_OLD}` holds the same")
@@ -567,7 +567,7 @@ def main():
         else:
             w("leanchecker was not run.")
         w(f'nanoda accepted {nn["accepted"]} of the {nn["main_theorems"]} main theorems, each exported with all its dependencies')
-        w(f'(rejected {nn["rejected"]}, not run {nn["not_run"]}; `results/apps/nanoda_apps.jsonl`). Trust levels as in `README.md`: K kernel-checked by')
+        w(f'(rejected {nn["rejected"]}, not run {nn["not_run"]}; `results/apps/nanoda_apps.jsonl`). Trust levels as in `docs/project/README.md`: K kernel-checked by')
         w("the build, K+ also replayed by leanchecker, K2 also accepted by nanoda (`results/apps/mathlib_apps.json`).")
         w("")
         w("| theorem | statement | covers | declarations checked by nanoda | level |")

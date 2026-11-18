@@ -2,7 +2,7 @@
 
 This part of the re-verification uses Lean 4.35.0 without Mathlib. It has two products. The first is `cecheck`,
 a compiled Lean program that re-checks certify-ed certificates from their raw stored numbers in exact rational
-arithmetic (trust level N in the scale of `README.md`). The second is a set of Lean theorems about the finite
+arithmetic (trust level N in the scale of `docs/project/README.md`). The second is a set of Lean theorems about the finite
 arithmetic behind the bounds, accepted by the Lean kernel with no `sorry` and no `native_decide` (trust level
 K). Every number below that comes from the project record is cited by its path relative to `archive_v5/`;
 every number produced here is in `lean/results/core/`.

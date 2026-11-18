@@ -4,7 +4,7 @@ This report states what the Lean 4 work in `lean/` checked, how strongly, and wh
 
 ## How to read the levels
 
-Every result carries one level of the scale defined in the top-level `README.md`. Level K is a Lean theorem accepted by the Lean kernel, with no `sorry`, no `native_decide` and no added axiom; the words used for it are "kernel-checked in Lean". Level K2 is a level K theorem that the independent kernel nanoda also accepted, after the theorem and everything it depends on (Lean core and Mathlib included) were exported with `leanexport`. Level K+ is a level K theorem whose module `leanchecker` replayed; this repeats Lean's own kernel on the compiled files and guards against a defect of the elaborator or of the files, not against a defect of the kernel. Level N is a compiled Lean program that recomputed a number or a status from raw data and agrees with the record; the program itself is not a theorem. A level applies to a statement as it is written in Lean. How far the Lean statement says what the document says is described in the column `correspondence` of the result files and in `ENCLOSURE.md`, `COUNTING.md`, `CORE.md` and `APPS.md`; that comparison was made by reading and is not part of any level. None of these levels is a check by a person in the sense of rule D-12; the last sections explain what that means for the derivation documents.
+Every result carries one level of the scale defined in `docs/project/README.md`. Level K is a Lean theorem accepted by the Lean kernel, with no `sorry`, no `native_decide` and no added axiom; the words used for it are "kernel-checked in Lean". Level K2 is a level K theorem that the independent kernel nanoda also accepted, after the theorem and everything it depends on (Lean core and Mathlib included) were exported with `leanexport`. Level K+ is a level K theorem whose module `leanchecker` replayed; this repeats Lean's own kernel on the compiled files and guards against a defect of the elaborator or of the files, not against a defect of the kernel. Level N is a compiled Lean program that recomputed a number or a status from raw data and agrees with the record; the program itself is not a theorem. A level applies to a statement as it is written in Lean. How far the Lean statement says what the document says is described in the column `correspondence` of the result files and in `ENCLOSURE.md`, `COUNTING.md`, `CORE.md` and `APPS.md`; that comparison was made by reading and is not part of any level. None of these levels is a check by a person in the sense of rule D-12; the last sections explain what that means for the derivation documents.
 
 ## Summary
 
@@ -207,7 +207,7 @@ Rule D-12 says that new mathematics counts as established only after Sarang Veha
 
 ## How to rebuild and re-run
 
-From `lean/`, with the toolchain directory and `C:\Program Files\Git\cmd` on `PATH` and `MATHLIB_CACHE_DIR` set as in `README.md`:
+From `lean/`, with the toolchain directory and `C:\Program Files\Git\cmd` on `PATH` and `MATHLIB_CACHE_DIR` set as in `docs/lean/README.md`:
 
 ```
 lake exe cache get

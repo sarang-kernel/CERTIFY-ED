@@ -130,7 +130,7 @@ def main():
     w("")
     w("## How to read the levels")
     w("")
-    w("Every result carries one level of the scale defined in the top-level `README.md`. Level K is a Lean theorem "
+    w("Every result carries one level of the scale defined in `docs/project/README.md`. Level K is a Lean theorem "
       "accepted by the Lean kernel, with no `sorry`, no `native_decide` and no added axiom; the words used for it are "
       "\"kernel-checked in Lean\". Level K2 is a level K theorem that the independent kernel nanoda also accepted, "
       "after the theorem and everything it depends on (Lean core and Mathlib included) were exported with `leanexport`. "
@@ -469,7 +469,7 @@ def main():
     w("## How to rebuild and re-run")
     w("")
     w("From `lean/`, with the toolchain directory and `C:\\Program Files\\Git\\cmd` on `PATH` and "
-      "`MATHLIB_CACHE_DIR` set as in `README.md`:")
+      "`MATHLIB_CACHE_DIR` set as in `docs/lean/README.md`:")
     w("")
     w("```")
     w("lake exe cache get")
