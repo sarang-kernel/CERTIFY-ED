@@ -77,6 +77,20 @@ def _interval_mul(lo1, hi1, lo2, hi2):
     return float(lo - abs(lo) * 4 * U), float(hi + abs(hi) * 4 * U)
 
 
+def _verdict(overlap: bool, *endpoints) -> str:
+    """CERTIFIED when the two intervals of a sum rule overlap, FAILED when they are disjoint, INCONCLUSIVE when an
+    endpoint is nan (an overflowed bound): a disjointness found on a nan is not a finding."""
+    if any(math.isnan(v) for v in endpoints):
+        return "INCONCLUSIVE"
+    return "CERTIFIED" if overlap else "FAILED"
+
+
+def _rule_text(overlap: bool, verdict: str) -> str:
+    if verdict == "INCONCLUSIVE":
+        return "cannot be compared (an endpoint is nan: an overflowed bound)"
+    return "overlap (consistent)" if overlap else "are DISJOINT: inconsistent inputs or bug"
+
+
 def _overlap(i1, i2) -> bool:
     return max(i1[0], i2[0]) <= min(i1[1], i2[1])
 
@@ -198,15 +212,25 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
                         "terms": {"projector": float(proj_term / g), "rounding": float((fp_terms + sum_rnd) / g)},
                         "M_norm_upper": float(up(On * On * Hk))})
     rec["moments"] = moments
-    statements.append(_vstmt("M1.moments", "CERTIFIED",
-                             f"m_k = tr(P O H^k O)/g for k = 0..{K}: " + ", ".join(
-                                 f"m_{m['k']} in [{m['interval'][0]:.12g}, {m['interval'][1]:.12g}]" for m in moments),
-                             {"moments": moments, "basis": "trace-norm bound (2 g s + g eta) ||O||^2 ||H||^k on the projector error, "
-                              "Theorem 1 style rounding of O x and of each H application; docs/proofs/C-07_moments.md"},
-                             assumptions=assume))
+    finite = all(math.isfinite(m["bound"]) and not math.isnan(m["value"]) for m in moments)
+    if not finite:
+        # a bound of the accounting is inf or nan (a product, a sum or a modulus overflowed): no moment interval
+        # and no sum-rule verdict rests on it
+        note = "the floating-point accounting of the moments is not finite (a bound of the accounting overflowed)"
+        for sid in ("M1.moments", "M2.sum_rule_zeroth", "M3.sum_rule_first"):
+            statements.append(_vstmt(sid, "INCONCLUSIVE", note, {"moments": moments}, assumptions=assume,
+                                     reason_code="NONFINITE_BOUND"))
+    else:
+        text = ", ".join(f"m_{m['k']} in [{m['interval'][0]:.12g}, {m['interval'][1]:.12g}]" for m in moments)
+        basis = ("trace-norm bound (2 g s + g eta) ||O||^2 ||H||^k on the projector error, "
+                 "Theorem 1 style rounding of O x and of each H application; docs/proofs/C-07_moments.md")
+        statements.append(_vstmt("M1.moments", "CERTIFIED", f"m_k = tr(P O H^k O)/g for k = 0..{K}: " + text,
+                                 {"moments": moments, "basis": basis}, assumptions=assume))
 
     # ---- sum rules through Theorem 6 on explicitly formed matrices
-    if not sum_rules:
+    if not finite:
+        pass                                              # M2 and M3 are stated above
+    elif not sum_rules:
         for sid in ("M2.sum_rule_zeroth", "M3.sum_rule_first"):
             statements.append(_vstmt(sid, "NOT_CHECKED", "sum rules not requested", {}, reason_code="NARROWED_BY_USER", assumptions=assume))
     else:
@@ -223,12 +247,14 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
         hi2 += abs(hi2) * 4 * U
         m0 = moments[0]["interval"]
         ok0 = _overlap(m0, (lo2, hi2))
-        statements.append(_vstmt("M2.sum_rule_zeroth", "CERTIFIED" if ok0 else "FAILED",
+        v0 = _verdict(ok0, lo2, hi2)
+        statements.append(_vstmt("M2.sum_rule_zeroth", v0,
                                  (f"m_0 in [{m0[0]:.12g}, {m0[1]:.12g}] (moment route) and tr(P O^2)/g in [{lo2:.12g}, {hi2:.12g}] "
-                                  f"(Theorem 6 on the formed O^2): the intervals {'overlap (consistent)' if ok0 else 'are DISJOINT: inconsistent inputs or bug'}"),
+                                  f"(Theorem 6 on the formed O^2): the intervals {_rule_text(ok0, v0)}"),
                                  {"moment_interval": m0, "theorem6_interval": [lo2, hi2], "overlap": ok0,
                                   "matrix_deviation_bound": dev2, "note": "a consistency statement between two certified routes, not a new theorem"},
-                                 assumptions=assume))
+                                 assumptions=assume,
+                                 reason_code="NONFINITE_BOUND" if v0 == "INCONCLUSIVE" else None))
         # f-sum rule: m_1 - tr(P H P O^2)/g = tr(P [O,[H,O]])/(2 g)
         if K < 1:
             statements.append(_vstmt("M3.sum_rule_first", "NOT_CHECKED", "needs K >= 1 (the first moment)", {},
@@ -257,14 +283,16 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
             plo, phi = _interval_mul(a, b, m0lo, m0hi)            # tr(P H P O^2)/g in [a, b] * m_0
             lhs = (float(sub_down(m1[0], phi)), float(sub_up(m1[1], plo)))        # [m1] - [plo, phi]
             ok1 = _overlap(lhs, (loC, hiC))
-            statements.append(_vstmt("M3.sum_rule_first", "CERTIFIED" if ok1 else "FAILED",
+            v1 = _verdict(ok1, loC, hiC, *lhs)
+            statements.append(_vstmt("M3.sum_rule_first", v1,
                                      (f"m_1 - tr(P H P O^2)/g in [{lhs[0]:.12g}, {lhs[1]:.12g}] (moment route; level [a, b] = [{a:.12g}, {b:.12g}]) and "
                                       f"tr(P [O,[H,O]])/(2g) in [{loC:.12g}, {hiC:.12g}] (Theorem 6 on the formed double commutator): the intervals "
-                                      f"{'overlap (consistent)' if ok1 else 'are DISJOINT: inconsistent inputs or bug'}"),
+                                      f"{_rule_text(ok1, v1)}"),
                                      {"lhs_interval": list(lhs), "rhs_interval": [loC, hiC], "overlap": ok1, "level": [a, b],
                                       "PHPO2_interval": [plo, phi], "matrix_deviation_bound": devC,
                                       "note": "f-sum rule form; a consistency statement between two certified routes, not a new theorem"},
-                                     assumptions=assume))
+                                     assumptions=assume,
+                                     reason_code="NONFINITE_BOUND" if v1 == "INCONCLUSIVE" else None))
     statements.append(_m4(assume))
     rec["statements"] = statements
     annotate_record(rec)
