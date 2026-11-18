@@ -1,0 +1,15 @@
+# python docs/proofs/verify_modulus-up.py (defaults: --cases 200000 --seed 7), 2026-11-18 (third run, after the second review round: 2 000 cases over the subnormal band and a third broken variant, the step only below 2^-1030), Windows, Python 3.11.17, NumPy 2.4.4
+random_cases: 199953
+adversarial_cases: 26815
+failures_i_ii_iip_iii_random: [0, 0, 0, 0]
+failures_i_ii_iip_iii_adversarial: [0, 0, 0, 0]
+inf_results_random_adversarial: [6, 1287]
+zero_component_cases_and_iv_failures: [461, 0]
+largest_relative_excess_over_u: 10.441
+inf_nan_real_input_ok: True
+negative_control_np_abs: {'below_|z|': '2/3', 'outside_2u': '3/3', 'relative_error_over_u': [-2.466, -2.462, 2.269]}
+negative_control_broken_variants_detected: {'no_guard': '14862/19996', 'no_subnormal_step': '1166/26815', 'step_only_below_2^-1030': '87/26815'}
+p15_modulus_upper_on_adversarial: {'cases': 26815, 'below_|z|': 0, 'inf': 4163, 'inf_by_cause': {'square': 3466, 'sum_of_squares': 133, 'guard_of_root': 0, 'abs_sum_branch': 564}, 'largest_ratio': 1.414214}
+p15_bitwise_agreement_common_range: 7307/7307
+violations: 0
+RESULT: 0 violations
