@@ -520,6 +520,43 @@ def test_upper_moduli_close_stage_S2_on_the_hard_examples():
             assert Fraction(float(absHX_up[i])) >= _sum_sqrt_upper(q)
 
 
+def _complex_chain(N, phi=0.3, J2=0.5):
+    """A Heisenberg-type chain with a complex phase on the flip terms (nearest and next-nearest neighbours)."""
+    from certify_ed.spec import LocalSpace, ModelSpec, _bonds_1d
+    local = LocalSpace.spin_space("1/2", "spin")
+    w = 0.5 * np.exp(1j * phi)
+    static = []
+    for Jr, r in ((1.0, 1), (J2, 2)):
+        bonds = _bonds_1d(N, r, "periodic")
+        static += [["+-", [[Jr * w, i, j] for i, j in bonds]], ["-+", [[Jr * np.conj(w), i, j] for i, j in bonds]],
+                   ["zz", [[Jr, i, j] for i, j in bonds]]]
+    return ModelSpec.from_static(N, local, static, name="complex_chain")
+
+
+def test_spec_invariants_take_each_modulus_once(monkeypatch):
+    """S1 evidence: spec_invariants forms the upper moduli of each coupling and each local factor once (T (N + 1) calls),
+    not inside its double sum over pairs of terms, and gets the same bounds as with the moduli taken there."""
+    import certify_ed.invariants as inv
+    from certify_ed.fp import gamma, up
+    spec = _complex_chain(5)
+    calls = []
+    real = inv.modulus_up
+
+    def spy(z):
+        calls.append(1)
+        return real(z)
+    monkeypatch.setattr(inv, "modulus_up", spy)
+    r = inv.spec_invariants(spec)
+    T, N = r["n_couplings"], spec.n_sites
+    assert len(calls) == T * (N + 1)
+    items = [(complex(c), inv._site_factors(spec, t.op, s)) for t in spec.terms for c, s in t.couplings]
+    g = gamma(2 * (N + 2) + spec.q ** 3 + T * T)
+    ref_tr = sum(real(c) * np.prod([real(m).trace() for m in f]) for c, f in items)
+    ref_fro = sum(real(ca) * real(cb) * np.prod([(real(fa[k]).T @ real(fb[k])).trace() for k in range(N)])
+                  for ca, fa in items for cb, fb in items)
+    assert r["trace_err"] == float(up(g * ref_tr)) and r["fro2_err"] == float(up(g * ref_fro))
+
+
 def _sum_sqrt_upper(qs):
     """A rational number >= sum_j sqrt(q_j) for rational q_j >= 0 (per term a start above sqrt(q), then one Newton
     step, which stays above sqrt(q) by the inequality of arithmetic and geometric means)."""

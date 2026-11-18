@@ -70,11 +70,12 @@ def spec_invariants(spec: ModelSpec) -> Dict[str, float]:
     # a sum of <= q^3 products), sums of <= T^2 terms
     q = spec.q
     g = gamma(2 * (N + 2) + q ** 3 + T * T)
-    # the moduli of complex couplings and local entries are upper bounds (fp.modulus_up)
-    abs_tr = sum(modulus_up(c) * np.prod([modulus_up(m).trace() for m in f]) for c, f in items)
-    abs_fro = sum(modulus_up(ca) * modulus_up(cb) * np.prod([modulus_up(fa[l]).T.__matmul__(modulus_up(fb[l])).trace()
-                                                                for l in range(N)])
-                  for ca, fa in items for cb, fb in items) if T <= 400 else float("inf")
+    # the moduli of complex couplings and local entries are upper bounds (fp.modulus_up), formed once per term and
+    # factor (T N calls), not inside the double sum over pairs of terms
+    mods = [(modulus_up(c), [modulus_up(m) for m in f]) for c, f in items]
+    abs_tr = sum(mc * np.prod([am.trace() for am in af]) for mc, af in mods)
+    abs_fro = sum(mca * mcb * np.prod([aa[l].T.__matmul__(ab[l]).trace() for l in range(N)])
+                  for mca, aa in mods for mcb, ab in mods) if T <= 400 else float("inf")
     return {"trace": float(tr.real), "trace_imag": float(tr.imag),
             "trace_err": float(up(g * abs_tr)),
             "fro2": float(fro2.real), "fro2_err": float(up(g * abs_fro)),
