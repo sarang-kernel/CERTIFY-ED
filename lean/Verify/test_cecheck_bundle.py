@@ -1,7 +1,7 @@
 r"""Tests of Verify/cecheck_bundle.py (N-04).
 
-    cd reverification_lean
-    set PYTHONPATH=..\sources\archive_v5\code\certify-ed
+    cd lean
+    set PYTHONPATH=..\..\archive\archive_v5\code\certify-ed
     python -m pytest -q Verify\test_cecheck_bundle.py --basetemp work\verify\pytest
 
 The export is compared byte for byte with export/export_certs.py; the mapping from cecheck's checks to statement

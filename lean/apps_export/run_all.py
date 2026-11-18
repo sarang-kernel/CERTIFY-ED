@@ -6,7 +6,7 @@ runs, measures wall time and the peak working set of the process (Windows: GetPr
 ru_maxrss of the child), copies the result files, checks that the two evidence runs hold the same values for
 the compared fields, and collects summary.json.
 
-usage: python run_all.py --exe <ceapps.exe> --archive <sources/archive_v5> --out <results/apps> --work <work/apps>
+usage: python run_all.py --exe <ceapps.exe> --archive <archive_v5> --out <results/apps> --work <work/apps>
                          [--only id ...] [--collect-only]
 """
 import argparse
@@ -227,8 +227,8 @@ def main():
         j = json.load(open(mp))
         mathlib = {k: j[k] for k in ("module", "theorems", "axioms", "forbidden_tokens", "nanoda", "leanchecker") if k in j}
     summary = {"description": "Recomputation of the certified application numbers of certify-ed in compiled core Lean "
-                              "(trust level N); see reverification_lean/APPS.md",
-               "lean_program": "ceapps (reverification_lean/CertifyApps/Main.lean)",
+                              "(trust level N); see docs/lean/APPS.md",
+               "lean_program": "ceapps (lean/CertifyApps/Main.lean)",
                "targets": rows,
                "model_checks": checks,
                "mathlib_lemmas": mathlib,

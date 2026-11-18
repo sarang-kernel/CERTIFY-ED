@@ -1,7 +1,7 @@
-"""make_development_roadmap.py: write docs/roadmap/DEVELOPMENT_ROADMAP.md.
+"""make_development_roadmap.py: write docs/project/roadmap/DEVELOPMENT_ROADMAP.md.
 
 The prose is in this file; the item table is generated from the roadmap CSV of the archive
-(sources/archive_v5/project_docs/roadmap/ROADMAP_expansion_items.csv, column status_2026-11-03) and from the list NEW
+(archive_v5/project_docs/roadmap/ROADMAP_expansion_items.csv, column status_2026-11-03) and from the list NEW
 below, which holds the candidates that appeared after that CSV (from the Lean re-verification and the applications).
 The outcomes of the first phase are the dict OUTCOME. Run from the repository root:
 python tools/make_development_roadmap.py
@@ -10,8 +10,9 @@ import csv
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CSV = os.path.join(ROOT, "sources", "archive_v5", "project_docs", "roadmap", "ROADMAP_expansion_items.csv")
-OUT = os.path.join(ROOT, "docs", "roadmap", "DEVELOPMENT_ROADMAP.md")
+ARCHIVE = os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5"))
+CSV = os.path.join(ARCHIVE, "project_docs", "roadmap", "ROADMAP_expansion_items.csv")
+OUT = os.path.join(ROOT, "docs", "project", "roadmap", "DEVELOPMENT_ROADMAP.md")
 STATUS = "status_2026-11-03"
 
 # wave and release target of every open item of the CSV; "now" marks the first phase
@@ -66,8 +67,8 @@ to 4) with four further waves. It was written on 11 November 2026, after the 3.2
 Lean re-verification of this repository. Its inputs are the item list of the expansion roadmap
 (`project_docs/roadmap/ROADMAP_expansion_items.csv`), the open items of
 [../failures/05_open_items.md](../failures/05_open_items.md), the findings L-1 to L-11 and the list of what is not
-formalized in `reverification_lean/VERIFICATION_REPORT.md`, and the applications that the archive names as not
-attempted. Paths without a folder of this repository are relative to `sources/archive_v5/`.
+formalized in `docs/lean/VERIFICATION_REPORT.md`, and the applications that the archive names as not
+attempted. Paths without a folder of this repository are relative to `archive_v5/`.
 
 ## Where the project stands
 
@@ -169,7 +170,7 @@ The five tracks of the first phase ended on 11 November 2026; the column "Outcom
 item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
 3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
 3.2.3 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
-and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
+and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `lean/` of this repository
 (`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
 (`run_full_20261112`) did not complete; version 3.2.3 (branch `fix/3.2.3`, tag `v3.2.3`) removes its two causes, and the
 evidence run of 3.2.3 (`run_full_20261112b`) completed on 13 November 2026 with no change of status against the 3.2.1
@@ -180,7 +181,7 @@ run except one E2 point that had reached the time limit.
 The table lists every open item of the expansion roadmap with its score and effort from the CSV, and the new candidates
 N-01 to N-13 with an effort estimated here (they have no score). "Needs D-12" is the CSV's column `needs_D12` for the
 old items. Two words of the CSV titles are replaced by plainer ones to keep
-to the writing rules of `STYLE.md`.
+to the writing rules of `docs/project/STYLE.md`.
 
 """
 
@@ -193,7 +194,7 @@ OUTCOME = {
     "D-03": "prototype on `dev/3.3`, not the default, draft without independent re-derivation",
     "D-04": "on `dev/3.3`, one worker by default, no speed-up measured yet",
     "H-04": "on `dev/3.3`, behind `pytest --perf`", "G-10": "script on `dev/3.3`, table of 4 small points",
-    "N-04": "done: driver in `reverification_lean/Verify/`, `verify --external` on `dev/3.3`",
+    "N-04": "done: driver in `lean/Verify/`, `verify --external` on `dev/3.3`",
     "N-05": "partial: the radius check is refined (K2 and K+); for the count only the general theorem",
     "N-06": "not reached", "N-11": "floating-point layer certified; exact re-check 3 of 8 blocks",
     "N-12": "estimate only (largest block 1293292 rows), not run",
@@ -202,7 +203,7 @@ OUTCOME = {
 
 
 def clean(title):
-    """Titles of the CSV, with two words replaced to keep to rule 3 of STYLE.md."""
+    """Titles of the CSV, with two words replaced to keep to rule 3 of docs/project/STYLE.md."""
     for a, b in (("harness", "tooling"), ("rigorous", "strict"), ("|", "/")):
         title = title.replace(a, b)
     return title

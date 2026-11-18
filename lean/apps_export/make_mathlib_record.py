@@ -1,6 +1,6 @@
 """Write results/apps/mathlib_apps.json, the record of the Mathlib module CertifyMathlib.Apps.
 
-Inputs (all from reverification_lean/): the module files (hashed and searched for forbidden tokens),
+Inputs (all from lean/): the module files (hashed and searched for forbidden tokens),
 results/apps/mathlib_axioms.txt (output of `lake env lean apps_export/PrintAxiomsApps.lean`),
 results/apps/nanoda_apps.jsonl (output of apps_export/nanoda_apps.py) and results/apps/leanchecker_apps.json
 (written by apps_export/run_leanchecker_apps.py). Trust levels as in README.md: K = kernel-checked by the
@@ -63,7 +63,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-seconds", type=float, default=None)
     a = ap.parse_args()
-    files = [{"path": "reverification_lean/" + f, "sha256": sha(os.path.join(ROOT, f))} for f in FILES]
+    files = [{"path": "lean/" + f, "sha256": sha(os.path.join(ROOT, f))} for f in FILES]
     words = {"sorry": 0, "admit": 0, "native_decide": 0, "axiom": 0}
     for f in FILES:
         text = open(os.path.join(ROOT, f), encoding="utf8").read()

@@ -1,8 +1,8 @@
 """Drafts/NonHermitian/make_results.py
 
-Writes reverification_lean/results/mathlib_nonhermitian.json from the logs of run_checks.ps1:
+Writes lean/results/mathlib_nonhermitian.json from the logs of run_checks.ps1:
 check_axioms.log (one line per theorem from #print axioms), check_textsearch.log, run_checks_summary.txt,
-check_build.log and nanoda_results.jsonl. Run from reverification_lean/: python Drafts/NonHermitian/make_results.py
+check_build.log and nanoda_results.jsonl. Run from lean/: python Drafts/NonHermitian/make_results.py
 """
 import json
 import os
@@ -111,15 +111,15 @@ def main():
         s["level"] = min(levs, key=lambda x: order[x]) if levs else "none"
     out = {
         "part": "Mathlib formalization: Bauer-Fike and the residual forms of E-02 (non-Hermitian eigenproblems)",
-        "document": "reverification_lean/NONHERMITIAN.md",
+        "document": "docs/lean/NONHERMITIAN.md",
         "root_module": "CertifyMathlib.NonHermitian",
-        "root_file": "reverification_lean/CertifyMathlib/NonHermitian.lean",
+        "root_file": "lean/CertifyMathlib/NonHermitian.lean",
         "modules": ["CertifyMathlib.NonHermitian.BauerFike", "CertifyMathlib.NonHermitian"],
         "toolchain": "leanprover/lean4:v4.35.0",
         "mathlib": "v4.35.0",
         "imports_from_other_parts": [],
         "statement_source": "docs/proofs/E-02_non_hermitian.md of the code repository, commit 167940a on branch "
-                            "track/non-hermitian (from dev/3.2 at fa86456); not yet in sources/archive_v5",
+                            "track/non-hermitian (from dev/3.2 at fa86456); not yet in archive_v5",
         "build": {
             "command": "lake build CertifyMathlib.NonHermitian",
             "exit_code": steps.get("build", {}).get("exit_code"),
@@ -129,7 +129,7 @@ def main():
             "step_seconds": steps.get("build", {}).get("seconds"),
             "warnings": "two notes that BauerFike.lean imports Mathlib modules designed for the module system; "
                         "no other warning",
-            "log": "reverification_lean/Drafts/NonHermitian/check_build.log",
+            "log": "lean/Drafts/NonHermitian/check_build.log",
         },
         "level_K_check": {
             "files_searched": int(text.get("files", 0)),
@@ -142,9 +142,9 @@ def main():
                       "and Drafts/NonHermitian/PrintAxioms.lean (run_checks.ps1, step textsearch)",
         },
         "axioms_check": {
-            "script": "reverification_lean/Drafts/NonHermitian/PrintAxioms.lean",
+            "script": "lean/Drafts/NonHermitian/PrintAxioms.lean",
             "command": "lake env lean Drafts/NonHermitian/PrintAxioms.lean",
-            "output": "reverification_lean/Drafts/NonHermitian/check_axioms.log",
+            "output": "lean/Drafts/NonHermitian/check_axioms.log",
             "theorems": len(axioms),
             "all_depend_on": sorted({a for ax in axioms.values() for a in ax}),
             "sorryAx": sum(1 for ax in axioms.values() if "sorryAx" in ax),
@@ -167,8 +167,8 @@ def main():
                 "command": "leanexport <module> -- <theorem> > export.ndjson; nanoda_bin config.json (permitted_axioms "
                            "propext, Classical.choice, Quot.sound; unpermitted_axiom_hard_error, nat_extension, "
                            "string_extension true)",
-                "driver": "reverification_lean/Drafts/Counting/nanoda_counting.py",
-                "theorem_list": "reverification_lean/Drafts/NonHermitian/nanoda_theorems.txt",
+                "driver": "lean/Drafts/Counting/nanoda_counting.py",
+                "theorem_list": "lean/Drafts/NonHermitian/nanoda_theorems.txt",
                 "procedure": "one theorem per run; the export contains the theorem and every declaration it depends on, "
                              "including the Lean core and Mathlib declarations; a run is stopped when a process "
                              "exceeds 4096 MiB of private memory or 1800 s; the export file is removed after each run",

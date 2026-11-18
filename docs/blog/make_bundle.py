@@ -1,30 +1,30 @@
-"""make_bundle.py: collect the files cited by blog/BLOG.md into one text bundle for the number check.
+"""make_bundle.py: collect the files cited by docs/blog/BLOG.md into one text bundle for the number check.
 
 Usage (from the root of the repository):
 
-    python blog/make_bundle.py
-    python tools/lint_docs.py --bundle blog/blog_sources_bundle.txt blog/BLOG.md
+    python docs/blog/make_bundle.py
+    python tools/lint_docs.py --bundle docs/blog/blog_sources_bundle.txt docs/blog/BLOG.md
 
 Every path written in backticks in BLOG.md is resolved first relative to the repository root and then relative to
-sources/archive_v5/. Each existing text file is appended to blog/blog_sources_bundle.txt; binary files (images,
-archives, PDFs) and folders are skipped and listed on standard output. For every figure in blog/figures/ the caption
+archive_v5/. Each existing text file is appended to docs/blog/blog_sources_bundle.txt; binary files (images,
+archives, PDFs) and folders are skipped and listed on standard output. For every figure in docs/blog/figures/ the caption
 numbers of its source (the <name>.numbers.json next to the source PNG and the INDEX.md of that folder) are added as
 well, because the captions of BLOG.md copy their numbers from those files. The script reads only; it changes nothing
-outside blog/blog_sources_bundle.txt. Standard library only.
+outside docs/blog/blog_sources_bundle.txt. Standard library only.
 """
 import os
 import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-ARCHIVE = os.path.join(ROOT, "sources", "archive_v5")
+ROOT = os.path.dirname(os.path.dirname(HERE))
+ARCHIVE = os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5"))
 BLOG = os.path.join(HERE, "BLOG.md")
 OUT = os.path.join(HERE, "blog_sources_bundle.txt")
 TEXT_EXT = {".md", ".txt", ".json", ".csv", ".tsv", ".log", ".tex", ".py", ".cff", ".toml"}
 CODE_DOCS = os.path.join(ARCHIVE, "code", "certify-ed", "docs")
 
-# figure in blog/figures -> (folder of the source figure, source file name)
+# figure in docs/blog/figures -> (folder of the source figure, source file name)
 FIGURES = {
     "fig_scope_vs_survey.png": (os.path.join(CODE_DOCS, "figures"), "fig_scope_vs_survey"),
     "fig_certificate_anatomy.png": (os.path.join(CODE_DOCS, "figures"), "fig_certificate_anatomy"),
@@ -50,7 +50,7 @@ PROOFS = os.path.join(CODE, "docs", "proofs")
 def resolve(path):
     """Return the existing file for a cited path, or None.
 
-    A path is tried relative to the repository root, to sources/archive_v5/, to the code clone (for names such as
+    A path is tried relative to the repository root, to archive_v5/, to the code clone (for names such as
     experiments/compare_runs.py) and to its folder of derivation documents (for bare names such as cor5_pairing.md).
     """
     for base in (ROOT, ARCHIVE, CODE, PROOFS):

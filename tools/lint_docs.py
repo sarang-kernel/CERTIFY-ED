@@ -4,7 +4,7 @@ Usage:  python tools/lint_docs.py FILE.md [FILE.md ...]        (or a directory: 
         python tools/lint_docs.py --bundle SOURCES.txt FILE.md  (also report numbers of 3 or more significant
                                                                  characters that do not occur in the bundle)
 
-The rules are those of STYLE.md, adapted from the style checker of the mm3x3 release (lint_paper.py):
+The rules are those of docs/project/STYLE.md, adapted from the style checker of the mm3x3 release (lint_paper.py):
 no list lines, no em or en dashes and no "--" used as a dash, no promotional or filler vocabulary, no
 mention of the writing process (assistants, agents, sessions), no claim that a statement is "verified" or
 "proven" (a statement is kernel-checked, machine-checked, or checked by a named person; D-12), and never the

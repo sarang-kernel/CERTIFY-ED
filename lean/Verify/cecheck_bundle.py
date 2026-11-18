@@ -32,7 +32,7 @@ each. Its fields `verdict`, `level` and `statements` are the ones `certify-ed ve
 external-verification record:
 
     certify-ed verify CERT.json --bundle BUNDLE_DIR --external
-        "python <repo>/reverification_lean/Verify/cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"
+        "python <repo>/lean/Verify/cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"
 """
 from __future__ import annotations
 

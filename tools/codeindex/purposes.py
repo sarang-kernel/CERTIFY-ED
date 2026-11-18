@@ -1,4 +1,4 @@
-"""Hand-written sentences for docs/CODE_INDEX.md, used by make_code_index.py instead of the docstring's first sentence.
+"""Hand-written sentences for docs/project/CODE_INDEX.md, used by make_code_index.py instead of the docstring's first sentence.
 
 A file is listed here when it has no module docstring, when the first sentence of its docstring is only a heading
 or too vague to say what the file does, or when that sentence uses a word the documentation's style rules exclude

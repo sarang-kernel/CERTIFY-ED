@@ -1,6 +1,6 @@
-"""collect.py: machine-readable tables of the dated sources of CERTIFY-ED, for CHANGELOG_PROJECT.md.
+"""collect.py: machine-readable tables of the dated sources of CERTIFY-ED, for docs/project/CHANGELOG_PROJECT.md.
 
-Usage:  python tools/changelog/collect.py [--archive sources/archive_v5] [--git <repository or bundle clone>]
+Usage:  python tools/changelog/collect.py [--archive archive_v5] [--git <repository or bundle clone>]
 
 Writes, next to this script:
   commits.tsv    every commit of every ref of the code repository (git log --all), author date converted to India
@@ -31,7 +31,8 @@ def arg(name, default):
     return default
 
 
-ARCHIVE = arg("--archive", os.path.join(HERE, "..", "..", "sources", "archive_v5"))
+ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
+ARCHIVE = arg("--archive", os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")))
 GITDIR = arg("--git", os.path.join(ARCHIVE, "code", "certify-ed"))
 GIT = os.environ.get("GIT", "git")
 

@@ -1,6 +1,6 @@
 """Audit/make_integration_record.py: collect the integration checks into results/integration.json.
 
-Usage, from reverification_lean/:  python Audit/make_integration_record.py
+Usage, from lean/:  python Audit/make_integration_record.py
 
 Reads logs/integration/lake_build.log (output of `lake build CertifyCore CertifyMathlib CertifyApps cecheck ceapps`),
 logs/integration/axiom_audit.log (output of `lake env lean Audit/AxiomAudit.lean`), logs/integration/final_checks.json

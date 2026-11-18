@@ -1,6 +1,6 @@
 """Drafts/Enclosure/nanoda_run.py: nanoda runs of the enclosure library, one theorem per run.
 
-Usage, from reverification_lean/:
+Usage, from lean/:
     python Drafts/Enclosure/nanoda_run.py <toolchain bin> <LEAN_PATH> <results.jsonl> <work dir> '<json list of [module, theorem]>'
 
 For each pair, leanexport writes the theorem and every declaration it depends on, and nanoda_bin checks the export with

@@ -1,8 +1,8 @@
-"""make_lean_status_tables.py: insert the Lean status of every result into docs/math/theorems.md and
-docs/math/derivation_documents.md.
+"""make_lean_status_tables.py: insert the Lean status of every result into docs/project/math/theorems.md and
+docs/project/math/derivation_documents.md.
 
-The status and level of each Lean statement are read from reverification_lean/results/mathlib_enclosure.json,
-reverification_lean/results/mathlib_counting.json and reverification_lean/results/mathlib_nonhermitian.json; the mapping from a result of the documents to the Lean statement
+The status and level of each Lean statement are read from lean/results/mathlib_enclosure.json,
+lean/results/mathlib_counting.json and lean/results/mathlib_nonhermitian.json; the mapping from a result of the documents to the Lean statement
 ids is the table MAP below. The text between the markers `<!-- lean-status begin -->` and `<!-- lean-status end -->`
 is replaced. Run from the repository root: python tools/make_lean_status_tables.py
 """
@@ -10,7 +10,7 @@ import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RES = os.path.join(ROOT, "reverification_lean", "results")
+RES = os.path.join(ROOT, "lean", "results")
 BEGIN, END = "<!-- lean-status begin -->", "<!-- lean-status end -->"
 WORD = {"proved": "complete", "partial": "partial", "not attempted": "not formalized"}
 
@@ -117,9 +117,9 @@ def replace(path, block):
 
 def main():
     idx = index()
-    intro = ("The Lean re-verification in `reverification_lean/` (repository certify-ed-project) states the "
+    intro = ("The Lean re-verification in `lean/` (the project record of this repository) states the "
              "results below as Lean theorems on Mathlib. The columns give the Lean statement ids of "
-             "`reverification_lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level "
+             "`docs/lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level "
              "(K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel "
              "and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the "
              "check by a person that rule D-12 asks for; the column \"Sarang's check\" above is unchanged.")
@@ -129,7 +129,7 @@ def main():
         extra = f"; {note}" if note else ""
         rows.append(f"| {name} | {cell(ids, idx)} | {st}{extra} | {lv} | {finds or 'none'} |")
     block = BEGIN + "\n\n## Lean status of every result\n\n" + intro + "\n\n" + "\n".join(rows) + "\n\n" + END
-    replace(os.path.join(ROOT, "docs", "math", "theorems.md"), block)
+    replace(os.path.join(ROOT, "docs", "project", "math", "theorems.md"), block)
 
     rows = ["| derivation document | Lean statements | Lean | level | findings |", "|---|---|---|---|---|"]
     for name, ids, finds in DERIVATIONS:
@@ -140,7 +140,7 @@ def main():
         "the column \"Sarang's check\" of the summary table is unchanged",
         "every document keeps the status \"Sarang's check pending\"")
     block = BEGIN + "\n\n## Lean status of every derivation document\n\n" + intro2 + "\n\n" + "\n".join(rows) + "\n\n" + END
-    replace(os.path.join(ROOT, "docs", "math", "derivation_documents.md"), block)
+    replace(os.path.join(ROOT, "docs", "project", "math", "derivation_documents.md"), block)
     print("ok")
 
 

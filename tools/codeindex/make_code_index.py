@@ -1,7 +1,7 @@
-"""make_code_index.py: write docs/CODE_INDEX.md, one row for every program file of certify-ed at one revision.
+"""make_code_index.py: write docs/project/CODE_INDEX.md, one row for every program file of certify-ed at one revision.
 
 Usage:  python tools/codeindex/make_code_index.py [REPO] [--rev REV] [--out FILE] [--check]
-        (defaults: REPO = sources/archive_v5/code/certify-ed, REV = HEAD, FILE = docs/CODE_INDEX.md)
+        (defaults: REPO = archive_v5/code/certify-ed, REV = HEAD, FILE = docs/project/CODE_INDEX.md)
 
 The files are read from the commit with `git ls-tree` and `git show`; nothing is checked out and nothing is written
 to the repository. A program file is a tracked file ending in .py, .c or .sh. For each one the script records:
@@ -337,7 +337,7 @@ def render(repo, rev):
     out = ["# Code index", ""]
     out.append(wrap(
         f"This index lists every program file of the certify-ed repository at commit `{commit}` (revision `{rev}` of "
-        f"`sources/archive_v5/code/certify-ed`): {len(rows)} files ending in `.py`, `.c` or `.sh`, with "
+        f"`archive_v5/code/certify-ed`): {len(rows)} files ending in `.py`, `.c` or `.sh`, with "
         f"{total_lines} lines in all. It is written by `tools/codeindex/make_code_index.py` from the committed "
         f"files, and `python tools/codeindex/make_code_index.py --check` reports whether it is up to date. Apart from "
         f"the introductions of the sections, which are part of the generator, and the sentences of "
@@ -360,7 +360,7 @@ def render(repo, rev):
         "serves and are not the result of a dependency analysis. Fingerprint says whether the file counts in the "
         "source fingerprint of `certify_ed/provenance.py` (`source`), is excluded from it by `NON_COMPUTATIONAL` "
         "(`excluded`), counts in the test fingerprint (`tests`), or is outside both (`none`); see "
-        "`docs/software/05_provenance.md`."))
+        "`docs/project/software/05_provenance.md`."))
     out.append("")
     out.append(wrap(
         f"Of these program files, {counts['source']} count in the source fingerprint, {counts['excluded']} are excluded "
@@ -389,10 +389,10 @@ def render(repo, rev):
 
 def main(argv):
     args = list(argv)
-    repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(ROOT, "sources", "archive_v5", "code",
+    repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")), "code",
                                                                              "certify-ed")
     rev = args[args.index("--rev") + 1] if "--rev" in args else "HEAD"
-    out = args[args.index("--out") + 1] if "--out" in args else os.path.join(ROOT, "docs", "CODE_INDEX.md")
+    out = args[args.index("--out") + 1] if "--out" in args else os.path.join(ROOT, "docs", "project", "CODE_INDEX.md")
     text = render(repo, rev)
     probs = lint_docs.lint(text)
     if probs:

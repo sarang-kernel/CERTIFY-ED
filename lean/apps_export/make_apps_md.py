@@ -1,10 +1,10 @@
-"""Write reverification_lean/APPS.md from the result files of results/apps/ and the run records.
+"""Write docs/lean/APPS.md from the result files of results/apps/ and the run records.
 
 Every number in the tables is copied by this script from a named file: record values from the run records
 (as the decimal text Python wrote), recomputed values from the JSON files written by ceapps, times and memory
 from results/apps/measurements.json. The prose is fixed text.
 
-usage: python make_apps_md.py --lean <reverification_lean> --archive <sources/archive_v5>
+usage: python make_apps_md.py --lean <lean> --archive <archive_v5>
 """
 import argparse
 import json
@@ -117,7 +117,7 @@ def main():
     w(f"3.2.1 evidence run, `{RUN_NEW}`; for every compared field the 3.1.0 evidence run `{RUN_OLD}` holds the same")
     w("values (JSON equality with the timing fields removed, checked by `apps_export/run_all.py`: "
       + ("true for E7, E9 and E10" if ident else "NOT true for every group, see `summary.json`") + ").")
-    w("Paths of record files are relative to `sources/archive_v5/`; every other path is relative to `reverification_lean/`.")
+    w("Paths of record files are relative to `archive_v5/`; every other path is relative to `lean/`.")
     w("")
     w("The lemmas that turn the E10 counts into the certified statement are, in addition, written as theorems on")
     w("Mathlib in the module `CertifyMathlib.Apps` (section 9), and the kernel equality on which every E10 number rests")
@@ -136,10 +136,10 @@ def main():
     w("`PYTHONPATH`. They write below `results/apps/` and `work/apps/` (git-ignored).")
     w("")
     w("```")
-    w("cd reverification_lean")
+    w("cd lean")
     w("lake build CertifyApps ceapps")
     w(".lake\\build\\bin\\ceapps.exe selftest > results\\apps\\selftest.txt")
-    w("set A=..\\sources\\archive_v5")
+    w("set A=..\\..\\archive\\archive_v5")
     w("set PYTHONPATH=%A%\\code\\certify-ed")
     w("set PYTHONDONTWRITEBYTECODE=1")
     w("python apps_export\\compare_models.py --exe .lake\\build\\bin\\ceapps.exe --code %A%\\code\\certify-ed --work work\\apps\\export --out results\\apps\\compare_models.json")
@@ -211,7 +211,7 @@ def main():
     w("")
     w("Two further theorems enter: Theorem 1 of certify-ed (for a nonzero vector `v`, some eigenvalue lies within")
     w("`|| H v - mu v || / || v ||` of `mu`), used for the E7 and spin-1 enclosures, and the bordered-pencil lemma")
-    w("for E10 (`docs/math/exact_layer.md` and `docs/applications/aklt_pomata_wei.md` describe them). Both are Lean")
+    w("for E10 (`docs/project/math/exact_layer.md` and `docs/project/applications/aklt_pomata_wei.md` describe them). Both are Lean")
     w("theorems on Mathlib: Theorem 1 is `CertifyMathlib.Enclosure.residual_enclosure` (`ENCLOSURE.md`), and the")
     w("bordered-pencil lemma is `CertifyMathlib.Apps.bordered_pencil`, with its perturbed form `eta_count` (section 9).")
     w("The vectors are computed here by inverse iteration, first in floating point and then with integer arithmetic")
@@ -287,7 +287,7 @@ def main():
     w("## 4 E7: the four benchmark ground energies")
     w("")
     w("Why. E7 is the case in which the exact layer of certify-ed reaches realistic sizes, blocks of dimension 9252 and")
-    w("12870 after symmetry reduction (`docs/applications/exact_benchmarks_e7.md`). Each record claims that the")
+    w("12870 after symmetry reduction (`docs/project/applications/exact_benchmarks_e7.md`). Each record claims that the")
     w("recorded `E0` is within the recorded exact radius of the lowest eigenvalue of the block, and that exactly one")
     w("eigenvalue of the block lies below the recorded count point (`experiments/e7_exact_benchmarks.py`,")
     w("`certify_ed.exact_sectors.exact_recheck_sector_lowest`). An error in the symmetry reduction, in a count or in a")
@@ -348,7 +348,7 @@ def main():
     w("")
     r = J("e9_crown_spin_half_lower_bound.json") if os.path.exists(os.path.join(res, "e9_crown_spin_half_lower_bound.json")) else None
     w("Why. The certified bound `lambda_min(H_crown) >= -0.5501582988212038` turns the reduced-model value of")
-    w("Kránitz and Penc into a statement with no floating-point assumption (`docs/applications/crown_kranitz_penc.md`).")
+    w("Kránitz and Penc into a statement with no floating-point assumption (`docs/project/applications/crown_kranitz_penc.md`).")
     w("The record claims that at the recorded shift no eigenvalue lies below the shift minus `delta` in any of the 128")
     w("sectors of the `S^z = 0` space (`certify_ed/apps/pyrochlore/spin_half.py`). A count of 1 in any sector, or a")
     w("residual bound larger than the recorded one, would mean that the recorded bound is not reproduced.")
@@ -428,7 +428,7 @@ def main():
     w("")
     w("Why. For each lattice the spectral-gap criterion of Pomata and Wei needs `eta < 1/z`, or")
     w("`4 eta_perp + 2 eta_par < 1` for the square-octagon lattice, and certify-ed replaced the floating-point `eta` by")
-    w("an upper bound `sqrt(t')` in exact arithmetic (`docs/applications/aklt_pomata_wei.md`,")
+    w("an upper bound `sqrt(t')` in exact arithmetic (`docs/project/applications/aklt_pomata_wei.md`,")
     w("`certify_ed/apps/aklt/eta.py`). The record states, at its threshold `t`, the number of positive pivots, the lower")
     w("bound on the unit cosines, `t'` and the criterion. A recomputed count above the unit-cosine bound, or a `t'`")
     w("that does not decide the criterion, would mean the record is not reproduced.")
@@ -612,7 +612,7 @@ def main():
     w("| `results/apps/compare_models.json`, `compare_aklt.json`, `compare_chain20.json`, `selftest.txt` | the checks of sections 2 and 3 |")
     w("| `results/apps/mathlib_apps.json`, `mathlib_axioms.txt`, `nanoda_apps.jsonl`, `leanchecker_apps.json` | the record of the Mathlib module |")
     w("")
-    with open(os.path.join(a.lean, "APPS.md"), "w", encoding="utf8", newline="\n") as f:
+    with open(os.path.join(a.lean, "..", "docs", "lean", "APPS.md"), "w", encoding="utf8", newline="\n") as f:
         f.write("\n".join(out) + "\n")
     print("written", len(out), "lines")
 

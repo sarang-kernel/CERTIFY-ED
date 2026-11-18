@@ -1,6 +1,6 @@
 """Audit/run_final_checks.py: the second-checker runs made after the final build of the three libraries.
 
-Usage, from reverification_lean/ with the environment of logs/lean_env.json:
+Usage, from lean/ with the environment of logs/lean_env.json:
     python Audit/run_final_checks.py <toolchain bin> <python with psutil> <out.json> [--reuse-nanoda-int05 <old.json>]
 
 First, nanoda on `CertifyMathlib.Enclosure.FP.residual_enclosure_int05` with a memory limit of 6 GiB (the earlier run

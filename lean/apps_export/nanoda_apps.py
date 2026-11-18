@@ -16,7 +16,7 @@ limit (default 4096 MiB) or the time limit (default 1800 s). The export file and
 are removed after each run. Results are appended to a JSON lines file, one record per theorem, and a
 theorem already present there with result "accepted" is skipped.
 
-Usage, from reverification_lean/ (LEAN_PATH is taken from `lake env`):
+Usage, from lean/ (LEAN_PATH is taken from `lake env`):
     python apps_export/nanoda_apps.py --lean-bin <toolchain bin> --work <scratch dir>
         --theorems <list file> --out <results.jsonl> [--mem-mib 4096] [--timeout 1800]
 """
@@ -97,7 +97,7 @@ def run(args, env, timeout, mem_mib, stdout_path=None):
         out_f.close()
         out = ""
     text = ((out or "") + (err or ""))[-1500:]
-    text = re.sub(re.escape(ROOT), "reverification_lean", text, flags=re.IGNORECASE)
+    text = re.sub(re.escape(ROOT), "lean", text, flags=re.IGNORECASE)
     return dict(exit_code=p.returncode, seconds=round(time.time() - t0, 1),
                 peak_private_mib=round(peak / 2 ** 20), stopped=stopped, output=text)
 

@@ -12,7 +12,7 @@ nanoda      exports every theorem listed in results/core/axioms.txt with leanexp
             implementation of the Lean type theory written in Rust), allowing only the axioms propext,
             Classical.choice and Quot.sound.
 
-Usage (from reverification_lean/):
+Usage (from lean/):
     python export/second_kernel.py --lean-bin <toolchain bin> [lean4lean|leanchecker|nanoda ...]
 Writes results/core/second_kernel.json (merged with an existing file, so modes can be run separately).
 The export files are written to work/core/second_kernel/ and removed after each check.
@@ -70,7 +70,7 @@ def run(args, lean_bin, timeout, stdout=None):
         out, err = p.communicate()
         code = "timeout"
     text = ((out or "") + (err or ""))[-1500:]
-    for path, name in ((os.path.dirname(os.path.abspath(lean_bin)), "<toolchain>"), (ROOT, "reverification_lean")):
+    for path, name in ((os.path.dirname(os.path.abspath(lean_bin)), "<toolchain>"), (ROOT, "lean")):
         text = re.sub(re.escape(path), name, text, flags=re.IGNORECASE)
     return code, round(time.time() - t0, 1), text
 

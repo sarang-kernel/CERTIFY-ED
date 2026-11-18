@@ -1,6 +1,6 @@
-"""build.py: assemble CHANGELOG_PROJECT.md from the tables in tools/changelog/ and check it.
+"""build.py: assemble docs/project/CHANGELOG_PROJECT.md from the tables in tools/changelog/ and check it.
 
-Usage:  python tools/changelog/build.py [--archive sources/archive_v5] [--out CHANGELOG_PROJECT.md]
+Usage:  python tools/changelog/build.py [--archive archive_v5] [--out docs/project/CHANGELOG_PROJECT.md]
 
 Inputs (all in this folder): entries.tsv (date, area, change, sources), months.tsv (month, paragraph),
 versions.tsv (version, date, commit, contents, evidence), intro.md (text before the first month), and the tables
@@ -27,7 +27,7 @@ import tarfile
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# commits of the code repository after archive v5, with the bundle in sources/ that holds them: the two documentation
+# commits of the code history after archive v5 (all in this repository since the import): the two documentation
 # commits of dev/3.2 (10 and 11 November 2026) and the first development phase (11 to 13 November 2026: fix/3.2.2,
 # fix/3.2.3, dev/3.3)
 _B32, _B33 = "certify-ed_dev-3.2.bundle", "certify-ed_dev-3.3.bundle"
@@ -46,8 +46,8 @@ def arg(name, default):
     return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
 
 
-ARCHIVE = arg("--archive", os.path.join(ROOT, "sources", "archive_v5"))
-OUT = arg("--out", os.path.join(ROOT, "CHANGELOG_PROJECT.md"))
+ARCHIVE = arg("--archive", os.environ.get("CERTIFYED_ARCHIVE") or os.path.normpath(os.path.join(ROOT, "..", "archive", "archive_v5")))
+OUT = arg("--out", os.path.join(ROOT, "docs/project/CHANGELOG_PROJECT.md"))
 BUNDLE = arg("--bundle-out", os.path.join(HERE, "changelog_sources_bundle.txt"))
 AREAS = ["code", "mathematics", "manuscript", "runs", "decisions", "applications", "documents", "archive"]
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -200,7 +200,7 @@ def main():
                     h = s[5:]
                     if h not in CODE_COMMITS_AFTER:
                         probs.append((where, "unknown code commit " + h))
-                    out.append("`" + h + "` (code repository, `sources/" + CODE_COMMITS_AFTER.get(h, _B33) + "`)")
+                    out.append("`" + h + "` (this repository)")
                 elif s.startswith("~"):
                     out.append(s[1:].strip())
                 else:

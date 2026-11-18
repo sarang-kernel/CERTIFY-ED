@@ -1,7 +1,7 @@
 """source_hash.py: recompute the computational source hash and the test-suite hash of certify-ed at any commit.
 
 Usage:  python tools/codeindex/source_hash.py [REPO] [REV ...]
-        (defaults: REPO = sources/archive_v5/code/certify-ed, REV = v3.1.0 v3.2.0 v3.2.1 HEAD)
+        (defaults: REPO = archive_v5/code/certify-ed, REV = v3.1.0 v3.2.0 v3.2.1 HEAD)
 
 certify-ed fingerprints the code that can change a recorded number (certify_ed/provenance.py,
 `source_fingerprint`): the SHA-256 of the output of `git ls-files -s -- certify_ed experiments` with the files
@@ -57,7 +57,7 @@ def hashes(repo, rev):
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     args = sys.argv[1:]
-    repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(here, "sources", "archive_v5", "code",
+    repo = args.pop(0) if args and os.path.isdir(args[0]) else os.path.join(os.environ.get("CERTIFYED_ARCHIVE") or os.path.join(here, "..", "archive", "archive_v5"), "code",
                                                                              "certify-ed")
     revs = args or ["v3.1.0", "v3.2.0", "v3.2.1", "HEAD"]
     for rev in revs:

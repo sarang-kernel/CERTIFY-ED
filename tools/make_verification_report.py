@@ -1,6 +1,6 @@
-"""make_verification_report.py: write reverification_lean/VERIFICATION_REPORT.md from the result files.
+"""make_verification_report.py: write docs/lean/VERIFICATION_REPORT.md from the result files.
 
-Every number in the report is read from a file under reverification_lean/results/; nothing is typed in by hand except
+Every number in the report is read from a file under lean/results/; nothing is typed in by hand except
 the explanatory prose. Run from the repository root:
 
     python tools/make_verification_report.py
@@ -15,9 +15,9 @@ import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LR = os.path.join(ROOT, "reverification_lean")
+LR = os.path.join(ROOT, "lean")
 RES = os.path.join(LR, "results")
-OUT = os.path.join(LR, "VERIFICATION_REPORT.md")
+OUT = os.path.join(ROOT, "docs", "lean", "VERIFICATION_REPORT.md")
 
 
 def load(*parts):
@@ -116,16 +116,16 @@ def main():
     w = L.append
     w("# VERIFICATION_REPORT.md: the Lean re-verification of CERTIFY-ED")
     w("")
-    w("This report states what the Lean 4 work in `reverification_lean/` checked, how strongly, and what it did not check. "
+    w("This report states what the Lean 4 work in `lean/` checked, how strongly, and what it did not check. "
       f"It was generated on {integ['date']} by `tools/make_verification_report.py` from the files in "
-      "`reverification_lean/results/`; every number below is copied from one of them, and the last section lists them. "
+      "`lean/results/`; every number below is copied from one of them, and the last section lists them. "
       f"The toolchain is Lean {integ['lean']} and Mathlib {integ['mathlib']}. The objects of the check are the "
       "certificates, derivation documents and run records of CERTIFY-ED as they are in the project archive v5 "
-      "(`sources/archive_v5/`, code at `dev/3.2` commit `a814d28`, source hash `cb73dec3e4433a3b`), and the "
+      "(`archive_v5/`, code at `dev/3.2` commit `a814d28`, source hash `cb73dec3e4433a3b`), and the "
       "documentation corrections of the code repository that this work led to (commits `40d59f4` and `fa86456`, "
-      "`sources/SOURCES.md`). The parts added on 11 November 2026 (the non-Hermitian statements of E-02, the "
+      "`docs/project/sources/SOURCES.md`). The parts added on 11 November 2026 (the non-Hermitian statements of E-02, the "
       "refinement of the kernel checks, the certificate driver and the applications N-11 and N-12) refer to the code "
-      "branches `fix/3.2.2` (tag `v3.2.2`) and `dev/3.3`, also described in `sources/SOURCES.md`; their accounts are "
+      "branches `fix/3.2.2` (tag `v3.2.2`) and `dev/3.3`, also described in `docs/project/sources/SOURCES.md`; their accounts are "
       "`NONHERMITIAN.md`, `LEAN_PRODUCT.md` and `APPS_NEXT.md`.")
     w("")
     w("## How to read the levels")
@@ -420,7 +420,7 @@ def main():
       "documents were found where the text and the Lean statement differ. None of them changes a stored certificate, "
       "a status or a published number; seven are corrected in the code repository by the documentation commits "
       "`40d59f4` and `fa86456`, one (L-3) is closed by the range check of 3.2.2, and three confirm a remark of the "
-      "documents or record a difference of form. `docs/failures/07_found_while_formalizing.md` describes each in prose.")
+      "documents or record a difference of form. `docs/project/failures/07_found_while_formalizing.md` describes each in prose.")
     w("")
     rows = [[f["id"], f["document"], f["says"], f["holds"], f["found_by"], f["effect"], f["correction"]] for f in finds]
     w(table(["Id", "Place", "The document says", "What holds", "Found by", "Effect", "Correction"], rows))
@@ -463,12 +463,12 @@ def main():
       "statements and documents can differ. The derivation documents therefore keep the status \"derived, "
       "machine-checked, independently re-derived (not a human check), Sarang's check pending\", with the Lean level "
       "reported next to it. A proposal for how a statement review could take the place of a re-derivation for the "
-      "statements at level K2 is in `docs/decisions/05_proposed_d62_lean.md`; it is not adopted.")
+      "statements at level K2 is in `docs/project/decisions/05_proposed_d62_lean.md`; it is not adopted.")
     w("")
 
     w("## How to rebuild and re-run")
     w("")
-    w("From `reverification_lean/`, with the toolchain directory and `C:\\Program Files\\Git\\cmd` on `PATH` and "
+    w("From `lean/`, with the toolchain directory and `C:\\Program Files\\Git\\cmd` on `PATH` and "
       "`MATHLIB_CACHE_DIR` set as in `README.md`:")
     w("")
     w("```")
@@ -476,12 +476,12 @@ def main():
     w(b["command"])
     w("lake env lean Audit/AxiomAudit.lean")
     w("lake env leanchecker " + " ".join(lcf["module_list"][:3]) + " ...   (all " + str(lcf["modules"]) + " modules, see Audit/run_final_checks.py)")
-    w("python apps_export/run_all.py --exe .lake/build/bin/ceapps.exe --archive ../sources/archive_v5 --out results/apps --work work/apps")
+    w("python apps_export/run_all.py --exe .lake/build/bin/ceapps.exe --archive ../../archive/archive_v5 --out results/apps --work work/apps")
     w("python ../tools/make_verification_report.py")
     w("```")
     w("")
     w("The certificate checks with `cecheck` and the C verifier are the commands of `CORE.md` section 1; they need "
-      "the certify-ed source of `sources/archive_v5/code/certify-ed` on `PYTHONPATH` to regenerate the validation "
+      "the certify-ed source of `archive_v5/code/certify-ed` on `PYTHONPATH` to regenerate the validation "
       "certificates. A single certificate is re-checked with `python Verify/cecheck_bundle.py CERT.json --bundle DIR` "
       "(or `--operator OPERATOR.npz`); from the code branch `dev/3.3` the same check runs as "
       "`certify-ed verify CERT.json --bundle DIR --external \"python Verify/cecheck_bundle.py {certificate} --bundle "
