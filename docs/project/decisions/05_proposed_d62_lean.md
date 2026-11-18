@@ -12,7 +12,7 @@ Rule D-12 (13 July 2026) says that new mathematics counts as established only af
 re-derived it. The rule was written when the only alternatives to a human re-derivation were a second written
 derivation and random testing, and both can share an error with the first derivation. The re-verification in
 `lean/` adds a third kind of evidence. A statement of a derivation document is written as a Lean
-theorem, the proof is checked by the Lean kernel (level K in `README.md`), and the exported proof is accepted again by
+theorem, the proof is checked by the Lean kernel (level K in `docs/project/README.md`), and the exported proof is accepted again by
 a second checker that was written independently of Lean (nanoda, level K2) or replayed by Lean's own `leanchecker`
 (level K+). The proof is then no longer the weak point. What can still be wrong is the statement: the Lean theorem may
 say something other than the document, it may rest on a Mathlib definition that does not mean what the document means,
@@ -63,5 +63,5 @@ reviews take as long as re-derivations.
 ## Where the evidence is
 
 `docs/lean/VERIFICATION_REPORT.md` lists every statement with its Lean names, its level, what is missing
-and the source paragraph. `docs/lean/README.md` defines the levels K, K2, K+, N, P and H, and
+and the source paragraph. `docs/project/README.md` defines the levels K, K2, K+, N, P and H, and
 `docs/project/STYLE.md` rule 4 fixes the words used for each.
