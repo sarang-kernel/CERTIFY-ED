@@ -188,6 +188,9 @@ tests/                       416 tests (410 without QuSpin; pytest; `ruff check 
 examples/                    01-04: QuSpin certificate, exact re-check, whole spectrum, applications
 experiments/                 E0-E10, harness, make_numbers*.py
 docs/                        theory, reproducibility, applications, symveig audit, API notes
+docs/project/, docs/blog/    the project record: documentation of the whole project, the blog, the project changelog
+docs/lean/, lean/            the Lean 4 re-verification (reports in docs/lean/, sources and results in lean/)
+tools/                       generators and the style check of the project record
 schema/                      JSON Schema of the certificate (2.1) and of the producer bundle (1.0); docs/schema.md
 conformance/                 reference producer bundles and `certify-ed conform` (conformance/README.md)
 legacy/                      CERTIFY-ED v1, symveig 1.0.0, first application scripts (not installed)

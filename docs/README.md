@@ -19,6 +19,10 @@
 | `faq_inconclusive.md` | every INCONCLUSIVE summary and reason code with its next action |
 | `index.md` | the home page of the documentation site |
 
+The folders `project/`, `blog/` and `lean/` hold the project record (the documentation of the whole project, the
+blog and the reports of the Lean re-verification; start at `project/README.md`). They follow their own style rules
+(`project/STYLE.md`) and are not part of the documentation site.
+
 The documentation site is built with `mkdocs build --strict` from `mkdocs.yml` in the repository root
 (`pip install -r docs/requirements-docs.txt`: mkdocs and the material theme). The built `site/` is not committed.
 | `schema.md` | the certificate JSON Schema 2.1 and the producer-bundle schema 1.0 (`schema/`): field by field, stability promise, how a third-party writer conforms |
