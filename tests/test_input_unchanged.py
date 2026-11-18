@@ -99,7 +99,7 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
 SymmetryEntry = collections.namedtuple("SymmetryEntry", "S lattice")
 
 
-@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array"])
+@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array", "list", "deque", "UserList"])
 def test_certify_leaves_matrices_of_the_options_as_given(shape):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
@@ -113,7 +113,10 @@ def test_certify_leaves_matrices_of_the_options_as_given(shape):
     opts = ce.Options(seed=1, eigenspaces="all", observables={"SzSz": Obs},
                       approximate_symmetries={"Sz": {"tuple": lambda: (Sz, 1.0),
                                                      "namedtuple": lambda: SymmetryEntry(Sz, 1.0),
-                                                     "object array": lambda: np.array([Sz, 1.0], dtype=object)}[shape]()})
+                                                     "object array": lambda: np.array([Sz, 1.0], dtype=object),
+                                                     "list": lambda: [Sz, 1.0],
+                                                     "deque": lambda: collections.deque([Sz, 1.0]),
+                                                     "UserList": lambda: collections.UserList([Sz, 1.0])}[shape]()})
     a = ce.certify(claim, spec, opts)
     assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
     b = ce.certify(claim, spec, opts)

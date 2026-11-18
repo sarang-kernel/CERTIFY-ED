@@ -933,10 +933,18 @@ def _options_as_given(opts: Options, own) -> Options:
     """Options with private copies (own) of the CSR matrices among the observables and approximate symmetries whose
     indices are unsorted or repeated (the S4 norm bounds and the label records take absolute values of them in place).
     """
-    def entry(v):                          # approximate symmetry: (S, lattice[, allowed]) as any sequence, or S
-        if not sp.issparse(v) and isinstance(v, (tuple, list, np.ndarray)) and len(v) and own(v[0]) is not v[0]:
-            return (type(v) if type(v) in (tuple, list) else tuple)([own(v[0]), *v[1:]])
-        return own(v)
+    def entry(v):                          # approximate symmetry: (S, lattice[, allowed]) as a sequence
+        if sp.issparse(v) or isinstance(v, (str, bytes)):
+            return v
+        try:
+            S = v[0]
+        except (TypeError, IndexError, KeyError):
+            return v
+        S_own = own(S)
+        if S_own is S:
+            return v
+        rest = list(v)[1:]
+        return [S_own, *rest] if type(v) is list else (S_own, *rest)
     obs = {k: own(v) for k, v in opts.observables.items()}
     asym = {k: entry(v) for k, v in opts.approximate_symmetries.items()}
     if all(obs[k] is opts.observables[k] for k in obs) and \
