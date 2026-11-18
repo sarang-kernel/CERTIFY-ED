@@ -7,16 +7,26 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
-### The caller's matrix stays as given
+### The caller's matrices stay as given
 
-`certify()` now works on a private copy of a CSR operator whose indices are unsorted or repeated, on every device.
-Before, the first run summed the duplicates in place, through arrays shared with the caller's matrix: by the absolute
-value of the adapter without a model, and by the S1 comparison and the sector audit with one. A second `certify()` of
-the same claim then saw a different matrix and row width and gave a different certificate. The first certificate is
-unchanged, since the copy goes through the same steps as the caller's matrix did before; the second is now equal to
-it (`tests/test_input_unchanged.py`, with and without a model, a sector isometry and `device="gpu"`). The copy costs
-one more operator in memory for such inputs only. It replaces the copy that `certify(device="gpu")` made for the same
-reason.
+`certify()` now works on private copies of the CSR matrices it is given whose indices are unsorted or repeated: the
+operator, the sector isometry, and the matrices in `Options.observables` and `Options.approximate_symmetries`, on
+every device and again for the CPU recompute of a failed GPU run. Before, the first run summed their duplicates in
+place, through arrays shared with the caller's matrices: the absolute value of the adapter, the S1 comparison, the
+sector audit, the S4 norm bounds and the label records all did so. Without a model, with a sector isometry or with
+approximate symmetries, a second `certify()` of the same claim then saw different matrices and gave a different
+certificate; with a model the two certificates were equal, but the caller's operator was changed and could be left
+inconsistent (more stored values than `nnz`). The first certificate is unchanged, since the copies go through the
+same steps as the caller's matrices did before; the second is now equal to it (`tests/test_input_unchanged.py`).
+
+The copies cost one more matrix in memory each, for such inputs only. They are made before the budget and memory
+gates, and the plan does not count them, so an operator that fits in memory once but not twice now raises
+`MemoryError` from `certify()`. They replace the copy that `certify(device="gpu")` made for the operator alone.
+
+The no-underflow scan of a stored operator (`certify` and `certify_variational`) reads only its `nnz` stored values.
+Before, values left past `nnz` by an in-place summation could be scanned, and an operator whose duplicates summed to
+normal numbers could get a spurious UNDERFLOW_RISK; this depended on whether the caller had read the matrix's
+`has_canonical_format` before the call.
 
 ### GPU products (roadmap D-05; track/gpu-d05)
 
