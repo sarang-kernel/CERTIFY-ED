@@ -31,6 +31,16 @@ def _random_claim():
     return ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=_with_duplicates(H), kind="lowest"), None
 
 
+def _unsorted(H):
+    """H with the columns of every row stored in reverse order (no duplicates; not canonical)."""
+    D = sp.csr_matrix(H, copy=True)
+    D.sum_duplicates()
+    for r in range(D.shape[0]):
+        sl = slice(D.indptr[r], D.indptr[r + 1])
+        D.indices[sl], D.data[sl] = D.indices[sl][::-1].copy(), D.data[sl][::-1].copy()
+    return sp.csr_matrix((D.data, D.indices, D.indptr), shape=D.shape)
+
+
 def _model_claim(isometry, split_isometry=False):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
@@ -73,9 +83,17 @@ def _unchanged(M, before):
 
 
 @pytest.mark.parametrize("case,device", [("no model", "cpu"), ("model", "cpu"), ("sector", "cpu"),
-                                         ("split isometry", "cpu"), ("no model", "gpu"), ("model", "gpu")])
+                                         ("split isometry", "cpu"), ("unsorted", "cpu"), ("csr_array", "cpu"),
+                                         ("no model", "gpu"), ("model", "gpu")])
 def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case, device):
-    claim, spec = _random_claim() if case == "no model" else _model_claim(case != "model", case == "split isometry")
+    claim, spec = _random_claim() if case == "no model" else _model_claim(case in ("sector", "split isometry"),
+                                                                          case == "split isometry")
+    if case == "unsorted":
+        claim = ce.Claim(eigenvalues=claim.eigenvalues, eigenvectors=claim.eigenvectors,
+                         operator=_unsorted(claim.operator), kind="lowest")
+    elif case == "csr_array":
+        claim = ce.Claim(eigenvalues=claim.eigenvalues, eigenvectors=claim.eigenvectors,
+                         operator=sp.csr_array(claim.operator), kind="lowest")
     D, iso = claim.operator, claim.sector_isometry
     assert not D.has_canonical_format
     before = _arrays(D)
@@ -85,14 +103,7 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
     assert _unchanged(D, before)
     if iso is not None:
         assert _unchanged(iso, before_iso)
-    b = ce.certify(claim, spec, opts)
-    for key in ("statements", "kato_temple", "enclosures", "gaps"):
-        assert json.dumps(_without_timings(a.body.get(key)), sort_keys=True, default=repr) == \
-            json.dumps(_without_timings(b.body.get(key)), sort_keys=True, default=repr), key
-    assert sorted(a.arrays) == sorted(b.arrays)
-    for key in a.arrays:
-        x, y = np.asarray(a.arrays[key]), np.asarray(b.arrays[key])
-        assert x.dtype == y.dtype and x.tobytes() == y.tobytes(), key
+    _same(a, ce.certify(claim, spec, opts))
     if spec is not None:
         assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
 
@@ -120,13 +131,11 @@ def test_certify_leaves_matrices_of_the_options_as_given(shape):
                                                      "UserList": lambda: collections.UserList([Sz, 1.0])}[shape]()})
     a = ce.certify(claim, spec, opts)
     assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
-    b = ce.certify(claim, spec, opts)
-    for key in ("statements", "kato_temple", "enclosures", "gaps"):
-        assert json.dumps(_without_timings(a.body.get(key)), sort_keys=True, default=repr) == \
-            json.dumps(_without_timings(b.body.get(key)), sort_keys=True, default=repr), key
+    _same(a, ce.certify(claim, spec, opts))
 
 
-def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow():
+@pytest.mark.parametrize("read_flag", [True, False])
+def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow(read_flag):
     """Each entry stored as v and 2^-950: summed, the tiny parts vanish (v + 2^-950 == v), so the stored operator is H
     and the no-underflow hypothesis holds. The scan must read the summed entries, not stale ones past nnz."""
     spec = ce.heisenberg_chain(8)
@@ -138,7 +147,8 @@ def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow():
     o = np.lexsort((cols, rows))
     indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=n))]
     D = sp.csr_matrix((vals[o], cols[o], indptr), shape=H.shape)
-    assert not D.has_canonical_format               # the flag is read (and cached) before certify()
+    if read_flag:
+        assert not D.has_canonical_format           # the flag is read (and cached) before certify()
     w, V = np.linalg.eigh(H.toarray())
     cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=D, kind="lowest"), spec,
                       ce.Options(seed=1))
@@ -240,3 +250,30 @@ def test_values_left_past_nnz_are_not_scanned_for_underflow(entry):
         rec = certify_variational(D, V[:, 0])
         status = {s["id"]: s["status"] for s in rec["statements"]}
         assert all(status[k] == "CERTIFIED" for k in status if k.startswith(("V1", "V2"))), status
+
+
+def test_a_block_isometry_and_a_lifted_observable_stay_as_given():
+    """Sector claim (k = 0 of the Sz = 0 block of an 8-site ring) with the isometry and a full-space observable stored
+    with duplicate entries: the S1 audit and the lift sum them; the caller's matrices must stay as given."""
+    from certify_ed.basis import cyclic_isometry, sector_matrix, translation
+    from certify_ed.certify import _certify
+    from certify_ed.correlations import site_operator
+    spec = ce.heisenberg_chain(8)
+    st = ce.magnetization_state_set(spec, 0)
+    full_idx, _ = ce.full_state_set(spec).index_of(st.states_in_order())
+    P = sp.csr_matrix((np.ones(st.size), (full_idx, np.arange(st.size))), shape=(spec.dim, st.size))
+    V0 = cyclic_isometry(st, translation(spec), 0)
+    Hk = sector_matrix(ce.build_bitwise(spec, st), V0)
+    wk, Y = np.linalg.eigh(Hk.toarray())
+    Vs = _with_duplicates((P @ V0).tocsr())
+    O = _with_duplicates((site_operator(spec, "z", (0,)) @ site_operator(spec, "z", (4,))).tocsr())
+    claim = ce.Claim(eigenvalues=wk[:1], eigenvectors=Y[:, :1], operator=Hk, kind="lowest", sector_isometry=Vs)
+    opts = ce.Options(seed=1, eigenspaces="all", observables={"zz04": O})
+    before = [_arrays(Vs), _arrays(O)]
+    ref_claim, ref_opts = copy.deepcopy((claim, opts))
+    ref = _certify(ref_claim, spec, ref_opts)               # in place, on the deep copy
+    a = ce.certify(claim, spec, opts)
+    assert _unchanged(Vs, before[0]) and _unchanged(O, before[1])
+    assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
+    _same(ref, a)
+    _same(a, ce.certify(claim, spec, opts))
