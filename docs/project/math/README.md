@@ -64,8 +64,8 @@ a script `code/certify-ed/docs/proofs/independent/adversarial_<id>.py`. They run
 at `a814d28` with the package on the path. In a Windows command prompt, from the root of this repository:
 
 ```
-git worktree add --detach ..\work\certify-ed a814d28
-cd ..\work\certify-ed
+git worktree add --detach ..\work\certify-ed-a814d28 a814d28
+cd ..\work\certify-ed-a814d28
 python -m pip install numpy scipy mpmath python-flint
 set PYTHONPATH=%CD%
 python docs/proofs/verify_P14.py --random 3000 --seed 0

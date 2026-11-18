@@ -88,12 +88,12 @@ code (`docs/project/failures/04_failed_runs_and_attempts.md`).
 
 ```
 python -m certify_ed.cli env
-python ..\..\tools\codeindex\source_hash.py . v3.1.0 v3.2.0 v3.2.1 HEAD
+python <repository>\tools\codeindex\source_hash.py . v3.1.0 v3.2.0 v3.2.1 HEAD
 ```
 
 The first command prints the versions, the floating-point probe and the fingerprint of the checkout;
-`standard_model_hypotheses_hold` must be `true` and `source_dirty` must be `false`. The second (the path is that of
-this repository's `tools/codeindex/source_hash.py`, relative to the checkout) recomputes the source and test hashes of
+`standard_model_hypotheses_hold` must be `true` and `source_dirty` must be `false`. The second (`<repository>` is the folder of this
+repository; the worktree, at an older commit, has no `tools/`) recomputes the source and test hashes of
 each tag from the commits; they must be `acbef11af991c860`, `47446976d4dbfdb1` and `cb73dec3e4433a3b` for `v3.1.0`,
 `v3.2.0` and `v3.2.1` (`docs/project/software/05_provenance.md`). A record produced by the checkout carries the fingerprint of
 the working tree, so a record whose `source_hash` is `cb73dec3e4433a3b` with `source_dirty` false ran the
