@@ -1,0 +1,4 @@
+# project record: git keeps the bytes of these files as committed (recorded hashes, Lean sources with CRLF)
+lean/** -text
+docs/project/sources/runs/** -text
+tools/changelog/*.tsv -text
