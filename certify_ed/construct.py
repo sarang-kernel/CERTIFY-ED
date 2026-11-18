@@ -25,7 +25,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import gamma
+from .fp import gamma, modulus_up
 from .spec import ModelSpec
 
 
@@ -260,9 +260,9 @@ class SpecOperator:
                     rr = r[found]
                     if transpose:          # (|H|_abs)^T x: gather at the target, scatter to the source
                         src, rr = rr, src
-                    if absolute:
-                        contrib = np.abs(a)[:, None] * np.abs(x[src]).reshape(len(src), -1) if x.ndim > 1 \
-                            else np.abs(a) * np.abs(x[src])
+                    if absolute:          # upper moduli of complex amplitudes and entries (fp.modulus_up)
+                        contrib = modulus_up(a)[:, None] * modulus_up(x[src]).reshape(len(src), -1) if x.ndim > 1 \
+                            else modulus_up(a) * modulus_up(x[src])
                     else:
                         contrib = (a[:, None] * x[src].reshape(len(src), -1)) if x.ndim > 1 else a * x[src]
                         if out_dtype == np.float64:
