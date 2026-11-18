@@ -371,7 +371,16 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                     rec["state"]["note"] = ("the statements are about the contracted vector psi_hat as stored; the source "
                                             "MPS psi has ||psi_hat - psi|| <= contraction_error and a Rayleigh quotient "
                                             "within theta_source_vs_contracted of theta(psi_hat) (Lemma 5)")
-                if True:
+                if not all(math.isfinite(v) for v in (th_lo, th_hi, r, upper)):
+                    # a bound of the accounting is inf or nan (a product, a sum or a modulus overflowed; inf * 0 =
+                    # nan in a product): no statement rests on it
+                    note = ("the floating-point accounting of theta is not finite (a bound of the accounting "
+                            "overflowed): no bound is stated")
+                    ev_nf = {"theta": theta_rec, "refers_to": refers_to}
+                    for sid in VARIATIONAL_STATEMENT_IDS[:3]:
+                        statements.append(_vstmt(sid, "INCONCLUSIVE", note, ev_nf, assumptions=assume,
+                                                 reason_code="NONFINITE_BOUND"))
+                else:
                     statements.append(_vstmt("V1.rayleigh_upper", "CERTIFIED",
                                              f"lambda_1 <= {upper:.17g} (Rayleigh quotient of the trial state, upper endpoint"
                                              + (f" + model shift {sigma:.3e})" if sigma > 0 else ")"),
