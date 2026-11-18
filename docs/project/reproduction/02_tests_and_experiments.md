@@ -28,7 +28,7 @@ experiments run at a time, longest first, and E2, E6 and E8 run alone afterwards
 what they measure (the comment on `EXCLUSIVE` in `certify_ed/cli.py`). The rule of decision D-44 applies: start from a
 clean checkout of the tag and make no change in the checkout until the run has finished, not even a new untracked file
 under `experiments/`, because the fingerprint of every step is computed over the working tree at that step
-(`docs/software/05_provenance.md`). On the workstation the 3.2.1 run took from 06:51 to 22:46 on 5 November 2026, and
+(`docs/project/software/05_provenance.md`). On the workstation the 3.2.1 run took from 06:51 to 22:46 on 5 November 2026, and
 needs about 2.5 GB of memory per parallel job (`docs/reproducibility.md` of the repository); E2 caps each child at 4.5
 GiB and E4 at 5 GiB.
 
@@ -55,8 +55,8 @@ python -m certify_ed.cli reproduce --full --only E6 --with-mutation --no-tests -
 runs the quick mode (E0, E1, E3, E7, E8, E9 and E10 at reduced size, E2, E4 and E5 skipped). A run of E1 alone from a
 fresh clone of the bundle at `a814d28`, made on 10 November 2026, reproduced the E1 record of the 3.2.1 run with no
 MISMATCH leaf (the comparison command is in `04_checks.md`). The settings that each experiment uses are in its record
-(`settings`) and in `docs/experiments/`. The expected full-mode times printed by `list` are those of an earlier
-two-core machine; the step times of the evidence runs are in `docs/experiments/02_evidence_runs.md`.
+(`settings`) and in `docs/project/experiments/`. The expected full-mode times printed by `list` are those of an earlier
+two-core machine; the step times of the evidence runs are in `docs/project/experiments/02_evidence_runs.md`.
 
 The experiment scripts can also be run directly, for example `python experiments\e1_failure_matrix.py`; they then
 write their record to `experiments/results/<name>_<timestamp>/`, or to the folder named by the environment variable
@@ -83,7 +83,7 @@ on two workers) and how the leaves of its records compare with those of the 3.1.
 should give against an archived one: statuses, counts and exact bounds must fall in `same` (the script requires them
 to be identical), while times, memory, sampled draws and digits that depend on the floating-point stack fall in the
 other classes. The 10 `MISMATCH` leaves of this pair are the E2 `fill_nnz` counts, two E3 `c_gap` values that moved by
-about 1e-9, and the E6 count of copied files; `docs/experiments/03_comparisons.md` explains each.
+about 1e-9, and the E6 count of copied files; `docs/project/experiments/03_comparisons.md` explains each.
 
 ## Scripts outside the evidence runs
 

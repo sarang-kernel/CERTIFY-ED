@@ -43,13 +43,13 @@ including the failed first attempt of 22 October 2026 and the E4 crash of the 3.
 the record-by-record comparisons between runs with every MISMATCH leaf explained. Two scripts outside E0 to E10
 reproduce single results of the 3.2 scale work: `experiments/e2_s3_reach.py` (the reach of the sparse S3 path with the
 a-posteriori residual) and `experiments/d02_matrixfree_scale.py` (S2 radii for claims whose matrix is never stored, up
-to dimension 2^24); they are listed in `docs/CODE_INDEX.md` and are not part of the evidence runs.
+to dimension 2^24); they are listed in `docs/project/CODE_INDEX.md` and are not part of the evidence runs.
 
 ## Rules that every run follows
 
 The evidence policy is decision D-24: every number, table and figure of the paper is generated from experiment records
 by the number scripts, which also check the qualitative sentences, and all experiments of a cited run come from one
-computational source (decision D-44, `docs/software/05_provenance.md`). Every iterative solver call gets a seeded
+computational source (decision D-44, `docs/project/software/05_provenance.md`). Every iterative solver call gets a seeded
 start vector (decision D-26). A record of an interrupted run is never read (decision D-29). Two runs on different
 stacks must certify the same statements, while digits that depend on the floating-point stack may differ (decision
 D-54). E2, E6 and E8 run alone because they measure time or memory. Each experiment runs single-threaded. Memory caps

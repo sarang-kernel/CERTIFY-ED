@@ -4,9 +4,9 @@ This folder explains the mathematics behind a CERTIFY-ED certificate: what each 
 model of floating-point arithmetic on which the floating-point statements rest, every theorem and lemma with its
 hypotheses, proof outline, implementation and check status, and the 22 derivation documents of version 3.2 with their
 machine checks and the verdicts of their independent second derivations. The applications of the theory (the pyrochlore
-crown, the AKLT lattices, the exact benchmarks, symveig and the C verifier) are in `docs/applications/`.
+crown, the AKLT lattices, the exact benchmarks, symveig and the C verifier) are in `docs/project/applications/`.
 
-Every path below is relative to `sources/archive_v5/` (see `sources/SOURCES.md`). The code is the clone
+Every path below is relative to `archive_v5/` (see `docs/project/sources/SOURCES.md`). The code is the clone
 `code/certify-ed/` on branch `dev/3.2` at commit `a814d28`, with the tags `v3.1.0` (`e860a83`), `v3.2.0` (`55d9f61`) and
 `v3.2.1` (`f3c478b`). Function names refer to that commit. The version that the manuscript cites is still 3.1.0, until
 Sarang Vehale decides otherwise (decision D-61 in `project_docs/DECISIONS_LOG.md`); the statements added in 3.2 are
@@ -34,7 +34,7 @@ same results by LaTeX labels (`thm:residual`, `lem:polar`, `thm:cluster`, `lem:e
 `prop:exactlowest`); [theorems.md](theorems.md) gives both names. The two lemmas of the AKLT application (the kernel
 lemma and the bordered-pencil lemma) are numbered 14 and 15 in the manuscript scaffolds, which collides with
 Propositions 14 and 15 of `theory.md`; these documents therefore call them by name only, and they are explained in
-`docs/applications/aklt_pomata_wei.md`. The statements added in 3.2 are named by their roadmap identifiers (C-03, E-04,
+`docs/project/applications/aklt_pomata_wei.md`. The statements added in 3.2 are named by their roadmap identifiers (C-03, E-04,
 D-01 and so on), and their mathematics is in the derivation documents named after them.
 
 ## How strongly each result has been checked
@@ -54,8 +54,8 @@ Temple 1928, Lemma 4 from Sylvester's law of inertia and Weyl's inequality, Kaha
 theorem) carry their literature reference instead. Where the manuscript scaffold and the code documentation disagree on
 whether a result is classical, [theorems.md](theorems.md) reports both labels.
 
-The Lean files of `reverification_lean/` are a separate, later check. Where a result of this folder has a Lean
-counterpart, `reverification_lean/VERIFICATION_REPORT.md` gives its trust level; nothing in this folder depends on it.
+The Lean files of `lean/` are a separate, later check. Where a result of this folder has a Lean
+counterpart, `docs/lean/VERIFICATION_REPORT.md` gives its trust level; nothing in this folder depends on it.
 
 ## Recreating the machine checks
 
@@ -64,7 +64,7 @@ a script `code/certify-ed/docs/proofs/independent/adversarial_<id>.py`. They run
 the package on the path. In a Windows command prompt, from the root of this repository:
 
 ```
-git clone sources/certify-ed_dev-3.2.bundle certify-ed
+git clone docs/project/sources/certify-ed_dev-3.2.bundle certify-ed
 cd certify-ed
 git checkout a814d28
 python -m pip install numpy scipy mpmath python-flint

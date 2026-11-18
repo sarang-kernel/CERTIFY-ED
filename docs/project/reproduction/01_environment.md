@@ -41,12 +41,12 @@ are skipped and recorded as skipped.
 
 ## The code at the version to be reproduced
 
-The code repository is in the archive as a full git clone, `sources/archive_v5/code/certify-ed/`, and in this
-repository as a git bundle, `sources/certify-ed_dev-3.2.bundle`. Work in a fresh clone, never in the archive copy, so
+The code repository is in the archive as a full git clone, `archive_v5/code/certify-ed/`, and in this
+repository as a git bundle, `docs/project/sources/certify-ed_dev-3.2.bundle`. Work in a fresh clone, never in the archive copy, so
 that the archive keeps its source hash:
 
 ```
-git clone sources/certify-ed_dev-3.2.bundle work/certify-ed
+git clone docs/project/sources/certify-ed_dev-3.2.bundle work/certify-ed
 cd work/certify-ed
 git -c advice.detachedHead=false checkout v3.2.1      # or v3.1.0 for the cited version, v3.2.0 for the failed run
 git -c core.filemode=false status --porcelain          # must print nothing
@@ -54,7 +54,7 @@ git -c core.filemode=false status --porcelain          # must print nothing
 
 The bundle contains every branch and tag of the code repository (`v1.0.0-baseline`, `v2-pre-homologation`,
 `v3.1.0-candidate`, `v3.1.0`, `v3.2.0`, `v3.2.1`). It does not contain the run records, because `results/` is ignored
-by git; the records of every run are in the archive copy, `sources/archive_v5/code/certify-ed/results/`, and are read
+by git; the records of every run are in the archive copy, `archive_v5/code/certify-ed/results/`, and are read
 from there by the comparison and number commands of the other documents. The package is used from the checkout,
 without installation, by putting the checkout on `PYTHONPATH`; `pip install -e .[all]` also works but is not needed.
 On Windows the `certify-ed` console script exists only after installation, so the commands of these documents call
@@ -82,7 +82,7 @@ subprocesses that import their neighbours (`harness.py`). The BLAS libraries run
 run; the driver sets this for its own children as well. pytest needs a temporary directory in a writable working
 folder (`--basetemp ..\pytest-tmp`), because on the Windows workstation the default temporary directory under
 `AppData` makes `tests/test_driver.py::test_reproduce_parallel_resume_and_numbers` fail for a reason unrelated to the
-code (`docs/failures/04_failed_runs_and_attempts.md`).
+code (`docs/project/failures/04_failed_runs_and_attempts.md`).
 
 ## Checking the environment and the checkout
 
@@ -95,7 +95,7 @@ The first command prints the versions, the floating-point probe and the fingerpr
 `standard_model_hypotheses_hold` must be `true` and `source_dirty` must be `false`. The second (the path is that of
 this repository's `tools/codeindex/source_hash.py`, relative to the checkout) recomputes the source and test hashes of
 each tag from the commits; they must be `acbef11af991c860`, `47446976d4dbfdb1` and `cb73dec3e4433a3b` for `v3.1.0`,
-`v3.2.0` and `v3.2.1` (`docs/software/05_provenance.md`). A record produced by the checkout carries the fingerprint of
+`v3.2.0` and `v3.2.1` (`docs/project/software/05_provenance.md`). A record produced by the checkout carries the fingerprint of
 the working tree, so a record whose `source_hash` is `cb73dec3e4433a3b` with `source_dirty` false ran the
 computational code of 3.2.1.
 

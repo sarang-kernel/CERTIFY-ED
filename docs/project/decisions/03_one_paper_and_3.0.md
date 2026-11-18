@@ -147,7 +147,7 @@ when the full run of 18 October crossed a commit that changed only the command l
 E6 and E8 always run alone because they measure time or memory) and `--resume`. The rule that follows, and that later
 decisions cite, is that a version the paper cites needs one full run at a single computational source. A single
 monolithic script was rejected in favour of a package with one driver, which stays importable, tested and runnable
-experiment by experiment. `docs/software/05_provenance.md` describes the mechanism.
+experiment by experiment. `docs/project/software/05_provenance.md` describes the mechanism.
 
 ## D-45 (21 October 2026): the one-paper manuscript as a scaffold
 
@@ -174,7 +174,7 @@ source `7fb63586baf7ea6f`). The lesson recorded is that mutation analysis could 
 tests cannot resolve half a unit in the last place and none used duplicated vectors. The policy that follows is that
 every new certified statement gets its proof written against the code before the run the paper cites. Shipping the run
 of 18 October with an erratum was rejected because its records came from the unsound code paths.
-`docs/failures/README.md` lists both gaps.
+`docs/project/failures/README.md` lists both gaps.
 
 ## D-47 (21 October 2026): Sarang's decisions on four open items
 

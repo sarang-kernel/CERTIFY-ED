@@ -1,6 +1,6 @@
 # VERIFICATION_REPORT.md: the Lean re-verification of CERTIFY-ED
 
-This report states what the Lean 4 work in `reverification_lean/` checked, how strongly, and what it did not check. It was generated on 12 November 2026 by `tools/make_verification_report.py` from the files in `reverification_lean/results/`; every number below is copied from one of them, and the last section lists them. The toolchain is Lean 4.35.0 and Mathlib v4.35.0 (commit 56a005855ea1). The objects of the check are the certificates, derivation documents and run records of CERTIFY-ED as they are in the project archive v5 (`sources/archive_v5/`, code at `dev/3.2` commit `a814d28`, source hash `cb73dec3e4433a3b`), and the documentation corrections of the code repository that this work led to (commits `40d59f4` and `fa86456`, `sources/SOURCES.md`). The parts added on 11 November 2026 (the non-Hermitian statements of E-02, the refinement of the kernel checks, the certificate driver and the applications N-11 and N-12) refer to the code branches `fix/3.2.2` (tag `v3.2.2`) and `dev/3.3`, also described in `sources/SOURCES.md`; their accounts are `NONHERMITIAN.md`, `LEAN_PRODUCT.md` and `APPS_NEXT.md`.
+This report states what the Lean 4 work in `lean/` checked, how strongly, and what it did not check. It was generated on 12 November 2026 by `tools/make_verification_report.py` from the files in `lean/results/`; every number below is copied from one of them, and the last section lists them. The toolchain is Lean 4.35.0 and Mathlib v4.35.0 (commit 56a005855ea1). The objects of the check are the certificates, derivation documents and run records of CERTIFY-ED as they are in the project archive v5 (`archive_v5/`, code at `dev/3.2` commit `a814d28`, source hash `cb73dec3e4433a3b`), and the documentation corrections of the code repository that this work led to (commits `40d59f4` and `fa86456`, `docs/project/sources/SOURCES.md`). The parts added on 11 November 2026 (the non-Hermitian statements of E-02, the refinement of the kernel checks, the certificate driver and the applications N-11 and N-12) refer to the code branches `fix/3.2.2` (tag `v3.2.2`) and `dev/3.3`, also described in `docs/project/sources/SOURCES.md`; their accounts are `NONHERMITIAN.md`, `LEAN_PRODUCT.md` and `APPS_NEXT.md`.
 
 ## How to read the levels
 
@@ -177,7 +177,7 @@ The axiom audit (`Audit/AxiomAudit.lean`, output `results/integration_logs/axiom
 
 ## What the formalization found in the documents
 
-Formalizing a statement forces every hypothesis and every range to be written down. Eleven places of the documents were found where the text and the Lean statement differ. None of them changes a stored certificate, a status or a published number; seven are corrected in the code repository by the documentation commits `40d59f4` and `fa86456`, one (L-3) is closed by the range check of 3.2.2, and three confirm a remark of the documents or record a difference of form. `docs/failures/07_found_while_formalizing.md` describes each in prose.
+Formalizing a statement forces every hypothesis and every range to be written down. Eleven places of the documents were found where the text and the Lean statement differ. None of them changes a stored certificate, a status or a published number; seven are corrected in the code repository by the documentation commits `40d59f4` and `fa86456`, one (L-3) is closed by the range check of 3.2.2, and three confirm a remark of the documents or record a difference of form. `docs/project/failures/07_found_while_formalizing.md` describes each in prose.
 
 | Id | Place | The document says | What holds | Found by | Effect | Correction |
 |---|---|---|---|---|---|---|
@@ -203,22 +203,22 @@ Of the parts added on 11 November 2026, the following are not formalized: from E
 
 ## Relation to rule D-12
 
-Rule D-12 says that new mathematics counts as established only after Sarang Vehale has re-derived it. A level K2 theorem removes the proof as a source of error but not the statement, and the findings above show that statements and documents can differ. The derivation documents therefore keep the status "derived, machine-checked, independently re-derived (not a human check), Sarang's check pending", with the Lean level reported next to it. A proposal for how a statement review could take the place of a re-derivation for the statements at level K2 is in `docs/decisions/05_proposed_d62_lean.md`; it is not adopted.
+Rule D-12 says that new mathematics counts as established only after Sarang Vehale has re-derived it. A level K2 theorem removes the proof as a source of error but not the statement, and the findings above show that statements and documents can differ. The derivation documents therefore keep the status "derived, machine-checked, independently re-derived (not a human check), Sarang's check pending", with the Lean level reported next to it. A proposal for how a statement review could take the place of a re-derivation for the statements at level K2 is in `docs/project/decisions/05_proposed_d62_lean.md`; it is not adopted.
 
 ## How to rebuild and re-run
 
-From `reverification_lean/`, with the toolchain directory and `C:\Program Files\Git\cmd` on `PATH` and `MATHLIB_CACHE_DIR` set as in `README.md`:
+From `lean/`, with the toolchain directory and `C:\Program Files\Git\cmd` on `PATH` and `MATHLIB_CACHE_DIR` set as in `README.md`:
 
 ```
 lake exe cache get
 lake build CertifyCore CertifyMathlib CertifyApps cecheck ceapps
 lake env lean Audit/AxiomAudit.lean
 lake env leanchecker CertifyApps CertifyApps.AkltHam CertifyApps.Apps ...   (all 78 modules, see Audit/run_final_checks.py)
-python apps_export/run_all.py --exe .lake/build/bin/ceapps.exe --archive ../sources/archive_v5 --out results/apps --work work/apps
+python apps_export/run_all.py --exe .lake/build/bin/ceapps.exe --archive ../../archive/archive_v5 --out results/apps --work work/apps
 python ../tools/make_verification_report.py
 ```
 
-The certificate checks with `cecheck` and the C verifier are the commands of `CORE.md` section 1; they need the certify-ed source of `sources/archive_v5/code/certify-ed` on `PYTHONPATH` to regenerate the validation certificates. A single certificate is re-checked with `python Verify/cecheck_bundle.py CERT.json --bundle DIR` (or `--operator OPERATOR.npz`); from the code branch `dev/3.3` the same check runs as `certify-ed verify CERT.json --bundle DIR --external "python Verify/cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"` (with the full path of the driver), which writes a separate record and changes no status (`LEAN_PRODUCT.md`).
+The certificate checks with `cecheck` and the C verifier are the commands of `CORE.md` section 1; they need the certify-ed source of `archive_v5/code/certify-ed` on `PYTHONPATH` to regenerate the validation certificates. A single certificate is re-checked with `python Verify/cecheck_bundle.py CERT.json --bundle DIR` (or `--operator OPERATOR.npz`); from the code branch `dev/3.3` the same check runs as `certify-ed verify CERT.json --bundle DIR --external "python Verify/cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"` (with the full path of the driver), which writes a separate record and changes no status (`LEAN_PRODUCT.md`).
 
 The nanoda drivers are `export/second_kernel.py` (CertifyCore), `Drafts/Enclosure/nanoda_run.py`, `Drafts/Counting/nanoda_counting.py` and `apps_export/nanoda_apps.py`; each runs one theorem per process and stops a run above 4 GiB of private memory (6 GiB for the one re-run made by `Audit/run_final_checks.py`).
 

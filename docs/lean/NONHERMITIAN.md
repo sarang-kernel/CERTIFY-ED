@@ -1,8 +1,8 @@
 # NONHERMITIAN.md: Bauer-Fike and the residual forms of E-02 on Mathlib
 
-This document describes the Lean 4 formalization of the exact statements behind the non-Hermitian claim kind of CERTIFY-ED (roadmap items E-02 and N-13). The theorems are in `reverification_lean/CertifyMathlib/NonHermitian/BauerFike.lean`, the root module is `CertifyMathlib.NonHermitian` (file `CertifyMathlib/NonHermitian.lean`), and the machine-readable record of every theorem, its axioms and the checks is `reverification_lean/results/mathlib_nonhermitian.json`. The toolchain is Lean 4.35.0 with Mathlib `v4.35.0`, as in `reverification_lean/README.md`.
+This document describes the Lean 4 formalization of the exact statements behind the non-Hermitian claim kind of CERTIFY-ED (roadmap items E-02 and N-13). The theorems are in `lean/CertifyMathlib/NonHermitian/BauerFike.lean`, the root module is `CertifyMathlib.NonHermitian` (file `CertifyMathlib/NonHermitian.lean`), and the machine-readable record of every theorem, its axioms and the checks is `lean/results/mathlib_nonhermitian.json`. The toolchain is Lean 4.35.0 with Mathlib `v4.35.0`, as in `docs/lean/README.md`.
 
-The statements are taken from the derivation document `docs/proofs/E-02_non_hermitian.md` of the code repository at commit 167940a on the branch `track/non-hermitian`, which starts from `dev/3.2` at fa86456. That branch is not yet part of `sources/archive_v5/`, so paths of the form `docs/...` and `certify_ed/...` in this document are relative to the root of the code repository at commit 167940a. The code is `certify_ed/nonhermitian.py`.
+The statements are taken from the derivation document `docs/proofs/E-02_non_hermitian.md` of the code repository at commit 167940a on the branch `track/non-hermitian`, which starts from `dev/3.2` at fa86456. That branch is not yet part of `archive_v5/`, so paths of the form `docs/...` and `certify_ed/...` in this document are relative to the root of the code repository at commit 167940a. The code is `certify_ed/nonhermitian.py`.
 
 ## What the derivation document states
 
@@ -80,7 +80,7 @@ Theorem 4 (a) is not stated because the Lean proof of (b) does not need it. Theo
 
 ## Commands
 
-From `reverification_lean/`, with the environment of `README.md`:
+From `lean/`, with the environment of `README.md`:
 
 ```
 lake build CertifyMathlib.NonHermitian

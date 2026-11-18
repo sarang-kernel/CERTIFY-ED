@@ -61,6 +61,6 @@ except four timings (`03_comparisons.md`).
 
 E0 shows that, on the matrices it draws, the floating-point bounds contain the values computed without the
 floating-point model, and that the builders agree with QuSpin to 3.2e-16. It does not show that the bounds hold for
-every matrix; that is the role of the derivations (`docs/math/`), and the worst-case rounding terms are far from what
+every matrix; that is the role of the derivations (`docs/project/math/`), and the worst-case rounding terms are far from what
 random tests can reach (decision D-35). The sizes are small (dimension at most 128 for part (a)), because Arb must
 compute every eigenvalue in ball arithmetic.

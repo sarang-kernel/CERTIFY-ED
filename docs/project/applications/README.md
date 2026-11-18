@@ -3,8 +3,8 @@
 This folder describes what CERTIFY-ED has computed outside its own test suite: the numerical lemmas of two published
 proofs (the pyrochlore crown of Kránitz and Penc and the AKLT lattices of Pomata and Wei), the benchmark ground energies
 certified with no floating-point assumption (experiment E7), the audit of the earlier package symveig and the comparison
-with it (experiment E8), and the independent verifier written in C. The mathematics they use is in `docs/math/`. Every
-path is relative to `sources/archive_v5/`; the code is `code/certify-ed/` at commit `a814d28` of `dev/3.2`.
+with it (experiment E8), and the independent verifier written in C. The mathematics they use is in `docs/project/math/`. Every
+path is relative to `archive_v5/`; the code is `code/certify-ed/` at commit `a814d28` of `dev/3.2`.
 
 | file | contents |
 |---|---|

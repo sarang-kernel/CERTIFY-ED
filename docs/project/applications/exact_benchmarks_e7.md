@@ -1,7 +1,7 @@
 # Experiment E7: benchmark ground energies with no floating-point assumption
 
 Experiment E7 re-derives four benchmark ground energies in exact arithmetic, through the exact symmetry-sector path of
-statement S6 (Lemmas 10 to 12 and Proposition 13 in `docs/math/theorems.md`). The records are
+statement S6 (Lemmas 10 to 12 and Proposition 13 in `docs/project/math/theorems.md`). The records are
 `code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json` (the 3.1.0 evidence run) and
 `code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json` (the 3.2.1 evidence run); the
 comparison of the two runs finds all 336 compared leaves identical except timings

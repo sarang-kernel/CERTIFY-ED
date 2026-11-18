@@ -23,7 +23,7 @@ in the S^z = 0 block of dimension 12870.
 
 E7 checks the same numbers as W4 by a different method with different hypotheses, so agreement between the two is a
 check of both. The exact layer itself is tested in the suite (the duplicated-vector case of decision D-46 included)
-and kept small, 713 lines of code in 3.2.1 (`docs/software/01_architecture.md`). One value is known in closed form:
+and kept small, 713 lines of code in 3.2.1 (`docs/project/software/01_architecture.md`). One value is known in closed form:
 the Majumdar-Ghosh chain at J2 = 0.5 has the exact ground energy -7.5 for N = 20 in the units of the spec, a classical
 result independent of any computation here. Its certified interval must contain -7.5, and it does in every run: the
 distance of the claimed value from -7.5 is just inside the exact radius (checked for this document in exact rational

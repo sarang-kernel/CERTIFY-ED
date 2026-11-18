@@ -53,14 +53,14 @@ E8 records, which run alone.
 ## The 3.1.0 run and its first attempt
 
 3.1.0 is the version built after the independent review of 21 October 2026: it fixes the review's findings
-(`docs/failures/03_review_and_derivation_findings.md`), adds the scope framework of decision D-49 and the named
+(`docs/project/failures/03_review_and_derivation_findings.md`), adds the scope framework of decision D-49 and the named
 sectors of E9, and was the first version whose evidence run was made on the Windows workstation. The first attempt, at
 commit `ada1362`, ran from 10:28 to 13:56 on 22 October 2026. The tests step reported 1 failed, 536 passed and 1
 skipped; E2, E4 and E6 failed after 5.4 s, 5.0 s and 155.9 s; the number scripts then failed or were skipped for lack
 of records. All four failures were portability defects of the 3.1.0 code on Windows and none was a certified
 statement: a SciPy 1.17.1 change in how `LinearOperator.matmat` calls a producer's matrix-vector function, the
 POSIX-only module `resource` used for the memory caps of E2 and E4, and a mutation copy that left out files six tests
-read (`docs/failures/04_failed_runs_and_attempts.md` and `results/run_full_20261022_attempt1/ATTEMPT_NOTE.md`). The
+read (`docs/project/failures/04_failed_runs_and_attempts.md` and `results/run_full_20261022_attempt1/ATTEMPT_NOTE.md`). The
 steps that ran are valid records of that commit, but under decision D-44 an evidence run must be one commit for every
 step, so the attempt was kept as a record and superseded. The tag `v3.1.0` was moved to the fixed commit `e860a83`
 before it was published.
@@ -69,7 +69,7 @@ The second run completed every step at the single source `acbef11af991c860`, wit
 both number scripts passed every check. After the run, filling the manuscript's evidence pointers found four places
 where the text and the code disagree (INT-01 to INT-04); decision D-57 kept the run as it stands, because none of them
 changes a statement or status, and recorded them as known issues of 3.1.0
-(`docs/failures/02_integration_findings.md`). This run is the cited evidence of the manuscript. Its comparison with
+(`docs/project/failures/02_integration_findings.md`). This run is the cited evidence of the manuscript. Its comparison with
 the Linux 3.0.0 run is the two-stack evidence for 3.1.0 (`03_comparisons.md`).
 
 ## The 3.2.0 run and the E4 crash

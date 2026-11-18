@@ -91,5 +91,5 @@ correct result.
 E1 shows that, on these 13 mechanisms, the certificate detects errors that the two common practices miss, and that it
 says where a model error lies. It does not measure how often such errors occur in published work; that would need the
 practice survey (decision D-50), which counts what papers report, not what errors they contain. The cases are on one
-small chain; the planted-error corpus (`docs/software/08_tests_and_mutation.md`) extends the same idea to 60 cases on
+small chain; the planted-error corpus (`docs/project/software/08_tests_and_mutation.md`) extends the same idea to 60 cases on
 three model families.

@@ -17,7 +17,7 @@ The script flattens the `data.json` of every experiment present in both runs int
 `explained`, `timing`, `missing`, `MISMATCH`). It prints a summary per experiment and per class, writes one CSV row
 per leaf, and exits with 1 when a leaf is a `MISMATCH`. The classes, their order and the two limits of the instrument
 (a tolerance divided by max(1, |A|), and `EXPLAINED` rules that match by path) are described in
-`docs/experiments/03_comparisons.md`. Run A is the older run: in the archived files `compare_vs_<run A>.csv` lie in
+`docs/project/experiments/03_comparisons.md`. Run A is the older run: in the archived files `compare_vs_<run A>.csv` lie in
 the directory of run B.
 
 The comparison of the 3.1.0 run with the 3.2.1 run was made again from the archived records:
@@ -52,7 +52,7 @@ four kinds (`radius`, `array_hash`, `body_hash`, `status`). Its `RESULTS.md` (63
 certify-ed) has the same content as the committed one, and `results.json` differs from the committed one only by a
 final newline; both are tracked files, so the run leaves them marked as modified in the checkout. The verifier run
 alone on `verifier/validation/certs/heis10_correct.json` with the operator of `corpus/cases/heis10_correct` printed
-`verdict: PASS` with no failed check. The validation and its limits are described in `docs/software/09_verifier.md`.
+`verdict: PASS` with no failed check. The validation and its limits are described in `docs/project/software/09_verifier.md`.
 
 ## The derivations of docs/proofs
 
@@ -119,5 +119,5 @@ python examples\04_applications.py
 
 The first needs QuSpin (`01_environment.md`); the fourth runs the two applications on their quick instances, and its
 docstring notes that the S = 1/2 crown certificate takes about 13 minutes through
-`certify_ed.apps.pyrochlore.spin_half.certify_crown`. The examples are described in `docs/software/04_api.md`. They
+`certify_ed.apps.pyrochlore.spin_half.certify_crown`. The examples are described in `docs/project/software/04_api.md`. They
 were not run again for this documentation.

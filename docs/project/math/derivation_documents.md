@@ -166,7 +166,7 @@ $\min(\rho, \varepsilon^*)$ in place of $(w + \sqrt{w^2 + 4\rho^2})/2$. In the 3
 experiments E3 and E4 that moved with this change shrank by less than $10^{-9}$ relative
 (`code/certify-ed/RESULT_evidence_run_3.2.1.md`), while the whole-spectrum half-widths of degenerate levels in
 experiment E8 became visibly smaller (for example 2.73e-12 against 4.42e-12 for the periodic Heisenberg chain at L = 12,
-`docs/applications/symveig_e8.md`); no status changed.
+`docs/project/applications/symveig_e8.md`); no status changed.
 
 ### `thm2prime_eps-star.md`: Theorem 2'
 
@@ -573,7 +573,7 @@ derivation document; they remain marked UNVERIFIED (see the table at the end of 
 
 ## Lean status of every derivation document
 
-The Lean re-verification in `reverification_lean/` (repository certify-ed-project) states the statements of the derivation documents as Lean theorems on Mathlib. The columns give the Lean statement ids of `reverification_lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; every document keeps the status "Sarang's check pending".
+The Lean re-verification in `lean/` (the project record of this repository) states the statements of the derivation documents as Lean theorems on Mathlib. The columns give the Lean statement ids of `docs/lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; every document keeps the status "Sarang's check pending".
 
 | derivation document | Lean statements | Lean | level | findings |
 |---|---|---|---|---|

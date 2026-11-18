@@ -49,7 +49,7 @@ measure time or memory (decision D-44). `--out` with an existing run directory o
 the commit and the source fingerprint per step, and `--resume` keeps a finished step only if its computational source
 is unchanged; for E6 it also requires an unchanged test suite. After E6 the driver runs the rule-based classification
 of the surviving mutants (`experiments/e6_classify.py`). The commands that recreate every record are in
-`docs/reproduction/`.
+`docs/project/reproduction/`.
 
 ## Presets
 
@@ -105,4 +105,4 @@ Every statement identifier appears exactly once across the lists `in_scope`, `na
 scope block, and the standing out-of-scope quantities are listed in every certificate with their reason codes, so that
 a reader never has to guess what a certificate is silent about. Since `fix/3.1.1` (merged into 3.2),
 `Certificate.verify_scope()` checks this when a certificate is loaded (INT-02 in
-`docs/failures/02_integration_findings.md`).
+`docs/project/failures/02_integration_findings.md`).

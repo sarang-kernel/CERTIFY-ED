@@ -94,7 +94,7 @@ workstation. The library versions of the 3.0.0 run `run_full_20261021` were repr
 3.11, numpy 2.4.4, scipy 1.17.1, python-flint 0.9.0, QuSpin 1.0.1, h5py 3.16.0, matplotlib 3.10.9, mpmath 1.4.1).
 QuSpin 1.0.1 is installed with `--no-deps`, because its metadata requires the PyPI package `importlib`, a Python 2
 backport that does not install on Python 3, and its real dependencies are installed explicitly
-(`docs/reproduction/01_environment.md`). The two-stack rule for 3.1.0 is met by the Linux 3.0.0 run against the
+(`docs/project/reproduction/01_environment.md`). The two-stack rule for 3.1.0 is met by the Linux 3.0.0 run against the
 Windows 3.1.0 run: statements must agree, while digits that depend on the floating-point stack need not.
 
 ## D-55 (22 October 2026): the four v1 figures are not carried into ms_v4
@@ -119,7 +119,7 @@ commit or tag changes. The push needs a credential with write access.
 
 After the 3.1.0 evidence run (`run_full_20261022`, tag `v3.1.0` = `e860a83`), filling the manuscript's evidence
 pointers showed four places where text and code disagree (INT-01 to INT-04, described in
-`docs/failures/02_integration_findings.md`). None changes a statement or status of the run. The paper cites 3.1.0 with
+`docs/project/failures/02_integration_findings.md`). None changes a statement or status of the run. The paper cites 3.1.0 with
 these known issues; INT-02 (no check that the scope block lists every statement) and INT-03 (exported radii rounded to
 nearest) are fixed on the branch `fix/3.1.1`, which is neither merged into `release/3.1.0` nor tagged. INT-01 (the
 no-underflow hypothesis) and INT-04 (the text of Appendix A) were left to Sarang. Folding the fixes into `v3.1.0` and
@@ -152,7 +152,7 @@ with its own adversarial script. This second derivation is not a human check. A 
 strength of a proof document, while a looser correction may go in at once with a negative-control test. Prose remains
 Sarang's. The outcome at 3.2.0 was 22 documents, 0 violations in every executed check, and verdicts of 6 AGREES, 9
 AGREES-WITH-REMARKS, 5 GAP (proof text only; no certified bound affected) and 2 ERROR, both corrected by looser code
-(`docs/failures/03_review_and_derivation_findings.md`). Rejected were calling any of the results established before
+(`docs/project/failures/03_review_and_derivation_findings.md`). Rejected were calling any of the results established before
 Sarang's check, publishing derivations without the independent second derivation, and keeping the old Theorem 2
 constant.
 
@@ -172,7 +172,7 @@ The 3.2.0 run (`run_full_20261104`, tag `v3.2.0` = `55d9f61`, 22 h) completed ev
 memory cap. The cause was the new a-posteriori S3 residual (D-01 of the roadmap), which formed its row blocks on eight
 threads; under a cap on committed memory, an allocation failure inside SciPy's sparse product in a worker thread ends
 the process instead of raising `MemoryError`. Version 3.2.1 (tag `v3.2.1` = `f3c478b`) makes one thread the default,
-and the 3.2.1 run `run_full_20261105` completed every step (`docs/experiments/02_evidence_runs.md` gives the numbers).
+and the 3.2.1 run `run_full_20261105` completed every step (`docs/project/experiments/02_evidence_runs.md` gives the numbers).
 The decision is that the 3.2 evidence run is `run_full_20261105`; the 3.2.0 run is kept as a record; the manuscript
 macros of archive v5 are generated from the 3.2.1 run, with the 3.1.0 macros kept beside them so that the cited run is
 switched by swapping two directories; and which version the paper cites is Sarang's decision. The tighter E3 bounds

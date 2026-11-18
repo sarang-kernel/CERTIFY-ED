@@ -46,7 +46,7 @@ The number script of `run_full_20261018` failed two checks. "All experiments ran
 failed because the run crossed a commit (`764a9e8` to `bcc6f12`) that changed only the command line: the check
 compared commits, not the code that can change a number. "E2: the N=22 momentum block has the largest S1 time" failed
 because the check compared runs instead of blocks, and failed when the same block's run with S3 took longer than its
-run without. The first led to the computational source fingerprint (decision D-44, `docs/software/05_provenance.md`),
+run without. The first led to the computational source fingerprint (decision D-44, `docs/project/software/05_provenance.md`),
 the second was corrected in the check. At the same time the mutation workspaces were found to lack `examples/`, which
 the suite runs, so the E6 baseline would have failed; they were made to include it.
 
@@ -106,7 +106,7 @@ thread the default, with `CERTIFY_ED_RESIDUAL_THREADS` to opt in, and pins with 
 on the thread count. The 3.2.1 run repeated every step (decision D-61), and its comparison with the 3.2.0 run has no
 MISMATCH and no float difference. The same 3.2.0 run's E2 record shows, for the same matrix, a certifier child that
 ended with an empty error text; this is consistent with the same crash, but the record does not state the cause
-(`docs/experiments/02_evidence_runs.md`). Decision D-61 rejected keeping eight threads by default, because the crash
+(`docs/project/experiments/02_evidence_runs.md`). Decision D-61 rejected keeping eight threads by default, because the crash
 depends on the kind of memory cap and gives no message. A memory gate that uses the process cap when no memory budget
 is given remains open (`05_open_items.md`).
 
@@ -144,5 +144,5 @@ One test fails under a particular temporary directory, not because of the code.
 `tests/test_driver.py::test_reproduce_parallel_resume_and_numbers` spawns two experiments, which failed within 3 s
 when pytest used the default temporary directory under `AppData`; with `--basetemp` in a writable working folder the
 test passes, and `certify-ed reproduce --only E1,E3` succeeds on its own
-(`review/completion/RESULT_independent_check.md`). The reproduction commands in `docs/reproduction/` therefore pass
+(`review/completion/RESULT_independent_check.md`). The reproduction commands in `docs/project/reproduction/` therefore pass
 `--basetemp`.

@@ -311,7 +311,7 @@ with a disjoint interval (pigeonhole).
 
 **Implementation.** `spectrum.enclose_spectrum` (with `spectrum.merge_intervals`). The exact check of the block
 structure is what symveig 1.0.0 lacked (finding P2), and the count condition replaces symveig's unproved multiplicities
-(finding P1); see `docs/applications/symveig_e8.md`.
+(finding P1); see `docs/project/applications/symveig_e8.md`.
 
 **Status.** Marked UNVERIFIED in the manuscript scaffold; no derivation document. Proposition 16 and the S7 statement
 rest on it.
@@ -372,7 +372,7 @@ which every eigenvalue appears twice.
 **Implementation.** `exact_sectors.orbit_columns`, `exact_sectors.sector_integer_matrix`,
 `exact_sectors.check_commutes`, `exact_sectors.exact_count_below`. Non-abelian groups are allowed when every irreducible
 representation met is one-dimensional, for example momentum 0 or $\pi$ with reflection and spin flip; this is how the
-crown application works (`docs/applications/crown_kranitz_penc.md`).
+crown application works (`docs/project/applications/crown_kranitz_penc.md`).
 
 **Status.** Marked UNVERIFIED; no derivation document.
 
@@ -669,7 +669,7 @@ manuscript; their status rows are in [derivation_documents.md](derivation_docume
 
 ## Lean status of every result
 
-The Lean re-verification in `reverification_lean/` (repository certify-ed-project) states the results below as Lean theorems on Mathlib. The columns give the Lean statement ids of `reverification_lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; the column "Sarang's check" above is unchanged.
+The Lean re-verification in `lean/` (the project record of this repository) states the results below as Lean theorems on Mathlib. The columns give the Lean statement ids of `docs/lean/VERIFICATION_REPORT.md`, whether the whole result has a Lean counterpart, its level (K2: accepted by the Lean kernel and by the independent kernel nanoda; K+: accepted by the Lean kernel and replayed by leanchecker) and the findings of that report that concern it. A Lean level is not the check by a person that rule D-12 asks for; the column "Sarang's check" above is unchanged.
 
 | result | Lean statements | Lean | level | findings |
 |---|---|---|---|---|

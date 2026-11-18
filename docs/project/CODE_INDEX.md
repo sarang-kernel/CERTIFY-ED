@@ -1,11 +1,10 @@
 # Code index
 
 This index lists every program file of the certify-ed repository at commit `a814d28` (revision `HEAD` of
-`sources/archive_v5/code/certify-ed`): 317 files ending in `.py`, `.c` or `.sh`, with 62133 lines in all. It is
-written by `tools/codeindex/make_code_index.py` from the committed files, and
-`python tools/codeindex/make_code_index.py --check` reports whether it is up to date. Apart from the introductions of
-the sections, which are part of the generator, and the sentences of `tools/codeindex/purposes.py`, every entry is
-taken from the files.
+`archive_v5/code/certify-ed`): 317 files ending in `.py`, `.c` or `.sh`, with 62133 lines in all. It is written by
+`tools/codeindex/make_code_index.py` from the committed files, and `python tools/codeindex/make_code_index.py --check`
+reports whether it is up to date. Apart from the introductions of the sections, which are part of the generator, and
+the sentences of `tools/codeindex/purposes.py`, every entry is taken from the files.
 
 The columns are the following. Lines is the number of lines of the committed file. What it does is the first sentence
 of the module docstring; for the 25 files listed in `tools/codeindex/purposes.py` it is a sentence written by reading
@@ -19,7 +18,7 @@ a package module, the statement ids S1 to S8 the docstring names and, for the ex
 experiment ids E0 to E10 it names; the ids show what a file says it serves and are not the result of a dependency
 analysis. Fingerprint says whether the file counts in the source fingerprint of `certify_ed/provenance.py` (`source`),
 is excluded from it by `NON_COMPUTATIONAL` (`excluded`), counts in the test fingerprint (`tests`), or is outside both
-(`none`); see `docs/software/05_provenance.md`.
+(`none`); see `docs/project/software/05_provenance.md`.
 
 Of these program files, 76 count in the source fingerprint, 37 are excluded by the 27 entries of `NON_COMPUTATIONAL`,
 75 count in the test fingerprint and 129 are outside both.

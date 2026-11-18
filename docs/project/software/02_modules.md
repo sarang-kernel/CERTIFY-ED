@@ -2,7 +2,7 @@
 
 This document gives the role of every module of the package `certify_ed`, grouped by what it does, at `a814d28` of
 `code/certify-ed/` (computationally identical to tag `v3.2.1`). The roles are taken from the module docstrings and
-from `report/04_software.md`; `docs/CODE_INDEX.md` lists every file with its line count, its definitions and the files
+from `report/04_software.md`; `docs/project/CODE_INDEX.md` lists every file with its line count, its definitions and the files
 it reads and writes where the code names them, and `code/certify-ed/docs/api.md` lists every public function with its
 signature. The last column says whether the module is part of the computational source hash (`05_provenance.md`): a
 module marked "no" is listed in `NON_COMPUTATIONAL` in `certify_ed/provenance.py` because it cannot change a status, a

@@ -9,7 +9,7 @@ program recomputed the number from the model specification and compared it with 
 comparison itself is made in exact rational arithmetic inside the program. The record values are those of the
 3.2.1 evidence run, `code/certify-ed/results/run_full_20261105`; for every compared field the 3.1.0 evidence run `code/certify-ed/results/run_full_20261022` holds the same
 values (JSON equality with the timing fields removed, checked by `apps_export/run_all.py`: true for E7, E9 and E10).
-Paths of record files are relative to `sources/archive_v5/`; every other path is relative to `reverification_lean/`.
+Paths of record files are relative to `archive_v5/`; every other path is relative to `lean/`.
 
 The lemmas that turn the E10 counts into the certified statement are, in addition, written as theorems on
 Mathlib in the module `CertifyMathlib.Apps` (section 9), and the kernel equality on which every E10 number rests
@@ -25,10 +25,10 @@ comparison with the Python builder only, the Python environment `certifyed-311` 
 `PYTHONPATH`. They write below `results/apps/` and `work/apps/` (git-ignored).
 
 ```
-cd reverification_lean
+cd lean
 lake build CertifyApps ceapps
 .lake\build\bin\ceapps.exe selftest > results\apps\selftest.txt
-set A=..\sources\archive_v5
+set A=..\..\archive\archive_v5
 set PYTHONPATH=%A%\code\certify-ed
 set PYTHONDONTWRITEBYTECODE=1
 python apps_export\compare_models.py --exe .lake\build\bin\ceapps.exe --code %A%\code\certify-ed --work work\apps\export --out results\apps\compare_models.json
@@ -98,7 +98,7 @@ is never below the exact sum. Section 3 checks the matrices themselves.
 
 Two further theorems enter: Theorem 1 of certify-ed (for a nonzero vector `v`, some eigenvalue lies within
 `|| H v - mu v || / || v ||` of `mu`), used for the E7 and spin-1 enclosures, and the bordered-pencil lemma
-for E10 (`docs/math/exact_layer.md` and `docs/applications/aklt_pomata_wei.md` describe them). Both are Lean
+for E10 (`docs/project/math/exact_layer.md` and `docs/project/applications/aklt_pomata_wei.md` describe them). Both are Lean
 theorems on Mathlib: Theorem 1 is `CertifyMathlib.Enclosure.residual_enclosure` (`ENCLOSURE.md`), and the
 bordered-pencil lemma is `CertifyMathlib.Apps.bordered_pencil`, with its perturbed form `eta_count` (section 9).
 The vectors are computed here by inverse iteration, first in floating point and then with integer arithmetic
@@ -178,7 +178,7 @@ Both full chains are equal entry by entry (`results/apps/compare_chain20.json`):
 ## 4 E7: the four benchmark ground energies
 
 Why. E7 is the case in which the exact layer of certify-ed reaches realistic sizes, blocks of dimension 9252 and
-12870 after symmetry reduction (`docs/applications/exact_benchmarks_e7.md`). Each record claims that the
+12870 after symmetry reduction (`docs/project/applications/exact_benchmarks_e7.md`). Each record claims that the
 recorded `E0` is within the recorded exact radius of the lowest eigenvalue of the block, and that exactly one
 eigenvalue of the block lies below the recorded count point (`experiments/e7_exact_benchmarks.py`,
 `certify_ed.exact_sectors.exact_recheck_sector_lowest`). An error in the symmetry reduction, in a count or in a
@@ -218,7 +218,7 @@ stated.
 ## 5 E9: the lower bound for the spin-1/2 crown
 
 Why. The certified bound `lambda_min(H_crown) >= -0.5501582988212038` turns the reduced-model value of
-Kránitz and Penc into a statement with no floating-point assumption (`docs/applications/crown_kranitz_penc.md`).
+Kránitz and Penc into a statement with no floating-point assumption (`docs/project/applications/crown_kranitz_penc.md`).
 The record claims that at the recorded shift no eigenvalue lies below the shift minus `delta` in any of the 128
 sectors of the `S^z = 0` space (`certify_ed/apps/pyrochlore/spin_half.py`). A count of 1 in any sector, or a
 residual bound larger than the recorded one, would mean that the recorded bound is not reproduced.
@@ -285,7 +285,7 @@ and are not targets.
 
 Why. For each lattice the spectral-gap criterion of Pomata and Wei needs `eta < 1/z`, or
 `4 eta_perp + 2 eta_par < 1` for the square-octagon lattice, and certify-ed replaced the floating-point `eta` by
-an upper bound `sqrt(t')` in exact arithmetic (`docs/applications/aklt_pomata_wei.md`,
+an upper bound `sqrt(t')` in exact arithmetic (`docs/project/applications/aklt_pomata_wei.md`,
 `certify_ed/apps/aklt/eta.py`). The record states, at its threshold `t`, the number of positive pivots, the lower
 bound on the unit cosines, `t'` and the criterion. A recomputed count above the unit-cosine bound, or a `t'`
 that does not decide the criterion, would mean the record is not reproduced.

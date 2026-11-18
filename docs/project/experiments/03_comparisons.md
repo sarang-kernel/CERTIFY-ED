@@ -110,7 +110,7 @@ states, and each was checked against the CSV for this document.
 
 `code/certify-ed/RESULT_evidence_run_3.2.1.md` explains the E6 leaf differently, as the mutation driver copying every
 tracked file instead of five folders; that change was made for 3.1.0 after its first attempt
-(`docs/failures/04_failed_runs_and_attempts.md`), so both compared runs already copied every tracked file, and the
+(`docs/project/failures/04_failed_runs_and_attempts.md`), so both compared runs already copied every tracked file, and the
 count differs because the repository grew. The two E3 bounds are tighter, and a tighter bound is admitted only on the
 strength of a proof document (decision D-59). The document `docs/proofs/D-01_sparse-residual.md` has an independent
 verdict of AGREES-WITH-REMARKS and Sarang's check is pending; decision D-61 records that if his check finds a gap,

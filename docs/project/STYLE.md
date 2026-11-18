@@ -1,6 +1,6 @@
-# STYLE.md: writing rules for the documents of this repository
+# docs/project/STYLE.md: writing rules for the documents of this repository
 
-These rules hold for every Markdown document under docs/, blog/, reverification_lean/ and for CHANGELOG_PROJECT.md.
+These rules hold for every Markdown document under docs/, blog/, lean/ and for docs/project/CHANGELOG_PROJECT.md.
 The script tools/lint_docs.py rejects a document that breaks rules 1 to 5; rules 6 to 9 are checked by reading.
 
 Rule 1. No bullet points and no lists of any kind. No line may start with a dash, an asterisk, a plus sign, a bullet
@@ -34,7 +34,7 @@ have changed the plan), what exactly was done (object, model, sizes, settings), 
 "Because it was requested" or "for completeness" alone is not a reason.
 
 Rule 7. Copy every number exactly from its source file and cite that file once, by its path relative to
-sources/archive_v5/ (for example code/certify-ed/RESULT_evidence_run_3.2.1.md). A number that is in no source is not
+archive_v5/ (for example code/certify-ed/RESULT_evidence_run_3.2.1.md). A number that is in no source is not
 written. Keep the difference between a certified bound, a floating-point estimate and a published value.
 
 Rule 8. Code, file names, record fields and commands go in backticks or fenced blocks. Everything needed to recreate

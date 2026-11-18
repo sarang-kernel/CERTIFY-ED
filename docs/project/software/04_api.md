@@ -3,7 +3,7 @@
 This document describes the main entry points of the Python interface of certify-ed at `a814d28`, with the patterns of
 use that the code repository documents. The complete list of public names with their signatures is generated from the
 docstrings by `docs/make_api.py` into `code/certify-ed/docs/api.md`; the runnable versions of the snippets below are
-`examples/01` to `examples/04` (`docs/CODE_INDEX.md`). Facts are from `code/certify-ed/README.md` and
+`examples/01` to `examples/04` (`docs/project/CODE_INDEX.md`). Facts are from `code/certify-ed/README.md` and
 `code/certify-ed/docs/api.md`.
 
 ## Specifying the model

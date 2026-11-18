@@ -79,4 +79,4 @@ The hashes in this table were recomputed from the commits by `tools/codeindex/so
 each agrees with the `source_hash` and `tests_hash` in the `manifest.json` of the run named in the last column. The
 script reads `NON_COMPUTATIONAL` from `provenance.py` as committed at the given revision, lists the blobs with `git
 ls-tree`, writes them in the form of `git ls-files -s` and hashes them in index order; it never checks out a file or
-touches the index, so it can be run on the read-only source tree. The command is in `docs/reproduction/README.md`.
+touches the index, so it can be run on the read-only source tree. The command is in `docs/project/reproduction/README.md`.

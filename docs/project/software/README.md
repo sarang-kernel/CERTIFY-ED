@@ -18,14 +18,14 @@ this folder changes the code repository.
 | `08_tests_and_mutation.md` | the test suite and its growth, mutation analysis (E6), the planted-error corpus |
 | `09_verifier.md` | the independent C verifier: what it recomputes, what it does not, how to build it, how it was validated |
 
-After archive v5 the code repository gained three branches, described in `sources/SOURCES.md` and in the sections
+After archive v5 the code repository gained three branches, described in `docs/project/sources/SOURCES.md` and in the sections
 [3.2.2], [3.2.3] and [3.3.0.dev0] of their `CHANGELOG.md`; the documents of this folder do not yet describe them. `fix/3.2.2`
 (tag `v3.2.2`, computational source hash `746958b63a65b43e`) refuses to bound outside the range of the floating-point
 guards (reason code `FP_GUARD_RANGE`), gates statements by the process memory cap when no budget is given, and adds the
 pinning tests of the E6 survivors and property tests against exact rational arithmetic. `fix/3.2.3` (tag `v3.2.3`,
 computational source hash `bfc115e824386443`) no longer lets the process memory cap gate S1 (an explicit budget still
 does) and makes the mutation analysis copy the repository next to it; its evidence run `run_full_20261112b` is complete
-(`sources/runs/`). `dev/3.3` (version
+(`docs/project/sources/runs/`). `dev/3.3` (version
 3.3.0.dev0) adds, on top of 3.2.3, the non-Hermitian claim kind of E-02 (`certify-ed nonhermitian`, UNVERIFIED), the
 command `certify-ed verify CERT.json --external CMD`, which runs an external verifier and records its verdict in a
 separate file without changing a status, the prototype of error-free products (`certify_ed/ozaki.py`, not the default),
@@ -34,7 +34,7 @@ one worker by default), performance regression tests behind `pytest --perf`, and
 N-12.
 
 A reader new to the project can take them in order. A reader who wants to run the software can start with
-`03_cli_and_presets.md` and `04_api.md`, and then follow `docs/reproduction/`. `docs/CODE_INDEX.md` lists every
+`03_cli_and_presets.md` and `04_api.md`, and then follow `docs/project/reproduction/`. `docs/project/CODE_INDEX.md` lists every
 program file of the code repository with what it does, the files it reads and writes where the code names them, and
 the statements or experiments its docstring names.
 

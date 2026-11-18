@@ -219,7 +219,7 @@ CERTIFY-ED computed. It is recorded as a possible future note to the authors (`r
 
 ## Reproducing
 
-From the root of the code clone (see `docs/math/README.md`): `python run.py --only E10` runs the experiment;
+From the root of the code clone (see `docs/project/math/README.md`): `python run.py --only E10` runs the experiment;
 `certify_ed.apps.aklt.certify_lattice(name)` with one of the names `"star"`, `"square_octagon_perp"`,
 `"square_octagon_par"`, `"cross"`, `"decorated_honeycomb"`, `"decorated_square"` certifies one lattice, and
 `certify_ed.apps.aklt.kernel.kernel_check` runs the kernel confirmation. E10 took 5848 s in the 3.2.1 run

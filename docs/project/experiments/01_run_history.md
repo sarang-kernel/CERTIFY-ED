@@ -55,7 +55,7 @@ and one step with uncommitted changes, although the computational files did not 
 `code/certify-ed/RESULT_candidate_run.md` gives the cause: the exclusion list `NON_COMPUTATIONAL` was extended while
 the run was in flight, the running process computed each step's hash with the list it had imported at its start, and a
 post-processing script created in `experiments/` during the last step made that step's tree dirty. Both facts were
-reproduced after the run. The lesson, recorded in `docs/software/05_provenance.md`, is that an evidence run must be
+reproduced after the run. The lesson, recorded in `docs/project/software/05_provenance.md`, is that an evidence run must be
 made from one commit with no edits in flight. The record-by-record comparison of its E7 to E10 records with the 3.0.0
 run found no MISMATCH leaf: every statement, count, pivot sign, status and string agreed, and only timings,
 stack-dependent bounds within their tolerance and the residual statistics of E8 differed
@@ -64,7 +64,7 @@ stack-dependent bounds within their tolerance and the residual statistics of E8 
 ## The 3.1.0 runs of 22 October 2026
 
 The first attempt, `run_full_20261022_attempt1` at commit `ada1362`, failed four steps (the tests, E2, E4 and E6)
-because of portability defects of 3.1.0 on Windows; `docs/failures/04_failed_runs_and_attempts.md` describes each. Its
+because of portability defects of 3.1.0 on Windows; `docs/project/failures/04_failed_runs_and_attempts.md` describes each. Its
 successful steps are valid records of that commit but are superseded, because an evidence run must be one commit for
 every step. The second run, `run_full_20261022` at tag `v3.1.0` = `e860a83`, completed every step and is the 3.1.0
 evidence run, still the cited run of the manuscript. `02_evidence_runs.md` gives its steps.

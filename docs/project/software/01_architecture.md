@@ -4,7 +4,7 @@ This document describes what the software does and how its parts fit together, a
 `code/certify-ed/` (branch `dev/3.2` at `a814d28`, which carries the same computational source as tag `v3.2.1` =
 `f3c478b`). The module-by-module description is `02_modules.md`; the command line is `03_cli_and_presets.md`; the file
 formats are `06_formats_and_schema.md`. The mathematics behind each statement is in `code/certify-ed/docs/theory.md`
-and the derivation documents of `code/certify-ed/docs/proofs/`, and is summarised in `docs/math/` of this repository.
+and the derivation documents of `code/certify-ed/docs/proofs/`, and is summarised in `docs/project/math/` of this repository.
 Unless another file is named, facts are taken from `code/certify-ed/README.md`, `code/certify-ed/docs/presets.md` and
 `report/04_software.md`.
 
@@ -85,7 +85,7 @@ non-standard environment (flush-to-zero or denormals-are-zero flags, a non-defau
 BLAS), every certified floating-point statement is downgraded to INCONCLUSIVE. The bounds also assume that no operand
 underflows: since 3.2 the code scans its inputs and radii for nonzero magnitudes below 2^-900 and refuses CERTIFIED
 with the reason code `UNDERFLOW_RISK` when it finds one (known issue INT-01,
-`docs/failures/02_integration_findings.md`), and the subnormal intermediate residual entries that ordinary LAPACK
+`docs/project/failures/02_integration_findings.md`), and the subnormal intermediate residual entries that ordinary LAPACK
 output produces are covered by additive terms in the radii (INT-05). Interval endpoints and margins are rounded one
 unit in the last place outward (`fp.sub_down`, `fp.add_up`), after the gap found under decision D-46.
 
@@ -164,4 +164,4 @@ lowest eigenvalue of the 18-site crown cluster of Kránitz and Penc (arXiv:2601.
 lower bound on the ground-state energy of the pyrochlore Heisenberg antiferromagnet. `apps/aklt` certifies upper
 bounds on the quantity η in the spectral-gap criteria of Pomata and Wei (arXiv:1911.01410) for two-dimensional AKLT
 models, in exact arithmetic, and checks the kernel lemma exactly where the size allows. Experiments E9 and E10 run
-them (`docs/experiments/`), and the application documents of this repository describe the results.
+them (`docs/project/experiments/`), and the application documents of this repository describe the results.

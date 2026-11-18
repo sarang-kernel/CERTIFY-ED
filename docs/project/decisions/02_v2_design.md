@@ -3,7 +3,7 @@
 This file explains entries D-17 to D-31 of `project_docs/DECISIONS_LOG.md` (version 1.19). They were taken between
 September and 11 October 2026, while the version 2 core of CERTIFY-ED was written and its first experiments were run.
 Every date and number below is from that file unless another file is named. The statements S1 to S6 are defined in
-`docs/software/01_architecture.md`; the experiments E0 to E10 in `docs/experiments/README.md`.
+`docs/project/software/01_architecture.md`; the experiments E0 to E10 in `docs/project/experiments/README.md`.
 
 ## D-17 (25 September to 4 October 2026): a revised manuscript and a v2 core, as an exception to D-10
 

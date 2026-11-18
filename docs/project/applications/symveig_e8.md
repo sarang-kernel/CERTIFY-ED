@@ -63,7 +63,7 @@ and the matrix is made Hermitian silently (P8).
 
 The audit raises a question that any whole-spectrum tool must answer: under which conditions may one say that a list of
 intervals contains every eigenvalue, and that each interval contains exactly a stated number of them? The answer used by
-CERTIFY-ED is Proposition 9 (`docs/math/theorems.md`). It needs four things. First, if sectors are used, the block
+CERTIFY-ED is Proposition 9 (`docs/project/math/theorems.md`). It needs four things. First, if sectors are used, the block
 structure must be checked exactly: no stored entry may couple two different values of the conserved quantity (the check
 that P2 shows to be necessary). Second, each interval must carry a number of distinct eigenvalue indices, which for a
 single pair is Theorem 1 and for a cluster needs Theorem 2, and therefore a computed orthonormality defect $\eta < 1$
@@ -139,7 +139,7 @@ are the macros `EeightMedianRatioMin`, `EeightMedianRatioMax`, `EeightSlopeSymMe
 the models with degenerate levels (periodic chains and the two-dimensional lattices) are smaller in the 3.2.1 run, while
 the open chain, whose levels in these sectors are not degenerate, is unchanged. The widths of degenerate levels are
 cluster radii, and between the two versions the Theorem 2 term of the cluster radius changed from
-$(w + \sqrt{w^2 + 4\rho^2})/2$ to $\rho$, which is never larger (`docs/math/derivation_documents.md`, entry
+$(w + \sqrt{w^2 + 4\rho^2})/2$ to $\rho$, which is never larger (`docs/project/math/derivation_documents.md`, entry
 `thm2_polar-factor.md`). The comparison tool `experiments/compare_runs.py` files these leaves under "stack-dependent"
 (`code/certify-ed/results/run_full_20261105/compare_vs_run_full_20261022.csv`); no status changed.
 

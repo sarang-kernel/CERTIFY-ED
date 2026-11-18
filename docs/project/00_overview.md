@@ -14,7 +14,7 @@ and S3 results again in integer arithmetic with no floating-point assumption (S6
 complete spectrum (S7), and the number of eigenvalues in each cluster (S8). The software never runs the producer's
 code. Two applications use it to certify numbers that enter published proofs: the cluster eigenvalue of the pyrochlore
 bound of Kránitz and Penc, and the η criteria of the AKLT gap proofs of Pomata and Wei.
-`docs/software/01_architecture.md` describes the design.
+`docs/project/software/01_architecture.md` describes the design.
 
 The project is the work of Sarang Vehale, with Ritu Goel. Three of its rules govern how every document of this
 repository speaks about results. Under decision D-12, new mathematics counts as established only after Sarang Vehale
@@ -36,40 +36,40 @@ manuscript cites is still 3.1.0 until Sarang decides whether 3.2.1 replaces it.
 | 3.2.1 | 4 November 2026 | 3.2.0 with the S3 residual on one thread by default; evidence run `run_full_20261105` of 5 November 2026, the 3.2 evidence run (decision D-61) |
 
 The dates are those of the release sections of `code/certify-ed/CHANGELOG.md` and of the decision log.
-`CHANGELOG_PROJECT.md` at the root of this repository gives every recorded change of the project from its first work
-to 6 November 2026, and `blog/BLOG.md` tells the same history as a narrative.
+`docs/project/CHANGELOG_PROJECT.md` at the root of this repository gives every recorded change of the project from its first work
+to 6 November 2026, and `docs/blog/BLOG.md` tells the same history as a narrative.
 
 ## How the documents are organised
 
-The folder `docs/` holds the documentation of the project. `docs/math/` gives the mathematics behind the statements
-and the status of each result. `docs/applications/` describes the two applications to published proofs.
-`docs/software/` describes the software: its architecture, every module, the command line and the presets, the Python
+The folder `docs/` holds the documentation of the project. `docs/project/math/` gives the mathematics behind the statements
+and the status of each result. `docs/project/applications/` describes the two applications to published proofs.
+`docs/project/software/` describes the software: its architecture, every module, the command line and the presets, the Python
 interface, provenance and the source hash, the file formats and the JSON schemas, the importers, the test suite and
-mutation analysis, and the C verifier. `docs/experiments/` describes the experiments E0 to E10, every run directory of
-the archive, the three evidence runs and the comparisons between runs. `docs/decisions/` explains the 61 entries of
-the decision log. `docs/failures/` records every defect, failed run and open gap. `docs/reproduction/` gives the
-commands that recreate every result from the sources. `docs/CODE_INDEX.md` lists every program file of the code
+mutation analysis, and the C verifier. `docs/project/experiments/` describes the experiments E0 to E10, every run directory of
+the archive, the three evidence runs and the comparisons between runs. `docs/project/decisions/` explains the 61 entries of
+the decision log. `docs/project/failures/` records every defect, failed run and open gap. `docs/project/reproduction/` gives the
+commands that recreate every result from the sources. `docs/project/CODE_INDEX.md` lists every program file of the code
 repository with what it does, what it defines, the arguments of a script, the files it reads and writes where the code
 names them, the package modules it imports, its place in the source and test fingerprints, and the statements or
-experiments its docstring names. Outside `docs/`, `reverification_lean/` holds the Lean 4 re-verification: an exact
+experiments its docstring names. Outside `docs/`, `lean/` holds the Lean 4 re-verification: an exact
 checker of the certificates, kernel theorems about the arithmetic, formal proofs of the statements on Mathlib and the
-recomputed application numbers, with its own report `reverification_lean/VERIFICATION_REPORT.md`; what the
+recomputed application numbers, with its own report `docs/lean/VERIFICATION_REPORT.md`; what the
 formalization found in the derivation documents is in [failures/07_found_while_formalizing.md](failures/07_found_while_formalizing.md).
 
 Every number in these documents is copied from a file of the project archive v5 of 6 November 2026, unpacked in
-`sources/archive_v5/` (not tracked by git; see `sources/SOURCES.md`), and the file is named, by its path relative to
+`archive_v5/` (not tracked by git; see `docs/project/sources/SOURCES.md`), and the file is named, by its path relative to
 that folder. The code repository is `code/certify-ed/` in the archive: branch `dev/3.2` at `a814d28`, with the tags
 `v3.1.0` = `e860a83`, `v3.2.0` = `55d9f61` and `v3.2.1` = `f3c478b`, and the run records in
 `code/certify-ed/results/`. Nothing in this repository changes the code repository; in particular the computational
-source hash of the 3.2.1 run, `cb73dec3e4433a3b`, is still the hash of its head (`docs/software/05_provenance.md`).
+source hash of the 3.2.1 run, `cb73dec3e4433a3b`, is still the hash of its head (`docs/project/software/05_provenance.md`).
 
 ## Reading order
 
 A reader who wants to know what the software certifies and how far that can be trusted can read, in order, this
-overview, `docs/software/01_architecture.md`, `docs/experiments/README.md`, `docs/experiments/02_evidence_runs.md` and
-`docs/failures/README.md`. A reader who wants to check a particular claim can start from the experiment document that
+overview, `docs/project/software/01_architecture.md`, `docs/project/experiments/README.md`, `docs/project/experiments/02_evidence_runs.md` and
+`docs/project/failures/README.md`. A reader who wants to check a particular claim can start from the experiment document that
 produced it and follow its source files. A reader who wants to run the software or recreate a result can read
-`docs/software/03_cli_and_presets.md`, `docs/software/04_api.md` and then `docs/reproduction/README.md`, with
-`docs/CODE_INDEX.md` as the map of the code. A reader who wants to know why the project is shaped as it is can read
-`docs/decisions/README.md` and the decisions it points to. The mathematics and the applications are in `docs/math/`
-and `docs/applications/`.
+`docs/project/software/03_cli_and_presets.md`, `docs/project/software/04_api.md` and then `docs/project/reproduction/README.md`, with
+`docs/project/CODE_INDEX.md` as the map of the code. A reader who wants to know why the project is shaped as it is can read
+`docs/project/decisions/README.md` and the decisions it points to. The mathematics and the applications are in `docs/project/math/`
+and `docs/project/applications/`.

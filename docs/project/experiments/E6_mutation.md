@@ -11,7 +11,7 @@ add a test before a version is cited (the revisit clause of decision D-60).
 
 ## Design
 
-The script is `experiments/e6_mutation.py`; the method is described in `docs/software/08_tests_and_mutation.md`. It
+The script is `experiments/e6_mutation.py`; the method is described in `docs/project/software/08_tests_and_mutation.md`. It
 enumerates the mutation sites of the core modules (arithmetic, comparison, boolean, sign and constant mutations),
 samples 64 mutants with a fixed seed, copies the repository (every file git tracks) into a work folder per mutant, and
 runs the whole test suite against each mutant on two workers. A mutant is killed if any test fails or errors, and it
@@ -25,7 +25,7 @@ inspection" is left to a person (finding RA-25).
 The baseline is the control: if the unmutated copy fails the suite, the copy is broken and every kill would be
 meaningless. The first 3.1.0 attempt showed exactly this failure mode: the copy then held three folders, six tests
 read files outside them, the baseline failed, and the copy was changed to every tracked file
-(`docs/failures/04_failed_runs_and_attempts.md`). The classification is stamped with the source and test fingerprints
+(`docs/project/failures/04_failed_runs_and_attempts.md`). The classification is stamped with the source and test fingerprints
 of the tree it read, and the number scripts refuse an unstamped post-run file (MS-N03).
 
 ## Results
@@ -102,7 +102,7 @@ which a false FAILED (never a false CERTIFIED) is possible (`checker.py:535`), a
 would catch, such as the rounding scale of the label bound, the real embedding factor of a complex sector block, the
 amplitude vector of the fermion lowering letter, and the merge of a counted with an uncounted sector interval. None of
 them changes a statement of the evidence runs, because the records were produced by the unmutated code; the
-recommended tests belong to a 3.2.2 together with the verdicts (`docs/failures/05_open_items.md`). One suggestion of
+recommended tests belong to a 3.2.2 together with the verdicts (`docs/project/failures/05_open_items.md`). One suggestion of
 the worksheet does not cover every input. For `construct.py:220` (the constant 0 of `asym.nnz == 0` in the early
 return of `hermitian_part` changed to 1) it reads the mutant as equivalent, but when H - H^H has exactly one stored
 nonzero entry, which happens when one diagonal entry of H is not real, the mutant returns H unsymmetrised where the

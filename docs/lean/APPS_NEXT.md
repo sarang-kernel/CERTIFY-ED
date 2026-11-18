@@ -1,7 +1,7 @@
 # APPS_NEXT.md: the nine-coupling crown and the honeycomb AKLT criterion
 
 This part takes up the two applications that the archive names as open, roadmap items N-11 and N-12 of
-`docs/roadmap/DEVELOPMENT_ROADMAP.md` in this repository. N-11 asks whether the nine couplings that Kránitz and Penc
+`docs/project/roadmap/DEVELOPMENT_ROADMAP.md` in this repository. N-11 asks whether the nine couplings that Kránitz and Penc
 print for their headline spin-1/2 bound determine the crown Hamiltonian, and if so for a certified value of its lowest
 eigenvalue. N-12 asks which paper states a finite-size criterion for the AKLT model on the honeycomb lattice, which
 cluster that criterion needs, and whether the eta machinery of certify-ed can decide it on this machine. The code is
@@ -9,8 +9,8 @@ on the code branch `track/applications` (based on `dev/3.2` at `fa86456`):
 `certify_ed/apps/pyrochlore/nine_coupling.py`, `certify_ed/apps/aklt/estimate.py`, the builder `honeycomb_method3` in
 `certify_ed/apps/aklt/lattices.py`, the scripts `experiments/n11_crown_nine.py` and
 `experiments/n12_honeycomb_estimate.py`, and the tests `tests/test_apps_applications_next.py`. The records are in
-`results/apps_next/`; paths of archive files are relative to `sources/archive_v5/`, other paths to
-`reverification_lean/`.
+`results/apps_next/`; paths of archive files are relative to `archive_v5/`, other paths to
+`lean/`.
 
 The outcome in two sentences. The printed couplings determine the problem once the digit that the paper writes in
 parentheses is read as one more decimal, and at those couplings the lowest eigenvalue of the crown lies in

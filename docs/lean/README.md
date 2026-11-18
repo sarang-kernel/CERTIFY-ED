@@ -1,4 +1,4 @@
-# reverification_lean
+# lean
 
 Lean 4 re-verification of CERTIFY-ED. The toolchain is Lean 4.35.0 (file `lean-toolchain`), the same build that was
 used for the re-verification of the mm3x3 project, and Mathlib is the release `v4.35.0` (commit `56a005855ea1`), pinned
@@ -17,7 +17,7 @@ in `lake-manifest.json`.
 
 The Lean binaries are in `<lean-4.35.0-windows>\bin`
 (no elan). Put that directory and `C:\Program Files\Git\cmd` on `PATH`, set `MATHLIB_CACHE_DIR` to
-`reverification_lean\.mathlib_cache`, and run from this folder:
+`lean\.mathlib_cache`, and run from this folder:
 
 ```
 lake update                    # only once: fetches Mathlib v4.35.0 and its dependencies, then the prebuilt cache

@@ -37,7 +37,7 @@ The cost of the delay was named and accepted. The decision stands until he sets 
 
 ## D-04 (June to July 2026): no rebuttal to the SciPost referees
 
-The first CERTIFY-ED manuscript (v1, see `docs/00_overview.md`) received two rejecting reports at SciPost. The project
+The first CERTIFY-ED manuscript (v1, see `docs/project/00_overview.md`) received two rejecting reports at SciPost. The project
 did not send a point-by-point defence or write to the editor. Two independent experts had converged on the same
 criticism, and Sarang judged it to be correct. The entry would be reopened only if the editor invited a response.
 

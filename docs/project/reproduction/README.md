@@ -12,7 +12,7 @@ on the floating-point stack may differ (decision D-54, finding SS-19 of the revi
 when the comparison of the new run with the archived run (`04_checks.md`) has no `MISMATCH` leaf; equal digits are not
 required where the comparison classes them as stack-dependent, timing or sample-dependent. A version that the paper
 cites needs one full run at a single computational source (decision D-44), and the source fingerprint of
-`certify_ed/provenance.py` is how a run shows which source it used (`docs/software/05_provenance.md`).
+`certify_ed/provenance.py` is how a run shows which source it used (`docs/project/software/05_provenance.md`).
 
 ## Reading order
 
@@ -27,8 +27,8 @@ cites needs one full run at a single computational source (decision D-44), and t
 
 The archived run directories are in `code/certify-ed/results/` of the archive (the directory is not in the git bundle,
 because `results/` is ignored by git). Three of them are the evidence runs of the versions that matter for the paper;
-their step times are in `docs/experiments/02_evidence_runs.md` and the other runs in
-`docs/experiments/01_run_history.md`.
+their step times are in `docs/project/experiments/02_evidence_runs.md` and the other runs in
+`docs/project/experiments/01_run_history.md`.
 
 | Version | Tag and commit | Source and test fingerprints | Run | Role |
 |---|---|---|---|---|
@@ -47,7 +47,7 @@ fingerprints can also be computed from the commits alone, without a checkout, by
 python tools\codeindex\source_hash.py [REPO] [REV ...]
 ```
 
-With no argument it reads `sources/archive_v5/code/certify-ed` and the revisions `v3.1.0`, `v3.2.0`, `v3.2.1` and
+With no argument it reads `archive_v5/code/certify-ed` and the revisions `v3.1.0`, `v3.2.0`, `v3.2.1` and
 `HEAD`. It reads `NON_COMPUTATIONAL` from `certify_ed/provenance.py` as committed at each revision, lists the blobs
 with `git ls-tree`, writes them in the form of `git ls-files -s`, hashes them in index order and prints one line per
 revision; it never writes to the repository. On 10 November 2026 it printed the fingerprints of the table above for
@@ -58,14 +58,14 @@ the `manifest.json` of the run in the same row.
 ## What was run again for this documentation
 
 Every check below was made on 10 November 2026 on the Windows workstation, in a clone of
-`sources/certify-ed_dev-3.2.bundle` at `a814d28` (the same computational source as `v3.2.1`), with the archived
+`docs/project/sources/certify-ed_dev-3.2.bundle` at `a814d28` (the same computational source as `v3.2.1`), with the archived
 records copied out where a command writes into a run directory. No full run was made.
 
 | Check | Where described | Result |
 |---|---|---|
 | `python -m certify_ed.cli env` | `01_environment.md` | clean checkout, source fingerprint `cb73dec3e4433a3b` |
 | `tools/codeindex/source_hash.py` | this file | the fingerprints of the table above |
-| `tools/codeindex/make_code_index.py --check` | `docs/CODE_INDEX.md` | up to date with the commit `a814d28` |
+| `tools/codeindex/make_code_index.py --check` | `docs/project/CODE_INDEX.md` | up to date with the commit `a814d28` |
 | E1 alone, compared with the 3.2.1 run | `02_tests_and_experiments.md` | no `MISMATCH` |
 | compare 3.1.0 with 3.2.1 from the records | `04_checks.md` | CSV equal row for row to the archived one; 10 `MISMATCH`, exit code 1 |
 | `numbers` on a copy of the 3.2.1 run | `03_numbers_figures_documents.md` | 44/44 and 61/61 checks; macros and tables byte-identical, figure PDFs differ only in `/CreationDate` |

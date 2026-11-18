@@ -4,13 +4,13 @@ Three instruments measure the code itself rather than a physics result. The test
 what its docstring and its derivation document say. Mutation analysis (experiment E6) measures how many deliberate
 faults the test suite detects. The planted-error corpus measures whether the certifier, run as a black box, refuses to
 certify results that contain known errors. This document describes all three; the E6 results of every run are in
-`docs/experiments/E6_mutation.md`. Facts are from the test files in `code/certify-ed/tests/`, the run manifests,
+`docs/project/experiments/E6_mutation.md`. Facts are from the test files in `code/certify-ed/tests/`, the run manifests,
 `code/certify-ed/experiments/e6_mutation.py` and `code/certify-ed/corpus/README.md`.
 
 ## The test suite
 
 At `a814d28` the folder `tests/` holds 73 Python files (71 test modules, `conftest.py` and the reference helper
-`_enclosure_reference.py`) and a folder `fixtures/` with the generators of producer files. `docs/CODE_INDEX.md` lists
+`_enclosure_reference.py`) and a folder `fixtures/` with the generators of producer files. `docs/project/CODE_INDEX.md` lists
 every file with what it tests. By subject the modules fall into these groups, named here by their file stems.
 Statements and certificates: `test_certify`, `test_core_api`, `test_presets_scope`, `test_report`, `test_diagnostics`,
 `test_viewer`, `test_schema_conformance`, `test_fix_3_1_1`, `test_review_fixes`. Bounds against references:
@@ -49,7 +49,7 @@ field of the run's `manifest.json`.
 The skipped tests of the 3.2 runs are those whose optional dependency or platform is absent on the Windows workstation
 (for example the `-ffast-math` shared-library test, which needs gcc on Linux or macOS;
 `code/certify-ed/docs/reproducibility.md`). The single failure of the first 3.1.0 attempt is described in
-`docs/failures/04_failed_runs_and_attempts.md`. Linting is `ruff check` over `certify_ed`, `tests`, `experiments`,
+`docs/project/failures/04_failed_runs_and_attempts.md`. Linting is `ruff check` over `certify_ed`, `tests`, `experiments`,
 `conformance` and `corpus`, recorded as clean at the 3.2 integration (`code/certify-ed/RESULT_integration_3.2.md`),
 and a CI workflow (`.github/workflows/ci.yml`) runs the tests, the lint and the wheel build.
 
@@ -69,7 +69,7 @@ workers, and calls a mutant killed if any test fails or errors. A mutant that su
 suite or an equivalent mutant, a change with no observable effect. The baseline (the unmutated copy) must survive the
 suite first, otherwise the copy itself is broken. Since 3.1.0 the copy given to the mutants holds every tracked file
 (`git ls-files`), because the first 3.1.0 attempt showed that six tests read files outside the three folders copied
-before (`docs/failures/04_failed_runs_and_attempts.md`).
+before (`docs/project/failures/04_failed_runs_and_attempts.md`).
 
 Decision D-35 makes the score part of the evidence only together with a classification of the survivors.
 `experiments/e6_classify.py` sorts survivors by rule into five classes (a rounding allowance in a worst-case bound, a

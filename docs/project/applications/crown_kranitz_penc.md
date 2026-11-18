@@ -127,7 +127,7 @@ named sectors.
 
 ## Reproducing
 
-From the root of the code clone (see `docs/math/README.md`): `python run.py --only E9` runs the experiment, and
+From the root of the code clone (see `docs/project/math/README.md`): `python run.py --only E9` runs the experiment, and
 `certify_ed.apps.pyrochlore.spin_half.certify_crown`, `certify_ed.apps.pyrochlore.spin_one.printed_coupling_check` and
 `certify_ed.apps.pyrochlore.spin_one.landscape` are the three entry points (`code/certify-ed/docs/applications.md`). The
 full evidence run is `certify-ed reproduce --full --with-mutation --jobs 2 --out results/run_full_<date>`; E9 took 2101

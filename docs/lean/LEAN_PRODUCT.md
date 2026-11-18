@@ -1,7 +1,7 @@
 # LEAN_PRODUCT.md: the Lean checks as part of the product (Wave 6, items N-04 to N-06)
 
 This part of the re-verification joins the two programs and the theorems described in `CORE.md`, `ENCLOSURE.md` and
-`COUNTING.md` where the roadmap `docs/roadmap/DEVELOPMENT_ROADMAP.md` (Wave 6) says the link pays most. It has three
+`COUNTING.md` where the roadmap `docs/project/roadmap/DEVELOPMENT_ROADMAP.md` (Wave 6) says the link pays most. It has three
 products. The first is a one-command driver that runs the exact checker `cecheck` on any certify-ed certificate and
 reports a verdict per statement (item N-04), together with an optional path in the code that records such a verdict
 without basing any status on it. The second is a set of refinement theorems on Mathlib (item N-05): they show that
@@ -10,8 +10,8 @@ of Theorem 1 and of Sylvester's law of inertia hold for those data. The third, t
 floating-point model (item N-06), was not reached; section 5 says what each needs. The trust levels N, K and K2 are
 those of `README.md`: N is a compiled Lean program, K a theorem accepted by the Lean kernel with no `sorry`, no
 `native_decide` and no new axiom, and K2 the same theorem accepted again by the independent kernel nanoda. Numbers
-produced here are in `reverification_lean/results/lean_product.json`; paths without a folder of this repository are
-relative to `sources/archive_v5/`.
+produced here are in `lean/results/lean_product.json`; paths without a folder of this repository are
+relative to `archive_v5/`.
 
 A word on terms. A refinement theorem says that a program, or a function written to be evaluated, computes what a
 mathematical statement needs: if the function returns true on some data, the statement holds for the same data. The
@@ -20,11 +20,11 @@ keeps them as lists, a matrix as one list of (column, value) pairs per row.
 
 ## 1 How to run
 
-The commands assume the environment of `reverification_lean/logs/lean_env.json` and the Python environment
+The commands assume the environment of `lean/logs/lean_env.json` and the Python environment
 `certifyed-311` with the certify-ed source on `PYTHONPATH`, as in `CORE.md` section 1.
 
 ```
-cd reverification_lean
+cd lean
 lake build cecheck CertifyMathlib.Refine.Residual CertifyMathlib.Refine.Small CertifyMathlib.Refine.Inertia
 set CE=..\sources\archive_v5\code\certify-ed
 set PYTHONPATH=%CE%
@@ -38,7 +38,7 @@ python Drafts\Counting\nanoda_counting.py --lean-bin <toolchain bin> --work <scr
 With the code branch `track/external-verifier` installed, the same check runs from certify-ed:
 
 ```
-certify-ed verify CERT.json --bundle BUNDLE_DIR --external "python <path>\reverification_lean\Verify\cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"
+certify-ed verify CERT.json --bundle BUNDLE_DIR --external "python <path>\lean\Verify\cecheck_bundle.py {certificate} --bundle {bundle} --json {report}"
 ```
 
 ## 2 The verifier driver (N-04)
@@ -77,7 +77,7 @@ How the instrument was checked. First, the export was compared byte for byte wit
 certificates, and for the seven whose bundle holds an `operator.npz` the export with `--operator` was identical as
 well, except for the manifest, which names the source of the operator. Second, the
 mapping from checks to verdicts was run on the archived `cecheck` reports of the core part
-(`reverification_lean/results/core/genuine/`) through a stand-in program that returns the archived report, and gave
+(`lean/results/core/genuine/`) through a stand-in program that returns the archived report, and gave
 the categories of `CORE.md` section 5. Third, the built `cecheck` was run through the driver on the same nine
 certificates and on three forgeries, each of which changes one thing a checker must notice. The certificates were
 produced by `verifier/make_validation_set.py` of the code at `fa86456` (branch `dev/3.2`, two documentation commits
@@ -87,7 +87,7 @@ fixtures; their statuses are those of `code/certify-ed/verifier/validation/resul
 check withdraws the confirmation of its statement), checks that a missing `cecheck` gives ERROR, and runs the
 genuine certificate of the fixture `npz` and two of its forgeries end to end; its five tests pass.
 
-What happened (`reverification_lean/results/lean_product.json`, key `driver`).
+What happened (`lean/results/lean_product.json`, key `driver`).
 
 | certificate | exit code | integrity | S2 recorded, verdict | S3 recorded, verdict | S8 recorded, verdict | failed checks |
 |---|---|---|---|---|---|---|

@@ -70,7 +70,7 @@ commit. Decision D-27 had already changed S3 to check the count below the top cl
 over-counts, so that it fails after two factorizations instead of up to six. A later rerun of E5 was interrupted at
 the end of a working period on 4 October 2026, and its partial record made the number script fail; decision D-29 moved
 such records to a folder the number scripts never read and reran E5 at `536b814`, which reproduced the outcomes seed
-by seed (`docs/failures/04_failed_runs_and_attempts.md`).
+by seed (`docs/project/failures/04_failed_runs_and_attempts.md`).
 
 ## What the result shows and does not show
 

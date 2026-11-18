@@ -163,7 +163,7 @@ complex constant covers.
 ## Arithmetic that does not use the model
 
 Statement S6, the exact bracket of C-16 and the application computations (the crown bound and the AKLT values of $\eta$,
-`docs/applications/`) work with integers, rationals and Gaussian integers through python-flint; their only hypothesis is
+`docs/project/applications/`) work with integers, rationals and Gaussian integers through python-flint; their only hypothesis is
 that FLINT's integer and rational arithmetic, characteristic polynomials and factorizations are exact. Statement S7
 works on intervals whose ends are dyadic rationals $p \cdot 2^{-192}$ with outward rounding at every step (Lemma 17);
 the only floating-point steps are the reading of the input interval ends, which are taken as the exact binary64 values

@@ -55,7 +55,7 @@ both runs), `fig_two_stack` (the compare CSV in the directory of the first run),
 `fig_enclosure_geometry`, `fig_inertia_completeness`, `fig_rounding_accounting`, `fig_corpus_detection`,
 `fig_scope_vs_survey`, `fig_roadmap_progress`) read no run. On 10 November 2026 the six record-driven scripts were run
 in the clone with the two variables above and `--png-only`; every `numbers.json` they wrote is equal, key for key, to
-the one in `docs/figures_run_3.2.1/` of the repository. The copies in `docs/experiments/figures/` of this
+the one in `docs/figures_run_3.2.1/` of the repository. The copies in `docs/project/experiments/figures/` of this
 documentation are those files. `make_index.py --check` reported `INDEX.md is in sync` for `docs/figures/` and for
 `docs/figures_run_3.2.1/`.
 
@@ -120,4 +120,4 @@ python experiments\make_result_candidate.py <reference run> <candidate run> <com
 writes a short Markdown note with the statements and headline numbers of E7, E8, E9 and E10 of both runs, the
 stack-dependent bounds with their relative difference and the summary of the comparison CSV (`04_checks.md`). The
 statements of the `RESULT_evidence_run_*.md` files of the repository that the records do not support are listed in
-`docs/failures/06_found_while_documenting.md`.
+`docs/project/failures/06_found_while_documenting.md`.

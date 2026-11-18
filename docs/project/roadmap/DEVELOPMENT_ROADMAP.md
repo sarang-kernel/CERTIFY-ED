@@ -5,8 +5,8 @@ to 4) with four further waves. It was written on 11 November 2026, after the 3.2
 Lean re-verification of this repository. Its inputs are the item list of the expansion roadmap
 (`project_docs/roadmap/ROADMAP_expansion_items.csv`), the open items of
 [../failures/05_open_items.md](../failures/05_open_items.md), the findings L-1 to L-11 and the list of what is not
-formalized in `reverification_lean/VERIFICATION_REPORT.md`, and the applications that the archive names as not
-attempted. Paths without a folder of this repository are relative to `sources/archive_v5/`.
+formalized in `docs/lean/VERIFICATION_REPORT.md`, and the applications that the archive names as not
+attempted. Paths without a folder of this repository are relative to `archive_v5/`.
 
 ## Where the project stands
 
@@ -108,7 +108,7 @@ The five tracks of the first phase ended on 11 November 2026; the column "Outcom
 item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
 3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
 3.2.3 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
-and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `reverification_lean/` of this repository
+and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `lean/` of this repository
 (`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
 (`run_full_20261112`) did not complete; version 3.2.3 (branch `fix/3.2.3`, tag `v3.2.3`) removes its two causes, and the
 evidence run of 3.2.3 (`run_full_20261112b`) completed on 13 November 2026 with no change of status against the 3.2.1
@@ -119,7 +119,7 @@ run except one E2 point that had reached the time limit.
 The table lists every open item of the expansion roadmap with its score and effort from the CSV, and the new candidates
 N-01 to N-13 with an effort estimated here (they have no score). "Needs D-12" is the CSV's column `needs_D12` for the
 old items. Two words of the CSV titles are replaced by plainer ones to keep
-to the writing rules of `STYLE.md`.
+to the writing rules of `docs/project/STYLE.md`.
 
 | Id | Item | Wave | Release | Effort | Score | Needs D-12 | First phase | Outcome |
 |---|---|---|---|---|---|---|---|---|
@@ -131,7 +131,7 @@ to the writing rules of `STYLE.md`.
 | B-04 | Identify and measure the trusted computing base: split a `certify-ed-core` package (fp, enclosure, inertia, checker) with a counted line budget and no optional imports | 6 | 3.3 | M | 7 | no |  |  |
 | B-05 | Machine-checked proofs of Theorem 1 (residual enclosure) and Theorem 3 (Kato-Temple) including the rounding model (Lean/Isabelle with Flocq-style FP) | 6 | 3.3 | XL | 8 | yes | part now | part: see N-05 |
 | B-06 | Uniform rounding-error calculus module replacing the ad hoc (1+4u) factors, with property-based tests against exact rationals | 6 | 3.3 | M | 6 | yes |  |  |
-| N-04 | `cecheck` as a supported external verifier: a one-command driver in this repository and an optional `verify --external` path in certify-ed that records the verdict without trusting it | 6 | 3.3 | M |  | no | now | done: driver in `reverification_lean/Verify/`, `verify --external` on `dev/3.3` |
+| N-04 | `cecheck` as a supported external verifier: a one-command driver in this repository and an optional `verify --external` path in certify-ed that records the verdict without trusting it | 6 | 3.3 | M |  | no | now | done: driver in `lean/Verify/`, `verify --external` on `dev/3.3` |
 | N-05 | Refinement proofs: the exact radius check and the exact inertia count of `CertifyCore` imply the conclusions of the Mathlib theorems, which lifts those re-checks from level N to level K | 6 | 3.3 | L |  | no | now | partial: the radius check is refined (K2 and K+); for the count only the general theorem |
 | N-06 | Mechanical Lean gaps: Theorem U5 and D-01 part (c) for complex data, C-12 part (a), E-07 Lemma 5 | 6 | 3.3 | M |  | no | now | not reached |
 | N-07 | Sturm's theorem and squarefree factorization on Mathlib, then C-16 | 6 | 3.4 | L |  | no |  |  |

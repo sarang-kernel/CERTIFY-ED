@@ -11,7 +11,7 @@ pending", and the Lean level is reported next to that wording, never instead of 
 Rule D-12 (13 July 2026) says that new mathematics counts as established only after a person, Sarang Vehale, has
 re-derived it. The rule was written when the only alternatives to a human re-derivation were a second written
 derivation and random testing, and both can share an error with the first derivation. The re-verification in
-`reverification_lean/` adds a third kind of evidence. A statement of a derivation document is written as a Lean
+`lean/` adds a third kind of evidence. A statement of a derivation document is written as a Lean
 theorem, the proof is checked by the Lean kernel (level K in `README.md`), and the exported proof is accepted again by
 a second checker that was written independently of Lean (nanoda, level K2) or replayed by Lean's own `leanchecker`
 (level K+). The proof is then no longer the weak point. What can still be wrong is the statement: the Lean theorem may
@@ -26,7 +26,7 @@ range; the display of Proposition 14 without its hypothesis; one inequality in t
 that holds for a different reason than the one given (D-02 part b, by a second-order margin), and two statements that
 are slightly too strong (the exactness of `from_float`, the index of Lemma A1 for complex data). It also confirmed a
 remark the documents already make (the constant 9/8 of the 3.1 logarithm bound) and showed that guard 4, true in its
-stated range, fails just beyond it, a range that the code does not check. `docs/failures/07_found_while_formalizing.md`
+stated range, fails just beyond it, a range that the code does not check. `docs/project/failures/07_found_while_formalizing.md`
 lists all eleven. None of them changes a stored certificate. Each one would have been found by a careful human re-derivation
 as well, and each was found here because the Lean kernel does not accept an argument that only nearly holds.
 
@@ -62,6 +62,6 @@ reviews take as long as re-derivations.
 
 ## Where the evidence is
 
-`reverification_lean/VERIFICATION_REPORT.md` lists every statement with its Lean names, its level, what is missing
-and the source paragraph. `reverification_lean/README.md` defines the levels K, K2, K+, N, P and H, and
-`STYLE.md` rule 4 fixes the words used for each.
+`docs/lean/VERIFICATION_REPORT.md` lists every statement with its Lean names, its level, what is missing
+and the source paragraph. `docs/lean/README.md` defines the levels K, K2, K+, N, P and H, and
+`docs/project/STYLE.md` rule 4 fixes the words used for each.

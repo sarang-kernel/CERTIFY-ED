@@ -1,16 +1,16 @@
 # Findings made while formalizing the mathematics in Lean
 
 Writing a statement as a Lean theorem forces every hypothesis and every range to be stated, and the Lean kernel does
-not accept an argument that only nearly holds. The re-verification in `reverification_lean/` therefore read the
+not accept an argument that only nearly holds. The re-verification in `lean/` therefore read the
 derivation documents more strictly than the earlier checks, which were random and adversarial testing by the verify
 scripts and an independent second derivation written from the statement alone (not a human check). It found eleven
 places where a document and the Lean statement differ. None of them changes a stored certificate, a status or a
 published number. Seven were corrected in the code repository by documentation commits that change no computational
-file (`40d59f4` and `fa86456`, see `sources/SOURCES.md`; the source hash stays `cb73dec3e4433a3b`), one is a missing
+file (`40d59f4` and `fa86456`, see `docs/project/sources/SOURCES.md`; the source hash stays `cb73dec3e4433a3b`), one is a missing
 check in the code that is a candidate for release 3.2.2, and three confirm a remark the documents already make or
-record a difference of form. The table of `reverification_lean/VERIFICATION_REPORT.md` lists them with the identifiers
-L-1 to L-11 used here, and `reverification_lean/results/findings_documents.json` holds the same data. Paths are
-relative to `sources/archive_v5/`.
+record a difference of form. The table of `docs/lean/VERIFICATION_REPORT.md` lists them with the identifiers
+L-1 to L-11 used here, and `lean/results/findings_documents.json` holds the same data. Paths are
+relative to `archive_v5/`.
 
 ## The range of the floating-point guards (L-1, L-2, L-3)
 

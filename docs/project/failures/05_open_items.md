@@ -90,14 +90,14 @@ width w and dimension n, while Lambda6 and Lambda4 are established for w and n u
 certificate is affected; a check that refuses to certify above the range, with a test, is a candidate for 3.2.2 together
 with the E6 pinning tests and the memory gate. The other findings of that document are corrected by documentation
 commits or need no change. The statements that the formalization left partial or did not take up are listed in
-`reverification_lean/VERIFICATION_REPORT.md`; whether a Lean theorem can stand in for Sarang's re-derivation is the
-subject of the proposal `docs/decisions/05_proposed_d62_lean.md`, which is not adopted.
+`docs/lean/VERIFICATION_REPORT.md`; whether a Lean theorem can stand in for Sarang's re-derivation is the
+subject of the proposal `docs/project/decisions/05_proposed_d62_lean.md`, which is not adopted.
 
 ## After the first development phase (11 to 13 November 2026)
 
 The first phase of [the development roadmap](../roadmap/DEVELOPMENT_ROADMAP.md) closed three items of this document in
 code and opened others. Sources: the sections [3.2.2] and [3.3.0.dev0] of `CHANGELOG.md` on the code branches
-`fix/3.2.2` and `dev/3.3` (`sources/SOURCES.md`), and `reverification_lean/NONHERMITIAN.md`, `LEAN_PRODUCT.md`,
+`fix/3.2.2` and `dev/3.3` (`docs/project/sources/SOURCES.md`), and `docs/lean/NONHERMITIAN.md`, `LEAN_PRODUCT.md`,
 `APPS_NEXT.md` and `VERIFICATION_REPORT.md`.
 
 Version 3.2.2 (tag `v3.2.2`) adds the range check of finding L-3, the pinning tests of the E6 survivors and the memory
@@ -110,13 +110,13 @@ hold: that mutant changes no built matrix, so its test pins the contract of `shi
 of 3.2.2 (`run_full_20261112`) did not complete: the memory gate refused S1 in two cases that the 3.2.1 run had
 certified (for the chain N=22 at k = 0 it estimated 16896 MB, where the 3.2.1 certifier peaked at 2989 MB), and the E6
 baseline failed because git could not create a repository under the temporary directory of the sandbox
-(`sources/runs/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
+(`docs/project/sources/runs/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
 cap (an explicit `budget_mb` still gates it) and makes E6 copy next to the repository. Its evidence run
 `run_full_20261112b` completed on 13 November 2026 at source `bfc115e824386443`, after a change of the number script
 alone (`5dedf9d`). Against the 3.2.1 run no record reached the guard range and no statement changed status, except one
 E2 point whose 3.2.1 certifier had reached the time limit and which now ends with S1 and S2 CERTIFIED and S3, S4 and S8
 NOT_CHECKED by the gate; the other differences are the summary texts of statements NOT_CHECKED in both runs and the size
-of the E6 copy (`sources/runs/RESULT_evidence_run_3.2.3.md`). Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.3)
+of the E6 copy (`docs/project/sources/runs/RESULT_evidence_run_3.2.3.md`). Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.3)
 stays Sarang's decision.
 
 Two new derivation documents are on `dev/3.3`. `docs/proofs/E-02_non_hermitian.md` (non-Hermitian eigenpairs:

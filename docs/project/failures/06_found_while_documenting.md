@@ -15,7 +15,7 @@ E6 records of both runs give `copy.source` as `git ls-files`
 `results/run_full_20261105/e6_mutation_20261105_154612/data.json`), and the copy was changed to every tracked file for
 3.1.0 already, after its first attempt. The number of files that git tracks is 215 at `v3.1.0` and 915 at `v3.2.0` and
 `v3.2.1` (counted with `git ls-tree -r --name-only` on each tag). The leaf differs because the repository grew between
-the versions, which is still a documented and harmless difference. `docs/experiments/03_comparisons.md` gives the
+the versions, which is still a documented and harmless difference. `docs/project/experiments/03_comparisons.md` gives the
 corrected explanation.
 
 ## The missing leaves of the comparison of 3.2.1 with 3.2.0
@@ -46,7 +46,7 @@ by path, and the attached sentence describes the case it was written for. The E2
 the wording of NOT_CHECKED reasons on two platforms; in the comparison of 3.2.1 with 3.1.0 it also matched six
 CERTIFIED summaries. Those six were read one by one: the certified counts are equal, the printed gaps are equal in
 five and move in the fourth digit in one (8.285e-02 against 8.286e-02), and the printed shifts differ from the sixth
-significant digit on in two rows and from the seventh or later in four (`docs/experiments/03_comparisons.md`).
+significant digit on in two rows and from the seventh or later in four (`docs/project/experiments/03_comparisons.md`).
 
 ## The 3.2.0 crash in E2
 
@@ -77,6 +77,6 @@ corpus has no sector certificate and the code path for the pre-lift radii is wri
 (`code/certify-ed/CHANGELOG.md`, line 44) and the handover of 6 November 2026
 (`project_docs/SESSION_HANDOVER_2026-11-06.md`, line 96) say that the scope has no sector certificates. All three are
 consistent with one reading: the path exists and is untested, so sector certificates are outside the validated scope.
-`CHANGELOG_PROJECT.md` and [../applications/c_verifier.md](../applications/c_verifier.md) use that reading. The exact
+`docs/project/CHANGELOG_PROJECT.md` and [../applications/c_verifier.md](../applications/c_verifier.md) use that reading. The exact
 checker `cecheck` of the Lean re-verification was run on the same validation set and has the same limit.
 

@@ -4,8 +4,8 @@ This part of the re-verification uses Lean 4.35.0 without Mathlib. It has two pr
 a compiled Lean program that re-checks certify-ed certificates from their raw stored numbers in exact rational
 arithmetic (trust level N in the scale of `README.md`). The second is a set of Lean theorems about the finite
 arithmetic behind the bounds, accepted by the Lean kernel with no `sorry` and no `native_decide` (trust level
-K). Every number below that comes from the project record is cited by its path relative to `sources/archive_v5/`;
-every number produced here is in `reverification_lean/results/core/`.
+K). Every number below that comes from the project record is cited by its path relative to `archive_v5/`;
+every number produced here is in `lean/results/core/`.
 
 A word on terms. An eigenpair claim is a value mu and a vector x that a producer says are an eigenvalue and
 eigenvector of a symmetric matrix A. The residual is the vector A x minus mu x. Theorem 1 of certify-ed says that
@@ -17,12 +17,12 @@ certificate are those of `code/certify-ed/docs/SCOPE_MATRIX.md`.
 
 ## 1 How to run
 
-The commands assume the environment of `reverification_lean/logs/lean_env.json` (the Lean binaries on `PATH`)
+The commands assume the environment of `lean/logs/lean_env.json` (the Lean binaries on `PATH`)
 and the Python environment `certifyed-311` with the certify-ed source on `PYTHONPATH`. They write only below
-`reverification_lean/work/core/` (git-ignored) and `reverification_lean/results/core/`.
+`lean/work/core/` (git-ignored) and `lean/results/core/`.
 
 ```
-cd reverification_lean
+cd lean
 lake build cecheck CertifyCore
 set CE=..\sources\archive_v5\code\certify-ed
 set PYTHONPATH=%CE%

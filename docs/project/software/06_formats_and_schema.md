@@ -3,7 +3,7 @@
 certify-ed reads and writes three kinds of files: the certificate (a JSON body and an NPZ side file of arrays), the
 producer bundle (a directory of plain files that any ED code can write), and the run directory of the reproduction
 driver. This document describes the first two and their schemas; the run directory is described in
-`docs/reproduction/README.md`. Facts are from `code/certify-ed/docs/schema.md`,
+`docs/project/reproduction/README.md`. Facts are from `code/certify-ed/docs/schema.md`,
 `code/certify-ed/docs/producer_bundle.md`, `code/certify-ed/verifier/README.md` and the schema files in
 `code/certify-ed/schema/`.
 
@@ -31,7 +31,7 @@ hashed as the SHA-256 of its dtype string, the JSON list of its shape and its by
 hashes are listed in the body's `arrays` block. The side file holds `eigenvalues`, `radius`, `existence_radius` and
 `residual_bound`, and also `eigenvectors` when the certificate was made with `Options(store_eigenvectors=True)`. The
 exported `radius` and `existence_radius` arrays carry the recorded radii plus the model shift, rounded upward since
-`fix/3.1.1` (INT-03, `docs/failures/02_integration_findings.md`). A certificate can also be exported to HDF5.
+`fix/3.1.1` (INT-03, `docs/project/failures/02_integration_findings.md`). A certificate can also be exported to HDF5.
 
 `Certificate.load(path, verify=True)` recomputes both hashes and, since `fix/3.1.1`, checks the scope block
 (`verify_scope`). The hash and the schema answer different questions. The hash says that the file was not modified
@@ -80,7 +80,7 @@ therefore accepted only with `--allow-code`. When several files share a stem, th
 Sparse operators are read as SciPy `save_npz` files, CSR triplets, COO triplets or groups of the same names in HDF5,
 and complex entries are accepted in each format. Non-finite entries anywhere are rejected when the file is read, so a
 NaN eigenvalue never reaches the enclosure code (finding IMP-21,
-`docs/failures/03_review_and_derivation_findings.md`).
+`docs/project/failures/03_review_and_derivation_findings.md`).
 
 A one-dimensional integer basis file is the list of basis states of a U(1) block in the spec's integer encoding (site
 0 most significant), with `meta.state_order` giving the producer's order. A two-dimensional basis file is the isometry

@@ -49,7 +49,7 @@ model shift nonzero for almost every certificate, almost every exported radius c
 half a unit in the last place. The cause is that the export was written separately from the statement code and did not
 reuse its directed rounding. The statements and statuses were never affected, only the exported arrays. The fix on
 `fix/3.1.1` uses `add_up` whenever the shift is nonzero; the independent C verifier checks exactly this property
-(check C4, `docs/software/09_verifier.md`).
+(check C4, `docs/project/software/09_verifier.md`).
 
 ## INT-04: Appendix A described the accounting of the Theorem 1 radius differently from the code
 
