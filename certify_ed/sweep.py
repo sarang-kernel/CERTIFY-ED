@@ -33,7 +33,7 @@ import scipy.sparse as sp
 
 from .certificate_v2 import Certificate, _jsonable, canonical_json
 from .construct import build_bitwise
-from .fp import U, add_up, inf_norm_upper, sub_down, up
+from .fp import U, abs_up, add_up, inf_norm_upper, modulus_up, sub_down, up
 from .spec import ModelSpec, Term
 
 __all__ = ["derivative_spec", "affinity_defect", "matrix_affinity_defect", "term_norm_bound", "h1_norm_bound", "certified_sweep",
@@ -79,7 +79,7 @@ def term_norm_bound(spec: ModelSpec, op: str) -> float:
     bnd = 1.0
     for letter in op:
         M = spec.local.matrix(letter)
-        bnd *= inf_norm_upper(np.abs(M))
+        bnd *= inf_norm_upper(modulus_up(M))
     return float(up(bnd * (1 + 4 * U)))
 
 
@@ -91,7 +91,7 @@ def h1_norm_bound(h1: ModelSpec, H1_matrix=None, builder_shift: float = 0.0) -> 
     for t in h1.terms:
         nb = term_norm_bound(h1, t.op)
         for c, _ in t.couplings:
-            tri = float(add_up(tri, up(abs(complex(c)) * nb)))
+            tri = float(add_up(tri, up(modulus_up(complex(c)) * nb)))
     if H1_matrix is None:
         return tri, "triangle inequality over the terms"
     row = float(add_up(inf_norm_upper(H1_matrix), builder_shift))
@@ -105,8 +105,8 @@ def matrix_affinity_defect(Ha, Hb, dc: float, H1) -> float:
     Ha, Hb, H1 = sp.csr_matrix(Ha), sp.csr_matrix(Hb), sp.csr_matrix(H1)
     g3 = 3 * U / (1 - 3 * U)
     diff = (Hb - Ha - dc * H1).tocsr()
-    rnd = (abs(Hb) + abs(Ha) + abs(dc) * abs(H1)).tocsr() * (g3 * (1 + 4 * U))
-    return float(up(inf_norm_upper((abs(diff) + rnd).tocsr())))
+    rnd = (abs_up(Hb) + abs_up(Ha) + abs(dc) * abs_up(H1)).tocsr() * (g3 * (1 + 4 * U))   # upper moduli (fp.abs_up)
+    return float(up(inf_norm_upper((abs_up(diff) + rnd).tocsr())))
 
 
 def affinity_defect(spec_a: ModelSpec, spec_b: ModelSpec, dc: float, h1: ModelSpec) -> float:
