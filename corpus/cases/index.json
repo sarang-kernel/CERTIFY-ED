@@ -1,0 +1,1165 @@
+{
+ "cases": [
+  {
+   "case": "heis8_correct",
+   "dimension": 256,
+   "error_class": "correct",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "9fcfbd58585d32ce552d5625fe646cca87c750fb654d1199ec9b99841fede33e",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "a28c763ffc7779b99fc1b1e88494a2b4a455eb8005feff380f628fa2be6d8dad",
+    "eigenvectors": "9fcfbd58585d32ce552d5625fe646cca87c750fb654d1199ec9b99841fede33e",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "a71b58b13819f2aa2446f47150b468759ee769992d961517329e6833e13c4df8",
+    "eigenvectors": "9fcfbd58585d32ce552d5625fe646cca87c750fb654d1199ec9b99841fede33e",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_unnormalised_isolated",
+   "dimension": 256,
+   "error_class": "unnormalised_isolated",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "27a77e37d2cf3dfa3aa7be24303e4c1265bccbfc306a677298f4b9aed8364cd9",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "dimension": 256,
+   "error_class": "unnormalised_cluster_member",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S4.eigenspaces"
+   ],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "24c7a39734a59e7981a05cfed6d93e4dcd4c211ea1b26652d0e638009abb84c5",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "dimension": 256,
+   "error_class": "swapped_pairs",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "f7e51b9cf21450900c4888e3ac8cf5d8919da546e35d49a49dd0c5b0fe6b4cdf",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "dimension": 256,
+   "error_class": "missing_multiplet_member",
+   "k": 2,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "cd91f4012750b0c8a459abca7b12f821ca5aa98196a10341984b2a7b8a99fee5",
+    "eigenvectors": "436ef64615faf1624da548dc64c7f62df663abf787482dd132387082ae07df98",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "dimension": 256,
+   "error_class": "duplicated_vector",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "aa010aca1f985385722589bf4dda401480e23c540823ec0e56adba3dd5cf6090",
+    "eigenvectors": "4aa3bdf102e1cc0e15ab89a9969a1be64a78dd75e3edafb80016b00823693f83",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_wrong_coupling",
+   "dimension": 256,
+   "error_class": "wrong_coupling",
+   "k": 7,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "173e7028eae0d96c7caf7fd66fe1bba50269558723946b3da68a02c0d6e89e69",
+    "eigenvectors": "34e8591e203b2c9b16349f584e3742f86a0ba8ada7603a899540ae0189480182",
+    "operator_data": "b562ef76e333e86b0818746062a11c229bda551e44eac2e18e92eaf9b611410a"
+   }
+  },
+  {
+   "case": "heis8_wrong_matrix_entry",
+   "dimension": 256,
+   "error_class": "wrong_matrix_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "ad5c3ac7407f5df2d684461934bbcf60ef855213bf46300f2e2d2c5b2246c27f",
+    "eigenvectors": "324100cb3b7015f17948e8a269eac8ea5fb06e649ca1b94e781e23330a0a5bd7",
+    "operator_data": "da41d628c5d48eb23190b6b52e6161f177ed96b00e14cf05e60a528f49cddf81"
+   }
+  },
+  {
+   "case": "heis8_non_hermitian",
+   "dimension": 256,
+   "error_class": "non_hermitian",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "ad5c3ac7407f5df2d684461934bbcf60ef855213bf46300f2e2d2c5b2246c27f",
+    "eigenvectors": "324100cb3b7015f17948e8a269eac8ea5fb06e649ca1b94e781e23330a0a5bd7",
+    "operator_data": "18771817d6fb2b4694ec0fc8ffa4a225000bae1e4b884622167d044111955b12"
+   }
+  },
+  {
+   "case": "heis8_nan_eigenvector_entry",
+   "dimension": 256,
+   "error_class": "nan_eigenvector_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "9895b2d22ad7db479504706655387bd1edf15e0db6bf7977f18deb2a1b09ec1f",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_nan_eigenvalue",
+   "dimension": 256,
+   "error_class": "nan_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "1fce6a9790daf13fc601b7e116e64791d742cbcae6eef0d9febe3607ec531902",
+    "eigenvectors": "9fcfbd58585d32ce552d5625fe646cca87c750fb654d1199ec9b99841fede33e",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "dimension": 256,
+   "error_class": "mislabeled_sector",
+   "k": 3,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "a87ba8aef7a4fa7aff1e5155fee4be33129f3fc51bdbf88d3cd11dd8d4e9a9bf",
+    "eigenvectors": "017d350700751dcf81c7ff002efb9afbcb839352404a88902145e49a7b8d06af",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "dimension": 256,
+   "error_class": "subnormal_entries",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "ca791cd5fb59361cefc6095fb92e793306ab060e92ee9d63009ad7c9f0e2a165",
+    "eigenvectors": "ec3998464f5f80b0d0bb1ad1e88ee2513e14defc1161dd26f703d3c7b469a4f0",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "dimension": 256,
+   "error_class": "wrong_window_count",
+   "k": 4,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "8980b56896f9495ac99e97877d4af3e81814176cb69dba8709a2e9450846c95a",
+    "eigenvectors": "58c83ccbe26b15e666195b78f0ea839234a9d43c99475351cfc27c2e07b0b599",
+    "operator_data": "fb55923528055e616d442e4bb3a1c6f31f08a67488451f81f41bbd46f2c1abcb"
+   }
+  },
+  {
+   "case": "j1j2_8_correct",
+   "dimension": 256,
+   "error_class": "correct",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "9dbb3d6f35056628c03649c414d375d36e393b10d101dab2b111e8b149521a7b",
+    "eigenvectors": "86ec3f13fc6dbd03dddfba1eba252ce8a29bbfb08b6d3635f093e83238eb7e1b",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_1e-05",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "6b37a10795bd968ad3348bf616522bedef2f08227f51b69fa2b1750f87da3328",
+    "eigenvectors": "86ec3f13fc6dbd03dddfba1eba252ce8a29bbfb08b6d3635f093e83238eb7e1b",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_large",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "7b48faba3c5ea0b25e00e27c56cc7e8727cf2300ee1daa2933a6cb8512c8d75a",
+    "eigenvectors": "86ec3f13fc6dbd03dddfba1eba252ce8a29bbfb08b6d3635f093e83238eb7e1b",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_unnormalised_cluster_member",
+   "dimension": 256,
+   "error_class": "unnormalised_cluster_member",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S4.eigenspaces"
+   ],
+   "sha256": {
+    "eigenvalues": "9dbb3d6f35056628c03649c414d375d36e393b10d101dab2b111e8b149521a7b",
+    "eigenvectors": "7e0dc46b27e77dcf2a049c3e402415e3b74704944570a52cb0fca740fc224176",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_missing_multiplet_member",
+   "dimension": 256,
+   "error_class": "missing_multiplet_member",
+   "k": 3,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "6cdfaaeeab1fa3f8b11ce427017d2b2566c179888f8b93f7110884a84d7d1cda",
+    "eigenvectors": "28cd26be65d9b725916dd5dcff33530487afcdeaaa6455643720541ce39ae6d3",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "dimension": 256,
+   "error_class": "duplicated_vector",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "477864f1c0a6114babf816c0ac1aae9aeef5e93c6d221198cabdb40d45390882",
+    "eigenvectors": "9de9828ac8a9af20983a4e8cd290060dcba79440f4dab5eb5b12ac10277a1d33",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_wrong_coupling",
+   "dimension": 256,
+   "error_class": "wrong_coupling",
+   "k": 7,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "2f84583daed30dd56acccffcc051ec1d56f637a86f99cc6a80dab945cb6fae7f",
+    "eigenvectors": "f8481faae23b6f1bff136b03b30b93ca5374f77e4746de99151ec0c46ec611f4",
+    "operator_data": "271de8000113f33b078ccfdc8ecd4eb297fc1ee98697686eec795e56cc51b714"
+   }
+  },
+  {
+   "case": "j1j2_8_wrong_matrix_entry",
+   "dimension": 256,
+   "error_class": "wrong_matrix_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "2904feea8977dd871458f46d5a4a982d23972e1fa6971a394715848f68a89f9d",
+    "eigenvectors": "7f767c3dc188605bd3106ec460346bc97f79f9e6c3738dac4bb164bd894764bc",
+    "operator_data": "0e5c2f019659df6ab8829ce44dd4e39755781bde942c2e3383c2b56d05c84b7d"
+   }
+  },
+  {
+   "case": "j1j2_8_non_hermitian",
+   "dimension": 256,
+   "error_class": "non_hermitian",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "2904feea8977dd871458f46d5a4a982d23972e1fa6971a394715848f68a89f9d",
+    "eigenvectors": "7f767c3dc188605bd3106ec460346bc97f79f9e6c3738dac4bb164bd894764bc",
+    "operator_data": "149a277ac07cbd5475376175ff0afac39b0817c6827047dd7075e5a247b3704c"
+   }
+  },
+  {
+   "case": "j1j2_8_nan_eigenvector_entry",
+   "dimension": 256,
+   "error_class": "nan_eigenvector_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "9dbb3d6f35056628c03649c414d375d36e393b10d101dab2b111e8b149521a7b",
+    "eigenvectors": "ca6cc344dc50c06e907ef2943724406fb1d238100f5fe754b8193cdc5d984a98",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_nan_eigenvalue",
+   "dimension": 256,
+   "error_class": "nan_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "872ece78ab8b9f17afb0401bf4baa98859cea83d98ac22c14025c131afa15be0",
+    "eigenvectors": "86ec3f13fc6dbd03dddfba1eba252ce8a29bbfb08b6d3635f093e83238eb7e1b",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_mislabeled_sector",
+   "dimension": 256,
+   "error_class": "mislabeled_sector",
+   "k": 3,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "36e0dc1bd0a102370215ae1d557562bfbfe1379466fac397600cc9ebc8d402dc",
+    "eigenvectors": "90a0b62edaa4529b5121c8d78b1b7d5a03bd02d24d56dc57e32382a8186870de",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "j1j2_8_subnormal_entries",
+   "dimension": 256,
+   "error_class": "subnormal_entries",
+   "k": 5,
+   "model": "heisenberg_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "9dbb3d6f35056628c03649c414d375d36e393b10d101dab2b111e8b149521a7b",
+    "eigenvectors": "510ab78e571043a696883132f3ad0a6cb758d624ad0f03e4af12d8cfe250639e",
+    "operator_data": "e9b8ad71f9dfa21e2be46e4d1f4d6dea41d12dcebbff88423b16f85fbfd6f52f"
+   }
+  },
+  {
+   "case": "tfim8_correct",
+   "dimension": 256,
+   "error_class": "correct",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "2b30ec224b7574472b457e647cd41485f2fb8e2c61f1701097e41cb738c39706",
+    "eigenvectors": "1694445ccfd32a2504fb729aefdc8c67f830a85f0923b7de257bf4bcd94e3c24",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_1e-05",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "1c75f95135dc3ed620276e5ae294474b2bd91b3d9412fd28203bb7709eabcf91",
+    "eigenvectors": "1694445ccfd32a2504fb729aefdc8c67f830a85f0923b7de257bf4bcd94e3c24",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_large",
+   "dimension": 256,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "7e4b60e43e0bce2eaba84af7c0bfc9ac7473f482cf03fdbbb4d534c660239f20",
+    "eigenvectors": "1694445ccfd32a2504fb729aefdc8c67f830a85f0923b7de257bf4bcd94e3c24",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_unnormalised_isolated",
+   "dimension": 256,
+   "error_class": "unnormalised_isolated",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "2b30ec224b7574472b457e647cd41485f2fb8e2c61f1701097e41cb738c39706",
+    "eigenvectors": "7fb7e2be16cc9e00f62d76b31be9af04b20a8fb75e7101427fdd73b2ae2ddc86",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_unnormalised_cluster_member",
+   "dimension": 256,
+   "error_class": "unnormalised_cluster_member",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S4.eigenspaces"
+   ],
+   "sha256": {
+    "eigenvalues": "2b30ec224b7574472b457e647cd41485f2fb8e2c61f1701097e41cb738c39706",
+    "eigenvectors": "6d531421f94075c62b58c89c601b64afc2b7fc97bf4a5ab3a291571d5d0f1eb1",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_swapped_pairs",
+   "dimension": 256,
+   "error_class": "swapped_pairs",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "2b30ec224b7574472b457e647cd41485f2fb8e2c61f1701097e41cb738c39706",
+    "eigenvectors": "8b4c5e8ac2d7b1394777bbadbeda5f71f8b289bec926379d2680474ca4541dc5",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_missing_multiplet_member",
+   "dimension": 256,
+   "error_class": "missing_multiplet_member",
+   "k": 4,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "f1e65a0a214bbf51800508739a1c9805b4582a18c84ae32a7379353bcc0bb93a",
+    "eigenvectors": "9b25356461f8ffa066debaa762d7b53b858fd47c36989039996c4a8dbc1d3469",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_duplicated_vector",
+   "dimension": 256,
+   "error_class": "duplicated_vector",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "d63e41ffc2eaefc666010e428858344bbe339ee8b0a7fc54a478c1bbe686bf93",
+    "eigenvectors": "60075ae7294b1b62a0edc614b2469ddf0d3598587a24e243b99a4b518ba67953",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_wrong_coupling",
+   "dimension": 256,
+   "error_class": "wrong_coupling",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "d633a0adbb531f0c0ea6bca44e6fcf3e2505e23507e00f677413ba74144974bf",
+    "eigenvectors": "cab9b5a3e8ac590e73cd8f8273c634d6933f2d9508354c93a47533b68be26df8",
+    "operator_data": "e630ab425744c35eeb37c136fb29668e7b08d6fa672213f0f982d9f7e7558075"
+   }
+  },
+  {
+   "case": "tfim8_wrong_matrix_entry",
+   "dimension": 256,
+   "error_class": "wrong_matrix_entry",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "46a4f1ad176e142b911057c206674ffab7d25e73a420e94e43835640770abe98",
+    "eigenvectors": "37b4e198630f2aa48c1a277bf1ddc177669dfb5005c77fa8264ecea058b4740b",
+    "operator_data": "62713ca01c35059a57d6dacfd79b96cfd40b8be2fa521909ba873bfa334a702f"
+   }
+  },
+  {
+   "case": "tfim8_non_hermitian",
+   "dimension": 256,
+   "error_class": "non_hermitian",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "034e7c3acd715df35a7450ebed1a144a4e5032b12af29992489652b8859d05a7",
+    "eigenvectors": "4b65e32e882e67d35c3cd2714e43f7ee40ec8f598d0328824d28a675cc02eb62",
+    "operator_data": "979e2f5a7898b06ab70c9605dee8511936afb692e80bb4471098e8d23c8522ae"
+   }
+  },
+  {
+   "case": "tfim8_nan_eigenvector_entry",
+   "dimension": 256,
+   "error_class": "nan_eigenvector_entry",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "2b30ec224b7574472b457e647cd41485f2fb8e2c61f1701097e41cb738c39706",
+    "eigenvectors": "d3a503e1cb29d8645435b3f962b0e06de3b48d689eb327529b1d89eb4a111571",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_nan_eigenvalue",
+   "dimension": 256,
+   "error_class": "nan_eigenvalue",
+   "k": 5,
+   "model": "tfim_chain N=8",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "b6e1dce6ed35491f25681e4388a61f9ec6cd02441a5512dd9fd0c7b5685ee05a",
+    "eigenvectors": "1694445ccfd32a2504fb729aefdc8c67f830a85f0923b7de257bf4bcd94e3c24",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_mislabeled_sector",
+   "dimension": 256,
+   "error_class": "mislabeled_sector",
+   "k": 6,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "8cb58399294d8fecd2c808e93385884af7701b55fbf9ee0ce39405e8affb95a8",
+    "eigenvectors": "63a6e2121e80633eb7ff2d9135ae6fad85eb6395e2ea81500152db943c6c791f",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "tfim8_wrong_window_count",
+   "dimension": 256,
+   "error_class": "wrong_window_count",
+   "k": 4,
+   "model": "tfim_chain N=8",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "12a9589d48c8d813a969a5a363081b95a72b8294f028484cc01a6336c4ac60dd",
+    "eigenvectors": "1d4f8778c765c3bbd51982725664a2ea839b5515c9b01c31e472c641add991e0",
+    "operator_data": "063b3d19fd835a100cff10a8bf04b8ecabfc2ceef2f0bcf54c915f8984c50020"
+   }
+  },
+  {
+   "case": "heis10_correct",
+   "dimension": 1024,
+   "error_class": "correct",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "f2a970b33363d1874319ae6630c479128ca9ad1494f36afaa2c2e15f52c94a26",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "dimension": 1024,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "0c10287bb537747688855c362cc73821ca5b5551478374afd9732f6370eddeec",
+    "eigenvectors": "f2a970b33363d1874319ae6630c479128ca9ad1494f36afaa2c2e15f52c94a26",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "dimension": 1024,
+   "error_class": "wrong_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "ce00f903e8afe48eb68a21fcf713441fa32f8c9c33f22b429ae136ef643aa912",
+    "eigenvectors": "f2a970b33363d1874319ae6630c479128ca9ad1494f36afaa2c2e15f52c94a26",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_unnormalised_isolated",
+   "dimension": 1024,
+   "error_class": "unnormalised_isolated",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "9886a50fe9674275d085f59c5b2e81070a111d0398457498ea632ef9bce6b173",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "dimension": 1024,
+   "error_class": "unnormalised_cluster_member",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S4.eigenspaces"
+   ],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "7280e5b0a30fbf6c31a0abd5c1614e8af27c688a27a2a5ab3234f08bd322a580",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "dimension": 1024,
+   "error_class": "swapped_pairs",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "0b3c878e5be01accbb3476d1a8fc31d93ef7d47e1d0d3e9accf8fbb4a4c805da",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "dimension": 1024,
+   "error_class": "missing_multiplet_member",
+   "k": 2,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "a797d3ea4157933737965c417f3528ff57ec381a797d685bf14e5538127d0bb0",
+    "eigenvectors": "f8088bc13d44f33f30f48d276f5331729ecc4b9b6872bb6e255e6d63b0640c59",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "dimension": 1024,
+   "error_class": "duplicated_vector",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "6dbec7887f1cde5ff046879bb220fb39fa7c7ff21d31c7b9878f127281dd13db",
+    "eigenvectors": "a3a058f053c387a2cef4fb131978eb370bd20cf00348dbc221b12a2c03ea02d8",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "dimension": 1024,
+   "error_class": "wrong_coupling",
+   "k": 7,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "0e13ba7935f9cb8d05424a0f77863872fac3e4c3a76e9c37234c075c77ff706f",
+    "eigenvectors": "5203497d7ffa4c3b734dd52f96938f0e445c6099047988620a0da91c47096152",
+    "operator_data": "a832683d47a837f585b48ea34a1e7910eba3d604531e65cc2425ac9a8cf3adde"
+   }
+  },
+  {
+   "case": "heis10_wrong_matrix_entry",
+   "dimension": 1024,
+   "error_class": "wrong_matrix_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "767cb1ac7f8d54626881c1572382bff221836a68f0525a353ff5f0095dfb1e68",
+    "eigenvectors": "4c01e7dead82b9c4f99a697cdcc1e47e406633e83e38665516c214c6cbbb4e47",
+    "operator_data": "33bc375fd3319f86102721129e0d70d3b12207df136774255630adb784b21c4d"
+   }
+  },
+  {
+   "case": "heis10_non_hermitian",
+   "dimension": 1024,
+   "error_class": "non_hermitian",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [],
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "sha256": {
+    "eigenvalues": "767cb1ac7f8d54626881c1572382bff221836a68f0525a353ff5f0095dfb1e68",
+    "eigenvectors": "4c01e7dead82b9c4f99a697cdcc1e47e406633e83e38665516c214c6cbbb4e47",
+    "operator_data": "77c83ed76e1c849711216078fe41e356e87674fb054d52c8895a9f8795565b40"
+   }
+  },
+  {
+   "case": "heis10_nan_eigenvector_entry",
+   "dimension": 1024,
+   "error_class": "nan_eigenvector_entry",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "c2092d31d1143e8cc6e07195ec07d35469aa7fc4482d0a083d4b725e8035120b",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_nan_eigenvalue",
+   "dimension": 1024,
+   "error_class": "nan_eigenvalue",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [],
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "sha256": {
+    "eigenvalues": "1a482e59794d1751ff1c3dc5eb90a33bd206f60e1bce8e3c0a0a3a233be5a211",
+    "eigenvectors": "f2a970b33363d1874319ae6630c479128ca9ad1494f36afaa2c2e15f52c94a26",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "dimension": 1024,
+   "error_class": "mislabeled_sector",
+   "k": 3,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "e0dbc8c04815a4f4c5281f1193e6d70620c0a93598f7049ef7a95e8b6e053502",
+    "eigenvectors": "ba25d15f5a4a2f16e8eb4cf5496f2305930d3697f669f16c52741e7fd1c0ad55",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "dimension": 1024,
+   "error_class": "subnormal_entries",
+   "k": 5,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "sha256": {
+    "eigenvalues": "259462ac0bd759eecdcf5fe1a8c84b6394544d4e3afd3a66c49825a5e47cbb6f",
+    "eigenvectors": "33484460a3b4284dcb786d53820b74de5e9be57548cb4e298bc64d0a80823eb9",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "dimension": 1024,
+   "error_class": "wrong_window_count",
+   "k": 4,
+   "model": "heisenberg_chain N=10",
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "sha256": {
+    "eigenvalues": "904a08d189c3a8b2d3a76a67c132eec1f9ff7744c7ca171476082732f28f2032",
+    "eigenvectors": "bf1a4808345b9afc822c69b0dde196bdadb11e6ffd1136547016092c5d95f6c5",
+    "operator_data": "ff3cba0177d0c79fedd6dd46ee4f0bebbf71209f2cadc70fd3230255968cae0b"
+   }
+  }
+ ],
+ "certify_ed": "3.2.0.dev0",
+ "generator": "corpus/make_corpus.py",
+ "models": {
+  "heis10": {
+   "dimension": 1024,
+   "k": 5,
+   "levels_in_lowest_k": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     4,
+     5
+    ]
+   ]
+  },
+  "heis8": {
+   "dimension": 256,
+   "k": 5,
+   "levels_in_lowest_k": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     4,
+     5
+    ]
+   ]
+  },
+  "j1j2_8": {
+   "dimension": 256,
+   "k": 5,
+   "levels_in_lowest_k": [
+    [
+     0,
+     2
+    ],
+    [
+     2,
+     5
+    ]
+   ]
+  },
+  "tfim8": {
+   "dimension": 256,
+   "k": 5,
+   "levels_in_lowest_k": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ]
+   ]
+  }
+ },
+ "numpy": "2.4.4",
+ "schema": "certify-ed/corpus-index/1.0",
+ "scipy": "1.17.1",
+ "seed": 20261029
+}

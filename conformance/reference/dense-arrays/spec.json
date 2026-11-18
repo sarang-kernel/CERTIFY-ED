@@ -1,0 +1,132 @@
+{
+ "schema": "certify-ed/model-spec/1.0",
+ "n_sites": 6,
+ "local_space": {
+  "kind": "spin",
+  "q": 2,
+  "spin": "1/2",
+  "convention": "spin"
+ },
+ "encoding": {
+  "site_order": "site0_msb",
+  "state_order": "descending",
+  "base": 2
+ },
+ "terms": [
+  [
+   "+-",
+   [
+    [
+     0.5,
+     0,
+     1
+    ],
+    [
+     0.5,
+     1,
+     2
+    ],
+    [
+     0.5,
+     2,
+     3
+    ],
+    [
+     0.5,
+     3,
+     4
+    ],
+    [
+     0.5,
+     4,
+     5
+    ],
+    [
+     0.5,
+     5,
+     0
+    ]
+   ]
+  ],
+  [
+   "-+",
+   [
+    [
+     0.5,
+     0,
+     1
+    ],
+    [
+     0.5,
+     1,
+     2
+    ],
+    [
+     0.5,
+     2,
+     3
+    ],
+    [
+     0.5,
+     3,
+     4
+    ],
+    [
+     0.5,
+     4,
+     5
+    ],
+    [
+     0.5,
+     5,
+     0
+    ]
+   ]
+  ],
+  [
+   "zz",
+   [
+    [
+     1.0,
+     0,
+     1
+    ],
+    [
+     1.0,
+     1,
+     2
+    ],
+    [
+     1.0,
+     2,
+     3
+    ],
+    [
+     1.0,
+     3,
+     4
+    ],
+    [
+     1.0,
+     4,
+     5
+    ],
+    [
+     1.0,
+     5,
+     0
+    ]
+   ]
+  ]
+ ],
+ "name": "heisenberg_chain",
+ "parameters": {
+  "J": 1.0,
+  "J2": 0.0,
+  "Delta": 1.0,
+  "boundary": "periodic",
+  "convention": "spin",
+  "physical_form": "J sum S_i.S_j (+J2 nnn), S=sigma/2"
+ },
+ "notes": ""
+}

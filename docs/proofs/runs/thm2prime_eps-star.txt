@@ -1,0 +1,14 @@
+  ... 0 random cases
+  ... 2000 random cases
+  ... 4000 random cases
+  ... 6000 random cases
+  ... 8000 random cases
+  ... 10000 random cases
+  ... 12000 random cases
+  ... 14000 random cases
+  ... 16000 random cases
+  ... 18000 random cases
+steps (i)-(ii) inequalities E1-E3: 51282 random + 1863 adversarial cases, 3085 skipped (hypothesis not met), 0 violations
+Theorem 2' radius eps*: 17094 random + 621 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+implemented eps* >= exact, radius >= matching distance: 15337 random + 547 adversarial cases, 1831 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations

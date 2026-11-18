@@ -1,0 +1,10 @@
+A random matrices: Propositions 5-7 stages exactly, N1-N4 against mpmath: 1808 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+B planted exact spectra (distinct, complex, repeated, defective, clustered): N3, N4 exactly: 888 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+C adversarial: Bauer-Fike equality, Jordan blocks, underflow, subnormal, singular V, overflow, companion, scalings, wrong eigenvalue, conjugate pairs: 0 random + 547 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+   certified statements checked: {'N1': 375, 'N2': 371, 'N3': 371, 'N4': 371}
+   Bauer-Fike equality family: rho / ||V^-1 R||_2 - 1 between 9.318e-10 and 3.500e+00
+   negative control D1_eps_as_radius: detected in 36/36 cases
+   negative control D2_no_conditioning: detected in 36/36 cases
+   negative control D3_half_radius: detected in 34/36 cases
+   negative control D4_zero_E: detected in 200/200 cases
+TOTAL: 2696 random + 547 adversarial cases; violations: 0; negative controls detected: True

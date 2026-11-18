@@ -1,0 +1,17 @@
+*.egg-info/
+*.pyc
+.coverage
+.pytest_cache/
+__pycache__/
+build/
+dist/
+experiments/results/
+htmlcov/
+legacy/v1/results/
+results/
+# the committed corpus reports (report.md / report.json only; per-case checker output stays local)
+!corpus/results/
+!corpus/results/*/
+corpus/results/*/*/
+# mkdocs output (built locally, not committed)
+site/

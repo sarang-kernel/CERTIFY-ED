@@ -1,0 +1,5 @@
+  cross Gram assembled (4096 x 4096)  [7s]
+  union VBS: 256 independent states in A and B  [139s]
+  t = 0.111111: 256 pencil eigenvalues above t' = 0.1111111111; eta <= 0.3333333333: True  [426s]
+  t = 0.039896: 256 pencil eigenvalues above t' = 0.0398960000; eta <= 0.1997398308: True  [718s]
+{'eta_upper': 0.19973983079577784, 'holds': True}

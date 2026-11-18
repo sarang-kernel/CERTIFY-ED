@@ -1,0 +1,30 @@
+{
+ "case": "heis8_duplicated_vector",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "The ground-state pair appears twice (a Lanczos ghost) and the top pair is dropped.",
+ "error_class": "duplicated_vector",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs",
+  "S3.completeness"
+ ],
+ "note": "two identical vectors cannot be matched to two distinct eigenvalues, and the k values are not the k lowest: the top pair is missing (one eigenvalue is claimed once too often)",
+ "parameters": {
+  "dropped_pair": 4,
+  "duplicated_pair": 0,
+  "k": 5
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

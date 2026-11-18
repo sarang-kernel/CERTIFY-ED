@@ -1,0 +1,39 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_duplicated_vector",
+ "error_class": "duplicated_vector",
+ "note": "the first pair listed twice, the second dropped: V is singular, an eigenvalue is missing",
+ "dimension": 5,
+ "n_pairs": 5,
+ "must_certify": [
+  "N1.backward_errors"
+ ],
+ "must_not_certify": [
+  "N2.eigenvector_inverse",
+  "N3.inclusion",
+  "N4.counting"
+ ],
+ "conditional": false,
+ "exact_eigenvalues": [
+  [
+   "-7/4",
+   "0"
+  ],
+  [
+   "-1/2",
+   "0"
+  ],
+  [
+   "1/4",
+   "0"
+  ],
+  [
+   "3/2",
+   "0"
+  ],
+  [
+   "13/4",
+   "0"
+  ]
+ ]
+}

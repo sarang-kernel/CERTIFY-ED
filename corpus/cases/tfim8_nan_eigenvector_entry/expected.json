@@ -1,0 +1,31 @@
+{
+ "case": "tfim8_nan_eigenvector_entry",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One eigenvector entry is NaN.",
+ "error_class": "nan_eigenvector_entry",
+ "may_certify": [
+  "S1.model_fidelity",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics"
+ ],
+ "model": "tfim_chain N=8",
+ "must_certify": [],
+ "must_not_certify": [
+  "S2.eigenpairs",
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S8.degeneracy"
+ ],
+ "note": "a NaN entry cannot be enclosed; refusing the input is a correct answer",
+ "parameters": {
+  "entry": [
+   3,
+   1
+  ],
+  "k": 5
+ },
+ "refusal_ok": true,
+ "schema": "certify-ed/corpus-case/1.0"
+}

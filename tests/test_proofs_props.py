@@ -1,0 +1,182 @@
+"""Pinning tests for the derivations in docs/proofs (D-59): Lemma 17, Propositions 14, 15, 16, and the status
+lines / VERDICTS.md of all 17 derivation documents (independent re-derivation, D-12).
+
+Each verification script exposes run(n_random, seed); the tests run it at reduced size (the documents record
+the full runs) and pin the code facts the proofs rely on: the series argument range and the exp argument
+guards of ivl.py, the rigorous modulus bound of correlations.py, the open-interval wording of the S8
+statement. Negative controls show that the verification harnesses detect a false enclosure.
+"""
+import importlib.util
+import math
+import os
+import re
+from fractions import Fraction
+
+import numpy as np
+import pytest
+
+from certify_ed import ivl
+from certify_ed.correlations import combine_certified, modulus_upper
+from certify_ed.thermo import thermodynamics
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROOFS = os.path.join(ROOT, "docs", "proofs")
+
+
+def _load(name):
+    spec = importlib.util.spec_from_file_location(name, os.path.join(PROOFS, name + ".py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("script,n", [("verify_L17", 60), ("verify_P16", 4), ("verify_P14", 200), ("verify_P15", 40),
+                                      ("verify_C06", 6), ("verify_C16", 10)])
+def test_verification_scripts_report_zero_violations(script, n):
+    pytest.importorskip("mpmath")
+    if script == "verify_C16":
+        pytest.importorskip("flint")
+    r = _load(script).run(n, seed=1)
+    assert r["violations"] == 0, r
+    assert r["random_cases"] > 0 and r["adversarial_cases"] > 0
+
+
+PROOF_DOCUMENTS = ("thm2_polar-factor", "thm2prime_eps-star", "cor5_pairing", "thm8_rho", "appA_model-shift",
+                   "thm1_fp-accounting", "int05_underflow", "L17_dyadic_exp_ln", "P16_thermo_intervals",
+                   "P14_degeneracy_bracketing", "P15_summed_bounds", "C06_truncated_thermodynamics", "C16_exact_bracket",
+                   "C-03_entanglement", "C-04_correlation_lift", "E-04_parameter_intervals", "E-07_davis_kahan",
+                   "E-05_variational", "E-03_generalized", "C-07_moments", "D-01_sparse-residual", "D-02_matrix-free")
+ORIGINAL_SIX = ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
+                "C06_truncated_thermodynamics", "C16_exact_bracket")
+VERDICTS = ("AGREES", "AGREES-WITH-REMARKS", "GAP", "ERROR")
+STATUS_RE = re.compile(r"independent re-derivation: done 2026-10-30 \(fresh-context session, verdict ("
+                       + "|".join(re.escape(v) for v in VERDICTS) + r"), docs/proofs/VERDICTS\.md\); "
+                       r"Sarang's check \(D-12\): pending\.")
+
+
+@pytest.mark.parametrize("name", PROOF_DOCUMENTS)
+def test_proof_documents_exist_with_the_six_sections(name):
+    """Every derivation document has the six sections, the 'Derived by Claude' / 'machine-checked' status, the
+    independent re-derivation status line in the fixed format (one of the four verdicts, pointing at VERDICTS.md,
+    Sarang's check still pending) and nowhere the word 'verified' for these results (D-12/D-59)."""
+    text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
+    for num, title in enumerate(("Statement", "Proof", "Where the code implements it", "Computational verification",
+                                 "Analytic cross-check", "Status"), start=1):
+        assert re.search(rf"^## {num}\.? {re.escape(title)}", text, flags=re.M), (name, title)
+    assert "Derived by Claude on" in text
+    assert "machine-checked (" in text or "machine-checked: NOT RUN" in text      # appA's script is gated (NOT RUN)
+    status = text[text.index("Status", text.rindex("## 6")):]
+    assert len(STATUS_RE.findall(status)) == 1, (name, status[-400:])
+    assert "independent re-derivation: pending" not in text
+    # the status section never calls these results 'verified'; the six D-59 documents nowhere in the text
+    scope = text if name in ORIGINAL_SIX else status
+    cleaned = scope.lower().replace("unverified", "").replace("not_verified", "").replace("machine-checked", "")
+    assert "verified" not in cleaned, name
+
+
+def test_verdicts_table_lists_every_document_with_its_status_line_verdict():
+    """docs/proofs/VERDICTS.md has one row per document and the verdict there matches the document's status line."""
+    table = open(os.path.join(PROOFS, "VERDICTS.md"), encoding="utf-8").read()
+    for name in PROOF_DOCUMENTS:
+        text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
+        verdict = STATUS_RE.search(text).group(1)
+        rows = [line for line in table.splitlines() if line.startswith("|") and f"{name}.md" in line.split("|")[1]]
+        assert len(rows) == 1, (name, rows)
+        assert f"| {verdict} |" in rows[0], (name, verdict, rows[0])
+    independent = os.path.join(PROOFS, "independent")
+    for name in PROOF_DOCUMENTS:
+        assert os.path.exists(os.path.join(independent, name + ".md")), name
+        assert os.path.exists(os.path.join(independent, "adversarial_" + name + ".py")), name
+
+
+# ------------------------------------------------------------------------------------------- Lemma 17 pins
+def test_atanh_series_argument_range_is_enforced():
+    with pytest.raises(ValueError):
+        ivl._atanh2_series(0, ivl._U_MAX + 1)
+    assert ivl._U_MAX >= -((-ivl.ONE) // 3)          # ceil(ONE/3) is admitted (u_hi of ln at m -> 2)
+    assert Fraction(ivl._U_MAX, ivl.ONE) <= Fraction(7, 20)
+
+
+def test_exp_argument_guards():
+    lo, hi = ivl.exp_interval(ivl.from_fraction(Fraction(-1001))).lo, ivl.exp_interval(ivl.from_fraction(Fraction(-1001))).hi
+    assert lo == 0 and hi == 1                          # [0, 2^-PREC] encloses exp(-1001) ~ 1e-435
+    with pytest.raises(OverflowError):
+        ivl.exp_interval(ivl.from_fraction(Fraction((1 << 16) + 1)))
+    e = ivl.exp_interval(ivl.from_fraction(Fraction(1 << 16)))      # the limit itself is formed
+    assert e.lo > 0
+
+
+def test_exp_of_ln_contains_the_argument():
+    for z in (Fraction(1), Fraction(2), Fraction(7, 3), Fraction(2 * ivl.ONE - 1, ivl.ONE), Fraction(10) ** 30,
+              Fraction(1, 10 ** 30)):
+        Z = ivl.from_fraction(z)
+        back = ivl.exp_interval(ivl.ln_interval(Z))
+        lo, hi = back.fractions()
+        assert lo <= z <= hi
+
+
+# ------------------------------------------------------------------------------------------- Prop 15 pins
+def test_modulus_upper_is_an_upper_bound_without_libm():
+    for z in (3 + 4j, 0.6 + 0.8j, 1e-160 + 1j, 2.0 ** -501 + 1j, 1 + 0j, 0 + 1j, 1e153 + 1e153j, 5e-324 + 1j):
+        m = modulus_upper(z)
+        assert Fraction(m) ** 2 >= Fraction(z.real) ** 2 + Fraction(z.imag) ** 2
+    assert modulus_upper(3 + 4j) <= 5 * (1 + 1e-14)
+
+
+def test_combine_certified_bound_grows_with_m_and_covers_cancellation():
+    val, b1 = combine_certified([1.0], [1.0], [0.0])
+    val2, b2 = combine_certified([1.0] * 100, [1.0] * 100, [0.0] * 100)
+    assert b2 > b1 > 0 and val == 1 and val2 == 100
+    val, bound = combine_certified([1 + 1j, 1 - 1j, -2.0], [3.7, 3.7, 3.7], [0.0, 0.0, 0.0])
+    assert abs(val) <= bound                           # exact cancellation: val is rounding noise inside the bound
+    # the certified deviation dominates the rounding term for ordinary inputs
+    val, bound = combine_certified([0.5, 0.5], [1.0, 2.0], [1e-10, 1e-10])
+    assert 1e-10 <= bound <= 1e-10 * (1 + 1e-4)        # rounding term 2 gamma_4 * 1.5 ~ 1.3e-15
+
+
+# ------------------------------------------------------------------------------------------- Prop 16 pins
+def test_thermo_refuses_sub_grid_temperature():
+    with pytest.raises(ZeroDivisionError):
+        thermodynamics([{"lo": 0.0, "hi": 0.0, "count": 1}], [1e-300])
+
+
+def test_thermo_harness_detects_a_false_enclosure():
+    """Negative control of verify_P16: a spectrum with an eigenvalue outside the enclosure is outside the
+    thermodynamic intervals at some temperature."""
+    mp = pytest.importorskip("mpmath")
+    v16 = _load("verify_P16")
+    ivs = [{"lo": 0.0, "hi": 0.0, "count": 1}, {"lo": 1.0, "hi": 1.0, "count": 1}]
+    res = thermodynamics(ivs, [0.3, 1.0])
+    wrong = [0.0, 1.001]                               # the second eigenvalue is NOT in its interval
+    hits = [v16._inside(row, *v16.exact_thermo(wrong, row["T"])) for row in res["rows"]]
+    assert not all(hits)
+    good = [0.0, 1.0]
+    assert all(v16._inside(row, *v16.exact_thermo(good, row["T"])) for row in res["rows"])
+    del mp
+
+
+# ------------------------------------------------------------------------------------------- Prop 14 pins
+def test_s8_statement_names_the_open_interval_and_the_proof():
+    import scipy.sparse as sp
+    from certify_ed.degeneracy import degeneracy_counts
+    from certify_ed.enclosure import OperatorAdapter, enclose
+    d = np.array([0.0, 1.0, 1.0, 2.5])
+    A = sp.diags(d).tocsr()
+    enc = enclose(OperatorAdapter(A), d, np.eye(4))
+    r = degeneracy_counts(A, enc, [[1, 2]], method="dense")[0]
+    assert r["status"] == "CERTIFIED" and "open interval (" in r["statement"]
+    assert "docs/proofs/P14_degeneracy_bracketing.md" in r["statement"] and "UNVERIFIED" in r["statement"]
+    lo, hi = r["bracket_inner"]
+    assert int(np.sum((d > lo) & (d < hi))) == 2
+
+
+def test_p14_harness_detects_a_wrong_count():
+    """Negative control of verify_P14 part A: a count that is off by one violates (b) or (c)."""
+    v14 = _load("verify_P14")
+    lam = [Fraction(0), Fraction(1), Fraction(1), Fraction(3)]
+    s_lo, s_hi, b = Fraction(1, 2), Fraction(2), Fraction(1, 100)
+    nu_lo, nu_hi = 1, 3                                 # correct
+    n_in = v14._in_open(lam, s_lo + b, s_hi - b)
+    assert n_in <= nu_hi - nu_lo <= v14._in_closed(lam, s_lo - b, s_hi + b)
+    assert not (n_in <= (nu_hi - 1) - nu_lo)            # an undercount breaks (b)
+    assert math.isfinite(float(b))

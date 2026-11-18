@@ -1,0 +1,5 @@
+A G1 lower bound on lambda_min(B); G2 radii vs the exact B^-1-norm residual and the nearest eigenvalue: 225 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+B G3 completeness (78 certified records checked against the exact spectrum): 78 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+C adversarial: indefinite B, wrong eigenvalue, swapped pairs, near-singular B, false declared lambda_min(B) named: 0 random + 100 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+   negative control (declared lambda_min(B) = 10 x true, inertia disabled): radius below the exact B^-1-norm residual in 40/40 pairs
+TOTAL: 303 random + 100 adversarial cases; violations: 0

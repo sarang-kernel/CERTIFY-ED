@@ -1,0 +1,13 @@
+{
+ "nh_correct_real": "correct",
+ "nh_correct_complex": "correct",
+ "nh_correct_conjugate_pairs": "correct",
+ "nh_correct_nonnormal": "correct",
+ "nh_bauer_fike_tight": "correct",
+ "nh_duplicated_vector": "duplicated_vector",
+ "nh_defective": "defective",
+ "nh_wrong_eigenvalue": "wrong_eigenvalue",
+ "nh_swapped_vectors": "swapped_vectors",
+ "nh_subnormal_entry": "subnormal_entry",
+ "nh_partial_claim": "partial_claim"
+}

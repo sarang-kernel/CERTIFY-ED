@@ -1,0 +1,38 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_correct_real",
+ "error_class": "correct",
+ "note": "control: distinct real eigenvalues",
+ "dimension": 5,
+ "n_pairs": 5,
+ "must_certify": [
+  "N1.backward_errors",
+  "N2.eigenvector_inverse",
+  "N3.inclusion",
+  "N4.counting"
+ ],
+ "must_not_certify": [],
+ "conditional": false,
+ "exact_eigenvalues": [
+  [
+   "-7/4",
+   "0"
+  ],
+  [
+   "-1/2",
+   "0"
+  ],
+  [
+   "1/4",
+   "0"
+  ],
+  [
+   "3/2",
+   "0"
+  ],
+  [
+   "13/4",
+   "0"
+  ]
+ ]
+}

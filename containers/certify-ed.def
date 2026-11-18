@@ -1,0 +1,41 @@
+# Apptainer definition of the 3.1.0 evidence-run stack (containers/README.md). Build from the repository root:
+#   apptainer build certify-ed_3.1.0.sif containers/certify-ed.def
+Bootstrap: docker
+From: python:3.11-slim
+
+%labels
+    org.opencontainers.image.title certify-ed
+    org.opencontainers.image.version 3.1.0
+    org.opencontainers.image.description CERTIFY-ED with the 3.1.0 evidence-run stack
+
+%environment
+    export PYTHONDONTWRITEBYTECODE=1
+    export OMP_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export MKL_NUM_THREADS=1
+
+%files
+    . /opt/certify-ed
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+    pip install --no-cache-dir \
+        numpy==2.4.4 \
+        scipy==1.17.1 \
+        python-flint==0.9.0 \
+        h5py \
+        matplotlib \
+        mpmath \
+        jsonschema \
+        pytest \
+        ruff \
+        quspin-extensions parallel-sparse-tools dill joblib numba numexpr six gmpy2
+    pip install quspin==1.0.1 --no-deps
+    cd /opt/certify-ed && pip install --no-cache-dir --no-deps -e . && certify-ed env
+
+%runscript
+    exec certify-ed "$@"
+
+%test
+    certify-ed env
+    python -m certify_ed.schema --check /opt/certify-ed/schema

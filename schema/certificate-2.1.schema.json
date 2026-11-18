@@ -1,0 +1,1751 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:certify-ed:schema:certificate:2.1",
+  "title": "CERTIFY-ED certificate body, schema 2.1",
+  "description": "The JSON body written by certify_ed.Certificate.save (certify-ed/certificate/2.1). Arrays live in the NPZ sidecar named in `arrays.sidecar`; their SHA-256 hashes are in the body. Unknown top-level and evidence fields are allowed (a 2.x writer may add fields; none is removed within a major version). Enumerations (statuses, statement ids, reason codes, claim kinds) are closed. docs/schema.md describes every field.",
+  "type": "object",
+  "required": [
+    "schema",
+    "subject",
+    "claim",
+    "statements",
+    "scope",
+    "integrity",
+    "environment"
+  ],
+  "properties": {
+    "schema": {
+      "const": "certify-ed/certificate/2.1"
+    },
+    "subject": {
+      "$ref": "#/$defs/subject"
+    },
+    "claim": {
+      "$ref": "#/$defs/claim"
+    },
+    "statements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/statement"
+      },
+      "description": "one record per statement that was reached, in S1..S8 order"
+    },
+    "enclosures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/enclosure"
+      }
+    },
+    "kato_temple": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/kato_temple_record"
+      }
+    },
+    "arithmetic": {
+      "$ref": "#/$defs/arithmetic"
+    },
+    "environment": {
+      "$ref": "#/$defs/environment"
+    },
+    "hermitian_part": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "max_abs_asymmetry": {
+              "$ref": "#/$defs/number_or_special"
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "operator_note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "spectrum_enclosure": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/spectrum_enclosure"
+        }
+      ]
+    },
+    "gaps": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/gaps_record"
+        }
+      ],
+      "description": "since 3.2: certified gap intervals read off S2 and S3 (certify_ed.gaps); null unless both are CERTIFIED"
+    },
+    "plan": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "schema",
+            "rows"
+          ],
+          "description": "advisory time and memory plan (certify_ed.cost.plan_for_claim) when Options(plan=True); never changes a status",
+          "properties": {
+            "schema": {
+              "const": "certify-ed/plan/1.0"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "statement",
+                  "runs",
+                  "seconds",
+                  "peak_mb"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "not_verified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "total_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "arrays": {
+      "$ref": "#/$defs/arrays_manifest"
+    },
+    "integrity": {
+      "$ref": "#/$defs/integrity"
+    }
+  },
+  "$defs": {
+    "number_or_special": {
+      "description": "a JSON number, or the strings 'nan', 'inf', '-inf' (JSON has no non-finite numbers)",
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "enum": [
+            "nan",
+            "inf",
+            "-inf"
+          ]
+        }
+      ]
+    },
+    "interval": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/number_or_special"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[lower, upper]; either end may be 'inf' / '-inf'"
+    },
+    "statement_id": {
+      "enum": [
+        "S1.model_fidelity",
+        "S2.eigenpairs",
+        "S3.completeness",
+        "S4.eigenspaces",
+        "S5.corroboration",
+        "S6.exact_recheck",
+        "S7.thermodynamics",
+        "S8.degeneracy"
+      ]
+    },
+    "status": {
+      "enum": [
+        "CERTIFIED",
+        "FAILED",
+        "INCONCLUSIVE",
+        "NOT_CHECKED",
+        "CORROBORATED"
+      ],
+      "description": "CORROBORATED is valid for S5.corroboration only (evidence, not a certified statement)"
+    },
+    "reason_code": {
+      "enum": [
+        "BUDGET_MEMORY",
+        "BUDGET_TIME",
+        "DECLARED_ESTIMATE",
+        "DEFAULT_SELECTION",
+        "DEPENDENCY_NARROWED",
+        "FP_GUARD_RANGE",
+        "ILL_CONDITIONED_EIGENVECTORS",
+        "MISSING_DEPENDENCY",
+        "NARROWED_BY_USER",
+        "NEEDS_DEPENDENCY",
+        "NEEDS_EIGENVECTORS",
+        "NEEDS_MATRIX",
+        "NEEDS_OBSERVABLES",
+        "NEEDS_SPEC",
+        "NEEDS_TEMPERATURES",
+        "NEEDS_WHOLE_SPECTRUM",
+        "NOT_APPLICABLE",
+        "NOT_IMPLEMENTED",
+        "NO_CLUSTERS",
+        "NO_COMPLETENESS_CLAIM",
+        "OUT_OF_SCOPE_DYNAMICS",
+        "OUT_OF_SCOPE_EXTRAPOLATION",
+        "SIZE_LIMIT",
+        "UNDERFLOW_RISK",
+        "UNSUPPORTED_CLAIM",
+        "UNSUPPORTED_MODEL"
+      ],
+      "description": "certify_ed.scope.REASON_CODES; documented in docs/SCOPE_MATRIX.md"
+    },
+    "claim_kind": {
+      "enum": [
+        "subset",
+        "lowest",
+        "window",
+        "all"
+      ]
+    },
+    "budget_record": {
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "mb": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "statement",
+              "code"
+            ],
+            "properties": {
+              "statement": {
+                "$ref": "#/$defs/statement_id"
+              },
+              "code": {
+                "enum": [
+                  "BUDGET_TIME",
+                  "BUDGET_MEMORY"
+                ]
+              },
+              "note": {
+                "type": "string"
+              },
+              "estimate_mb": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "model_spec": {
+      "type": "object",
+      "required": [
+        "schema",
+        "n_sites",
+        "local_space",
+        "terms"
+      ],
+      "properties": {
+        "schema": {
+          "const": "certify-ed/model-spec/1.0"
+        },
+        "n_sites": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "local_space": {
+          "type": "object",
+          "required": [
+            "kind",
+            "q"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "spin",
+                "boson",
+                "fermion"
+              ]
+            },
+            "q": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "spin": {
+              "type": "string"
+            },
+            "convention": {
+              "type": "string"
+            },
+            "n_max": {
+              "type": "integer"
+            },
+            "jw_string": {
+              "type": "string"
+            }
+          }
+        },
+        "encoding": {
+          "type": "object",
+          "properties": {
+            "site_order": {
+              "type": "string"
+            },
+            "state_order": {
+              "enum": [
+                "descending",
+                "ascending"
+              ]
+            },
+            "base": {
+              "type": "integer",
+              "minimum": 2
+            }
+          }
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {
+                "type": "string",
+                "description": "operator letters, one per site"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "prefixItems": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      ]
+                    }
+                  ],
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "description": "[coefficient (real, or [re, im]), site, site, ...]"
+                }
+              }
+            ]
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "description",
+        "operator"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "spec": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/model_spec"
+            }
+          ]
+        },
+        "spec_sha256": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "SHA-256 hex digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "operator": {
+          "type": "object",
+          "required": [
+            "kind",
+            "dimension"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "matrix",
+                "spec",
+                "blackbox",
+                "stable"
+              ]
+            },
+            "dimension": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "matrix_sha256": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$",
+                  "description": "SHA-256 hex digest"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "norm_upper_bound": {
+              "$ref": "#/$defs/number_or_special"
+            }
+          }
+        },
+        "sector": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "isometry_sha256",
+                "dimension"
+              ],
+              "properties": {
+                "isometry_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$",
+                  "description": "SHA-256 hex digest"
+                },
+                "dimension": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "lift_shift": {
+                  "$ref": "#/$defs/number_or_special"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": [
+        "kind",
+        "n_eigenvalues",
+        "eigenvalues",
+        "has_eigenvectors"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/claim_kind"
+        },
+        "window": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/interval"
+            }
+          ]
+        },
+        "n_eigenvalues": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "has_eigenvectors": {
+          "type": "boolean"
+        },
+        "producer": {
+          "type": "object",
+          "description": "free-form producer record (name, version, bundle path, files)"
+        },
+        "accuracy_target": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "eigenvalues": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "the claimed eigenvalues in the claim's order (finite)"
+        },
+        "eigenvectors_sha256": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "SHA-256 hex digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "window"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "window"
+        ],
+        "properties": {
+          "window": {
+            "$ref": "#/$defs/interval"
+          }
+        }
+      }
+    },
+    "statement": {
+      "type": "object",
+      "required": [
+        "id",
+        "status",
+        "summary"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/statement_id"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "object"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S1.model_fidelity"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "spec_name": {
+                    "type": "string"
+                  },
+                  "spec_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$",
+                    "description": "SHA-256 hex digest"
+                  },
+                  "comparison": {
+                    "type": "object"
+                  },
+                  "reference": {
+                    "type": "object"
+                  },
+                  "internal_cross_construction": {
+                    "type": "object"
+                  },
+                  "spec_invariants_vs_reference": {
+                    "type": "object"
+                  },
+                  "audit_space": {
+                    "type": "object"
+                  },
+                  "sector_audit": {
+                    "type": "object"
+                  },
+                  "hermiticity_max_abs": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "model_shift_bound": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "estimate_mb": {
+                    "$ref": "#/$defs/number_or_special"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S2.eigenpairs"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "n_pairs": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "rigorous": {
+                    "type": "boolean"
+                  },
+                  "max_radius": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "median_radius": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "max_existence_radius": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "model_shift": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "sector_lift_shift": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/number_or_special"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "radius_refers_to": {
+                    "type": "string"
+                  },
+                  "accuracy_target": {
+                    "type": "object"
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "budget": {
+                    "$ref": "#/$defs/budget_record"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S3.completeness"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "dimension": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count_from_inertia": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "claimed_certified_inside": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "claimed_touching": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "missing_at_least": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "unclaimed_near_top": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "window": {
+                    "$ref": "#/$defs/interval"
+                  },
+                  "certified_window": {
+                    "$ref": "#/$defs/interval"
+                  },
+                  "complete_below": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "gap_lower_bound": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "next_eigenvalue_lower_bound": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "next_eigenvalue_estimate": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "top_shift": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "gap_interval": {
+                    "$ref": "#/$defs/interval"
+                  },
+                  "vectorless": {
+                    "type": "boolean"
+                  },
+                  "n_claimed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count_in_window": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "spurious_at_least": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count_statement": {
+                    "type": "string"
+                  },
+                  "pairing": {
+                    "type": "string"
+                  },
+                  "edges": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  },
+                  "beta_a": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "beta_b": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "beta_effective": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "counts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "top_multiplet": {
+                    "type": "object"
+                  },
+                  "narrowed": {
+                    "type": "object"
+                  },
+                  "budget": {
+                    "$ref": "#/$defs/budget_record"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S4.eigenspaces"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "clusters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "narrowed": {
+                    "type": "object"
+                  },
+                  "budget": {
+                    "$ref": "#/$defs/budget_record"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S5.corroboration"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "oracles": {
+                    "type": "object"
+                  },
+                  "independence": {
+                    "type": "object"
+                  },
+                  "tolerance": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S6.exact_recheck"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S7.thermodynamics"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "dimension": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "n_intervals": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "energy_offset": {
+                    "$ref": "#/$defs/number_or_special"
+                  },
+                  "hypothesis": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "looseness": {
+                    "type": "string"
+                  },
+                  "temperatures": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "claimed_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "tail_bound": {
+                    "type": "object",
+                    "properties": {
+                      "omitted_count": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "next_lower_bound": {
+                        "$ref": "#/$defs/number_or_special"
+                      },
+                      "upper_bound": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/number_or_special"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "method": {
+                        "type": "string"
+                      },
+                      "weight_bound": {
+                        "type": "string"
+                      },
+                      "statement": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "S8.degeneracy"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "reason_code": {
+                    "$ref": "#/$defs/reason_code"
+                  },
+                  "clusters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "budget": {
+                    "$ref": "#/$defs/budget_record"
+                  },
+                  "exact_bracket": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "id": {
+                  "const": "S5.corroboration"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "CERTIFIED",
+                  "FAILED",
+                  "INCONCLUSIVE",
+                  "NOT_CHECKED"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "CORROBORATED",
+                  "FAILED",
+                  "INCONCLUSIVE",
+                  "NOT_CHECKED"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "enclosure": {
+      "type": "object",
+      "required": [
+        "index",
+        "claimed",
+        "lower",
+        "upper",
+        "radius"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "claimed": {
+          "type": "number"
+        },
+        "lower": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "upper": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "radius": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "existence_radius": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "residual_bound": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "residual_computed": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "method": {
+          "enum": [
+            "single",
+            "cluster",
+            "residual interval"
+          ]
+        },
+        "group": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distinct": {
+          "type": "boolean"
+        }
+      }
+    },
+    "kato_temple_record": {
+      "type": "object",
+      "required": [
+        "index",
+        "lower",
+        "upper"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lower": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "upper": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "width": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "residual_width": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "isolation_interval": {
+          "$ref": "#/$defs/interval"
+        }
+      }
+    },
+    "arithmetic": {
+      "type": "object",
+      "required": [
+        "arithmetic",
+        "unit_roundoff",
+        "model"
+      ],
+      "properties": {
+        "arithmetic": {
+          "type": "string"
+        },
+        "unit_roundoff": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "model": {
+          "type": "string"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "complex_inner_product_constant": {
+          "type": "string"
+        },
+        "runtime_probe": {
+          "type": "object",
+          "required": [
+            "standard_model_hypotheses_hold"
+          ],
+          "properties": {
+            "standard_model_hypotheses_hold": {
+              "type": "boolean"
+            },
+            "failed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "checks": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "python",
+        "numpy",
+        "scipy",
+        "created_utc"
+      ],
+      "properties": {
+        "python": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "machine": {
+          "type": "string"
+        },
+        "numpy": {
+          "type": "string"
+        },
+        "scipy": {
+          "type": "string"
+        },
+        "created_utc": {
+          "type": "string",
+          "description": "ISO 8601 with offset, seconds precision"
+        },
+        "blas": {},
+        "certify_ed": {
+          "type": "string"
+        },
+        "source_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_dirty": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "python_flint": {
+          "type": "string"
+        },
+        "flint_c_library": {
+          "type": "string"
+        },
+        "distribution_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "reserved: hash of the installed distribution (not written by 3.1)"
+        }
+      }
+    },
+    "spectrum_enclosure": {
+      "type": "object",
+      "required": [
+        "complete",
+        "intervals",
+        "n_intervals"
+      ],
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "n_intervals": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_halfwidth": {
+          "$ref": "#/$defs/number_or_special"
+        },
+        "intervals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "lo",
+              "hi",
+              "count"
+            ],
+            "properties": {
+              "lo": {
+                "$ref": "#/$defs/number_or_special"
+              },
+              "hi": {
+                "$ref": "#/$defs/number_or_special"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "counted": {
+                "type": "boolean"
+              },
+              "method": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "gaps_record": {
+      "type": "object",
+      "required": [
+        "refers_to",
+        "ranked",
+        "levels",
+        "gaps"
+      ],
+      "description": "levels: maximal chains of overlapping S2 enclosures (radii including the model shift), each holding exactly `count` eigenvalues when S3 is CERTIFIED; gaps: intervals for the differences of consecutive eigenvalues, ends rounded outward, upper end 'inf' when the next eigenvalue is not claimed (then the lower end is S3's gap_lower_bound)",
+      "properties": {
+        "refers_to": {
+          "type": "string"
+        },
+        "ranked": {
+          "type": "boolean"
+        },
+        "rank_origin": {
+          "type": "string"
+        },
+        "n_levels": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "basis": {
+          "type": "string"
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "lower",
+              "upper",
+              "members",
+              "count"
+            ],
+            "properties": {
+              "lower": {
+                "$ref": "#/$defs/number_or_special"
+              },
+              "upper": {
+                "$ref": "#/$defs/number_or_special"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "ranks": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gap_record"
+          }
+        },
+        "top_gap": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/gap_record"
+            }
+          ]
+        }
+      }
+    },
+    "gap_record": {
+      "type": "object",
+      "required": [
+        "interval",
+        "lower_from",
+        "upper_from"
+      ],
+      "properties": {
+        "interval": {
+          "$ref": "#/$defs/interval"
+        },
+        "lower_from": {
+          "enum": [
+            "S2",
+            "S3"
+          ]
+        },
+        "upper_from": {
+          "enum": [
+            "S2",
+            null
+          ]
+        },
+        "within_level": {
+          "type": "boolean"
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "between_ranks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "schema",
+        "preset",
+        "in_scope",
+        "narrowed",
+        "out_of_scope",
+        "reason_codes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "certify-ed/scope/1.0"
+        },
+        "preset": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "preset": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "wanted": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "implied": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "narrowed": {
+              "type": "object"
+            },
+            "only": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "skip": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "narrowing_reason": {
+              "type": "string"
+            }
+          }
+        },
+        "budgets": {
+          "$ref": "#/$defs/budget_record"
+        },
+        "in_scope": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/statement_id"
+              },
+              "status": {
+                "enum": [
+                  "CERTIFIED",
+                  "FAILED",
+                  "INCONCLUSIVE",
+                  "CORROBORATED"
+                ]
+              },
+              "implied": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "narrowed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "by",
+              "reason",
+              "reason_code"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/statement_id"
+              },
+              "by": {
+                "enum": [
+                  "default",
+                  "dependency",
+                  "only",
+                  "skip",
+                  "preset"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "reason_code": {
+                "$ref": "#/$defs/reason_code"
+              },
+              "status": {
+                "const": "NOT_CHECKED"
+              }
+            }
+          }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "quantity",
+              "reason_code"
+            ],
+            "properties": {
+              "quantity": {
+                "type": "string",
+                "description": "a statement id (NOT_CHECKED statement) or a named quantity"
+              },
+              "reason_code": {
+                "$ref": "#/$defs/reason_code"
+              },
+              "detail": {
+                "type": "string"
+              },
+              "implied": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "requested": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/claim_kind"
+            },
+            "has_eigenvectors": {
+              "type": "boolean"
+            },
+            "has_spec": {
+              "type": "boolean"
+            },
+            "has_matrix": {
+              "type": "boolean"
+            }
+          }
+        },
+        "options": {
+          "type": "object"
+        },
+        "operator_scope": {
+          "type": "string"
+        },
+        "reason_codes": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/reason_code"
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "the reason codes used in this certificate with their one-line meaning"
+        }
+      }
+    },
+    "arrays_manifest": {
+      "type": "object",
+      "required": [
+        "sidecar",
+        "sha256",
+        "shapes",
+        "dtypes"
+      ],
+      "properties": {
+        "sidecar": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "NPZ file next to the JSON (null in HDF5 export)"
+        },
+        "sha256": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 hex digest"
+          }
+        },
+        "shapes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "dtypes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "description": "numpy dtype.str, e.g. '<f8'"
+          }
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": [
+        "algorithm",
+        "canonicalization",
+        "body_sha256"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "canonicalization": {
+          "const": "certify-ed-canonical-json-1"
+        },
+        "body_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 hex digest"
+        }
+      }
+    }
+  }
+}

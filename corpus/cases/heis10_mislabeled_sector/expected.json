@@ -1,0 +1,30 @@
+{
+ "case": "heis10_mislabeled_sector",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "The lowest states of one symmetry sector (Sz = 0 for the spin chains; even spin-flip parity for the TFIM) are reported as the lowest states of the whole model.",
+ "error_class": "mislabeled_sector",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=10",
+ "must_certify": [
+  "S1.model_fidelity",
+  "S2.eigenpairs"
+ ],
+ "must_not_certify": [
+  "S3.completeness"
+ ],
+ "note": "the Sz=0 block's lowest states are claimed as the model's lowest 3; 2 eigenvalue(s) of other sectors lie at or below the top of the claim",
+ "parameters": {
+  "k": 3,
+  "missing_in_lowest_k": 2,
+  "sector": "Sz=0"
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

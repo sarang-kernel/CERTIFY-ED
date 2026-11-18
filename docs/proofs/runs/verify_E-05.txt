@@ -1,0 +1,7 @@
+A Rayleigh quotient enclosure and upper bound: 200 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+B existence radius: 200 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+C Temple lower bound (hypothesis true, equality case, orthogonal state, false hypothesis named): 200 random + 198 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+   negative control (rho = lambda_3 > lambda_2 declared): bound broken in 66/66 two-level cases
+D MPS contraction bound and Lemma 5: 66 random + 66 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+E tiny norms: 0 random + 30 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+TOTAL: 666 random + 294 adversarial cases; violations: 0
