@@ -149,6 +149,12 @@ complete (every E2 point below).
 | Theorem-1 upper bound and radius | `ozaki_residual`, lines 549 and 551 | upward |
 | hook into Theorems 1, 2, 2′ | `residual_report` 558; `enclosure.enclose(..., residual_report=...)` | as the default path |
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Theorem R's remainder bound counts "moduli rounded once
+each for complex data" for |H|, taken with `numpy.abs`, whose error is not bounded (`docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0
+`ozaki_residual` takes |H| from `fp.abs_up` (≥ the exact moduli, Lemma M there); the moduli of the slices and
+remainders are |Re| + |Im| of exact components, an upper bound on |z| with one addition, as before. The constant
+γ_{w+6} is kept, with spare counts.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_D-03.py` (from the repository root, `python docs/proofs/verify_D-03.py`; record
@@ -239,3 +245,4 @@ the same accuracy as `fp.exact_dot` (2u|s|).
 Derived 11 November 2026 (draft); machine-checked (1000 random + 14 adversarial cases, 4 negative controls detected,
 0 violations); independent re-derivation: not done; Sarang's check (D-12): pending. UNVERIFIED: not used by
 `certify()`; no default changes.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

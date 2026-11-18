@@ -227,6 +227,15 @@ downward (`norm2_lower`, `sub_down`); the separations δᵢⱼ downward. Every s
 marker (`nonhermitian.UNVERIFIED`); the reason code `ILL_CONDITIONED_EIGENVECTORS` is in `scope.REASON_CODES` and the
 schema `certify-ed/nonhermitian/1.0` in `schema.RECORD_SCHEMAS`; the CLI is `certify-ed nonhermitian`.
 
+**Correction (2026-11-18), H-mod replaced; UNVERIFIED (D-12).** The hypothesis H-mod of (FP), the modulus of a complex
+number within 3u, is not established for NumPy's complex absolute value (2.47u measured on the reference host; no
+bound is known; `docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0 `residual_bounds` and `inverse_bound` take every modulus from
+`fp.modulus_up` (≥ the exact modulus, Lemma M there, subnormal components included), and `matrix_norm2_upper` gets
+upper moduli through `fp.inf_norm_upper`. Propositions 5 (ii) and 6 then hold without H-mod: (|A||x|)_j ≤ â_j/(1 − g)
+needs only the w products and sums, and |μ||x_j| ≤ p̂_j(1 + 8u) only the product. The constants g = γ_{w+6} (complex)
+and the factor (1 + 8u) are kept, with spare counts; the additive budget of (M-U) is kept as stated. The record's
+arithmetic text names `fp.modulus_up` instead of H-mod.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_E-02.py` (`--cases 200 --seed 20261111`; exact rational arithmetic with `fractions.Fraction`, complex
@@ -278,3 +287,4 @@ Derived on 2026-11-11; machine-checked (2696 random + 547 adversarial cases, 0 v
 36/36, 36/36, 34/36 and 200/200 cases); independent re-derivation: done 2026-11-11 (a second derivation written from section 1 and
 section 3 alone, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending. The code is
 marked UNVERIFIED until that check.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

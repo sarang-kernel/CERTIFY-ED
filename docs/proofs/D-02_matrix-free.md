@@ -147,6 +147,15 @@ named, and S2 adds nothing. S3 (inertia) needs a factorization and stays NOT_CHE
 
 **Note after the independent re-derivation (2026-11-03, `docs/proofs/VERDICTS.md`).** Lemma M3's second-pass count omits the modulus roundings of a complex vector applied to a real spec (and the complex modulus costs up to 2u on this host, measured 1.88u). On dev/3.2 `enclosure._rounding_bound` uses γ_{width+3} in place of γ_{width+1} for complex data, which restores `absHX_up_i ≥ (|H_spec|_abs |x|)_i` for up to two extra roundings per entry; the counts in section 2 are to be read with the exponent w_row + L + ρ + h_a + h_x (h ≤ 2) as recorded in VERDICTS.md. Sarang's check (D-12) remains pending.
 
+**Correction (2026-11-18); UNVERIFIED (D-12).** The note above counts h ≤ 2 roundings per complex modulus. No such
+bound is established for NumPy's complex absolute value (2.47u measured on the reference host, `docs/proofs/fp_modulus-up.md`).
+Since 3.3.0.dev0 the passes take the moduli of complex amplitudes and of x_j from `fp.modulus_up` (≥ the exact
+moduli, Lemma M there). In Lemma M3, h_a = h_x = 0 for every family: the second pass carries at most w_row + L + ρ
+(real spec) or w_row + 3L + ρ + 2 (complex spec) roundings, for real and complex x alike, as Lemma M3 states, and
+`absHX_up_i` ≥ (|H_spec|_abs|x|)_i holds with the division constant of the code. Lemma N's |c_t| and the moduli of
+`local_norm_bound` are upper bounds too, so Lemma N counts no rounding for them. No code constant changes;
+`_rounding_bound`'s `gamma(width + 3)` for complex data has two spare counts.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_D-02.py` (run from the repository root; 150 random specs by default):
@@ -187,3 +196,4 @@ model shift. (iii) *Lemma N for a single Pauli string* reduces to ‖c σ^{a}⊗
 ## 6 Status
 
 Derived by Claude on 2026-10-31; machine-checked (182 random + 18 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).
