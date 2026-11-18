@@ -24,7 +24,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from .fp import gamma, up
+from .fp import gamma, modulus_up, up
 from .spec import ModelSpec
 
 
@@ -70,9 +70,10 @@ def spec_invariants(spec: ModelSpec) -> Dict[str, float]:
     # a sum of <= q^3 products), sums of <= T^2 terms
     q = spec.q
     g = gamma(2 * (N + 2) + q ** 3 + T * T)
-    abs_tr = sum(abs(c) * np.prod([np.abs(m).trace() for m in f]) for c, f in items)
-    abs_fro = sum(abs(ca) * abs(cb) * np.prod([np.abs(fa[l]).T.__matmul__(np.abs(fb[l])).trace()
-                                                    for l in range(N)])
+    # the moduli of complex couplings and local entries are upper bounds (fp.modulus_up)
+    abs_tr = sum(modulus_up(c) * np.prod([modulus_up(m).trace() for m in f]) for c, f in items)
+    abs_fro = sum(modulus_up(ca) * modulus_up(cb) * np.prod([modulus_up(fa[l]).T.__matmul__(modulus_up(fb[l])).trace()
+                                                                for l in range(N)])
                   for ca, fa in items for cb, fb in items) if T <= 400 else float("inf")
     return {"trace": float(tr.real), "trace_imag": float(tr.imag),
             "trace_err": float(up(g * abs_tr)),
@@ -85,12 +86,12 @@ def matrix_invariants(H) -> Dict[str, float]:
     if sp.issparse(H):
         H = H.tocsr()
         tr = complex(H.diagonal().sum())
-        fro2 = float(np.sum(np.abs(H.data) ** 2))
+        fro2 = float(np.sum(H.data.real ** 2 + H.data.imag ** 2))     # |h|^2 from the components, no modulus
         n = H.nnz
     else:
         H = np.asarray(H)
         tr = complex(np.trace(H))
-        fro2 = float(np.sum(np.abs(H) ** 2))
+        fro2 = float(np.sum(H.real ** 2 + H.imag ** 2))
         n = H.size
     return {"trace": tr.real, "fro2": fro2, "err_rel": gamma(n + 2)}
 
