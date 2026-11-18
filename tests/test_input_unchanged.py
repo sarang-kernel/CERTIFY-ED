@@ -80,3 +80,23 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
         assert x.dtype == y.dtype and x.tobytes() == y.tobytes(), key
     if spec is not None:
         assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
+
+
+def test_certify_leaves_matrices_of_the_options_as_given():
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec)
+    w, V = np.linalg.eigh(H.toarray())
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
+    n_sites = int(round(np.log2(spec.dim)))
+    z = np.array([sum(0.5 - ((b >> i) & 1) for i in range(n_sites)) for b in range(spec.dim)])   # total Sz, up to sign
+    Sz = _with_duplicates(sp.diags(z).tocsr())
+    Obs = _with_duplicates(sp.diags(z * z).tocsr())
+    before = {"Sz": _arrays(Sz), "Obs": _arrays(Obs)}
+    opts = ce.Options(seed=1, eigenspaces="all", observables={"SzSz": Obs},
+                      approximate_symmetries={"Sz": (Sz, 1.0)})
+    a = ce.certify(claim, spec, opts)
+    assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
+    b = ce.certify(claim, spec, opts)
+    for key in ("statements", "kato_temple", "enclosures", "gaps"):
+        assert json.dumps(_without_timings(a.body.get(key)), sort_keys=True, default=repr) == \
+            json.dumps(_without_timings(b.body.get(key)), sort_keys=True, default=repr), key
