@@ -16,11 +16,17 @@ Nothing in it changes the software or its run records.
 | `lean/` | the Lean 4 re-verification: a core-Lean exact checker and kernel theorems (`CertifyCore`), formal proofs on Mathlib (`CertifyMathlib`), the recomputation of the application numbers, and their result files |
 | `docs/lean/` | the reports of the Lean work, among them `VERIFICATION_REPORT.md`; paths in them without a folder are relative to `lean/` |
 | `tools/` | `lint_docs.py` (the style checker of `docs/project/STYLE.md`) and the scripts that generate tables and reports |
-| `docs/project/sources/` | `SOURCES.md` (where the research archive is and how it was checked) and `runs/` (the run records of the 3.2.2 and 3.2.3 evidence runs) |
+| `docs/project/sources/` | `SOURCES.md` (where the research archive and the run records are, and how they were checked) and `runs/` (the result documents of the 3.2.2 and 3.2.3 evidence runs) |
 | `docs/project/STYLE.md` | the writing rules every document of the project record follows |
 
 The research archive v5 (`archive_v5/`) is not part of the repository; `docs/project/sources/SOURCES.md` says why and
 where the generators look for it.
+
+The documents were written while the code and the record were two repositories, so they speak of "the code
+repository". Since the import that means the code of this repository: a commit id cited with it is a commit of this
+repository, and a path of the form `code/certify-ed/...` is a path of the archived clone of the code at `a814d28`
+(`archive_v5/code/certify-ed/`). The folder `lean/` was named `reverification_lean/` before the import; comments in the
+Lean files keep the old name.
 
 ## Trust levels
 
