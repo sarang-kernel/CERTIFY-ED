@@ -590,3 +590,127 @@ def _sum_sqrt_upper(qs):
         r = (r + q / r) / 2
         total += r
     return total
+
+
+# --------------------------------------------------------- dynamic pin: no complex modulus bypasses fp in the bounds
+
+def _tripwire_allowed():
+    """(file, function) of the places tests/abs_audit_allowlist.txt classifies as taking a modulus of complex data
+    that is not an upper modulus of a rigorous bound (not part of a bound; Arb balls; the open lower-bound use)."""
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "abs_audit_allowlist.txt")
+    out = set()
+    for line in open(path, encoding="utf-8"):
+        if line.startswith("#") or not line.strip():
+            continue
+        f, scope, _expr, cls = line.rstrip("\n").split("\t")
+        if not cls.startswith("real data only"):
+            out.add((f, scope))
+    return out
+
+
+def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
+    """numpy's absolute value (np.abs, np.absolute), the builtin abs and the absolute value of scipy sparse matrices are
+    replaced by functions that record every call on complex data whose nearest caller in certify_ed is not one of the
+    places the audit allows (tests/abs_audit_allowlist.txt, classes other than real data); fp.modulus_up and
+    fp.abs_up take only real components, so they record nothing. The main entry points then run on complex data; a
+    modulus that bypasses fp is recorded whatever its spelling (recorded rather than raised, because certify() turns
+    exceptions into INCONCLUSIVE statements)."""
+    import builtins
+    import os
+    import sys
+
+    import scipy.sparse._data as spdata
+
+    import certify_ed as ce
+    import certify_ed.fp as fp
+    from certify_ed.construct import build_bitwise, full_state_set
+    from certify_ed.correlations import compress_operator
+    from certify_ed.davis_kahan import commutator_bound
+    from certify_ed.enclosure import OperatorAdapter, enclose
+    from certify_ed.generalized import certify_generalized
+    from certify_ed.moments import certified_moments
+    from certify_ed.nonhermitian import certify_nonhermitian
+    from certify_ed.ozaki import ozaki_residual
+    from certify_ed.sectors import audit_sector
+    from certify_ed.sweep import matrix_affinity_defect
+    from certify_ed.variational import certify_variational, state_from_mps
+
+    pkg = os.path.dirname(os.path.abspath(ce.__file__))
+    root = os.path.dirname(pkg)
+    allowed = _tripwire_allowed()
+    found = []
+    real_np_abs, real_builtin_abs, real_sparse_abs = np.abs, builtins.abs, spdata._data_matrix.__abs__
+
+    def is_complex(x):
+        if sp.issparse(x):
+            return np.iscomplexobj(x.data)
+        return isinstance(x, complex) or np.iscomplexobj(x)
+
+    def check(x):
+        if not is_complex(x):
+            return
+        f = sys._getframe(2)
+        while f is not None and not os.path.abspath(f.f_code.co_filename).startswith(pkg + os.sep):
+            f = f.f_back
+        if f is None:
+            return                                      # called from the test itself or from outside certify_ed
+        rel = os.path.relpath(os.path.abspath(f.f_code.co_filename), root).replace(os.sep, "/")
+        scope = getattr(f.f_code, "co_qualname", f.f_code.co_name).replace(".<locals>", "")
+        if (rel, scope) not in allowed:
+            found.append((rel, scope, f.f_lineno))
+
+    def np_abs(x, *a, **k):
+        check(x)
+        return real_np_abs(x, *a, **k)
+
+    def builtin_abs(x):
+        check(x)
+        return real_builtin_abs(x)
+
+    def sparse_abs(self):
+        check(self)
+        return real_sparse_abs(self)
+    monkeypatch.setattr(np, "abs", np_abs)
+    monkeypatch.setattr(np, "absolute", np_abs)
+    monkeypatch.setattr(builtins, "abs", builtin_abs)
+    monkeypatch.setattr(spdata._data_matrix, "__abs__", sparse_abs)
+
+    rng = np.random.default_rng(31)
+    n = 48
+    H = _hermitian(n, True, 31, density=0.2)
+    w, V = np.linalg.eigh(H.toarray())
+    O = _hermitian(n, True, 32, density=0.1)
+    claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest")
+    cert = ce.certify(claim, None, ce.Options(seed=1, observables={"O": O}))
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    spec = _complex_chain(6)
+    Hs = build_bitwise(spec, full_state_set(spec))
+    ws, Vs = np.linalg.eigh(Hs.toarray())
+    ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], operator=Hs, kind="lowest"), spec, ce.Options(seed=1))
+    certify_variational(operator=H, psi=V[:, 0] + 1e-3 * _vectors(n, 1, True, 33)[:, 0])
+    state_from_mps([rng.standard_normal((1, 2, 3)) + 1j * rng.standard_normal((1, 2, 3)),
+                    rng.standard_normal((3, 2, 1)) + 1j * rng.standard_normal((3, 2, 1))])
+    certified_moments(H, O, V[:, :1], 1e-12, 1e-12)
+    S = _hermitian(n, True, 34, density=0.05)
+    commutator_bound(H, S)
+    Vi = sp.csr_matrix(V[:, :4])
+    audit_sector(H, Vi, sp.csr_matrix(np.diag(w[:4]).astype(complex)))
+    compress_operator(Vi, O)
+    A = rng.standard_normal((12, 12)) + 1j * rng.standard_normal((12, 12))
+    lam, R = np.linalg.eig(A)
+    certify_nonhermitian(A, lam, R)
+    Bm = rng.standard_normal((12, 12)) + 1j * rng.standard_normal((12, 12))
+    Bm = Bm @ Bm.conj().T + 12 * np.eye(12)
+    Ah = (A + A.conj().T) / 2
+    import scipy.linalg as sla
+    lg, Xg = sla.eigh(Ah, Bm)
+    certify_generalized(Ah, Bm, lg[:2], Xg[:, :2])
+    matrix_affinity_defect(H, H + 0.5 * S, 0.5, S)
+    ozaki_residual(H, w[:2], V[:, :2])
+    enclose(OperatorAdapter(H), w[:3], V[:, :3])
+    assert not found, sorted(set(found))[:20]
+    # positive control: a modulus of fp.inf_norm_upper reverted to the builtin abs is recorded
+    monkeypatch.setattr(fp, "abs_up", lambda M: abs(M))
+    fp.inf_norm_upper(H)
+    assert found and {k[:2] for k in found} == {("certify_ed/fp.py", "inf_norm_upper")}
