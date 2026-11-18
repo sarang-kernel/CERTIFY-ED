@@ -1,0 +1,821 @@
+[
+ {
+  "case": "heis10_duplicated_vector__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_duplicated_vector__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_duplicated_vector__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_duplicated_vector__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_mislabeled_sector__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_mislabeled_sector__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_mislabeled_sector__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_mislabeled_sector__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.inertia",
+   "S3.bound",
+   "S3.ordering",
+   "S3.gap",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_missing_multiplet_member__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_missing_multiplet_member__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_missing_multiplet_member__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_missing_multiplet_member__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.inertia",
+   "S3.bound",
+   "S3.ordering",
+   "S3.gap",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_subnormal_entries__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_subnormal_entries__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_subnormal_entries__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_subnormal_entries__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_swapped_pairs__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_swapped_pairs__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_swapped_pairs__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_swapped_pairs__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_coupling__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_coupling__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_coupling__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_coupling__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_window_count__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_window_count__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_window_count__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_window_count__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.ordering",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_duplicated_vector__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_duplicated_vector__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_duplicated_vector__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_duplicated_vector__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_mislabeled_sector__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_mislabeled_sector__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_mislabeled_sector__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_mislabeled_sector__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.inertia",
+   "S3.bound",
+   "S3.ordering",
+   "S3.gap",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_missing_multiplet_member__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_missing_multiplet_member__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_missing_multiplet_member__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_missing_multiplet_member__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.inertia",
+   "S3.bound",
+   "S3.ordering",
+   "S3.gap",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_subnormal_entries__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_subnormal_entries__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_subnormal_entries__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_subnormal_entries__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_swapped_pairs__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_swapped_pairs__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_swapped_pairs__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_swapped_pairs__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__radius",
+  "exit_code": 1,
+  "fails": [
+   "C4.arrays_vs_records",
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_window_count__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_window_count__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_window_count__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_window_count__status",
+  "exit_code": 1,
+  "fails": [
+   "S3.ordering",
+   "S3.window_record"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__radius",
+  "exit_code": 1,
+  "fails": [
+   "R2.residual_bound",
+   "R3.existence_radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__array_hash",
+  "exit_code": 1,
+  "fails": [
+   "H2.radius"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__body_hash",
+  "exit_code": 1,
+  "fails": [
+   "H1.body_sha256"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__status",
+  "exit_code": 1,
+  "fails": [
+   "S2.status"
+  ],
+  "operator_given": true,
+  "reproduced": {}
+ }
+]

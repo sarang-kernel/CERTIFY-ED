@@ -1,0 +1,8 @@
+n=8 bits=10 s=0 weights=false: neg 4 (exact 4), beta 0.000000, bucket bound / exact sum 1.000000, u=0 v=110: agree
+n=20 bits=40 s=3 weights=false: neg 3 (exact 3), beta 0.003090, bucket bound / exact sum 1.000000, u=0 v=80: agree
+n=40 bits=70 s=6 weights=false: neg 2 (exact 2), beta 9828338.970737, bucket bound / exact sum 1.000000, u=0 v=49: agree
+n=40 bits=130 s=6 weights=false: neg 1 (exact 1), beta 13004789048028821580677120.000000, bucket bound / exact sum 1.000000, u=13 v=0: agree
+n=30 bits=90 s=0 weights=true: neg 14 (exact 14), beta 4073508771784.621582, bucket bound / exact sum 1.000000, u=0 v=28: agree
+n=60 bits=50 s=10 weights=false: neg 0 (exact 0), beta 23.710198, bucket bound / exact sum 1.000000, u=0 v=68: agree
+n=60 bits=100 s=12 weights=true: neg 0 (exact 0), beta 8580754348000671.000000, bucket bound / exact sum 1.000000, u=0 v=18: agree
+n=90 bits=60 s=0 weights=false: neg 45 (exact 45), beta 58737.870964, bucket bound / exact sum 1.000000, u=0 v=57: agree

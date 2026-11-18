@@ -1,0 +1,11 @@
+CertifyMathlib\NonHermitian\BauerFike.lean:191:21: warning: Unused tactic linter: `<;>` should be replaced with `;` or be removed.
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+CertifyMathlib\NonHermitian\BauerFike.lean:191:25: warning: Unused tactic linter: `ring` does nothing.
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+CertifyMathlib\NonHermitian\BauerFike.lean:191:25: warning: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+
+EXIT 0 SECONDS 362

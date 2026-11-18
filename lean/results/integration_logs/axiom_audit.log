@@ -1,0 +1,3 @@
+AUDIT CertifyCore: theorems=164 auxiliary=265 axioms=[Classical.choice, Quot.sound, propext] nonstandard=0
+AUDIT CertifyMathlib: theorems=916 auxiliary=558 axioms=[Classical.choice, Quot.sound, propext] nonstandard=0
+AUDIT CertifyApps: theorems=87 auxiliary=0 axioms=[propext] nonstandard=0

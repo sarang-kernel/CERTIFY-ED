@@ -1,0 +1,18 @@
+star: threshold 616527636979/50000000000000
+  reduced dims L 8, C 8, R 8; Gamma boundaries 16, 16; unit cosines >= 32 [0s]
+  [certCount n=8] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=8] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=8] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=16] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=16] build 0 ms, ldl 0 ms, limbs 0 ms
+  symmetry group of order 2 checked exactly; C signs #[1, 1] [0s]
+  [certCount n=2] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 10 chi 0: size 2, 0 positive pivots, beta 2.95e-8 [0.001000s] [0s]
+  [certCount n=14] build 1 ms, ldl 0 ms, limbs 0 ms
+    block 11 chi 0: size 14, 1 positive pivots, beta 1.66e-7 [0.002000s] [0s]
+  [certCount n=42] build 3 ms, ldl 0 ms, limbs 1 ms
+    block 12 chi 0: size 42, 5 positive pivots, beta 4.73e-7 [0.008000s] [0s]
+  [certCount n=70] build 15 ms, ldl 1 ms, limbs 1 ms
+    block 13 chi 0: size 70, 10 positive pivots, beta 6.60e-7 [0.026000s] [0s]
+  t = 1.23306e-2: 32 positive pivots (need <= 32); beta = 6.60e-7; t' = 1.2330552740e-2; certified true [0s]
+star: Lean t' 1.23305527396e-2 vs record 1.23305527401e-2; agreement true; record t' re-certified true

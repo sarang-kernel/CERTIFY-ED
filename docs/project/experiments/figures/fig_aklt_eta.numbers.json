@@ -1,0 +1,72 @@
+{
+ "criterion_values": {
+  "cross [4.6.12] 3 \u03b7": 0.599215352165567,
+  "decorated honeycomb 4 \u03b7": 0.6121316343039965,
+  "decorated square 4 \u03b7": 0.8814172772291874,
+  "square-octagon 4 \u03b7\u22a5 + 2 \u03b7\u2225": 0.8481546963604274,
+  "star [3.12.12] 4 \u03b7": 0.44417208809354597
+ },
+ "lattices": {
+  "cross": {
+   "criterion_holds": true,
+   "criterion_z": 3,
+   "eta_float": 0.1997384499691276,
+   "eta_published": 0.19973845,
+   "eta_upper": 0.19973845072185567,
+   "largest_block": 1584,
+   "seconds": 106.16638970375061
+  },
+  "decorated_honeycomb": {
+   "criterion_holds": true,
+   "criterion_z": 4,
+   "eta_float": 0.1530329084713553,
+   "eta_published": 0.1530329085,
+   "eta_upper": 0.15303290857599913,
+   "largest_block": 673,
+   "seconds": 10.246206760406494
+  },
+  "decorated_square": {
+   "criterion_holds": true,
+   "criterion_z": 4,
+   "eta_float": 0.22035431735047722,
+   "eta_published": 0.2203543174,
+   "eta_upper": 0.22035431930729685,
+   "largest_block": 4034,
+   "seconds": 2368.1666371822357
+  },
+  "square_octagon_par": {
+   "criterion_holds": null,
+   "criterion_z": null,
+   "eta_float": 0.10614468577327944,
+   "eta_published": 0.1061446858,
+   "eta_upper": 0.10614468587603454,
+   "largest_block": 420,
+   "seconds": 3.6142094135284424
+  },
+  "square_octagon_perp": {
+   "criterion_holds": null,
+   "criterion_z": null,
+   "eta_float": 0.15896633104635846,
+   "eta_published": 0.158966331,
+   "eta_upper": 0.15896633115208958,
+   "largest_block": 420,
+   "seconds": 3.467301845550537
+  },
+  "star": {
+   "criterion_holds": true,
+   "criterion_z": 4,
+   "eta_float": 0.1110430219655686,
+   "eta_published": 0.111043022,
+   "eta_upper": 0.11104302202338649,
+   "largest_block": 70,
+   "seconds": 0.0916745662689209
+  }
+ },
+ "max_abs_diff_upper_minus_published": 1.907296848235873e-09,
+ "max_criterion_value": 0.8814172772291874,
+ "record": "e10_aklt_20261105_071106/data.json",
+ "square_octagon": {
+  "criterion_holds": true,
+  "sum_upper": 0.8481546963604274
+ }
+}

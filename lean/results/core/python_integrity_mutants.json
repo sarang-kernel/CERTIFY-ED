@@ -1,0 +1,402 @@
+[
+ {
+  "case": "heis10_duplicated_vector__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_duplicated_vector__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_duplicated_vector__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_duplicated_vector__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_mislabeled_sector__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_mislabeled_sector__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_mislabeled_sector__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_mislabeled_sector__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_missing_multiplet_member__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_missing_multiplet_member__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_missing_multiplet_member__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_missing_multiplet_member__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_subnormal_entries__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_subnormal_entries__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_subnormal_entries__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_subnormal_entries__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_swapped_pairs__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_swapped_pairs__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_swapped_pairs__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_swapped_pairs__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_coupling__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_coupling__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_coupling__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_coupling__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_window_count__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_window_count__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_window_count__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis10_wrong_window_count__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_duplicated_vector__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_duplicated_vector__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_duplicated_vector__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_duplicated_vector__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_mislabeled_sector__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_mislabeled_sector__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_mislabeled_sector__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_mislabeled_sector__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_missing_multiplet_member__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_missing_multiplet_member__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_missing_multiplet_member__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_missing_multiplet_member__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_subnormal_entries__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_subnormal_entries__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_subnormal_entries__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_subnormal_entries__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_swapped_pairs__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_swapped_pairs__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_swapped_pairs__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_swapped_pairs__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_window_count__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_window_count__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_window_count__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "heis8_wrong_window_count__status",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__radius",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__array_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': True, 'arrays_ok': False, 'bad_arrays': ['radius'], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__body_hash",
+  "error": "ValueError: certificate integrity check failed: {'body_hash_ok': False, 'arrays_ok': True, 'bad_arrays': [], 'scope_ok': True, 'scope_problems': [], 'ok': False}",
+  "integrity_ok": false
+ },
+ {
+  "case": "j1j2_8_duplicated_vector__status",
+  "error": "",
+  "integrity_ok": true
+ }
+]

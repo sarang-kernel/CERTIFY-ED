@@ -1,0 +1,932 @@
+{
+ "lean4lean": {
+  "modules": [
+   {
+    "module": "CertifyCore",
+    "exit_code": 1,
+    "seconds": 19.0,
+    "output": "m in CertifyCore.Kernel.Data.DenseArrays:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Data\\DenseArrays.olean', incompatible header\nlean4lean found a problem in CertifyCore.KData:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\KData.olean', incompatible header\nlean4lean found a problem in CertifyCore.Json:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Json.olean', incompatible header\nlean4lean found a problem in CertifyCore.Inertia:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Inertia.olean', incompatible header\nlean4lean found a problem in CertifyCore.Dyadic:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Dyadic.olean', incompatible header\nlean4lean found a problem in CertifyCore.Check:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Check.olean', incompatible header\nlean4lean found a problem in CertifyCore.Basic:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Basic.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Basic",
+    "exit_code": 1,
+    "seconds": 11.3,
+    "output": "lean4lean found a problem in CertifyCore.Basic:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Basic.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Check",
+    "exit_code": 1,
+    "seconds": 10.4,
+    "output": "lean4lean found a problem in CertifyCore.Check:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Check.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Dyadic",
+    "exit_code": 1,
+    "seconds": 10.8,
+    "output": "lean4lean found a problem in CertifyCore.Dyadic:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Dyadic.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Inertia",
+    "exit_code": 1,
+    "seconds": 11.1,
+    "output": "lean4lean found a problem in CertifyCore.Inertia:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Inertia.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Json",
+    "exit_code": 1,
+    "seconds": 7.3,
+    "output": "lean4lean found a problem in CertifyCore.Json:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Json.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.KData",
+    "exit_code": 1,
+    "seconds": 6.6,
+    "output": "lean4lean found a problem in CertifyCore.KData:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\KData.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Kernel.Data.DenseArrays",
+    "exit_code": 1,
+    "seconds": 6.1,
+    "output": "lean4lean found a problem in CertifyCore.Kernel.Data.DenseArrays:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Data\\DenseArrays.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Kernel.Data.MatrixFree",
+    "exit_code": 1,
+    "seconds": 5.6,
+    "output": "lean4lean found a problem in CertifyCore.Kernel.Data.MatrixFree:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Data\\MatrixFree.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Kernel.Data.Npz",
+    "exit_code": 1,
+    "seconds": 6.0,
+    "output": "lean4lean found a problem in CertifyCore.Kernel.Data.Npz:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Data\\Npz.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Kernel.Defs",
+    "exit_code": 1,
+    "seconds": 6.3,
+    "output": "lean4lean found a problem in CertifyCore.Kernel.Defs:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Defs.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Kernel.Small",
+    "exit_code": 1,
+    "seconds": 5.6,
+    "output": "lean4lean found a problem in CertifyCore.Kernel.Small:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Kernel\\Small.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Load",
+    "exit_code": 1,
+    "seconds": 5.6,
+    "output": "lean4lean found a problem in CertifyCore.Load:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Load.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Main",
+    "exit_code": 1,
+    "seconds": 5.8,
+    "output": "lean4lean found a problem in CertifyCore.Main:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Main.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Sha256",
+    "exit_code": 1,
+    "seconds": 6.4,
+    "output": "lean4lean found a problem in CertifyCore.Sha256:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Sha256.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.Counting",
+    "exit_code": 1,
+    "seconds": 6.7,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.Counting:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\Counting.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.E04",
+    "exit_code": 1,
+    "seconds": 6.6,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.E04:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\E04.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.Gamma",
+    "exit_code": 1,
+    "seconds": 6.4,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.Gamma:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\Gamma.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.Int05",
+    "exit_code": 1,
+    "seconds": 6.3,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.Int05:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\Int05.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.L17",
+    "exit_code": 1,
+    "seconds": 6.5,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.L17:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\L17.olean', incompatible header\n"
+   },
+   {
+    "module": "CertifyCore.Theorems.Thm1",
+    "exit_code": 1,
+    "seconds": 6.6,
+    "output": "lean4lean found a problem in CertifyCore.Theorems.Thm1:\nfailed to read file 'reverification_lean\\.lake\\build\\lib\\lean\\CertifyCore\\Theorems\\Thm1.olean', incompatible header\n"
+   }
+  ],
+  "control": [
+   {
+    "module": "Init.Prelude",
+    "exit_code": 1,
+    "seconds": 6.6,
+    "output": "lean4lean found a problem in Init.Prelude:\nfailed to read file '<toolchain>\\lib\\lean\\Init\\Prelude.olean', incompatible header\n"
+   }
+  ]
+ },
+ "nanoda": [
+  {
+   "theorem": "CertifyCore.Thm.div_le_div_of",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.2,
+   "check_s": 4.2,
+   "export_bytes": 12269652,
+   "output": "Checked 3153 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3153
+  },
+  {
+   "theorem": "CertifyCore.Thm.le_div_of",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.2,
+   "check_s": 4.2,
+   "export_bytes": 12298370,
+   "output": "Checked 3163 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3163
+  },
+  {
+   "theorem": "CertifyCore.Thm.div_le_of",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.8,
+   "check_s": 3.9,
+   "export_bytes": 12298853,
+   "output": "Checked 3163 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3163
+  },
+  {
+   "theorem": "CertifyCore.Thm.two53_pos",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.4,
+   "check_s": 1.1,
+   "export_bytes": 4736420,
+   "output": "Checked 1666 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1666
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_eq",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.2,
+   "check_s": 4.0,
+   "export_bytes": 13143079,
+   "output": "Checked 3315 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3315
+  },
+  {
+   "theorem": "CertifyCore.Thm.cast_nonneg",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.3,
+   "check_s": 1.7,
+   "export_bytes": 5773317,
+   "output": "Checked 1929 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1929
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_nonneg",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.8,
+   "check_s": 4.1,
+   "export_bytes": 13247532,
+   "output": "Checked 3338 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3338
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_mono",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.0,
+   "check_s": 4.1,
+   "export_bytes": 13275161,
+   "output": "Checked 3347 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3347
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_add",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.9,
+   "check_s": 8.0,
+   "export_bytes": 15289422,
+   "output": "Checked 3718 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3718
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_succ",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 12.1,
+   "check_s": 10.8,
+   "export_bytes": 15532860,
+   "output": "Checked 3753 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3753
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_ge",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 71.2,
+   "check_s": 11.5,
+   "export_bytes": 13251982,
+   "output": "Checked 3343 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3343
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_le_two",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 38.2,
+   "check_s": 13.1,
+   "export_bytes": 15223915,
+   "output": "Checked 3715 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3715
+  },
+  {
+   "theorem": "CertifyCore.Thm.rpow_add",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 10.1,
+   "check_s": 5.2,
+   "export_bytes": 11271427,
+   "output": "Checked 2962 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2962
+  },
+  {
+   "theorem": "CertifyCore.Thm.rpow_mul",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 12.6,
+   "check_s": 5.3,
+   "export_bytes": 11279376,
+   "output": "Checked 2963 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2963
+  },
+  {
+   "theorem": "CertifyCore.Thm.rpow_le_pow_left",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 12.5,
+   "check_s": 2.6,
+   "export_bytes": 7521429,
+   "output": "Checked 2308 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2308
+  },
+  {
+   "theorem": "CertifyCore.Thm.one_pow'",
+   "ok": true,
+   "exit_code": 0,
+   "declarations": 2250,
+   "export_s": 21.4,
+   "check_s": 4.9,
+   "export_bytes": 7218566,
+   "output": "Checked 2250 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+  },
+  {
+   "theorem": "CertifyCore.Thm.one_le_rpow",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 14.2,
+   "check_s": 4.7,
+   "export_bytes": 7695478,
+   "output": "Checked 2379 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2379
+  },
+  {
+   "theorem": "CertifyCore.Thm.le_max_l",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 21.0,
+   "check_s": 4.9,
+   "export_bytes": 13146599,
+   "output": "Checked 3381 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3381
+  },
+  {
+   "theorem": "CertifyCore.Thm.le_max_r",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 12.6,
+   "check_s": 4.9,
+   "export_bytes": 13298049,
+   "output": "Checked 3408 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3408
+  },
+  {
+   "theorem": "CertifyCore.Thm.max_lt_of",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.5,
+   "check_s": 4.2,
+   "export_bytes": 13371057,
+   "output": "Checked 3428 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3428
+  },
+  {
+   "theorem": "CertifyCore.Thm.u_pos",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.0,
+   "check_s": 1.5,
+   "export_bytes": 5415703,
+   "output": "Checked 1838 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1838
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_cast",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.0,
+   "check_s": 2.1,
+   "export_bytes": 6114260,
+   "output": "Checked 2011 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2011
+  },
+  {
+   "theorem": "CertifyCore.Thm.one_add_4u_covers_three",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.3,
+   "check_s": 2.1,
+   "export_bytes": 6132126,
+   "output": "Checked 2019 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2019
+  },
+  {
+   "theorem": "CertifyCore.Thm.one_sub_u_cube_mul",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.4,
+   "check_s": 2.0,
+   "export_bytes": 6131188,
+   "output": "Checked 2018 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2018
+  },
+  {
+   "theorem": "CertifyCore.Thm.guard_covers_six",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.4,
+   "check_s": 2.2,
+   "export_bytes": 6131182,
+   "output": "Checked 2018 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2018
+  },
+  {
+   "theorem": "CertifyCore.Thm.step5_chain",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.2,
+   "check_s": 2.2,
+   "export_bytes": 6133833,
+   "output": "Checked 2018 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2018
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda5",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 9.4,
+   "check_s": 6.7,
+   "export_bytes": 16219928,
+   "output": "Checked 3843 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3843
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda5_complex",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.3,
+   "check_s": 6.6,
+   "export_bytes": 16225014,
+   "output": "Checked 3844 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3844
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda6",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.2,
+   "check_s": 6.3,
+   "export_bytes": 15748068,
+   "output": "Checked 3766 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3766
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda6_fails_at_boundary",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.8,
+   "check_s": 2.0,
+   "export_bytes": 6131918,
+   "output": "Checked 2019 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2019
+  },
+  {
+   "theorem": "CertifyCore.Thm.pow_chain",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.6,
+   "check_s": 3.9,
+   "export_bytes": 11888213,
+   "output": "Checked 3121 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3121
+  },
+  {
+   "theorem": "CertifyCore.Thm.sq_nonneg'",
+   "ok": true,
+   "exit_code": 0,
+   "declarations": 3118,
+   "export_s": 52.5,
+   "check_s": 6.8,
+   "export_bytes": 11867761,
+   "output": "Checked 3118 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+  },
+  {
+   "theorem": "CertifyCore.Thm.sq_le_sq_of",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.3,
+   "check_s": 3.7,
+   "export_bytes": 11886966,
+   "output": "Checked 3121 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3121
+  },
+  {
+   "theorem": "CertifyCore.Thm.gamma_n2_lower",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.8,
+   "check_s": 5.5,
+   "export_bytes": 15472471,
+   "output": "Checked 3724 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3724
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda4_upper_2n",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 8.1,
+   "check_s": 25.3,
+   "export_bytes": 16104576,
+   "output": "Checked 3793 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3793
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda4_upper_n",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 11.7,
+   "check_s": 41.5,
+   "export_bytes": 16552287,
+   "output": "Checked 3848 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3848
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda4_lower_2n",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 12.1,
+   "check_s": 13.5,
+   "export_bytes": 16373302,
+   "output": "Checked 3861 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3861
+  },
+  {
+   "theorem": "CertifyCore.Thm.lambda4_lower_n",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 13.2,
+   "check_s": 18.2,
+   "export_bytes": 16570614,
+   "output": "Checked 3876 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3876
+  },
+  {
+   "theorem": "CertifyCore.Thm.binary64_on_grid",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.9,
+   "check_s": 1.7,
+   "export_bytes": 5416766,
+   "output": "Checked 1840 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1840
+  },
+  {
+   "theorem": "CertifyCore.Thm.small_multiple_binary64",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.1,
+   "check_s": 1.8,
+   "export_bytes": 5415478,
+   "output": "Checked 1840 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1840
+  },
+  {
+   "theorem": "CertifyCore.Thm.add_exact_below",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.6,
+   "check_s": 4.1,
+   "export_bytes": 12202201,
+   "output": "Checked 3178 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3178
+  },
+  {
+   "theorem": "CertifyCore.Thm.additive_sum_bound",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.6,
+   "check_s": 4.8,
+   "export_bytes": 13989571,
+   "output": "Checked 3508 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3508
+  },
+  {
+   "theorem": "CertifyCore.Thm.norm_underflow_factor",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 8.1,
+   "check_s": 5.9,
+   "export_bytes": 15874140,
+   "output": "Checked 3800 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3800
+  },
+  {
+   "theorem": "CertifyCore.Thm.ulp_min_covers",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.1,
+   "check_s": 4.4,
+   "export_bytes": 13745227,
+   "output": "Checked 3481 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3481
+  },
+  {
+   "theorem": "CertifyCore.Thm.ln_remainder_const",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.7,
+   "check_s": 5.3,
+   "export_bytes": 14918031,
+   "output": "Checked 3634 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3634
+  },
+  {
+   "theorem": "CertifyCore.Thm.ln_remainder_old_const_too_small",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.4,
+   "check_s": 2.0,
+   "export_bytes": 6122770,
+   "output": "Checked 2013 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2013
+  },
+  {
+   "theorem": "CertifyCore.Thm.geom_mul",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.6,
+   "check_s": 3.9,
+   "export_bytes": 11879830,
+   "output": "Checked 3049 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3049
+  },
+  {
+   "theorem": "CertifyCore.Thm.geom_le",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.8,
+   "check_s": 4.4,
+   "export_bytes": 12663385,
+   "output": "Checked 3246 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3246
+  },
+  {
+   "theorem": "CertifyCore.Thm.atanhTail_le_geom",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.1,
+   "check_s": 5.1,
+   "export_bytes": 14743229,
+   "output": "Checked 3626 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3626
+  },
+  {
+   "theorem": "CertifyCore.Thm.ln_tail_bound",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.9,
+   "check_s": 5.8,
+   "export_bytes": 15484252,
+   "output": "Checked 3727 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3727
+  },
+  {
+   "theorem": "CertifyCore.Thm.fact_pos",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.1,
+   "check_s": 0.2,
+   "export_bytes": 239353,
+   "output": "Checked 160 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 160
+  },
+  {
+   "theorem": "CertifyCore.Thm.fact_ge",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.6,
+   "check_s": 1.2,
+   "export_bytes": 4318938,
+   "output": "Checked 1529 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1529
+  },
+  {
+   "theorem": "CertifyCore.Thm.exp_tail_bound",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 8.0,
+   "check_s": 5.8,
+   "export_bytes": 15877063,
+   "output": "Checked 3804 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3804
+  },
+  {
+   "theorem": "CertifyCore.Thm.ln_argument_range",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 8.3,
+   "check_s": 5.0,
+   "export_bytes": 14849431,
+   "output": "Checked 3626 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3626
+  },
+  {
+   "theorem": "CertifyCore.Thm.umax_admits",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.1,
+   "check_s": 0.2,
+   "export_bytes": 352088,
+   "output": "Checked 228 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 228
+  },
+  {
+   "theorem": "CertifyCore.Thm.ceil_ceil",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.1,
+   "check_s": 1.2,
+   "export_bytes": 4459082,
+   "output": "Checked 1535 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1535
+  },
+  {
+   "theorem": "CertifyCore.Thm.crossing_slack",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.1,
+   "check_s": 4.5,
+   "export_bytes": 13939077,
+   "output": "Checked 3513 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3513
+  },
+  {
+   "theorem": "CertifyCore.Thm.crossing_separation",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.4,
+   "check_s": 4.7,
+   "export_bytes": 14057083,
+   "output": "Checked 3529 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3529
+  },
+  {
+   "theorem": "CertifyCore.Thm.pigeon",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.0,
+   "check_s": 1.5,
+   "export_bytes": 4496293,
+   "output": "Checked 1555 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1555
+  },
+  {
+   "theorem": "CertifyCore.Thm.sorted_pairing",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.2,
+   "check_s": 5.6,
+   "export_bytes": 14416630,
+   "output": "Checked 3513 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3513
+  },
+  {
+   "theorem": "CertifyCore.Thm.countBelow_ge",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.8,
+   "check_s": 1.2,
+   "export_bytes": 4331544,
+   "output": "Checked 1535 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1535
+  },
+  {
+   "theorem": "CertifyCore.Thm.below_index_lt",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.0,
+   "check_s": 2.9,
+   "export_bytes": 8539904,
+   "output": "Checked 2539 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2539
+  },
+  {
+   "theorem": "CertifyCore.Thm.cor5_pairing",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 7.3,
+   "check_s": 5.9,
+   "export_bytes": 14733686,
+   "output": "Checked 3558 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 3558
+  },
+  {
+   "theorem": "CertifyCore.Thm.sum_map_zero",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 3.7,
+   "check_s": 0.2,
+   "export_bytes": 93079,
+   "output": "Checked 78 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 78
+  },
+  {
+   "theorem": "CertifyCore.Thm.sum_map_add'",
+   "ok": true,
+   "exit_code": 0,
+   "declarations": 1428,
+   "export_s": 16.1,
+   "check_s": 1.2,
+   "export_bytes": 3737203,
+   "output": "Checked 1428 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n"
+  },
+  {
+   "theorem": "CertifyCore.Thm.indicator_sum",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.8,
+   "check_s": 1.2,
+   "export_bytes": 4727770,
+   "output": "Checked 1669 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1669
+  },
+  {
+   "theorem": "CertifyCore.Thm.indicator_count",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.1,
+   "check_s": 1.2,
+   "export_bytes": 4724955,
+   "output": "Checked 1669 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1669
+  },
+  {
+   "theorem": "CertifyCore.Thm.sum_mul_dCount",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.9,
+   "check_s": 3.6,
+   "export_bytes": 10867915,
+   "output": "Checked 2764 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2764
+  },
+  {
+   "theorem": "CertifyCore.Thm.sum_dCount",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.1,
+   "check_s": 1.2,
+   "export_bytes": 4891305,
+   "output": "Checked 1712 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 1712
+  },
+  {
+   "theorem": "CertifyCore.Thm.c16_single_root",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 6.8,
+   "check_s": 3.6,
+   "export_bytes": 10988687,
+   "output": "Checked 2775 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2775
+  },
+  {
+   "theorem": "CertifyCore.Thm.pooled_count",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.0,
+   "check_s": 0.3,
+   "export_bytes": 883071,
+   "output": "Checked 566 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 566
+  },
+  {
+   "theorem": "CertifyCore.Thm.pooled_length",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 4.1,
+   "check_s": 0.3,
+   "export_bytes": 809345,
+   "output": "Checked 519 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 519
+  },
+  {
+   "theorem": "CertifyCore.K.matrixFree_S2_S3",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.5,
+   "check_s": 148.5,
+   "export_bytes": 6447550,
+   "output": "Checked 2144 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2144
+  },
+  {
+   "theorem": "CertifyCore.K.denseArrays_S2_S3",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.6,
+   "check_s": 126.6,
+   "export_bytes": 6532482,
+   "output": "Checked 2144 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2144
+  },
+  {
+   "theorem": "CertifyCore.K.npz_S2_S3",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.1,
+   "check_s": 133.1,
+   "export_bytes": 6532585,
+   "output": "Checked 2144 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2144
+  },
+  {
+   "theorem": "CertifyCore.K.npz_forged_radius_rejected",
+   "ok": true,
+   "exit_code": 0,
+   "export_s": 5.4,
+   "check_s": 3.2,
+   "export_bytes": 6547414,
+   "output": "Checked 2151 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+   "declarations": 2151
+  }
+ ],
+ "leanchecker": {
+  "command": "leanchecker CertifyCore",
+  "modules_covered": [
+   "CertifyCore",
+   "CertifyCore.Basic",
+   "CertifyCore.Check",
+   "CertifyCore.Dyadic",
+   "CertifyCore.Inertia",
+   "CertifyCore.Json",
+   "CertifyCore.KData",
+   "CertifyCore.Kernel.Data.DenseArrays",
+   "CertifyCore.Kernel.Data.MatrixFree",
+   "CertifyCore.Kernel.Data.Npz",
+   "CertifyCore.Kernel.Defs",
+   "CertifyCore.Kernel.Small",
+   "CertifyCore.Load",
+   "CertifyCore.Main",
+   "CertifyCore.Sha256",
+   "CertifyCore.Theorems.Counting",
+   "CertifyCore.Theorems.E04",
+   "CertifyCore.Theorems.Gamma",
+   "CertifyCore.Theorems.Int05",
+   "CertifyCore.Theorems.L17",
+   "CertifyCore.Theorems.Thm1"
+  ],
+  "module": "CertifyCore",
+  "exit_code": 0,
+  "seconds": 473.3,
+  "output": ""
+ }
+}

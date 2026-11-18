@@ -1,0 +1,7 @@
+# module theorem; each export contains the theorem with every declaration it depends on
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.disc_inclusion_certified
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.bauerFike_matrix
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.bauerFike_residual_matrix
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.disc_inclusion_matrix
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.backward_error
+CertifyMathlib.NonHermitian CertifyMathlib.NonHermitian.bauerFike_matrix_sharp

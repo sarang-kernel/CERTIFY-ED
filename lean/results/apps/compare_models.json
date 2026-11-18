@@ -1,0 +1,301 @@
+{
+ "all_equal": true,
+ "heisenberg": [
+  {
+   "den_lean": 4,
+   "den_python": 4,
+   "entries_equal": true,
+   "model": "chain8",
+   "nonzeros_lean": 354,
+   "nonzeros_python": 354,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 0.2,
+   "sites": 8,
+   "state_sets_equal": true,
+   "states": 70
+  },
+  {
+   "den_lean": 8,
+   "den_python": 8,
+   "entries_equal": true,
+   "model": "chain8_J2",
+   "nonzeros_lean": 694,
+   "nonzeros_python": 694,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 0.1,
+   "sites": 8,
+   "state_sets_equal": true,
+   "states": 70
+  },
+  {
+   "den_lean": 8,
+   "den_python": 8,
+   "entries_equal": true,
+   "model": "chain12_J2",
+   "nonzeros_lean": 12876,
+   "nonzeros_python": 12876,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 0.6,
+   "sites": 12,
+   "state_sets_equal": true,
+   "states": 924
+  },
+  {
+   "den_lean": 8,
+   "den_python": 8,
+   "entries_equal": true,
+   "model": "square42_J2",
+   "nonzeros_lean": 852,
+   "nonzeros_python": 852,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 0.2,
+   "sites": 8,
+   "state_sets_equal": true,
+   "states": 70
+  },
+  {
+   "den_lean": 4,
+   "den_python": 4,
+   "entries_equal": true,
+   "model": "square4",
+   "nonzeros_lean": 228162,
+   "nonzeros_python": 228162,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 7.9,
+   "sites": 16,
+   "state_sets_equal": true,
+   "states": 12870
+  },
+  {
+   "den_lean": 8,
+   "den_python": 8,
+   "entries_equal": true,
+   "model": "square4_J2",
+   "nonzeros_lean": 449462,
+   "nonzeros_python": 449462,
+   "python_imaginary_part_zero": true,
+   "python_scale": 1,
+   "python_weights_one": true,
+   "seconds": 15.3,
+   "sites": 16,
+   "state_sets_equal": true,
+   "states": 12870
+  },
+  {
+   "den_lean": 80000000,
+   "den_python": 1,
+   "entries_equal": true,
+   "model": "crown",
+   "nonzeros_lean": 975260,
+   "nonzeros_python": 975260,
+   "python_imaginary_part_zero": true,
+   "python_scale": 80000000,
+   "python_weights_one": true,
+   "seconds": 35.4,
+   "sites": 18,
+   "state_sets_equal": true,
+   "states": 48620
+  }
+ ],
+ "sectors": [
+  {
+   "columns_matched": true,
+   "dim_lean": 1,
+   "dim_python": 1,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    0,
+    2
+   ],
+   "group_order_lean": 32,
+   "group_order_python": 32,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "chain8",
+   "seconds": 0.1
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 2,
+   "dim_python": 2,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    2,
+    2
+   ],
+   "group_order_lean": 32,
+   "group_order_python": 32,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "chain8_J2",
+   "seconds": 0.2
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 35,
+   "dim_python": 35,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    0,
+    0
+   ],
+   "group_order_lean": 48,
+   "group_order_python": 48,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "chain12_J2",
+   "seconds": 0.8
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 21,
+   "dim_python": 21,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    2,
+    2
+   ],
+   "group_order_lean": 48,
+   "group_order_python": 48,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "chain12_J2",
+   "seconds": 0.8
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 5,
+   "dim_python": 5,
+   "entries_equal": true,
+   "exponents": [
+    1,
+    0,
+    2
+   ],
+   "group_order_lean": 16,
+   "group_order_python": 16,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "square42_J2",
+   "seconds": 0.1
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 3,
+   "dim_python": 3,
+   "entries_equal": true,
+   "exponents": [
+    2,
+    2,
+    0
+   ],
+   "group_order_lean": 16,
+   "group_order_python": 16,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "square42_J2",
+   "seconds": 0.2
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 392,
+   "dim_python": 392,
+   "entries_equal": true,
+   "exponents": [
+    1,
+    2,
+    0
+   ],
+   "group_order_lean": 32,
+   "group_order_python": 32,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "square4_J2",
+   "seconds": 31.5
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 441,
+   "dim_python": 441,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    0,
+    0
+   ],
+   "group_order_lean": 32,
+   "group_order_python": 32,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "square4",
+   "seconds": 19.3
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 179,
+   "dim_python": 179,
+   "entries_equal": true,
+   "exponents": [
+    0,
+    2,
+    0,
+    2,
+    2,
+    0,
+    0
+   ],
+   "group_order_lean": 128,
+   "group_order_python": 128,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "crown",
+   "seconds": 131.3
+  },
+  {
+   "columns_matched": true,
+   "dim_lean": 10,
+   "dim_python": 10,
+   "entries_equal": true,
+   "exponents": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "group_order_lean": 128,
+   "group_order_python": 128,
+   "lean_commutes": true,
+   "lean_hermitian": true,
+   "model": "crown",
+   "seconds": 128.0
+  }
+ ],
+ "spin1": [
+  {
+   "entries_equal": true,
+   "model": "spin1_ring6",
+   "nonzeros_lean": 4384,
+   "nonzeros_python": 4384,
+   "orientation": "K_rc^2 w_r = H_rc^2 w_c",
+   "seconds": 0.4,
+   "states": 729
+  }
+ ]
+}

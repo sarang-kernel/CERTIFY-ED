@@ -1,0 +1,1008 @@
+{
+ "agreeing": 14,
+ "description": "Recomputation of the certified application numbers of certify-ed in compiled core Lean (trust level N); see reverification_lean/APPS.md",
+ "disagreeing": 0,
+ "lean_program": "ceapps (reverification_lean/CertifyApps/Main.lean)",
+ "mathlib_lemmas": {
+  "axioms": {
+   "all_standard": true,
+   "command": "lake env lean apps_export/PrintAxiomsApps.lean",
+   "standard": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "theorems": 37
+  },
+  "forbidden_tokens": {
+   "admit": 0,
+   "axiom": 0,
+   "native_decide": 0,
+   "sorry": 0
+  },
+  "leanchecker": {
+   "command": "lake env leanchecker CertifyMathlib.Apps.Bordered CertifyMathlib.Apps.Kernel CertifyMathlib.Apps.Criterion CertifyMathlib.Apps",
+   "exit_code": 0,
+   "modules": [
+    "CertifyMathlib.Apps.Bordered",
+    "CertifyMathlib.Apps.Kernel",
+    "CertifyMathlib.Apps.Criterion",
+    "CertifyMathlib.Apps"
+   ],
+   "output": "none",
+   "seconds": 1087.6,
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "trust_level": "K+"
+  },
+  "module": "CertifyMathlib.Apps",
+  "nanoda": {
+   "accepted": 15,
+   "command": "python apps_export/nanoda_apps.py --theorems apps_export/nanoda_apps_theorems.txt",
+   "main_theorems": 15,
+   "not_run": 0,
+   "rejected": 0
+  },
+  "theorems": [
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.qf_real",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.nsq_real",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.nsq_pos",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.qf_smul_real",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.qf_smul_one_real",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.qf_smul_vec",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.transpose_eq_of_isHermitian",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.dotProduct_mulVec_symm",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.isUnit_det_of_qf_ge",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.exists_negOn_zero",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.finrank_le_cntLt_zero",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.cntLt_le_of_qf_le",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.cntLt_congr",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.cntLt_zero_of_nonneg",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.cntLt_fromBlocks",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.isHermitian_smul_real",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.bordered_isHermitian",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.schur_isHermitian",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.bordered_eq",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, the bordered matrix of eta.py",
+    "main": true,
+    "name": "CertifyMathlib.Apps.bordered_inertia",
+    "nanoda": {
+     "check_peak_private_mib": 261,
+     "check_seconds": 97.3,
+     "declarations": 35445,
+     "export_bytes": 203008157,
+     "export_peak_private_mib": 3981,
+     "export_seconds": 86.2,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "Haynsworth inertia additivity for the bordered matrix [[X, -q C], [-q C^H, q G]] with G > 0: its negative eigenvalues are those of the Schur complement X - q C G^-1 C^H",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, the bordered-pencil lemma",
+    "main": true,
+    "name": "CertifyMathlib.Apps.bordered_pencil",
+    "nanoda": {
+     "check_peak_private_mib": 208,
+     "check_seconds": 133.8,
+     "declarations": 35460,
+     "export_bytes": 203188191,
+     "export_peak_private_mib": 3981,
+     "export_seconds": 123.0,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "the bordered matrix with X = p G_A has as many negative eigenvalues as (p/q) G_A - C G_B^-1 C^H, the number of pencil eigenvalues above p/q",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.var_le",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, the inequality (G_B + beta)^-1 >= G_B^-1 / (1 + beta/mu)",
+    "main": true,
+    "name": "CertifyMathlib.Apps.qf_inv_shift",
+    "nanoda": {
+     "check_peak_private_mib": 107,
+     "check_seconds": 51.4,
+     "declarations": 20918,
+     "export_bytes": 97222180,
+     "export_peak_private_mib": 3922,
+     "export_seconds": 445.7,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "G^-1 <= (1 + beta/mu) (G + beta I)^-1 in the quadratic form for G >= mu > 0, beta >= 0",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.qf_bordered_shift",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, the certified count of eta.py",
+    "main": true,
+    "name": "CertifyMathlib.Apps.eta_count",
+    "nanoda": {
+     "check_peak_private_mib": 203,
+     "check_seconds": 115.4,
+     "declarations": 35959,
+     "export_bytes": 208602067,
+     "export_peak_private_mib": 3989,
+     "export_seconds": 209.4,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "a symmetric N' within q beta of the bordered matrix has at least as many negative eigenvalues as there are pencil eigenvalues above t' = (1 + beta/mu)(p/q + beta/nu)",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, ranks modulo p",
+    "main": true,
+    "name": "CertifyMathlib.Apps.linearIndependent_int_of_zmod",
+    "nanoda": {
+     "check_peak_private_mib": 51,
+     "check_seconds": 12.0,
+     "declarations": 7924,
+     "export_bytes": 30286552,
+     "export_peak_private_mib": 3399,
+     "export_seconds": 62.7,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "integer vectors independent modulo a prime are independent over Z",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, ranks modulo p (unit cosines, kernel check)",
+    "main": true,
+    "name": "CertifyMathlib.Apps.rank_zmod_le_rank_rat",
+    "nanoda": {
+     "check_peak_private_mib": 131,
+     "check_seconds": 25.6,
+     "declarations": 17253,
+     "export_bytes": 80210275,
+     "export_peak_private_mib": 3426,
+     "export_seconds": 90.6,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "the rank of an integer matrix modulo a prime is at most its rank over Q",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, kernel of a projector Hamiltonian",
+    "main": true,
+    "name": "CertifyMathlib.Apps.psd_sum_mulVec_eq_zero",
+    "nanoda": {
+     "check_peak_private_mib": 100,
+     "check_seconds": 23.2,
+     "declarations": 14380,
+     "export_bytes": 55479853,
+     "export_peak_private_mib": 3410,
+     "export_seconds": 47.8,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "a vector killed by a sum of positive semidefinite matrices is killed by every term",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, the kernel equality",
+    "main": true,
+    "name": "CertifyMathlib.Apps.aklt_kernel_certificate",
+    "nanoda": {
+     "check_peak_private_mib": 199,
+     "check_seconds": 42.8,
+     "declarations": 24434,
+     "export_bytes": 119852529,
+     "export_peak_private_mib": 3452,
+     "export_seconds": 107.9,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "T_e = D^-1 P_e D with P_e >= 0, T_e U = 0, rank_p U >= r and nullity_p of the stacked T_e <= r give ker (sum T_e) = range U of dimension r over Q",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "main": false,
+    "name": "CertifyMathlib.Apps.cntLt_smul_one_sub",
+    "trust_level": "K+"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, pencil count as count of squared cosines",
+    "main": true,
+    "name": "CertifyMathlib.Apps.pencil_count_eq",
+    "nanoda": {
+     "check_peak_private_mib": 261,
+     "check_seconds": 114.5,
+     "declarations": 35400,
+     "export_bytes": 202265406,
+     "export_peak_private_mib": 3981,
+     "export_seconds": 112.9,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "for G_A = F F^H and K = F^-1 C G_B^-1 C^H F^-H, the negative eigenvalues of t G_A - C G_B^-1 C^H are the eigenvalues of K above t",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, unit cosines",
+    "main": true,
+    "name": "CertifyMathlib.Apps.eig_le_of_count",
+    "nanoda": {
+     "check_peak_private_mib": 51,
+     "check_seconds": 10.5,
+     "declarations": 7356,
+     "export_bytes": 28150109,
+     "export_peak_private_mib": 3881,
+     "export_seconds": 62.2,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "if at most u values exceed t' < 1 and at least u equal 1, every value below 1 is at most t'",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, eta bound of each lattice",
+    "main": true,
+    "name": "CertifyMathlib.Apps.e10_eta_bound",
+    "nanoda": {
+     "check_peak_private_mib": 203,
+     "check_seconds": 122.2,
+     "declarations": 35968,
+     "export_bytes": 208820274,
+     "export_peak_private_mib": 3989,
+     "export_seconds": 97.2,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "composed: residual bound, pivot count u and at least u unit cosines give eta^2 <= t'",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, criterion of star, cross and the decorated lattices",
+    "main": true,
+    "name": "CertifyMathlib.Apps.e10_criterion",
+    "nanoda": {
+     "check_peak_private_mib": 208,
+     "check_seconds": 101.6,
+     "declarations": 35978,
+     "export_bytes": 208930452,
+     "export_peak_private_mib": 3989,
+     "export_seconds": 100.4,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "composed: with t' < 1/z^2 and z >= 1 every cosine other than 1 is below 1/z",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, rational criterion test",
+    "main": true,
+    "name": "CertifyMathlib.Apps.criterion_of_eta_sq",
+    "nanoda": {
+     "check_peak_private_mib": 52,
+     "check_seconds": 10.9,
+     "declarations": 7503,
+     "export_bytes": 28301115,
+     "export_peak_private_mib": 3881,
+     "export_seconds": 56.0,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "eta^2 <= t' and t' < 1/z^2 give eta < 1/z",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, square-root bound of __init__.py",
+    "main": true,
+    "name": "CertifyMathlib.Apps.sqrt_le_isqrt_div",
+    "nanoda": {
+     "check_peak_private_mib": 56,
+     "check_seconds": 16.5,
+     "declarations": 11712,
+     "export_bytes": 44425132,
+     "export_peak_private_mib": 3890,
+     "export_seconds": 85.4,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "sqrt(num/den) <= (isqrt(num den) + 1)/den",
+    "trust_level": "K2"
+   },
+   {
+    "axioms": [
+     "Classical.choice",
+     "Quot.sound",
+     "propext"
+    ],
+    "covers": "E10, square-octagon criterion",
+    "main": true,
+    "name": "CertifyMathlib.Apps.square_octagon_criterion",
+    "nanoda": {
+     "check_peak_private_mib": 51,
+     "check_seconds": 11.1,
+     "declarations": 7507,
+     "export_bytes": 28280423,
+     "export_peak_private_mib": 3881,
+     "export_seconds": 54.7,
+     "reason": null,
+     "result": "accepted"
+    },
+    "statement": "eta_perp^2 <= a, eta_par^2 <= b, a <= s_perp^2, b <= s_par^2, 4 s_perp + 2 s_par < 1 give 4 eta_perp + 2 eta_par < 1",
+    "trust_level": "K2"
+   }
+  ]
+ },
+ "model_checks": {
+  "compare_aklt": {
+   "all_equal": true,
+   "file": "results/apps/compare_aklt.json"
+  },
+  "compare_chain20": {
+   "all_equal": true,
+   "file": "results/apps/compare_chain20.json"
+  },
+  "compare_models": {
+   "all_equal": true,
+   "file": "results/apps/compare_models.json"
+  },
+  "selftest": {
+   "all_agree": true,
+   "file": "results/apps/selftest.txt"
+  }
+ },
+ "skipped": 0,
+ "targets": [
+  {
+   "agreement": true,
+   "id": "e7_chain_J2_0",
+   "lean_value": {
+    "count": 1,
+    "delta": "4.9432867231835551e-13",
+    "radius": "2.1599193648251390e-23",
+    "radius_at_record_E0": "2.5249289783497136e-14",
+    "rayleigh_quotient": "-8.9043865298764423e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 131895296,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-8.9043865298764171e0",
+    "count": 1,
+    "delta": "2.4676572307452423e-10",
+    "exact_radius": "3.7193004277411412e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_chain_J2_0.json",
+   "seconds": 578.5,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_chain_J2_0.5",
+   "lean_value": {
+    "count": 1,
+    "delta": "3.9205600890254744e-13",
+    "radius": "6.2805712975047203e-23",
+    "radius_at_record_E0": "3.3750779948604759e-14",
+    "rayleigh_quotient": "-7.5000000000000000e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 135729152,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-7.4999999999999662e0",
+    "count": 1,
+    "delta": "4.2024233071565570e-10",
+    "exact_radius": "3.3926633543218007e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_chain_J2_0.5.json",
+   "seconds": 673.0,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_square_J2_0",
+   "lean_value": {
+    "count": 1,
+    "delta": "2.2583362660115805e-13",
+    "radius": "6.6295588784963786e-31",
+    "radius_at_record_E0": "8.6548064142404770e-16",
+    "rayleigh_quotient": "-1.1228483208428860e1",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 36851712,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-1.1228483208428859e1",
+    "count": 1,
+    "delta": "6.8237294005347545e-11",
+    "exact_radius": "1.7685219221982841e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_square_J2_0.json",
+   "seconds": 130.3,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e7_square_J2_0.5",
+   "lean_value": {
+    "count": 1,
+    "delta": "1.7130522014567057e-13",
+    "radius": "3.8644449557691711e-23",
+    "radius_at_record_E0": "7.1742627698341029e-15",
+    "rayleigh_quotient": "-8.4579233513948467e0",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 45727744,
+   "quantity": "lowest eigenvalue of the block enclosed around the recorded E0 with the recorded exact radius; eigenvalues below the recorded count point",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e7_exact_benchmarks_20261105_092337/data.json",
+    "code/certify-ed/results/run_full_20261022/e7_exact_benchmarks_20261022_193038/data.json"
+   ],
+   "record_value": {
+    "E0": "-8.4579233513948395e0",
+    "count": 1,
+    "delta": "8.3762290850411612e-11",
+    "exact_radius": "1.0998626604929780e-14"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e7_square_J2_0.5.json",
+   "seconds": 157.7,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e9_crown_spin_half_lower_bound",
+   "lean_value": {
+    "count": 0,
+    "delta": "6.5807061378185269e-14",
+    "lower_bound": "-5.5015829796302939e-1",
+    "lower_bound_exact": "-1662751428206861688552370713366242609/3022314549036572936765440000000000000",
+    "status": "CERTIFIED"
+   },
+   "peak_memory_bytes": 289865728,
+   "quantity": "certified lower bound on lambda_min of the reduced spin-1/2 crown",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e9_pyrochlore_20261105_084835/data.json",
+    "code/certify-ed/results/run_full_20261022/e9_pyrochlore_20261022_185936/data.json"
+   ],
+   "record_value": {
+    "delta": "8.5824017850325153e-10",
+    "lower_bound": "-5.5015829882120382e-1",
+    "lower_bound_exact": "-365642906453273759099372454070876322095643/664613997892457936451903530140172288000000"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e9_crown_spin_half_lower_bound.json",
+   "seconds": 1360.1,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e9_crown_spin_one_upper_bound",
+   "lean_value": {
+    "eigenvalue_upper": "-1.6380246425131775e0",
+    "from_record_numbers": "-1.6380246425131772e0",
+    "ring_radius": "4.9852152691217544e-28",
+    "ring_rayleigh_quotient": "-8.6174231818142135e0"
+   },
+   "peak_memory_bytes": 24227840,
+   "quantity": "certified upper bound -12 c1 + c17 (E0 + r) on an eigenvalue of the spin-1 crown at the printed couplings",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e9_pyrochlore_20261105_084835/data.json",
+    "code/certify-ed/results/run_full_20261022/e9_pyrochlore_20261022_185936/data.json"
+   ],
+   "record_value": {
+    "E0_radius": "5.0929865200188118e-15",
+    "E0_ring": "-8.6174231818142157e0",
+    "eigenvalue_upper": "-1.6380246425131773e0"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e9_crown_spin_one_upper_bound.json",
+   "seconds": 6.6,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_star",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.1104302202114303e-1",
+    "positive": 32,
+    "record_t_prime_recertified": true,
+    "t_prime": "1.2330552739588056e-2",
+    "unit_cosines": 32
+   },
+   "peak_memory_bytes": 13631488,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.1104302202338649e-1",
+    "positive": 32,
+    "t_prime": "1.2330552740086294e-2",
+    "unit_cosines": 32
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_star.json",
+   "seconds": 0.2,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_perp",
+   "lean_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.5896633112606854e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "2.5270294431682869e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 21504000,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.5896633115208958e-1",
+    "positive": 256,
+    "t_prime": "2.5270294439955797e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_perp.json",
+   "seconds": 2.9,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_par",
+   "lean_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.0614468582666172e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "1.1266694329240721e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 21561344,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": null,
+    "eta_upper": "1.0614468587603454e-1",
+    "positive": 256,
+    "t_prime": "1.1266694339722041e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_par.json",
+   "seconds": 2.9,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_cross",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.9973845006935519e-1",
+    "positive": 256,
+    "record_t_prime_recertified": true,
+    "t_prime": "3.9895448436108296e-2",
+    "unit_cosines": 256
+   },
+   "peak_memory_bytes": 142958592,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.9973845072185567e-1",
+    "positive": 256,
+    "t_prime": "3.9895448696767151e-2",
+    "unit_cosines": 256
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_cross.json",
+   "seconds": 84.6,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_decorated_honeycomb",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.5303290854841137e-1",
+    "positive": 216,
+    "record_t_prime_recertified": true,
+    "t_prime": "2.3419071098786437e-2",
+    "unit_cosines": 216
+   },
+   "peak_memory_bytes": 28581888,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "1.5303290857599913e-1",
+    "positive": 216,
+    "t_prime": "2.3419071107230095e-2",
+    "unit_cosines": 216
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_decorated_honeycomb.json",
+   "seconds": 6.0,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_decorated_square",
+   "lean_value": {
+    "criterion_holds": true,
+    "eta_upper": "2.2035431746216704e-1",
+    "positive": 1728,
+    "record_t_prime_recertified": true,
+    "t_prime": "4.8556025224217495e-2",
+    "unit_cosines": 1728
+   },
+   "peak_memory_bytes": 853786624,
+   "quantity": "certified upper bound t' on eta^2 at the recorded threshold, and the criterion",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "eta_upper": "2.2035431930729685e-1",
+    "positive": 1728,
+    "t_prime": "4.8556026037382119e-2",
+    "unit_cosines": 1728
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_decorated_square.json",
+   "seconds": 2468.4,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_kernels",
+   "lean_value": {
+    "all_kernels_equal_vbs_range": true,
+    "largest_dimension": 16777216,
+    "record_checks_agree": true,
+    "regions_checked": 12
+   },
+   "peak_memory_bytes": 98377728,
+   "quantity": "ker H_X = range U_X for Gamma_i = L u C and Gamma_j = C u R of the six lattices",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "all_equal": true,
+    "entries": [
+     "kernel.star[0]",
+     "kernel.square_octagon[0]",
+     "kernel.decorated_honeycomb[0]",
+     "kernel.decorated_honeycomb[1]"
+    ],
+    "regions_checked": 4
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_kernels.json",
+   "seconds": 333.9,
+   "skipped_reason": null
+  },
+  {
+   "agreement": true,
+   "id": "e10_square_octagon_criterion",
+   "lean_value": {
+    "criterion_holds": true,
+    "sum_upper": "8.4815469615759761e-1"
+   },
+   "peak_memory_bytes": 12890112,
+   "quantity": "4 eta_perp + 2 eta_par < 1",
+   "record_files": [
+    "code/certify-ed/results/run_full_20261105/e10_aklt_20261105_071106/data.json",
+    "code/certify-ed/results/run_full_20261022/e10_aklt_20261022_170609/data.json"
+   ],
+   "record_value": {
+    "criterion_holds": true,
+    "sum_upper": "8.4815469636042740e-1"
+   },
+   "records_identical_in_both_runs": true,
+   "result_file": "results/apps/e10_square_octagon_criterion.json",
+   "seconds": 0.1,
+   "skipped_reason": null
+  }
+ ]
+}
