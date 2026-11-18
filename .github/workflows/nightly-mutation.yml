@@ -33,7 +33,10 @@ jobs:
           CERTIFY_RESULTS: ${{ github.workspace }}/results
           OMP_NUM_THREADS: "1"
           OPENBLAS_NUM_THREADS: "1"
-        run: python experiments/e6_mutation.py ${{ github.event.inputs.mutants || 32 }} ${{ github.event.inputs.workers || 2 }}
+          # inputs reach the shell as variables, never as text spliced into the command
+          E6_MUTANTS: ${{ github.event.inputs.mutants || 32 }}
+          E6_WORKERS: ${{ github.event.inputs.workers || 2 }}
+        run: python experiments/e6_mutation.py "${E6_MUTANTS:-32}" "${E6_WORKERS:-2}"
       - name: Classify survivors
         run: python experiments/e6_classify.py || true
       - uses: actions/upload-artifact@v4
