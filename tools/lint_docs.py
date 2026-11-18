@@ -1,4 +1,4 @@
-"""lint_docs.py: house-style and safety checks for every document of the certify-ed-project repository.
+"""lint_docs.py: house-style and safety checks for the documents of the project record.
 
 Usage:  python tools/lint_docs.py FILE.md [FILE.md ...]        (or a directory: every .md below it)
         python tools/lint_docs.py --bundle SOURCES.txt FILE.md  (also report numbers of 3 or more significant
