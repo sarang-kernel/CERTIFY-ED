@@ -899,16 +899,23 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
                  time.time() - t0)
 
 
+def _own(m):
+    """A private copy of a CSR matrix whose indices are unsorted or repeated; any other value unchanged."""
+    if sp.issparse(m) and m.format == "csr" and not m.has_canonical_format:
+        return m.copy()
+    return m
+
+
 def _as_given(claim: Claim) -> Claim:
-    """The claim with a private copy of a CSR operator whose indices are unsorted or repeated.
+    """The claim with private copies of a CSR operator and a CSR sector isometry whose indices are unsorted or repeated.
 
     Several steps (the S1 comparison, the sector audit, the absolute value taken by the adapter) sum duplicates and
-    sort indices in place, through arrays they share with the operator. On a copy the caller's matrix stays as given,
-    and certifying the same claim again gives the same certificate. The copy costs one more operator in memory."""
-    op = claim.operator
-    if sp.issparse(op) and op.format == "csr" and not op.has_canonical_format:
-        return replace(claim, operator=op.copy())
-    return claim
+    sort indices in place, through arrays they share with these matrices. On copies the caller's matrices stay as given,
+    and certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory."""
+    op, iso = _own(claim.operator), _own(claim.sector_isometry)
+    if op is claim.operator and iso is claim.sector_isometry:
+        return claim
+    return replace(claim, operator=op, sector_isometry=iso)
 
 
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:

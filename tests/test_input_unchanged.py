@@ -28,11 +28,13 @@ def _random_claim():
     return ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=_with_duplicates(H), kind="lowest"), None
 
 
-def _model_claim(isometry):
+def _model_claim(isometry, split_isometry=False):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
     w, V = np.linalg.eigh(H.toarray())
     iso = sp.identity(spec.dim, format="csr") if isometry else None
+    if split_isometry:
+        iso = _with_duplicates(iso)
     claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=_with_duplicates(H), kind="lowest",
                      sector_isometry=iso)
     return claim, spec
@@ -46,17 +48,28 @@ def _without_timings(obj):
     return obj
 
 
+def _arrays(M):
+    return M.indptr.copy(), M.indices.copy(), M.data.copy()
+
+
+def _unchanged(M, before):
+    return all(np.array_equal(x, y) for x, y in zip(before, (M.indptr, M.indices, M.data))) and \
+        M.nnz == len(M.data) == len(M.indices) and M.tocoo().nnz == M.nnz
+
+
 @pytest.mark.parametrize("case,device", [("no model", "cpu"), ("model", "cpu"), ("sector", "cpu"),
-                                         ("no model", "gpu"), ("model", "gpu")])
+                                         ("split isometry", "cpu"), ("no model", "gpu"), ("model", "gpu")])
 def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case, device):
-    claim, spec = _random_claim() if case == "no model" else _model_claim(case == "sector")
-    D = claim.operator
+    claim, spec = _random_claim() if case == "no model" else _model_claim(case != "model", case == "split isometry")
+    D, iso = claim.operator, claim.sector_isometry
     assert not D.has_canonical_format
-    before = (D.indptr.copy(), D.indices.copy(), D.data.copy())
+    before = _arrays(D)
+    before_iso = _arrays(iso) if iso is not None else None
     opts = ce.Options(seed=1, device=device)
     a = ce.certify(claim, spec, opts)
-    assert all(np.array_equal(x, y) for x, y in zip(before, (D.indptr, D.indices, D.data)))
-    assert D.nnz == len(D.data) == len(D.indices) and D.tocoo().nnz == D.nnz
+    assert _unchanged(D, before)
+    if iso is not None:
+        assert _unchanged(iso, before_iso)
     b = ce.certify(claim, spec, opts)
     for key in ("statements", "kato_temple", "enclosures", "gaps"):
         assert json.dumps(_without_timings(a.body.get(key)), sort_keys=True, default=repr) == \
