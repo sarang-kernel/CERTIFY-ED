@@ -50,7 +50,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from .fp import U, GuardRangeError, gamma_dot, up, fro_upper
+from .fp import U, GuardRangeError, gamma_dot, up, fro_upper, modulus_up
 
 
 @dataclass
@@ -134,10 +134,11 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
         return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman",
                              time.time() - t0, False, "factor not lower triangular after permutation")
     R = lu @ d @ lu.conj().T - S
-    # rounding in forming lu d lu^H (two products, inner length <= n) and S
-    absprod = np.abs(lu) @ np.abs(d) @ np.abs(lu).T
+    # rounding in forming lu d lu^H (two products, inner length <= n) and S; complex moduli rounded up (fp.modulus_up)
+    alu = modulus_up(lu)
+    absprod = alu @ modulus_up(d) @ alu.T
     g = gamma_dot(2 * n + 2, cplx)
-    beta = fro_upper(R) + g * fro_upper(absprod) + U * float(np.max(np.abs(np.diag(S)))) * 2
+    beta = fro_upper(R) + g * fro_upper(absprod) + U * float(np.max(modulus_up(np.diag(S)))) * 2
     beta = up(beta)
     res = InertiaResult(float(sigma), None if amb else int(neg), float(beta), "dense-bunch-kaufman",
                         time.time() - t0, not amb, "zero pivot or singular 2x2 block" if amb else "")
@@ -188,7 +189,7 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
         g2 = gamma_dot(2, cplx)
         beta = (gamma_dot(w + 1, cplx) * Lf * Uff + Lf * asym_f
                 + Lf * g2 * (Uff + float(np.max(np.abs(Dreal))) * Lf)
-                + U * float(np.max(np.abs(S.diagonal()))) * 2)
+                + U * float(np.max(modulus_up(S.diagonal()))) * 2)
         beta = up(beta)
         return _no_count_on_nonfinite(InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
                                                     time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz)))

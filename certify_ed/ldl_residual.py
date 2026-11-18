@@ -37,7 +37,7 @@ from typing import Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, gamma, gamma_dot, up, _GUARD, check_guard_range
+from .fp import U, gamma, gamma_dot, up, _GUARD, check_guard_range, abs_up, modulus_up
 
 DEFAULT_BLOCK_MB = 64.0      # memory for the sparse temporaries of one row block (F block, |E| block, S block)
 _MIN_BLOCK_ROWS = 64
@@ -107,7 +107,7 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     SP = S[ip][:, ip].tocsr()             # exact re-indexing
     DLt = (sp.diags(Dr) @ L.conj().T).tocsc()    # fl(D L^H): one rounding per entry
     # rounding of the product, by rows: gamma_{c_i+1} (|L| |D| |L|^T 1)_i  (one sparse matvec)
-    absL = abs(L)
+    absL = abs_up(L)                                        # complex moduli rounded up (fp.abs_up)
     colsum = np.asarray(absL.sum(axis=0)).ravel()          # sum_j |L_jk|, k-th column
     G1 = absL @ (np.abs(Dr) * colsum)                       # (G 1)_i
     c = np.diff(L.indptr).astype(np.int64)
@@ -133,7 +133,7 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
         Eb = (Fb - SP[a:b, :b]).tocsr()
         # entry (r, j) of the block is (i, j) with i = a + r; keep the lower triangle j <= i, i.e. j - r <= a
         Eb = sp.tril(Eb, k=a).tocsr()
-        Ab = abs(Eb)
+        Ab = abs_up(Eb)
         r_sum = np.asarray(Ab.sum(axis=1)).ravel()                      # row sums of the lower triangle
         strict = sp.tril(Ab, k=a - 1)
         c_sum = np.asarray(strict.sum(axis=0)).ravel()                 # column sums of the strict lower part
@@ -159,7 +159,7 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     resid_inf = resid_inf * (1.0 + gamma(m)) * (1.0 + 4 * U) * _GUARD
     round_inf = float(rounding_rows.max()) if n else 0.0
     round_inf = round_inf * (1.0 + gamma(2 * n + 8)) * _GUARD * _GUARD
-    shift_term = 2.0 * U * float(np.max(np.abs(S.diagonal()))) if n else 0.0
+    shift_term = 2.0 * U * float(np.max(modulus_up(S.diagonal()))) if n else 0.0
     beta = up(resid_inf + round_inf + shift_term)
     return ResidualBound(float(beta), float(resid_inf), float(round_inf), float(shift_term), int(L.nnz),
                          int(c.max()) if n else 0, int(nnz_prod), len(blocks), nth, time.time() - t0)
