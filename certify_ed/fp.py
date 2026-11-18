@@ -286,7 +286,7 @@ def abs_up(A):
         if A.format in ("csr", "csc", "bsr"):
             return type(A)((data, A.indices.copy(), A.indptr.copy()), shape=A.shape)
         if A.format == "coo":
-            return type(A)((data, tuple(c.copy() for c in A.coords)), shape=A.shape)
+            return type(A)((data, (A.row.copy(), A.col.copy())), shape=A.shape)    # row, col: scipy >= 1.8
         return type(A)((data, A.offsets.copy()), shape=A.shape)
     return modulus_up(A)
 
