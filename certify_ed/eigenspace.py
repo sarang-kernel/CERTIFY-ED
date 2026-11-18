@@ -126,7 +126,9 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
     width = n if not sp.issparse(O) else int(np.diff(sp.csr_matrix(O).indptr).max())
     absOX = (abs(O) if sp.issparse(O) else np.abs(O)) @ np.abs(Xg)
     rnd = gamma_dot(width + n + 2, cplx) * float(np.sum(np.abs(Xg) * absOX)) * (1 + 8 * U)
-    bound = up(2 * g * O_norm * ec.projector_error + rnd)
+    bound = float(up(2 * g * O_norm * ec.projector_error + rnd))
+    if not math.isfinite(bound):
+        bound = math.inf       # a product or a sum overflowed (inf, or inf * 0 = nan): no finite interval
     rec = {"value": float(val), "bound": float(bound), "O_norm_bound": float(O_norm),
            "statement": f"tr(P {name}) in [{val - bound:.15g}, {val + bound:.15g}]"}
     ec.observables[name] = rec
