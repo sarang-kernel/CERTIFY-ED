@@ -381,3 +381,132 @@ def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
     assert np.array_equal(abs_up(Dg).data, modulus_up(Dg.data)) and Dg.data.shape == (2, 3)
     L = sp.lil_matrix(np.diag([1 + 1j, 2j, 3.0]))
     assert abs_up(L).format == "csr" and L.format == "lil"
+
+
+def test_the_s2_adapter_takes_the_width_before_and_the_products_after_the_summation():
+    """The adapter of the S2 products: width counted on the stored entries, products on the summed matrix (abs_up sums
+    the duplicates in place, as abs does)."""
+    from certify_ed.enclosure import OperatorAdapter
+    idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
+    A = sp.csr_matrix(((1 + 1j) * np.ones(9), idx.copy(), indptr.copy()), shape=(3, 3))
+    ad = OperatorAdapter(A)
+    assert ad.width == 4 and ad.A is A and A.has_canonical_format and A.nnz == 5
+
+
+# ------------------------------------------------------------------------- the S2 bounds use the upper moduli
+
+def _hermitian(n, cplx, seed, density=0.15):
+    rng = np.random.default_rng(seed)
+    A = sp.random(n, n, density=density, format="csr", random_state=np.random.RandomState(seed))
+    if cplx:
+        B = A.copy()
+        B.data = rng.standard_normal(B.nnz)
+        A = (A + 1j * B).tocsr()
+    return ((A + A.conj().T) * 0.5 + sp.identity(n, format="csr")).tocsr()
+
+
+def _vectors(n, k, cplx, seed):
+    rng = np.random.default_rng(seed)
+    X = rng.standard_normal((n, k))
+    return X + 1j * rng.standard_normal((n, k)) if cplx else X
+
+
+def test_abs_matvec_takes_the_upper_moduli():
+    from certify_ed.enclosure import OperatorAdapter
+    for cplx_a in (False, True):
+        H = _hermitian(50, cplx_a, 1)
+        for cplx_x in (False, True):
+            X = _vectors(50, 3, cplx_x, 2)
+            for op in (H, H.toarray()):
+                ad = OperatorAdapter(op)
+                ref = abs_up(op) @ modulus_up(X)
+                assert np.array_equal(ad.abs_matvec(X), ref)
+
+
+def test_rounding_bound_constant_and_moduli_bit_for_bit():
+    """enclosure._rounding_bound: gamma_{w+1} for real data, gamma_{w+3} for complex data (kept from 3.2.0; with upper
+    moduli it has two spare counts), moduli of X from fp.modulus_up. Compared bit for bit, so a change of the constant
+    or a reverted modulus fails."""
+    from certify_ed.enclosure import OperatorAdapter, _rounding_bound
+    from certify_ed.fp import gamma, gamma_dot
+    mu = np.array([0.5, -1.25])
+    for cplx in (False, True):
+        H = _hermitian(60, cplx, 3)
+        ad = OperatorAdapter(H)
+        X = _vectors(60, 2, cplx, 4)
+        E = abs_up(H) @ modulus_up(X)
+        E /= (1.0 - gamma(ad.width + (3 if cplx else 1)))
+        E *= (1 + 4 * U)
+        aX = modulus_up(X)
+        aX *= np.abs(mu)[None, :]
+        E += aX
+        E *= gamma_dot(ad.width + 2, cplx)
+        E *= (1 + 4 * U)
+        assert np.array_equal(_rounding_bound(ad, mu, X), E)
+
+
+def test_rayleigh_interval_constants_and_moduli(monkeypatch):
+    """enclosure.rayleigh_interval's own constants (finding S7 of the 18 Nov 2026 review): gamma_{w+1} for the division
+    and gamma_{n+2} for the dot, for real and complex data alike once the moduli are upper bounds. The calls made before
+    `residuals` are pinned, and the argument of the guard that forms num_err is compared bit for bit."""
+    import certify_ed.enclosure as enc
+    from certify_ed.fp import exact_dot, gamma, gamma_dot, up
+    calls, ups = [], []
+
+    def spy_gamma(m):
+        calls.append(m)
+        return gamma(m)
+
+    def spy_up(x):
+        ups.append(float(x))
+        return up(x)
+    monkeypatch.setattr(enc, "gamma", spy_gamma)
+    monkeypatch.setattr(enc, "up", spy_up)
+    for cplx in (False, True):
+        H = _hermitian(80, cplx, 5)
+        ad = enc.OperatorAdapter(H)
+        x = _vectors(80, 1, cplx, 6)[:, 0]
+        Ax = ad.matvec(x)
+        _, num_e = exact_dot(x, Ax)
+        absAx = ad.abs_matvec(x) / (1 - gamma(ad.width + 1))
+        expected = num_e + gamma_dot(ad.width + 2, cplx) * float(modulus_up(x) @ absAx) * (1 + gamma(x.size + 2))
+        calls.clear()
+        ups.clear()
+        assert enc.rayleigh_interval(ad, x) is not None
+        assert calls[:2] == [ad.width + 1, x.size + 2], calls
+        assert ups[0] == expected
+
+
+def test_upper_moduli_close_stage_S2_on_the_hard_examples():
+    """thm1 (S2): absHX_up_i >= (|A||x|)_i in exact arithmetic, with the upper moduli, when the entries of A and x are
+    the arguments on which NumPy's complex absolute value is below |z| on the reference host, at three scales. This
+    shows that the stage holds with the upper moduli there; it does not show that it fails with np.abs (with the spare
+    counts of gamma_{w+3} it may hold)."""
+    from certify_ed.enclosure import OperatorAdapter
+    from certify_ed.fp import gamma
+    z0, z1 = EXAMPLES[0], EXAMPLES[1]
+    for scale in (1.0, 2.0 ** -500, 2.0 ** 400):
+        A = np.array([[1.0, z0 * scale, z1 * scale], [np.conj(z0) * scale, 2.0, z0 * scale],
+                      [np.conj(z1) * scale, np.conj(z0) * scale, 3.0]])
+        x = np.array([z0, z1, z0])
+        ad = OperatorAdapter(A)
+        absHX_up = ad.abs_matvec(x[:, None])[:, 0] / (1.0 - gamma(ad.width + 3)) * (1 + 4 * U)
+        for i in range(3):
+            q = [(Fraction(A[i, j].real) ** 2 + Fraction(A[i, j].imag) ** 2)
+                 * (Fraction(x[j].real) ** 2 + Fraction(x[j].imag) ** 2) for j in range(3)]
+            assert Fraction(float(absHX_up[i])) >= _sum_sqrt_upper(q)
+
+
+def _sum_sqrt_upper(qs):
+    """A rational number >= sum_j sqrt(q_j) for rational q_j >= 0 (per term a start above sqrt(q), then one Newton
+    step, which stays above sqrt(q) by the inequality of arithmetic and geometric means)."""
+    total = Fraction(0)
+    for q in qs:
+        if q == 0:
+            continue
+        r = Fraction(float(np.sqrt(float(q)))) * (1 + Fraction(1, 2 ** 40))
+        while r * r < q:
+            r *= 1 + Fraction(1, 2 ** 40)
+        r = (r + q / r) / 2
+        total += r
+    return total
