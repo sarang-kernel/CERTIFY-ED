@@ -7,6 +7,17 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### The caller's matrix stays as given
+
+`certify()` now works on a private copy of a CSR operator whose indices are unsorted or repeated, on every device.
+Before, the first run summed the duplicates in place, through arrays shared with the caller's matrix: by the absolute
+value of the adapter without a model, and by the S1 comparison and the sector audit with one. A second `certify()` of
+the same claim then saw a different matrix and row width and gave a different certificate. The first certificate is
+unchanged, since the copy goes through the same steps as the caller's matrix did before; the second is now equal to
+it (`tests/test_input_unchanged.py`, with and without a model, a sector isometry and `device="gpu"`). The copy costs
+one more operator in memory for such inputs only. It replaces the copy that `certify(device="gpu")` made for the same
+reason.
+
 ### GPU products (roadmap D-05; track/gpu-d05)
 
 With `device` left at `"cpu"` no bound, status rule or record field of `certify()` changes. With `device="gpu"`, S2's
