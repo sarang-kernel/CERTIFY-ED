@@ -32,6 +32,7 @@ from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .eigenspace import EigenspaceCertificate, certify_observable
 from .fp import (U, UNDERFLOW_THRESHOLD, add_up, exact_dot, fro_upper, gamma, gamma_dot, inf_norm_upper, max_nnz_per_row,
                  norm2_upper, sub_down, sub_up, underflow_scan, up)
+from .precision import binary64, widening_record
 from .spec import canonical_json
 
 MOMENTS_SCHEMA = "certify-ed/moments/1.0"
@@ -48,7 +49,10 @@ def _vstmt(sid, status, summary, evidence=None, hypotheses=None, assumptions=Non
     return _v(sid, status, summary, evidence, hypotheses, assumptions, reason_code)
 
 
-def _as_matrix(M, name):
+def _as_matrix(M, name, widened: Optional[list] = None):
+    # a narrower format (float32, complex64, integers) is converted exactly to binary64, a wider one refused
+    # (precision.py): every bound below counts binary64 arithmetic
+    M = binary64(M if sp.issparse(M) else np.asarray(M), name, widened)
     if sp.issparse(M):
         M = M.tocsr()
         D = (M - M.conj().T)
@@ -89,6 +93,7 @@ def hermitian_matrix_with_bound(factors: Sequence[Any], widths: Sequence[int], c
     successive products of the inner-product lengths: the nonzeros per row of F_1 for the first product, n after).
     Returns (dense product, dense bound matrix E) with |fl - exact| <= E entrywise; coeff is applied to both (exact when
     it is a power of two)."""
+    factors = [binary64(F if sp.issparse(F) else np.asarray(F), "factor") for F in factors]   # exact (precision.py)
     n = factors[0].shape[0]
     cplx = any(np.iscomplexobj(F.data if sp.issparse(F) else F) for F in factors)
     T = factors[0]
@@ -119,9 +124,10 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     H, O: stored Hermitian matrices (dense or scipy.sparse). level: the level interval [a, b] of the cluster (union of its
     enclosures), needed for the first-moment sum rule. Returns a JSON-able record (schema MOMENTS_SCHEMA)."""
     from .diagnostics import annotate_record
-    H = _as_matrix(H, "H")
-    O = _as_matrix(O, "O")
-    X = np.asarray(X)
+    widened: List[dict] = []
+    H = _as_matrix(H, "H", widened)
+    O = _as_matrix(O, "O", widened)
+    X = binary64(np.asarray(X), "cluster vectors", widened)
     if X.ndim == 1:
         X = X[:, None]
     n, g = X.shape
@@ -141,6 +147,9 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
                            "state": {"form": "cluster", "g": int(g), "vectors_sha256": array_sha256(X), "sin_theta_bound": float(s),
                                      "eta": float(eta), "level": None if level is None else [float(level[0]), float(level[1])],
                                      "cluster": cluster}, "K": K}
+    widening = widening_record(widened)
+    if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
+        rec["input_widening"] = widening
     cplx = np.iscomplexobj(X) or np.iscomplexobj(H.data if sp.issparse(H) else H) or np.iscomplexobj(O.data if sp.issparse(O) else O)
     wH, wO = max_nnz_per_row(H), max_nnz_per_row(O)
     Hn, On = rec["operator"]["H_norm_upper"], rec["operator"]["O_norm_upper"]
@@ -303,7 +312,7 @@ def moments_from_certificate(cert, H, O, K: int = 2, members: Sequence[int] = (0
     note = None
     if stored is not None and stored != matrix_sha256(Hm):
         note = "WARNING: the matrix H differs from the certificate's stored operator (hash mismatch); the projector P is the certified operator's"
-    rec = certified_moments(Hm, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K, level=level,
+    rec = certified_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K, level=level,
                             cluster={"members": list(members), "claimed": cl.get("claimed"), "status": cl.get("status")}, **kw)
     from .crossings import certificate_hash
     rec["certificate"] = {"hash": certificate_hash(cert), "members": list(members), "operator_hash_matches": stored is None or note is None}

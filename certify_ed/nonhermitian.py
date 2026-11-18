@@ -46,6 +46,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .fp import (U, ULP_MIN, gamma, gamma_dot, inf_norm_upper, norm2_lower, norm2_upper, safe_sqrt_upper, sub_down,
                  underflow_scan, up)
+from .precision import binary64, check_values, widening_record
 from .spec import canonical_json
 
 NONHERMITIAN_SCHEMA = "certify-ed/nonhermitian/1.0"
@@ -69,22 +70,24 @@ __all__ = ["NONHERMITIAN_SCHEMA", "NONHERMITIAN_STATEMENT_IDS", "DEFAULT_MAX_DIM
 
 # ------------------------------------------------------------------------------------------------ inputs
 
-def _dense_square(M, name: str) -> np.ndarray:
+def _dense_square(M, name: str, widened: Optional[list] = None) -> np.ndarray:
     M = M.toarray() if sp.issparse(M) else np.asarray(M)
     if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")
-    M = M.astype(np.complex128 if np.iscomplexobj(M) else np.float64)     # exact for every binary32/binary64 input
+    M = binary64(M, name, widened)        # exact for narrower formats (noted), a wider one refused (precision.py)
+    M = M.astype(np.complex128 if np.iscomplexobj(M) else np.float64)     # a private copy
     if not np.all(np.isfinite(M)):
         raise ValueError(f"{name} has non-finite entries")
     return M
 
 
-def _vectors(X, n: int, k: int, name: str) -> np.ndarray:
+def _vectors(X, n: int, k: int, name: str, widened: Optional[list] = None) -> np.ndarray:
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
     if X.shape != (n, k):
         raise ValueError(f"{name} must be n x k = {n} x {k}, got {X.shape}")
+    X = binary64(X, name, widened)        # exact for narrower formats (noted), a wider one refused (precision.py)
     X = X.astype(np.complex128 if np.iscomplexobj(X) else np.float64)
     if not np.all(np.isfinite(X)):
         raise ValueError(f"{name} must be finite")
@@ -118,6 +121,7 @@ def residual_bounds(A: np.ndarray, mu: np.ndarray, X: np.ndarray, return_arrays:
     ||x_i||_2, and eps_i = up(S_i / ||x_i||_lower + 2 ULP_MIN) >= ||A x_i - mu_i x_i|| / ||x_i|| (inf when the lower
     bound is 0). return_arrays: also return the computed residual matrix 'S_hat' and the bound matrix 'E' (for the
     verification scripts)."""
+    A, X = binary64(np.asarray(A), "A"), binary64(np.asarray(X), "eigenvectors")    # exact (precision.py)
     n, k = X.shape
     mu = np.asarray(mu).ravel()
     cplx = bool(np.iscomplexobj(A) or np.iscomplexobj(X) or np.iscomplexobj(mu))
@@ -154,6 +158,7 @@ def residual_bounds(A: np.ndarray, mu: np.ndarray, X: np.ndarray, return_arrays:
 def matrix_norm2_upper(M: np.ndarray) -> float:
     """c >= ||M||_2: the smaller of the Frobenius bound and sqrt(||M||_1 ||M||_inf) (fp.inf_norm_upper on M^T and M;
     for complex M valid under H-mod, Proposition 6 (iii))."""
+    M = binary64(np.asarray(M), "matrix")          # exact (precision.py)
     fro = norm2_upper(np.asarray(M).ravel())
     hoelder = safe_sqrt_upper(up(inf_norm_upper(np.asarray(M).T) * inf_norm_upper(np.asarray(M))))
     vals = [v for v in (fro, hoelder) if math.isfinite(v)]
@@ -168,6 +173,7 @@ def inverse_bound(V: np.ndarray, W: Optional[np.ndarray] = None, return_arrays: 
     invertible, ||V^-1||_2 <= beta = up(c_W / sub_down(1, theta) + 2 ULP_MIN), and cond_2(V) <= kappa = up(beta c_V).
     Returns {'ok', 'theta', 'c_W', 'beta', 'c_V', 'kappa_upper', 'cond_estimate', 'reason'} (plus 'W', 'G_hat', 'B' with
     return_arrays)."""
+    V = binary64(np.asarray(V), "eigenvectors")    # exact (precision.py)
     n = V.shape[0]
     out: Dict[str, Any] = {"ok": False, "theta": None, "c_W": None, "beta": None, "c_V": None, "kappa_upper": None,
                            "cond_estimate": None, "reason": ""}
@@ -181,7 +187,7 @@ def inverse_bound(V: np.ndarray, W: Optional[np.ndarray] = None, return_arrays: 
         except np.linalg.LinAlgError:
             out["reason"] = "the claimed eigenvector matrix is singular in floating point (LAPACK found a zero pivot)"
             return out
-    W = np.asarray(W)
+    W = binary64(np.asarray(W), "W")
     if W.shape != V.shape or not np.all(np.isfinite(W)):
         out["reason"] = "the computed inverse of the eigenvector matrix is not finite (the matrix is numerically singular)"
         return out
@@ -290,8 +296,10 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
     'auto' ('all' when k = n). left_eigenvectors: optional n x k left vectors y_i (y_i^H A = mu_i y_i^H) for the left
     backward errors of N1. W: optional computed inverse of V (default np.linalg.inv(V)); it is only a tool, the bound
     holds for any W. Returns a JSON-able record (schema NONHERMITIAN_SCHEMA). Every statement is UNVERIFIED."""
-    A = _dense_square(A, "A")
+    widened: List[dict] = []
+    A = _dense_square(A, "A", widened)
     n = A.shape[0]
+    check_values(eigenvalues, "eigenvalues")   # the conversion below must be exact (precision.py)
     mu = np.asarray(eigenvalues).ravel()
     mu = mu.astype(np.complex128 if np.iscomplexobj(mu) else np.float64)
     if not np.all(np.isfinite(mu)):
@@ -299,8 +307,8 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
     k = int(mu.size)
     if k < 1:
         raise ValueError("the claim must list at least one eigenpair")
-    X = _vectors(eigenvectors, n, k, "eigenvectors")
-    Y = None if left_eigenvectors is None else _vectors(left_eigenvectors, n, k, "left_eigenvectors")
+    X = _vectors(eigenvectors, n, k, "eigenvectors", widened)
+    Y = None if left_eigenvectors is None else _vectors(left_eigenvectors, n, k, "left_eigenvectors", widened)
     if kind == "auto":
         kind = "all" if k == n else "subset"
     if kind not in NONHERMITIAN_KINDS:
@@ -319,6 +327,9 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
         "basis": ("Lemma 1 (backward error of a residual), Lemma 4 (Neumann bound on ||V^-1||), Theorem 3 (Bauer-Fike for "
                   "diag(mu) after the similarity V, counting by continuity); docs/proofs/E-02_non_hermitian.md"),
     }
+    widening = widening_record(widened)
+    if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
+        rec["input_widening"] = widening
     statements: List[dict] = []
     if n > max_dim:
         for sid in NONHERMITIAN_STATEMENT_IDS:

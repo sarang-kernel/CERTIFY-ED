@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
@@ -40,6 +40,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .enclosure import OperatorAdapter, rayleigh_interval
 from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, norm2_upper, sub_down, underflow_scan, up
+from .precision import binary64, widening_record
 from .spec import ModelSpec, canonical_json
 
 VARIATIONAL_SCHEMA = "certify-ed/variational/1.0"
@@ -70,22 +71,23 @@ class TrialState:
     reason: str = ""
 
 
-def state_from_dense(psi) -> TrialState:
-    v = np.asarray(psi)
+def state_from_dense(psi, widened: Optional[list] = None) -> TrialState:
+    """The stored vector psi; a narrower format (float32, complex64, integers) is converted exactly to binary64
+    (precision.binary64, noted in `widened`), a wider one refused."""
+    v = binary64(np.asarray(psi), "trial state", widened)
     if v.ndim == 2 and 1 in v.shape:
         v = v.ravel()
     if v.ndim != 1:
         raise ValueError(f"a dense trial state must be a vector, got shape {v.shape}")
-    if not np.issubdtype(v.dtype, np.floating) and not np.issubdtype(v.dtype, np.complexfloating):
-        v = v.astype(complex if np.iscomplexobj(v) else float)
     return TrialState(v, "dense", {"form": "dense", "dimension": int(v.size), "complex": bool(np.iscomplexobj(v))})
 
 
-def state_from_sparse_ci(indices, amplitudes, n: int) -> TrialState:
+def state_from_sparse_ci(indices, amplitudes, n: int, widened: Optional[list] = None) -> TrialState:
     """psi[indices[k]] = amplitudes[k], zero elsewhere (exact: a scatter, no arithmetic). Duplicate indices are
-    refused (their sum would round)."""
+    refused (their sum would round). Amplitudes in a narrower format are converted exactly to binary64
+    (precision.binary64), a wider format is refused."""
     idx = np.asarray(indices, dtype=np.int64).ravel()
-    amp = np.asarray(amplitudes).ravel()
+    amp = binary64(np.asarray(amplitudes).ravel(), "sparse CI amplitudes", widened)
     n = int(n)
     if idx.size != amp.size:
         raise ValueError(f"indices ({idx.size}) and amplitudes ({amp.size}) must have the same length")
@@ -99,18 +101,19 @@ def state_from_sparse_ci(indices, amplitudes, n: int) -> TrialState:
                                        "complex": bool(np.iscomplexobj(amp))})
 
 
-def state_from_mps(tensors: Sequence[Any], max_dim: int = MPS_MAX_DIM) -> TrialState:
+def state_from_mps(tensors: Sequence[Any], max_dim: int = MPS_MAX_DIM, widened: Optional[list] = None) -> TrialState:
     """Contract an open-boundary MPS (tensors A^(j) of shape (D_{j-1}, d_j, D_j), D_0 = D_L = 1; a 2-D first or
     last tensor is accepted) to the dense vector psi[s_1 ... s_L] = A^(1)[s_1] ... A^(L)[s_L] (site 1 is the most
     significant index). The contraction runs left to right in floating point; the entrywise bound
     |psi_hat - psi| <= c_L |A^(1)| ... |A^(L)| with c_L = prod_j (1 + g_j) - 1, g_j = gamma_dot(D_{j-1}) the inner-product
     constant of step j (docs/proofs/E-05_variational.md, Lemma 4), gives `contraction_error` >= ||psi_hat - psi||_2.
-    Refused (vector None, reason_code SIZE_LIMIT) when prod d_j > max_dim."""
+    Refused (vector None, reason_code SIZE_LIMIT) when prod d_j > max_dim. Tensors in a narrower format are converted
+    exactly to binary64 first (precision.binary64): the contraction bound counts binary64 arithmetic."""
     if len(tensors) == 0:
         raise ValueError("an MPS needs at least one tensor")
     As = []
     for j, A in enumerate(tensors):
-        A = np.asarray(A)
+        A = binary64(np.asarray(A), f"MPS tensor {j}", widened)
         if A.ndim == 2:
             A = A[None, :, :] if j == 0 else A[:, :, None]
         if A.ndim != 3:
@@ -150,18 +153,18 @@ def state_from_mps(tensors: Sequence[Any], max_dim: int = MPS_MAX_DIM) -> TrialS
     return TrialState(psi, "mps", rec, contraction_error=e)
 
 
-def _as_state(psi) -> TrialState:
+def _as_state(psi, widened: Optional[list] = None) -> TrialState:
     if isinstance(psi, TrialState):
         return psi
     if isinstance(psi, dict):
         if "mps" in psi:
-            return state_from_mps(psi["mps"], psi.get("max_dim", MPS_MAX_DIM))
+            return state_from_mps(psi["mps"], psi.get("max_dim", MPS_MAX_DIM), widened)
         if "indices" in psi:
-            return state_from_sparse_ci(psi["indices"], psi["amplitudes"], psi["n"])
+            return state_from_sparse_ci(psi["indices"], psi["amplitudes"], psi["n"], widened)
         raise ValueError("a dict trial state needs either {'mps': [tensors]} or {'indices', 'amplitudes', 'n'}")
     if isinstance(psi, (list, tuple)) and len(psi) and np.ndim(psi[0]) >= 2:
-        return state_from_mps(psi)
-    return state_from_dense(psi)
+        return state_from_mps(psi, widened=widened)
+    return state_from_dense(psi, widened)
 
 
 # ------------------------------------------------------------------------------------------------ gap sources
@@ -257,6 +260,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
     statements: List[dict] = []
     rec: Dict[str, Any] = {"schema": VARIATIONAL_SCHEMA, "description": description or "variational trial state"}
     assume = [STANDARD_MODEL]
+    widened: List[dict] = []         # inputs converted exactly to binary64 (precision.py), recorded under input_widening
 
     # operator
     sigma = 0.0
@@ -276,7 +280,11 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                              "operators have no rounding bound (docs/SCOPE_MATRIX.md)")
         A = operator.tocsr() if sp.issparse(operator) else np.asarray(operator)
         if A is operator:
-            A = _private_copies()(A)       # the adapter sums duplicates in place: the caller's matrix stays as given
+            # the adapter sums duplicates in place: the caller's matrix stays as given; a narrower format becomes an
+            # exact binary64 copy (precision.py)
+            A = _private_copies(widened)(A, "operator")
+        else:
+            A = binary64(A, "operator", widened)
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError(f"the operator must be square, got shape {A.shape}")
         D = (A - A.conj().T)
@@ -297,7 +305,11 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
     n = int(adapter.shape[0])
 
     # state
-    st = _as_state(psi) if psi is not None else None
+    st = _as_state(psi, widened) if psi is not None else None
+    if st is not None and st.vector is not None:
+        vec = binary64(st.vector, "trial state", widened)      # a TrialState given as such
+        if vec is not st.vector:
+            st = replace(st, vector=vec)
     if st is not None and st.vector is not None and st.vector.size != n:
         raise ValueError(f"the trial state has dimension {st.vector.size}, the operator {n}")
     state_rec = dict(st.record) if st is not None else {"form": None}
@@ -307,6 +319,9 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
             state_rec["vector_sha256"] = array_sha256(st.vector)
     rec["state"] = state_rec
     rec["gap_hypothesis"] = None if gap_hypothesis is None else {"rho": float(gap_hypothesis), "source": str(gap_source)}
+    widening = widening_record(widened)
+    if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
+        rec["input_widening"] = widening
 
     def all_not_checked(code, why):
         for sid in VARIATIONAL_STATEMENT_IDS[:3]:

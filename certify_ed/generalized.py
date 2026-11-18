@@ -33,6 +33,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .fp import U, add_up, exact_dot, gamma, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia_dense
+from .precision import binary64, check_values, widening_record
 from .spec import canonical_json
 
 GENERALIZED_SCHEMA = "certify-ed/generalized/1.0"
@@ -46,10 +47,11 @@ __all__ = ["GENERALIZED_SCHEMA", "GENERALIZED_STATEMENT_IDS", "DEFAULT_MAX_DIM",
            "certify_B_positive_definite", "pencil_residual_radii", "pencil_count_below", "format_generalized"]
 
 
-def _dense_hermitian(M, name: str) -> np.ndarray:
+def _dense_hermitian(M, name: str, widened: Optional[list] = None) -> np.ndarray:
     M = M.toarray() if sp.issparse(M) else np.asarray(M)
     if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")
+    M = binary64(M, name, widened)        # exact for narrower formats (noted), a wider one refused (precision.py)
     if not np.all(np.isfinite(M)):
         raise ValueError(f"{name} has non-finite entries")
     D = M - M.conj().T
@@ -76,6 +78,7 @@ def certify_B_positive_definite(B: np.ndarray, fraction: float = 0.5, tries: int
     (rounded down). Smaller fractions are tried when the count is inconclusive. Also records the inertia of B itself
     (shift 0): a negative count >= 1 there means B is not positive definite (refused by the caller).
     Returns {'ok', 'beta_c', 'beta', 'inertia', 'inertia_at_zero', 'reason'}."""
+    B = binary64(np.asarray(B), "B")               # exact (precision.py)
     n = B.shape[0]
     out: Dict[str, Any] = {"ok": False, "beta_c": None, "beta": None, "inertia": None, "inertia_at_zero": None, "reason": ""}
     at0 = inertia_dense(B, 0.0)
@@ -120,6 +123,8 @@ def pencil_residual_radii(A: np.ndarray, B: np.ndarray, mu: np.ndarray, X: np.nd
     c = fl(mu b), s = fl(a - c): |s - (A x - mu B x)| <= gd_n |A||x| + |mu| gd_{n+1} |B||x| + u (1 + 2u) |s| entrywise;
     the computed |A||x|, |B||x| are divided by (1 - gamma_n). x^H B x = x^H b + x^H (B x - b) with the error-free
     x^H b (fp.exact_dot) and |x^H (B x - b)| <= gd_n |x|^T |B||x| (as in enclosure.rayleigh_interval)."""
+    A, B = binary64(np.asarray(A), "A"), binary64(np.asarray(B), "B")    # exact (precision.py)
+    X = binary64(np.asarray(X), "eigenvectors")
     n, k = X.shape
     cplx = np.iscomplexobj(A) or np.iscomplexobj(B) or np.iscomplexobj(X)
     gd = gamma_dot(n, cplx)
@@ -158,6 +163,7 @@ def pencil_count_below(A: np.ndarray, B: np.ndarray, sigma: float, beta_c: float
     """Inertia of M = fl(A - fl(sigma B)) with the collar for the pencil: with b = backward error of the LDL^H of M
     (inertia_dense) + ||Delta M||_2 (rounding of forming M, bounded by the infinity norm of u |sigma||B| + u |M|),
     #{lambda_pencil < sigma - b/beta_c} <= nu <= #{lambda_pencil <= sigma + b/beta_c} (Lemma 3 of the derivation)."""
+    A, B = binary64(np.asarray(A), "A"), binary64(np.asarray(B), "B")    # exact (precision.py)
     M = A - sigma * B
     res = inertia_dense(M, 0.0)
     form = inf_norm_upper(U * abs(sigma) * np.abs(B) + U * np.abs(M))
@@ -188,13 +194,15 @@ def certify_generalized(A, B, eigenvalues, eigenvectors, kind: str = "lowest", *
     from .diagnostics import annotate_record
     if kind not in ("lowest", "subset"):
         raise ValueError("kind must be 'lowest' or 'subset' ('window' and 'all' pencils are not implemented)")
-    A = _dense_hermitian(A, "A")
-    B = _dense_hermitian(B, "B")
+    widened: List[dict] = []
+    A = _dense_hermitian(A, "A", widened)
+    B = _dense_hermitian(B, "B", widened)
     if A.shape != B.shape:
         raise ValueError(f"A and B must have the same shape, got {A.shape} and {B.shape}")
     n = A.shape[0]
+    check_values(eigenvalues, "eigenvalues")   # the conversion below must be exact (precision.py)
     mu = np.asarray(eigenvalues, dtype=float).ravel()
-    X = np.asarray(eigenvectors)
+    X = binary64(np.asarray(eigenvectors), "eigenvectors", widened)
     if X.ndim == 1:
         X = X[:, None]
     if X.shape != (n, mu.size):
@@ -211,6 +219,9 @@ def certify_generalized(A, B, eigenvalues, eigenvectors, kind: str = "lowest", *
                            "claim": {"kind": kind, "n_pairs": k, "eigenvalues": [float(m) for m in mu],
                                      "eigenvectors_sha256": array_sha256(X)},
                            "state": {"form": "pencil"}}
+    widening = widening_record(widened)
+    if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
+        rec["input_widening"] = widening
     if n > max_dim:
         for sid in GENERALIZED_STATEMENT_IDS:
             statements.append(_vstmt(sid, "NOT_CHECKED", f"dimension {n} exceeds max_dim = {max_dim} (dense path only)", {},
