@@ -1,25 +1,30 @@
-# certify-ed-project
+# The project record of CERTIFY-ED
 
-This repository holds the documentation, the long-form blog, the project changelog and the Lean re-verification of
-CERTIFY-ED, the software that issues certificates for exact-diagonalization results (Sarang Vehale, with Ritu Goel).
-The software itself lives in its own repository; a full copy of it, with every branch, tag and run record, is in
-sources/ (see below). Nothing in this repository changes the software or its run records.
+This part of the repository holds the documentation of the whole project, the long-form blog, the project changelog
+and the Lean re-verification of CERTIFY-ED, the software that issues certificates for exact-diagonalization results
+(Sarang Vehale, with Ritu Goel). Until 18 November 2026 it was a separate repository, certify-ed-project; its history
+was imported with every file moved to the place given below, so `git log --follow` shows each file's earlier commits.
+Nothing in it changes the software or its run records.
 
 ## Layout
 
 | Folder or file | Contents |
 |---|---|
-| `docs/` | the documentation of the whole project: mathematics, software, experiments, applications, decisions, failures, reproduction, and `CODE_INDEX.md`, which documents every program of the code repository |
-| `blog/` | `BLOG.md`, a long-form account of the project from its first version to 6 November 2026, with figures |
-| `CHANGELOG_PROJECT.md` | every recorded change of the project, dated, from the first work on it to 6 November 2026 |
-| `reverification_lean/` | the Lean 4 re-verification: a core-Lean exact checker and kernel theorems (`CertifyCore`), formal proofs on Mathlib (`CertifyMathlib`), the recomputation of the application numbers, and `VERIFICATION_REPORT.md` |
-| `tools/` | `lint_docs.py` (the style checker of STYLE.md) and the scripts that generate tables |
-| `sources/` | `archive_v5/` (the project archive v5 of 6 November 2026, unpacked; not tracked by git, see `sources/SOURCES.md`) `certify-ed_dev-3.2.bundle` and `certify-ed_dev-3.3.bundle` (the code repository as git bundles, before and after the first development phase), and `runs/` (the run records of the 3.2.2 and 3.2.3 evidence runs) |
-| `STYLE.md` | the writing rules every document follows |
+| `docs/project/` | the documentation of the whole project: mathematics, software, experiments, applications, decisions, failures, reproduction, and `CODE_INDEX.md`, which documents every program of the code at archive v5 |
+| `docs/blog/` | `BLOG.md`, a long-form account of the project from its first version to 6 November 2026, with figures |
+| `docs/project/CHANGELOG_PROJECT.md` | every recorded change of the project, dated, from the first work on it |
+| `lean/` | the Lean 4 re-verification: a core-Lean exact checker and kernel theorems (`CertifyCore`), formal proofs on Mathlib (`CertifyMathlib`), the recomputation of the application numbers, and their result files |
+| `docs/lean/` | the reports of the Lean work, among them `VERIFICATION_REPORT.md`; paths in them without a folder are relative to `lean/` |
+| `tools/` | `lint_docs.py` (the style checker of `docs/project/STYLE.md`) and the scripts that generate tables and reports |
+| `docs/project/sources/` | `SOURCES.md` (where the research archive is and how it was checked) and `runs/` (the run records of the 3.2.2 and 3.2.3 evidence runs) |
+| `docs/project/STYLE.md` | the writing rules every document of the project record follows |
+
+The research archive v5 (`archive_v5/`) is not part of the repository; `docs/project/sources/SOURCES.md` says why and
+where the generators look for it.
 
 ## Trust levels
 
-Every result in `reverification_lean/` carries one of these levels, the same scale as the re-verification of the
+Every result in `lean/` carries one of these levels, the same scale as the re-verification of the
 mm3x3 project.
 
 | Level | Meaning |
@@ -39,10 +44,11 @@ re-derived it) is his decision; until he takes it, the derivation documents keep
 
 The software, the derivation documents, the Lean files and these documents were prepared with the help of an
 automated system, under the direction of Sarang Vehale. The record of that process (plans, reports of the
-individual work tracks) is kept apart from the research material, in the agent-material package. A statement in this
-repository is a human-checked result only where it names the person who checked it.
+individual work tracks) is kept apart from the research material, in a separate private repository. A statement in
+this record is a human-checked result only where it names the person who checked it.
 
 ## Building
 
-The Lean toolchain is Lean 4.35.0 (`lean-toolchain`); Mathlib is the release `v4.35.0`. See
-`reverification_lean/README.md`. The style check is `python tools/lint_docs.py docs blog reverification_lean CHANGELOG_PROJECT.md`.
+The Lean toolchain is Lean 4.35.0 (`lean/lean-toolchain`); Mathlib is the release `v4.35.0`. See
+`docs/lean/README.md`. The style check is
+`python tools/lint_docs.py docs/project docs/blog docs/lean`.
