@@ -166,8 +166,9 @@ def _modulus_up_scaled(x, y):
 
 
 def modulus_up(z):
-    """m >= |z| for every entry of a real or complex array, same shape (float64 for complex input; a float for a
-    complex scalar).
+    """m >= |z| for every entry of a real or complex array, same shape (float64 for complex, integer and boolean input;
+    the input's type for real floating input); a float for a scalar (a NumPy scalar for a real type wider than
+    binary64, which a float would round).
 
     Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
     up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
@@ -192,7 +193,8 @@ def modulus_up(z):
     z = np.asarray(z)
     kind = z.dtype.kind
     if kind == "f":
-        return np.abs(z)
+        m = np.abs(z)
+        return float(m) if m.ndim == 0 and np.finfo(z.dtype).nmant <= 52 else m
     if kind in "iub":
         m = np.abs(z.astype(np.float64))
         big = m >= 2.0 ** 53

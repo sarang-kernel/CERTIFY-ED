@@ -126,10 +126,18 @@ def test_the_exact_check_rejects_a_value_one_step_below():
 
 def test_real_input_is_returned_exactly():
     rng = np.random.default_rng(3)
-    for a in (rng.standard_normal(17), rng.standard_normal((4, 5)).astype(np.float32), np.float64(-0.0)):
+    for a in (rng.standard_normal(17), rng.standard_normal((4, 5)).astype(np.float32)):
         m = modulus_up(a)
         assert m.dtype == np.abs(a).dtype and np.array_equal(m, np.abs(a))
-    assert modulus_up(-2.5) == 2.5
+    # a scalar gives a float, whatever its type (exact: every type here is at most binary64)
+    for a in (-2.5, np.float64(-0.0), np.float32(-1.5), np.float16(-3.0), -7, np.int32(-4), True, 3 + 4j,
+              np.complex64(1j), np.asarray(-0.25), np.asarray(1 - 1j)):
+        m = modulus_up(a)
+        assert type(m) is float and m >= abs(complex(a)), a
+        if not np.iscomplexobj(a):
+            assert m == abs(float(a))
+    w = np.longdouble(-1.5)
+    assert modulus_up(w) == 1.5 and (type(modulus_up(w)) is float) == (np.finfo(np.longdouble).nmant <= 52)
     # complex data with a zero component: the other's absolute value, exact
     a = rng.standard_normal(9)
     assert np.array_equal(modulus_up(a + 0j), np.abs(a)) and np.array_equal(modulus_up(1j * a), np.abs(a))
