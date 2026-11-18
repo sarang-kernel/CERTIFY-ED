@@ -18,7 +18,7 @@ cites needs one full run at a single computational source (decision D-44), and t
 
 | File | Content |
 |---|---|
-| `01_environment.md` | the reference versions, installation, the checkout from the bundle, shell settings, the checks of the environment |
+| `01_environment.md` | the reference versions, installation, the checkout of the code, shell settings, the checks of the environment |
 | `02_tests_and_experiments.md` | the test suite, the full evidence run, single experiments, the scripts outside the evidence runs |
 | `03_numbers_figures_documents.md` | macros and tables from a run, the figures, the manuscript, the consolidated report |
 | `04_checks.md` | the comparison of runs, the verifier, the derivation scripts, the corpus, conformance, schemas, examples |
@@ -57,9 +57,9 @@ the `manifest.json` of the run in the same row.
 
 ## What was run again for this documentation
 
-Every check below was made on 10 November 2026 on the Windows workstation, in a clone of
-`docs/project/sources/certify-ed_dev-3.2.bundle` at `a814d28` (the same computational source as `v3.2.1`), with the archived
-records copied out where a command writes into a run directory. No full run was made.
+Every check below was made on 10 November 2026 on the Windows workstation, in a clone of the code bundle
+`certify-ed_dev-3.2.bundle` at `a814d28` (the same computational source as `v3.2.1`; the commit is in this repository), with
+the archived records copied out where a command writes into a run directory. No full run was made.
 
 | Check | Where described | Result |
 |---|---|---|

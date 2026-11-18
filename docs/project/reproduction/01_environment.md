@@ -41,20 +41,20 @@ are skipped and recorded as skipped.
 
 ## The code at the version to be reproduced
 
-The code repository is in the archive as a full git clone, `archive_v5/code/certify-ed/`, and in this
-repository as a git bundle, `docs/project/sources/certify-ed_dev-3.2.bundle`. Work in a fresh clone, never in the archive copy, so
-that the archive keeps its source hash:
+The code history is part of this repository, and the archive holds a full git clone of it at the time of archive v5,
+`archive_v5/code/certify-ed/`. Work in a separate worktree of this repository, never in the archive copy, so that the
+archive keeps its source hash. From the root of this repository:
 
 ```
-git clone docs/project/sources/certify-ed_dev-3.2.bundle work/certify-ed
-cd work/certify-ed
-git -c advice.detachedHead=false checkout v3.2.1      # or v3.1.0 for the cited version, v3.2.0 for the failed run
+git worktree add --detach ../work/certify-ed v3.2.1     # or v3.1.0 for the cited version, v3.2.0 for the failed run
+cd ../work/certify-ed
 git -c core.filemode=false status --porcelain          # must print nothing
 ```
 
-The bundle contains every branch and tag of the code repository (`v1.0.0-baseline`, `v2-pre-homologation`,
-`v3.1.0-candidate`, `v3.1.0`, `v3.2.0`, `v3.2.1`). It does not contain the run records, because `results/` is ignored
-by git; the records of every run are in the archive copy, `archive_v5/code/certify-ed/results/`, and are read
+The repository holds every tag of the code (`v1.0.0-baseline`, `v2-pre-homologation`, `v3.1.0-candidate`, `v3.1.0`,
+`v3.2.0`, `v3.2.1` and later). Until 18 November 2026 this document cloned the git bundle `certify-ed_dev-3.2.bundle`
+instead; its commits have the same ids here. The history does not contain the run records, because `results/` is
+ignored by git; the records of every run are in the archive copy, `archive_v5/code/certify-ed/results/`, and are read
 from there by the comparison and number commands of the other documents. The package is used from the checkout,
 without installation, by putting the checkout on `PYTHONPATH`; `pip install -e .[all]` also works but is not needed.
 On Windows the `certify-ed` console script exists only after installation, so the commands of these documents call

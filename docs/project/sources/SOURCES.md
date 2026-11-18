@@ -11,8 +11,12 @@ repository is relative to `archive_v5/`.
 
 The code history is part of this repository. Until 18 November 2026 the project record cited it through two git bundles,
 `certify-ed_dev-3.2.bundle` (SHA-256 `627313031d6686ef90cb2ad7602d5aed6abb31e0c7786361ab36a5810fe5d04c`) and
-`certify-ed_dev-3.3.bundle` (SHA-256 `52a2e64efa76bf0a0bbe1084616f4cd7308cb412fc4b0d709888bb8076cf9849`); every commit they
-held has the same id here. The two documentation commits after archive v5, `40d59f4` (the corrections of 10 November 2026)
+`certify-ed_dev-3.3.bundle` (SHA-256 `52a2e64efa76bf0a0bbe1084616f4cd7308cb412fc4b0d709888bb8076cf9849`). Every commit
+reachable from `dev/3.3` and from the tags has the same id here; the four commits of the side branch
+`track/whole-spectrum` (the whole-spectrum work before its line endings were normalised) are only in the archived copy
+of the 3.3 bundle, and the record cites none of them. A path into the code (`certify_ed/`, `tests/`, `experiments/`,
+`docs/proofs/` and so on) cited in `docs/project/` refers to the code at the commit named with it, or at `a814d28` when
+none is named. The two documentation commits after archive v5, `40d59f4` (the corrections of 10 November 2026)
 and `fa86456` (four errata found by the Lean formalization), change no computational file; the source hash stays
 `cb73dec3e4433a3b`. The first development phase of 11 to 13 November 2026 added tag `v3.2.2` at `a9b9838` (source hash
 `746958b63a65b43e`), tag `v3.2.3` at `9f42adc` (source hash `bfc115e824386443`) and the line 3.3.0.dev0 at `c29e968`, whose

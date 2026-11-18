@@ -60,13 +60,12 @@ counterpart, `docs/lean/VERIFICATION_REPORT.md` gives its trust level; nothing i
 ## Recreating the machine checks
 
 Each derivation document has a script `code/certify-ed/docs/proofs/verify_<id>.py`, and each independent derivation has
-a script `code/certify-ed/docs/proofs/independent/adversarial_<id>.py`. They run from the root of the code clone with
-the package on the path. In a Windows command prompt, from the root of this repository:
+a script `code/certify-ed/docs/proofs/independent/adversarial_<id>.py`. They run from the root of a checkout of the code
+at `a814d28` with the package on the path. In a Windows command prompt, from the root of this repository:
 
 ```
-git clone docs/project/sources/certify-ed_dev-3.2.bundle certify-ed
-cd certify-ed
-git checkout a814d28
+git worktree add --detach ..\work\certify-ed a814d28
+cd ..\work\certify-ed
 python -m pip install numpy scipy mpmath python-flint
 set PYTHONPATH=%CD%
 python docs/proofs/verify_P14.py --random 3000 --seed 0
