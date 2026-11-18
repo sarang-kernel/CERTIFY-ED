@@ -68,6 +68,7 @@ from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range)
 from .gpu import GPUUnavailable
+from .precision import binary64
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -102,7 +103,9 @@ class OperatorAdapter:
         self.op = op
         if sp.issparse(op) or isinstance(op, np.ndarray):
             self.kind = "matrix"
-            self.A = op.tocsr() if sp.issparse(op) else np.asarray(op)
+            # a stored matrix in a narrower format is converted exactly to binary64 (precision.py): the bounds below
+            # count binary64 arithmetic, and a single-precision product would not satisfy them
+            self.A = binary64(op.tocsr() if sp.issparse(op) else np.asarray(op), "operator")
             self.shape = self.A.shape
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
             self.width = max_nnz_per_row(self.A)
@@ -416,8 +419,10 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
     in blocks of `block_mb` megabytes of temporaries (DEFAULT_BLOCK_MB) for a sparse or spec operator, in
     one block for a dense or black-box operator (OperatorAdapter.column_block_invariant). keep_R: store the
     residual matrix (default: yes for in-memory vectors, no for streamed ones). products: (H X, |H| |X|)
-    already formed for in-memory X (one block; the |H| |X| array is consumed in place)."""
+    already formed for in-memory X (one block; the |H| |X| array is consumed in place). Vectors in a narrower format
+    are converted exactly to binary64 first (precision.binary64)."""
     mu = np.asarray(mu, dtype=float)
+    X = binary64(X, "eigenvectors")
     streamed = is_streamed(X)
     if not streamed:
         X = np.asarray(X)
@@ -658,6 +663,7 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional
     if X is None:
         raise ValueError("eigenvectors are required for enclosures (eigenvalue-only claims "
                          "are handled by inertia counts)")
+    X = binary64(X, "eigenvectors")          # exact; the bounds count binary64 arithmetic (precision.py)
     if not is_streamed(X):
         X = np.asarray(X)
         if X.ndim == 1:
@@ -787,7 +793,7 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     supplied when fl(A x) and |A| |x| were already formed (certify.py forms them for all isolated pairs in
     one product each); the bound is the same function of them.
     """
-    x = np.asarray(x).ravel()
+    x = binary64(np.asarray(x).ravel(), "vector")
     # the |A||x| guard below is the one of Theorem 1 (Lambda5): established for w <= 2^26 and n <= 2^26 (3.2.2)
     check_guard_range(n=x.size, w=adapter.width, where="enclosure.rayleigh_interval")
     cplx = adapter.complex or np.iscomplexobj(x)

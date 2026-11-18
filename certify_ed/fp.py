@@ -26,6 +26,8 @@ import math
 import numpy as np
 import scipy.sparse as sp
 
+from .precision import binary64
+
 U = 2.0 ** -53          # unit roundoff for binary64
 _GUARD = 1.0 + 8 * U    # relative guard applied to computed upper bounds
 
@@ -191,7 +193,8 @@ def norm2_upper(v: np.ndarray) -> float:
     (1 + gamma_{n+2})(1 + 8u) undoes the relative errors of the squares, the sum and the square root; the
     additive norm_underflow_term covers the squares that underflow, INT-05). The guard (1 + gamma_{n+2})(1 + 8u) is
     established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised before anything is
-    computed (3.2.2)."""
+    computed (3.2.2). A vector in a narrower format is converted exactly to binary64 first (precision.py)."""
+    v = binary64(np.asarray(v), "fp.norm2_upper")
     n = v.size
     check_guard_range(n=n, where="fp.norm2_upper")
     s = float(np.linalg.norm(v))
@@ -200,7 +203,9 @@ def norm2_upper(v: np.ndarray) -> float:
 
 def norm2_lower(v: np.ndarray) -> float:
     """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve).
-    Established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised (3.2.2)."""
+    Established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised (3.2.2). A vector in a
+    narrower format is converted exactly to binary64 first (precision.py)."""
+    v = binary64(np.asarray(v), "fp.norm2_lower")
     n = v.size
     check_guard_range(n=n, where="fp.norm2_lower")
     s = float(np.linalg.norm(v))
@@ -224,8 +229,9 @@ def inf_norm_upper(A) -> float:
     """Upper bound on ||A||_inf (max absolute row sum) of a stored matrix.
 
     For Hermitian A this also bounds ||A||_2 (since ||A||_2 <= sqrt(||A||_1 ||A||_inf)
-    and ||A||_1 = ||A||_inf).
+    and ||A||_1 = ||A||_inf). A matrix in a narrower format is converted exactly to binary64 first (precision.py).
     """
+    A = binary64(A if sp.issparse(A) else np.asarray(A), "fp.inf_norm_upper")
     if sp.issparse(A):
         A = A.tocsr()
         absA = abs(A)
@@ -512,8 +518,8 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
     have, n_tiny * TINY_BOUND per real component (INT-05; zero for every input whose
     products are above 2^-967, i.e. for every pair of vectors with entries above 2^-483 in magnitude).
     """
-    x = np.asarray(x).ravel()
-    y = np.asarray(y).ravel()
+    x = binary64(np.asarray(x).ravel(), "fp.exact_dot")      # exact for narrower formats; wider ones refused
+    y = binary64(np.asarray(y).ravel(), "fp.exact_dot")
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         xr, xi = np.real(x).astype(float), np.imag(x).astype(float)
         yr, yi = np.real(y).astype(float), np.imag(y).astype(float)
