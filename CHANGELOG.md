@@ -16,8 +16,9 @@ place, through arrays shared with the caller's matrices: the absolute value of t
 sector audit, the S4 norm bounds and the label records all did so. Without a model, with a sector isometry or with
 approximate symmetries, a second `certify()` of the same claim then saw different matrices and gave a different
 certificate; with a model the two certificates were equal, but the caller's operator was changed and could be left
-inconsistent (more stored values than `nnz`). The first certificate is unchanged, since the copies go through the
-same steps as the caller's matrices did before; the second is now equal to it (`tests/test_input_unchanged.py`).
+inconsistent (more stored values than `nnz`). The first certificate is unchanged (apart from the no-underflow scan
+below), since the copies go through the same steps as the caller's matrices did before; the second is now equal to
+it (`tests/test_input_unchanged.py`).
 
 The copies cost one more matrix in memory each, for such inputs only. They are made before the budget and memory
 gates, and the plan does not count them, so an operator that fits in memory once but not twice now raises
