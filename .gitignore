@@ -15,3 +15,15 @@ results/
 corpus/results/*/*/
 # mkdocs output (built locally, not committed)
 site/
+
+# project record (imported certify-ed-project): Lean build caches and generated bundles
+lean/.lake/
+*.olean
+*.ilean
+lean/**/build/
+lean/work/
+lean/.mathlib_cache/
+lean/.curl/
+lean/logs/
+lean/Drafts/**/scratch_*.lean
+docs/blog/blog_sources_bundle.txt
