@@ -99,7 +99,7 @@ def files(args):
     for a in args:
         if os.path.isdir(a):
             for dp, dns, fns in os.walk(a):
-                dns[:] = [d for d in dns if d not in (".git", ".lake", "sources", "__pycache__")]
+                dns[:] = [d for d in dns if d not in (".git", ".lake", "archive_v5", "__pycache__")]
                 for f in sorted(fns):
                     if f.endswith(".md"):
                         yield os.path.join(dp, f)
