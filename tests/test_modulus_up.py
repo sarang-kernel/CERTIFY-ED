@@ -97,6 +97,22 @@ def test_upper_modulus_on_random_magnitudes():
     assert all(_upper_ok(z, m) and _tight_ok(z, m) for z, m in zip(Z, M))
 
 
+def test_the_step_up_covers_the_whole_subnormal_band():
+    """Lemma M, Step 4 (c): the step up below 2^-1022, on 2 400 z with both components nonzero and |z| log-uniform in
+    [2^-1074, 2^-1022], and 400 more just below 2^-1022 (exact check m^2 >= x^2 + y^2, and (ii)). A step taken only
+    below a smaller threshold (2^-1030, 2^-1023), or no step, gives m < |z| on some of them."""
+    rng = np.random.default_rng(20261120)
+    e = np.concatenate([rng.uniform(-1074.0, -1022.0, 2400), rng.uniform(-1023.0, -1022.0, 400)])
+    t = rng.uniform(0.0, np.pi / 2, e.size)
+    r = np.exp2(e)
+    Z = r * np.cos(t) + 1j * (r * np.sin(t))
+    Z = Z[(Z.real != 0) & (Z.imag != 0) & (np.abs(Z) <= 2.0 ** -1022)]
+    assert Z.size > 2000
+    M = modulus_up(Z)
+    bad = [(z, m) for z, m in zip(Z, M) if not (_upper_ok(z, m) and _tight_ok(z, m))]
+    assert not bad, bad[:5]
+
+
 def test_the_exact_check_rejects_a_value_one_step_below():
     """Negative control of the check itself: one binary64 step below fl(sqrt(re^2 + im^2)) rounded down is never an
     upper bound (whatever NumPy's complex absolute value returns on a given platform)."""
