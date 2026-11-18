@@ -115,6 +115,13 @@ subtractions add u(|S₁| + |C|) entrywise, with (1 + 4u) for their own rounding
 Rounding directions: every error term up (`norm2_upper`, `up`, `add_up`), interval endpoints outward (`sub_down`,
 `add_up`, `sub_up`, the 4u steps of the interval product).
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Lemma 3 (i)–(ii) and Lemma 4 take the computed
+moduli |O|, |H|, |x_i|, |ẑ_i| and |F_j| as exact ("the computed fl(|O||x_i|) of non-negative terms is ≥ (1 − γ_{w_O})
+times the exact one"). For complex data the code took them from `numpy.abs`, whose error is not bounded (`docs/proofs/fp_modulus-up.md`).
+Since 3.3.0.dev0 `moments` takes them from `fp.abs_up` and `fp.modulus_up` (≥ the exact moduli, Lemma M there),
+so these steps hold as written; the rounding term u(|S1| + |C|) of the formed commutator in M3 uses upper moduli too.
+No constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_C-07.py` (seed 20261030, `--cases 40`; exact Fractions for the rounding part, mpmath at 60 digits
@@ -152,3 +159,4 @@ record schema.
 ## 6 Status
 
 Derived by Claude on 2026-10-31; machine-checked (418 random + 192 adversarial cases, 0 violations; negative controls 132/138, 138/138 and 40/40); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

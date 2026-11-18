@@ -147,6 +147,13 @@ floating point has relative error ≤ γ_{g²+1} plus the squaring, ≤ γ_{g²+
 
 Rounding directions: every bound is rounded up (`up`, `add_up`, index shifts), gaps and γ₀ down (`sub_down`).
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Lemma 5 (a) uses |H||S| and |C| with exact moduli,
+and Lemma 5 (c) the floating-point sum of the squared moduli |Ĉ_ij|² = Re² + Im². The code formed (a) with
+`numpy.abs`, whose error is not bounded (`docs/proofs/fp_modulus-up.md`), and (c) as `np.abs(C)**2`. Since 3.3.0.dev0 (a) uses
+`fp.abs_up` (≥ the exact moduli, Lemma M there) and (c) forms Re² + Im², as Lemma 5 (c) states; this also settles the
+remark of the independent re-derivation on (c) (VERDICTS.md). For real data the computed values are unchanged. No
+constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_E-07.py` (seed 20261030, mpmath at 50 digits; comparison margin 10⁻⁴⁰, 10⁻¹⁴ where the code's
@@ -194,3 +201,4 @@ subspaces' overlap contains tr(P₁P₂), shape and missing-vector errors, and 2
 
 Derived by Claude on 2026-10-30; machine-checked (529 random + 24 adversarial cases, 0 violations; both negative
 controls detected 20/20); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).
