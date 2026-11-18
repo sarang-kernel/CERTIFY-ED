@@ -56,6 +56,16 @@ arrays; spot-check rejection, injected fallback, no device, dense and unknown de
 with no device visible: 1222 passed, 70 skipped, 4 failed; plain `dev/3.3` in the same environment: 1218 passed, 57
 skipped, the same 4 failed (see the Linux findings below).
 
+Re-test of 18 November 2026 at the head of the branch after the reviews (`937ae1e`, source hash
+`7fc028c29b1173fd`, tests hash `6bbd879b8887b05a`; one H100, CuPy 13.6.0, CUDA runtime 13.0): the device probe holds
+(full range, narrow range, low range, gradual underflow, kernels equal to SciPy's), and `tests/test_gpu.py` gives 21
+passed. `certify()` with `device="gpu"` against `device="cpu"` on a banded matrix of dimension 20000 (real and
+complex, four claimed pairs, S2, S3 and Kato-Temple) and on the Heisenberg chain of 18 sites with its model gives the
+same statuses, the same records apart from timings and the `device` field, and the same arrays bit for bit, with the
+GPU products used (4, 4 and 2 products; spot checks on 128, 128 and 64 rows). For the same chain stored with every
+entry split into two halves the device was not used (`|A| does not share the pattern of A`), and the CPU products
+gave the same certificate as the CPU run.
+
 ## Products and residual bounds against the CPU (`experiments/d05_gpu_bench.py`)
 
 Heisenberg chains in the full space (n = 2^N), k = 8 random vectors and values. CPU: SciPy's CSR product on one thread,
