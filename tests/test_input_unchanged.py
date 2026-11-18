@@ -184,3 +184,18 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
     assert all(_unchanged(M, x) for M, x in zip(given, before))
     _same(ref, a)
     _same(a, ce.certify(claim, spec, opts))
+
+
+@pytest.mark.parametrize("cls", [sp.csr_matrix, sp.csr_array])
+def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls):
+    from certify_ed.certify import _private_copies
+    D = cls(_with_duplicates(_random_claim()[0].operator))
+    D.indices, D.indptr = D.indices.astype(np.int64), D.indptr.astype(np.int64)
+    own = _private_copies()
+    C = own(D)
+    assert C is not D and type(C) is type(D) and own(D) is C
+    assert C.indices.dtype == C.indptr.dtype == np.int64
+    assert all(np.array_equal(x, y) for x, y in zip(_arrays(C), _arrays(D)))
+    H = _random_claim()[0].operator.copy()
+    H.sum_duplicates()
+    assert own(H) is H and own(None) is None
