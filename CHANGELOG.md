@@ -7,6 +7,34 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Single-precision inputs (soundness fix)
+
+A float32 or complex64 operator with float32 or complex64 vectors received S2 certificates that did not hold: numpy
+formed the products in single precision (u = 2^-24), while every bound counts binary64 rounding (u = 2^-53). Example:
+A = [[1, 2^-30], [2^-30, 1]] in float32 (entries exact), x = (1, 1), claimed eigenvalue 1, kind 'subset': S2 CERTIFIED
+with radius 8.9e-16 (3.6e-15 for complex64), although the stored matrix has the eigenvalues 1 -+ 2^-30. Affected: every
+3.x release, checked at the release commits of 3.0.0, 3.1.0, 3.2.0, 3.2.1, 3.2.2 and 3.2.3, and dev/3.3 up to this fix.
+The other records and helpers that formed products of the given arrays were affected the same way (variational,
+generalized pencil, moments, `enclose_spectrum`, the Rayleigh interval of Kato-Temple, the S4 observable and label
+records, the sector audits, the norm bounds of `fp`); the non-Hermitian record converted its inputs to binary64
+already. No evidence-run input, example or test of the repository uses single precision.
+
+Every entry point that takes a stored operator, vectors or another matrix into a bound now passes them through
+`precision.binary64` first: float16, float32 and complex64 data are widened exactly to float64 or complex128, so the
+statements concern the values as stored; integer data are widened when every value is a binary64 number (integer
+vectors with an integer operator raised a numpy casting error before); a long double wider than binary64, non-numeric data and integers that
+binary64 cannot hold are refused with `PrecisionError` (a `ValueError`). Vectors on disk are widened block by block.
+The certificate's `arithmetic.input_widening` (`input_widening` in the standalone records) lists the converted inputs,
+only when there are any. Hashes are of the binary64 data: an operator's `matrix_sha256` does not change (it always
+hashed binary64 entries); `eigenvectors_sha256` of single-precision vectors is now that of the widened array, which is
+also the array the arrays sidecar stores.
+
+float64 and complex128 inputs give the same certificates and records as before, bit for bit (bodies without
+environment and times, and arrays, on 14 models and records against the previous commit). The computational source
+hash changes (new module `precision.py`; `certify.py`, `enclosure.py`, `fp.py`, `inertia.py`, the record modules and
+the eigenspace, correlation, sector, spectrum, Ozaki and Arb helpers). Tests: `tests/test_single_precision.py`.
+
+
 ### The caller's matrices stay as given
 
 `certify()` and `certify_variational()` now work on private copies of the CSR matrices they are given whose indices
