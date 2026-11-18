@@ -1,4 +1,4 @@
-# docs/project/CHANGELOG_PROJECT.md: every recorded change of CERTIFY-ED, 18 December 2025 to 6 November 2026
+# docs/project/CHANGELOG_PROJECT.md: every recorded change of CERTIFY-ED, 18 December 2025 to 18 November 2026
 
 This file lists, month by month, every change of the CERTIFY-ED project that a dated source of the project archive v5 records: code, mathematics, manuscripts, runs, decisions, applications, documents and archives, with the failures and reversals as well as the results. CERTIFY-ED (Sarang Vehale, with Ritu Goel) issues certificates for exact-diagonalization (ED) results. An ED result is a set of eigenvalues and eigenvectors that a program computed for a Hamiltonian matrix; a certificate states, statement by statement, what has been established about such a result for a declared model. The archive itself is described in `archive_v5/README_ARCHIVE.md`, and the consolidated report `archive_v5/report/CONSOLIDATED_REPORT.md` gives the technical detail behind every row.
 
