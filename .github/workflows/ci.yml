@@ -55,6 +55,7 @@ jobs:
           OMP_NUM_THREADS: "1"
           OPENBLAS_NUM_THREADS: "1"
           MKL_NUM_THREADS: "1"
+          VECLIB_MAXIMUM_THREADS: "1"
         run: pytest -q -p no:cacheprovider 2>&1 | tee pytest-${{ matrix.os }}-py${{ matrix.python-version }}.log; test ${PIPESTATUS[0]} -eq 0
       - uses: actions/upload-artifact@v4
         if: always()
