@@ -62,10 +62,11 @@ def _without_timings(obj):
 
 
 def _same(a, b):
-    """The two certificates agree in every field of the body except the environment and the times, and in every array bit
-    for bit."""
-    body = lambda c: json.dumps(_without_timings({k: v for k, v in c.body.items() if k not in ("environment", "timing")}),
-                                sort_keys=True, default=repr)
+    """The two certificates agree in every field of the body except the environment and the times, and in every array
+    bit for bit."""
+    def body(c):
+        kept = {k: v for k, v in c.body.items() if k not in ("environment", "timing")}
+        return json.dumps(_without_timings(kept), sort_keys=True, default=repr)
     assert body(a) == body(b)
     assert sorted(a.arrays) == sorted(b.arrays)
     for key in a.arrays:

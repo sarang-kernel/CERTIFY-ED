@@ -327,8 +327,8 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
             if underflow_check:
                 parts = [("state.entries", x, UNDERFLOW_THRESHOLD)]
                 if adapter.kind == "matrix":
-                    parts.append(("operator.entries", adapter.A.data[:adapter.A.nnz] if sp.issparse(adapter.A) else adapter.A,
-                                  UNDERFLOW_THRESHOLD))
+                    entries = adapter.A.data[:adapter.A.nnz] if sp.issparse(adapter.A) else adapter.A    # stored values
+                    parts.append(("operator.entries", entries, UNDERFLOW_THRESHOLD))
                 else:
                     parts.append(("operator.norm_bound", np.array([adapter.norm_upper()], dtype=float), UNDERFLOW_THRESHOLD))
                     if sigma > 0:
