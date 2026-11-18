@@ -9,25 +9,37 @@
 
 ### The caller's matrices stay as given
 
-`certify()` now works on private copies of the CSR matrices it is given whose indices are unsorted or repeated: the
-operator, the sector isometry, and the matrices in `Options.observables` and `Options.approximate_symmetries`, on
-every device and again for the CPU recompute of a failed GPU run. Before, the first run summed their duplicates in
-place, through arrays shared with the caller's matrices: the absolute value of the adapter, the S1 comparison, the
-sector audit, the S4 norm bounds and the label records all did so. Without a model, with a sector isometry or with
-approximate symmetries, a second `certify()` of the same claim then saw different matrices and gave a different
-certificate; with a model the two certificates were equal, but the caller's operator was changed and could be left
-inconsistent (more stored values than `nnz`). The first certificate is unchanged (apart from the no-underflow scan
-below), since the copies go through the same steps as the caller's matrices did before; the second is now equal to
-it (`tests/test_input_unchanged.py`).
+`certify()` and `certify_variational()` now work on private copies of the CSR matrices they are given whose indices
+are unsorted or repeated: for `certify()` the operator, the sector isometry, and the matrices in `Options.observables`
+and `Options.approximate_symmetries`, on every device and again for the CPU recompute of a failed GPU run. A matrix
+given in several places (the operator also as an observable, say) is copied once, so that a step working through one
+place sees what the others did, as on the caller's matrix. The copies keep the index dtypes of the caller's matrices.
+Before, the first run summed their duplicates and sorted their indices in place, through arrays shared with the
+caller's matrices: the absolute value of the adapter, the S1 comparison, the sector audit, the S4 norm bounds and the
+label records all did so. Without a model, or with a sector isometry, observables or approximate symmetries, a second
+call with the same input then saw different matrices and gave a different certificate (or record); otherwise the
+statuses and bounds were equal (S1's comparison record and the plan could differ), but the caller's operator was
+changed and could be left with more stored values than `nnz`. The first certificate is unchanged, since the copies go
+through the same steps as the caller's matrices did before, with two exceptions: the no-underflow scan below, and,
+with `device="gpu"`, the certificate after a failed device run, which now equals the CPU certificate (the recompute saw
+matrices of `Options` that the failed run had summed, and a matrix given both as the operator and elsewhere had two
+copies). The second certificate is now equal to the first (`tests/test_input_unchanged.py`,
+`tests/test_gpu.py`). Other entry points that take a matrix, for example `OperatorAdapter`, `enclose_spectrum` and
+`certified_moments`, still sum it in place.
 
-The copies cost one more matrix in memory each, for such inputs only. They are made before the budget and memory
-gates, and the plan does not count them, so an operator that fits in memory once but not twice now raises
-`MemoryError` from `certify()`. They replace the copy that `certify(device="gpu")` made for the operator alone.
+The copies cost one more matrix in memory each, for such inputs only, also for matrices of statements that are
+skipped. They are made before the budget and memory gates, and the plan does not count them, so an operator that fits
+in memory once but not twice now raises `MemoryError` from `certify()`. They replace the copy that
+`certify(device="gpu")` made for the operator alone.
 
 The no-underflow scan of a stored operator (`certify` and `certify_variational`) reads only its `nnz` stored values.
-Before, values left past `nnz` by an in-place summation could be scanned, and an operator whose duplicates summed to
-normal numbers could get a spurious UNDERFLOW_RISK; this depended on whether the caller had read the matrix's
+Before, values left past `nnz` could be scanned (left by a summation through another matrix object that shares the
+arrays, inside `certify()` or before the call), and an operator whose stored values are normal numbers could get a
+spurious UNDERFLOW_RISK; inside `certify()` this depended on whether the caller had read the matrix's
 `has_canonical_format` before the call.
+
+The computational source hash changes (`certify.py`, `variational.py`).
+
 
 ### GPU products (roadmap D-05; track/gpu-d05)
 
