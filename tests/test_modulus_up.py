@@ -238,6 +238,22 @@ def test_inf_and_nan_follow_numpy():
     assert modulus_up(complex(big, 0.0)) == big
 
 
+def test_zero_entries_take_the_unscaled_branch(monkeypatch):
+    """An entry 0 + 0i is exact on the unscaled branch (0, then the zero override), so it does not pay for the scaled
+    one: arrays of Pauli type never call _modulus_up_scaled, and the values are unchanged."""
+    import certify_ed.fp as fp
+    calls = []
+    real_scaled = fp._modulus_up_scaled
+
+    def spy(x, y):
+        calls.append(x.size)
+        return real_scaled(x, y)
+    monkeypatch.setattr(fp, "_modulus_up_scaled", spy)
+    for a in (np.array([[0, -1j], [1j, 0]]), np.array([[1, 0], [0, -1]], dtype=complex), np.zeros(5, dtype=complex)):
+        assert np.array_equal(fp.modulus_up(a), np.abs(a)) and not calls
+    assert fp.modulus_up(complex(2.0 ** -600, 0.0)) == 2.0 ** -600 and calls == [1]
+
+
 def test_shapes_dtypes_and_elementwise_identity():
     rng = np.random.default_rng(5)
     X = rng.standard_normal((30, 7)) + 1j * rng.standard_normal((30, 7))

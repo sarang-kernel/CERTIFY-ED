@@ -172,14 +172,15 @@ def modulus_up(z):
     Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
     up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
     Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M):
-    m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is in [2^-500, 2^500]; otherwise the same with
-    the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1) (np.frexp,
-    np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below 2^-1022, where the
-    rescaling may have rounded it down. The factor (1 + 8u) covers the five roundings and the rounding of a scaled
-    smaller component to the subnormal grid. A zero component gives the other's absolute value (exact); an infinite
-    component gives inf; otherwise a nan component gives nan (as np.abs does); an m above the largest float is inf,
-    never a smaller finite value. Tightness: a finite m satisfies m <= |z| (1 + 12u) + 2^-1073, and m <= |z| (1 + 12u)
-    when |z| >= 2^-1022. Floating-point warnings are off inside (np.errstate); nothing is raised for inf or nan.
+    m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is 0 or lies in [2^-500, 2^500]; otherwise
+    the same with the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1)
+    (np.frexp, np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below
+    2^-1022, where the rescaling may have rounded it down. The factor (1 + 8u) covers the five roundings and the
+    rounding of a scaled smaller component to the subnormal grid. A zero component gives the other's absolute value
+    (exact); an infinite component gives inf; otherwise a nan component gives nan (as np.abs does); an m above the
+    largest float is inf, never a smaller finite value. Tightness: a finite m satisfies m <= |z| (1 + 12u) + 2^-1073,
+    and m <= |z| (1 + 12u) when |z| >= 2^-1022. Floating-point warnings are off inside (np.errstate); nothing is
+    raised for inf or nan.
 
     Rejected with TypeError: scipy sparse matrices (use abs_up), object arrays (their entries need not be binary64
     numbers) and complex types wider than complex128 (np.clongdouble where long double is wider than binary64), whose
@@ -217,7 +218,7 @@ def _modulus_up_block(x, y, m):
     written into m (float64, same size)."""
     with np.errstate(over="ignore", under="ignore", invalid="ignore"):
         big = np.maximum(x, y)
-        fast = (big >= _SAFE_LO) & (big <= _SAFE_HI)
+        fast = ((big >= _SAFE_LO) & (big <= _SAFE_HI)) | (big == 0.0)    # 0 + 0i: exact on this branch too
         del big
         np.multiply(x, x, out=m)
         b = np.multiply(y, y)
