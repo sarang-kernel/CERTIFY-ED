@@ -8,7 +8,7 @@ repository-code: "https://github.com/sarang-kernel/CERTIFY-ED"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.20066565"
-    description: "Zenodo concept DOI (all versions; first archived version v1.0.0)"
+    description: "Zenodo DOI of the v1.0.0 archive"
 authors:
   - family-names: "Vehale"
     given-names: "Sarang"
