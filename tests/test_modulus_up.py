@@ -323,6 +323,22 @@ def test_abs_up_of_sparse_and_dense_matrices():
     assert got.nnz == 1 and _upper_ok(3 + 0j, got.data[0]) and got.data[0] == 3.0
 
 
+def test_abs_up_of_integer_sparse_data_is_stepped_up():
+    """Integer and boolean sparse data take modulus_up (float64, exact below 2^53, one step up from there), not abs(A),
+    which wraps at the most negative integer; real floating data keep abs(A)."""
+    lo = np.iinfo(np.int64).min
+    for mk in (sp.csr_matrix, sp.csc_array, sp.coo_matrix):
+        A = mk(np.array([[lo, 1], [0, -(2 ** 53) - 1]], dtype=np.int64))
+        got = abs_up(A)
+        assert got.dtype == np.float64 and type(got) is type(A)
+        D = got.toarray()
+        assert Fraction(float(D[0, 0])) >= 2 ** 63 and D[0, 1] == 1.0 and Fraction(float(D[1, 1])) >= 2 ** 53 + 1
+    B = sp.csr_matrix(np.array([[True, False], [False, True]]))
+    assert abs_up(B).dtype == np.float64 and np.array_equal(abs_up(B).toarray(), np.eye(2))
+    R = sp.csr_matrix(np.array([[-1.5, 0.0], [2.0, -0.25]], dtype=np.float32))
+    assert abs_up(R).dtype == np.float32 and np.array_equal(abs_up(R).toarray(), abs(R).toarray())
+
+
 def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
     """For CSR, CSC, BSR and COO input with duplicate entries, abs_up sums them in place (A.sum_duplicates(), binary64,
     as abs(A) does), so the moduli and the products formed with A afterwards refer to the same summed matrix. DIA (no

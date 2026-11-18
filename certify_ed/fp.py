@@ -267,17 +267,18 @@ def _modulus_up_block(x, y, m):
 
 
 def abs_up(A):
-    """The entrywise moduli of a stored dense array or scipy sparse matrix, each rounded up: abs(A) for real data
-    (exact), modulus_up entrywise for complex data.
+    """The entrywise moduli of a stored dense array or scipy sparse matrix, each rounded up: abs(A) for real floating
+    data (exact), modulus_up entrywise for complex, integer and boolean data (float64; integers stepped up from 2^53).
 
     A sparse matrix in CSR, CSC, BSR or COO format has its duplicate entries summed in place first (A.sum_duplicates(),
-    in binary64), as abs(A) does for real data; the result, and every product formed with A afterwards, refer to that
-    summed matrix (docs/proofs/fp_modulus-up.md, section 1). DIA keeps its stored diagonals; LIL, DOK and other formats
-    are converted to CSR (a copy, so A itself is not changed). The result has A's format and type."""
+    in the type of its data), as abs(A) does; the result, and every product formed with A afterwards, refer to that
+    summed matrix (docs/proofs/fp_modulus-up.md, section 1: a product formed before the call is not covered). DIA keeps
+    its stored diagonals; LIL, DOK and other formats are converted to CSR (a copy, so A itself is not changed). The
+    result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array)."""
     if sp.issparse(A):
         if A.format not in ("csr", "csc", "bsr", "coo", "dia"):
             A = A.tocsr()
-        if not np.iscomplexobj(A.data):
+        if A.data.dtype.kind == "f":
             return abs(A)
         if A.format != "dia":
             A.sum_duplicates()
