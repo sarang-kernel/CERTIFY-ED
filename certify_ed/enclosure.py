@@ -257,28 +257,37 @@ _BLOCK_TEMPORARIES = 4     # X block, H X block, |X| block, |H| |X| block (the E
 class StreamedColumns:
     """Column access to an on-disk eigenvector matrix (an h5py dataset, or any object with shape, dtype and
     2-D slicing) with numpy-style indexing X[:, i], X[:, a:b], X[:, [i, j, ...]] (any order). What certify()
-    wraps an HDF5 dataset in; a numpy memmap needs no wrapper."""
+    wraps an HDF5 dataset in; a binary64 numpy memmap needs no wrapper.
 
-    def __init__(self, source):
+    dtype: the dtype the columns are returned in; None, the source's. precision.binary64 wraps single-precision
+    vectors on disk (a memmap or a dataset) with float64 or complex128, so that every block is widened exactly as it
+    is read."""
+
+    def __init__(self, source, dtype=None):
         self.source = source
         self.shape = tuple(int(d) for d in source.shape)
-        self.dtype = np.dtype(source.dtype)
+        self.dtype = np.dtype(source.dtype) if dtype is None else np.dtype(dtype)
+        self.widens = self.dtype != np.dtype(source.dtype)
         self.ndim = len(self.shape)
         if self.ndim != 2:
             raise ValueError(f"streamed eigenvectors must be 2-D (n x k), got shape {self.shape}")
+
+    def _out(self, a) -> np.ndarray:
+        a = np.asarray(a)
+        return a.astype(self.dtype) if self.widens else a
 
     def __getitem__(self, key):
         if isinstance(key, tuple) and len(key) == 2 and key[0] == slice(None):
             col = key[1]
             if isinstance(col, slice):
-                return np.asarray(self.source[:, col])
+                return self._out(self.source[:, col])
             if np.isscalar(col) or isinstance(col, (int, np.integer)):
-                return np.asarray(self.source[:, int(col)])
-            return read_columns(self.source, list(col))
+                return self._out(self.source[:, int(col)])
+            return self._out(read_columns(self.source, list(col)))
         raise IndexError("StreamedColumns supports X[:, i], X[:, a:b] and X[:, [i, j, ...]] only")
 
     def __array__(self, dtype=None, copy=None):
-        a = np.asarray(self.source[...])
+        a = self._out(self.source[...])
         return a if dtype is None else a.astype(dtype)
 
 
@@ -319,11 +328,15 @@ def read_columns(X, idx) -> np.ndarray:
     idx = np.asarray(list(idx), dtype=np.int64)
     if isinstance(X, np.ndarray):
         return np.asfortranarray(X[:, idx])
+    widen_to = None
     if isinstance(X, StreamedColumns):
+        widen_to = X.dtype if X.widens else None
         X = X.source
     order = np.argsort(idx, kind="stable")
     uniq, inv = np.unique(idx[order], return_inverse=True)
     cols = np.asarray(X[:, uniq.tolist()])          # increasing, no duplicates
+    if widen_to is not None:
+        cols = cols.astype(widen_to)
     out = np.empty((cols.shape[0], idx.size), dtype=cols.dtype, order="F")
     out[:, order] = cols[:, inv]
     return out
