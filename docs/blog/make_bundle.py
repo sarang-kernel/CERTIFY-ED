@@ -5,8 +5,8 @@ Usage (from the root of the repository):
     python docs/blog/make_bundle.py
     python tools/lint_docs.py --bundle docs/blog/blog_sources_bundle.txt docs/blog/BLOG.md
 
-Every path written in backticks in BLOG.md is resolved first relative to the repository root and then relative to
-archive_v5/. Each existing text file is appended to docs/blog/blog_sources_bundle.txt; binary files (images,
+Every path written in backticks in BLOG.md is resolved as described in resolve(): paths of the project record relative
+to the repository root, every other path relative to archive_v5/ and its code clone first. Each existing text file is appended to docs/blog/blog_sources_bundle.txt; binary files (images,
 archives, PDFs) and folders are skipped and listed on standard output. For every figure in docs/blog/figures/ the caption
 numbers of its source (the <name>.numbers.json next to the source PNG and the INDEX.md of that folder) are added as
 well, because the captions of BLOG.md copy their numbers from those files. The script reads only; it changes nothing
@@ -39,7 +39,7 @@ FIGURES = {
     "fig_two_stack_3.2.1_vs_3.1.0.png": (os.path.join(CODE_DOCS, "figures_run_3.2.1"), "fig_two_stack"),
     "fig_crown_sectors_run_3.2.1.png": (os.path.join(CODE_DOCS, "figures_run_3.2.1"), "fig_crown_sectors"),
     "fig_aklt_eta_run_3.2.1.png": (os.path.join(CODE_DOCS, "figures_run_3.2.1"), "fig_aklt_eta"),
-    "fig_symveig_width_vs_dim_norm.png": (os.path.join(ROOT, "docs", "applications"), "symveig_e8"),
+    "fig_symveig_width_vs_dim_norm.png": (os.path.join(ROOT, "docs", "project", "applications"), "symveig_e8"),
 }
 
 
@@ -50,10 +50,13 @@ PROOFS = os.path.join(CODE, "docs", "proofs")
 def resolve(path):
     """Return the existing file for a cited path, or None.
 
-    A path is tried relative to the repository root, to archive_v5/, to the code clone (for names such as
-    experiments/compare_runs.py) and to its folder of derivation documents (for bare names such as cor5_pairing.md).
+    A path into the project record (docs/project/, docs/blog/, docs/lean/, lean/, tools/) is tried relative to the
+    repository root first. Any other path is tried relative to archive_v5/, to the code clone of the archive (for names
+    such as experiments/compare_runs.py, which the account cites at a814d28, not at the head of this repository), to its
+    folder of derivation documents (for bare names such as cor5_pairing.md) and last to the repository root.
     """
-    for base in (ROOT, ARCHIVE, CODE, PROOFS):
+    record = path.startswith(("docs/project/", "docs/blog/", "docs/lean/", "lean/", "tools/"))
+    for base in ((ROOT, ARCHIVE, CODE, PROOFS) if record else (ARCHIVE, CODE, PROOFS, ROOT)):
         full = os.path.normpath(os.path.join(base, path))
         if os.path.isfile(full):
             return full
@@ -71,6 +74,8 @@ def main():
     seen, parts, skipped = set(), [], []
     for c in cited:
         full = resolve(c)
+        if full is not None and os.path.normcase(full) == os.path.normcase(OUT):
+            continue                       # the bundle itself is cited in BLOG.md; never include it
         if full is None or full in seen:
             if full is None:
                 skipped.append(c)
@@ -80,7 +85,7 @@ def main():
             skipped.append(c)
             continue
         parts.append("\n\n===== " + c + "\n\n" + open(full, encoding="utf-8", errors="replace").read())
-    for fig, (folder, stem) in FIGURES.items():
+    for _fig, (folder, stem) in FIGURES.items():
         for name in (stem + ".numbers.json", "INDEX.md", stem + ".md"):
             full = os.path.join(folder, name)
             if os.path.isfile(full) and full not in seen:
