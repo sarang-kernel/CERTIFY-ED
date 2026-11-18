@@ -42,6 +42,24 @@ spurious UNDERFLOW_RISK; inside `certify()` this depended on whether the caller 
 
 The computational source hash changes (`certify.py`, `variational.py`).
 
+### Upper moduli in `fp`
+
+`fp.modulus_up` returns, entrywise, an upper bound m ≥ |z| on the modulus of a real or complex array, formed from
+correctly rounded products, sums and square roots with exact scaling by powers of two, at most a relative 12u above
+|z| for normal values (`docs/proofs/fp_modulus-up.md`, Lemma M); `fp.abs_up` does the same for a dense array or a
+scipy sparse matrix. No bound uses them in this change, and no bound, status rule or record changes. `modulus_up`
+returns real floating input as `np.abs` gives it, integer and boolean input as float64 (one step up from 2⁵³), a float
+for every scalar, and raises TypeError for a scipy sparse matrix, an object array and a complex type wider than
+complex128; it works in passes of at most 2¹⁸ entries without copying its input. Known issues: the moduli of
+float16, float32 and complex64 data are covered, but bounds whose products are formed in single precision are not
+(the corollary counts binary64 roundings); `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in
+place, so a product formed with the matrix before the call is not covered by its moduli (direct calls of
+`commutator_bound`, `audit_sector`, `compress_operator` and `certify_observable` on a matrix with duplicates); the
+floating-point items that the lemma assumes beyond those `probe_float_environment` checks are tested with the test
+suite, not probed at run time. The derivation is new and unverified: Sarang's check (D-12) is pending (independent
+re-derivation: verdict AGREES on the lemma, GAP on its corollary, resolved; `docs/proofs/verify_modulus-up.py`,
+`tests/test_modulus_up.py`). The computational source hash changes (`fp.py`).
+
 
 ### GPU products (roadmap D-05; branch feature/gpu-d05, first named track/gpu-d05)
 
