@@ -70,6 +70,16 @@ class InertiaResult:
         return asdict(self)
 
 
+def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
+    """A backward-error bound beta that is not finite (a bound of the accounting overflowed; inf * 0 = nan) gives no
+    count: beta = inf and conclusive False."""
+    if np.isfinite(res.beta):
+        return res
+    res.beta, res.negative, res.conclusive = float("inf"), None, False
+    res.note = (res.note + "; " if res.note else "") + "backward-error bound not finite (an overflowed bound)"
+    return res
+
+
 def _exact_sign(x: float) -> int:
     return (x > 0) - (x < 0)
 
@@ -131,7 +141,7 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     beta = up(beta)
     res = InertiaResult(float(sigma), None if amb else int(neg), float(beta), "dense-bunch-kaufman",
                         time.time() - t0, not amb, "zero pivot or singular 2x2 block" if amb else "")
-    return res
+    return _no_count_on_nonfinite(res)
 
 
 def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", block_mb: Optional[float] = None,
@@ -180,13 +190,14 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
                 + Lf * g2 * (Uff + float(np.max(np.abs(Dreal))) * Lf)
                 + U * float(np.max(np.abs(S.diagonal()))) * 2)
         beta = up(beta)
-        return InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
-                             time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz))
+        return _no_count_on_nonfinite(InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
+                                                    time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz)))
     from .ldl_residual import sparse_ldl_residual_bound
     del Uf
     rb = sparse_ldl_residual_bound(L, dU, S, f.perm_c, block_mb=block_mb, threads=threads)
-    return InertiaResult(float(sigma), neg, float(rb.beta), "sparse-superlu-residual",
-                         time.time() - t0, True, "", fill_nnz=int(2 * L.nnz - n), residual=rb.to_dict())
+    return _no_count_on_nonfinite(InertiaResult(float(sigma), neg, float(rb.beta), "sparse-superlu-residual",
+                                                time.time() - t0, True, "", fill_nnz=int(2 * L.nnz - n),
+                                                residual=rb.to_dict()))
 
 
 def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget_mb: Optional[float] = None) -> InertiaResult:
