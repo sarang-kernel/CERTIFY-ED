@@ -1,7 +1,7 @@
 """make_development_roadmap.py: write docs/project/roadmap/DEVELOPMENT_ROADMAP.md.
 
-The prose is in this file; the item table is generated from the roadmap CSV of the archive
-(archive_v5/project_docs/roadmap/ROADMAP_expansion_items.csv, column status_2026-11-03) and from the list NEW
+The prose is in this file; the item table is generated from the roadmap CSV of the archive, of which this repository
+holds a byte-identical copy (experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv, column status_2026-11-03) and from the list NEW
 below, which holds the candidates that appeared after that CSV (from the Lean re-verification and the applications).
 The outcomes of the first phase are the dict OUTCOME. Run from the repository root:
 python tools/make_development_roadmap.py
@@ -65,7 +65,8 @@ INTRO = """# DEVELOPMENT_ROADMAP.md: how CERTIFY-ED develops after 3.2.1
 This roadmap continues the expansion roadmap of 23 October 2026 (`project_docs/roadmap/ROADMAP_expansion.md`, Waves 0
 to 4) with four further waves. It was written on 11 November 2026, after the 3.2.1 evidence run, archive v5 and the
 Lean re-verification of this repository. Its inputs are the item list of the expansion roadmap
-(`project_docs/roadmap/ROADMAP_expansion_items.csv`), the open items of
+(`project_docs/roadmap/ROADMAP_expansion_items.csv`, read from its copy
+`experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv`), the open items of
 [../failures/05_open_items.md](../failures/05_open_items.md), the findings L-1 to L-11 and the list of what is not
 formalized in `docs/lean/VERIFICATION_REPORT.md`, and the applications that the archive names as not
 attempted. Paths without a folder of this repository are relative to `archive_v5/`.
@@ -170,8 +171,8 @@ The five tracks of the first phase ended on 11 November 2026; the column "Outcom
 item, and `../failures/05_open_items.md` (section "After the first development phase") what they left open. Version
 3.2.2 (branch `fix/3.2.2`, tag `v3.2.2`) carries N-01, N-02, N-03 and H-02. The branch `dev/3.3` (3.3.0.dev0) carries
 3.2.3 together with E-02, the external verifier path of N-04, the prototypes of D-03 and D-04, H-04 and the code of N-11
-and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `lean/` of this repository
-(`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
+and N-12. The Lean parts (N-04 driver, N-05, N-13) are in `lean/` of this repository, with their reports in
+`docs/lean/` (`LEAN_PRODUCT.md`, `NONHERMITIAN.md`, `VERIFICATION_REPORT.md`). N-06 was not reached. The evidence run of 3.2.2
 (`run_full_20261112`) did not complete; version 3.2.3 (branch `fix/3.2.3`, tag `v3.2.3`) removes its two causes, and the
 evidence run of 3.2.3 (`run_full_20261112b`) completed on 13 November 2026 with no change of status against the 3.2.1
 run except one E2 point that had reached the time limit.
