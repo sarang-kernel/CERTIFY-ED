@@ -88,7 +88,10 @@ def main():
     drows = re.findall(r"^\*\*(D-\d+)\s*\(([^)]*)\)\s*\u2014\s*(.*?)\*\*", log, re.M)
     readme = open(os.path.join(ROOT, "docs", "project", "decisions", "README.md"), encoding="utf-8").read()
     titles = dict(re.findall(r"^\| (D-\d+) \| [^|]+ \| ([^|]+?) \|", readme, re.M))
-    write("decisions.tsv", ["id", "date_recorded", "title"], [[d, date, titles.get(d, "")] for d, date, _ in drows])
+    missing = [d for d, _, _ in drows if d not in titles]
+    if missing:
+        sys.exit("decisions without a title in docs/project/decisions/README.md: " + ", ".join(missing))
+    write("decisions.tsv", ["id", "date_recorded", "title"], [[d, date, titles[d]] for d, date, _ in drows])
     res = os.path.join(ARCHIVE, "code", "certify-ed", "results")
     rrows = []
     short = {k[:7]: k for k in hashmap}
