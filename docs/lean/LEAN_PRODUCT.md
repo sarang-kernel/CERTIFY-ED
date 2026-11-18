@@ -26,7 +26,7 @@ The commands assume the environment of `lean/logs/lean_env.json` and the Python 
 ```
 cd lean
 lake build cecheck CertifyMathlib.Refine.Residual CertifyMathlib.Refine.Small CertifyMathlib.Refine.Inertia
-set CE=..\sources\archive_v5\code\certify-ed
+set CE=..\..\archive\archive_v5\code\certify-ed
 set PYTHONPATH=%CE%
 python Verify\cecheck_bundle.py CERT.json --bundle BUNDLE_DIR --json VERDICT.json
 python -m pytest -q Verify\test_cecheck_bundle.py --basetemp <scratch dir>

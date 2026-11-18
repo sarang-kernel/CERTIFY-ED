@@ -24,7 +24,7 @@ and the Python environment `certifyed-311` with the certify-ed source on `PYTHON
 ```
 cd lean
 lake build cecheck CertifyCore
-set CE=..\sources\archive_v5\code\certify-ed
+set CE=..\..\archive\archive_v5\code\certify-ed
 set PYTHONPATH=%CE%
 python %CE%\verifier\make_validation_set.py --out work\core\certs --cases %CE%\corpus\cases --conformance %CE%\conformance\reference
 python export\export_certs.py --index work\core\certs\index.json --certs work\core\certs --out work\core\export
