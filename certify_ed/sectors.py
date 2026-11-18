@@ -67,7 +67,10 @@ def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "
     inv = up(fro_upper(D) + rnd)
     C = (V.conj().T @ HV - Hs).tocsr()
     comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(abs(V).T @ abs(H) @ abs(V)))
-    passed = iso <= tol and inv <= tol * max(1.0, fro_upper(H) / max(1.0, np.sqrt(H.shape[0])))
+    # a defect bound that is not finite (a bound of the accounting overflowed) passes nothing: inf <= tol * inf would
+    # hold otherwise
+    finite = bool(np.isfinite(iso) and np.isfinite(inv) and np.isfinite(comp))
+    passed = finite and iso <= tol and inv <= tol * max(1.0, fro_upper(H) / max(1.0, np.sqrt(H.shape[0])))
     return SectorAudit(label, int(ds), float(iso), float(inv), float(comp), bool(passed))
 
 

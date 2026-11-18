@@ -444,15 +444,24 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         audit = audit_sector(H_full_ref, V_audit, Hs, label="producer sector")
         ev["sector_audit"] = audit.to_dict()
         ev["model_shift_bound"] = _builder_shift(spec, st_u1 if red is not None else None)
-        status = "CERTIFIED" if audit.passed else "FAILED"
-        summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
-                f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
-                f"{audit.invariance_defect:.1e})" if status == "CERTIFIED" else
-                f"sector audit failed (isometry defect {audit.isometry_defect:.1e}, invariance "
-                f"defect {audit.invariance_defect:.1e}, hermiticity {herm:.1e})")
-        return _stmt("S1.model_fidelity", status, summ, ev,
+        finite = all(math.isfinite(v) for v in (audit.isometry_defect, audit.invariance_defect,
+                                                audit.compression_defect))
+        status = "CERTIFIED" if audit.passed else ("FAILED" if finite else "INCONCLUSIVE")
+        if status == "CERTIFIED":
+            summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
+                    f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
+                    f"{audit.invariance_defect:.1e})")
+        elif status == "FAILED":
+            summ = (f"sector audit failed (isometry defect {audit.isometry_defect:.1e}, invariance "
+                    f"defect {audit.invariance_defect:.1e}, hermiticity {herm:.1e})")
+        else:
+            summ = (f"sector audit bounds are not finite (isometry defect {audit.isometry_defect:.1e}, invariance "
+                    f"defect {audit.invariance_defect:.1e}): a bound of the floating-point accounting overflowed; "
+                    f"nothing is stated about the sector block")
+        stmt = _stmt("S1.model_fidelity", status, summ, ev,
                      ["full-space reference built by CERTIFY-ED from the spec (bitwise path)"],
-                     time.time() - t0), H_full_ref, audit
+                     time.time() - t0, reason_code="NONFINITE_BOUND" if status == "INCONCLUSIVE" else None)
+        return stmt, H_full_ref, audit
 
     n_ref = claim.states.size if claim.states is not None else spec.dim
     if opts.matrix_free and op is None:
