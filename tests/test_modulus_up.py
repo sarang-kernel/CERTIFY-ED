@@ -557,6 +557,26 @@ def test_spec_invariants_take_each_modulus_once(monkeypatch):
     assert r["trace_err"] == float(up(g * ref_tr)) and r["fro2_err"] == float(up(g * ref_fro))
 
 
+def test_inf_norm_upper_on_the_hard_arguments():
+    """fp.inf_norm_upper, the norm bound of every certificate: bit for bit max_i sum_j m_ij (1 + gamma_{w+1}) (1 + 8u)
+    with m_ij from fp.modulus_up (dense) and fp.abs_up (sparse), on matrices built from the three hard arguments at three
+    scales, so that a modulus reverted to np.abs changes the value; and in exact arithmetic it bounds the largest exact
+    row sum of moduli (_sum_sqrt_upper)."""
+    from certify_ed.fp import _GUARD, gamma, inf_norm_upper
+    z0, z1, z2 = EXAMPLES
+    differs = 0
+    for scale in (1.0, 2.0 ** -500, 2.0 ** 400):
+        A = np.array([[z0, z1, z2], [z2, z0, z1], [z1, np.conj(z2), z0], [z0, 0, 0]]) * scale
+        dense = float(modulus_up(A).sum(axis=1).max()) * (1.0 + gamma(4)) * _GUARD
+        S = sp.csr_matrix(A)
+        sparse = float(np.asarray(abs_up(S).sum(axis=1)).ravel().max()) * (1.0 + gamma(4)) * _GUARD
+        assert inf_norm_upper(A) == dense and inf_norm_upper(sp.csr_matrix(A)) == sparse
+        differs += float(np.abs(A).sum(axis=1).max()) * (1.0 + gamma(4)) * _GUARD != dense
+        exact = max(_sum_sqrt_upper([Fraction(v.real) ** 2 + Fraction(v.imag) ** 2 for v in row]) for row in A)
+        assert Fraction(dense) >= exact and Fraction(sparse) >= exact
+    assert differs == 3
+
+
 def _sum_sqrt_upper(qs):
     """A rational number >= sum_j sqrt(q_j) for rational q_j >= 0 (per term a start above sqrt(q), then one Newton
     step, which stays above sqrt(q) by the inequality of arithmetic and geometric means)."""
