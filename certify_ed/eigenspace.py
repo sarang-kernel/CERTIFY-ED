@@ -37,6 +37,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, gamma_dot, up, inf_norm_upper
+from .precision import binary64
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +115,10 @@ def certify_eigenspace(X: np.ndarray, members: List[int], claimed: np.ndarray,
 
 def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
                        O_norm: Optional[float] = None) -> dict:
-    """Certified tr(P O) for Hermitian O (dense or sparse)."""
+    """Certified tr(P O) for Hermitian O (dense or sparse). Data in a narrower format than binary64 are converted
+    exactly first (precision.py)."""
+    X = binary64(X, "eigenvectors")
+    O = binary64(O if sp.issparse(O) else np.asarray(O), name)
     Xg = X[:, ec.members]
     OX = O @ Xg
     val = np.trace(Xg.conj().T @ OX).real
@@ -136,7 +140,10 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
 def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: str,
                             lattice: Optional[float] = None, S_norm: Optional[float] = None,
                             commutation_certified: bool = False, allowed_values=None) -> dict:
-    """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0)."""
+    """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0). Data in a narrower format than
+    binary64 are converted exactly first (precision.py)."""
+    X = binary64(X, "eigenvectors")
+    S = binary64(S if sp.issparse(S) else np.asarray(S), name)
     Xg = X[:, ec.members]
     M = Xg.conj().T @ (S @ Xg)
     M = (M + M.conj().T) / 2
