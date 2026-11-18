@@ -16,7 +16,7 @@ import scipy.sparse as sp
 
 from .construct import StateSet, build_bitwise, full_state_set
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import U, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, up
+from .fp import U, abs_up, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, up
 from .spec import ModelSpec, Term
 
 __all__ = ["site_operator", "certify_observables_batch", "certify_correlations", "structure_factor",
@@ -299,7 +299,8 @@ def compress_operator(V, O):
     Ot = (V.conj().T @ OV).tocsr()
     w_O = int(np.diff(O.indptr).max()) if O.shape[0] else 1
     w_V = int(np.diff(sp.csc_matrix(V).indptr).max()) if V.shape[1] else 1
-    absprod = (abs(V).T @ (abs(O) @ abs(V))).tocsr()
+    aV = abs_up(V)                                           # upper moduli of complex data (fp.abs_up)
+    absprod = (aV.T @ (abs_up(O) @ aV)).tocsr()
     # the computed |V|^T |O| |V| underestimates the exact one by at most a relative gamma_{w_O + w_V} entrywise
     g_abs = gamma_dot(w_O + w_V, cplx)
     rnd = g_abs * fro_upper(absprod) * up(1.0 / (1.0 - g_abs))
