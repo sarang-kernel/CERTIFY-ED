@@ -85,6 +85,7 @@
                   "NEEDS_SPEC",
                   "NEEDS_TEMPERATURES",
                   "NEEDS_WHOLE_SPECTRUM",
+                  "NONFINITE_BOUND",
                   "NOT_APPLICABLE",
                   "NOT_IMPLEMENTED",
                   "NO_CLUSTERS",

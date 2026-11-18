@@ -50,6 +50,8 @@ REASON_CODES: Dict[str, str] = {
                                      "invertible (no bound ||I - W V||_2 < 1 for its computed inverse W): the matrix is "
                                      "defective or close to a defective matrix, or V is too ill-conditioned for binary64 "
                                      "(E-02, certify_ed.nonhermitian; UNVERIFIED)"),
+    "NONFINITE_BOUND": ("a bound of the floating-point accounting is not finite: a product, a sum or a modulus "
+                        "overflowed (inf, or inf * 0 = nan in a product); no statement rests on it (3.3.0.dev0)"),
     "DECLARED_ESTIMATE": ("a producer-declared stochastic estimate (an energy or a variance from samples): recorded as "
                           "DECLARED, never certified; no statement rests on it (variational records, E-05)"),
 }
