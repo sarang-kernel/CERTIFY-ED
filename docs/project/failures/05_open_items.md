@@ -71,7 +71,8 @@ check of three statements against the arXiv text before it is sent, and nothing 
 publicly before their reply (decisions D-34 and D-51). The corrected replacement of the symveig preprint and the
 deprecation of its public code (decision D-53) have not been carried out. The push of the rewritten history to GitHub
 waits for a credential with write access and for Sarang's word (decisions D-56 and D-60), and the Zenodo version after
-it. The question of whether the Zenodo DOI 20066565 or 20066566 is the concept DOI of v1, and a threat model for the
+it; since 18 November 2026 the push of the joined repository also waits for the reply of Kránitz and Penc, because
+its history states the S = 1 discrepancy (D-34). The question of whether the Zenodo DOI 20066565 or 20066566 is the concept DOI of v1, and a threat model for the
 authenticity of certificates, are open from the audit of v1 (`01_defect_ledger.md`). The PDFs of manuscript v4 and
 report v1.2 have not been built from the archive v5 sources (`04_failed_runs_and_attempts.md`). The manuscript prose
 is Sarang's (decision D-16): v4 carries scaffold captions only, and every section except Appendix D still names 3.1.0.
