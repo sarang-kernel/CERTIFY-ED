@@ -37,6 +37,7 @@ from .importers import (claim_from_quspin, claim_from_arrays, claim_from_npz,
 from .io import read_bundle, write_bundle
 from .recorder import record, recorded, Recorder
 from .fp import probe_float_environment
+from .precision import PrecisionError
 from .spectrum import enclose_spectrum, SpectrumEnclosure, SpectrumInterval
 from .checker import exact_matrix, exact_eigenpair_radii, exact_recheck_lowest
 from .exact_sectors import exact_recheck_sector_lowest, site_permutation
@@ -59,4 +60,5 @@ __all__ = [
     "probe_float_environment",
     "enclose_spectrum", "SpectrumEnclosure", "SpectrumInterval", "exact_matrix",
     "exact_eigenpair_radii", "exact_recheck_lowest", "exact_recheck_sector_lowest", "site_permutation",
+    "PrecisionError",
 ]

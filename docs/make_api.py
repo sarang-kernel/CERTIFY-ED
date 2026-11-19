@@ -36,7 +36,7 @@ GROUPS = {
                                         "full_state_set", "u1_state_set", "magnetization_state_set", "translation",
                                         "spin_flip", "reflection", "cyclic_isometry", "sector_matrix"],
     "Certification": ["Claim", "Options", "certify", "quick", "Certificate", "OperatorAdapter", "enclose", "kato_temple",
-                      "inertia_count", "probe_float_environment"],
+                      "inertia_count", "probe_float_environment", "PrecisionError"],
     "Certificate methods (3.2)": [],
     "Reports, diagnostics and budgets (3.2)": ["methods_paragraph", "estimate_seconds", "auto_budget", "plan_for_claim",
                                                "parse_operator"],

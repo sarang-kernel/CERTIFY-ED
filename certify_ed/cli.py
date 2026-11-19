@@ -184,7 +184,12 @@ def cmd_certify(a):
             and not getattr(a, "skip", None)):
         a.preset = "whole-spectrum"          # the whole-spectrum path (C-17), recorded in the scope block
     opts = _options_from_args(a)
-    cert = certify(claim, spec, opts)
+    from .precision import PrecisionError
+    try:
+        cert = certify(claim, spec, opts)
+    except PrecisionError as e:          # data binary64 cannot hold exactly: no certificate (precision.py)
+        print(f"certify: refused: {e}")
+        return 2
     out = cert.save(a.output or default_out)
     for s_ in cert.statements:
         print(f"{s_['id']:22s} {s_['status']:13s} {s_['summary']}")
@@ -352,9 +357,14 @@ def cmd_variational(a):
                 declared[key.strip()] = float(val)
             except ValueError:
                 declared[key.strip()] = val.strip()
-    rec = certify_variational(operator, psi, spec=spec, gap_hypothesis=a.gap, gap_source=a.gap_source or "",
-                              gap_certificate=gap_cert, declared=declared, underflow_check=not a.assume_no_underflow,
-                              description=a.description or "")
+    from .precision import PrecisionError
+    try:
+        rec = certify_variational(operator, psi, spec=spec, gap_hypothesis=a.gap, gap_source=a.gap_source or "",
+                                  gap_certificate=gap_cert, declared=declared, underflow_check=not a.assume_no_underflow,
+                                  description=a.description or "")
+    except PrecisionError as e:          # data binary64 cannot hold exactly: no record (precision.py)
+        print(f"variational: refused: {e}")
+        return 2
     print(format_variational(rec))
     if a.json:
         from .certificate_v2 import _jsonable
