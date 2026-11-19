@@ -735,6 +735,9 @@ EXEMPT = {
     "certify_ed.fp.add_up": "directed rounding by nextafter in the operands' own format (see sub_down)",
     "certify_ed.fp.sub_up": "directed rounding by nextafter in the operands' own format (see sub_down)",
     "certify_ed.fp.add_down": "directed rounding by nextafter in the operands' own format (see sub_down)",
+    "certify_ed.fp.modulus_up": "an upper modulus in any IEEE format: the absolute value in the data's own type for "
+                                "real data (exact), binary64 for complex data (Lemma M); callers pass binary64 data",
+    "certify_ed.fp.abs_up": "entrywise modulus_up (see modulus_up)",
     "certify_ed.fp.up": "a scalar, converted with float()",
     "certify_ed.fp.norm_underflow_term": "an integer",
     "certify_ed.fp.residual_entry_count": "integers",
