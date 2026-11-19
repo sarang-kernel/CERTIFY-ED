@@ -175,8 +175,8 @@ def modulus_up(z):
     Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
     up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
     Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M; for float16, float32 and
-    complex64 input these are moduli only, a bound formed in single precision is not covered: Risks and limits there,
-    and the separate change fix/single-precision):
+    complex64 input these are moduli only: a bound formed in single precision is not covered, and certify() and the
+    other entry points convert such data to binary64 first, precision.py):
     m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is 0 or lies in [2^-500, 2^500]; otherwise
     the same with the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1)
     (np.frexp, np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below
@@ -278,7 +278,9 @@ def abs_up(A):
     in the type of its data), as abs(A) does; the result, and every product formed with A afterwards, refer to that
     summed matrix (docs/proofs/fp_modulus-up.md, section 1: a product formed before the call is not covered). DIA keeps
     its stored diagonals; LIL, DOK and other formats are converted to CSR (a copy, so A itself is not changed). The
-    result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array)."""
+    result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array). For sparse
+    data narrower than binary64 the duplicates are summed in that precision; callers pass binary64 data
+    (precision.py)."""
     if sp.issparse(A):
         if A.format not in ("csr", "csc", "bsr", "coo", "dia"):
             A = A.tocsr()
