@@ -67,9 +67,21 @@ import scipy.sparse as sp
 from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range)
+from .gpu import GPUUnavailable
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
+# ---- device for the products H X and |H| |X| (roadmap D-05, gpu.py): OperatorAdapter(op, device=...). None or
+# 'cpu': scipy on the CPU; 'gpu': the ordered CSR kernels of gpu.py, bit for bit equal to the CPU products, with a
+# fallback to the CPU recorded in the adapter's device_record.
+
+
+def _device_error_text(err, limit: int = 300) -> str:
+    """The reason recorded for a device failure: the message of a GPUUnavailable, otherwise type and message, on one
+    line and at most `limit` characters (an NVRTC error carries the whole compiler log)."""
+    text = str(err) if isinstance(err, GPUUnavailable) else f"{type(err).__name__}: {err}"
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[:limit - 3] + "..."
 
 # ---------------------------------------------------------------------------
 # operator adapters
@@ -86,7 +98,7 @@ class OperatorAdapter:
                    marked 'floating-point estimate')
     """
 
-    def __init__(self, op, norm_bound: Optional[float] = None):
+    def __init__(self, op, norm_bound: Optional[float] = None, device: Optional[str] = None):
         self.op = op
         if sp.issparse(op) or isinstance(op, np.ndarray):
             self.kind = "matrix"
@@ -129,6 +141,49 @@ class OperatorAdapter:
             self._norm = norm_bound
         if norm_bound is not None:
             self._norm = norm_bound if self._norm is None else min(self._norm, norm_bound)
+        self._init_device(device)
+
+    def _init_device(self, device):
+        """Set up the GPU products when asked for (device='gpu') and possible."""
+        self._gpu = None
+        self.device_record = None
+        if device in (None, "cpu"):
+            return
+        rec: Dict[str, Any] = {"requested": str(device), "used": False}
+        if device != "gpu":
+            rec["reason"] = f"unknown device {device!r} (expected 'cpu' or 'gpu')"
+        elif not (self.kind == "matrix" and sp.issparse(self.A)):
+            rec["reason"] = ("the GPU products are implemented for stored sparse matrices only; this operator is "
+                             + ("a dense matrix" if self.kind == "matrix" else f"of kind '{self.kind}'"))
+        else:
+            from . import gpu
+            try:
+                self._gpu = gpu.DeviceCSR(self.A, self._absA)
+                rec["used"] = True
+                rec["gpu"] = self._gpu.record
+            except Exception as e:          # GPUUnavailable, or any CuPy/CUDA error: the CPU forms the products
+                rec["reason"] = _device_error_text(e)
+        self.device_record = rec
+
+    def _gpu_fallback(self, err):
+        """Stop using the GPU and record why. If products had been taken from the device before the failure
+        (gpu_products_at_fallback > 0), they are not trusted: certify() then computes the certificate again with the
+        CPU products."""
+        gpu_rec = self.device_record.get("gpu") or {}
+        self.device_record["fallback"] = _device_error_text(err)
+        self.device_record["gpu_products_at_fallback"] = int(gpu_rec.get("products", 0))
+        self.device_record["used"] = self.device_record["gpu_products_at_fallback"] > 0
+        try:
+            self._gpu.close()
+        except Exception:
+            pass
+        finally:
+            self._gpu = None
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d["_gpu"] = None       # device arrays stay in this process; a copy computes on the CPU
+        return d
 
     @property
     def rigorous(self) -> bool:
@@ -136,6 +191,11 @@ class OperatorAdapter:
 
     def matvec(self, X):
         if self.kind == "matrix":
+            if getattr(self, "_gpu", None) is not None:
+                try:
+                    return self._gpu.matmul(X)
+                except Exception as e:
+                    self._gpu_fallback(e)
             return self.A @ X
         if self.kind == "spec":
             return self.op.matvec(X)
@@ -148,10 +208,26 @@ class OperatorAdapter:
     def abs_matvec(self, X):
         if self.kind == "matrix":
             absA = self._absA if self._absA is not None else np.abs(self.A)
-            return absA @ np.abs(X)
+            aX = np.abs(X)
+            if getattr(self, "_gpu", None) is not None:
+                try:
+                    return self._gpu.matmul(aX, absolute=True)
+                except Exception as e:
+                    self._gpu_fallback(e)
+            return absA @ aX
         if self.kind == "spec":
             return self.op.abs_matvec(np.abs(X))
         raise RuntimeError("no |H| access for black-box operator")
+
+    def both_products(self, X):
+        """(H X, |H| |X|), the same arrays as (matvec(X), abs_matvec(X)); with the GPU products of D-05 both are
+        formed in one pass over H."""
+        if self.kind == "matrix" and getattr(self, "_gpu", None) is not None:
+            try:
+                return self._gpu.products(X)
+            except Exception as e:
+                self._gpu_fallback(e)
+        return self.matvec(X), self.abs_matvec(X)
 
     def norm_upper(self) -> Optional[float]:
         return self._norm
@@ -357,7 +433,13 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         if Xb.ndim == 1:
             Xb = Xb[:, None]
         mub = mu[a:b]
-        HX = adapter.matvec(Xb) if products is None else np.asarray(products[0])
+        gpu_absHX = None
+        if products is not None:
+            HX = np.asarray(products[0])
+        elif adapter.rigorous and getattr(adapter, "_gpu", None) is not None:
+            HX, gpu_absHX = adapter.both_products(Xb)   # D-05: both products in one pass, bit for bit the CPU ones
+        else:
+            HX = adapter.matvec(Xb)
         if HX.ndim == 1:
             HX = HX[:, None]
         Rb = HX - Xb * mub[None, :]
@@ -368,7 +450,12 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             xl[a + i] = norm2_lower(Xb[:, i])
             R_up[a + i] = norm2_upper(Rb[:, i])
         if adapter.rigorous:
-            Eb = _rounding_bound(adapter, mub, Xb, None if products is None else np.asarray(products[1], dtype=float))
+            if gpu_absHX is not None:
+                absHX, gpu_absHX = gpu_absHX, None
+            else:
+                absHX = None if products is None else np.asarray(products[1], dtype=float)
+            Eb = _rounding_bound(adapter, mub, Xb, absHX)
+            del absHX
             for i in range(b - a):
                 E_up[a + i] = norm2_upper(Eb[:, i])
             del Eb
@@ -378,6 +465,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             if R is not Rb:
                 R[:, a:b] = Rb
         del Rb
+        gpu_absHX = None
     if adapter.rigorous:
         # ||A x - mu x|| <= ||R|| + ||E|| + sqrt(n) c_w u_min: the last term is the INT-05 additive term (the
         # per-entry shortfall of R and E under fl(z) = z(1 + delta) + eta); it is about 1e-160 and changes the

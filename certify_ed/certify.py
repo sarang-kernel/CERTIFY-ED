@@ -35,7 +35,7 @@ from __future__ import annotations
 import math
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
@@ -188,6 +188,11 @@ class Options:
     # the roundings of the local amplitudes are counted in the S2 radius (no model shift), the amplitude hypothesis
     # is recorded in S1; S3 and S8 need a stored matrix and are NOT_CHECKED (NEEDS_MATRIX).
     matrix_free: bool = False
+    # ---- GPU products (D-05, 3.3.0.dev0, gpu.py): device="gpu" forms H X and |H| |X| for S2 and Kato-Temple on a
+    # CUDA device with the ordered kernels of gpu.py, bit for bit equal to the CPU products (device probe and spot
+    # checks), for a stored sparse operator; otherwise, or on any failure, the CPU computes them and S2's evidence
+    # `device` says why. It never changes a number of the certificate.
+    device: str = "cpu"
 
     @classmethod
     def from_preset(cls, name: str, **overrides) -> "Options":
@@ -897,6 +902,33 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
+    if opts.device not in ("cpu", "gpu"):
+        raise ValueError(f"Options.device must be 'cpu' or 'gpu', not {opts.device!r}")
+    first = claim
+    if (opts.device != "cpu" and sp.issparse(claim.operator) and claim.operator.format == "csr"
+            and not claim.operator.has_canonical_format):
+        # a run may sum duplicates of the caller's sparse matrix in place; a recompute must see the matrix as given
+        first = replace(claim, operator=claim.operator.copy())
+    cert = _certify(first, spec, opts)
+    s2 = cert.statement("S2.eigenpairs")
+    rec = None if s2 is None else (s2.get("evidence") or {}).get("device")
+    if rec is None:
+        return cert
+    if rec.get("gpu_products_at_fallback", 0) > 0:
+        # D-05: the device failed (a spot check found a product unequal to the CPU product, or CuPy raised) after
+        # products had been taken from it. Those products are not trusted, so the whole certificate is computed again
+        # with the CPU products; the record keeps the failure.
+        cert = _certify(claim, spec, replace(opts, device="cpu"))
+        s2 = cert.statement("S2.eigenpairs")
+        if s2 is not None:
+            s2["evidence"]["device"] = dict(rec, used=False, recomputed_on_cpu=True)
+        return cert
+    rec["used"] = int((rec.get("gpu") or {}).get("products", 0)) > 0     # products of this certificate from the GPU
+    return cert
+
+
+def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
+    """The body of certify() for one device setting."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
@@ -1018,7 +1050,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
             op = (opm + opm.conj().T) / 2
             herm_note = {"max_abs_asymmetry": dev,
                          "note": "producer matrix not exactly Hermitian; statements concern its Hermitian part"}
-    adapter = OperatorAdapter(op)
+    adapter = OperatorAdapter(op, device=opts.device)
     # model shift: bound on ||H_operator_used - H_spec||_2 (exact spec operator), so that S2/S3
     # statements refer to the declared model; 0 when there is no spec or S1 did not certify it
     model_shift = 0.0
@@ -1292,6 +1324,8 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     # ---------------- gap records (C-01): a presentation of S2 + S3, no statement of its own (gaps.py)
     gaps_record = None
     _s2 = next((s for s in statements if s["id"] == "S2.eigenpairs"), None)
+    if _s2 is not None and getattr(adapter, "device_record", None) is not None:
+        _s2["evidence"]["device"] = adapter.device_record     # D-05: where H X and |H| |X| were formed
     _s3 = next((s for s in statements if s["id"] == "S3.completeness"), None)
     if (enc is not None and window is not None and _s2 is not None and _s3 is not None
             and _s2["status"] == "CERTIFIED" and _s3["status"] == "CERTIFIED"
@@ -1317,8 +1351,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         for a0 in range(0, len(iso), max(1, _kt_block(int(adapter.shape[0]), is_cplx_claim, block_mb))):
             chunk = iso[a0:a0 + max(1, _kt_block(int(adapter.shape[0]), is_cplx_claim, block_mb))]
             Xc = read_columns(X, chunk)
-            HXc = adapter.matvec(Xc)
-            AXc = adapter.abs_matvec(Xc)
+            HXc, AXc = adapter.both_products(Xc)
             if HXc.ndim == 1:
                 HXc, AXc = HXc[:, None], AXc[:, None]
             for c, i in enumerate(chunk):
@@ -1760,6 +1793,12 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         arrays["residual_bound"] = enc.residual.upper
     if opts.store_eigenvectors and X is not None:
         arrays["eigenvectors"] = np.asarray(X) if not is_streamed(X) else read_columns(X, slice(0, int(X.shape[1])))
+    if getattr(adapter, "_gpu", None) is not None:      # D-05: free the device copy of H for the next certificate
+        try:
+            adapter._gpu.close()
+        except Exception:
+            pass
+        adapter._gpu = None
     return Certificate(body, arrays)
 
 
