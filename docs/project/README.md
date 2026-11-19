@@ -51,10 +51,9 @@ re-derived it) is his decision; until he takes it, the derivation documents keep
 
 ## Provenance of these documents
 
-The software, the derivation documents, the Lean files and these documents were prepared with the help of an
-automated system, under the direction of Sarang Vehale. The record of that process (plans, reports of the
-individual work tracks) is kept apart from the research material, in a separate private repository. A statement in
-this record is a human-checked result only where it names the person who checked it.
+The record of how the software, the derivation documents, the Lean files and these documents were prepared (plans,
+reports of the individual work tracks) is kept apart from the research material, in a separate private repository. A
+statement in this record is a human-checked result only where it names the person who checked it.
 
 ## Building
 

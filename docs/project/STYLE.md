@@ -24,9 +24,9 @@ project's decision D-12 new mathematics counts as established only after a perso
 by Sarang Vehale is still pending for the derivation documents. Never write that a check was made by a person when it
 was not.
 
-Rule 5. The documents describe the work, not the writing process. They do not mention software assistants, agents,
-sessions, prompts or chats. The record of how the material was produced is kept in the separate agent-material
-package (see README.md). Where a check was produced automatically rather than by a person, the text says so in those
+Rule 5. The documents describe the work, not the writing process. They do not mention the tools, sessions, prompts
+or conversations through which a text was produced; that record is kept apart, in a separate private repository (see
+README.md). Where a check was produced automatically rather than by a person, the text says so in those
 words ("a second derivation written independently from the statement alone, not a human check").
 
 Rule 6. Every experiment and every failure gets a reason. For each one write, as prose and in this order: why it was a
