@@ -71,9 +71,9 @@ ended after 3287 s with a failed test (record: `baseline.status = killed`; the c
 new files of 3.2.2). A replica of the copy in the same temporary directory gives the cause: `tests/test_review_fixes.py::
 test_imp05_source_fingerprint_ignores_lost_executable_bit` fails because `git init` returns 128 both in pytest's temporary
 directory and in the fallback next to the copied package, which is also under the temporary directory (1 failed, 1004
-passed, 10 skipped, stopping at the first failure). In the sandbox of this machine git cannot create a repository under the
+passed, 10 skipped, stopping at the first failure). In the restricted environment of this machine git cannot create a repository under the
 temporary directory. The copies of the 3.2.1 run were made the same way and passed; what changed between the two runs is
-not established (the temporary directory of the sandbox now lies under the AppContainer folder of the kernel). The four test files new in 3.2.2 pass in the replica (46 passed). E6 therefore did not measure 3.2.2, and the
+not established (the temporary directory of the restricted environment now lies under a restricted folder). The four test files new in 3.2.2 pass in the replica (46 passed). E6 therefore did not measure 3.2.2, and the
 survivor verdicts (RA-25) and the pin tests of N-02 remain the account of the 3.2 sample.
 
 ## Consequences: 3.2.3

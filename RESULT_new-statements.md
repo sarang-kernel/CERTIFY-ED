@@ -70,7 +70,7 @@ fidelity); no new reason code or statement id. `python -m certify_ed.schema --ch
 
 ## What was not done, and why
 
-* No new statement id or schema change for any item: the task scoped the results as S4 evidence and standalone
+* No new statement id or schema change for any item: the plan scoped the results as S4 evidence and standalone
   records; a statement id for the sweep (e.g. S9) would need the schema RFC process (`docs/SCHEMA_RFC_PROCESS.md`).
 * C-03 for symmetry-adapted claims (lifted reduced states) is NOT_CHECKED (UNSUPPORTED_CLAIM): propagating the
   isometry and invariance defects into the reduced state was not derived.

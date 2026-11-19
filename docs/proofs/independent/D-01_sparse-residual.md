@@ -1,9 +1,9 @@
 # Independent re-derivation: D-01 (a-posteriori backward error of the sparse L D Lᴴ factorisation)
 
-Written from sections 1 and 3 of `docs/proofs/D-01_sparse-residual.md` only (section 2 read afterwards; comparison
-at the end). Notation as there. Classical facts: Higham (2002) eq. (3.5) (inner products, any order, FMA allowed),
-Lemma 3.3; Sylvester's law of inertia; Weyl; ‖E‖₂ ≤ ‖E‖_∞ for Hermitian E; theory.md Lemma 4 (inertia sandwich from a
-backward error).
+Not a human check. Written from sections 1 and 3 of `docs/proofs/D-01_sparse-residual.md` only (section 2 read
+afterwards; comparison at the end). Notation as there. Classical facts: Higham (2002) eq. (3.5) (inner products, any
+order, FMA allowed), Lemma 3.3; Sylvester's law of inertia; Weyl; ‖E‖₂ ≤ ‖E‖_∞ for Hermitian E; theory.md Lemma 4
+(inertia sandwich from a backward error).
 
 ## Proofs
 

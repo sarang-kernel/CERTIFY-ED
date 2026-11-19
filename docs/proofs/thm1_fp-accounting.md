@@ -219,5 +219,5 @@ is the fourth rounding of step 5 (the INT-05 term), paid by the step-4 slack.
 
 ## 6 Status
 
-Derived by Claude on 2026-10-30; machine-checked (20 000 (40 000 stage checks, 20 000 lemma grid points) random + 246 (480 stage checks, 12 lemma grid points) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (20 000 (40 000 stage checks, 20 000 lemma grid points) random + 246 (480 stage checks, 12 lemma grid points) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for upper moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

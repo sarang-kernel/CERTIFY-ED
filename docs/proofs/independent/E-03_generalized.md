@@ -1,8 +1,8 @@
 # Independent re-derivation: E-03 (generalized eigenproblems A x = λ B x, B ≻ 0)
 
-Written from sections 1 and 3 of `docs/proofs/E-03_generalized.md` only (section 2 read afterwards; comparison at
-the end). Notation as there. Classical facts: Cholesky factorisation; the residual theorem (Parlett Thm 4.5.1);
-Sylvester's law of inertia; Ostrowski's theorem (Horn & Johnson Thm 4.5.9); Weyl; Higham (2002) eq. (3.5), Lemma
+Not a human check. Written from sections 1 and 3 of `docs/proofs/E-03_generalized.md` only (section 2 read afterwards;
+comparison at the end). Notation as there. Classical facts: Cholesky factorisation; the residual theorem (Parlett Thm
+4.5.1); Sylvester's law of inertia; Ostrowski's theorem (Horn & Johnson Thm 4.5.9); Weyl; Higham (2002) eq. (3.5), Lemma
 3.3; the contracts of `fp.exact_dot` (thm1 note) and of `inertia.inertia_dense` (β ≥ ‖LDLᴴ − P(A − σI)Pᵀ‖₂, with the
 rounding of forming the shifted matrix included — theory.md Lemma 4, taken as a hypothesis here).
 

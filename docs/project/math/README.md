@@ -45,7 +45,7 @@ document each. Each document was then machine-checked by a script in exact ratio
 random and adversarial cases, and a second derivation was written independently from the statement and the code mapping
 alone, without reading the original proof first, and compared with it. That second derivation was produced
 automatically; it is not a human check. The status of every derivation document is therefore written in these documents
-as: derived, machine-checked, independently re-derived (a second derivation written from the statement alone, not a
+as: derived, machine-checked, independently re-derived (a second derivation written before the original proof was read, not a
 human check), Sarang's check pending. None of these results is called established, and no document of this folder says
 that a person checked a result unless that person is named.
 

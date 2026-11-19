@@ -87,7 +87,7 @@ integration (B-08) and signed releases (B-09).
 ## Acts of the authors
 
 Several items can only be done by Sarang and Ritu Goel: the public push and the Zenodo version (G-01, blocked on a
-credential), the software paper (G-02), journal engagement (G-06), the hand coding of the practice survey (G-09), pilot
+credential), the software paper (G-02), journal engagement (G-06), coding the practice survey by hand (G-09), pilot
 users (G-11) and an external soundness audit (B-10). Tutorials (G-04) and a certificate deposit (G-07) follow a
 release that is cited. Besides these, the checks of the derivation documents under D-12, the decision on the proposal
 D-62, the cited version and the E6 verdicts remain his.
@@ -170,5 +170,5 @@ to the writing rules of `docs/project/STYLE.md`.
 | G-04 | Tutorial notebooks and a 20-minute recorded walkthrough; a module for a summer school | community | after 3.3 | M | 5 | no |  |  |
 | G-06 | Journal engagement: a short proposal to SciPost/PRB editors for a 'certificate attached' statement in methods, backed by the practice survey | community | Sarang | S | 6 | no |  |  |
 | G-07 | Opt-in certificate deposit: a Zenodo community for certificates and bundles, with the hash in the paper | community | after 3.3 | M | 5 | no |  |  |
-| G-09 | Finish the hand coding of the practice survey (agreement below 80 % on 9 of 13 fields today) and publish it as a short preprint | community | Sarang | M | 6 | no |  |  |
+| G-09 | Code the practice survey by hand (agreement below 80 % on 9 of 13 fields today) and publish it as a short preprint | community | Sarang | M | 6 | no |  |  |
 | G-11 | Pilot users: three external groups certify one published result each, with a write-up of what blocked them | community | Sarang | M | 7 | no |  |  |

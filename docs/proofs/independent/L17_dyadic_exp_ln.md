@@ -1,6 +1,6 @@
 # Independent re-derivation: Lemma 17 (dyadic interval arithmetic with outward rounding, exp and ln)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../L17_dyadic_exp_ln.md` read first, together with the
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../L17_dyadic_exp_ln.md` read first, together with the
 code `certify_ed/ivl.py` (the statement is about that code); proof written before section 2 was opened.
 Notation: P = 192, grid G = 2⁻ᴾℤ, an interval (lo, hi) of integers stands for [lo·2⁻ᴾ, hi·2⁻ᴾ]; ⌊·⌋, ⌈·⌉ integer
 floor/ceiling (Python `//` floors towards −∞; `_ceil_div(a, b) = −((−a)//b)`).

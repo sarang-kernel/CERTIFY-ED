@@ -72,7 +72,7 @@ for a complex operator; (ii) `tests/fixtures/whole_spectrum_252_{claim,sparse,de
 radii of a fixed claim (vectors stored as float32, eigenvalues dyadic, so the inputs are identical on every
 machine); exact on this machine, asserted at 1e-12 with a warning when a different BLAS rounds a 2-norm
 differently (stated in the test); (iii) the recorded 924 sparse and dense certificates of the base code equal
-the new ones array for array (done in-session, not a committed test: the 924 inputs come from `eigh`).
+the new ones array for array (checked once during development, not a committed test: the 924 inputs come from `eigh`).
 
 Deliberately not done: S8 was not added to the `whole-spectrum` preset (one factorization pair per cluster,
 thousands at 12870; `labels` has it), and S8 for `kind="all"` was not re-derived from the Prop-9 spectrum
@@ -161,7 +161,7 @@ CHANGELOG.md.
 ## Tests and lint
 
 Full suite: `pytest -q tests` -> `2 failed, 763 passed, 2 skipped, 1 warning in 2118.06s (0:35:18)` (run while the 12870 memmap test was also running).
-Both failures are pre-existing at f080586 and named by the lead as fixed on dev/3.2 68e26d0 (`test_fix_3_1_1::test_scope_validator_rejects_a_statement_dropped_from_the_scope_block`, `test_schema_conformance::test_unknown_status_and_reason_code_fail_at_load`: two validators guard the same tampering, `Certificate.load` order); the other two of the four pre-existing failures (rendered schema out of date) pass here because the schema was re-rendered for the `plan` property. The 2 skips are the `CERTIFY_ED_LARGE_FIXTURE`-gated 12870 memmap test (run separately: passed, 811 s) and one pre-existing skip.
+Both failures are pre-existing at f080586 and recorded as fixed on dev/3.2 68e26d0 (`test_fix_3_1_1::test_scope_validator_rejects_a_statement_dropped_from_the_scope_block`, `test_schema_conformance::test_unknown_status_and_reason_code_fail_at_load`: two validators guard the same tampering, `Certificate.load` order); the other two of the four pre-existing failures (rendered schema out of date) pass here because the schema was re-rendered for the `plan` property. The 2 skips are the `CERTIFY_ED_LARGE_FIXTURE`-gated 12870 memmap test (run separately: passed, 811 s) and one pre-existing skip.
 ruff: `ruff check certify_ed tests experiments conformance` -> All checks passed!
 
 ## Expected merge conflicts with the other Wave-1 tracks
@@ -174,7 +174,7 @@ ruff: `ruff check certify_ed tests experiments conformance` -> All checks passed
   has a three-line change (parse_window) in `read_bundle`; `cli.py` gained `_claim_from_args`, `cmd_plan`, the
   `--plan`, `--block-mb` and `--window` changes (textual conflicts likely if that track edits the same flags).
 - Viewer and corpus: no shared files except `CHANGELOG.md` and `mkdocs.yml` nav (additive).
-- Lead's dev/3.2 68e26d0 (schema re-render, `Certificate.load` schema-before-hash): `schema/certificate-2.1.schema.json`
+- dev/3.2 68e26d0 (schema re-render, `Certificate.load` schema-before-hash): `schema/certificate-2.1.schema.json`
   conflicts (resolution: re-render with `python -m certify_ed.schema --write schema`); `certificate_v2.py` touches
   different functions (`array_sha256` here).
 

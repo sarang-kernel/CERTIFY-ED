@@ -41,13 +41,13 @@ silently by preset (a certificate must never be quieter than the run that produc
 A survey of published ED practice was pre-registered (`PREREG_practice_survey.md` v0.1) before any paper was fetched.
 The design draws arXiv records from five categories between 1 January 2024 and 21 October 2026, up to 600 records,
 codes a subsample of 80 papers (seed 20261021) on fixed fields, has the first pass made by an automatic classifier
-with a fixed schema, hand-checks 15 % of the papers (seed 20261022) with agreement per field, re-codes fields below 80
+with a fixed schema, re-codes 15 % of the papers (seed 20261022) in a second reading with agreement per field, re-codes fields below 80
 % agreement, reports Wilson 95 % intervals, and treats fewer than 40 coded papers as a pilot whose percentages do not
 enter the manuscript. The survey decides the default scope and the presets, not which statements certify-ed certifies.
 Its population is arXiv preprints of those years and categories, not the whole community, and the manuscript says so.
 Rejected were citing the earlier horizons report for claims about practice (unsourced), a survey coded only by hand
-(too slow) and an automatic coding without a hand check (the classifier can mislabel, and the check measures how
-often).
+(too slow) and an automatic coding without a check reading (the classifier can mislabel, and the check shows how
+often two readings disagree).
 
 ## D-51 (21 October 2026, evening): the note to Kránitz and Penc is corrected before sending
 

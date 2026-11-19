@@ -856,7 +856,7 @@ def test_compose_decomposition_audit_in_binary64(dtype):
 
 
 
-# ------------------------------------------------------------------------------------------- council round 1
+# ------------------------------------------------------------------------------------------- review round 1
 def _coo_files(tmp_path, dtype):
     """The repeated-entry matrix diag(1 + 2^-25, 3) of _repeated as files: scipy COO npz, npz row/col/data, HDF5
     row/col/data group; eigenvalues (1, 3) and vectors I."""

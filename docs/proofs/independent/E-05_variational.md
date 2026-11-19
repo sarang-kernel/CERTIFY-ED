@@ -1,8 +1,8 @@
 # Independent re-derivation: E-05 (variational certificates: Rayleigh upper bound, existence radius, Temple)
 
-Written from sections 1 and 3 of `docs/proofs/E-05_variational.md` only (section 2 read afterwards; comparison at
-the end). Notation as there. Classical facts: Rayleigh–Ritz; the residual theorem (Parlett Thm 4.5.1); Temple's
-inequality via the operator inequality (H − λ₁)(H − ρ) ⪰ 0; Weyl; Higham (2002) Lemma 3.1/3.3 and the complex
+Not a human check. Written from sections 1 and 3 of `docs/proofs/E-05_variational.md` only (section 2 read afterwards;
+comparison at the end). Notation as there. Classical facts: Rayleigh–Ritz; the residual theorem (Parlett Thm 4.5.1);
+Temple's inequality via the operator inequality (H − λ₁)(H − ρ) ⪰ 0; Weyl; Higham (2002) Lemma 3.1/3.3 and the complex
 inner-product constant; the error-free `fp.exact_dot` (checked in my thm1 note).
 
 ## Proofs

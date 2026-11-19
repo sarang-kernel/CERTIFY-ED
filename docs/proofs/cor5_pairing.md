@@ -95,7 +95,7 @@ use through `enc.radius` with the model shift.
 Other branches of `_certify_lowest` (FAILED when `_missing_below` finds ν_low > #enclosures reaching below
 s_low + β_low; INCONCLUSIVE otherwise) make no completeness statement and are outside this document;
 their soundness is a count inequality of Lemma 4 alone (an eigenvalue counted below s_low + β that no
-enclosure can account for is unclaimed), and the task's negative controls exercise them.
+enclosure can account for is unclaimed), and the negative controls of `verify_cor5_pairing.py` exercise them.
 
 ## 4 Computational verification
 
@@ -144,4 +144,4 @@ cluster radii are uniform (Remark in section 1).
 
 ## 6 Status
 
-Derived by Claude on 2026-10-30; machine-checked (20 347 random + 900 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (20 347 random + 900 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

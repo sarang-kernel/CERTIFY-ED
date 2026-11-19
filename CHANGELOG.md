@@ -7,6 +7,23 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Wording of the records
+
+No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of the
+derivation documents and the headers of the independent re-derivations in `docs/proofs/` name no tool; an independent
+re-derivation is described as written before the original proof was read (the statement and the code mapping were read
+first), not a human check (`tests/test_proofs_props.py` pins the new wording). Entries of earlier versions below that
+quote these status lines quote the new wording. `docs/theory.md` section 10 now says that the independent re-derivations
+are done (not a human check), as their status lines say. The practice survey calls its re-coding of 12 papers a check
+reading, a second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording only); the blog, a
+decision record and the roadmap had called it a hand check or a hand coding. Suggested readings of mutation survivors
+are called automatic suggestions, and one free-text note of a Lean result file (`lean/results/apps/mathlib_apps.json`)
+is dated. Sentences on how the texts were prepared and on the statement on assistance made at each submission are worded
+without naming a tool. Working notes of the development environment are removed from the track reports, the project
+changelog and the derivation documents, except where they give the reason for a failed run. `tools/lint_docs.py`
+compares product and tool names by their SHA-256 digests, so that it does not spell them, and
+`tests/test_process_words.py` applies that check to every tracked text file except the third-party survey data.
+
 ### Single-precision inputs (soundness fix)
 
 Certificates computed from inputs in a floating format narrower than binary64 (float16, float32, complex64) could state
@@ -361,7 +378,7 @@ moved into a function).
   (the 3.2.0 E4 crash). A task predicted above the budget, failing in a worker (exception, dead worker) or showing a
   resource limit (NOT_CHECKED for memory or time, an inertia `resource_failure`) runs afterwards in this process, so
   its result is the serial one. Workers exchange pickles through files (no pipes; `multiprocessing` pools need named
-  pipes, which the sandbox of the development machine refuses). `certify_many(jobs, workers)` for (claim, spec,
+  pipes, which the restricted environment of the development machine refuses). `certify_many(jobs, workers)` for (claim, spec,
   options) triples; `compose.certify_low_energy(..., workers=1, cap_mb=None)` for sectors (the parallel path follows
   the serial loop's choice between a sector's U(1) restriction and the full matrix; the scheduling record is under
   `parallel`). `tests/test_parallel.py`: every status and every recorded number (timings excluded) identical for 1,
@@ -469,7 +486,7 @@ are explained in `RESULT_evidence_run_3.2.2.md`.
   gains `use_cap` and `certify._gate` passes it; S1 is gated by an explicit budget only, and the factorizations and the
   other statements keep the gate of 3.2.2. Test: `tests/test_memory_gate.py::test_cap_does_not_gate_s1_but_still_gates_factorizations`.
 - **E6 copies next to the repository.** `experiments/e6_mutation.py` made its copies of the repository in the system temp
-  directory. In the sandbox of the 3.2.2 run git could not create a repository there, so
+  directory. In the restricted environment of the 3.2.2 run git could not create a repository there, so
   `tests/test_review_fixes.py::test_imp05_source_fingerprint_ignores_lost_executable_bit` failed in the copy, the
   unmutated baseline counted as killed and E6 stopped before its first mutant. The copies are now made next to the
   repository (or in `CERTIFY_ED_E6_COPY_DIR`), and the test skips when git can work neither in its temp directory nor next to
@@ -590,7 +607,7 @@ can change only by the documented bound changes (listed per track below) and the
   D-02 Lemma M3 gaps; looser), `fp.norm2_lower` returns 0 when the squared norm overflows (int05 ERROR; looser),
   `sweep.certified_crossing_interval` adds the affinity defects at interior grid points (E-04 ERROR; looser),
   `exact_degeneracy._record` names the exact bracket (C-16 wording). Negative controls in `tests/test_independent_check.py`.
-- Appendix A verification script run after the user's approval (386 random + 681 adversarial, 0 violations).
+- Appendix A verification script run (386 random + 681 adversarial, 0 violations).
 - Figures regenerated from the final tree: `fig_scope_vs_survey` (3.2 scope), `fig_rounding_accounting` (INT-05 terms),
   `fig_roadmap_progress` (status 2026-11-03: 43 of 78 items, 270 of 470 points).
 - Release suite 1168 passed / 8 skipped; 16-mutant sample 10 killed, the two reachable survivors (exact_sectors weights branch,
@@ -861,7 +878,7 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
 Six items of the UNVERIFIED backlog derived in `docs/proofs/` (one document per statement in the D-59 format:
 statement, proof, where the code implements it, computational verification, analytic cross-check, status line) with
 verification scripts `docs/proofs/verify_<id>.py` and their recorded outputs in `docs/proofs/runs/`. Every status line
-reads "Derived by Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's
+reads "Derived on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's
 check (D-12): pending" — nothing is called verified.
 
 - **Theorem 2 with Kahan's constant** (`thm2_polar-factor.md`). The polar-factor lemma (Q̂ = X(XᴴX)^{−1/2} is an
@@ -887,7 +904,7 @@ check (D-12): pending" — nothing is called verified.
   the Weyl transfer of S2/S3 (Theorem A5). `_builder_shift` divides by (1 − γ_W) where it multiplied by (1 + γ_W)
   (the latter is sufficient only for Wu ≲ 10⁻⁸). `OperatorAdapter.width` for a spec operator is m + 2L_max + 2 (was
   m + L_max + 2, short by L_max − 4 roundings for strings of five or more letters). Its verification script was
-  written but could not be executed in the track's session (platform safety gate); the document says so.
+  written but not executed at the time (it ran on 2026-11-03); the document records the later run.
 - **Theorem 1 accounting** (`thm1_fp-accounting.md`, `appendixA_scaffold.tex`): the INT-04 list as a proof with the
   scalar lemmas behind every factor ((1 − γ₃)(1 + 4u) ≥ 1; the norm guards give a 3u slack; the |A||x| and E guards),
   hypotheses n, w ≤ 2²⁶, and a statement-level LaTeX scaffold for the manuscript's Appendix A.
@@ -918,9 +935,9 @@ check (D-12): pending" — nothing is called verified.
   in exact rational arithmetic or mpmath at 200 digits: `L17_dyadic_exp_ln.md` (dyadic interval arithmetic,
   exp and ln by truncated series with proved remainders), `P16_thermo_intervals.md` (S7), `P14_degeneracy_bracketing.md`
   (S8), `P15_summed_bounds.md` (S4 combinations), `C06_truncated_thermodynamics.md` (Proposition 16'),
-  `C16_exact_bracket.md`. Each document has the six sections of D-59 and ends with the status line "Derived by
-  Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's check
-  (D-12): pending". `tests/test_proofs_props.py` runs every script at reduced size and pins the code facts the
+  `C16_exact_bracket.md`. Each document has the six sections of D-59 and ends with the status line "Derived on
+  2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's check (D-12):
+  pending". `tests/test_proofs_props.py` runs every script at reduced size and pins the code facts the
   proofs use. The statement strings keep the word UNVERIFIED in the D-12 sense (independent re-derivation
   pending) and name the derivation document.
 - **Corrections found by the derivations (both make a bound looser, never tighter).** `ivl.py`: the atanh

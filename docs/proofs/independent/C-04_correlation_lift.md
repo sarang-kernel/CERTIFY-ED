@@ -1,12 +1,12 @@
 # Independent re-derivation: C-04 (lift of observables through the sector isometry)
 
-Written from sections 1 and 3 of `docs/proofs/C-04_correlation_lift.md` only (section 2 read afterwards; the
-comparison is at the end). Notation: V (n × d_s) the producer's sector basis, ι ≥ ‖VᴴV − I‖₂ with ι < 1,
-H_s the supplied block, P_s the spectral projector of H_s on the cluster (rank g), O Hermitian on the full space,
-Õ := VᴴOV, Õ_h the stored Hermitian part of fl(Vᴴ fl(OV)), Π_V := V P_s Vᴴ, Π_Q := Q P_s Qᴴ with V = QM the polar
-decomposition, δ := 1 − √(1 − ι). Classical facts used: Higham (2002) Lemma 3.1 (any summation order), Lemma 3.3
-(γ_j + γ_k + γ_jγ_k ≤ γ_{j+k}), Lemma 3.5 (complex product: |fl(xy) − xy| ≤ √2 γ₂ |x||y|), §3.6; the polar
-decomposition; ‖AB‖₁ ≤ ‖A‖₁‖B‖₂ and |tr(AB)| ≤ ‖A‖₁‖B‖₂ (Hölder for Schatten norms); ‖Z‖₁ ≤ rank(Z)·‖Z‖₂.
+Not a human check. Written from sections 1 and 3 of `docs/proofs/C-04_correlation_lift.md` only (section 2 read
+afterwards; the comparison is at the end). Notation: V (n × d_s) the producer's sector basis, ι ≥ ‖VᴴV − I‖₂ with ι < 1,
+H_s the supplied block, P_s the spectral projector of H_s on the cluster (rank g), O Hermitian on the full space, Õ :=
+VᴴOV, Õ_h the stored Hermitian part of fl(Vᴴ fl(OV)), Π_V := V P_s Vᴴ, Π_Q := Q P_s Qᴴ with V = QM the polar
+decomposition, δ := 1 − √(1 − ι). Classical facts used: Higham (2002) Lemma 3.1 (any summation order), Lemma 3.3 (γ_j +
+γ_k + γ_jγ_k ≤ γ_{j+k}), Lemma 3.5 (complex product: |fl(xy) − xy| ≤ √2 γ₂ |x||y|), §3.6; the polar decomposition; ‖AB‖₁
+≤ ‖A‖₁‖B‖₂ and |tr(AB)| ≤ ‖A‖₁‖B‖₂ (Hölder for Schatten norms); ‖Z‖₁ ≤ rank(Z)·‖Z‖₂.
 
 ## Proofs
 

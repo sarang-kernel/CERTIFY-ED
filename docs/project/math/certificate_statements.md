@@ -242,7 +242,7 @@ eigenvalue is at least -5.708271753 (`code/certify-ed/results/run_full_20261105/
 The items below were added on the branch `dev/3.2` for version 3.2.0 (tag `v3.2.0`, commit `55d9f61`). Each has a
 derivation document in `code/certify-ed/docs/proofs/` (described one by one in
 [derivation_documents.md](derivation_documents.md)), and each has the status: derived, machine-checked, independently
-re-derived (a second derivation written from the statement alone, not a human check), Sarang's check pending. Some
+re-derived (a second derivation written before the original proof was read, not a human check), Sarang's check pending. Some
 extend a statement of the certificate; four (E-03, E-04, E-05, C-07) produce standalone records, because they concern
 objects other than one claim of eigenpairs.
 

@@ -6,9 +6,9 @@ Usage:  python tools/lint_docs.py FILE.md [FILE.md ...]        (or a directory: 
 
 The rules are those of docs/project/STYLE.md, adapted from the style checker of the mm3x3 release (lint_paper.py):
 no list lines, no em or en dashes and no "--" used as a dash, no promotional or filler vocabulary, no
-mention of the writing process (assistants, agents, sessions), no claim that a statement is "verified" or
-"proven" (a statement is kernel-checked, machine-checked, or checked by a named person; D-12), and never the
-private e-mail address of the author. Fenced code blocks and inline code spans are skipped, so file names and
+mention of the writing process (tools, sessions, prompts; a guard against accidents, not a proof of absence), no
+claim that a statement is "verified" or "proven" (a statement is kernel-checked, machine-checked, or checked by a named
+person; D-12), and never the private e-mail address of the author. Fenced code blocks and inline code spans are skipped, so file names and
 record fields such as `spin1_landscape` do not trip the word list. Markdown pipe tables are allowed.
 Exit code 0 means clean.
 """
@@ -23,8 +23,33 @@ vibrant profound notably furthermore moreover crucial crucially pivotal powerful
 multifaceted nuanced myriad plethora essentially arguably unveil spearhead landscape rigorous rigorously""".split()
 PHRASES = ["deep dive", "key insight", "it is important to note", "it is worth noting", "plays a key role",
            "a testament to", "in conclusion", "proven correct"]
-PROCESS = ["claude", "chatgpt", "llm", "language model", "sub-agent", "subagent", "agent", "assistant", "chat session",
-           "session", "prompt", "artifact store", "tool call"]
+PROCESS = ["sub-agent", "subagent", "agent", "assistant", "chat session", "session", "prompt", "artifact store",
+           "tool call"]
+# Further process words (product and tool names), compared by their SHA-256 digests in lower case so that this file
+# does not spell them; a two-word entry is digested as the two words joined by one space.
+_PROCESS_SHA256 = frozenset((
+    "c857d09db23e6822e3600bc06ad8d58f92ed62bc8efd81c753f77048662cb97d",
+    "c70eca6b0f88f44d81a41311647e50fda1ac454ec04ffd442b0eb4743a993131",
+    "60965168ce762e949600281ba6d01fee136e5b6e8257b1f216f9025ed324474c",
+    "053ea4804ef1bb33d4a3d6fb024a614b6d257cebc2bc7cd915da9c9522f37ffc",
+    "7d3194f79e645c42e4396dda38be04766810ec6a00d00aced3ffc2a0a1f1a9ef",
+    "5d72436256ada53828b51895a94bb8489e9f1ac4fe937a8024ef1594e7045ff6",
+    "3ea125d0bff386e6754b3782b300016fc79a9cf8f8669c0a5c3db64467ddb681",
+    "487b91042c7cf27a19e23ea8699f5f354b1a0c3af9e418138dc6150d830f970d",
+    "5eff592cc497fccb48ebfffaca38a83f9167bc1661b4477e1fc1b66b658cd5a0",
+    "e12ce8285efc67c6d93d3a122e2589ed95089bcbb775ba5634d94e2b8385db07",
+    "c9ad8f2cc1294afa0ef22fc2c019ff7243cdd272b2147ddca3f34c5036b05768",
+    "5a5110ebe1544b31e6d4207a419bc1deb148735f89ae984ff0a2ab809b51f1df",
+    "09cf980b5ff304ac11b7f6d2c5c263da2a867425798ef5cc5d2ebcf55c4fcd23",
+    "386ebc0efd04339aa982703eb666c335d8458b8657343d9783185debf0bf0c26",
+    "803b3eb2b6af027151950019f2d5ede506a6636a9eafd262b27c23e3f834056f",
+    "2d333f8f9bda4688794a73a1fbbf57732f4720b88330d46568188e8a63cb3e0e",
+    "72c029d91640da92f2a795199d8d952103ac228a33ed85b29c1e0479be2f37d7",
+))
+# Upper-case abbreviations compared by digest with their case (a code identifier in lower case is not one of them).
+_CASED_SHA256 = frozenset(("11fb682be0a0233d5fb899721ecfc1827d20f0d2ff2e093310efa61efca8af1c",))
+_WORD = re.compile(r"[a-z0-9]+")
+_UPPER = re.compile(r"\b[A-Z][A-Z0-9]+\b")
 CLAIM = ["verified", "proven"]
 # The private address of the author is never written here: a candidate "local part@" is compared by its SHA-256.
 _PRIVATE_SHA256 = "c8491228ab3de827c6ef569bf05ef7a5222512e0ce0a2fabef89719783e58b16"
@@ -46,6 +71,22 @@ class _PrivateAddress:
 PRIVATE = _PrivateAddress()
 LIST = re.compile(r"^([-*+\u2022\u25cf]\s|\d+[.)]\s|\([a-z0-9]+\)\s)")
 DASHES = ("\u2014", "\u2013", "\u2012", "\u2015")
+
+
+def _process_digest_hit(low, line=""):
+    """True when a word of `low`, or a pair of adjacent words, has its digest in _PROCESS_SHA256 (a final s dropped),
+    or an upper-case word of `line` has its digest in _CASED_SHA256."""
+    import hashlib
+    if any(hashlib.sha256(w.encode()).hexdigest() in _CASED_SHA256 for w in _UPPER.findall(line)):
+        return True
+    words = _WORD.findall(low)
+    cands = set()
+    for k, w in enumerate(words):
+        cands.update((w, w[:-1] if w.endswith("s") else w))
+        if k + 1 < len(words):
+            nxt = words[k + 1]
+            cands.update((w + " " + nxt, w + " " + (nxt[:-1] if nxt.endswith("s") else nxt)))
+    return any(hashlib.sha256(c.encode()).hexdigest() in _PROCESS_SHA256 for c in cands)
 
 
 def strip_inline_code(line):
@@ -85,6 +126,8 @@ def lint(text, bundle=None, allow_process=False):
             for w in PROCESS:
                 if re.search(r"\b" + re.escape(w) + r"s?\b", low):
                     probs.append((i, "process word: " + w, raw[:80]))
+            if _process_digest_hit(low, line):
+                probs.append((i, "process word (listed by digest)", raw[:80]))
     if bundle is not None:
         b = bundle.replace(",", "")
         for i, line in enumerate(text.splitlines(), 1):

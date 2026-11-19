@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 2 (cluster radius ρ) and the polar-factor lemma
 
-Fresh-context session, 2026-10-30. Protocol (D-12): sections 1 and 3 of `../thm2_polar-factor.md` were read
+Written on 2026-10-30 before the original proof was read (not a human check). Protocol (D-12): sections 1 and 3 of `../thm2_polar-factor.md` were read
 first; this proof was written before section 2 was opened; the comparison follows at the end.
 Notation as in `docs/theory.md`: A Hermitian n × n, λ₁ ≤ … ≤ λₙ, ‖·‖ the spectral norm.
 
@@ -83,7 +83,7 @@ in both. Corollaries (i), (ii) as I reconstructed them.
 
 **Code mapping (current `dev/3.2` lines).** `enclosure._cluster_bound` 458–513: η exact path 476, BLAS path
 481, guard `eta < 1` 482, δ 486–487, ‖R‖ 489, ‖A‖ 490, ‖Λ‖ 493, ρ 494, min(ρ, ε*) 511. `certify._subspace_shift`
-296–303, `sectors.decomposition_shift` 125–148. Rounding directions checked by hand against `fp.up` (93–95,
+296–303, `sectors.decomposition_shift` 125–148. Rounding directions checked line by line against `fp.up` (93–95,
 one rounding, (1 + 8u)), `fp.norm2_upper` (149–155), `fp.fro_upper` (165–170): every factor is rounded towards
 +∞; δ: 1 − fl(√fl(1 − e)) ≥ δ(e) − 2.5u − O(u²) (I count the subtraction's rounding at u, not 1.1u), `up` adds
 ≥ 6u relative, `+ 4u` absolute closes it since δ ≤ 1 — agrees. The additive `+ ULP_MIN`/`gram_additive_term`

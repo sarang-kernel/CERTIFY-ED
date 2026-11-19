@@ -179,7 +179,7 @@ of 18 October with an erratum was rejected because its records came from the uns
 ## D-47 (21 October 2026): Sarang's decisions on four open items
 
 Sarang decided that Kránitz and Penc may be contacted by e-mail, that he himself checks the proofs marked
-`UNVERIFIED`, that a statement on the use of automated assistance can be attached to the paper, and that symveig is
+`UNVERIFIED`, that a statement on assistance can be attached to the paper, and that symveig is
 dropped as a separate paper. The consequences recorded are a note to the authors updated to v0.2 (later withdrawn,
 D-51), a list of every unchecked item in the report in the order to check it, a factual draft of the assistance
 statement in the manuscript, and no CPC submission of symveig. Because arXiv:2606.16217 v1 is public and contains the

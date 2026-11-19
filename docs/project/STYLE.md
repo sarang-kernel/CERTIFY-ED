@@ -24,10 +24,12 @@ project's decision D-12 new mathematics counts as established only after a perso
 by Sarang Vehale is still pending for the derivation documents. Never write that a check was made by a person when it
 was not.
 
-Rule 5. The documents describe the work, not the writing process. They do not mention software assistants, agents,
-sessions, prompts or chats. The record of how the material was produced is kept in the separate agent-material
-package (see README.md). Where a check was produced automatically rather than by a person, the text says so in those
-words ("a second derivation written independently from the statement alone, not a human check").
+Rule 5. The documents describe the work, not the writing process. They name no tool and describe no session, prompt or
+conversation through which a text was produced; the record of that process is kept apart, in a separate private
+repository (see README.md). That the work was done with tool assistance under decision D-16, and that this is disclosed
+at every submission, is stated in neutral words: the assistance in README.md, and the assistance with its disclosure in
+the record of D-15 and D-16. Where a check was produced automatically rather than by a person, the text says so in those
+words ("a second derivation written independently, before the original proof was read, not a human check").
 
 Rule 6. Every experiment and every failure gets a reason. For each one write, as prose and in this order: why it was a
 reasonable next step (which earlier result, gap, theorem or cost argument made it worth doing, and what outcome would

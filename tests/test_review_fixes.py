@@ -335,7 +335,7 @@ def _git(cwd, *args):
 
 
 def _git_scratch(tmp_path):
-    """A directory git can work in: tmp_path, or (sandboxes whose temp dir git cannot stat) one next to the repo."""
+    """A directory git can work in: tmp_path, or (environments whose temp dir git cannot stat) one next to the repo."""
     import tempfile
     if subprocess.run(["git", "init", "-q"], cwd=tmp_path, capture_output=True).returncode == 0:
         shutil.rmtree(tmp_path / ".git")

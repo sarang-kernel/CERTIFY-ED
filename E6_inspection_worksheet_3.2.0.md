@@ -1,6 +1,6 @@
 # E6 inspection worksheet, 3.2.0 evidence run (results/run_full_20261104, e6_mutation_20261104_163828)
 
-64 mutants, 36 killed, 28 survived, 0 timeouts (3.1.0 run: 38 of 64). Readings below are the lead's suggestions (RA-25), not verdicts; the verdicts are Sarang's. The 3.2.1 run repeats E6 from tag v3.2.1 with the same seed; sites in cost.py and ldl_residual.py may shift by a few lines.
+64 mutants, 36 killed, 28 survived, 0 timeouts (3.1.0 run: 38 of 64). Readings below are automatic suggestions (RA-25), not verdicts; the verdicts are Sarang's. The 3.2.1 run repeats E6 from tag v3.2.1 with the same seed; sites in cost.py and ldl_residual.py may shift by a few lines.
 
 Classes: equivalent (no output can change), looser (the bound only grows), heuristic (parameters that decide where to look, not what a count says), test gap (a reachable path without a test), soundness-relevant test gap (a bound or count that could become wrong under the mutant, hidden by the margins of the fixtures), needs inspection.
 

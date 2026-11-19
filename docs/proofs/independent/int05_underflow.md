@@ -1,6 +1,6 @@
 # Independent re-derivation: INT-05 (Theorem 1 radius under the underflow-tolerant model)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../int05_underflow.md` read first; proof written before
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../int05_underflow.md` read first; proof written before
 section 2 was opened. Notation as in the original and in `independent/thm1_fp-accounting.md`. u = 2⁻⁵³,
 u_min = 2⁻¹⁰⁷⁵, ULP_MIN = 2⁻¹⁰⁷⁴. Classical facts: IEEE 754-2008 §3.3–3.4 (binary64 format: 53-bit significand,
 exponent range, subnormals with fixed spacing 2⁻¹⁰⁷⁴, round-to-nearest); Higham (2002) Lemma 3.1, 3.3, §2.5 eq.

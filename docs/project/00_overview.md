@@ -19,7 +19,7 @@ bound of Kránitz and Penc, and the η criteria of the AKLT gap proofs of Pomata
 The project is the work of Sarang Vehale, with Ritu Goel. Three of its rules govern how every document of this
 repository speaks about results. Under decision D-12, new mathematics counts as established only after Sarang Vehale
 has re-derived it; the 22 derivation documents of the code repository are therefore derived, machine-checked and
-independently re-derived (a second derivation written from the statement alone, not a human check), with Sarang's
+independently re-derived (a second derivation written before the original proof was read, not a human check), with Sarang's
 check pending. Under decision D-16, the prose of the manuscripts is Sarang's. Under decision D-61, the version the
 manuscript cites is still 3.1.0 until Sarang decides whether 3.2.1 replaces it.
 

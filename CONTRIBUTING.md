@@ -63,7 +63,7 @@ changes when, and only when, a number can.
 
 * One concern per commit. The message says what changed and why, in plain prose; the first line is a
   summary under 100 characters, the body explains the reason and names the tests added.
-* No trailers (`Co-Authored-By`, `Signed-off-by`, tool stamps): authorship is the git author field.
+* No trailers (co-author lines, sign-off lines, tool stamps): authorship is the git author field.
 * A pull request that touches a status-affecting path lists: the theorem it rests on, the negative control
   it adds, and the result of the full suite on your machine.
 * Documentation and scaffolding are welcome without tests; manuscript prose is the authors' (D-16).

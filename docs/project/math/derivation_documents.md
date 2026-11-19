@@ -50,7 +50,7 @@ the integration of 3 November 2026 (5 AGREES, 7 AGREES-WITH-REMARKS, 3 GAP, 2 ER
 Each entry below has four parts: what the document derives, its machine check (the script, the arguments of the recorded
 run where the document gives them, and the counts of its status line), the independent verdict with its remarks, and the
 outcome for the code. The status of every document is the same: derived, machine-checked, independently re-derived (a
-second derivation written from the statement alone, not a human check), Sarang's check pending.
+second derivation written before the original proof was read, not a human check), Sarang's check pending.
 
 ## Theorem 1 and the arithmetic
 
@@ -546,10 +546,10 @@ modulus hypothesis $h \ge 2$.
 | `D-01_sparse-residual.md` | D-01 | `verify_D-01.py` | 400 + 17 | AGREES-WITH-REMARKS | measured sparse $\beta$ (tighter, justified by the document) |
 | `D-02_matrix-free.md` | D-02 | `verify_D-02.py` | 182 + 18 | GAP | $\gamma_{w+3}$ for complex data (looser) |
 
-Every document has the status: derived, machine-checked, independently re-derived (a second derivation written from the
-statement alone, not a human check), Sarang's check pending. The reduced runs of the original scripts and the counts of
-the independent adversarial scripts are listed per row in `code/certify-ed/docs/proofs/VERDICTS.md`; all report 0
-violations, except the two pre-correction counts quoted above for `int05_underflow.md` and
+Every document has the status: derived, machine-checked, independently re-derived (a second derivation written before
+the original proof was read, not a human check), Sarang's check pending. The reduced runs of the original scripts and
+the counts of the independent adversarial scripts are listed per row in `code/certify-ed/docs/proofs/VERDICTS.md`; all
+report 0 violations, except the two pre-correction counts quoted above for `int05_underflow.md` and
 `E-04_parameter_intervals.md`.
 
 ## What the checks show and do not show

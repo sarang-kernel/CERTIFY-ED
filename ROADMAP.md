@@ -5,7 +5,7 @@ items as a sortable table in `ROADMAP_expansion_items.csv`; both are kept with t
 lists 78 items in eight themes, each scored on **Adoption** (A, 0-5: how much it removes a reason not to
 use the tool) and **Rigor/coverage** (R, 0-5: how much more, or more soundly, a certificate states), with
 Score = A + R and an effort class S (days) / M (weeks) / L (months) / XL (a year or more). The scores are
-one session's judgment and are meant to be re-weighted by the maintainers; the CSV is the place to do it.
+a first estimate and are meant to be re-weighted by the maintainers; the CSV is the place to do it.
 
 ## What adoption depends on
 
@@ -26,7 +26,7 @@ that does not depend on the authors** (a published format and a verifier written
 | D Scale | 8 | 50 | completeness beyond d ~ 5e4, matrix-free S2 at 1e8-1e9, error-free dot products, parallelism, GPU, larger exact layer, macOS caps, cost model |
 | E Mathematics | 7 | 47 | the UNVERIFIED backlog (D-12), non-Hermitian, generalized problems, parameter intervals, variational certificates, underflow policy, sharper clusters |
 | F Ecosystem | 9 | 54 | QuSpin upstream, HPhi/DiagHam/SPINPACK/ALPS importers, Julia package, PETSc/SLEPc, Pauli-string specs, TeNPy/ITensor, NetKet, C/Fortran writers, reference bundles |
-| G Community | 12 | 70 | public release, software paper, documentation site, tutorials, governance, journal engagement, certificate deposit, reproducibility harness, survey hand-coding, benchmark page, pilot users, scope intake |
+| G Community | 12 | 70 | public release, software paper, documentation site, tutorials, governance, journal engagement, certificate deposit, reproducibility harness, survey coded by hand, benchmark page, pilot users, scope intake |
 | H Engineering | 6 | 28 | CI matrix, property-based tests, typing and semver, performance regression tests, containers, environment capture |
 
 ## Waves
@@ -56,7 +56,7 @@ adapters; E-03 generalized eigenproblems; E-02 non-Hermitian; C-12, C-13, C-16, 
 120 points. Every item here is UNVERIFIED until a second person re-derives it; this is the schedule's
 bottleneck.
 
-**Wave 4, the field (continuous).** G-02 software paper; G-09 survey hand-coding; G-06 journal
+**Wave 4, the field (continuous).** G-02 software paper; G-09 survey coded by hand; G-06 journal
 engagement; G-11 pilot users; G-04 tutorials; G-07 certificate deposit; G-12 scope intake; B-10 external
 audit; B-08 mutation testing as a process; B-09 signed releases; H-03..H-06; D-07; F-04, F-08, F-09;
 A-04, A-06; B-05 machine-checked proofs last. 109 points.
@@ -90,6 +90,6 @@ ships.
 ## Caveats
 
 Scores are a draft to be re-weighted. Items needing new mathematics cannot be finished by code alone.
-Nothing in Waves 1-4 should delay Wave 0. The survey numbers are provisional until the hand coding (G-09)
-is finished. The two items that could change practice are B-01 (a verifier the authors do not control)
+Nothing in Waves 1-4 should delay Wave 0. The survey numbers are provisional until the survey is coded by hand
+(G-09). The two items that could change practice are B-01 (a verifier the authors do not control)
 and G-06/G-11 (editors and pilot users); everything else makes those two credible.

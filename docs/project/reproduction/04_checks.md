@@ -66,9 +66,9 @@ exact rationals), prints the number of random and adversarial cases, the number 
 met and the number of violations, and exits with 1 when a violation is found. The logs of the long runs are in
 `docs/proofs/runs/` (ten files); the first line of `appA_model-shift.txt`, for example, records `--cases 400 --seed 5`
 and 235 minutes of wall time. The scripts of `docs/proofs/independent/` belong to the second derivations, each written
-from the statement alone, and search for counterexamples at the boundaries of the hypotheses; their verdicts are
+before the original proof was read, and search for counterexamples at the boundaries of the hypotheses; their verdicts are
 collected in `docs/proofs/VERDICTS.md`. These are machine checks. The status of every derivation is: derived,
-machine-checked, independently re-derived (a second derivation written from the statement alone, not a human check),
+machine-checked, independently re-derived (a second derivation written before the original proof was read, not a human check),
 Sarang's check pending (decision D-12).
 
 As a check that the scripts run from a fresh clone, `python docs\proofs\verify_thm8_rho.py --cases 10 --seed 1` was

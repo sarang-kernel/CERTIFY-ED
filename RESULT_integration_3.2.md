@@ -1,6 +1,6 @@
 # Integration of roadmap Waves 0 and 1 into `dev/3.2` (2026-10-29)
 
-Lead's record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `dev/3.2`, certify-ed 3.2.0.dev0.
+Record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `dev/3.2`, certify-ed 3.2.0.dev0.
 
 ## Merge order and resolutions
 
@@ -18,7 +18,7 @@ Lead's record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `d
 
 ## Checks on the merged branch
 
-- `pytest -q tests` at 73e5c2e: **953 passed, 2 skipped** (1412 s); PYTHONSAFEPATH removed from the environment of the run, as for every run on this host (the sandbox's default breaks the experiment driver test independently of the code).
+- `pytest -q tests` at 73e5c2e: **953 passed, 2 skipped** (1412 s); PYTHONSAFEPATH removed from the environment of the run, as for every run on this host (the default of the development environment breaks the experiment driver test independently of the code).
 - Before the viewer merge (cd874f8): 862 passed, 2 skipped. Base `release/3.1.0`: 541 passed, 1 skipped.
 - `ruff check certify_ed tests experiments conformance corpus`: clean. `python -m certify_ed.schema --check schema`: in sync.
 - CLI: env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum, list, test, reproduce, numbers.
@@ -35,7 +35,7 @@ CI workflows and container recipes syntax-checked only; wheel installed offline;
 
 ## Mutation sample on the merged branch (2026-10-29)
 
-`experiments/e6_mutation.py 16 2` at c59131e (baseline timeout raised to 3600 s; the baseline suite took 1195 s): **13 of 16 killed** (3.1.0's 64-mutant sample: 38 of 64). Record: `experiments/results/e6_mutation_20261029_164910/`. Survivors, with the lead's suggestions (not verdicts, RA-25):
+`experiments/e6_mutation.py 16 2` at c59131e (baseline timeout raised to 3600 s; the baseline suite took 1195 s): **13 of 16 killed** (3.1.0's 64-mutant sample: 38 of 64). Record: `experiments/results/e6_mutation_20261029_164910/`. Survivors, with suggested readings (automatic, not verdicts, RA-25):
 
 | mutant | suggestion |
 |---|---|
@@ -46,16 +46,16 @@ CI workflows and container recipes syntax-checked only; wheel installed offline;
 
 ## Completion plan Phase 1 integration (2026-10-30)
 
-Merged into `dev/3.2` on 38b0212: track/new-statements (ec8163a), track/figures (9c8b043), track/backlog-proofs (dffa41b), track/props-proofs (f7a5983). Conflicts resolved by hand: CHANGELOG.md (additive, four times), certify_ed/enclosure.py `_cluster_bound` (Backlog's min(rho, eps*) with INT-05 guard, plus the Davis-Kahan ingredient keys of New statements), certify_ed/correlations.py (fp import union), docs/SCOPE_MATRIX.md (degeneracies/thermodynamics rows from Props proofs, labels/entanglement rows from New statements, correlation row with the P15 derivation reference). docs/api.md regenerated; schema in sync.
+Merged into `dev/3.2` on 38b0212: track/new-statements (ec8163a), track/figures (9c8b043), track/backlog-proofs (dffa41b), track/props-proofs (f7a5983). Conflicts resolved in the merge commits: CHANGELOG.md (additive, four times), certify_ed/enclosure.py `_cluster_bound` (Backlog's min(rho, eps*) with INT-05 guard, plus the Davis-Kahan ingredient keys of New statements), certify_ed/correlations.py (fp import union), docs/SCOPE_MATRIX.md (degeneracies/thermodynamics rows from Props proofs, labels/entanglement rows from New statements, correlation row with the P15 derivation reference). docs/api.md regenerated; schema in sync.
 
 Full suite at d5ddf17: 1047 passed, 8 skipped, 5 warnings in 1992.79s (0:33:12). ruff clean.
 
-Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not run (held by a platform safety gate in the track's session; awaiting the user's decision); C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
+Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not yet run; C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
 
 
 ## Completion plan Phase 2 integration (2026-11-03)
 
-Merged into `dev/3.2` on ac52920: track/variational (fda4d74; E-05, E-03, C-07 first part), track/verifier (be4456a; C verifier `verifier/src/cev.c`, builds with `CEV_CC` = MinGW gcc 14.2 from GNU Octave 10.3 on this host; 7 tests pass, skipped without a C compiler), track/scale (4150a79; D-01 a-posteriori sparse residual, D-02 matrix-free S2), track/independent-check (8b598d7; `docs/proofs/VERDICTS.md`, 17 documents: 5 AGREES, 7 AGREES-WITH-REMARKS, 3 GAP (thm1, C-04, E-07: proof text), 2 ERROR corrected by looser code with negative controls (int05 `norm2_lower` overflow; E-04 crossing slack at interior grid points)). Conflicts resolved by hand: CHANGELOG.md (additive), docs/SCOPE_MATRIX.md (producer-formats row; the D-02 row now says S1 and S2 at 2^20-2^24, the only statements the scale run timed). Lead commit 2e1dc59: thm1 correction implemented as the looser option (`gamma(width + 3)` for complex data in `enclosure._rounding_bound`).
+Merged into `dev/3.2` on ac52920: track/variational (fda4d74; E-05, E-03, C-07 first part), track/verifier (be4456a; C verifier `verifier/src/cev.c`, builds with `CEV_CC` = MinGW gcc 14.2 from GNU Octave 10.3 on this host; 7 tests pass, skipped without a C compiler), track/scale (4150a79; D-01 a-posteriori sparse residual, D-02 matrix-free S2), track/independent-check (8b598d7; `docs/proofs/VERDICTS.md`, 17 documents: 5 AGREES, 7 AGREES-WITH-REMARKS, 3 GAP (thm1, C-04, E-07: proof text), 2 ERROR corrected by looser code with negative controls (int05 `norm2_lower` overflow; E-04 crossing slack at interior grid points)). Conflicts resolved in the merge commits: CHANGELOG.md (additive), docs/SCOPE_MATRIX.md (producer-formats row; the D-02 row now says S1 and S2 at 2^20-2^24, the only statements the scale run timed). Lead commit 2e1dc59: thm1 correction implemented as the looser option (`gamma(width + 3)` for complex data in `enclosure._rounding_bound`).
 
 Full suite at e69bca5 (+2e1dc59 for subprocess tests): 1161 passed, 8 skipped, 8 warnings in 6404 s (1:46:44, run concurrently with the Appendix A verification script). ruff clean (certify_ed tests experiments conformance corpus docs/proofs verifier). Schema in sync (certificate-2.1, producer-bundle-1.0, statement-record-1.0).
 
@@ -68,7 +68,7 @@ Full suite at e1ebaed (release tree, idle machine, `--basetemp` in the workspace
 
 `experiments/e6_mutation.py 16 2` at e1ebaed (record `experiments/results/e6_mutation_20261104_043326/`; baseline 2355 s): **10 of 16 killed** (3.2.0.dev0 sample: 13 of 16; 3.1.0's 64-mutant sample: 38 of 64). An earlier attempt at b832d8e aborted because the baseline failed: `tests/test_whole_spectrum.py::test_enclosure_radii_bit_identical_complex_operator` compared complex-data radii bit for bit against the frozen oracle after the gamma_{w+3} change (fixed in e1ebaed: the complex comparison is >= and within 1 + 1e-12; real data stay bit-identical). The full suite of 2026-11-03 (1161 passed) had been started before that change was imported and did not see it; the release suite above does.
 
-Survivors, with the lead's reading (suggestions, not verdicts, RA-25):
+Survivors, with suggested readings (automatic, not verdicts, RA-25):
 
 | mutant | reading |
 |---|---|

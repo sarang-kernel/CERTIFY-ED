@@ -1,9 +1,9 @@
 # Independent re-derivation: C-07 (certified moments tr(P O Hᵏ O)/g and two sum-rule consistency statements)
 
-Written from sections 1 and 3 of `docs/proofs/C-07_moments.md` only (section 2 read afterwards; comparison at the
-end). Notation as there. Classical facts: Hölder |tr(AB)| ≤ ‖A‖₁‖B‖₂, ‖Z‖₁ ≤ rank(Z)‖Z‖₂; Higham (2002) eq. (3.5),
-Lemma 3.3; the contracts of `fp.exact_dot`, `fp.norm2_upper`, `fp.inf_norm_upper` (Hermitian: ≥ ‖·‖₂) and of
-Theorem 6 / `eigenspace.certify_observable` (|v − tr(PM)| ≤ β for a stored Hermitian M with a norm bound).
+Not a human check. Written from sections 1 and 3 of `docs/proofs/C-07_moments.md` only (section 2 read afterwards;
+comparison at the end). Notation as there. Classical facts: Hölder |tr(AB)| ≤ ‖A‖₁‖B‖₂, ‖Z‖₁ ≤ rank(Z)‖Z‖₂; Higham
+(2002) eq. (3.5), Lemma 3.3; the contracts of `fp.exact_dot`, `fp.norm2_upper`, `fp.inf_norm_upper` (Hermitian: ≥ ‖·‖₂)
+and of Theorem 6 / `eigenspace.certify_observable` (|v − tr(PM)| ≤ β for a stored Hermitian M with a norm bound).
 
 ## Proofs
 

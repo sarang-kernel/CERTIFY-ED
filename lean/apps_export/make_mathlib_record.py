@@ -103,8 +103,8 @@ def main():
             row["statement"], row["covers"] = MAIN[short]
             row["nanoda"] = nan.get(name, {"result": "not run"})
         theorems.append(row)
-    rec = {"module": "CertifyMathlib.Apps", "root_import_note": "the root CertifyMathlib.lean does not import it yet; "
-           "the lead adds it", "date": "10 November 2026", "lean": "4.35.0", "mathlib": "v4.35.0",
+    rec = {"module": "CertifyMathlib.Apps", "root_import_note": "the root CertifyMathlib.lean did not import it on 10 November "
+           "2026; it was to be added", "date": "10 November 2026", "lean": "4.35.0", "mathlib": "v4.35.0",
            "files": files, "forbidden_tokens": words,
            "build": {"command": "lake build CertifyMathlib.Apps", "seconds": a.build_seconds},
            "axioms": {"command": "lake env lean apps_export/PrintAxiomsApps.lean", "theorems": len(ax),

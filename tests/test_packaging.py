@@ -76,7 +76,7 @@ def test_governance_files_exist_and_say_what_they_must():
         assert os.path.exists(os.path.join(ROOT, rel)), rel
     assert "Contributor Covenant" in _read("CODE_OF_CONDUCT.md") and "sarangvehale2@gmail.com" in _read("CODE_OF_CONDUCT.md")
     c = _read("CONTRIBUTING.md")
-    assert "negative control" in c and "D-12" in c and "Co-Authored-By" in c
+    assert "negative control" in c and "D-12" in c and "co-author lines" in c
     g = _read("GOVERNANCE.md")
     assert "never removed" in g and "Deprecation" in g
     icc = _read(".github/ISSUE_TEMPLATE/could-not-certify.md")

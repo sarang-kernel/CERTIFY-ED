@@ -3,7 +3,7 @@
 Writing a statement as a Lean theorem forces every hypothesis and every range to be stated, and the Lean kernel does
 not accept an argument that only nearly holds. The re-verification in `lean/` therefore read the
 derivation documents more strictly than the earlier checks, which were random and adversarial testing by the verify
-scripts and an independent second derivation written from the statement alone (not a human check). It found eleven
+scripts and an independent second derivation written before the original proof was read (not a human check). It found eleven
 places where a document and the Lean statement differ. None of them changes a stored certificate, a status or a
 published number. Seven were corrected in the code repository by documentation commits that change no computational
 file (`40d59f4` and `fa86456`, see `docs/project/sources/SOURCES.md`; the source hash stays `cb73dec3e4433a3b`), one is a missing
