@@ -219,7 +219,8 @@ hypothesis H-mod.
 Review rounds of 2026-11-18 (UNVERIFIED, D-12). Resolved: the audit pin of `tests/test_abs_audit.py` covers every
 spelling of a modulus, called or referenced, whatever the object it is taken from, the 1- and ∞-type norm orders and
 hand-written moduli, and fails on stale lines of its list; a dynamic pin runs the main entry points on complex data
-with numpy's modulus recorded outside the classified places (nothing recorded; 14 of 14 single reverts recorded);
+with numpy's modulus recorded outside the classified places (nothing recorded; with the source pin left out it
+records 66 of the 74 routed moduli reverted one at a time, all but the 8 of the device path in `gpu.py`);
 `fp.inf_norm_upper` has an exact and bit-for-bit test; the S1 invariants take each modulus once (S1 time back at the
 base's: N = 20, T = 120: 7.3 s against 8.9 s at the base, 80.5 s before); the moduli of an S2 block are formed once.
 Open items:

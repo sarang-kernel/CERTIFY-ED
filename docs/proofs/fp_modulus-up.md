@@ -329,11 +329,16 @@ and `.imag` or calls `.conj()`. It fails when the moduli found and the list diff
 must be classified and a removed one must leave the list; it also fails on an import of these names under another
 name. There are no others in `certify_ed`. A dynamic pin (`tests/test_modulus_up.py`) replaces `np.abs`,
 `np.absolute`, the builtin `abs` and the absolute value of scipy sparse matrices by functions that record each call
-on complex data made from a place the list does not classify as complex, and runs the main entry points on complex
-data (`certify()` with an observable and with a spec, `certify_variational`, `state_from_mps`, `certified_moments`,
-`commutator_bound`, `audit_sector`, `compress_operator`, `certify_nonhermitian`, `certify_generalized`,
-`matrix_affinity_defect`, `ozaki_residual`, `enclose`): it records nothing, and each of 14 single reverts of a routed
-modulus to `np.abs`, `abs` or `np.vectorize(abs)` is recorded with the source pin left out.
+on complex data made from a place the list does not classify as complex (matched on the function and the expression
+of the line), and runs the main entry points on complex data: `certify()` with a sparse and a dense operator, an
+observable, a spec, a spec operator above `reference_max_dim`, the matrix-free operator and the sparse inertia;
+`certify_variational`, `state_from_mps`, `certified_moments` with its sum rules, `commutator_bound`, `audit_sector`,
+`audit_label`, `compress_operator`, `certify_nonhermitian`, `certify_generalized`, `matrix_affinity_defect`,
+`certified_sweep`, `ozaki_residual`, `enclose`, `inertia_sparse` with the a-priori bound, and the spec and matrix-free
+operators applied to complex vectors directly. It records nothing. With the source pin left out, each of the 74
+routed occurrences of `modulus_up` and `abs_up` reverted alone to `np.abs` or `abs` is recorded, except the 8 in
+`gpu.py`, whose device path does not run without CuPy (the source pins catch those); also recorded: a revert to
+`np.vectorize(abs)`.
 
 **The call sites.** Direction: "upper" where the bound needs m ≥ |z| (a modulus in a sum or product of non-negative
 terms), "lower" where it would need m ≤ |z|.
