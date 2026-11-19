@@ -915,7 +915,7 @@ def _private_copies(widened=None):
         hit = copies.get(id(m))
         if hit is None:
             note = []
-            c = binary64(m, what, note) if (sp.issparse(m) or isinstance(m, np.ndarray)) else m
+            c = binary64(m, what, note)       # a narrower matrix on disk becomes binary64 in memory; matvec objects stay
             if c is m:
                 if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
                     return m
@@ -944,7 +944,7 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
     which that conversion would round is refused."""
     check_values(claim.eigenvalues, "claim.eigenvalues")
     op, iso = own(claim.operator, "claim.operator"), own(claim.sector_isometry, "claim.sector_isometry")
-    X = binary64(claim.eigenvectors, "claim.eigenvectors", widened)
+    X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True)
     if op is claim.operator and iso is claim.sector_isometry and X is claim.eigenvectors:
         return claim
     return replace(claim, operator=op, sector_isometry=iso, eigenvectors=X)

@@ -422,7 +422,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
     already formed for in-memory X (one block; the |H| |X| array is consumed in place). Vectors in a narrower format
     are converted exactly to binary64 first (precision.binary64)."""
     mu = np.asarray(mu, dtype=float)
-    X = binary64(X, "eigenvectors")
+    X = binary64(X, "eigenvectors", stream=True)
     streamed = is_streamed(X)
     if not streamed:
         X = np.asarray(X)
@@ -663,7 +663,7 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional
     if X is None:
         raise ValueError("eigenvectors are required for enclosures (eigenvalue-only claims "
                          "are handled by inertia counts)")
-    X = binary64(X, "eigenvectors")          # exact; the bounds count binary64 arithmetic (precision.py)
+    X = binary64(X, "eigenvectors", stream=True)     # exact; the bounds count binary64 arithmetic (precision.py)
     if not is_streamed(X):
         X = np.asarray(X)
         if X.ndim == 1:

@@ -117,7 +117,7 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
                        O_norm: Optional[float] = None) -> dict:
     """Certified tr(P O) for Hermitian O (dense or sparse). Data in a narrower format than binary64 are converted
     exactly first (precision.py)."""
-    X = binary64(X, "eigenvectors")
+    X = binary64(X, "eigenvectors", stream=True)
     O = binary64(O if sp.issparse(O) else np.asarray(O), name)
     Xg = X[:, ec.members]
     OX = O @ Xg
@@ -142,7 +142,7 @@ def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: s
                             commutation_certified: bool = False, allowed_values=None) -> dict:
     """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0). Data in a narrower format than
     binary64 are converted exactly first (precision.py)."""
-    X = binary64(X, "eigenvectors")
+    X = binary64(X, "eigenvectors", stream=True)
     S = binary64(S if sp.issparse(S) else np.asarray(S), name)
     Xg = X[:, ec.members]
     M = Xg.conj().T @ (S @ Xg)

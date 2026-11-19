@@ -36,12 +36,16 @@ NULLABLE_SHA256 = {"oneOf": [SHA256, {"type": "null"}]}
 INPUT_WIDENING = {
     "type": "object", "required": ["converted", "exact"],
     "description": ("inputs converted exactly to binary64 before any product (precision.binary64); the statements concern "
-                    "the values as stored; hashes are of the converted data"),
+                    "the values as stored; the record's hashes are of the converted data, source_sha256 of each input "
+                    "as given"),
     "properties": {
         "converted": {"type": "array", "minItems": 1, "items": {
             "type": "object", "required": ["input", "dtype", "converted_to"],
-            "properties": {"input": {"type": "string"}, "dtype": {"type": "string"},
-                           "converted_to": {"enum": ["float64", "complex128"]}}}},
+            "properties": {"input": {"type": "string"}, "dtype": {"type": "string", "description": "the caller's dtype"},
+                           "converted_to": {"enum": ["float64", "complex128"]},
+                           "source_sha256": dict(SHA256, description=(
+                               "precision.source_sha256 of the input as given: array_sha256 of an array; format, shape "
+                               "and array_sha256 of each stored array of a sparse matrix"))}}},
         "exact": {"const": True}, "note": {"type": "string"}}}
 CLAIM_KINDS = ("subset", "lowest", "window", "all")
 NARROWING_BY = ("default", "dependency", "only", "skip", "preset")

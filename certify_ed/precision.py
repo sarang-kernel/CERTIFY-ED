@@ -14,23 +14,31 @@ both eigenvalues. Every entry point applies `binary64` before the data reach a p
   a wider format (80- or 128-bit long double), object,     refused: PrecisionError (a ValueError)
   strings, dates, ...
 
-A sparse matrix keeps its format, its index arrays and any repeated or unsorted indices; vectors on disk (numpy
-memmap, HDF5 dataset) are wrapped in an enclosure.StreamedColumns that widens each block as it is read. Objects
-without a dtype (LinearOperators, spec operators, callables) are returned unchanged: their products are their own.
-A list or tuple of numbers is converted to an array only when its numbers need it.
+A sparse matrix keeps its format, its index arrays and any repeated or unsorted indices (they are summed later, in
+binary64, by the step that converts the format). Every entry point widens the caller's object before any format
+conversion (tocsr, csr_matrix, toarray), since such a conversion sums repeated entries in the input's own precision.
+Claimed eigenvectors on disk (numpy memmap, HDF5 dataset) are wrapped in an enclosure.StreamedColumns that widens each
+block as it is read (stream=True); any other memmap (an operator, a symmetry diagonal, an observable) becomes an array
+in memory. Operators with a matvec (LinearOperators, spec operators) and callables are returned unchanged: their
+products are their own. A list or tuple of numbers, or an array-like (an object with __array__), is converted only
+when its numbers need it.
 
 Claimed eigenvalues are always converted with dtype=float by the callers; `check_values` only refuses the types for
 which that conversion would round (a wider float, an integer beyond 2^53 that binary64 cannot hold).
 
-Records: `widened` collects one entry per converted input; certify() writes them to the certificate's
-arithmetic.input_widening and the other records to their `input_widening` field, only when there are any, so a
-binary64 input gives the same record as before. Hashes are taken of the binary64 data, after the conversion:
+Records: `widened` collects one entry per converted input (the caller's dtype, the target dtype and source_sha256, the
+hash of the input as given); certify() writes them to the certificate's arithmetic.input_widening and the other
+records to their `input_widening` field, only when there are any, so a binary64 input gives the same record as before.
+Every converted input is recorded, integers and lists included; the claimed eigenvalues, which were always converted
+with dtype=float, are checked and not recorded. Hashes are taken of the binary64 data, after the conversion:
 matrix_sha256 has always hashed binary64 entries (an operator's hash does not change), and an eigenvector hash is that
 of the converted array, which is the array the arrays sidecar stores.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -43,7 +51,8 @@ _CHUNK_BYTES = 64 * 2 ** 20          # rows of an on-disk integer array read at 
 
 
 class PrecisionError(ValueError):
-    """An input whose values binary64 cannot hold exactly, or that is not numeric data."""
+    """An input whose values binary64 cannot hold exactly, or that is not numeric data; raised before any product, and
+    no certificate or record is issued."""
 
 
 def _is_binary64(dt: np.dtype) -> bool:
@@ -100,15 +109,64 @@ def _exact_ints_streamed(src, shape, dtype: np.dtype, what: str) -> None:
         _exact_ints(np.asarray(src[r:r + step]), what)
 
 
-def _note(widened: Optional[List[Dict[str, Any]]], what: str, dt, tgt) -> None:
+_SPARSE_PARTS = {"csr": ("data", "indices", "indptr"), "csc": ("data", "indices", "indptr"),
+                 "bsr": ("data", "indices", "indptr"), "coo": ("data", "row", "col"), "dia": ("data", "offsets")}
+
+
+def source_sha256(a) -> str:
+    """SHA-256 of an input as the caller stored it, before any conversion: certificate_v2.array_sha256 (dtype, shape,
+    C-order bytes; on-disk arrays in row chunks) of an array, of np.asarray of a list or an array-like; for a sparse
+    matrix the format, the shape and array_sha256 of each stored array (data and index arrays as given; lil and dok
+    through their coo form)."""
+    from .certificate_v2 import array_sha256
+    from .enclosure import StreamedColumns, is_streamed
+    if sp.issparse(a):
+        parts = _SPARSE_PARTS.get(a.format)
+        if parts is None:
+            a, parts = a.tocoo(), _SPARSE_PARTS["coo"]
+        h = hashlib.sha256()
+        h.update(a.format.encode())
+        h.update(json.dumps([int(d) for d in a.shape]).encode())
+        for name in parts:
+            h.update(array_sha256(np.asarray(getattr(a, name))).encode())
+        return h.hexdigest()
+    if isinstance(a, StreamedColumns) and a.widens:
+        a = a.source
+    return array_sha256(a if (isinstance(a, np.ndarray) or is_streamed(a)) else np.asarray(a))
+
+
+def _note(widened: Optional[List[Dict[str, Any]]], what: str, a, dt, tgt) -> None:
     if widened is not None:
-        widened.append({"input": what, "dtype": np.dtype(dt).name, "converted_to": np.dtype(tgt).name})
+        widened.append({"input": what, "dtype": np.dtype(dt).name, "converted_to": np.dtype(tgt).name,
+                        "source_sha256": source_sha256(a)})
 
 
-def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = None):
+def _sparse_binary64(a, tgt):
+    """A new matrix of the same format with the stored entries converted to `tgt` and copies of the index arrays:
+    every stored entry is kept as given (scipy's astype sums repeated entries, in the new format, where the sum may
+    round), and the caller's entries are not copied before the conversion."""
+    data = a.data.astype(tgt)
+    if a.format in ("csr", "csc", "bsr"):
+        kw = {"blocksize": a.blocksize} if a.format == "bsr" else {}
+        w = type(a)((data, a.indices.copy(), a.indptr.copy()), shape=a.shape, **kw)
+        if (w.indices.dtype, w.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):     # the constructor may narrow int64
+            w.indices, w.indptr = a.indices.copy(), a.indptr.copy()
+        return w
+    if a.format == "coo":
+        return type(a)((data, (a.row.copy(), a.col.copy())), shape=a.shape)
+    if a.format == "dia":
+        return type(a)((data, a.offsets.copy()), shape=a.shape)
+    return a.astype(tgt)                          # lil, dok: one value per position
+
+
+def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = None, stream: bool = False):
     """`a` with binary64 entries (see the module docstring): the same object when it is binary64 already or is not
-    array data, else an exact conversion, noted in `widened` when that list is given. PrecisionError for data that
-    binary64 cannot hold."""
+    array data, else an exact conversion, noted in `widened` when that list is given (with the caller's dtype and
+    source_sha256 of the caller's data). PrecisionError for data that binary64 cannot hold.
+
+    stream: vectors on disk (numpy memmap, HDF5 dataset) in a narrower format are wrapped in a widening
+    enclosure.StreamedColumns (claimed eigenvectors only); without it they are converted to an array in memory, as
+    any matrix is."""
     if a is None:
         return None
     if sp.issparse(a):
@@ -117,17 +175,8 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
             return a
         if a.dtype.kind in "iu":
             _exact_ints(a.tocoo().data if a.format in ("dok", "lil") else a.data, what)
-        if a.format in ("csr", "csc", "bsr", "coo", "dia"):
-            # a copy with the entries converted: scipy's astype would sum repeated entries (in the new format, where
-            # the sum may round), while every stored entry is kept here, as given
-            w = a.copy()
-            if a.format in ("csr", "csc", "bsr") and \
-                    (w.indices.dtype, w.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):     # copy() may narrow int64
-                w.indices, w.indptr = a.indices.copy(), a.indptr.copy()
-            w.data = a.data.astype(tgt)
-        else:                                       # lil, dok: no repeated entries
-            w = a.astype(tgt)
-        _note(widened, what, a.dtype, tgt)
+        w = _sparse_binary64(a, tgt)
+        _note(widened, what, a, a.dtype, tgt)
         return w
     from .enclosure import StreamedColumns, is_streamed       # enclosure imports this module
     if is_streamed(a):
@@ -137,17 +186,27 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
         src = a.source if isinstance(a, StreamedColumns) else a
         if np.dtype(a.dtype).kind in "biu":
             _exact_ints_streamed(src, tuple(int(d) for d in a.shape), np.dtype(src.dtype), what)
-        _note(widened, what, a.dtype, tgt)
-        return StreamedColumns(src, dtype=tgt)
+        _note(widened, what, a, a.dtype, tgt)
+        if stream:
+            return StreamedColumns(src, dtype=tgt)
+        return np.asarray(src[...] if not isinstance(src, np.ndarray) else src).astype(tgt)
     if isinstance(a, np.ndarray):
         tgt = target_dtype(a.dtype, what)
         if tgt is None:
             return a
         if a.dtype.kind in "biu":
             _exact_ints(a, what)
-        _note(widened, what, a.dtype, tgt)
+        _note(widened, what, a, a.dtype, tgt)
         return a.astype(tgt)
-    if isinstance(a, (list, tuple, np.generic)):
+    if isinstance(a, (list, tuple, np.generic)) or (hasattr(a, "__array__") and not hasattr(a, "matvec")):
+        # a list or tuple of numbers, or an array-like (an object with __array__: a data frame, a tensor on the CPU, a
+        # zarr array); operators with a matvec are the producer's and stay as given
+        dt = getattr(a, "dtype", None)
+        try:
+            if dt is not None and not isinstance(a, (list, tuple)) and target_dtype(np.dtype(dt), what) is None:
+                return a                          # binary64 already: left to the caller's own conversion
+        except (TypeError, PrecisionError):
+            pass
         try:
             arr = np.asarray(a)
         except (ValueError, TypeError):           # ragged or mixed: left to the caller, as before
@@ -160,7 +219,10 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
 
 def check_values(values, what: str = "eigenvalues") -> None:
     """PrecisionError when converting `values` with dtype=float would round them: a floating type wider than
-    binary64, or an integer that binary64 cannot hold. Every other numeric type converts exactly."""
+    binary64, or an integer that binary64 cannot hold. Narrower numeric types convert exactly. Non-numeric values
+    (an object array of Fraction, Decimal or mpmath numbers) are not checked: the callers convert them with
+    dtype=float as before, which rounds them, and the record then holds the converted values, which are the values
+    every statement refers to."""
     try:
         arr = np.asarray(values)
     except (ValueError, TypeError):
@@ -178,11 +240,11 @@ def widening_record(widened: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         return None
     seen, rows = set(), []
     for w in widened:
-        key = (w["input"], w["dtype"], w["converted_to"])
+        key = (w["input"], w["dtype"], w["converted_to"], w.get("source_sha256"))
         if key not in seen:
             seen.add(key)
             rows.append(dict(w))
     return {"converted": rows, "exact": True,
             "note": ("inputs stored in a narrower format than binary64 (or as integers) were converted to binary64 "
                      "before any product; the conversion is exact, so the statements concern the values as stored; "
-                     "hashes are of the converted binary64 data")}
+                     "the record's hashes are of the converted binary64 data, source_sha256 of each input as given")}
