@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from .construct import StateSet, build_bitwise, full_state_set
 from .eigenspace import EigenspaceCertificate, certify_observable
 from .fp import U, abs_up, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, up
+from .precision import binary64
 from .spec import ModelSpec, Term
 
 __all__ = ["site_operator", "certify_observables_batch", "certify_correlations", "structure_factor",
@@ -61,8 +62,9 @@ def hermitian_parts(O, name: str = "O"):
     O = H + iK. Classical decomposition; both parts are formed in floating point and the formation is checked
     to be exact entrywise (Knuth's TwoSum error term zero; halving and the multiplication by -i are exact).
     Returns (H, K, exact). When `exact` is False the parts are rounded and the record that uses them must not
-    be CERTIFIED (no bound on the rounding is claimed)."""
-    O = sp.csr_matrix(O)
+    be CERTIFIED (no bound on the rounding is claimed). A matrix in a narrower format is converted exactly first, so
+    that the sums and the TwoSum check are binary64 (precision.py)."""
+    O = sp.csr_matrix(binary64(O if sp.issparse(O) else np.asarray(O), name))
     Oh = sp.csr_matrix(O.conj().T)
     S = (O + Oh).tocsr()
     D = (O - Oh).tocsr()
@@ -88,8 +90,9 @@ def certify_observable_general(ec: EigenspaceCertificate, X: np.ndarray, O, name
     """Theorem 6 for a Hermitian O; for a non-Hermitian O (C-05) the Hermitian decomposition O = H + iK:
     tr(P H) and tr(P K) are certified separately (Theorem 6 each) and recombined as tr(P O) = tr(P H) + i tr(P K)
     with bound b_H + b_K (Proposition 15 with coefficients 1 and i). The record names both parts and how to
-    recombine them; `value` is then [re, im]. Records land in ec.observables[name]."""
-    Oc = sp.csr_matrix(O)
+    recombine them; `value` is then [re, im]. Records land in ec.observables[name]. An operator in a narrower format
+    than binary64 is converted exactly first (precision.py)."""
+    Oc = sp.csr_matrix(binary64(O, name))
     dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0
     if dev == 0:
         rec = certify_observable(ec, X, Oc, name)
@@ -291,9 +294,10 @@ def compress_operator(V, O):
     |fl(V^H fl(O V)) - V^H O V| <= gamma_{w_O + w_V} (|V|^T |O| |V|), w_O the row width of O and w_V the column width
     of V; the Hermitian part of an approximation to the Hermitian V^H O V is at least as close; forming it in
     floating point adds at most u |Otilde_fl| entrywise. ||.||_2 <= ||.||_F closes the bound.
-    Returns (Otilde_h (csr, exactly Hermitian), rnd, norm_upper) with norm_upper >= ||Otilde_h||_2."""
-    V = sp.csr_matrix(V)
-    O = sp.csr_matrix(O)
+    Returns (Otilde_h (csr, exactly Hermitian), rnd, norm_upper) with norm_upper >= ||Otilde_h||_2. Data in a narrower
+    format than binary64 are converted exactly first (precision.py)."""
+    V = sp.csr_matrix(binary64(V, "sector isometry"))     # widened before the conversion (precision.py)
+    O = sp.csr_matrix(binary64(O, "operator"))
     cplx = np.iscomplexobj(V.data) or np.iscomplexobj(O.data)
     OV = (O @ V).tocsr()
     Ot = (V.conj().T @ OV).tocsr()
@@ -325,8 +329,9 @@ def certify_observable_lifted(ec: EigenspaceCertificate, X: np.ndarray, V, O, na
     Hermitian O: Theorem 6 for the compressed Hermitian Otilde_h = (V^H O V)_h in the block (certify_observable),
     plus g * rnd for the compression rounding (bound for tr(Pi_V O), `bound_V`), plus the isometry term for
     tr(Pi_Q O) (`bound`). Non-Hermitian O: the exact Hermitian decomposition O = H + iK (C-05) in the full space,
-    each part lifted, recombined with bound b_H + b_K (Proposition 15); `value` is then [re, im]."""
-    Oc = sp.csr_matrix(O)
+    each part lifted, recombined with bound b_H + b_K (Proposition 15); `value` is then [re, im]. Data in a narrower
+    format than binary64 are converted exactly first (precision.py)."""
+    Oc = sp.csr_matrix(binary64(O, name))
     g = len(ec.members)
     iota = float(isometry_defect)
     dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0

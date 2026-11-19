@@ -3,6 +3,7 @@ certificate. A CSR matrix with duplicate entries used to be summed in place: by 
 a model, and by the S1 comparison and the sector audit with one."""
 import collections
 import copy
+import dataclasses
 import json
 
 import numpy as np
@@ -256,6 +257,35 @@ def test_int64_indices_with_values_past_nnz_are_accepted():
     _same(a, ce.certify(claim, spec, ce.Options(seed=1)))
     rec = certify_variational(D, claim.eigenvectors[:, 0])
     assert _unchanged_arrays(D, before) and rec["statements"]
+
+
+def test_an_integer_past_nnz_that_binary64_cannot_hold_is_not_read():
+    """Only the nnz stored values of an integer CSR matrix are checked for exactness; a value left past them is not part
+    of the matrix."""
+    A = sp.csr_matrix(np.array([[2, 1], [1, 2]], dtype=np.int64))
+    A.data, A.indices = np.r_[A.data, 2 ** 60 + 1], np.r_[A.indices, 0]
+    assert A.data.size == A.nnz + 1
+    w, V = np.linalg.eigh(A.toarray().astype(float))
+    a = ce.certify(ce.Claim(eigenvalues=w, eigenvectors=V, operator=A, kind="lowest"), None,
+                   ce.Options(seed=1, only=["S2.eigenpairs"]))
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+
+
+def test_single_precision_int64_indices_with_values_past_nnz_are_accepted():
+    """The same matrix in float32: its binary64 copy (precision.binary64) keeps consistent index arrays."""
+    claim, spec = _model_claim(False)
+    D = claim.operator
+    D32 = sp.csr_matrix((D.data.astype(np.float32), D.indices.copy(), D.indptr.copy()), shape=D.shape)
+    D32.indices, D32.indptr = D32.indices.astype(np.int64), D32.indptr.astype(np.int64)
+    assert not D32.has_canonical_format
+    sp.csr_matrix(D32).sum_duplicates()
+    assert D32.data.size > D32.nnz
+    claim = dataclasses.replace(claim, operator=D32)
+    before = _arrays(D32)
+    a = ce.certify(claim, spec, ce.Options(seed=1))
+    assert _unchanged_arrays(D32, before)
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+    _same(a, ce.certify(claim, spec, ce.Options(seed=1)))
 
 
 def _record_without_times(rec):

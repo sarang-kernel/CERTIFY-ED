@@ -54,6 +54,7 @@ from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
+from .precision import binary64, check_values, widening_record
 from .presets import STATEMENTS, preset_options, resolve_selection
 from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
@@ -937,44 +938,65 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
                  time.time() - t0)
 
 
-def _private_copies():
-    """own(m): a private copy of a CSR matrix whose indices are unsorted or repeated, any other value unchanged.
+def _private_copies(widened=None):
+    """own(m, what): the matrix certify() works on in place of the caller's matrix m.
+
+    A matrix in a narrower floating format than binary64 (float16, float32, complex64) becomes a private exact binary64
+    copy (precision.binary64), listed in `widened` under `what`; a wider format is refused (PrecisionError). Integer
+    matrices are checked (every value a binary64 number) and used as given, as in 3.x: the steps that multiply them
+    convert them exactly, and their certificates are those of 3.x. Boolean matrices (3.x raised a TypeError) are
+    converted exactly, not listed. A CSR matrix whose indices are unsorted or repeated becomes a private copy. Any
+    other value is returned unchanged.
 
     A matrix given in several places (the operator also as an observable, say) gets one copy, so that a summation done
     through one place is seen through the others, as it was on the caller's matrix. A new own() for each run."""
     copies = {}
 
-    def own(m):
-        if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
-            return m
+    def own(m, what="matrix"):
         hit = copies.get(id(m))
         if hit is None:
-            c = m.copy()
-            if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
-                c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
-            hit = copies[id(m)] = (m, c)              # m is kept, so that its id is not reused during the run
+            note = []
+            c = binary64(m, what, note, keep_integers=True)   # narrower floats: binary64 copies; integers checked
+            if c is m:
+                if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
+                    return m
+                c = m.copy()
+                if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
+                    c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
+            hit = copies[id(m)] = (m, c, note)    # m is kept, so that its id is not reused during the run
+        if widened is not None:
+            widened.extend(dict(w, input=what) for w in hit[2])
         return hit[1]
     return own
 
 
-def _as_given(claim: Claim, own) -> Claim:
-    """The claim with private copies (own) of a CSR operator and a CSR sector isometry whose indices are unsorted or
-    repeated.
+def _as_given(claim: Claim, own, widened=None) -> Claim:
+    """The claim with the operator, the sector isometry and the eigenvectors certify() works on: private copies (own)
+    of a CSR operator and a CSR sector isometry whose indices are unsorted or repeated, and exact binary64 copies of
+    every one of them (and of the vectors) stored in a narrower format.
 
     Several steps (the S1 comparison, the sector audit, the absolute value taken by the adapter) sum duplicates and
     sort indices in place, through arrays they share with these matrices. On copies the caller's matrices stay as given,
-    and certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory."""
-    op, iso = own(claim.operator), own(claim.sector_isometry)
-    if op is claim.operator and iso is claim.sector_isometry:
+    and certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory.
+
+    Every bound counts binary64 arithmetic (fp.U = 2^-53); numpy would form the products of single-precision data in
+    single precision, so such data are widened here, before anything runs (precision.py). The widening is exact: the
+    statements concern the values as stored. Claimed eigenvalues are converted with dtype=float as before; a type for
+    which that conversion would round is refused."""
+    check_values(claim.eigenvalues, "claim.eigenvalues")
+    op, iso = own(claim.operator, "claim.operator"), own(claim.sector_isometry, "claim.sector_isometry")
+    X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True, keep_integers=True)
+    if op is claim.operator and iso is claim.sector_isometry and X is claim.eigenvectors:
         return claim
-    return replace(claim, operator=op, sector_isometry=iso)
+    return replace(claim, operator=op, sector_isometry=iso, eigenvectors=X)
 
 
 def _options_as_given(opts: Options, own) -> Options:
     """Options with private copies (own) of the CSR matrices among the observables and approximate symmetries whose
-    indices are unsorted or repeated (the S4 norm bounds and the label records take absolute values of them in place).
-    """
-    def entry(v):                          # approximate symmetry: (S, lattice[, allowed]) as a sequence
+    indices are unsorted or repeated (the S4 norm bounds and the label records take absolute values of them in place),
+    and exact binary64 copies of the observables, approximate symmetries and symmetry diagonals stored in a narrower
+    format (precision.py)."""
+    def entry(v, what):                    # (approximate) symmetry: (S, lattice[, allowed]) as a sequence
         if sp.issparse(v) or isinstance(v, (str, bytes)):
             return v
         try:
@@ -982,23 +1004,32 @@ def _options_as_given(opts: Options, own) -> Options:
             rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
         except (TypeError, IndexError, KeyError):
             return v                       # not readable so: passed on as given, read (or refused) where it is used
-        S_own = own(S)
+        S_own = own(S, what)
         if S_own is S:
             return v
         return (S_own, *rest)
     obs_given = opts.observables or {}                 # [] and () as accepted before
     asym_given = opts.approximate_symmetries or {}
-    obs = {k: own(v) for k, v in obs_given.items()}
-    asym = {k: entry(v) for k, v in asym_given.items()}
-    if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym):
+    syms_given = opts.symmetries or {}
+    obs = {k: own(v, f"options.observables[{k}]") for k, v in obs_given.items()}
+    asym = {k: entry(v, f"options.approximate_symmetries[{k}]") for k, v in asym_given.items()}
+    syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in syms_given.items()}
+    if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym) and \
+            all(syms[k] is syms_given[k] for k in syms):
         return opts
-    return replace(opts, observables=obs, approximate_symmetries=asym)
+    return replace(opts, observables=obs, approximate_symmetries=asym, symmetries=syms)
 
 
 def _certify_as_given(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
-    """_certify on private copies of the caller's non-canonical CSR matrices; the copies go when it returns."""
-    own = _private_copies()
-    return _certify(_as_given(claim, own), spec, _options_as_given(opts, own))
+    """_certify on private copies of the caller's non-canonical CSR matrices and on exact binary64 copies of inputs
+    stored in a narrower format; the copies go when it returns."""
+    widened = []
+    own = _private_copies(widened)
+    narrow = None
+    if opts.plan:                     # the planner sees the binary64 copies only: add the caller's narrower arrays
+        from .cost import narrow_input_mb
+        narrow = narrow_input_mb(claim, opts)
+    return _certify(_as_given(claim, own, widened), spec, _options_as_given(opts, own), widened, narrow_mb=narrow)
 
 
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
@@ -1024,8 +1055,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     return cert
 
 
-def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
-    """The body of certify() for one device setting."""
+def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=None, narrow_mb=None) -> Certificate:
+    """The body of certify() for one device setting. `widened`: the inputs _as_given converted to binary64 (recorded
+    under arithmetic.input_widening when there are any); `narrow_mb`: the caller's arrays in a narrower format, for
+    the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
@@ -1049,7 +1082,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
     plan_record = None
     if opts.plan:
         from .cost import plan_for_claim
-        plan_ = plan_for_claim(claim, spec, opts)
+        plan_ = plan_for_claim(claim, spec, opts, narrow_mb=narrow_mb)
         plan_record = plan_.to_dict()
         sink = (print if opts.progress is True else opts.progress) if opts.progress else print
         for line in plan_.format().splitlines():
@@ -1866,6 +1899,9 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
     arithmetic = float_env_record()
     arithmetic["runtime_probe"] = fp_probe
     arithmetic["underflow_check"] = uf_record
+    widening = widening_record(widened or [])
+    if widening is not None:                  # only when an input was converted: binary64 inputs keep their record
+        arithmetic["input_widening"] = widening
     annotate_next_actions(statements, {"kind": claim.kind, "has_eigenvectors": X is not None, "has_spec": spec is not None,
                                        "eigenspaces": opts.eigenspaces, "budget_seconds": budget_seconds})
     body = {"subject": subject, "claim": claim_rec, "statements": list(statements),

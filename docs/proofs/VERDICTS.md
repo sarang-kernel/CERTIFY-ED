@@ -163,7 +163,7 @@ summation of duplicate entries; a test covers the subnormal band of results. Ope
   `fp_modulus-up.md`, What is not claimed). An `abs_up` that bounds the stored entries without summing is not written.
 - Single precision: Lemma M and the corollary do not cover products formed in float32 or complex64; a false S2
   certificate for a float32 operator with float32 vectors was reproduced (as before). Refusing or widening such input
-  at the entry points is not written here (not covered; the separate change `fix/single-precision`).
+  at the entry points is not written here; it is done by the single-precision change (`certify_ed/precision.py`).
 - The FP-M items that `fp.probe_float_environment` does not probe (correctly rounded square root, frexp, ldexp,
   nextafter) are tested with the test suite only, and the certificate does not name them; a run-time probe and an
   assumption line are not written.
@@ -210,7 +210,7 @@ with upper moduli. No code constant changes; the complex γ_{w+3} of `_rounding_
 D-03 and E-02 keep spare counts. For complex128 data the bound values change in the last bits (each modulus lies at or
 above the exact one and, for normal values, at most a relative 12u above it); for complex64 data the moduli were
 float32 values before, so those bounds can move either way by more (a bound formed in single precision is not covered;
-the separate change `fix/single-precision`); an entry within a relative 12u of the largest float has an infinite
+the entry points convert such data, `certify_ed/precision.py`); an entry within a relative 12u of the largest float has an infinite
 modulus now (S2 INCONCLUSIVE instead of CERTIFIED). The records that rest on such a modulus state nothing, by the
 rules of the section above (`tests/test_nonfinite_moduli.py`), as the independent re-derivation asks for a nan bound
 (suggested edit 1 of its row). Real data and complex data whose entries have a zero component are unchanged, except

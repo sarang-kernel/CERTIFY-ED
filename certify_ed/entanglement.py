@@ -30,6 +30,7 @@ import numpy as np
 
 from . import ivl
 from .eigenspace import EigenspaceCertificate
+from .precision import binary64
 
 __all__ = ["bipartition_indices", "reduced_density_exact", "enclose_psd_eigenvalues", "entropy_interval",
            "fannes_audenaert_bound", "certify_entanglement", "entanglement_records", "DEFAULT_MAX_DIM_A"]
@@ -99,8 +100,9 @@ def bipartition_indices(states_in_order: np.ndarray, n_sites: int, q: int,
 def reduced_density_exact(X: np.ndarray, a_idx: np.ndarray, b_idx: np.ndarray, d_A: int, d_B: int):
     """M = sum_j tr_B(x_j x_j^H) in exact rational arithmetic: (M_re, M_im) as object arrays of Fractions
     (d_A x d_A), and t = tr M = ||X||_F^2 as a Fraction. The vectors' binary64 entries are taken as the exact
-    dyadic rationals they are; no rounding occurs."""
-    X = np.asarray(X)
+    dyadic rationals they are; no rounding occurs (a narrower format is converted exactly, a wider one refused:
+    precision.py)."""
+    X = binary64(np.asarray(X), "eigenvectors")
     if X.ndim == 1:
         X = X[:, None]
     n, g = X.shape

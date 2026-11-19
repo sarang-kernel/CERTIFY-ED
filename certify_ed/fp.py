@@ -26,6 +26,8 @@ import math
 import numpy as np
 import scipy.sparse as sp
 
+from .precision import binary64
+
 U = 2.0 ** -53          # unit roundoff for binary64
 _GUARD = 1.0 + 8 * U    # relative guard applied to computed upper bounds
 
@@ -173,8 +175,8 @@ def modulus_up(z):
     Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
     up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
     Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M; for float16, float32 and
-    complex64 input these are moduli only, a bound formed in single precision is not covered: Risks and limits there,
-    and the separate change fix/single-precision):
+    complex64 input these are moduli only: a bound formed in single precision is not covered, and certify() and the
+    other entry points convert such data to binary64 first, precision.py):
     m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is 0 or lies in [2^-500, 2^500]; otherwise
     the same with the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1)
     (np.frexp, np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below
@@ -276,7 +278,9 @@ def abs_up(A):
     in the type of its data), as abs(A) does; the result, and every product formed with A afterwards, refer to that
     summed matrix (docs/proofs/fp_modulus-up.md, section 1: a product formed before the call is not covered). DIA keeps
     its stored diagonals; LIL, DOK and other formats are converted to CSR (a copy, so A itself is not changed). The
-    result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array)."""
+    result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array). For sparse
+    data narrower than binary64 the duplicates are summed in that precision; callers pass binary64 data
+    (precision.py)."""
     if sp.issparse(A):
         if A.format not in ("csr", "csc", "bsr", "coo", "dia"):
             A = A.tocsr()
@@ -353,7 +357,8 @@ def norm2_upper(v: np.ndarray) -> float:
     (1 + gamma_{n+2})(1 + 8u) undoes the relative errors of the squares, the sum and the square root; the
     additive norm_underflow_term covers the squares that underflow, INT-05). The guard (1 + gamma_{n+2})(1 + 8u) is
     established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised before anything is
-    computed (3.2.2)."""
+    computed (3.2.2). A vector in a narrower format is converted exactly to binary64 first (precision.py)."""
+    v = binary64(np.asarray(v), "fp.norm2_upper")
     n = v.size
     check_guard_range(n=n, where="fp.norm2_upper")
     s = float(np.linalg.norm(v))
@@ -362,7 +367,9 @@ def norm2_upper(v: np.ndarray) -> float:
 
 def norm2_lower(v: np.ndarray) -> float:
     """Lower bound on the exact 2-norm of a stored float vector (0 when the vector is too small to resolve).
-    Established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised (3.2.2)."""
+    Established for 1 <= n <= 2^26 entries (Lambda4); above that GuardRangeError is raised (3.2.2). A vector in a
+    narrower format is converted exactly to binary64 first (precision.py)."""
+    v = binary64(np.asarray(v), "fp.norm2_lower")
     n = v.size
     check_guard_range(n=n, where="fp.norm2_lower")
     s = float(np.linalg.norm(v))
@@ -386,8 +393,9 @@ def inf_norm_upper(A) -> float:
     """Upper bound on ||A||_inf (max absolute row sum) of a stored matrix (the moduli of complex entries from abs_up).
 
     For Hermitian A this also bounds ||A||_2 (since ||A||_2 <= sqrt(||A||_1 ||A||_inf)
-    and ||A||_1 = ||A||_inf).
+    and ||A||_1 = ||A||_inf). A matrix in a narrower format is converted exactly to binary64 first (precision.py).
     """
+    A = binary64(A if sp.issparse(A) else np.asarray(A), "fp.inf_norm_upper")
     if sp.issparse(A):
         A = A.tocsr()
         absA = abs_up(A)
@@ -674,8 +682,8 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
     have, n_tiny * TINY_BOUND per real component (INT-05; zero for every input whose
     products are above 2^-967, i.e. for every pair of vectors with entries above 2^-483 in magnitude).
     """
-    x = np.asarray(x).ravel()
-    y = np.asarray(y).ravel()
+    x = binary64(np.asarray(x).ravel(), "fp.exact_dot")      # exact for narrower formats; wider ones refused
+    y = binary64(np.asarray(y).ravel(), "fp.exact_dot")
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         xr, xi = np.real(x).astype(float), np.imag(x).astype(float)
         yr, yi = np.real(y).astype(float), np.imag(y).astype(float)

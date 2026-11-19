@@ -26,6 +26,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import gamma, modulus_up
+from .precision import binary64
 from .spec import ModelSpec
 
 
@@ -214,8 +215,9 @@ def hermitian_part(H: sp.spmatrix) -> sp.csr_matrix:
     the same amplitude factors), so a built matrix with irrational local amplitudes (S >= 1, bosons) can
     differ from its adjoint in the last bit. The statements of Theorems 1, 2 and 8 and Weyl's inequality
     need a Hermitian matrix; the builder shift certify._builder_shift covers the symmetrisation
-    (docs/proofs/appA_model-shift.md, Lemma A2)."""
-    H = sp.csr_matrix(H)
+    (docs/proofs/appA_model-shift.md, Lemma A2). A matrix in a narrower floating format is converted exactly to
+    binary64 first, so that the sum is formed in binary64 (precision.py)."""
+    H = sp.csr_matrix(binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True))
     asym = H - H.conj().T
     if asym.nnz == 0 or float(abs(asym).max()) == 0.0:
         return H
@@ -290,9 +292,10 @@ class SpecOperator:
 # ---------------------------------------------------------------------------
 
 def matrix_difference(A: sp.spmatrix, B: sp.spmatrix) -> Dict[str, float]:
-    """Entrywise comparison with a rounding allowance for non-dyadic products."""
-    A = sp.csr_matrix(A)
-    B = sp.csr_matrix(B)
+    """Entrywise comparison with a rounding allowance for non-dyadic products. Matrices in a narrower floating format
+    are converted exactly to binary64 first, so that repeated entries are summed in binary64 (precision.py)."""
+    A = sp.csr_matrix(binary64(A if sp.issparse(A) else np.asarray(A), "A", keep_integers=True))
+    B = sp.csr_matrix(binary64(B if sp.issparse(B) else np.asarray(B), "B", keep_integers=True))
     if A.shape != B.shape:
         return {"shape_match": False, "max_abs_diff": float("inf"), "pattern_match": False}
     D = (A - B).tocsr()

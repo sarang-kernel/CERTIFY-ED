@@ -51,6 +51,7 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
 from .fp import U, GuardRangeError, gamma_dot, up, fro_upper, modulus_up
+from .precision import binary64, require_binary64
 
 
 @dataclass
@@ -118,7 +119,8 @@ def _count_block_diagonal(D: np.ndarray):
 
 def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     t0 = time.time()
-    A = np.asarray(A)
+    A = binary64(np.asarray(A), "operator")     # exact; LAPACK in single precision would break the beta below
+    require_binary64(A, "inertia_dense")        # fail closed (precision.py)
     n = A.shape[0]
     cplx = np.iscomplexobj(A)
     S = A - sigma * np.eye(n)
@@ -151,7 +153,9 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     the measured residual of the stored factors (ldl_residual.sparse_ldl_residual_bound); residual='apriori':
     the 3.1 bound gamma_{w+1} ||L||_F ||U||_F + ... (conditional on SuperLU's arithmetic, see module docstring)."""
     t0 = time.time()
-    A = sp.csc_matrix(A)
+    # exact, and before csc_matrix (which sums repeated entries in the narrower format); SuperLU in single precision
+    # would break the beta below
+    A = require_binary64(sp.csc_matrix(binary64(A, "operator")), "inertia_sparse")   # fail closed (precision.py)
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()
@@ -216,7 +220,10 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
     Memory gate (D-01): a sparse factorization whose predicted peak (cost.sparse_inertia_mb, fill model plus the
     residual's own arrays) exceeds `budget_mb` is not attempted and is reported as a resource failure. Without a
     budget (3.2.2, N-03) the limit is the memory left under the process memory cap (cost.process_memory_cap: job
-    object or RLIMIT_AS), for the dense path (cost.dense_inertia_mb) as well; without a cap nothing is gated."""
+    object or RLIMIT_AS), for the dense path (cost.dense_inertia_mb) as well; without a cap nothing is gated.
+
+    A matrix in a narrower format is converted exactly to binary64 first (precision.py)."""
+    A = binary64(A if sp.issparse(A) else np.asarray(A), "operator")
     if method == "auto":
         from .cost import recommend_inertia_method
         method, _why = recommend_inertia_method(int(A.shape[0]), int(A.nnz) if sp.issparse(A) else None,

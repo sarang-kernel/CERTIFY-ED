@@ -59,7 +59,8 @@ _HASH_CHUNK_BYTES = 64 * 2 ** 20
 
 def array_sha256(a) -> str:
     """SHA-256 of dtype, shape and the C-order bytes. Large or on-disk arrays (numpy memmap, HDF5 dataset,
-    enclosure.StreamedColumns) are hashed in row chunks: the same byte stream, never a whole second copy."""
+    enclosure.StreamedColumns) are hashed in row chunks: the same byte stream, never a whole second copy. A
+    StreamedColumns that widens its source (precision.binary64) is hashed as the widened array, chunk by chunk."""
     shape = tuple(int(d) for d in a.shape)
     dtype = np.dtype(a.dtype)
     if dtype.byteorder == ">":
@@ -76,6 +77,8 @@ def array_sha256(a) -> str:
         rows = (np.ascontiguousarray(src[r:r + step]) for r in range(0, shape[0], step)) if shape else [np.ascontiguousarray(a)]
     for blk in rows:
         blk = np.asarray(blk)
+        if blk.dtype.kind in "biufc" and blk.dtype.newbyteorder("<") != dtype:    # a widening StreamedColumns
+            blk = blk.astype(dtype)
         if blk.dtype.byteorder == ">":
             blk = blk.byteswap().view(blk.dtype.newbyteorder("<"))
         h.update(blk.tobytes(order="C"))
@@ -83,7 +86,14 @@ def array_sha256(a) -> str:
 
 
 def matrix_sha256(A) -> str:
-    """Hash of a canonical CSR form (sorted indices, summed duplicates, no explicit zeros)."""
+    """Hash of a canonical CSR form (sorted indices, summed duplicates, no explicit zeros) of the binary64 entries. A
+    matrix in a narrower format is converted exactly first (precision.binary64), so that repeated entries are summed in
+    binary64, as certify() sums them, and the hash of the caller's matrix is the hash in its certificate."""
+    from .precision import PrecisionError, binary64
+    try:
+        A = binary64(A if sp.issparse(A) else np.asarray(A), "matrix")
+    except PrecisionError:
+        pass                              # a format binary64 cannot hold: hashed as before, cast after the summation
     if not sp.issparse(A):
         A = sp.csr_matrix(np.asarray(A))
     A = sp.csr_matrix(A, copy=True)

@@ -94,3 +94,12 @@ The cited version stays 3.1.0 until Sarang decides (D-61).
 What the 3.2.2 run shows: inside the range of the floating-point guards no statement of E0 to E10 changed, except the three S1
 statements that the memory gate refused (CERTIFIED in 3.2.1, NOT_CHECKED in 3.2.2), and no record reached the guard range.
 What it does not show: the mutation score of 3.2.2 and the cost of 3.2.2 on an unloaded machine.
+
+## Note: single-precision inputs
+
+Note of 2026-11-19 (single-precision advisory, `docs/failures/single_precision_inputs.md`). The inputs of this run are
+binary64, so the advisory does not affect any number above. Checked at the run's commit a9b9838: `git grep` finds no
+float16, float32, complex64, '<f4', '<c8' or np.single in experiments/, certify_ed/apps/, examples/, corpus/,
+conformance/ and run.py; of the 186 data files of that commit (.npz, .npy, .h5, .mtx), every floating array is float64
+except the float32 storage of the vectors in tests/fixtures/whole_spectrum_252_claim.npz, which the test converts to
+float64 before use; and the run record (run_full_20261112, 58 files) contains none of these dtype names.

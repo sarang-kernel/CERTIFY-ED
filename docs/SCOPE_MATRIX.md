@@ -34,6 +34,21 @@ out-of-scope rows of this table in `scope.out_of_scope` with these codes.
 | **moments and sum rules** of a local operator on a certified level (m_k = tr(P O Hᵏ O)/g, f-sum rule) | since 3.2 (C-07, first part) `certify_ed.moments.certified_moments` / `moments_from_certificate`: a standalone record (schema `certify-ed/moments/1.0`) with M1 certified intervals for m_k, k = 0..K, from the stored vectors of a CERTIFIED S4 cluster (O applied once and H k times to the vectors, never Hᵏ; Theorem 1 style rounding at every application; projector term (2gs + gη)‖O‖²‖H‖ᵏ), M2 the zeroth-moment sum rule m₀ = tr(PO²)/g and M3 the f-sum rule m₁ − tr(PHPO²)/g = tr(P[O,[H,O]])/(2g), each certified by two routes whose intervals must overlap (CERTIFIED / FAILED consistency statements) (`docs/proofs/C-07_moments.md`) | K, the operator O, sum rules on/off | M4 continued-fraction (Lanczos) bounds on the spectral function from the moments: NOT_IMPLEMENTED (the open part of C-07) | a posteriori bounds for the Lanczos continued fraction: certified three-term recurrence coefficients from the certified moments (Hankel positivity, Chebyshev–Markov–Stieltjes bounds on the spectral measure) with the rounding of the recurrence accounted; a certified Gauss quadrature of the spectral function |
 | **producer formats** | any of npy/npz/HDF5/CSV/TSV/text/JSON/Matrix Market, matrix-free Python (`docs/producer_bundle.md`); since 3.2 (D-02) claims with no operator at all (`Options(matrix_free=True)`, vectors as memmap/HDF5 datasets): S1 and S2 at d = 2²⁰–2²⁴ without a stored matrix (S4 only when the vectors and observables fit the same memmap path; not timed) (timings in `results/d02_matrixfree_scale.json`) | — | compressed states (MPS) and non-Hermitian problems (UNSUPPORTED_MODEL): the statements assume a Hermitian matrix and explicit vectors | non-Hermitian: left/right residuals, pseudospectra; MPS: residual via MPO contraction, completeness undefined |
 
+## Input types (3.3 development line)
+
+Every stored array, in any position (the operator, the claimed vectors, a sector isometry and block, observables,
+symmetry matrices, the inputs of the standalone records, and the files the readers load), is used in binary64. float64
+and complex128 arrays are used as given. float16, float32 and complex64 arrays are converted exactly to float64 or
+complex128 before any product or format conversion, so that repeated sparse entries are summed in binary64; the
+certificate lists the conversion under `arithmetic.input_widening` with the caller's dtype and `source_sha256`. Integer
+arrays are used as given when every value is a binary64 number, boolean arrays are converted, object arrays are accepted
+when every value v has float(v) == v, and lists, tuples and array-likes become arrays. Refused with `PrecisionError`
+(exit status 2 on the command line): a floating format wider than binary64 (an x87 or IEEE 128-bit long double), an
+integer or object value that binary64 cannot hold, non-numeric data, and an array-like whose conversion fails. Claimed
+eigenvalues follow the same rule; a complex array of the eigenvalues of a Hermitian claim is converted to its real part,
+as in 3.x. Releases 3.0.0 to 3.2.3 did not convert the narrower formats: [single-precision
+inputs](failures/single_precision_inputs.md).
+
 ## Reason codes used in `scope.out_of_scope` and `evidence.reason_code`
 
 | code | meaning |

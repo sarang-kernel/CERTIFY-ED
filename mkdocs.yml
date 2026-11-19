@@ -40,6 +40,8 @@ nav:
       - Pauli strings, OpenFermion, Qiskit: integrations/pauli.md
   - What certified means: what_certified_means.md
   - Limitations: limitations.md
+  - Failure reports:
+      - Single-precision inputs (3.0.0 to 3.2.3): failures/single_precision_inputs.md
   - FAQ, INCONCLUSIVE: faq_inconclusive.md
   - Reference:
       - Theory: theory.md

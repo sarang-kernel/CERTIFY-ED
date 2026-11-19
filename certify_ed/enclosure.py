@@ -68,6 +68,7 @@ from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range, modulus_up, abs_up)
 from .gpu import GPUUnavailable
+from .precision import binary64, require_binary64
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -102,7 +103,11 @@ class OperatorAdapter:
         self.op = op
         if sp.issparse(op) or isinstance(op, np.ndarray):
             self.kind = "matrix"
-            self.A = op.tocsr() if sp.issparse(op) else np.asarray(op)
+            # a stored matrix in a narrower format is converted exactly to binary64 (precision.py): the bounds below
+            # count binary64 arithmetic, and a single-precision product would not satisfy them
+            # (widened before tocsr, which would sum repeated entries in the narrower format)
+            w = binary64(op if sp.issparse(op) else np.asarray(op), "operator")
+            self.A = require_binary64(w.tocsr() if sp.issparse(w) else w, "OperatorAdapter")
             self.shape = self.A.shape
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
             self.width = max_nnz_per_row(self.A)
@@ -191,6 +196,7 @@ class OperatorAdapter:
         return self.kind in ("matrix", "spec")
 
     def matvec(self, X):
+        require_binary64(X, "OperatorAdapter.matvec")          # fail closed (precision.py)
         if self.kind == "matrix":
             if getattr(self, "_gpu", None) is not None:
                 try:
@@ -209,6 +215,9 @@ class OperatorAdapter:
     def abs_matvec(self, X, aX=None):
         """|A| |X| from upper moduli. `aX` = fp.modulus_up(X) may be passed when the caller has formed it already
         (the same values; it is read, not changed)."""
+        require_binary64(X, "OperatorAdapter.abs_matvec")      # fail closed (precision.py)
+        if aX is not None:
+            require_binary64(aX, "OperatorAdapter.abs_matvec: aX")
         if self.kind == "matrix":
             absA = self._absA if self._absA is not None else abs_up(self.A)
             aX = modulus_up(X) if aX is None else aX
@@ -225,6 +234,7 @@ class OperatorAdapter:
     def both_products(self, X):
         """(H X, |H| |X|), the same arrays as (matvec(X), abs_matvec(X)); with the GPU products of D-05 both are
         formed in one pass over H."""
+        require_binary64(X, "OperatorAdapter.both_products")   # fail closed (precision.py)
         if self.kind == "matrix" and getattr(self, "_gpu", None) is not None:
             try:
                 return self._gpu.products(X)
@@ -261,28 +271,37 @@ _BLOCK_TEMPORARIES = 4     # X block, H X block, |X| block, |H| |X| block (the E
 class StreamedColumns:
     """Column access to an on-disk eigenvector matrix (an h5py dataset, or any object with shape, dtype and
     2-D slicing) with numpy-style indexing X[:, i], X[:, a:b], X[:, [i, j, ...]] (any order). What certify()
-    wraps an HDF5 dataset in; a numpy memmap needs no wrapper."""
+    wraps an HDF5 dataset in; a binary64 numpy memmap needs no wrapper.
 
-    def __init__(self, source):
+    dtype: the dtype the columns are returned in; None, the source's. precision.binary64 wraps single-precision
+    vectors on disk (a memmap or a dataset) with float64 or complex128, so that every block is widened exactly as it
+    is read."""
+
+    def __init__(self, source, dtype=None):
         self.source = source
         self.shape = tuple(int(d) for d in source.shape)
-        self.dtype = np.dtype(source.dtype)
+        self.dtype = np.dtype(source.dtype) if dtype is None else np.dtype(dtype)
+        self.widens = self.dtype != np.dtype(source.dtype)
         self.ndim = len(self.shape)
         if self.ndim != 2:
             raise ValueError(f"streamed eigenvectors must be 2-D (n x k), got shape {self.shape}")
+
+    def _out(self, a) -> np.ndarray:
+        a = np.asarray(a)
+        return a.astype(self.dtype) if self.widens else a
 
     def __getitem__(self, key):
         if isinstance(key, tuple) and len(key) == 2 and key[0] == slice(None):
             col = key[1]
             if isinstance(col, slice):
-                return np.asarray(self.source[:, col])
+                return self._out(self.source[:, col])
             if np.isscalar(col) or isinstance(col, (int, np.integer)):
-                return np.asarray(self.source[:, int(col)])
-            return read_columns(self.source, list(col))
+                return self._out(self.source[:, int(col)])
+            return self._out(read_columns(self.source, list(col)))
         raise IndexError("StreamedColumns supports X[:, i], X[:, a:b] and X[:, [i, j, ...]] only")
 
     def __array__(self, dtype=None, copy=None):
-        a = np.asarray(self.source[...])
+        a = self._out(self.source[...])
         return a if dtype is None else a.astype(dtype)
 
 
@@ -323,11 +342,15 @@ def read_columns(X, idx) -> np.ndarray:
     idx = np.asarray(list(idx), dtype=np.int64)
     if isinstance(X, np.ndarray):
         return np.asfortranarray(X[:, idx])
+    widen_to = None
     if isinstance(X, StreamedColumns):
+        widen_to = X.dtype if X.widens else None
         X = X.source
     order = np.argsort(idx, kind="stable")
     uniq, inv = np.unique(idx[order], return_inverse=True)
     cols = np.asarray(X[:, uniq.tolist()])          # increasing, no duplicates
+    if widen_to is not None:
+        cols = cols.astype(widen_to)
     out = np.empty((cols.shape[0], idx.size), dtype=cols.dtype, order="F")
     out[:, order] = cols[:, inv]
     return out
@@ -412,8 +435,10 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
     in blocks of `block_mb` megabytes of temporaries (DEFAULT_BLOCK_MB) for a sparse or spec operator, in
     one block for a dense or black-box operator (OperatorAdapter.column_block_invariant). keep_R: store the
     residual matrix (default: yes for in-memory vectors, no for streamed ones). products: (H X, |H| |X|)
-    already formed for in-memory X (one block; the |H| |X| array is consumed in place)."""
+    already formed for in-memory X (one block; the |H| |X| array is consumed in place). Vectors in a narrower format
+    are converted exactly to binary64 first (precision.binary64)."""
     mu = np.asarray(mu, dtype=float)
+    X = require_binary64(binary64(X, "eigenvectors", stream=True), "residuals")    # fail closed (precision.py)
     streamed = is_streamed(X)
     if not streamed:
         X = np.asarray(X)
@@ -444,7 +469,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         mub = mu[a:b]
         gpu_absHX = None
         if products is not None:
-            HX = np.asarray(products[0])
+            HX = require_binary64(np.asarray(products[0]), "residuals: products[0]")     # fail closed (precision.py)
         elif adapter.rigorous and getattr(adapter, "_gpu", None) is not None:
             HX, gpu_absHX = adapter.both_products(Xb)   # D-05: both products in one pass, bit for bit the CPU ones
         else:
@@ -462,7 +487,8 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             if gpu_absHX is not None:
                 absHX, gpu_absHX = gpu_absHX, None
             else:
-                absHX = None if products is None else np.asarray(products[1], dtype=float)
+                absHX = (None if products is None else
+                         np.asarray(require_binary64(np.asarray(products[1]), "residuals: products[1]"), dtype=float))
             Eb = _rounding_bound(adapter, mub, Xb, absHX)
             del absHX
             for i in range(b - a):
@@ -658,6 +684,7 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional
     if X is None:
         raise ValueError("eigenvectors are required for enclosures (eigenvalue-only claims "
                          "are handled by inertia counts)")
+    X = binary64(X, "eigenvectors", stream=True)     # exact; the bounds count binary64 arithmetic (precision.py)
     if not is_streamed(X):
         X = np.asarray(X)
         if X.ndim == 1:
@@ -789,11 +816,12 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     supplied when fl(A x) and |A| |x| were already formed (certify.py forms them for all isolated pairs in
     one product each); the bound is the same function of them.
     """
-    x = np.asarray(x).ravel()
+    x = binary64(np.asarray(x).ravel(), "vector")
     # the |A||x| guard below is the one of Theorem 1 (Lambda5): established for w <= 2^26 and n <= 2^26 (3.2.2)
     check_guard_range(n=x.size, w=adapter.width, where="enclosure.rayleigh_interval")
     cplx = adapter.complex or np.iscomplexobj(x)
-    Ax = adapter.matvec(x) if Ax is None else np.asarray(Ax).ravel()
+    # caller-supplied products must be binary64 products (fail closed, precision.py)
+    Ax = adapter.matvec(x) if Ax is None else require_binary64(np.asarray(Ax), "rayleigh_interval: Ax").ravel()
     num_c, num_e = exact_dot(x, Ax)
     num = float(np.real(num_c))
     den_c, den_e = exact_dot(x, x)
@@ -802,7 +830,7 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     gw = gamma(adapter.width + 1)
     xa = modulus_up(x)
     if absAx is not None:
-        absAx_raw = np.asarray(absAx).ravel()
+        absAx_raw = require_binary64(np.asarray(absAx), "rayleigh_interval: absAx").ravel()
     else:
         absAx_raw = adapter.abs_matvec(x, xa) if isinstance(adapter, OperatorAdapter) else adapter.abs_matvec(x)
     absAx = absAx_raw / (1 - gw)

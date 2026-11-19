@@ -38,6 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, ULP_MIN, _GUARD, abs_up, gamma, norm2_upper, norm2_lower, up
+from .precision import binary64, require_binary64
 
 DEFAULT_MAX_SLICES = 8
 MAX_EXPONENT = 480          # |entries| < 2^480: products of two slices and their sums stay far below 2^1024
@@ -127,7 +128,7 @@ def _slice_values(v: np.ndarray, t, beta: int, max_slices: int):
 
 def split_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> Split:
     """Column-wise split of a real 2-D array (the exponent of column j is shared by its entries)."""
-    A = np.asarray(A, dtype=float)
+    A = np.asarray(require_binary64(A, "ozaki.split_columns"), dtype=float)    # fail closed (precision.py)
     if A.ndim == 1:
         A = A[:, None]
     _check_finite(A)
@@ -141,7 +142,7 @@ def split_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES
 
 def split_complex_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> Tuple[Split, Split]:
     """Real and imaginary parts split with one exponent per column (the larger of the two parts)."""
-    A = np.asarray(A)
+    A = np.asarray(require_binary64(A, "ozaki.split_complex_columns"))        # fail closed (precision.py)
     if A.ndim == 1:
         A = A[:, None]
     Ar = np.ascontiguousarray(A.real, dtype=float)
@@ -198,6 +199,7 @@ def _pad(parts, k, like):
 
 def split_rows(H, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> RowSplit:
     """Split a stored matrix by rows (sparse: on its stored entries; dense: on all entries)."""
+    require_binary64(H, "ozaki.split_rows")                                   # fail closed (precision.py)
     if sp.issparse(H):
         H = sp.csr_matrix(H)
         H.sort_indices()
@@ -344,11 +346,11 @@ def ozaki_gram(X: np.ndarray, Y: Optional[np.ndarray] = None, max_slices: int = 
     every gemm X_p^T Y_q is exact; X^H Y = sum_{p,q} X_p^H Y_q + R_X^H Y + Xs^H R_Y, and E is the Sum2 bound plus an
     upper bound on |R_X|^T |Y| + |Xs|^T |R_Y|."""
     t0 = time.time()
-    X = np.asarray(X)
+    X = binary64(np.asarray(X), "X")      # the slices are error-free for binary64 data only (precision.py)
     if X.ndim == 1:
         X = X[:, None]
     same = Y is None
-    Y = X if same else np.asarray(Y)
+    Y = X if same else binary64(np.asarray(Y), "Y")
     if Y.ndim == 1:
         Y = Y[:, None]
     n = int(X.shape[0])
@@ -397,8 +399,8 @@ def ozaki_gram(X: np.ndarray, Y: Optional[np.ndarray] = None, max_slices: int = 
 def ozaki_column_dots(X: np.ndarray, Y: np.ndarray, max_slices: int = DEFAULT_MAX_SLICES):
     """(d, e): d_c ~ x_c^H y_c for every column c with |d_c - x_c^H y_c| <= e_c (the diagonal of Theorem G, formed
     by elementwise slice products and column sums: each column sum has n exact terms, the same argument)."""
-    X = np.asarray(X)
-    Y = np.asarray(Y)
+    X = binary64(np.asarray(X), "X")      # the slices are error-free for binary64 data only (precision.py)
+    Y = binary64(np.asarray(Y), "Y")
     if X.ndim == 1:
         X, Y = X[:, None], Y[:, None]
     n, k = X.shape
@@ -458,7 +460,8 @@ def ozaki_residual(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES, block_cols: O
     Sum2; the remainders of H, X and mu are bounded by |H| |R_X| + |R_H| |Xs| + |Xs| |r_mu| + |R_X| |mu|."""
     t0 = time.time()
     mu = np.asarray(mu, dtype=float).ravel()
-    X = np.asarray(X)
+    X = binary64(np.asarray(X), "eigenvectors")    # the slices are error-free for binary64 data only (precision.py)
+    H = binary64(H, "operator")
     if X.ndim == 1:
         X = X[:, None]
     n, k = X.shape
@@ -562,7 +565,8 @@ def residual_report(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES):
     The stored residual R is the accurately summed one and E_norm its entrywise error bound, so the Theorem 2'
     term ||X^H R|| uses ||Rc - R|| <= ||E|| exactly as with the default report."""
     from .enclosure import OperatorAdapter, ResidualReport
-    X = np.asarray(X)
+    X = binary64(np.asarray(X), "eigenvectors")    # exact (precision.py)
+    H = binary64(H, "operator")
     if X.ndim == 1:
         X = X[:, None]
     mu = np.asarray(mu, dtype=float).ravel()

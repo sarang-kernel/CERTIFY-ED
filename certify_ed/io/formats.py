@@ -40,6 +40,8 @@ from typing import Optional
 import numpy as np
 import scipy.sparse as sp
 
+from ..precision import is_narrow_float
+
 ARRAY_EXT = (".npy", ".npz", ".h5", ".hdf5", ".hdf", ".csv", ".tsv", ".txt", ".dat", ".json", ".mtx")
 OPERATOR_EXT = ARRAY_EXT + (".py",)
 
@@ -211,7 +213,9 @@ def read_array(path: str, key: Optional[str] = None, role: str = "eigenvalues",
 
 
 def write_array(path: str, a, key: Optional[str] = None, role: str = "eigenvalues") -> str:
-    """Write an array in the format given by the extension (the inverse of read_array)."""
+    """Write an array in the format given by the extension (the inverse of read_array). In Matrix Market (.mtx) a
+    narrower floating array (float16, float32, complex64) is written as its exact binary64 copy, with 17 significant
+    digits, so it reads back as that copy; the other formats keep the array's dtype."""
     a = np.asarray(a)
     e = _ext(path)
     key = key or DEFAULT_KEYS[role][0]
@@ -230,19 +234,41 @@ def write_array(path: str, a, key: Optional[str] = None, role: str = "eigenvalue
             json.dump({key: _jsonable_array(a)}, f)
     elif e == ".mtx":
         from scipy.io import mmwrite
-        mmwrite(path, a.reshape(-1, 1) if a.ndim == 1 else a)
+        from ..precision import binary64
+        # 17 significant digits are binary64 digits: a narrower floating array is written as its exact binary64 copy
+        # (scipy 1.17's writer fails on float32 and complex64 data at this precision), so every value round-trips
+        b = binary64(a, role) if is_narrow_float(a.dtype) else a
+        mmwrite(path, b.reshape(-1, 1) if b.ndim == 1 else b, precision=17)
     else:
         raise FormatError(f"{path}: unsupported extension {e!r}")
     return path
 
 
 # ------------------------------------------------------------------------------------------ operators
+def _as_csr(A):
+    """A sparse matrix as read, in CSR when that conversion cannot round: a matrix in a narrower floating format
+    (float16, float32, complex64) keeps its format (a COO keeps its repeated entries), because tocsr would sum them in
+    that format; certify() and the record functions convert it exactly to binary64 first and then sum (precision.py),
+    and record the arrays as read."""
+    return A if is_narrow_float(A.dtype) else A.tocsr()
+
+
+def _csr_to_write(A):
+    """The CSR matrix a writer stores for the sparse matrix A: a matrix in a narrower floating format is written as
+    its exact binary64 copy, with its repeated entries summed in binary64 (the matrix certify() would certify), since
+    a CSR conversion in its own format would sum them in that format; other matrices as before."""
+    if is_narrow_float(A.dtype):
+        from ..precision import binary64
+        return sp.csr_matrix(binary64(A, "operator"))
+    return sp.csr_matrix(A)
+
+
 def _csr_from_group(g):
     keys = set(g.keys())
     if {"data", "indices", "indptr", "shape"} <= keys:
         return sp.csr_matrix((g["data"][...], g["indices"][...], g["indptr"][...]), shape=tuple(g["shape"][...]))
     if {"row", "col", "data", "shape"} <= keys:
-        return sp.coo_matrix((g["data"][...], (g["row"][...], g["col"][...])), shape=tuple(g["shape"][...])).tocsr()
+        return _as_csr(sp.coo_matrix((g["data"][...], (g["row"][...], g["col"][...])), shape=tuple(g["shape"][...])))
     raise FormatError("sparse group needs data/indices/indptr/shape or row/col/data/shape")
 
 
@@ -270,7 +296,8 @@ def _coo_header_shape(path: str):
 
 def read_operator(path: str, key: Optional[str] = None, layout: str = "auto", allow_code: bool = False,
                   shape=None, one_based: bool = False):
-    """Read the producer's operator: dense ndarray, scipy CSR matrix, or (allow_code) a LinearOperator."""
+    """Read the producer's operator: dense ndarray, scipy CSR matrix (a single-precision sparse file in its stored
+    layout, see _as_csr), or (allow_code) a LinearOperator."""
     e = _ext(path)
     if e == ".py":
         if not allow_code:
@@ -291,16 +318,16 @@ def _read_matrix(path: str, key: Optional[str], layout: str = "auto", shape=None
         with np.load(path, allow_pickle=False) as z:
             files = set(z.files)
             if {"data", "indices", "indptr", "shape", "format"} <= files:
-                A = sp.load_npz(path).tocsr()
+                A = _as_csr(sp.load_npz(path))
             elif {"H_data", "H_indices", "H_indptr", "H_shape"} <= files:
                 A = sp.csr_matrix((z["H_data"], z["H_indices"], z["H_indptr"]), shape=tuple(z["H_shape"]))
             elif {"row", "col", "data", "shape"} <= files:
-                A = sp.coo_matrix((z["data"], (z["row"], z["col"])), shape=tuple(z["shape"])).tocsr()
+                A = _as_csr(sp.coo_matrix((z["data"], (z["row"], z["col"])), shape=tuple(z["shape"])))
             else:
                 A = z[_pick_key(z.files, key, "operator", path)]
     elif e == ".mtx":
         A = _mmread(path)
-        A = A.tocsr() if sp.issparse(A) else np.asarray(A)
+        A = _as_csr(A) if sp.issparse(A) else np.asarray(A)
     elif e in (".h5", ".hdf5", ".hdf"):
         import h5py
         with h5py.File(path, "r") as f:
@@ -379,15 +406,16 @@ def _vector_call(f, n: int, path: str, name: str):
 
 def write_operator(path: str, A, key: str = "H") -> str:
     """Write an operator: dense (.npy, .npz, text, .json, .mtx, .h5) or sparse (.npz via scipy, .mtx,
-    .h5 CSR group, .json COO, text COO triplets with the shape in the header)."""
+    .h5 CSR group, .json COO, text COO triplets with the shape in the header). A sparse matrix in a narrower floating
+    format is written as its exact binary64 copy (_csr_to_write)."""
     e = _ext(path)
     if sp.issparse(A):
-        A = sp.csr_matrix(A)
+        A = _csr_to_write(A)                      # a narrower matrix: its binary64 copy, summed in binary64
         if e == ".npz":
             sp.save_npz(path, A)
         elif e == ".mtx":
             from scipy.io import mmwrite
-            mmwrite(path, A)
+            mmwrite(path, A, precision=17)    # 17 significant digits: binary64 round trip on every scipy
         elif e in (".h5", ".hdf5", ".hdf"):
             import h5py
             with h5py.File(path, "w") as f:
@@ -417,7 +445,8 @@ def write_operator(path: str, A, key: str = "H") -> str:
 
 # ------------------------------------------------------------------------------------------ bases
 def read_basis(path: str, key: Optional[str] = None):
-    """A sector basis: ('states', 1-D int64 array of basis states) or ('isometry', CSR matrix)."""
+    """A sector basis: ('states', 1-D int64 array of basis states) or ('isometry', CSR matrix; a single-precision
+    sparse file in its stored layout, see _as_csr)."""
     e = _ext(path)
     A = None
     if e in (".mtx", ".h5", ".hdf5", ".hdf") or (e == ".npz" and _npz_is_sparse(path)):
@@ -430,7 +459,8 @@ def read_basis(path: str, key: Optional[str] = None):
     if (sp.issparse(A) or np.asarray(A).ndim == 2) and A.shape[1] == 1 and A.shape[0] > 1:
         A = (A.toarray() if sp.issparse(A) else np.asarray(A)).ravel()      # an n x 1 column is a state list
     if sp.issparse(A) or np.asarray(A).ndim == 2:
-        return ("isometry", sp.csr_matrix(_finite(A, path)))
+        _finite(A, path)
+        return ("isometry", A if sp.issparse(A) and is_narrow_float(A.dtype) else sp.csr_matrix(A))
     a = np.asarray(A)
     if a.dtype.kind in "fc":
         if not np.all(np.mod(a.real, 1) == 0) or np.any(a.imag != 0):

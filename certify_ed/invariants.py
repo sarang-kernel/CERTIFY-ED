@@ -25,6 +25,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from .fp import gamma, modulus_up, up
+from .precision import binary64
 from .spec import ModelSpec
 
 
@@ -83,7 +84,11 @@ def spec_invariants(spec: ModelSpec) -> Dict[str, float]:
 
 
 def matrix_invariants(H) -> Dict[str, float]:
+    """Trace and squared Frobenius norm of H with the relative rounding bound err_rel (binary64). A matrix in a
+    narrower floating format is converted exactly to binary64 first, so that the sums are those the bound counts
+    (precision.py)."""
     import scipy.sparse as sp
+    H = binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True)
     if sp.issparse(H):
         H = H.tocsr()
         tr = complex(H.diagonal().sum())

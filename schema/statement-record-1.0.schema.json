@@ -30,6 +30,54 @@
     "basis": {
       "type": "string"
     },
+    "input_widening": {
+      "type": "object",
+      "required": [
+        "converted",
+        "exact"
+      ],
+      "description": "inputs converted exactly to binary64 before any product (precision.binary64); the statements concern the values as stored; the record's hashes are of the converted data, source_sha256 of each input as given",
+      "properties": {
+        "converted": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "input",
+              "dtype",
+              "converted_to"
+            ],
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "dtype": {
+                "type": "string",
+                "description": "the caller's dtype"
+              },
+              "converted_to": {
+                "enum": [
+                  "float64",
+                  "complex128"
+                ]
+              },
+              "source_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$",
+                "description": "precision.source_sha256 of the input as given: array_sha256 of an array; format, shape and array_sha256 of each stored array of a sparse matrix"
+              }
+            }
+          }
+        },
+        "exact": {
+          "const": true
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
     "record_sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$",

@@ -7,6 +7,160 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Single-precision inputs (soundness fix)
+
+Certificates computed from inputs in a floating format narrower than binary64 (float16, float32, complex64) could state
+bounds that the computation did not support: numpy and scipy formed the products, and the sums of repeated sparse
+entries, in the inputs' own precision (unit roundoff 2^-24 for float32), while every bound counts binary64 rounding
+(unit roundoff 2^-53).
+
+Affected versions: 3.0.0, 3.1.0, 3.2.0, 3.2.1, 3.2.2 and 3.2.3, checked at their release commits (2bd9a39, e860a83,
+55d9f61, f3c478b, ddf83e1, 145cc00), and dev/3.3 up to cd0ca97. The 1.x and 2.x lines were not checked.
+
+Affected inputs:
+
+- Any input in a narrower floating format, in any position: the operator, the claimed eigenvectors, a sector isometry or
+  block, an observable or symmetry matrix, the inputs of the standalone records. Example: A = [[1, 2^-30], [2^-30, 1]]
+  in float32 (exact entries), x = (1, 1), claimed eigenvalue 1, kind 'subset': S2 CERTIFIED with radius 8.9e-16 (3.6e-15
+  for complex64), although the eigenvalues of A are 1 -+ 2^-30, at distance 9.3e-10.
+- A binary64 operator with single-precision vectors (the norm of the vectors was formed in single precision). Example:
+  the float64 CSR matrix [[1, 2^-20], [2^-20, 1]], x = (7, 7) in float32, accuracy_target 1e-5: S2 CERTIFIED with radius
+  9.536742991635583e-07 (complex64: 9.536743018280948e-07), below the distance 2^-20 = 9.5367431640625e-07 to the
+  eigenvalues, at all seven commits above.
+- A single-precision sparse matrix with repeated entries (COO, or CSR with duplicate indices), in memory or read from a
+  file by `claim_from_file`, `claim_from_npz`, `claim_from_bundle` or the command line (3.1.0 onwards): the format
+  conversions summed the repeated entries in single precision, so the statements concerned a rounded matrix. Example: a
+  float32 COO matrix with (0, 0) stored as 1 and 2^-25 and (1, 1) = 3, claimed eigenvalues (1, 3), X = I: S2 CERTIFIED
+  with radius 6.661338147750968e-16 (complex64: 3.108624468950454e-15), although the first eigenvalue is 1 + 2^-25, at
+  distance 3.0e-08; at all seven commits in memory and from 3.1.0 on through an npz file and `claim_from_file`.
+
+Not affected: certificates whose inputs were all float64 or complex128, and integer inputs (an integer beyond 2^53 was
+rounded to binary64 without notice; it is refused now). One integer case differs, to the safe side: for an integer
+matrix whose absolute row sums exceed 2^63, 3.x gave a negative norm bound (norm_upper_bound -9.2e18 for the int64
+matrix [[2^62, 2^62], [2^62, 2^62]]) and a spurious S2 FAILED; the 3.3 development line gives the certificate of the
+float64 copy.
+
+Affected statements and records:
+
+- S2, and the statements that rest on its enclosures or on an inertia count of a narrower operator: S3, S4, S7 and S8.
+  In the 3.2.3 kind 'lowest' variant of the first example S3 is INCONCLUSIVE, so no false S3 was demonstrated; S3 rests
+  on S2 all the same.
+- S1: its entrywise comparison and its probes promote a single-precision matrix to binary64 (checked on the Heisenberg
+  chain of 6 sites: a float32 copy of the matrix gives the S1 status, difference and model-shift bound of the float64
+  matrix at 3.2.3 and cd0ca97, by entries and by probes). Two parts were affected: a single-precision sparse matrix was
+  compared after the single-precision sum of its repeated entries (the same matrix as a float32 COO with an extra entry
+  2^-28 on the diagonal: S1 CERTIFIED with max |diff| 0 at 3.2.3 and cd0ca97, FAILED with 3.7e-09 for its float64 copy),
+  and the sector audit formed the products of a single-precision isometry or block in that precision.
+- S6 is not affected: it works in exact arithmetic on the spec operator and on the exact rational values of the claimed
+  eigenvalues and vectors (on the same chain with float32 and complex64 vectors, S6 gives the same radii at cd0ca97 as
+  on this branch; its bound on the next eigenvalue differs only through the floating-point hint it verifies).
+- The standalone records and helpers that formed products or sums of the given arrays: `certify_variational`,
+  `certify_generalized` and its inertia count, `certified_moments`, `enclose_spectrum`, `certified_sweep` and
+  `sweep.matrix_affinity_defect`, the sector audits and the decomposition audit of `compose.certify_low_energy`,
+  `compat.symveig` with `symmetrize=True`, `eigenspace.commutes_signed_permutation`, `sectors.trace_moments_check`,
+  `correlations.hermitian_parts`, `davis_kahan.labels_hook`, the Rayleigh interval of Kato-Temple and the norm bounds of
+  `fp`. The non-Hermitian record converted its inputs to binary64 already.
+
+No evidence-run input, example or test of the repository passes single-precision data (git grep: float32 appears only as
+the storage of a fixture's vectors, converted to float64 before use, in tests/test_whole_spectrum.py and
+RESULT_whole_spectrum.md), so no published number changes.
+
+How to recognise an affected 3.x certificate: 3.x certificates do not record the input dtypes. When the eigenvectors
+were stored (`store_eigenvectors`), the arrays sidecar records their dtype: `arrays.dtypes.eigenvectors` is '<f4'
+(float32) or '<c8' (complex64) for affected vectors. Otherwise `claim.eigenvectors_sha256` of a 3.x certificate equals
+`certificate_v2.array_sha256` of the producer's vectors in their own dtype, so a holder of those vectors can check
+whether they were single precision. The operator's dtype cannot be read off a certificate (`matrix_sha256` hashes the
+matrix after its conversion): the holder of the certificate has to check the producer's code or files for narrower
+operators, isometries and observables and for repeated sparse entries.
+
+Workaround for 3.x: Convert every array to float64 or complex128 before the call: the operator, the vectors, the sector
+isometry and block, observables, symmetry matrices and the inputs of the standalone records. For a COO, CSR or CSC
+matrix convert the stored value array and keep the index arrays, `B = A.copy(); B.data = A.data.astype(np.float64)` (or
+`np.complex128`): no entry is summed before the conversion, whatever the scipy version. `A.astype(np.float64)` converts
+before it sums repeated entries only from scipy 1.11; up to scipy 1.10 it sums them first, in single precision and in
+place on `A` (scipy's source: 1.8.1 and 1.10.1 sum, then convert; 1.11.0 converts, then sums). A format conversion first
+(`A.tocsr().astype(...)`) sums them in single precision on every version. For files, load the arrays, convert them the
+same way and pass the arrays to `Claim`; 3.x's readers convert single-precision sparse files to CSR in single precision.
+Checked at 3.0.0 and 3.2.3 (scipy 1.17.1): with the stored values converted, the first example gives radius 9.3e-10 and
+the COO example 2.98e-08 = 2^-25, for COO, CSR and CSC, float32 and complex64, and `A` is unchanged;
+`A.tocsr().astype(np.float64)` still gives 6.7e-16.
+
+Advisory: `docs/failures/single_precision_inputs.md` (the text above).
+
+The fix. The public functions of the 30 modules listed in `tests/test_precision_registry.py` that take a stored matrix
+or vectors pass them through `precision.binary64` before any product or format conversion: float16, float32 and
+complex64 data are converted exactly to float64 or complex128 (a sparse matrix keeps its stored entries, repeated ones
+included, which are then summed in binary64; LIL and DOK through their own astype; DIA without reading its padding). The
+registry test runs each of them on single-precision data with a repeated entry against the binary64 copy; it fails when
+a public function of those modules is neither listed nor exempted with a reason, and when a module of the package is
+neither listed nor exempted with a reason (wrappers of certify(), the S5 corroboration, readers of producer formats that
+produce float64 arrays, modules without a stored-matrix input). The low-level kernels (`OperatorAdapter` products,
+`enclosure.residuals`, the inertia factorizations, `ldl_residual`, `sectors.audit_sector`, the Ozaki splits) and the
+caller-supplied products of `rayleigh_interval`, `kato_temple` and `residuals(products=...)` refuse floating data other
+than binary64 with `PrecisionError`, so an entry point that misses its conversion fails instead of certifying. The S1
+comparator `construct.matrix_difference`, `construct.hermitian_part`, `basis.sector_matrix` and
+`invariants.matrix_invariants` (which carries a rounding bound) convert as well; inside certify() they receive converted
+matrices already.
+
+File readers (`io.formats.read_operator` and `read_basis`, `io.bundle`, `claim_from_file`, `claim_from_npz`,
+`claim_from_bundle`, `claim_from_quspin`) return a single-precision sparse matrix as read (a COO keeps its repeated
+entries), and certify() converts it; `source_sha256` in the record is that of the arrays as read. Writers
+(`write_operator`, `write_bundle`, `export_npz`) store the exact binary64 copy of a single-precision sparse matrix,
+summed in binary64, so the files of a float32 matrix and of its float64 copy certify alike; such a matrix therefore
+reads back as float64 (a round trip changes its dtype, and an .npz file is larger). The Matrix Market writers write 17
+significant digits (`mmwrite(..., precision=17)`), so that binary64 values round-trip on every scipy version (below 1.12
+scipy writes 16 by default); a narrower dense array (vectors, eigenvalues, a dense operator or isometry) is written
+there as its exact binary64 copy and reads back as that copy (scipy 1.17's writer stops the process on float32 data and
+writes an unreadable file for complex64 data at this precision); the other formats keep a dense array's dtype. The text
+of such files changes, their values do not. Claimed vectors on disk (numpy memmap, HDF5 dataset) are converted block by
+block; any other matrix on disk is read into memory, an HDF5 dataset in binary64 as well (it is then a stored matrix,
+like a float32 dataset). An operator given as a list of lists or as an array-like (an object with `__array__` and no
+`matvec`) is a stored matrix whatever its dtype; in 3.x it failed as a black box without a `matvec`.
+`compose.certify_low_energy` converts each sector's isometry, block and vectors once, before the U(1) restriction and
+the decomposition audit, and lists the conversions in its record. A binary64 sparse matrix in the other byte order is
+copied to native order.
+
+Record and hashes. `arithmetic.input_widening` of the certificate (`input_widening` of the standalone records and of the
+composition) lists, only when there are any, the inputs that were in a narrower floating format, with the caller's dtype
+and `source_sha256` (array_sha256 of the input as given; per stored array for a sparse matrix). Hashes are of the
+binary64 data: `matrix_sha256` widens before it sums repeated entries (it differs from the 3.x hash only for a
+single-precision matrix whose repeated entries sum differently in single precision), and `eigenvectors_sha256` of
+single-precision vectors is that of the converted array, which the arrays sidecar stores.
+
+Integers and other types. Integer inputs were not affected, and their certificates and records are those of 3.x, bodies
+and hashes (15 integer cases against cd0ca97: operators dense, sparse and with the plan, vectors, claimed eigenvalues,
+observables, symmetry diagonals, isometries, stored eigenvectors, variational, moments, non-Hermitian, spectrum and
+inertia records; the generalized record differs only in its hash over the run time, as between any two runs), except the
+integer matrices with absolute row sums beyond 2^63 named above: integers are checked, used as given, converted only
+where they are multiplied, and not recorded. Integer vectors, which 3.x refused with a numpy casting error, now certify;
+boolean inputs (a TypeError in 3.x) are converted exactly. Values that binary64 cannot hold are refused with
+`PrecisionError` (a `ValueError`, exported by the package) under one rule wherever they enter, the entry points of the
+exact layer (`checker.exact_eigenpair_radii`, `exact_recheck_lowest`, `exact_sectors.exact_recheck_sector_lowest`)
+included: a floating format wider than binary64 (an x87 or IEEE 128-bit long double; the decision is
+`precision.classify_format`, tested for both on every platform), an integer beyond 2^53 that is not a binary64 number
+(also in a list next to floats, where numpy would round it: Python integers, numpy integer scalars and integer arrays
+alike; a Python integer beyond 2^64 or of 2^1024 or more), an object value v with float(v) != v (a Fraction 1/3, a
+Decimal 0.1; exact object values are accepted, a change for `variational.state_from_dense`, which rounded them in 3.x;
+NaN goes on to the finite check, as in a float array), non-numeric data, and an array-like whose conversion raises. A
+complex array of the claimed eigenvalues of a Hermitian claim is converted as in 3.x (the real part, with numpy's
+ComplexWarning). `claim_from_file` checks the eigenvalue file before it converts it. Every `certify-ed` command prints
+'<command>: refused: ...' and exits with 2.
+
+Memory. A narrower dense input now costs the caller's array plus its binary64 copy (1.5 times a float64 input for
+float32); `cost.plan_for_claim` adds the caller's narrower arrays to its peaks. The copies are made before the memory
+gates, so a claim that does not fit raises MemoryError instead of giving NOT_CHECKED (BUDGET_MEMORY). Array-likes are
+materialized. Integer operators are used as given and converted where they are multiplied, as in 3.x; the exactness
+check of an integer CSR, CSC or BSR matrix reads its nnz stored values only, so a value left past them is not
+refused. Upper moduli that a caller passes to `OperatorAdapter.abs_matvec` must be binary64, like its vectors.
+
+float64 and complex128 inputs give the same certificates and records as before, bit for bit (bodies without environment
+and times, and arrays, on 14 models and records against cd0ca97, and claims with a complex eigenvalue array; hashes over
+the run time differ between any two runs), also for vectors, observables and symmetry diagonals given as lists or
+array-likes and for the sector composition; array-like observables, which 3.x refused, now certify. The computational
+source hash changes (new module `precision.py` and the modules changed here). Tests: `tests/test_single_precision.py`,
+`tests/test_precision_registry.py`. Not exercised here: the GPU products of D-05 (no device), which receive the
+converted matrix, and a Linux run.
+
 ### The caller's matrices stay as given
 
 `certify()` and `certify_variational()` now work on private copies of the CSR matrices they are given whose indices are
@@ -47,21 +201,21 @@ The computational source hash changes (`certify.py`, `variational.py`).
 ### Upper moduli in `fp`
 
 `fp.modulus_up` returns, entrywise, an upper bound m ≥ |z| on the modulus of a real or complex array, formed from
-correctly rounded products, sums and square roots with exact scaling by powers of two, at most a relative 12u above
-|z| for normal values (`docs/proofs/fp_modulus-up.md`, Lemma M); `fp.abs_up` does the same for a dense array or a
-scipy sparse matrix. No bound uses them in this change, and no bound, status rule or record changes. `modulus_up`
-returns real floating input as `np.abs` gives it, integer and boolean input as float64 (one step up from 2⁵³), a float
-for every scalar, and raises TypeError for a scipy sparse matrix, an object array and a complex type wider than
-complex128; it works in passes of at most 2¹⁸ entries without copying its input. Known issues: the moduli of
-float16, float32 and complex64 data are upper bounds, but a bound whose products are formed in single precision is not
-covered (the corollary counts binary64 roundings; such input is the subject of the separate change
-`fix/single-precision`); `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in
-place, so a product formed with the matrix before the call is not covered by its moduli (direct calls of
-`commutator_bound`, `audit_sector`, `compress_operator` and `certify_observable` on a matrix with duplicates); the
-floating-point items that the lemma assumes beyond those `probe_float_environment` checks are tested with the test
-suite, not probed at run time. The derivation is new and unverified: Sarang's check (D-12) is pending (independent
-re-derivation: verdict AGREES on the lemma, GAP on its corollary, resolved; `docs/proofs/verify_modulus-up.py`,
-`tests/test_modulus_up.py`). The computational source hash changes (`fp.py`).
+correctly rounded products, sums and square roots with exact scaling by powers of two, at most a relative 12u above |z|
+for normal values (`docs/proofs/fp_modulus-up.md`, Lemma M); `fp.abs_up` does the same for a dense array or a scipy
+sparse matrix. No bound uses them in this change, and no bound, status rule or record changes. `modulus_up` returns real
+floating input as `np.abs` gives it, integer and boolean input as float64 (one step up from 2⁵³), a float for every
+scalar, and raises TypeError for a scipy sparse matrix, an object array and a complex type wider than complex128; it
+works in passes of at most 2¹⁸ entries without copying its input. Known issues: the moduli of float16, float32 and
+complex64 data are upper bounds, but a bound whose products are formed in single precision is not covered (the corollary
+counts binary64 roundings; the entry points convert such input to binary64, see 'Single-precision inputs' above);
+`abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in place, so a product formed with the matrix before
+the call is not covered by its moduli (direct calls of `commutator_bound`, `audit_sector`, `compress_operator` and
+`certify_observable` on a matrix with duplicates); the floating-point items that the lemma assumes beyond those
+`probe_float_environment` checks are tested with the test suite, not probed at run time. The derivation is new and
+unverified: Sarang's check (D-12) is pending (independent re-derivation: verdict AGREES on the lemma, GAP on its
+corollary, resolved; `docs/proofs/verify_modulus-up.py`, `tests/test_modulus_up.py`). The computational source hash
+changes (`fp.py`).
 
 ### Non-finite bounds give no statement
 
@@ -91,32 +245,32 @@ hash changes.
 
 ### Upper bounds for complex moduli
 
-The bounds now take every modulus of complex data from `fp.modulus_up` (`fp.abs_up` for matrices; "Upper moduli in
-`fp`" above). Before, they used NumPy's complex absolute value and counted it as one to three roundings; on Windows
-(NumPy 2.4.4) its error reaches 2.47u, and no bound on it is established. This covers the residual bounds of S2 (on
-the CPU and on the GPU, whose moduli are formed on the host by the same functions, so that they equal the CPU moduli
-by construction; the device path was not run after the change), the Rayleigh intervals of the Kato-Temple step and of
-the variational records, the norm bounds, the backward errors of S3, and the bounds of observables, moments,
-commutators, sector audits, pencils, non-Hermitian operators, sweeps, MPS contractions and the Ozaki prototype. Two
-two-sided values, the C-13 fidelity and the Frobenius invariant of the S1 evidence, are formed from the squares of the
-components instead. No constant and no status rule changes. For complex128 data the bound values change in the last
-bits (each modulus lies at or above the exact one and, for normal values, at most a relative 12u above it, where
-NumPy's could lie below it). For complex64 data the moduli were float32 values before and are binary64 upper bounds
-now, so those bounds can move either way by more than that (a bound formed in single precision is not covered; the
-separate change `fix/single-precision`). An operator with an entry within a relative 12u of the largest float now has
-an infinite modulus, and the statements that rest on it state nothing, by the rules of the previous entry: S2, V1, V2,
-N1 and G2 are INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and
-`commutator_bound` is ∞ where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment,
-observable and sweep-affinity bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well.
-Real data, and complex data whose entries all have a zero real or imaginary part, give the same bounds and records as
-before, except the non-Hermitian record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod,
-which the bounds no longer need (its four assumption strings and its record hash change, for real data too). Cost: a
-modulus pass takes about four times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the
-S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at
-commit cdf6ebb; 8.9 s and 9.0 s against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host);
-matrix-free operators pay the moduli in every |H||x| application. The derivation is new and unverified: Sarang's check
-(D-12) is pending (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation
-documents; `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
+The bounds now take every modulus of complex data from `fp.modulus_up` (`fp.abs_up` for matrices; "Upper moduli in `fp`"
+above). Before, they used NumPy's complex absolute value and counted it as one to three roundings; on Windows (NumPy
+2.4.4) its error reaches 2.47u, and no bound on it is established. This covers the residual bounds of S2 (on the CPU and
+on the GPU, whose moduli are formed on the host by the same functions, so that they equal the CPU moduli by
+construction; the device path was not run after the change), the Rayleigh intervals of the Kato-Temple step and of the
+variational records, the norm bounds, the backward errors of S3, and the bounds of observables, moments, commutators,
+sector audits, pencils, non-Hermitian operators, sweeps, MPS contractions and the Ozaki prototype. Two two-sided values,
+the C-13 fidelity and the Frobenius invariant of the S1 evidence, are formed from the squares of the components instead.
+No constant and no status rule changes. For complex128 data the bound values change in the last bits (each modulus lies
+at or above the exact one and, for normal values, at most a relative 12u above it, where NumPy's could lie below it).
+For complex64 data the moduli were float32 values before and are binary64 upper bounds now, so those bounds can move
+either way by more than that (a bound formed in single precision is not covered; the entry points convert such data, see
+'Single-precision inputs'). An operator with an entry within a relative 12u of the largest float now has an infinite
+modulus, and the statements that rest on it state nothing, by the rules of the previous entry: S2, V1, V2, N1 and G2 are
+INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and `commutator_bound` is ∞
+where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment, observable and sweep-affinity
+bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well. Real data, and complex data whose
+entries all have a zero real or imaginary part, give the same bounds and records as before, except the non-Hermitian
+record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod, which the bounds no longer need (its
+four assumption strings and its record hash change, for real data too). Cost: a modulus pass takes about four times as
+long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus once and
+cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at commit cdf6ebb; 8.9 s and 9.0 s against
+11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host); matrix-free operators pay the moduli in every
+|H||x| application. The derivation is new and unverified: Sarang's check (D-12) is pending
+(`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation documents;
+`tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
 `tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic
 symmetry divides by a floating-point root separation and its record's `certified` flag rests on it (an open D-12 item;
 the record says so, previous entry). The computational source hash changes.

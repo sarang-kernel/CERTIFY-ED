@@ -38,6 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, gamma, gamma_dot, up, _GUARD, check_guard_range, abs_up, modulus_up
+from .precision import require_binary64
 
 DEFAULT_BLOCK_MB = 64.0      # memory for the sparse temporaries of one row block (F block, |E| block, S block)
 _MIN_BLOCK_ROWS = 64
@@ -93,6 +94,9 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     The shift rounding term 2u max_i |S_ii| (S = A - sigma I formed in floating point) is included in beta.
     """
     t0 = time.time()
+    # fail closed (precision.py): the bound counts binary64 arithmetic on binary64 factors and matrix
+    for M, name in ((L, "L"), (D, "D"), (S, "S")):
+        require_binary64(M, f"ldl_residual.sparse_ldl_residual_bound: {name}")
     L = sp.csr_matrix(L)
     n = L.shape[0]
     # hypothesis (H3) of docs/proofs/D-01_sparse-residual.md: n <= 2^26 and w <= 2^26 (3.2.2, finding L-3)
