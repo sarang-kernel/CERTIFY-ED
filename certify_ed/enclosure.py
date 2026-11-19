@@ -216,6 +216,8 @@ class OperatorAdapter:
         """|A| |X| from upper moduli. `aX` = fp.modulus_up(X) may be passed when the caller has formed it already
         (the same values; it is read, not changed)."""
         require_binary64(X, "OperatorAdapter.abs_matvec")      # fail closed (precision.py)
+        if aX is not None:
+            require_binary64(aX, "OperatorAdapter.abs_matvec: aX")
         if self.kind == "matrix":
             absA = self._absA if self._absA is not None else abs_up(self.A)
             aX = modulus_up(X) if aX is None else aX

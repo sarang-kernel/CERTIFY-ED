@@ -989,6 +989,8 @@ def test_low_level_products_and_splits_refuse_single_precision():
         with pytest.raises(PrecisionError, match="did not convert"):
             f(*args)
     assert json.dumps(canon(ad.matvec(D.Xw))) == json.dumps(canon(OperatorAdapter(_wide(D.S)).matvec(D.Xw)))
+    with pytest.raises(PrecisionError, match="did not convert"):     # moduli passed by a caller: binary64 too
+        OperatorAdapter(_wide(D.S)).abs_matvec(D.Xw, np.abs(D.Xw).astype(np.float32))
     # caller-supplied products (the fast path of certify()) must be binary64 products too
     from certify_ed.enclosure import kato_temple, rayleigh_interval, residuals
     aw, x = OperatorAdapter(_wide(D.S)), D.Xw[:, 0]
