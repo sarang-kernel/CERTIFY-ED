@@ -115,8 +115,9 @@ other analyses the treatment is the one each document states (not re-checked her
   keeps `np.abs`; its other moduli are upper bounds. The separation is a floating-point value, so the record's leakage
   bound and its `certified` flag are not covered by Lemma M. A rigorous version needs a lower bound on the exact
   separation 2 sin(π/n) and a bound on the distance of the computed roots from the exact ones; it is an open D-12 item
-  (Risks and limits; VERDICTS.md, complex moduli). The record is part of the sector composition (`compose.py`); no
-  statement of `certify()` uses it.
+  (Risks and limits; VERDICTS.md, complex moduli). The record says so: it carries the separation as a float
+  (`separation`), a note (`separation_note`) and `separation_rigorous: false`; its `certified` flag is unchanged (a
+  known issue). The record is part of the sector composition (`compose.py`); no statement of `certify()` uses it.
 - Duplicate entries. For a sparse matrix in CSR, CSC, BSR or COO format, `abs_up` first sums duplicate entries in place
   (`A.sum_duplicates()`, in the type of the data, as `abs(A)` does), and its moduli are those of the summed entries;
   the exact sum of the duplicates can differ from the stored sum by a rounding, and no bound refers to it. A product
@@ -433,6 +434,7 @@ bounds that use the moduli it pins `abs_matvec`, the constant and moduli of `_ro
 `rayleigh_interval` (bit for bit), the moduli of a block formed once, `fp.inf_norm_upper` bit for bit and in exact
 arithmetic on the three arguments (dense and sparse), `spec_invariants` (each modulus taken once, the same bounds),
 stage (S2) of Theorem 1 in exact arithmetic on the three arguments, and the dynamic pin of section 3.
+`tests/test_nonfinite_moduli.py` shows the handling of an infinite upper modulus (Risks and limits).
 
 **Cost** (best and median of five, seconds, Windows reference host, branch `fix/upper-moduli` at commit 249b8ae). A
 complex vector of 2²⁴ entries: `np.abs` 0.162 and 0.171, `modulus_up` 0.698 and 0.739 (about 4.3 times); the scaled
@@ -483,5 +485,5 @@ step the result would be 2⁻¹⁰⁷⁴ < |z| (the second negative control catc
 
 ## 6 Status
 
-Derived on 2026-11-18; machine-checked (sampled, exact rational checks: 199 953 random + 26 815 adversarial cases, 0 violations; negative controls: broken variants detected in 14 862 of 19 996, 1 166 and 87 of 26 815 cases, `np.abs` below |z| on 2 of the 3 reference arguments); independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md); resolved 2026-11-18 by stating the corollary for finite moduli with the underflow term w·2⁻¹⁰⁷⁵ (absent without underflow), and by rejecting inputs whose components are not binary64 numbers (TypeError) and stepping integer input up from 2⁵³;
+Derived on 2026-11-18; machine-checked (sampled, exact rational checks: 199 953 random + 26 815 adversarial cases, 0 violations; negative controls: broken variants detected in 14 862 of 19 996, 1 166 and 87 of 26 815 cases, `np.abs` below |z| on 2 of the 3 reference arguments); independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md); resolved 2026-11-18 by stating the corollary for finite moduli with the underflow term w·2⁻¹⁰⁷⁵ (absent without underflow), by rejecting inputs whose components are not binary64 numbers (TypeError) and stepping integer input up from 2⁵³, and, with the upper moduli in the bounds, by the rules for non-finite bounds on which this change builds (the records that rest on an infinite modulus are INCONCLUSIVE: S2, S3, V1 to V3, M1 to M3, N1, G2);
 Sarang's check (D-12): pending. UNVERIFIED (D-12) until that check.
