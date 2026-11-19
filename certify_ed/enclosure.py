@@ -479,6 +479,10 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         # the absolute errors of a division and a product whose results are subnormal
         rel = np.where(xl > 0, upper / xl, np.inf) * (1 + 4 * U) + 2 * ULP_MIN
         est = computed / xn
+    # a nan bound (inf - inf or inf * 0 after an overflow of the accounting) is no bound: inf, as for a zero vector,
+    # so that the records never store nan and every comparison treats it as unbounded
+    upper = np.where(np.isnan(upper), np.inf, upper)
+    rel = np.where(np.isnan(rel), np.inf, rel)
     return ResidualReport(computed, upper, xl, rel, est, R, E_up, adapter.rigorous, adapter, mu, X)
 
 

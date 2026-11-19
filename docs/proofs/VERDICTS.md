@@ -170,3 +170,25 @@ summation of duplicate entries; a test covers the subnormal band of results. Ope
 - For P15's D-12 check: `P15_summed_bounds.md` prints (1 − u)³(1 + 8u) = 1 + 5u − 21u² + 13u³ − 8u⁴, where the
   coefficient is 23u³, and reports a worst main-branch overestimate of 2.2·10⁻¹⁵ relative, above the 12u ≈
   1.33·10⁻¹⁵ of Lemma M (ii) for the same computation (probably m²/|z|² − 1). P15 is not changed here.
+
+### Non-finite bounds (2026-11-19; UNVERIFIED, D-12)
+
+A bound of the floating-point accounting can be ∞ or nan: a product, a sum or a modulus overflows for operator entries
+near the largest float (∞, and nan where an ∞ meets a zero or another ∞), for real and complex data. Resolved in the
+code, each with a test in `tests/test_nonfinite_bounds.py` (real entries of 1.7·10³⁰⁸ and one step below the largest
+float, the complex entry 1.5·10³⁰⁸(1 + i), whose modulus exceeds the largest float; controls at 10¹⁰⁰ certified): S2
+and S3 of `certify()` are INCONCLUSIVE with the reason code `NONFINITE_BOUND` and a summary that says the radius is not
+finite (before, the S2 summary of such a pair said that an eigenvalue lies within its radius), the residual bounds and
+radii are stored as ∞, not nan, and S2 makes no accuracy statement, with the same code, when the sector lift shift is
+not finite; a nonzero claimed vector whose norm binary64 does not resolve (its squared norm underflows or overflows)
+has the reason code `UNRESOLVED_VECTOR_NORM` and the advice to normalise the vectors instead; `inertia_dense` and
+`inertia_sparse` give no count on a non-finite backward error (the sparse guard is reached through a stand-in residual
+bound only); a sector audit with a non-finite defect does not pass (inf ≤ tol · inf held before), so S1 on a sector
+isometry is INCONCLUSIVE and the sector composition is INCONCLUSIVE with a summary that names the audit bounds; the
+variational records (V1 to V3; V1 and V2 were CERTIFIED with a nan bound) and the moment records (M1 to M3, and a
+sum-rule verdict on a nan endpoint) are INCONCLUSIVE with `NONFINITE_BOUND`; a non-finite observable bound is reported
+as ∞. The label record of a cyclic symmetry carries its separation as a float, a note that it is not a certified lower
+bound and `separation_rigorous: false`; its `certified` flag is unchanged (open, D-12). Not covered by a test: the
+correlation records, the sweeps, the MPS contraction, the Ozaki prototype and the GPU path. Open, as at the base:
+`certify(kind="lowest")` raises ValueError in `scipy.linalg.ldl` when the shifted matrix of S3 is not finite (couplings
+of 10¹⁶⁰ without a sector isometry).

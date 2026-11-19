@@ -64,6 +64,32 @@ re-derivation: verdict AGREES on the lemma, GAP on its corollary, resolved; `doc
 `tests/test_modulus_up.py`). The computational source hash changes (`fp.py`).
 
 
+### Non-finite bounds give no statement
+
+A bound of the floating-point accounting that is not finite now gives no statement. Such a bound arises when a
+product, a sum or a modulus overflows, for operator entries near the largest float (∞, and nan where an ∞ meets a zero
+or another ∞), for real and complex data alike. S2 and S3 are INCONCLUSIVE with the new reason code `NONFINITE_BOUND`
+(listed in `scope.REASON_CODES`, docs/SCOPE_MATRIX.md and the published schemas) and say that the radius is not finite
+(the S2 summary used to say that an eigenvalue lies within it); S2 makes no accuracy statement, with the same code,
+when the sector lift shift is not finite; the residual bounds and radii of the certificate are stored as ∞ instead of
+nan. A nonzero claimed vector whose norm binary64 does not resolve (its squared norm underflows or overflows, as for
+entries of about 10⁻¹⁷⁰ or 10¹⁷⁰) gets the new reason code `UNRESOLVED_VECTOR_NORM` instead, with the advice to
+normalise the vectors (S2 and S3 were INCONCLUSIVE without a code). `inertia_dense` and `inertia_sparse` give no count
+when their backward error is not finite (β = ∞, `conclusive` false; before, β could be ∞ or nan with a count, and
+`certify(kind="lowest")` could then raise ValueError in the factorization of S3); the guard of `inertia_sparse` is
+defensive (no input of the test suite reaches it; a test reaches it through a stand-in residual bound). A sector audit
+with a non-finite defect does not pass (inf ≤ tol · inf passed before): S1 on a sector isometry is INCONCLUSIVE, and
+the sector composition is INCONCLUSIVE with a summary that says the audit bounds are not finite. The variational
+records (V1 to V3) and the moment records (M1 to M3) are INCONCLUSIVE with `NONFINITE_BOUND` when a bound of their
+accounting is not finite (before, V1 and V2 could be CERTIFIED with a nan bound and M1 was CERTIFIED unconditionally),
+and a sum-rule verdict on a nan endpoint is INCONCLUSIVE instead of CERTIFIED or FAILED. A non-finite observable bound
+is reported as ∞ instead of nan. Records of real data change here: the label record of a cyclic symmetry gains the keys
+`separation` (the floating-point root separation it divides by), `separation_note` (it is not a certified lower bound)
+and `separation_rigorous` (false). Known issue: the label record's `certified` flag still rests on the floating-point
+separation (an open D-12 item). `tests/test_nonfinite_bounds.py` covers these cases; the correlation records, the
+sweeps, the MPS contraction, the Ozaki prototype and the GPU path are not covered by a test. The computational source
+hash changes.
+
 ### Housekeeping after joining the histories
 
 No bound, status rule or record field changes, and the computational source hash stays the same. CI installs ruff
