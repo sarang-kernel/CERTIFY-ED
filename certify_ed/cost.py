@@ -519,8 +519,46 @@ def plan_certification(n: int, nnz: Optional[int], k: int, kind: str = "lowest",
     return plan
 
 
-def plan_for_claim(claim, spec, options) -> Plan:
-    """The plan for a Claim / ModelSpec / Options triple (what Options(plan=True) and `certify-ed plan` print)."""
+def narrow_input_mb(claim, options) -> float:
+    """Megabytes of the caller's inputs stored in a narrower format than binary64 (or as integers): certify() works on
+    exact binary64 copies of them (precision.py), which live next to the caller's arrays. The plan's baseline counts
+    the binary64 arrays; this is the memory of the caller's arrays on top (operator, sector isometry, in-memory vectors,
+    the matrices of Options.observables, approximate_symmetries and symmetries). Vectors read from disk add none."""
+    import numpy as np
+    import scipy.sparse as sp
+    from .enclosure import is_streamed
+    from .precision import PrecisionError, target_dtype
+
+    def mb(a) -> float:
+        try:
+            if sp.issparse(a):
+                if target_dtype(a.dtype) is None:
+                    return 0.0
+                return sum(int(getattr(a, k).nbytes) for k in ("data", "indices", "indptr", "row", "col", "offsets")
+                           if isinstance(getattr(a, k, None), np.ndarray)) / 2 ** 20
+            if isinstance(a, np.ndarray) and not is_streamed(a) and target_dtype(a.dtype) is None:
+                return 0.0
+            if isinstance(a, np.ndarray) and not is_streamed(a):
+                return float(a.nbytes) / 2 ** 20
+        except (PrecisionError, TypeError, ValueError):
+            return 0.0
+        return 0.0
+    first = lambda v: v[0] if isinstance(v, (tuple, list)) and len(v) else None     # noqa: E731
+    parts = [claim.operator, claim.sector_isometry, claim.eigenvectors]
+    parts += list(options.observables.values())
+    parts += [first(v) for v in options.approximate_symmetries.values()] + [first(v) for v in options.symmetries.values()]
+    seen, total = set(), 0.0
+    for a in parts:
+        if a is not None and id(a) not in seen:
+            seen.add(id(a))
+            total += mb(a)
+    return total
+
+
+def plan_for_claim(claim, spec, options, narrow_mb: Optional[float] = None) -> Plan:
+    """The plan for a Claim / ModelSpec / Options triple (what Options(plan=True) and `certify-ed plan` print).
+    narrow_mb: memory of the caller's inputs in a narrower format than binary64 (narrow_input_mb; computed from the
+    claim when None), added to the baseline and to every statement's peak."""
     import numpy as np
     import scipy.sparse as sp
     from .enclosure import is_streamed
@@ -544,9 +582,17 @@ def plan_for_claim(claim, spec, options) -> Plan:
     sel = resolve_selection(options.preset, options.only, options.skip, options.narrowing_reason,
                             corroborate=bool(options.corroborate), exact_recheck=bool(options.exact_recheck),
                             temperatures=bool(len(options.temperatures)), degeneracy=bool(options.degeneracy))
-    return plan_certification(n, nnz, k, claim.kind, dense, complex_, X is not None and is_streamed(X), sel.wanted,
+    plan = plan_certification(n, nnz, k, claim.kind, dense, complex_, X is not None and is_streamed(X), sel.wanted,
                               options.inertia_method, options.budget_mb, options.block_mb, temperatures=len(options.temperatures),
                               has_spec=spec is not None, has_vectors=X is not None)
+    extra = narrow_input_mb(claim, options) if narrow_mb is None else float(narrow_mb)
+    if extra > 0:          # only then: a binary64 claim keeps its plan
+        plan.baseline_mb += extra
+        for r in plan.rows:
+            r.peak_mb += extra
+        plan.notes.append(f"inputs in a narrower format than binary64: certify() works on exact binary64 copies, which "
+                          f"live next to the caller's arrays ({extra:.1f} MB of the caller's arrays added to every peak)")
+    return plan
 
 
 __all__ = ["E2_RECORDS", "COEFFICIENTS", "AUTO_FACTOR", "AUTO_FLOOR_SECONDS", "estimate_seconds", "auto_budget",

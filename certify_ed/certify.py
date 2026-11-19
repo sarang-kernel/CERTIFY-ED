@@ -982,7 +982,11 @@ def _certify_as_given(claim: Claim, spec: Optional[ModelSpec], opts: Options) ->
     stored in a narrower format; the copies go when it returns."""
     widened = []
     own = _private_copies(widened)
-    return _certify(_as_given(claim, own, widened), spec, _options_as_given(opts, own), widened)
+    narrow = None
+    if opts.plan:                     # the planner sees the binary64 copies only: add the caller's narrower arrays
+        from .cost import narrow_input_mb
+        narrow = narrow_input_mb(claim, opts)
+    return _certify(_as_given(claim, own, widened), spec, _options_as_given(opts, own), widened, narrow_mb=narrow)
 
 
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
@@ -1008,9 +1012,10 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
     return cert
 
 
-def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=None) -> Certificate:
+def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=None, narrow_mb=None) -> Certificate:
     """The body of certify() for one device setting. `widened`: the inputs _as_given converted to binary64 (recorded
-    under arithmetic.input_widening when there are any)."""
+    under arithmetic.input_widening when there are any); `narrow_mb`: the caller's arrays in a narrower format, for
+    the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
     mu = np.asarray(claim.eigenvalues, dtype=float)
@@ -1034,7 +1039,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     plan_record = None
     if opts.plan:
         from .cost import plan_for_claim
-        plan_ = plan_for_claim(claim, spec, opts)
+        plan_ = plan_for_claim(claim, spec, opts, narrow_mb=narrow_mb)
         plan_record = plan_.to_dict()
         sink = (print if opts.progress is True else opts.progress) if opts.progress else print
         for line in plan_.format().splitlines():
