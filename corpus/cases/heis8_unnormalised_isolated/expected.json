@@ -1,0 +1,29 @@
+{
+ "case": "heis8_unnormalised_isolated",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One isolated eigenvector is scaled by 1.7 (norm not 1). The eigenvalue statement is still true for the direction; a checker that normalises may certify S2.",
+ "error_class": "unnormalised_isolated",
+ "may_certify": [
+  "S2.eigenpairs",
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [],
+ "note": "Theorem 1 uses ||Hx - mu x|| / ||x||: S2 may be certified; a checker that requires unit vectors must say so (INCONCLUSIVE), not refute S2",
+ "parameters": {
+  "k": 5,
+  "pair": 0,
+  "scale": 1.7
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

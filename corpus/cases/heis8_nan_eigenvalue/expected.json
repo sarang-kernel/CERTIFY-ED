@@ -1,0 +1,28 @@
+{
+ "case": "heis8_nan_eigenvalue",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One claimed eigenvalue is NaN.",
+ "error_class": "nan_eigenvalue",
+ "may_certify": [
+  "S1.model_fidelity",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [],
+ "must_not_certify": [
+  "S2.eigenpairs",
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S8.degeneracy"
+ ],
+ "note": "a NaN eigenvalue cannot be enclosed; refusing the input is a correct answer",
+ "parameters": {
+  "k": 5,
+  "pair": 2
+ },
+ "refusal_ok": true,
+ "schema": "certify-ed/corpus-case/1.0"
+}

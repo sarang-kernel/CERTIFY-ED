@@ -1,0 +1,32 @@
+{
+ "case": "j1j2_8_wrong_matrix_entry",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One symmetric pair of entries of the producer's matrix is changed by +0.3 (a matrix element the model does not have); the eigenpairs are those of the wrong matrix.",
+ "error_class": "wrong_matrix_entry",
+ "may_certify": [
+  "S2.eigenpairs",
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [],
+ "must_not_certify": [
+  "S1.model_fidelity"
+ ],
+ "note": "one matrix element of the producer's operator is not in the model (it couples the two fully polarised states)",
+ "parameters": {
+  "added": 0.3,
+  "entry": [
+   0,
+   255
+  ],
+  "k": 5
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

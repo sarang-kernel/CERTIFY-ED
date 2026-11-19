@@ -1,0 +1,107 @@
+{
+ "landscape": {
+  "all_singlet_class": {
+   "dim": 141,
+   "energy": -1.634346435612205,
+   "multiplicity": 1,
+   "pair_spins2": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "classes": 92,
+  "couplings": {
+   "c1": 0.053975140682882464,
+   "c3": 0.08288267138128608
+  },
+  "largest_class": {
+   "dim": 1116229,
+   "energy": -1.6343529000425256,
+   "multiplicity": 1,
+   "pair_spins2": [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+   ]
+  },
+  "min_class": {
+   "dim": 51315,
+   "energy": -1.6343595995104314,
+   "multiplicity": 3,
+   "pair_spins2": [
+    0,
+    4,
+    4,
+    0,
+    4,
+    4
+   ]
+  }
+ },
+ "named_sectors": [
+  {
+   "dim": 2495,
+   "energy": -1.6329866581559116,
+   "multiplicity": 6,
+   "pair_spins": [
+    0,
+    0,
+    0,
+    2,
+    0,
+    2
+   ],
+   "pair_spins2": [
+    0,
+    0,
+    0,
+    4,
+    0,
+    4
+   ]
+  },
+  {
+   "dim": 51315,
+   "energy": -1.632984890229642,
+   "multiplicity": 3,
+   "pair_spins": [
+    0,
+    2,
+    2,
+    0,
+    2,
+    2
+   ],
+   "pair_spins2": [
+    0,
+    4,
+    4,
+    0,
+    4,
+    4
+   ]
+  }
+ ],
+ "named_sectors_have_intervals": false,
+ "printed": {
+  "E0_radius_exact": 5.092986520018812e-15,
+  "E0_radius_standard_model": 1.3545154070606862e-13,
+  "c1": "26733/500000",
+  "c17": "11563/100000",
+  "c3": "41363/500000",
+  "contradiction": true,
+  "eigenvalue_upper": -1.6380246425131773,
+  "exact_recheck": "CERTIFIED",
+  "margin": 0.0050396425131771765,
+  "no_floating_point_assumption": true,
+  "published_bound": -1.632985
+ },
+ "record": "e9_pyrochlore_20261022_185936/data.json"
+}

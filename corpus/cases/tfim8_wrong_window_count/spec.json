@@ -1,0 +1,107 @@
+{
+ "schema": "certify-ed/model-spec/1.0",
+ "n_sites": 8,
+ "local_space": {
+  "kind": "spin",
+  "q": 2,
+  "spin": "1/2",
+  "convention": "pauli"
+ },
+ "encoding": {
+  "site_order": "site0_msb",
+  "state_order": "descending",
+  "base": 2
+ },
+ "terms": [
+  [
+   "zz",
+   [
+    [
+     -1.0,
+     0,
+     1
+    ],
+    [
+     -1.0,
+     1,
+     2
+    ],
+    [
+     -1.0,
+     2,
+     3
+    ],
+    [
+     -1.0,
+     3,
+     4
+    ],
+    [
+     -1.0,
+     4,
+     5
+    ],
+    [
+     -1.0,
+     5,
+     6
+    ],
+    [
+     -1.0,
+     6,
+     7
+    ],
+    [
+     -1.0,
+     7,
+     0
+    ]
+   ]
+  ],
+  [
+   "x",
+   [
+    [
+     -1.0,
+     0
+    ],
+    [
+     -1.0,
+     1
+    ],
+    [
+     -1.0,
+     2
+    ],
+    [
+     -1.0,
+     3
+    ],
+    [
+     -1.0,
+     4
+    ],
+    [
+     -1.0,
+     5
+    ],
+    [
+     -1.0,
+     6
+    ],
+    [
+     -1.0,
+     7
+    ]
+   ]
+  ]
+ ],
+ "name": "tfim_chain",
+ "parameters": {
+  "J": 1.0,
+  "h": 1.0,
+  "boundary": "periodic",
+  "physical_form": "-J sum s^z s^z - h sum s^x (Pauli)"
+ },
+ "notes": ""
+}

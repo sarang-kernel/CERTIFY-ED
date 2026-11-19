@@ -1,0 +1,30 @@
+{
+ "case": "j1j2_8_wrong_eigenvalue_large",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "One claimed eigenvalue is shifted by delta (1e-5, above the declared accuracy 1e-8; or, on the top pair, past the next level, so that the claimed set is no longer the k lowest); the vector is the true eigenvector.",
+ "error_class": "wrong_eigenvalue",
+ "may_certify": [
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "heisenberg_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs",
+  "S3.completeness"
+ ],
+ "note": "the top claimed value is 0.2571 above the true eigenvalue and above the next level: no radius below 0.2571 exists for the pair, and more than k = 5 eigenvalues lie below the top of the claim",
+ "parameters": {
+  "delta": 0.2571031297440495,
+  "k": 5,
+  "pair": 4
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

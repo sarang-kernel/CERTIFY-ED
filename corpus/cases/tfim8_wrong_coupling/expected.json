@@ -1,0 +1,28 @@
+{
+ "case": "tfim8_wrong_coupling",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "The producer's operator has the sign of one bond coupling flipped (J -> -J on bond (0,1); for the TFIM the field on site 0 is doubled); the eigenpairs are correct for the producer's operator but the declared model is the intended one.",
+ "error_class": "wrong_coupling",
+ "may_certify": [
+  "S2.eigenpairs",
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "tfim_chain N=8",
+ "must_certify": [],
+ "must_not_certify": [
+  "S1.model_fidelity"
+ ],
+ "note": "the producer's operator is not the declared model; S2-S4 may be certified for the producer's operator (the certificate must say which operator the radii refer to)",
+ "parameters": {
+  "change": "transverse field on site 0 doubled",
+  "k": 5
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

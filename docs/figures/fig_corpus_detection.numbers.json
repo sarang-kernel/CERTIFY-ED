@@ -1,0 +1,18 @@
+{
+ "classes": 15,
+ "conditional": 0,
+ "controls": 7,
+ "controls_clean": 7,
+ "detected": 53,
+ "detected_by_refusal": 8,
+ "error": 0,
+ "false_alarms": 0,
+ "line": "detected 53 / missed 0 (unsound 0, silent 0, error 0) / false alarms 0 (weak 0) of 53 planted cases, 7 controls (clean 7); conditional 0",
+ "missed": 0,
+ "planted": 53,
+ "report": "corpus/results/certify-ed/report.json",
+ "silent": 0,
+ "started_utc": "2026-10-29T04:36:23+00:00",
+ "unsound": 0,
+ "weak_alarms": 0
+}

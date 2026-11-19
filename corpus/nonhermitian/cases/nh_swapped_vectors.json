@@ -1,0 +1,35 @@
+{
+ "schema": "certify-ed/corpus-case-nonhermitian/1.0",
+ "case": "nh_swapped_vectors",
+ "error_class": "swapped_vectors",
+ "note": "the eigenvectors of two levels interchanged",
+ "dimension": 5,
+ "n_pairs": 5,
+ "must_certify": [
+  "N1.backward_errors"
+ ],
+ "must_not_certify": [],
+ "conditional": false,
+ "exact_eigenvalues": [
+  [
+   "-7/4",
+   "0"
+  ],
+  [
+   "-1/2",
+   "0"
+  ],
+  [
+   "1/4",
+   "0"
+  ],
+  [
+   "3/2",
+   "0"
+  ],
+  [
+   "13/4",
+   "0"
+  ]
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "classification": "e6_mutation_20261022_205005/classification.json",
+ "dev_3_2_sample": {
+  "killed": 10,
+  "n": 16,
+  "survivors": [
+   "construct.py:220",
+   "certify.py:1039",
+   "exact_sectors.py:213",
+   "sectors.py:179",
+   "checker.py:521",
+   "eigenspace.py:100"
+  ]
+ },
+ "evidence_run": {
+  "baseline_seconds": 511.1292462348938,
+  "killed": 38,
+  "modules": 14,
+  "n": 64,
+  "score": 0.59375,
+  "survived": 26,
+  "survivor_categories": {
+   "heuristic or performance parameter (shift placement, method choice, caching)": 2,
+   "needs inspection": 15,
+   "no effect on statements (timing, messages)": 4,
+   "rounding allowance in a worst-case bound (looser: sound; tighter: below test resolution)": 3,
+   "strict vs non-strict comparison (differs only at exact equality)": 2
+  },
+  "timeouts": 0,
+  "version": "3.1.0"
+ },
+ "integration_result": "RESULT_integration_3.2.md",
+ "record": "e6_mutation_20261022_205005/data.json"
+}

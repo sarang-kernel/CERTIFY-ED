@@ -1,0 +1,111 @@
+% Scaffold for the manuscript's Appendix A (replacement text; D-16: statement level only, no prose claims
+% beyond the proof). Source of each statement: docs/proofs/thm1_fp-accounting.md (Theorem 1-fl),
+% docs/proofs/int05_underflow.md (model (M-U), Theorem U5), docs/proofs/appA_model-shift.md (the model shift).
+% Line numbers refer to certify_ed/enclosure.py and certify_ed/fp.py on branch track/backlog-proofs.
+
+\section*{Appendix A. Floating-point evaluation of the residual radius and the model shift}
+
+\paragraph{Notation.}
+$A\in\mathbb{C}^{n\times n}$ Hermitian (stored), $x\in\mathbb{C}^n$ and $\mu\in\mathbb{R}$ stored binary64 numbers,
+$r := Ax-\mu x$, $a_i := (|A||x|)_i$, $q_i := |\mu x_i|$; $u = 2^{-53}$, $u_{\min} = 2^{-1075}$,
+$\gamma_k := ku/(1-ku)$; $w$ an upper bound on the number of nonzero terms in any row sum of $Ax$
+(\texttt{adapter.width}); $g := \gamma_{w+2}$ for real data and $2\gamma_{w+6}$ for complex data;
+$\mathrm{fl}(\cdot)$ one round-to-nearest binary64 operation.
+
+\paragraph{Arithmetic model.}
+For $x,y$ binary64 and $\circ\in\{+,-,\times,/\}$ (and $\sqrt{\cdot}$), with exact result $z$ finite and below the
+overflow threshold,
+\[
+\mathrm{fl}(z) = z(1+\delta)+\eta,\qquad |\delta|\le u,\quad |\eta|\le u_{\min},\quad \delta\eta = 0,
+\]
+and $\eta=0$ for $\circ\in\{+,-\}$ (an addition whose exact result lies below $2^{-1022}$ is exact).
+A fused multiply--add satisfies the same bound with one pair $(\delta,\eta)$. Inner products are evaluated as
+sums of the exact products in some order, each operation rounded once.
+[Proof from the binary64 format: \texttt{docs/proofs/int05\_underflow.md}, (M-U).]
+
+\paragraph{Theorem A.1 (Theorem 1, exact).}
+For Hermitian $A$, $x\ne 0$ and real $\mu$ some eigenvalue $\lambda$ of $A$ satisfies
+$|\lambda-\mu|\le \|Ax-\mu x\|/\|x\|$.
+
+\paragraph{Lemma A.2 (the residual vector; \texttt{enclosure.py} lines 343, 346).}
+Let $R_c := \mathrm{fl}(\mathrm{fl}(Ax)-\mathrm{fl}(\mu x))$ be the computed residual. Then for every $i$
+\[
+|R_{c,i}-r_i| \;\le\; e_i + P(1+\gamma_{w+1})\,u_{\min},\qquad
+e_i := (\gamma_w(1+u)+u)\,a_i+(2u+u^2)\,q_i \;\le\; g\,(a_i+q_i) - u\,(a_i+q_i)
+\]
+for real data ($e_i := (\gamma_{w+2}(1+u)+u)\,a_i+(2u+u^2)\,q_i \le g(a_i+q_i)/2$ for complex data), with $P=w+1$ for
+real data and $P=4w+2$ for complex data.
+[\texttt{thm1\_fp-accounting.md} Step 1; \texttt{int05\_underflow.md} Lemma U4.]
+
+\paragraph{Lemma A.3 (the bound on $|A||x|$; lines 293--296).}
+Let $\widehat{\gamma}_{w+1} := \mathrm{fl}(\gamma_{w+1})$ and
+$\mathrm{absHX}^{\uparrow}_i := \mathrm{fl}\big(\mathrm{fl}(\mathrm{fl}(|A||x|)_i/\mathrm{fl}(1-\widehat{\gamma}_{w+1}))\,(1+4u)\big)$.
+For $1\le w\le 2^{26}$, $\mathrm{absHX}^{\uparrow}_i \ge a_i(1+u)$.
+[Scalar inequality $(1-\gamma_w)(1-u)^3(1+4u)/(1-\gamma_{w+1}(1-u)^2)\ge 1+u$; Step 2, (Λ5).]
+
+\paragraph{Lemma A.4 (the entrywise bound $E$; lines 297--301).}
+Let $E_i := \mathrm{fl}\big(\mathrm{fl}(\mathrm{fl}(\mathrm{absHX}^{\uparrow}_i+\mathrm{fl}(|x_i||\mu|))\,\widehat g)\,(1+4u)\big)$ with
+$\widehat g := \mathrm{fl}(g)$. For $1\le w\le 2^{26}$,
+\[
+E_i \;\ge\; g(a_i+q_i)(1-u)^6(1+4u) \;\ge\; e_i,
+\qquad\text{hence}\qquad
+|R_{c,i}-r_i| \le E_i + c_w\,u_{\min},
+\]
+with $c_w := P(1+\gamma_{w+1}) + 2gw(1+\gamma_w)(1+4u) + 3g(1+4u)^2 + 2(1+4u)$ (\texttt{fp.residual\_entry\_count}).
+[Step 3, (Λ6); Lemma U4.]
+
+\paragraph{Lemma A.5 (norm bounds; \texttt{fp.py} lines 98--162).}
+For a stored vector $v$ with $n$ entries and $N$ real components ($N=n$ real, $N=2n$ complex), $1\le n\le 2^{26}$,
+let $s := \mathrm{fl}(\sqrt{\mathrm{fl}(\sum v_j^2)})$ and
+$T_N := \mathrm{fl}\big(\sqrt{N/2}\big)\,2^{-537}\,\mathrm{fl}(1+2\widehat\gamma_{N+2})\,(1+8u)^2 \ \ (\ge \sqrt{N u_{\min}}\sqrt{(1+\gamma_N)/(1-\gamma_N)})$.
+Then
+\[
+\mathrm{norm2\_upper}(v) := \mathrm{fl}\big(\mathrm{fl}(\mathrm{fl}(s\,\mathrm{fl}(1+\widehat\gamma_{n+2}))(1+8u)) + T_N\big) \;\ge\; \|v\|,
+\qquad
+\mathrm{norm2\_lower}(v) := \max\big(0,\ \mathrm{fl}(\mathrm{fl}(\mathrm{fl}(s\,\mathrm{fl}(1-\widehat\gamma_{n+2}))/(1+8u)) - T_N)\big) \;\le\; \|v\|,
+\]
+and, when every square $v_j^2$ is a normal number, the multiplicative parts alone satisfy
+$\mathrm{norm2\_upper}(v)\ge \|v\|(1+3u)$ and $\mathrm{norm2\_lower}(v)\le \|v\|(1-3u)$.
+[Step 4, (Λ4); Lemma U3.]
+
+\paragraph{Theorem A.6 (the computed radius; lines 368, 375).}
+With $R^{\uparrow} := \mathrm{norm2\_upper}(R_c)$, $E^{\uparrow} := \mathrm{norm2\_upper}(E)$, $x_\ell := \mathrm{norm2\_lower}(x)$,
+$A_{n,w} := \mathrm{ldexp}\big(\mathrm{fl}(\sqrt{n}\,c_w)(1+8u)^2,\,-1075\big) + 2^{-1074}\ (\ge \sqrt{n}\,c_w u_{\min})$,
+\[
+\mathrm{upper} := \mathrm{fl}\big(\mathrm{fl}(R^{\uparrow}+E^{\uparrow}) + A_{n,w}\big),\qquad
+\mathrm{rel} := \mathrm{fl}\big(\mathrm{fl}(\mathrm{upper}/x_\ell)(1+4u)\big) + 2\cdot 2^{-1074}\quad(\mathrm{rel}:=+\infty \text{ if } x_\ell = 0),
+\]
+one has $\mathrm{rel}\ \ge\ \|Ax-\mu x\|/\|x\|$ for every finite stored $A$, $x\ne 0$, $\mu$, with no hypothesis on the
+magnitudes of the intermediate quantities. [Theorem 1-fl and Theorem U5.]
+
+\paragraph{Theorem A.7 (comparison with the 3.2.0.dev0 evaluation).}
+Let $\mathrm{rel}_{\mathrm{old}}$ be the value obtained with $T_N = A_{n,w} = 0$ and without the final $2\cdot 2^{-1074}$.
+Then $\mathrm{rel}\ge \mathrm{rel}_{\mathrm{old}}$, and $\mathrm{rel}-\mathrm{rel}_{\mathrm{old}} \le
+2(1+8u)\big[(2T_N + A_{n,w})/x_\ell + (R^{\uparrow}_{\mathrm{old}}+E^{\uparrow}_{\mathrm{old}})T_N/(x_\ell x_{\ell,\mathrm{old}})\big] + 4\cdot 2^{-1074}$;
+the two values coincide whenever $\mathrm{rel}_{\mathrm{old}} > 10^{-145}$. [Theorem U6.]
+
+\paragraph{Lemma A.8 (the builder).}
+Let $H_{\mathrm{spec}}$ be the exact operator of the declared model on the basis and $H_{\mathrm{ref}}$ its floating-point
+build, with at most $m$ monomial contributions per entry and strings of length at most $L_{\max}$; let $|H|_{\mathrm{abs}}$
+be the matrix of summed exact monomial moduli, $r := \||H|_{\mathrm{abs}}\|_\infty$, $c := \||H|_{\mathrm{abs}}\|_1$, $W := m+2L_{\max}+2$.
+Then $|H_{\mathrm{ref}}-H_{\mathrm{spec}}| \le \gamma_{m+2L_{\max}-1}|H|_{\mathrm{abs}}$ entrywise,
+$\|(H_{\mathrm{ref}}+H_{\mathrm{ref}}^{\mathsf H})/2 - H_{\mathrm{spec}}\|_2 \le \gamma_W\sqrt{rc}$, and
+$\Delta_{\mathrm{builder}} := \mathrm{fl}$-evaluation of $\gamma_W\sqrt{rc}/(1-\gamma_W)\,(1+4u)(1+8u)$
+(\texttt{certify.\_builder\_shift}) satisfies $\Delta_{\mathrm{builder}}\ge \|H_{\mathrm{ref}}-H_{\mathrm{spec}}\|_2$.
+[\texttt{appA\_model-shift.md} Lemmas A1--A3.]
+
+\paragraph{Theorem A.9 (the model shift).}
+Let $H_h := (H_p+H_p^{\mathsf H})/2$ be the Hermitian part of a producer matrix certified against $H_{\mathrm{ref}}$ by S1, and
+$D := H_h - H_{\mathrm{ref}}$. Then
+\[
+\|H_h - H_{\mathrm{spec}}\|_2 \;\le\; \Delta := \max(\|D\|_1,\|D\|_\infty) + \Delta_{\mathrm{builder}},
+\]
+and the code's value $\mathrm{up}(\max(\mathrm{inf\_norm\_upper}(D),\mathrm{inf\_norm\_upper}(D^{\mathsf H}))+\Delta_{\mathrm{builder}})$ is $\ge\Delta$.
+For Hermitian $H_h$, $H_{\mathrm{spec}}$ with $\|H_h-H_{\mathrm{spec}}\|_2\le\Delta$: $|\lambda_j(H_{\mathrm{spec}})-\lambda_j(H_h)|\le\Delta$ for all $j$
+(Weyl), so an enclosure of radius $r$ for $H_h$ is an enclosure of radius $r+\Delta$ for $H_{\mathrm{spec}}$ (the exported radii
+are $\mathrm{add\_up}(\mathrm{rel},\Delta)$), and a count $\#\{\lambda(H_h)<\sigma-\beta\}\le\nu\le\#\{\lambda(H_h)\le\sigma+\beta\}$ becomes
+$\#\{\lambda(H_{\mathrm{spec}})<\sigma-\beta-\Delta\}\le\nu\le\#\{\lambda(H_{\mathrm{spec}})\le\sigma+\beta+\Delta\}$.
+[\texttt{appA\_model-shift.md} Theorems A4--A5; \texttt{cor5\_pairing.md} Step 4.]
+
+% Status of every statement above: derived by Claude on 2026-10-30; machine-checked by the scripts named in the
+% source documents (counts recorded there); independent re-derivation pending (Phase 2); Sarang's check (D-12) pending.

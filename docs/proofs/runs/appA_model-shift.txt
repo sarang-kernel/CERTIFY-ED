@@ -1,0 +1,7 @@
+# python docs/proofs/verify_appA_model-shift.py --cases 400 --seed 5  (2026-11-03, Windows, certifyed-311; 235 min wall)
+norm inequality / inf_norm_upper: 100 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+builder error (Lemmas A1-A3): 180 random + 363 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+Weyl transfer builder (Theorem A5): 47 random + 99 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+model shift Delta (Theorem A4): 59 random + 80 adversarial cases, 1 skipped (hypothesis not met), 0 violations
+negative controls: 0 random + 139 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations

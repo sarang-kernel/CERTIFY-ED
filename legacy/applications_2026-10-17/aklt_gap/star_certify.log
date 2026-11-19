@@ -1,0 +1,6 @@
+1. VBS maps exact: ranks 16/16/32, H Psi = 0  [10s]
+2. Gi: exactly 16 eigenvalues of H below 1/8 - eps (||E|| <= 9.18e-09)  [286s]
+2. Gj: exactly 16 eigenvalues of H below 1/8 - eps (||E|| <= 2.01e-08)  [620s]
+3. t = 1/16 (0.062500): D has 32 positive pivots; ||E|| <= 3.665e+89; cos^2 <= 0.0625000000 for all non-unit angles -> eta <= 0.2500000000  [657s]
+3. t = 12331/1000000 (0.012331): D has 32 positive pivots; ||E|| <= 5.700e+94; cos^2 <= 0.0123310000 for all non-unit angles -> eta <= 0.1110450359  [683s]
+certified: eta <= 0.1110450359 < 1/4: True

@@ -1,0 +1,1923 @@
+{
+ "schema": "certify-ed/corpus-report/1.0",
+ "checker": "certify-ed",
+ "command": "{python} -m certify_ed.cli certify --from {case} -o {out}",
+ "started_utc": "2026-10-29T03:33:46+00:00",
+ "cases_dir": "corpus/cases",
+ "summary": {
+  "planted": 53,
+  "controls": 7,
+  "controls_clean": 7,
+  "detected": 49,
+  "detected_by_refusal": 8,
+  "missed": 4,
+  "unsound": 0,
+  "silent": 4,
+  "error": 0,
+  "conditional": 0,
+  "false_alarms": 0,
+  "weak_alarms": 0,
+  "line": "detected 49 / missed 4 (unsound 0, silent 4, error 0) / false alarms 0 (weak 0) of 53 planted cases, 7 controls (clean 7); conditional 0"
+ },
+ "rows": [
+  {
+   "case": "heis10_correct",
+   "model": "heisenberg_chain N=10",
+   "error_class": "correct",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 13.33,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_duplicated_vector",
+   "model": "heisenberg_chain N=10",
+   "error_class": "duplicated_vector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 13.07,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_mislabeled_sector",
+   "model": "heisenberg_chain N=10",
+   "error_class": "mislabeled_sector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.96,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 3
+  },
+  {
+   "case": "heis10_missing_multiplet_member",
+   "model": "heisenberg_chain N=10",
+   "error_class": "missing_multiplet_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.96,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 2
+  },
+  {
+   "case": "heis10_nan_eigenvalue",
+   "model": "heisenberg_chain N=10",
+   "error_class": "nan_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.23,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_nan_eigenvector_entry",
+   "model": "heisenberg_chain N=10",
+   "error_class": "nan_eigenvector_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.46,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_non_hermitian",
+   "model": "heisenberg_chain N=10",
+   "error_class": "non_hermitian",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 18.18,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_subnormal_entries",
+   "model": "heisenberg_chain N=10",
+   "error_class": "subnormal_entries",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 11.51,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_swapped_pairs",
+   "model": "heisenberg_chain N=10",
+   "error_class": "swapped_pairs",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 18.21,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_unnormalised_cluster_member",
+   "model": "heisenberg_chain N=10",
+   "error_class": "unnormalised_cluster_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S4.eigenspaces"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.66,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "silent",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_unnormalised_isolated",
+   "model": "heisenberg_chain N=10",
+   "error_class": "unnormalised_isolated",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 23.58,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_wrong_coupling",
+   "model": "heisenberg_chain N=10",
+   "error_class": "wrong_coupling",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.58,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 7
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_1e-05",
+   "model": "heisenberg_chain N=10",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 18.56,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_wrong_eigenvalue_large",
+   "model": "heisenberg_chain N=10",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 15.93,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_wrong_matrix_entry",
+   "model": "heisenberg_chain N=10",
+   "error_class": "wrong_matrix_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 17.42,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis10_wrong_window_count",
+   "model": "heisenberg_chain N=10",
+   "error_class": "wrong_window_count",
+   "claim_kind": "window",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 19.48,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": null
+  },
+  {
+   "case": "heis8_correct",
+   "model": "heisenberg_chain N=8",
+   "error_class": "correct",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 13.4,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_duplicated_vector",
+   "model": "heisenberg_chain N=8",
+   "error_class": "duplicated_vector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 13.46,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_mislabeled_sector",
+   "model": "heisenberg_chain N=8",
+   "error_class": "mislabeled_sector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.31,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 3
+  },
+  {
+   "case": "heis8_missing_multiplet_member",
+   "model": "heisenberg_chain N=8",
+   "error_class": "missing_multiplet_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 15.88,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 2
+  },
+  {
+   "case": "heis8_nan_eigenvalue",
+   "model": "heisenberg_chain N=8",
+   "error_class": "nan_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 14.42,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_nan_eigenvector_entry",
+   "model": "heisenberg_chain N=8",
+   "error_class": "nan_eigenvector_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.88,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_non_hermitian",
+   "model": "heisenberg_chain N=8",
+   "error_class": "non_hermitian",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 14.82,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_subnormal_entries",
+   "model": "heisenberg_chain N=8",
+   "error_class": "subnormal_entries",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 13.53,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_swapped_pairs",
+   "model": "heisenberg_chain N=8",
+   "error_class": "swapped_pairs",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.95,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_unnormalised_cluster_member",
+   "model": "heisenberg_chain N=8",
+   "error_class": "unnormalised_cluster_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S4.eigenspaces"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 12.49,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "silent",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_unnormalised_isolated",
+   "model": "heisenberg_chain N=8",
+   "error_class": "unnormalised_isolated",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 10.92,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_wrong_coupling",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_coupling",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.62,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 7
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_1e-05",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.8,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_wrong_eigenvalue_large",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 13.63,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_wrong_matrix_entry",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_matrix_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.07,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "heis8_wrong_window_count",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_window_count",
+   "claim_kind": "window",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.44,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": null
+  },
+  {
+   "case": "j1j2_8_correct",
+   "model": "heisenberg_chain N=8",
+   "error_class": "correct",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 15.81,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_duplicated_vector",
+   "model": "heisenberg_chain N=8",
+   "error_class": "duplicated_vector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.32,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_mislabeled_sector",
+   "model": "heisenberg_chain N=8",
+   "error_class": "mislabeled_sector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 15.47,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 3
+  },
+  {
+   "case": "j1j2_8_missing_multiplet_member",
+   "model": "heisenberg_chain N=8",
+   "error_class": "missing_multiplet_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.2,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 3
+  },
+  {
+   "case": "j1j2_8_nan_eigenvalue",
+   "model": "heisenberg_chain N=8",
+   "error_class": "nan_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.72,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_nan_eigenvector_entry",
+   "model": "heisenberg_chain N=8",
+   "error_class": "nan_eigenvector_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.41,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_non_hermitian",
+   "model": "heisenberg_chain N=8",
+   "error_class": "non_hermitian",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 16.38,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_subnormal_entries",
+   "model": "heisenberg_chain N=8",
+   "error_class": "subnormal_entries",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.53,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "INCONCLUSIVE",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_unnormalised_cluster_member",
+   "model": "heisenberg_chain N=8",
+   "error_class": "unnormalised_cluster_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S4.eigenspaces"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 17.17,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "silent",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_wrong_coupling",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_coupling",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 17.43,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 7
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_1e-05",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 17.65,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_wrong_eigenvalue_large",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 16.22,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "j1j2_8_wrong_matrix_entry",
+   "model": "heisenberg_chain N=8",
+   "error_class": "wrong_matrix_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 20.37,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_correct",
+   "model": "tfim_chain N=8",
+   "error_class": "correct",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 22.66,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_duplicated_vector",
+   "model": "tfim_chain N=8",
+   "error_class": "duplicated_vector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 17.68,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_mislabeled_sector",
+   "model": "tfim_chain N=8",
+   "error_class": "mislabeled_sector",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.66,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 6
+  },
+  {
+   "case": "tfim8_missing_multiplet_member",
+   "model": "tfim_chain N=8",
+   "error_class": "missing_multiplet_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 14.61,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 4
+  },
+  {
+   "case": "tfim8_nan_eigenvalue",
+   "model": "tfim_chain N=8",
+   "error_class": "nan_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 10.16,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_nan_eigenvector_entry",
+   "model": "tfim_chain N=8",
+   "error_class": "nan_eigenvector_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness",
+    "S4.eigenspaces",
+    "S8.degeneracy"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": true,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 13.37,
+   "statuses": null,
+   "verdict": "refused",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_non_hermitian",
+   "model": "tfim_chain N=8",
+   "error_class": "non_hermitian",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 12.34,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_swapped_pairs",
+   "model": "tfim_chain N=8",
+   "error_class": "swapped_pairs",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 16.49,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_unnormalised_cluster_member",
+   "model": "tfim_chain N=8",
+   "error_class": "unnormalised_cluster_member",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S4.eigenspaces"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": true,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 15.84,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "INCONCLUSIVE",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "silent",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_unnormalised_isolated",
+   "model": "tfim_chain N=8",
+   "error_class": "unnormalised_isolated",
+   "claim_kind": "lowest",
+   "must_not_certify": [],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 0,
+   "timed_out": false,
+   "seconds": 16.71,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "control",
+   "unsound": [],
+   "flagged": [],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_wrong_coupling",
+   "model": "tfim_chain N=8",
+   "error_class": "wrong_coupling",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 14.25,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "NOT_CHECKED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_1e-05",
+   "model": "tfim_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 17.59,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_wrong_eigenvalue_large",
+   "model": "tfim_chain N=8",
+   "error_class": "wrong_eigenvalue",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 15.73,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "FAILED",
+    "S3.completeness": "INCONCLUSIVE",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "INCONCLUSIVE"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S2.eigenpairs",
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_wrong_matrix_entry",
+   "model": "tfim_chain N=8",
+   "error_class": "wrong_matrix_entry",
+   "claim_kind": "lowest",
+   "must_not_certify": [
+    "S1.model_fidelity"
+   ],
+   "must_certify": [],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 16.51,
+   "statuses": {
+    "S1.model_fidelity": "FAILED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "CERTIFIED",
+    "S4.eigenspaces": "CERTIFIED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S1.model_fidelity"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": 5
+  },
+  {
+   "case": "tfim8_wrong_window_count",
+   "model": "tfim_chain N=8",
+   "error_class": "wrong_window_count",
+   "claim_kind": "window",
+   "must_not_certify": [
+    "S3.completeness"
+   ],
+   "must_certify": [
+    "S1.model_fidelity",
+    "S2.eigenpairs"
+   ],
+   "conditional_case": false,
+   "refusal_ok": false,
+   "exit_code": 1,
+   "timed_out": false,
+   "seconds": 18.26,
+   "statuses": {
+    "S1.model_fidelity": "CERTIFIED",
+    "S2.eigenpairs": "CERTIFIED",
+    "S3.completeness": "FAILED",
+    "S4.eigenspaces": "NOT_CHECKED",
+    "S8.degeneracy": "CERTIFIED"
+   },
+   "verdict": "detected",
+   "unsound": [],
+   "flagged": [
+    "S3.completeness"
+   ],
+   "false_alarms": [],
+   "weak_alarms": [],
+   "conditional": [],
+   "k": null
+  }
+ ]
+}

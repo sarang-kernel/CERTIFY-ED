@@ -1,0 +1,32 @@
+{
+ "case": "tfim8_swapped_pairs",
+ "claim_kind": "lowest",
+ "conditional": false,
+ "description": "The eigenvectors of two non-degenerate levels are interchanged (eigenvalue i with vector j).",
+ "error_class": "swapped_pairs",
+ "may_certify": [
+  "S3.completeness",
+  "S4.eigenspaces",
+  "S5.corroboration",
+  "S6.exact_recheck",
+  "S7.thermodynamics",
+  "S8.degeneracy"
+ ],
+ "model": "tfim_chain N=8",
+ "must_certify": [
+  "S1.model_fidelity"
+ ],
+ "must_not_certify": [
+  "S2.eigenpairs"
+ ],
+ "note": "the residual of (mu_0, x_1) is |mu_0 - mu_1| = 0.197: no small radius exists for either pair",
+ "parameters": {
+  "k": 5,
+  "pairs": [
+   0,
+   1
+  ]
+ },
+ "refusal_ok": false,
+ "schema": "certify-ed/corpus-case/1.0"
+}

@@ -1,0 +1,63 @@
+site_name: CERTIFY-ED
+site_description: Certificates for exact-diagonalization results
+repo_url: https://github.com/sarang-kernel/CERTIFY-ED
+docs_dir: docs
+site_dir: site
+strict: true
+use_directory_urls: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+  palette:
+    scheme: default
+    primary: blue grey
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Cookbook:
+      - Overview: cookbook/index.md
+      - numpy arrays (eigh): cookbook/numpy_eigh.md
+      - eigsh, lowest k: cookbook/eigsh_lowest.md
+      - eigsh shift-invert, interior window: cookbook/shift_invert_window.md
+      - Files and the command line: cookbook/files_import.md
+      - QuSpin: cookbook/quspin.md
+      - Matrix-free: cookbook/matrix_free.md
+      - Producer bundle: cookbook/producer_bundle.md
+      - Vectors larger than RAM, the plan: cookbook/streaming_vectors.md
+  - Integrations:
+      - QuSpin: integrations/quspin.md
+      - HPhi, DiagHam, SPINPACK, ALPS files: integrations/ed_codes.md
+      - Pauli strings, OpenFermion, Qiskit: integrations/pauli.md
+  - What certified means: what_certified_means.md
+  - Limitations: limitations.md
+  - FAQ, INCONCLUSIVE: faq_inconclusive.md
+  - Reference:
+      - Theory: theory.md
+      - Scope matrix: SCOPE_MATRIX.md
+      - Presets and scope: presets.md
+      - Producer bundle format: producer_bundle.md
+      - Offline certificate viewer: viewer.md
+      - Planted-error corpus: corpus.md
+      - API: api.md
+      - Applications: applications.md
+      - Reproducibility: reproducibility.md
+      - symveig audit: symveig_audit.md
+  - Figures:
+      - Figure index: figures/INDEX.md
+      - Placement in the manuscript and report: figures/MANUSCRIPT_PLACEMENT.md
+
+exclude_docs: |
+  make_api.py
+  README.md
+  cookbook/snippets/
+  requirements-docs.txt

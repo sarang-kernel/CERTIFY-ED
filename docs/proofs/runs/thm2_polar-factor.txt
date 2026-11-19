@@ -1,0 +1,16 @@
+  ... 0 random cases
+  ... 2000 random cases
+  ... 4000 random cases
+  ... 6000 random cases
+  ... 8000 random cases
+  ... 10000 random cases
+  ... 12000 random cases
+  ... 14000 random cases
+  ... 16000 random cases
+  ... 18000 random cases
+polar-factor lemma (L1, L2): 34448 random + 900 adversarial cases, 2926 skipped (hypothesis not met), 0 violations
+Kahan with the block Lambda: 17224 random + 450 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+Theorem 2 radius rho: 17224 random + 450 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+Kahan, random Hermitian block: 5000 random + 600 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+implemented bounds >= exact: 32738 random + 859 adversarial cases, 1751 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations
