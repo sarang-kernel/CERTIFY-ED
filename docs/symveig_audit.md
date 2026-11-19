@@ -49,14 +49,7 @@ reproduce here (for example, sector h_max 2.77e-11 at L = 12, PBC).
   4. the "verify an approximate eigensolver" use case, which is exactly where P1 bites. It makes a
      good worked example of why counts need the cluster theorem.
 
-## 4. Decisions needed from Sarang
-1. **Do not submit the CPC manuscript as it stands.** P1–P4 are claims a referee can falsify with a
-   10-line script. Under D-33 the content goes into the one paper instead. If a separate CPC
-   submission is still wanted, the fixes are P1 (add the Gram check plus cluster theorem, or drop
-   "exactly"), P2 (exact commutation check), P3 (independent reference, or remove the global-path
-   claim), P4 (reword) and P6 (remove Tier 2). Effort: about 1–2 days of code and text.
-2. **arXiv:2606.16217 v1** was posted on 2026-06-15 and is the only version. Its abstract matches the CPC version, except that it says "up to 130×". Its body was not checked here. Options: post a
-   v2 noting P1/P2, or replace it when the merged paper is posted. This is Sarang's call; not urgent,
-   but before anyone cites it.
-3. Whether the merged repository should keep the symveig 1.0.0 API names as a thin compatibility
-   layer (`enclose_global`, `enclose_sectors` over `enclose_spectrum`). Not done yet. Cheap if wanted.
+## 4. Status
+The decisions on the symveig manuscript and on the preprint arXiv:2606.16217 are recorded as decisions D-33 and
+D-53 of the project. The symveig 1.0.0 API names are kept as a thin compatibility layer in
+`certify_ed/compat/symveig.py`.

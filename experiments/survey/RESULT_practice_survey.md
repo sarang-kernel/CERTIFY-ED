@@ -20,6 +20,10 @@ Status: **full survey per the pre-registered stop rule (n_analysis >= 40)**.
 
 Population primary categories (top): cond-mat.str-el 389, quant-ph 193, hep-th 58, cond-mat.quant-gas 56, cond-mat.mes-hall 54, cond-mat.stat-mech 37.
 
+One `comment` field of `survey_sample.json` was edited on 18 November 2026, after this report was generated: an
+author's e-mail address in the arXiv comment of one record was replaced by `[e-mail address removed]`. No count or
+coded field of this report reads that field.
+
 ## 2. Exclusions (recorded, not dropped from the CSV)
 
 | Reason | Count |

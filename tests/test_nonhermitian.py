@@ -14,7 +14,7 @@ import scipy.linalg as la
 
 from certify_ed.nonhermitian import (NONHERMITIAN_SCHEMA, NONHERMITIAN_STATEMENT_IDS, certify_nonhermitian,
                                      disc_groups, format_nonhermitian, inverse_bound, residual_bounds)
-from certify_ed.schema import validate_record
+from certify_ed.schema import SchemaValidationError, validate_record
 from certify_ed.scope import REASON_CODES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -215,7 +215,7 @@ def test_record_hash_detects_a_forged_status():
     rec = certify_nonhermitian(A, w, V)
     bad = json.loads(json.dumps(rec))
     bad["statements"][1]["status"] = "CERTIFIED"
-    with pytest.raises(Exception):
+    with pytest.raises(SchemaValidationError, match="record_sha256 does not match"):
         validate_record(bad)
 
 

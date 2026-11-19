@@ -7,6 +7,17 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Housekeeping after joining the histories
+
+No bound, status rule or record field changes, and the computational source hash stays the same. CI installs ruff
+0.17.1 and runs pytest with one BLAS thread (the recorded radii of `tests/test_whole_spectrum.py` are compared
+exactly); the forged-record test names `SchemaValidationError`, which ruff's rule B017 asks for; the nightly mutation
+job passes its inputs through the environment. `CITATION.cff` describes the Zenodo DOI without the open question of
+which DOI is the concept record. An author's e-mail address is removed from one arXiv comment of
+`experiments/survey/survey_sample.json` (noted in `RESULT_practice_survey.md`). `docs/symveig_audit.md` keeps its
+technical findings, `docs/applications.md` states the current reading of the S = 1 discrepancy, and
+`legacy/README.md` says how `legacy/v1` relates to the tag `v1.0.0`.
+
 ### Scale track (roadmap D-03, D-04, H-04, groundwork of G-10; track/scale)
 
 No bound, status rule or record field of `certify()` changes; the computational source hash changes (new modules

@@ -17,8 +17,10 @@ c1 = n1/10⁷ and c3 = n3/10⁷, and c17 is fixed by the embedding constraint
 | 1 | at the printed couplings (c1 = 0.053466, c3 = 0.082726) the all-singlet sector has eigenvalue ≤ −1.6380246 < −1.632985 (published bound); margin 5.0e-3 | certified in exact arithmetic (six-ring energy re-derived in the scaled spin-1 basis; radius below 1e-14) | `apps.pyrochlore.spin_one.printed_coupling_check` |
 | 1 | re-optimised max-min over all 92 pair-spin classes ≈ −1.6343596 | floating-point estimate (the competitive all-S̃=2 class has 1.1M states) | `apps.pyrochlore.spin_one.landscape` |
 
-The S = 1 discrepancy may come from an unprinted coupling (c5). The authors should be asked before
-anything about it is stated publicly.
+An unprinted coupling cannot explain the S = 1 discrepancy: the paper states that c5 is neglected, and a cutting-plane
+bound shows that no value of c5 raises the max-min above about −1.6342. The published −1.632985 is reproduced at the
+printed couplings in the two pair-spin sectors the paper names; the all-singlet sector, 5.0e-3 lower, was evidently not
+part of the published search. The authors are asked before anything about it is stated publicly.
 
 ### Nine-coupling model, S = 1/2 (roadmap item N-11)
 
