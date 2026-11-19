@@ -52,6 +52,9 @@ REASON_CODES: Dict[str, str] = {
                                      "(E-02, certify_ed.nonhermitian; UNVERIFIED)"),
     "NONFINITE_BOUND": ("a bound of the floating-point accounting is not finite: a product, a sum or a modulus "
                         "overflowed (inf, or inf * 0 = nan in a product); no statement rests on it (3.3.0.dev0)"),
+    "UNRESOLVED_VECTOR_NORM": ("the 2-norm of a nonzero claimed vector is not resolvable in binary64: its squared "
+                               "norm underflows or overflows, so the norm's lower bound is 0 and no Theorem 1 radius "
+                               "is formed; no statement rests on the pair (3.3.0.dev0)"),
     "DECLARED_ESTIMATE": ("a producer-declared stochastic estimate (an energy or a variance from samples): recorded as "
                           "DECLARED, never certified; no statement rests on it (variational records, E-05)"),
 }

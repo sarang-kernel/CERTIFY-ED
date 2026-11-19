@@ -303,14 +303,33 @@ def _underflow_statement_note(findings):
             "assumes it)")
 
 
-def _overflowed_pairs(enc, X):
-    """Claimed pairs whose certified radius is not finite although their vector is not zero: a bound of the
-    floating-point accounting overflowed (inf, or inf * 0 = nan, stored as inf). A zero vector has an infinite radius
-    by Theorem 1 and is not listed."""
+def _nonfinite_pairs(enc, X):
+    """(overflowed, unresolved): the claimed pairs with a nonzero vector whose certified radius is not finite.
+
+    unresolved: the lower bound of the vector's 2-norm is 0 (fp.norm2_lower: the squared norm underflows, or overflows
+    above about 1.3e154), so no radius can be formed whatever the operator; normalising the vectors removes it.
+    overflowed: the others; their residual bound, rounding bound or radius quotient overflowed (inf, or inf * 0 = nan,
+    stored as inf). A zero vector has an infinite radius by Theorem 1 and is in neither list."""
     bad = np.nonzero(~np.isfinite(enc.radius))[0].tolist()
     if not bad or X is None:
-        return []
-    return [int(j) for j in bad if np.any(np.asarray(X[:, j]) != 0)]
+        return [], []
+    over, unresolved = [], []
+    for j in bad:
+        if np.any(np.asarray(X[:, j]) != 0):
+            (over if enc.residual.xnorm_lower[j] > 0 else unresolved).append(int(j))
+    return over, unresolved
+
+
+def _nonfinite_text(over, unresolved):
+    """Summary and reason code for claimed pairs without a finite radius (_nonfinite_pairs)."""
+    parts = []
+    if over:
+        parts.append(f"the certified radius of claimed pairs {over[:8]} is not finite (a bound of the floating-point "
+                     f"accounting overflowed)")
+    if unresolved:
+        parts.append(f"the norm of the claimed vectors {unresolved[:8]} is not resolvable in binary64 (its squared "
+                     f"norm underflows or overflows; normalise the vectors)")
+    return "; ".join(parts), ("NONFINITE_BOUND" if over else "UNRESOLVED_VECTOR_NORM")
 
 
 def _guard_range_note(findings):
@@ -1201,17 +1220,17 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
               "model_shift": model_shift,
               "radius_refers_to": ("declared model (spec)" if model_shift > 0 or (spec is not None and
                                    statements[0]["status"] == "CERTIFIED") else "producer operator")}
-        nf_pairs = _overflowed_pairs(enc, X)
+        nf_over, nf_unres = _nonfinite_pairs(enc, X)
         code_nf = None
         if not enc.rigorous:
             st, summ = "INCONCLUSIVE", "residuals computed but rounding not boundable for this operator (estimates only)"
-        elif nf_pairs:
-            # a bound of the accounting overflowed: the radius of these pairs is infinite, and nothing is stated
-            # about them or the matching
-            st, code_nf = "INCONCLUSIVE", "NONFINITE_BOUND"
-            summ = (f"the certified radius of claimed pairs {nf_pairs[:8]} is not finite (a bound of the "
-                    f"floating-point accounting overflowed): no enclosure is stated for them")
-            ev["pairs_with_nonfinite_radius"] = nf_pairs[:16]
+        elif nf_over or nf_unres:
+            # a bound of the accounting overflowed, or a vector norm is not resolvable in binary64: the radius of
+            # these pairs is infinite, and nothing is stated about them or the matching
+            text, code_nf = _nonfinite_text(nf_over, nf_unres)
+            st, summ = "INCONCLUSIVE", text + ": no enclosure is stated for them"
+            ev["pairs_with_nonfinite_radius"] = nf_over[:16]
+            ev["pairs_with_unresolved_vector_norm"] = nf_unres[:16]
         elif not enc.all_distinct:
             st, summ = "INCONCLUSIVE", ("each claimed value has an eigenvalue within its radius, but some "
                                         "claimed pairs could not be matched to distinct eigenvalues "
@@ -1308,16 +1327,18 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
                                 {"n_claimed": int(mu.size), "guard_range": {"findings": gr_findings}},
                                 reason_code="FP_GUARD_RANGE"))
     elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
-        # a zero claimed vector has an infinite Theorem-1 radius, and so has a pair whose accounting overflowed: there
-        # is no enclosure to count against (the shift sigma = inf would otherwise crash the factorization, IMP-23)
-        nf_pairs = _overflowed_pairs(enc, X)
+        # a zero claimed vector has an infinite Theorem-1 radius, and so has a pair whose accounting overflowed or
+        # whose vector norm binary64 does not resolve: there is no enclosure to count against (the shift sigma = inf
+        # would otherwise crash the factorization, IMP-23)
+        nf_over, nf_unres = _nonfinite_pairs(enc, X)
+        text, code_nf = _nonfinite_text(nf_over, nf_unres)
         statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
-                                ("some claimed pair has no finite enclosure (a bound of the floating-point accounting "
-                                 "overflowed): counts cannot be matched to the claimed set" if nf_pairs else
+                                (f"some claimed pair has no finite enclosure ({text}): counts cannot be matched to the "
+                                 f"claimed set" if nf_over or nf_unres else
                                  "some claimed pair has no finite enclosure (zero eigenvector): "
                                  "counts cannot be matched to the claimed set"),
                                 {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]},
-                                reason_code="NONFINITE_BOUND" if nf_pairs else None))
+                                reason_code=code_nf if nf_over or nf_unres else None))
     elif claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",
