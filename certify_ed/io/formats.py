@@ -213,7 +213,9 @@ def read_array(path: str, key: Optional[str] = None, role: str = "eigenvalues",
 
 
 def write_array(path: str, a, key: Optional[str] = None, role: str = "eigenvalues") -> str:
-    """Write an array in the format given by the extension (the inverse of read_array)."""
+    """Write an array in the format given by the extension (the inverse of read_array). In Matrix Market (.mtx) a
+    narrower floating array (float16, float32, complex64) is written as its exact binary64 copy, with 17 significant
+    digits, so it reads back as that copy; the other formats keep the array's dtype."""
     a = np.asarray(a)
     e = _ext(path)
     key = key or DEFAULT_KEYS[role][0]
@@ -232,7 +234,11 @@ def write_array(path: str, a, key: Optional[str] = None, role: str = "eigenvalue
             json.dump({key: _jsonable_array(a)}, f)
     elif e == ".mtx":
         from scipy.io import mmwrite
-        mmwrite(path, a.reshape(-1, 1) if a.ndim == 1 else a, precision=17)    # 17 digits: exact round trip
+        from ..precision import binary64
+        # 17 significant digits are binary64 digits: a narrower floating array is written as its exact binary64 copy
+        # (scipy 1.17's writer fails on float32 and complex64 data at this precision), so every value round-trips
+        b = binary64(a, role) if is_narrow_float(a.dtype) else a
+        mmwrite(path, b.reshape(-1, 1) if b.ndim == 1 else b, precision=17)
     else:
         raise FormatError(f"{path}: unsupported extension {e!r}")
     return path
