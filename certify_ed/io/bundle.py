@@ -26,6 +26,7 @@ import scipy.sparse as sp
 
 from ..certify import Claim
 from ..construct import StateSet
+from ..precision import is_narrow_float
 from ..spec import ModelSpec
 from .formats import (ARRAY_EXT, FormatError, read_array, read_basis, read_operator, write_array,
                       write_basis, write_operator)
@@ -116,7 +117,7 @@ def read_bundle(path: str, allow_code: bool = False, kind: Optional[str] = None,
             order = meta.get("state_order") or (spec.state_order if spec is not None else "descending")
             states = StateSet(np.sort(B.astype(np.int64)), order, label=meta.get("basis_label", "producer basis"))
         else:
-            iso = sp.csr_matrix(B)
+            iso = B if sp.issparse(B) and is_narrow_float(B.dtype) else sp.csr_matrix(B)   # no single-precision sum
     kind = kind or meta.get("kind", "subset")
     window = window if window is not None else meta.get("window")
     if window is not None:

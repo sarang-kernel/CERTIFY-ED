@@ -24,6 +24,7 @@ import scipy.sparse as sp
 
 from .certify import Claim
 from .construct import StateSet
+from .precision import check_values, is_narrow_float
 from .spec import spec_from_quspin
 
 
@@ -65,7 +66,10 @@ def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None
         if not hasattr(basis, "Ns"):
             raise TypeError(f"basis must be a QuSpin basis object (got {type(basis).__name__})")
     spec = spec_from_quspin(static, basis)
-    Hq = H.tocsr() if hasattr(H, "tocsr") else sp.csr_matrix(H)
+    if sp.issparse(H) and is_narrow_float(H.dtype):
+        Hq = H                    # as given: certify() converts it exactly before it sums repeated entries
+    else:
+        Hq = H.tocsr() if hasattr(H, "tocsr") else sp.csr_matrix(H)
     producer = {"name": "QuSpin", "basis": type(basis).__name__, "Ns": int(basis.Ns)}
     try:
         import quspin
@@ -130,7 +134,8 @@ def export_npz(path: str, eigenvalues, eigenvectors=None, H=None) -> str:
     if eigenvectors is not None:
         d["eigenvectors"] = np.asarray(eigenvectors)
     if H is not None:
-        H = sp.csr_matrix(H)
+        from .io.formats import _csr_to_write
+        H = _csr_to_write(H) if sp.issparse(H) else sp.csr_matrix(H)   # a narrower matrix: its binary64 copy
         d.update(H_data=H.data, H_indices=H.indices, H_indptr=H.indptr, H_shape=np.array(H.shape))
     np.savez(path, **d)
     return path
@@ -142,7 +147,9 @@ def claim_from_file(eigenvalues: str, eigenvectors: str = None, operator: str = 
     directory of such files is a producer bundle (claim_from_bundle)."""
     from .io.formats import read_array, read_basis, read_operator
     keys = keys or {}
-    ev = np.asarray(read_array(eigenvalues, keys.get("eigenvalues"), "eigenvalues"), dtype=float)
+    ev = read_array(eigenvalues, keys.get("eigenvalues"), "eigenvalues")
+    check_values(ev, "eigenvalues")       # before the conversion, which would round an inexact value (precision.py)
+    ev = np.asarray(ev, dtype=float)
     X = None if eigenvectors is None else np.asarray(read_array(eigenvectors, keys.get("eigenvectors"), "eigenvectors"))
     op = None if operator is None else read_operator(operator, keys.get("operator"), allow_code=allow_code)
     states, iso = None, None
