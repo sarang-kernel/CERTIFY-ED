@@ -389,7 +389,10 @@ def _rounding_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray, abs
     # (docs/proofs/thm1_fp-accounting.md, corrections of 2026-11-03 and 2026-11-18)
     gw = gamma(adapter.width + (3 if cplx else 1))
     aX = modulus_up(X)                                   # formed once: for |H||X| here and for |X||mu| below
-    E = adapter.abs_matvec(X, aX) if absHX is None else absHX
+    if absHX is not None:
+        E = absHX
+    else:                                                # another adapter type takes X alone (the same values)
+        E = adapter.abs_matvec(X, aX) if isinstance(adapter, OperatorAdapter) else adapter.abs_matvec(X)
     if E.ndim == 1:
         E = E[:, None]
     E /= (1.0 - gw)
@@ -798,7 +801,10 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     gdw = gamma_dot(adapter.width + 2, cplx)
     gw = gamma(adapter.width + 1)
     xa = modulus_up(x)
-    absAx_raw = adapter.abs_matvec(x, xa) if absAx is None else np.asarray(absAx).ravel()
+    if absAx is not None:
+        absAx_raw = np.asarray(absAx).ravel()
+    else:
+        absAx_raw = adapter.abs_matvec(x, xa) if isinstance(adapter, OperatorAdapter) else adapter.abs_matvec(x)
     absAx = absAx_raw / (1 - gw)
     # |x^*(Ax - fl(Ax))| <= |x|^T gdw |A||x|, bounded with a guarded float dot of non-negatives
     num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
