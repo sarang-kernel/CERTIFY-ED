@@ -1,7 +1,7 @@
 # Single-precision inputs: bounds the computation did not support (3.0.0 to 3.2.3)
 
-Status: fixed in 3.3.0.dev0 on this branch (`fix/single-precision`); the CHANGELOG entry 'Single-precision inputs
-(soundness fix)' under 3.3.0.dev0 describes the fix.
+Status: fixed in the 3.3 development line (not yet released); the CHANGELOG entry 'Single-precision inputs (soundness
+fix)' under 3.3.0.dev0 describes the fix.
 
 Certificates computed from inputs in a floating format narrower than binary64 (float16, float32, complex64) could state
 bounds that the computation did not support: numpy and scipy formed the products, and the sums of repeated sparse
@@ -31,7 +31,10 @@ ddf83e1, 145cc00), and dev/3.3 up to cd0ca97. The 1.x and 2.x lines were not che
   distance 3.0e-08; at all seven commits in memory and from 3.1.0 on through an npz file and `claim_from_file`.
 
 Not affected: certificates whose inputs were all float64 or complex128, and integer inputs (an integer beyond 2^53 was
-rounded to binary64 without notice; it is refused now).
+rounded to binary64 without notice; it is refused now). One integer case differs, to the safe side: for an integer
+matrix whose absolute row sums exceed 2^63, 3.x gave a negative norm bound (norm_upper_bound -9.2e18 for the int64
+matrix [[2^62, 2^62], [2^62, 2^62]]) and a spurious S2 FAILED; the 3.3 development line gives the certificate of the
+float64 copy.
 
 ## Affected statements and records
 
@@ -71,9 +74,13 @@ repeated sparse entries.
 ## Workaround for 3.x
 
 Convert every array to float64 or complex128 before the call: the operator, the vectors, the sector isometry and block,
-observables, symmetry matrices and the inputs of the standalone records. For a scipy.sparse matrix use
-`A.astype(np.float64)` (or `np.complex128`) on the matrix as stored, which converts the entries before it sums repeated
-ones; a format conversion first (`A.tocsr().astype(...)`) has already summed them in single precision. For files, load
-the arrays, convert them the same way and pass the arrays to `Claim`; 3.x's readers convert single-precision sparse
-files to CSR in single precision. Checked at 3.0.0 and 3.2.3: converted this way, the first example gives radius 9.3e-10
-and the COO example 2.98e-08 = 2^-25 (complex64 likewise), while `A.tocsr().astype(np.float64)` still gives 6.7e-16.
+observables, symmetry matrices and the inputs of the standalone records. For a COO, CSR or CSC matrix convert the stored
+value array and keep the index arrays, `B = A.copy(); B.data = A.data.astype(np.float64)` (or `np.complex128`): no entry
+is summed before the conversion, whatever the scipy version. `A.astype(np.float64)` converts before it sums repeated
+entries only from scipy 1.11; up to scipy 1.10 it sums them first, in single precision and in place on `A` (scipy's
+source: 1.8.1 and 1.10.1 sum, then convert; 1.11.0 converts, then sums). A format conversion first
+(`A.tocsr().astype(...)`) sums them in single precision on every version. For files, load the arrays, convert them the
+same way and pass the arrays to `Claim`; 3.x's readers convert single-precision sparse files to CSR in single precision.
+Checked at 3.0.0 and 3.2.3 (scipy 1.17.1): with the stored values converted, the first example gives radius 9.3e-10 and
+the COO example 2.98e-08 = 2^-25, for COO, CSR and CSC, float32 and complex64, and `A` is unchanged;
+`A.tocsr().astype(np.float64)` still gives 6.7e-16.

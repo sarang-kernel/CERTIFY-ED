@@ -35,7 +35,10 @@ Affected inputs:
   distance 3.0e-08; at all seven commits in memory and from 3.1.0 on through an npz file and `claim_from_file`.
 
 Not affected: certificates whose inputs were all float64 or complex128, and integer inputs (an integer beyond 2^53 was
-rounded to binary64 without notice; it is refused now).
+rounded to binary64 without notice; it is refused now). One integer case differs, to the safe side: for an integer
+matrix whose absolute row sums exceed 2^63, 3.x gave a negative norm bound (norm_upper_bound -9.2e18 for the int64
+matrix [[2^62, 2^62], [2^62, 2^62]]) and a spurious S2 FAILED; the 3.3 development line gives the certificate of the
+float64 copy.
 
 Affected statements and records:
 
@@ -71,37 +74,48 @@ matrix after its conversion): the holder of the certificate has to check the pro
 operators, isometries and observables and for repeated sparse entries.
 
 Workaround for 3.x: Convert every array to float64 or complex128 before the call: the operator, the vectors, the sector
-isometry and block, observables, symmetry matrices and the inputs of the standalone records. For a scipy.sparse matrix
-use `A.astype(np.float64)` (or `np.complex128`) on the matrix as stored, which converts the entries before it sums
-repeated ones; a format conversion first (`A.tocsr().astype(...)`) has already summed them in single precision. For
-files, load the arrays, convert them the same way and pass the arrays to `Claim`; 3.x's readers convert single-precision
-sparse files to CSR in single precision. Checked at 3.0.0 and 3.2.3: converted this way, the first example gives radius
-9.3e-10 and the COO example 2.98e-08 = 2^-25 (complex64 likewise), while `A.tocsr().astype(np.float64)` still gives
-6.7e-16.
+isometry and block, observables, symmetry matrices and the inputs of the standalone records. For a COO, CSR or CSC
+matrix convert the stored value array and keep the index arrays, `B = A.copy(); B.data = A.data.astype(np.float64)` (or
+`np.complex128`): no entry is summed before the conversion, whatever the scipy version. `A.astype(np.float64)` converts
+before it sums repeated entries only from scipy 1.11; up to scipy 1.10 it sums them first, in single precision and in
+place on `A` (scipy's source: 1.8.1 and 1.10.1 sum, then convert; 1.11.0 converts, then sums). A format conversion first
+(`A.tocsr().astype(...)`) sums them in single precision on every version. For files, load the arrays, convert them the
+same way and pass the arrays to `Claim`; 3.x's readers convert single-precision sparse files to CSR in single precision.
+Checked at 3.0.0 and 3.2.3 (scipy 1.17.1): with the stored values converted, the first example gives radius 9.3e-10 and
+the COO example 2.98e-08 = 2^-25, for COO, CSR and CSC, float32 and complex64, and `A` is unchanged;
+`A.tocsr().astype(np.float64)` still gives 6.7e-16.
 
 Advisory: `docs/failures/single_precision_inputs.md` (the text above).
 
-The fix. The public functions of the 25 modules listed in `tests/test_precision_registry.py` that take a stored matrix
+The fix. The public functions of the 30 modules listed in `tests/test_precision_registry.py` that take a stored matrix
 or vectors pass them through `precision.binary64` before any product or format conversion: float16, float32 and
 complex64 data are converted exactly to float64 or complex128 (a sparse matrix keeps its stored entries, repeated ones
 included, which are then summed in binary64; LIL and DOK through their own astype; DIA without reading its padding). The
-registry test runs each of them on single-precision data with a repeated entry against the binary64 copy, and fails when
-a public function of those modules is neither listed nor exempted with a reason. The low-level kernels
-(`OperatorAdapter` products, `enclosure.residuals`, the inertia factorizations, `ldl_residual`, `sectors.audit_sector`,
-the Ozaki splits) refuse floating data other than binary64 with `PrecisionError` ('... did not convert them'), so an
-entry point that misses its conversion fails instead of certifying.
+registry test runs each of them on single-precision data with a repeated entry against the binary64 copy; it fails when
+a public function of those modules is neither listed nor exempted with a reason, and when a module of the package is
+neither listed nor exempted with a reason (wrappers of certify(), the S5 corroboration, readers of producer formats that
+produce float64 arrays, modules without a stored-matrix input). The low-level kernels (`OperatorAdapter` products,
+`enclosure.residuals`, the inertia factorizations, `ldl_residual`, `sectors.audit_sector`, the Ozaki splits) and the
+caller-supplied products of `rayleigh_interval`, `kato_temple` and `residuals(products=...)` refuse floating data other
+than binary64 with `PrecisionError`, so an entry point that misses its conversion fails instead of certifying. The S1
+comparator `construct.matrix_difference`, `construct.hermitian_part`, `basis.sector_matrix` and
+`invariants.matrix_invariants` (which carries a rounding bound) convert as well; inside certify() they receive converted
+matrices already.
 
 File readers (`io.formats.read_operator` and `read_basis`, `io.bundle`, `claim_from_file`, `claim_from_npz`,
 `claim_from_bundle`, `claim_from_quspin`) return a single-precision sparse matrix as read (a COO keeps its repeated
 entries), and certify() converts it; `source_sha256` in the record is that of the arrays as read. Writers
 (`write_operator`, `write_bundle`, `export_npz`) store the exact binary64 copy of a single-precision sparse matrix,
-summed in binary64, so the files of a float32 matrix and of its float64 copy certify alike. Claimed vectors on disk
-(numpy memmap, HDF5 dataset) are converted block by block; any other matrix on disk is read into memory, an HDF5 dataset
-in binary64 as well (it is then a stored matrix, like a float32 dataset). An operator given as a list of lists or as an
-array-like (an object with `__array__` and no `matvec`) is a stored matrix whatever its dtype; in 3.x it failed as a
-black box without a `matvec`. `compose.certify_low_energy` converts each sector's isometry, block and vectors once,
-before the U(1) restriction and the decomposition audit, and lists the conversions in its record. A binary64 sparse
-matrix in the other byte order is copied to native order.
+summed in binary64, so the files of a float32 matrix and of its float64 copy certify alike; such a matrix therefore
+reads back as float64 (a round trip changes its dtype, and an .npz file is larger). The Matrix Market writers write 17
+significant digits (`mmwrite(..., precision=17)`), so that binary64 values round-trip on every scipy version (below 1.12
+scipy writes 16 by default); the text of such files changes, their values do not. Claimed vectors on disk (numpy memmap,
+HDF5 dataset) are converted block by block; any other matrix on disk is read into memory, an HDF5 dataset in binary64 as
+well (it is then a stored matrix, like a float32 dataset). An operator given as a list of lists or as an array-like (an
+object with `__array__` and no `matvec`) is a stored matrix whatever its dtype; in 3.x it failed as a black box without
+a `matvec`. `compose.certify_low_energy` converts each sector's isometry, block and vectors once, before the U(1)
+restriction and the decomposition audit, and lists the conversions in its record. A binary64 sparse matrix in the other
+byte order is copied to native order.
 
 Record and hashes. `arithmetic.input_widening` of the certificate (`input_widening` of the standalone records and of the
 composition) lists, only when there are any, the inputs that were in a narrower floating format, with the caller's dtype
@@ -113,18 +127,21 @@ single-precision vectors is that of the converted array, which the arrays sideca
 Integers and other types. Integer inputs were not affected, and their certificates and records are those of 3.x, bodies
 and hashes (15 integer cases against cd0ca97: operators dense, sparse and with the plan, vectors, claimed eigenvalues,
 observables, symmetry diagonals, isometries, stored eigenvectors, variational, moments, non-Hermitian, spectrum and
-inertia records; the generalized record differs only in its hash over the run time, as between any two runs): integers
-are checked, used as given, converted only where they are multiplied, and not recorded. Integer vectors, which 3.x
-refused with a numpy casting error, now certify; boolean inputs (a TypeError in 3.x) are converted exactly. Values that
-binary64 cannot hold are refused with `PrecisionError` (a `ValueError`, exported by the package) under one rule wherever
-they enter: a floating format wider than binary64 (an x87 or IEEE 128-bit long double; the decision is
+inertia records; the generalized record differs only in its hash over the run time, as between any two runs), except the
+integer matrices with absolute row sums beyond 2^63 named above: integers are checked, used as given, converted only
+where they are multiplied, and not recorded. Integer vectors, which 3.x refused with a numpy casting error, now certify;
+boolean inputs (a TypeError in 3.x) are converted exactly. Values that binary64 cannot hold are refused with
+`PrecisionError` (a `ValueError`, exported by the package) under one rule wherever they enter, the entry points of the
+exact layer (`checker.exact_eigenpair_radii`, `exact_recheck_lowest`, `exact_sectors.exact_recheck_sector_lowest`)
+included: a floating format wider than binary64 (an x87 or IEEE 128-bit long double; the decision is
 `precision.classify_format`, tested for both on every platform), an integer beyond 2^53 that is not a binary64 number
-(also in a list next to floats, where numpy would round it, and a Python integer beyond 2^64), an object value v with
-float(v) != v (a Fraction 1/3, a Decimal 0.1; exact object values are accepted, a change for
-`variational.state_from_dense`, which rounded them in 3.x), non-numeric data, an array-like whose conversion raises, and
-a claimed eigenvalue of a Hermitian claim with a nonzero imaginary part (3.x dropped it with a ComplexWarning).
-`claim_from_file` checks the eigenvalue file before it converts it. Every `certify-ed` command prints '<command>:
-refused: ...' and exits with 2.
+(also in a list next to floats, where numpy would round it: Python integers, numpy integer scalars and integer arrays
+alike; a Python integer beyond 2^64 or of 2^1024 or more), an object value v with float(v) != v (a Fraction 1/3, a
+Decimal 0.1; exact object values are accepted, a change for `variational.state_from_dense`, which rounded them in 3.x;
+NaN goes on to the finite check, as in a float array), non-numeric data, and an array-like whose conversion raises. A
+complex array of the claimed eigenvalues of a Hermitian claim is converted as in 3.x (the real part, with numpy's
+ComplexWarning). `claim_from_file` checks the eigenvalue file before it converts it. Every `certify-ed` command prints
+'<command>: refused: ...' and exits with 2.
 
 Memory. A narrower dense input now costs the caller's array plus its binary64 copy (1.5 times a float64 input for
 float32); `cost.plan_for_claim` adds the caller's narrower arrays to its peaks. The copies are made before the memory
@@ -132,11 +149,12 @@ gates, so a claim that does not fit raises MemoryError instead of giving NOT_CHE
 materialized. Integer operators are used as given and converted where they are multiplied, as in 3.x.
 
 float64 and complex128 inputs give the same certificates and records as before, bit for bit (bodies without environment
-and times, and arrays, on 14 models and records against cd0ca97; hashes over the run time differ between any two runs),
-also for vectors, observables and symmetry diagonals given as lists or array-likes and for the sector composition;
-array-like observables, which 3.x refused, now certify. The computational source hash changes (new module `precision.py`
-and the modules changed here). Tests: `tests/test_single_precision.py`, `tests/test_precision_registry.py`. Not
-exercised here: the GPU products of D-05 (no device), which receive the converted matrix, and a Linux run.
+and times, and arrays, on 14 models and records against cd0ca97, and claims with a complex eigenvalue array; hashes over
+the run time differ between any two runs), also for vectors, observables and symmetry diagonals given as lists or
+array-likes and for the sector composition; array-like observables, which 3.x refused, now certify. The computational
+source hash changes (new module `precision.py` and the modules changed here). Tests: `tests/test_single_precision.py`,
+`tests/test_precision_registry.py`. Not exercised here: the GPU products of D-05 (no device), which receive the
+converted matrix, and a Linux run.
 
 ### The caller's matrices stay as given
 
