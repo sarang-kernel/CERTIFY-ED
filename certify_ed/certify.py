@@ -946,8 +946,7 @@ def _options_as_given(opts: Options, own) -> Options:
         S_own = own(S)
         if S_own is S:
             return v
-        rest = list(v)[1:]
-        return [S_own, *rest] if type(v) is list else (S_own, *rest)
+        return (S_own, *(v[i] for i in range(1, len(v))))      # read by index, as labels_hook reads it
     obs = {k: own(v) for k, v in opts.observables.items()}
     asym = {k: entry(v) for k, v in opts.approximate_symmetries.items()}
     if all(obs[k] is opts.observables[k] for k in obs) and \

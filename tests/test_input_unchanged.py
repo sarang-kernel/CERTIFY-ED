@@ -116,7 +116,7 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
 SymmetryEntry = collections.namedtuple("SymmetryEntry", "S lattice")
 
 
-@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array", "list", "deque", "UserList"])
+@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array", "list", "deque", "UserList", "mapping"])
 def test_certify_leaves_matrices_of_the_options_as_given(shape):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
@@ -133,7 +133,8 @@ def test_certify_leaves_matrices_of_the_options_as_given(shape):
                                                      "object array": lambda: np.array([Sz, 1.0], dtype=object),
                                                      "list": lambda: [Sz, 1.0],
                                                      "deque": lambda: collections.deque([Sz, 1.0]),
-                                                     "UserList": lambda: collections.UserList([Sz, 1.0])}[shape]()})
+                                                     "UserList": lambda: collections.UserList([Sz, 1.0]),
+                                                     "mapping": lambda: {0: Sz, 1: 1.0}}[shape]()})
     a = ce.certify(claim, spec, opts)
     assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
     _same(a, ce.certify(claim, spec, opts))
@@ -303,3 +304,17 @@ def test_a_block_isometry_and_a_lifted_observable_stay_as_given():
     assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
     _same(ref, a)
     _same(a, ce.certify(claim, spec, opts))
+
+
+def test_a_mapping_entry_is_read_by_index_like_a_tuple():
+    """labels_hook reads an approximate-symmetry entry by index, so {0: S, 1: lattice} means (S, lattice); a lattice of
+    0.3 (not the keys' 1) changes the label record."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec)
+    w, V = np.linalg.eigh(H.toarray())
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
+    Sz = _with_duplicates(sp.diags(_total_sz(spec)).tocsr())
+    as_tuple = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", approximate_symmetries={"Sz": (Sz, 0.3)}))
+    as_mapping = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all",
+                                                    approximate_symmetries={"Sz": {0: Sz, 1: 0.3}}))
+    _same(as_tuple, as_mapping)
