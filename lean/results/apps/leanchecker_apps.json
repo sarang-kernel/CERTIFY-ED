@@ -1,0 +1,14 @@
+{
+ "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+ "command": "lake env leanchecker CertifyMathlib.Apps.Bordered CertifyMathlib.Apps.Kernel CertifyMathlib.Apps.Criterion CertifyMathlib.Apps",
+ "modules": [
+  "CertifyMathlib.Apps.Bordered",
+  "CertifyMathlib.Apps.Kernel",
+  "CertifyMathlib.Apps.Criterion",
+  "CertifyMathlib.Apps"
+ ],
+ "exit_code": 0,
+ "seconds": 1087.6,
+ "output": "none",
+ "trust_level": "K+"
+}

@@ -1,0 +1,177 @@
+{
+ "agreement_definition": "genuine certificate: both checkers exit 0 and failed_reproduced_both is yes or empty; forgery: both checkers exit 1",
+ "agreement_rows": 135,
+ "agreement_rows_agree": 135,
+ "certificates": {
+  "bundles": 63,
+  "c_verifier_pass": 55,
+  "cecheck_pass": 55,
+  "checked": 55,
+  "refused_by_certify_ed": 8,
+  "source": "code/certify-ed/verifier/make_validation_set.py on corpus/cases and conformance/reference (archive v5, dev/3.2 a814d28)",
+  "statuses_equal_to_archived_validation_record": true
+ },
+ "checker_seconds_forgeries": 2514,
+ "checker_seconds_genuine": 1785,
+ "exact_checks_on_genuine": {
+  "S2_inconclusive_by_underflow_rule_but_exactly_valid": [
+   "heis10_subnormal_entries",
+   "heis10_wrong_coupling",
+   "heis8_subnormal_entries",
+   "j1j2_8_subnormal_entries"
+  ],
+  "S8_brackets_confirmed": 42,
+  "certified_S2_confirmed": 31,
+  "certified_S3_confirmed": 24,
+  "cluster_radii_confirmed": 55,
+  "exact_counts": 211,
+  "kato_temple_records_confirmed": 15,
+  "recorded_counts_equal": 70,
+  "recorded_counts_recomputed": 70
+ },
+ "failed_statuses": {
+  "by_statement": {
+   "S2": 12,
+   "S3": 6
+  },
+  "categories": "REPRODUCED = the recorded FAILED status is reproduced; REFUTED = reproduced and the claim is also contradicted by an exact inertia count (cecheck only); see agreement_stats.json definitions",
+  "refuted_by_exact_counts": 15,
+  "refuted_by_statement": {
+   "S2": 9,
+   "S3": 6
+  },
+  "reproduced_by_both": 18,
+  "reproduced_by_c_verifier": 18,
+  "reproduced_by_cecheck": 18,
+  "total": 18
+ },
+ "forgeries": {
+  "by_mutation": {
+   "array_hash": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 20,
+    "total": 20
+   },
+   "body_hash": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 20,
+    "total": 20
+   },
+   "radius": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 0,
+    "total": 20
+   },
+   "status": {
+    "c": 20,
+    "lean": 20,
+    "python_integrity": 0,
+    "total": 20
+   }
+  },
+  "rejected_by_c_verifier": 80,
+  "rejected_by_cecheck": 80,
+  "rejected_by_certify_ed_integrity_check": 40,
+  "status_forgeries_rejected_only_by_the_floating_point_rule": [
+   "heis10_subnormal_entries__status",
+   "heis10_wrong_coupling__status",
+   "heis8_subnormal_entries__status"
+  ],
+  "total": 80
+ },
+ "inertia": {
+  "heis10_correct_reduced_seconds": 16.5,
+  "largest_block": 128,
+  "method": "Bareiss with symmetric pivoting, connected components, character blocks of commuting basis involutions",
+  "tfim8_correct_dense_256_seconds": 247,
+  "tfim8_correct_reduced_seconds": 2.9
+ },
+ "kernel_theorems": {
+  "K2_means": "accepted by leanchecker and by nanoda (lean4lean could not read the files)",
+  "axioms": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "count": 76,
+  "files": [
+   "CertifyCore/Theorems/Gamma.lean",
+   "CertifyCore/Theorems/Thm1.lean",
+   "CertifyCore/Theorems/Int05.lean",
+   "CertifyCore/Theorems/L17.lean",
+   "CertifyCore/Theorems/E04.lean",
+   "CertifyCore/Theorems/Counting.lean",
+   "CertifyCore/Kernel/Small.lean"
+  ],
+  "findings": [
+   "Lambda6 (docs/proofs/thm1_fp-accounting.md lines 54 to 56): holds for w+2 <= 3002399751580329 (margin 2.0 u^2), fails at w+2 = 3002399751580330 = floor(2^53/3) (margin -7.0 u^2), which the closing condition (w+2)u <= 1/3 admits; correct condition (w+2)u <= (1-5u)/3; stated range w <= 2^26 holds; no stored certificate affected",
+   "Lemma 17 ln remainder (docs/proofs/L17_dyadic_exp_ln.md lines 112 to 125): 1/(1-x^2) = 1.1396 at x = 0.35 exceeds 9/8 (v3.1.0 certify_ed/ivl.py line 212), 8/7 suffices (ivl.py line 233); at the largest argument ceil(2^192/3) the tail is at most 0.00118 grid units while both versions add 1 grid unit, so no 3.1 enclosure was wrong",
+   "Lambda4 (docs/proofs/thm1_fp-accounting.md lines 44 to 50): upper guard with N = 2n has margin 0.75u at n = 2^26 (1.50u in squared form), holds for n <= 84886743 and fails from n = 84886744 (exact bisection, export/findings_values.py, not a Lean theorem); certify_ed/fp.py lines 149 to 167 check no bound on n; largest stored dimension 1116229, no certificate affected"
+  ],
+  "kernel_checked_certificates": [
+   "matrix-free",
+   "dense-arrays",
+   "npz"
+  ],
+  "kernel_small_build_seconds": 309,
+  "lean4lean": {
+   "calls": 22,
+   "control": "Init.Prelude",
+   "declarations_checked": 0,
+   "exit_codes": {
+    "1": 22
+   },
+   "message": "failed to read file ..., incompatible header",
+   "modules": 21,
+   "program": "bin/lean4lean.exe of the toolchain",
+   "seconds_max": 19.0,
+   "seconds_min": 5.6,
+   "toolchain_and_olean_version": "4.35.0 (eb6cafb7290e8bd5f2937522d8d804f58f02bafc)",
+   "version_string_in_program": "4.35.0-nightly-2026-09-06"
+  },
+  "leanchecker": {
+   "command": "leanchecker CertifyCore",
+   "earlier_run_via_lake_env_seconds": 562,
+   "exit_code": 0,
+   "independent_of_build_kernel": false,
+   "modules": 21,
+   "seconds": 473.3
+  },
+  "nanoda": {
+   "accepted": 76,
+   "check_seconds_total": 773,
+   "declarations_per_theorem_max": 3876,
+   "declarations_per_theorem_min": 78,
+   "exit_codes": {
+    "0": 76
+   },
+   "export_seconds_total": 708,
+   "kernel_evaluation_check_seconds": {
+    "CertifyCore.K.denseArrays_S2_S3": 126.6,
+    "CertifyCore.K.matrixFree_S2_S3": 148.5,
+    "CertifyCore.K.npz_S2_S3": 133.1,
+    "CertifyCore.K.npz_forged_radius_rejected": 3.2
+   },
+   "permitted_axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+   ],
+   "program": "bin/nanoda_bin.exe with leanexport",
+   "theorems": 76
+  }
+ },
+ "lean": "4.35.0",
+ "not_checked": [
+  "S1 model fidelity (model shift taken from the record)",
+  "S4 eigenspace bounds",
+  "S5 to S7",
+  "Theorems 1, 2, 2', Sylvester's law and Weyl's inequality (Mathlib part)",
+  "complex operators and sector certificates (none in the set)",
+  "lean4lean (the toolchain's build reads no 4.35.0 .olean file)"
+ ],
+ "track": "core-Lean exact checker and kernel theorems (no Mathlib)"
+}

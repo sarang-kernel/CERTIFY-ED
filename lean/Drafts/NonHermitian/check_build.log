@@ -1,0 +1,5 @@
+ÔÜá [2483/2484] Built CertifyMathlib.NonHermitian.BauerFike (173s)
+warning: CertifyMathlib\NonHermitian\BauerFike.lean: imports `Mathlib.Analysis.InnerProductSpace.PiL2` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: CertifyMathlib\NonHermitian\BauerFike.lean: imports `Mathlib.Analysis.Normed.Lp.Matrix` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+Ô£ö [2484/2484] Built CertifyMathlib.NonHermitian (103s)
+Build completed successfully (2484 jobs).

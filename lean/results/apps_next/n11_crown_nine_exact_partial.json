@@ -1,0 +1,29 @@
+{
+ "status": "incomplete: stopped after the blocks below",
+ "process_cpu_seconds": 9680,
+ "note": "values from the run log, deltas rounded to three digits; the run wrote no exact deltas before it was stopped",
+ "blocks_logged": [
+  {
+   "dim": 6194,
+   "count": 0,
+   "shift_K_units_rounded": "-43986633.1602",
+   "delta_K_units_rounded_in_log": 0.000313,
+   "seconds": 5568
+  },
+  {
+   "dim": 6066,
+   "count": 0,
+   "shift_K_units_rounded": "-43986633.1602",
+   "delta_K_units_rounded_in_log": 0.000259,
+   "seconds": 7424
+  },
+  {
+   "dim": 6031,
+   "count": 0,
+   "shift_K_units_rounded": "-43986633.1602",
+   "delta_K_units_rounded_in_log": 0.000188,
+   "seconds": 12240
+  }
+ ],
+ "log": "n11_appended.log"
+}

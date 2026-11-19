@@ -2,8 +2,8 @@
 verdict in a record of its own.
 
 An external verifier is any program that re-checks a saved certificate independently of certify-ed, for example
-the exact checker `cecheck` of the Lean re-verification (driver `Verify/cecheck_bundle.py` of the repository
-certify-ed-project) or the C verifier of `verifier/`. This module runs such a program and writes what it said into
+the exact checker `cecheck` of the Lean re-verification (driver `lean/Verify/cecheck_bundle.py` of this
+repository) or the C verifier of `verifier/`. This module runs such a program and writes what it said into
 an external-verification record (schema `certify-ed/external-verification/1`), a separate JSON file. Nothing here
 reads that verdict back: the certificate file is not modified, and no status, bound or count of certify-ed depends
 on the external program. The record says so in its field `status_effect`.

@@ -1,0 +1,277 @@
+[
+ {
+  "case": "heis10_correct",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_duplicated_vector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_mislabeled_sector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_missing_multiplet_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_non_hermitian",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_subnormal_entries",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_swapped_pairs",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_unnormalised_isolated",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_coupling",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_matrix_entry",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis10_wrong_window_count",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_correct",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_duplicated_vector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_mislabeled_sector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_missing_multiplet_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_non_hermitian",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_subnormal_entries",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_swapped_pairs",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_unnormalised_isolated",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_coupling",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_matrix_entry",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "heis8_wrong_window_count",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_correct",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_duplicated_vector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_mislabeled_sector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_missing_multiplet_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_non_hermitian",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_subnormal_entries",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_unnormalised_cluster_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_wrong_coupling",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_wrong_eigenvalue_1e-05",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_wrong_eigenvalue_large",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "j1j2_8_wrong_matrix_entry",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_correct",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_duplicated_vector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_mislabeled_sector",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_missing_multiplet_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_non_hermitian",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_swapped_pairs",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_unnormalised_cluster_member",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_unnormalised_isolated",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_wrong_coupling",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_wrong_eigenvalue_1e-05",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_wrong_eigenvalue_large",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_wrong_matrix_entry",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "tfim8_wrong_window_count",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "dense-arrays",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "matrix-free",
+  "error": "",
+  "integrity_ok": true
+ },
+ {
+  "case": "npz",
+  "error": "",
+  "integrity_ok": true
+ }
+]

@@ -1,0 +1,7 @@
+tag	commit	type	date_ist	message
+v1.0.0-baseline	61437a7	commit	2026-09-25 11:02	Import CERTIFY-ED v1.0.0 as baseline for v2 work
+v2-pre-homologation	1aa96a9	commit	2026-10-18 19:06	Merge symveig as certify_ed.spectrum: whole-spectrum enclosure by sectors with certified counts, exact conservation and Hermiticity checks; E8 compares against symveig 1.0.0 on its 17 benchmark configurations
+v3.1.0	e860a83	tag	2026-10-22 16:58	certify-ed 3.1.0: review fixes of 2026-10-21, scope framework (presets, scope block, producer bundle, S7/S8/S4 extensions, UNVERIFIED under D-12), practice survey, manuscript_v4 macro emission, Windows portability. Evidence run: results/run_full_20261022.
+v3.1.0-candidate	d815533	tag	2026-10-22 05:48	release/3.1.0 integration candidate of 2026-10-22: review fixes, scope framework, survey, v4 macros, E9 named sectors. Not the evidence-run commit; the 3.1.0 evidence run is still to be made.
+v3.2.0	55d9f61	tag	2026-11-04 08:41	certify-ed 3.2.0: D-12 backlog derived and independently re-derived, INT-05 closed, new statements, scale, C verifier, figures (evidence run pending)
+v3.2.1	f3c478b	tag	2026-11-04 18:47	certify-ed 3.2.1: residual threads default 1 (robustness under memory caps); the version of the 3.2 evidence run

@@ -1,0 +1,11 @@
+E7 chain_J2=0: building model and sectors
+  184756 states, group order 80, block 9252, sectors #[2518, 2234, 2136, 2364] [110.691000s]
+  [certCount n=2518] build 3689 ms, ldl 30672 ms, limbs 700 ms
+  sector #[0, 0, 0] dim 2518: 1 below the point, delta 4.943e-13, 126.323000s 
+  [certCount n=2234] build 3205 ms, ldl 25839 ms, limbs 631 ms
+  sector #[0, 0, 2] dim 2234: 0 below the point, delta 4.478e-13, 99.159000s 
+  [certCount n=2136] build 2816 ms, ldl 18899 ms, limbs 553 ms
+  sector #[0, 2, 0] dim 2136: 0 below the point, delta 4.282e-13, 80.404000s 
+  [certCount n=2364] build 4212 ms, ldl 28283 ms, limbs 618 ms
+  sector #[0, 2, 2] dim 2364: 0 below the point, delta 4.649e-13, 111.981000s 
+E7 chain_J2=0: count 1 (record 1), record enclosure re-certified true, agreement true

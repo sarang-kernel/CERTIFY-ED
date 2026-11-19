@@ -1,0 +1,237 @@
+{
+ "calibration": {
+  "lattices": {
+   "star": {
+    "largest_block_rows": 70,
+    "e10_log_largest": 70,
+    "sum_n3": 419840.0,
+    "site_symmetry_group_used": 1
+   },
+   "cross": {
+    "largest_block_rows": 1584,
+    "e10_log_largest": 1584,
+    "sum_n3": 6609919552.0,
+    "site_symmetry_group_used": 1,
+    "count_seconds": 103,
+    "seconds_per_n3": 1.558264048294426e-08
+   },
+   "decorated_honeycomb": {
+    "largest_block_rows": 673,
+    "e10_log_largest": 673,
+    "sum_n3": 488383446.0,
+    "site_symmetry_group_used": 1
+   },
+   "decorated_square": {
+    "largest_block_rows": 3997,
+    "e10_log_largest": 4034,
+    "sum_n3": 233721721536.0,
+    "site_symmetry_group_used": 2,
+    "count_seconds": 2358,
+    "seconds_per_n3": 1.0088921066058462e-08
+   }
+  },
+  "seconds_per_n3_used": 1.558264048294426e-08,
+  "bytes_per_entry_used": 100.0
+ },
+ "honeycomb_method3": {
+  "sites": 30,
+  "edges": 36,
+  "phys_dims": {
+   "L": 16777216,
+   "C": 4096,
+   "R": 16777216
+  },
+  "reduced": {
+   "L": 1024,
+   "C": 64,
+   "R": 1024,
+   "Gamma_i": 4096,
+   "Gamma_j": 4096,
+   "union": 262144
+  },
+  "dim_V": 67108864,
+  "dim_A": 4194304,
+  "dim_B": 4194304,
+  "bordered_rows": 8388608,
+  "Sz_blocks": {
+   "34": 2,
+   "35": 44,
+   "36": 462,
+   "37": 3080,
+   "38": 14630,
+   "39": 52668,
+   "40": 149226,
+   "41": 341088,
+   "42": 639540,
+   "43": 994840,
+   "44": 1293292,
+   "45": 1410864,
+   "46": 1293292,
+   "47": 994840,
+   "48": 639540,
+   "49": 341088,
+   "50": 149226,
+   "51": 52668,
+   "52": 14630,
+   "53": 3080,
+   "54": 462,
+   "55": 44,
+   "56": 2
+  },
+  "site_symmetries_available": 1,
+  "site_symmetry_group_used": 1,
+  "flip_pairs_consistent": true,
+  "factorizations": [
+   {
+    "keys": [
+     34,
+     56
+    ],
+    "rows": 2,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     35,
+     55
+    ],
+    "rows": 44,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     36,
+     54
+    ],
+    "rows": 462,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     37,
+     53
+    ],
+    "rows": 3080,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     38,
+     52
+    ],
+    "rows": 14630,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     39,
+     51
+    ],
+    "rows": 52668,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     40,
+     50
+    ],
+    "rows": 149226,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     41,
+     49
+    ],
+    "rows": 341088,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     42,
+     48
+    ],
+    "rows": 639540,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     43,
+     47
+    ],
+    "rows": 994840,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     44,
+     46
+    ],
+    "rows": 1293292,
+    "factorizations": 1
+   },
+   {
+    "keys": [
+     45
+    ],
+    "rows": 705432,
+    "factorizations": 2
+   }
+  ],
+  "largest_block_rows": 1293292,
+  "Z_Y_object_entries": 536870912,
+  "Z_Y_object_GiB": 4.0,
+  "largest_block": {
+   "rows": 1293292,
+   "float_layer_MiB": 121229094.4977417,
+   "float_layer_seconds": 2343429429.778616,
+   "exact_GiB": 155773.40473085642,
+   "exact_seconds": 33707832278.207306,
+   "dense_float64_copy_GiB": 12461.872378468513
+  },
+  "sum_n3": 4.15459366208427e+18,
+  "all_blocks_exact_seconds": 64739539388.978,
+  "model": {
+   "exact_bytes_per_entry": 100.0,
+   "exact_seconds_per_n3": 1.558264048294426e-08
+  },
+  "binomial_check": {
+   "C(22,11)": 705432
+  },
+  "paper_table_I": {
+   "Gamma_i": 4096,
+   "union": 262144,
+   "L": 1024,
+   "C": 64,
+   "R": 1024,
+   "dim_V": 67108864
+  },
+  "geometry_matches_table_I": true,
+  "su2_reduced_largest_rows": {
+   "S": 2,
+   "rows": 355300
+  },
+  "years_one_core_all_blocks": 2051.472209197721
+ },
+ "gap_constants": {
+  "printed": {
+   "gamma_p": "0.3130520508",
+   "gamma_2p": "0.02571076873",
+   "gamma_4p": "0.7784203312"
+  },
+  "eta": "0.1445124916",
+  "product_exact": "207838546442957782304707043/78125000000000000000000000000",
+  "product": 0.0026603333944698595,
+  "final_equation": "0.002660333395",
+  "conclusion": "0.002550333395",
+  "final_equation_minus_product": 5.301403864997498e-13,
+  "conclusion_minus_product": -0.00010999999946985962
+ },
+ "lemm_sandvik_wang_cluster": {
+  "sites": 36,
+  "spin": "3/2",
+  "states": 4722366482869645213696
+ },
+ "peak_rss_mb": 175.796875,
+ "_elapsed_seconds": 337.26454162597656
+}

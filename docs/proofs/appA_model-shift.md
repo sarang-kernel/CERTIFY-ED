@@ -68,7 +68,7 @@ parts are exactly zero, sorting indices) add no rounding. The computed |H|_abs s
 `abs_rmatvec(ones)`) are sums of the |t̂_k| (|t̂_k| ≤ |t_k|(1 + γ_{2L}) and ≥ |t_k|(1 − γ_{2L})) with p − 1 roundings,
 hence within a factor (1 ± γ_{m+2L_max−1}) of the exact sums (all terms non-negative, no cancellation). ∎
 
-  *Erratum (10 Nov 2026, found by the Lean formalization, `FP.abs_sum_bounds_real` and `FP.abs_sum_bounds_complex`, certify-ed-project reverification_lean/ENCLOSURE.md).* For complex amplitudes `np.abs` of a computed amplitude is itself rounded, so the factor of the second sentence of Lemma A1 is (1 ± γ_{m+2L_max}), one index more than stated; for real amplitudes (1 ± γ_{m+2L_max−1}) holds as written. The code divides by `(1 - gamma(width))` with `width` = m + 2L_max + 2 (`certify.py` lines 389 to 395), which covers either index, so no computed bound changes.
+  *Erratum (10 Nov 2026, found by the Lean formalization, `FP.abs_sum_bounds_real` and `FP.abs_sum_bounds_complex`, docs/lean/ENCLOSURE.md).* For complex amplitudes `np.abs` of a computed amplitude is itself rounded, so the factor of the second sentence of Lemma A1 is (1 ± γ_{m+2L_max}), one index more than stated; for real amplitudes (1 ± γ_{m+2L_max−1}) holds as written. The code divides by `(1 - gamma(width))` with `width` = m + 2L_max + 2 (`certify.py` lines 389 to 395), which covers either index, so no computed bound changes.
 
 **Lemma A2.** H_spec is Hermitian, so Ĥ − H_spec = (E + Eᴴ)/2 and ‖(E + Eᴴ)/2‖ ≤ (‖E‖ + ‖Eᴴ‖)/2 = ‖E‖ for a
 unitarily invariant norm; entrywise |(E + Eᴴ)/2|_{ij} ≤ (|E_{ij}| + |E_{ji}|)/2. The rounding of

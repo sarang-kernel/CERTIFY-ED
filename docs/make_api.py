@@ -96,7 +96,7 @@ lines += ["## External verifiers (module level, 3.3, N-04)", "", entry("external
           entry("external.split_command", _ext.split_command), entry("external.expand_command", _ext.expand_command),
           entry("external.verdict_from_exit_code", _ext.verdict_from_exit_code),
           "  `certify-ed verify CERT.json --external CMD` runs a configured external verifier (for example the exact "
-          "checker `cecheck` through its driver in certify-ed-project) and writes its verdict to a separate record "
+          "checker `cecheck` through its driver in `lean/Verify/`) and writes its verdict to a separate record "
           f"(schema `{_ext.SCHEMA}`); no status, bound or count depends on it. `verify_external` is also importable "
           "from `certify_ed.api`.", ""]
 lines += ["## Applications", "", entry("apps.aklt.certify_lattice", aklt.certify_lattice),

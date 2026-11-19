@@ -9,3 +9,7 @@ recursive-include examples *.py *.md
 global-exclude __pycache__ *.pyc
 prune results
 prune legacy
+# the project record (docs/project, docs/blog, docs/lean and lean/) is not part of the package source
+prune docs/project
+prune docs/blog
+prune docs/lean

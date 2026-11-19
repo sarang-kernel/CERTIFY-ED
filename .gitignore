@@ -15,3 +15,17 @@ results/
 corpus/results/*/*/
 # mkdocs output (built locally, not committed)
 site/
+
+# project record (imported certify-ed-project): the Lean result files are tracked despite results/ above;
+# Lean build caches and generated bundles are not
+!lean/results/
+lean/.lake/
+*.olean
+*.ilean
+lean/**/build/
+lean/work/
+lean/.mathlib_cache/
+lean/.curl/
+lean/logs/
+lean/Drafts/**/scratch_*.lean
+docs/blog/blog_sources_bundle.txt

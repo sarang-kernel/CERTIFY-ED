@@ -1,0 +1,423 @@
+[
+ {
+  "case": "heis10_correct",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_duplicated_vector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_mislabeled_sector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_missing_multiplet_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_non_hermitian",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_subnormal_entries",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_swapped_pairs",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_unnormalised_cluster_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_unnormalised_isolated",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_coupling",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_1e-05",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_eigenvalue_large",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis10_wrong_matrix_entry",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis10_wrong_window_count",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_correct",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_duplicated_vector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_mislabeled_sector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_missing_multiplet_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_non_hermitian",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_subnormal_entries",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_swapped_pairs",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_unnormalised_cluster_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_unnormalised_isolated",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_coupling",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_1e-05",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_eigenvalue_large",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "heis8_wrong_matrix_entry",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "heis8_wrong_window_count",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "j1j2_8_correct",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_duplicated_vector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_mislabeled_sector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_missing_multiplet_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_non_hermitian",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_subnormal_entries",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_unnormalised_cluster_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_wrong_coupling",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "j1j2_8_wrong_eigenvalue_1e-05",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "j1j2_8_wrong_eigenvalue_large",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "j1j2_8_wrong_matrix_entry",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_correct",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_duplicated_vector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_mislabeled_sector",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "tfim8_missing_multiplet_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_non_hermitian",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "tfim8_swapped_pairs",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "tfim8_unnormalised_cluster_member",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_unnormalised_isolated",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_wrong_coupling",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_wrong_eigenvalue_1e-05",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "tfim8_wrong_eigenvalue_large",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S2.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "tfim8_wrong_matrix_entry",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ },
+ {
+  "case": "tfim8_wrong_window_count",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {
+   "S3.failed": "REPRODUCED"
+  }
+ },
+ {
+  "case": "dense-arrays",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": false,
+  "reproduced": {}
+ },
+ {
+  "case": "matrix-free",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": false,
+  "reproduced": {}
+ },
+ {
+  "case": "npz",
+  "exit_code": 0,
+  "fails": [],
+  "operator_given": true,
+  "reproduced": {}
+ }
+]

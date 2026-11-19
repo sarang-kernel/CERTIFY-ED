@@ -1,0 +1,175 @@
+{
+ "all_equal": true,
+ "hamiltonians": [
+  {
+   "den_lean": 20,
+   "den_python": 20,
+   "dim": 4096,
+   "entries_equal": true,
+   "lattice": "star",
+   "lean_H_U_zero": true,
+   "nonzeros": 54272,
+   "region": "L u C",
+   "seconds": 1.1,
+   "vbs_columns": 16
+  },
+  {
+   "den_lean": 20,
+   "den_python": 20,
+   "dim": 65536,
+   "entries_equal": true,
+   "lattice": "square_octagon_par",
+   "lean_H_U_zero": true,
+   "nonzeros": 1097728,
+   "region": "L u C",
+   "seconds": 13.7,
+   "vbs_columns": 64
+  }
+ ],
+ "lattices": [
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    8,
+    8,
+    8,
+    16,
+    16
+   ],
+   "entries_equal": true,
+   "lattice": "star",
+   "seconds": 0.2,
+   "unit_cosines": 32
+  },
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    16,
+    16,
+    16,
+    64,
+    64
+   ],
+   "entries_equal": true,
+   "lattice": "square_octagon_par",
+   "seconds": 0.3,
+   "unit_cosines": 256
+  },
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    16,
+    16,
+    16,
+    64,
+    64
+   ],
+   "entries_equal": true,
+   "lattice": "square_octagon_perp",
+   "seconds": 0.3,
+   "unit_cosines": 256
+  },
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    64,
+    16,
+    64,
+    64,
+    64
+   ],
+   "entries_equal": true,
+   "lattice": "cross",
+   "seconds": 4.7,
+   "unit_cosines": 256
+  },
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    24,
+    6,
+    72,
+    36,
+    36
+   ],
+   "entries_equal": true,
+   "lattice": "decorated_honeycomb",
+   "seconds": 0.7,
+   "unit_cosines": 216
+  },
+  {
+   "checks": {
+    "GC": true,
+    "GL": true,
+    "GR": true,
+    "Gi": true,
+    "Gj": true,
+    "downs": true,
+    "graph": true,
+    "singlets": true,
+    "unit_cosines": true
+   },
+   "dims": [
+    144,
+    12,
+    192,
+    144,
+    144
+   ],
+   "entries_equal": true,
+   "lattice": "decorated_square",
+   "seconds": 14.1,
+   "unit_cosines": 1728
+  }
+ ]
+}

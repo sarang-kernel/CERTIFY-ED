@@ -1,0 +1,13 @@
+{
+ "K": 5,
+ "N": 12,
+ "P1_flags": 2,
+ "P2_flags": 9,
+ "P3_localizes": 12,
+ "P3_not_certified": 13,
+ "agreement_tolerance": 1e-08,
+ "cases": 15,
+ "record": "e1_failure_matrix_20261105_104157/data.json",
+ "residual_tolerance": 1e-08,
+ "wrong_results": 13
+}

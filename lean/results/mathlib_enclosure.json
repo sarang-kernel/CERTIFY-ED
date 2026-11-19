@@ -1,0 +1,5334 @@
+{
+ "track": "Mathlib enclosure theorems",
+ "date": "10 November 2026",
+ "lean": "4.35.0",
+ "mathlib": "v4.35.0 (commit 56a005855ea1, lake-manifest.json)",
+ "root_module": "CertifyMathlib.Enclosure",
+ "files": [
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Spectral.lean",
+   "sha256": "04c3b3af651123e5fac1dbd47092347df873fc4d529915aa8c4400887a054161"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Residual.lean",
+   "sha256": "aad74a7530b8e433f787d4cd7c7dd9457cb83f1ef78694c9a46247579b888bb5"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/KatoTemple.lean",
+   "sha256": "65bb16aa653c76ce289b267cb23ca2d15171e6fd05301f4093cabf2723c9ea84"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Weyl.lean",
+   "sha256": "796294adea6dd37f6e0cce2075516b7109e7ec46660d2ab5c83000cacf3fa054"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Kahan.lean",
+   "sha256": "b21c3fc9bb02d25066dfec74d6e9bfd951294197128bf8d42490a038d3d4042f"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Cluster.lean",
+   "sha256": "d5ffd3d9fecb87d5b110573202ad9965cd8cd845ff33be4840f76ddb7e7ef643"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "sha256": "a0902e22cd1a3edd24ce02fb6ff9cb69ba3113d85463355eed95a26ac9c3af33"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Variational.lean",
+   "sha256": "777e20fe530c3df2677eb38ef2846a5d34911434470ac5bd5f7cd502a44c02c7"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/Generalized.lean",
+   "sha256": "4cde281f46548772167d1e34fb9e5b67aedbe54c0a157dd78dfae15c6487bb74"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/FloatModel.lean",
+   "sha256": "4bf89067fedb139d530f515cb72566313f40337f57ade2b5ec614cfbce1759a0"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "sha256": "053b10503c8ec5929e5fa0e6e8bececb457f14b5da8f99ebd6d553bcb8cac113"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/MatrixFree.lean",
+   "sha256": "c4fa0e996268b4b796244dcdf3f93482aabf97d0e7fa132bcee0be30ccade13b"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/ExpLn.lean",
+   "sha256": "021ba38a8ac6cae1350dc4daf4824cb619883ad020c8a6c963b8fc7d6a59a9e6"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "sha256": "d500b0b4eea5cdca1b023fe5e2e4ebf7b7a4e0931c97db66232b96399df33276"
+  },
+  {
+   "path": "reverification_lean/CertifyMathlib/Enclosure.lean",
+   "sha256": "c91d6afed5d5340e72f33c28eb341c0d292c39101d19a22712277c97ab073309"
+  },
+  {
+   "path": "reverification_lean/Drafts/Enclosure/PrintAxioms.lean",
+   "sha256": "523007fdb97fcc45d9b4d98b111b7972fe6eef40aeb8256beab975224269a592"
+  }
+ ],
+ "forbidden_tokens": {
+  "sorry": 0,
+  "admit": 0,
+  "native_decide": 0,
+  "axiom": 0,
+  "checked": "word search in the fourteen module files and the root file"
+ },
+ "build": {
+  "command": "lake build CertifyMathlib.Enclosure",
+  "seconds": 719.7,
+  "date": "10 November 2026",
+  "note": "round 3: two invocations after the last edits; the first (583.5 s) rebuilt FloatAccounting, MatrixFree, FloatUnderflow and ExpLn and stopped at a parse error in Generalized (the Matrix notation was not opened in the new section), the second (136.2 s) rebuilt Generalized and the root module; a final invocation (138.9 s) rebuilt no module and completed successfully; machine shared with other builds",
+  "module_seconds": {
+   "Spectral": 57,
+   "Residual": 66,
+   "KatoTemple": 69,
+   "Weyl": 76,
+   "Kahan": 62,
+   "Cluster": 83,
+   "ClusterPrime": 84,
+   "Variational": 115,
+   "Generalized": 64,
+   "FloatModel": 121,
+   "FloatAccounting": 244,
+   "MatrixFree": 195,
+   "ExpLn": 123,
+   "FloatUnderflow": 320,
+   "Enclosure (root)": 52
+  },
+  "module_seconds_note": "per-module elaboration times reported by lake, each module built once after its last edit; unchanged modules keep the times of the round 2 builds"
+ },
+ "axioms_check": {
+  "script": "reverification_lean/Drafts/Enclosure/PrintAxioms.lean",
+  "command": "lake env lean Drafts/Enclosure/PrintAxioms.lean",
+  "seconds": 76.6,
+  "theorems": 355,
+  "all_depend_on": [
+   "Classical.choice",
+   "Quot.sound",
+   "propext"
+  ],
+  "exceptions": {
+   "CertifyMathlib.Enclosure.FP.STree.length_leaves": [
+    "propext"
+   ]
+  },
+  "note": "354 theorems depend exactly on the three axioms; FP.STree.length_leaves depends on propext only",
+  "sorryAx": 0
+ },
+ "second_checker": [
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Enclosure.Spectral ... CertifyMathlib.Enclosure.Variational CertifyMathlib.Enclosure",
+   "modules": [
+    "CertifyMathlib.Enclosure.Spectral",
+    "CertifyMathlib.Enclosure.Residual",
+    "CertifyMathlib.Enclosure.KatoTemple",
+    "CertifyMathlib.Enclosure.Weyl",
+    "CertifyMathlib.Enclosure.Kahan",
+    "CertifyMathlib.Enclosure.Cluster",
+    "CertifyMathlib.Enclosure.ClusterPrime",
+    "CertifyMathlib.Enclosure.Variational",
+    "CertifyMathlib.Enclosure (root, before Generalized was added)"
+   ],
+   "exit_code": 0,
+   "seconds": 2541.8,
+   "output": "none",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Enclosure.Generalized",
+   "modules": [
+    "CertifyMathlib.Enclosure.Generalized"
+   ],
+   "exit_code": 0,
+   "seconds": 233.5,
+   "output": "none",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Enclosure.FloatModel CertifyMathlib.Enclosure.FloatAccounting CertifyMathlib.Enclosure.MatrixFree CertifyMathlib.Enclosure.ExpLn CertifyMathlib.Enclosure.Generalized CertifyMathlib.Enclosure.Variational CertifyMathlib.Enclosure",
+   "modules": [
+    "CertifyMathlib.Enclosure.FloatModel",
+    "CertifyMathlib.Enclosure.FloatAccounting",
+    "CertifyMathlib.Enclosure.MatrixFree",
+    "CertifyMathlib.Enclosure.ExpLn",
+    "CertifyMathlib.Enclosure.Generalized",
+    "CertifyMathlib.Enclosure.Variational",
+    "CertifyMathlib.Enclosure"
+   ],
+   "exit_code": 0,
+   "seconds": 1956.2,
+   "output": "none",
+   "trust_level": "K+"
+  },
+  {
+   "tool": "leanchecker (toolchain lean-4.35.0-windows)",
+   "command": "lake env leanchecker CertifyMathlib.Enclosure.FloatAccounting CertifyMathlib.Enclosure.FloatUnderflow CertifyMathlib.Enclosure.MatrixFree CertifyMathlib.Enclosure.ExpLn CertifyMathlib.Enclosure.Generalized CertifyMathlib.Enclosure",
+   "modules": [
+    "CertifyMathlib.Enclosure.FloatAccounting",
+    "CertifyMathlib.Enclosure.FloatUnderflow",
+    "CertifyMathlib.Enclosure.MatrixFree",
+    "CertifyMathlib.Enclosure.ExpLn",
+    "CertifyMathlib.Enclosure.Generalized",
+    "CertifyMathlib.Enclosure"
+   ],
+   "exit_code": 0,
+   "seconds": 1324.4,
+   "output": "none",
+   "trust_level": "K+",
+   "note": "round 3: the modules changed or added in this round, with the root module"
+  },
+  {
+   "tool": "nanoda (nanoda_bin of toolchain lean-4.35.0-windows, input from leanexport)",
+   "command": "leanexport <module> -- <theorem> > export.ndjson; nanoda_bin config.json (permitted_axioms propext, Classical.choice, Quot.sound; unpermitted_axiom_hard_error, nat_extension, string_extension true)",
+   "procedure": "one theorem per run; the export contains the theorem and every declaration it depends on, including the Lean core and Mathlib declarations; LEAN_PATH as given by lake env; a run is stopped when a process exceeds 4 GiB of private memory or 30 minutes; the export file is removed after each run; the round 2 runs used the round 2 build; the round 3 edits add declarations at the ends of the files, the import of CertifyMathlib.Counting.Inertia in Generalized and documentation, and leave the checked declarations as they were; leanchecker run 4 covers the current build",
+   "theorems": 63,
+   "accepted": 63,
+   "rejected": 0,
+   "not_run": 0,
+   "runs": [
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.higham_lemma_3_1",
+     "module": "CertifyMathlib.Enclosure.FloatModel",
+     "result": "accepted",
+     "declarations": 7640,
+     "export_seconds": 38.0,
+     "export_peak_private_mib": 3275,
+     "export_bytes": 29485832,
+     "check_seconds": 11.5,
+     "check_peak_private_mib": 67,
+     "output": "Checked 7640 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.residual_enclosure",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 34649,
+     "export_seconds": 127.4,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 196378543,
+     "check_seconds": 93.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34649 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.residual_enclosure_family",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 34650,
+     "export_seconds": 77.3,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 196387262,
+     "check_seconds": 86.9,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34650 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.residual_enclosure_of_shift",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 34660,
+     "export_seconds": 91.7,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 196500817,
+     "check_seconds": 97.1,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34660 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 35038,
+     "export_seconds": 80.8,
+     "export_peak_private_mib": 3984,
+     "export_bytes": 199370723,
+     "check_seconds": 92.9,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35038 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.gam_succ",
+     "module": "CertifyMathlib.Enclosure.FloatModel",
+     "result": "accepted",
+     "declarations": 7165,
+     "export_seconds": 36.9,
+     "export_peak_private_mib": 3275,
+     "export_bytes": 27053525,
+     "check_seconds": 9.6,
+     "check_peak_private_mib": 66,
+     "output": "Checked 7165 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.STree.comp_error",
+     "module": "CertifyMathlib.Enclosure.FloatModel",
+     "result": "accepted",
+     "declarations": 8721,
+     "export_seconds": 38.4,
+     "export_peak_private_mib": 3275,
+     "export_bytes": 33525894,
+     "check_seconds": 13.7,
+     "check_peak_private_mib": 67,
+     "output": "Checked 8721 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.dot_error",
+     "module": "CertifyMathlib.Enclosure.FloatModel",
+     "result": "accepted",
+     "declarations": 8861,
+     "export_seconds": 47.1,
+     "export_peak_private_mib": 3275,
+     "export_bytes": 33932629,
+     "check_seconds": 11.6,
+     "check_peak_private_mib": 67,
+     "output": "Checked 8861 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.cmul_err",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 14767,
+     "export_seconds": 64.3,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 58169450,
+     "check_seconds": 19.8,
+     "check_peak_private_mib": 131,
+     "output": "Checked 14767 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_radius_fl",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 18840,
+     "export_seconds": 61.3,
+     "export_peak_private_mib": 3935,
+     "export_bytes": 88446122,
+     "check_seconds": 48.2,
+     "check_peak_private_mib": 132,
+     "output": "Checked 18840 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_fl",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 34818,
+     "export_seconds": 106.9,
+     "export_peak_private_mib": 4012,
+     "export_bytes": 205282986,
+     "check_seconds": 91.5,
+     "check_peak_private_mib": 262,
+     "output": "Checked 34818 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_radius_fl_c",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 19033,
+     "export_seconds": 54.6,
+     "export_peak_private_mib": 3944,
+     "export_bytes": 95341828,
+     "check_seconds": 33.4,
+     "check_peak_private_mib": 132,
+     "output": "Checked 19033 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 34911,
+     "export_seconds": 89.2,
+     "export_peak_private_mib": 4014,
+     "export_bytes": 211749751,
+     "check_seconds": 95.0,
+     "check_peak_private_mib": 512,
+     "output": "Checked 34911 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.kato_temple",
+     "module": "CertifyMathlib.Enclosure.KatoTemple",
+     "result": "accepted",
+     "declarations": 34643,
+     "export_seconds": 104.0,
+     "export_peak_private_mib": 3980,
+     "export_bytes": 196668872,
+     "check_seconds": 91.7,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34643 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 34618,
+     "export_seconds": 80.5,
+     "export_peak_private_mib": 3981,
+     "export_bytes": 196092171,
+     "check_seconds": 83.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34618 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum",
+     "module": "CertifyMathlib.Enclosure.Residual",
+     "result": "accepted",
+     "declarations": 35014,
+     "export_seconds": 81.6,
+     "export_peak_private_mib": 3983,
+     "export_bytes": 199272851,
+     "check_seconds": 91.3,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35014 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.weyl_eigenvalues₀",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 34778,
+     "export_seconds": 81.0,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 197992326,
+     "check_seconds": 86.0,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34778 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.card_le_le_card_le_add",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 25924,
+     "export_seconds": 86.2,
+     "export_peak_private_mib": 3941,
+     "export_bytes": 125480478,
+     "check_seconds": 49.1,
+     "check_peak_private_mib": 261,
+     "output": "Checked 25924 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.builder_error",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 12773,
+     "export_seconds": 50.2,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 48897137,
+     "check_seconds": 16.2,
+     "check_peak_private_mib": 67,
+     "output": "Checked 12773 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.symmetrised_error",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 14134,
+     "export_seconds": 47.5,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 55676189,
+     "check_seconds": 17.2,
+     "check_peak_private_mib": 131,
+     "output": "Checked 14134 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.mono_error",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 12610,
+     "export_seconds": 45.2,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 47935770,
+     "check_seconds": 15.8,
+     "check_peak_private_mib": 67,
+     "output": "Checked 12610 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.schur_bound",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 19235,
+     "export_seconds": 62.4,
+     "export_peak_private_mib": 3911,
+     "export_bytes": 83982442,
+     "check_seconds": 30.9,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19235 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.builder_shift",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 19364,
+     "export_seconds": 64.8,
+     "export_peak_private_mib": 3931,
+     "export_bytes": 85626442,
+     "check_seconds": 28.8,
+     "check_peak_private_mib": 132,
+     "output": "Checked 19364 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.symmetrised_shift",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 19652,
+     "export_seconds": 64.9,
+     "export_peak_private_mib": 3936,
+     "export_bytes": 87651412,
+     "check_seconds": 31.0,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19652 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.model_shift_fl",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 19376,
+     "export_seconds": 68.6,
+     "export_peak_private_mib": 3933,
+     "export_bytes": 85769048,
+     "check_seconds": 31.0,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19376 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.model_shift_bound",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 19248,
+     "export_seconds": 63.4,
+     "export_peak_private_mib": 3911,
+     "export_bytes": 84116181,
+     "check_seconds": 31.4,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19248 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.weyl_transfer_enclosure",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 34779,
+     "export_seconds": 98.3,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 198020899,
+     "check_seconds": 86.1,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34779 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.weyl_transfer_count",
+     "module": "CertifyMathlib.Enclosure.Weyl",
+     "result": "accepted",
+     "declarations": 34704,
+     "export_seconds": 86.6,
+     "export_peak_private_mib": 3977,
+     "export_bytes": 197606740,
+     "check_seconds": 90.1,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34704 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.weyl_transfer_fl",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 34942,
+     "export_seconds": 80.8,
+     "export_peak_private_mib": 4003,
+     "export_bytes": 200450248,
+     "check_seconds": 93.5,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34942 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.polarQ_norm",
+     "module": "CertifyMathlib.Enclosure.Cluster",
+     "result": "accepted",
+     "declarations": 19686,
+     "export_seconds": 55.8,
+     "export_peak_private_mib": 3912,
+     "export_bytes": 86584587,
+     "check_seconds": 31.6,
+     "check_peak_private_mib": 131,
+     "output": "Checked 19686 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.sub_polarQ_le",
+     "module": "CertifyMathlib.Enclosure.Cluster",
+     "result": "accepted",
+     "declarations": 19738,
+     "export_seconds": 49.2,
+     "export_peak_private_mib": 3913,
+     "export_bytes": 87258844,
+     "check_seconds": 31.9,
+     "check_peak_private_mib": 132,
+     "output": "Checked 19738 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.polarQ_residual_le",
+     "module": "CertifyMathlib.Enclosure.Cluster",
+     "result": "accepted",
+     "declarations": 19740,
+     "export_seconds": 762.7,
+     "export_peak_private_mib": 3913,
+     "export_bytes": 87483573,
+     "check_seconds": 36.0,
+     "check_peak_private_mib": 132,
+     "output": "Checked 19740 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.kahan",
+     "module": "CertifyMathlib.Enclosure.Kahan",
+     "result": "accepted",
+     "declarations": 25993,
+     "export_seconds": 68.7,
+     "export_peak_private_mib": 3939,
+     "export_bytes": 125829892,
+     "check_seconds": 45.9,
+     "check_peak_private_mib": 262,
+     "output": "Checked 25993 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.kahan_antitone",
+     "module": "CertifyMathlib.Enclosure.Kahan",
+     "result": "accepted",
+     "declarations": 26041,
+     "export_seconds": 70.7,
+     "export_peak_private_mib": 3939,
+     "export_bytes": 126414822,
+     "check_seconds": 55.0,
+     "check_peak_private_mib": 261,
+     "output": "Checked 26041 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.cluster_enclosure",
+     "module": "CertifyMathlib.Enclosure.Cluster",
+     "result": "accepted",
+     "declarations": 34902,
+     "export_seconds": 88.5,
+     "export_peak_private_mib": 3986,
+     "export_bytes": 200175198,
+     "check_seconds": 94.9,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34902 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.cluster_enclosure_eps_star",
+     "module": "CertifyMathlib.Enclosure.ClusterPrime",
+     "result": "accepted",
+     "declarations": 34940,
+     "export_seconds": 76.3,
+     "export_peak_private_mib": 3988,
+     "export_bytes": 201825326,
+     "check_seconds": 91.8,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34940 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.cluster_min",
+     "module": "CertifyMathlib.Enclosure.ClusterPrime",
+     "result": "accepted",
+     "declarations": 7004,
+     "export_seconds": 43.0,
+     "export_peak_private_mib": 3908,
+     "export_bytes": 25993709,
+     "check_seconds": 9.5,
+     "check_peak_private_mib": 35,
+     "output": "Checked 7004 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.rayleigh_ritz_matrix",
+     "module": "CertifyMathlib.Enclosure.Variational",
+     "result": "accepted",
+     "declarations": 34651,
+     "export_seconds": 78.8,
+     "export_peak_private_mib": 3982,
+     "export_bytes": 196361585,
+     "check_seconds": 86.2,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34651 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.temple_matrix",
+     "module": "CertifyMathlib.Enclosure.Variational",
+     "result": "accepted",
+     "declarations": 34637,
+     "export_seconds": 75.1,
+     "export_peak_private_mib": 3989,
+     "export_bytes": 196520276,
+     "check_seconds": 101.6,
+     "check_peak_private_mib": 261,
+     "output": "Checked 34637 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.rayleigh_perturb",
+     "module": "CertifyMathlib.Enclosure.Variational",
+     "result": "accepted",
+     "declarations": 14323,
+     "export_seconds": 52.6,
+     "export_peak_private_mib": 3910,
+     "export_bytes": 55779275,
+     "check_seconds": 19.7,
+     "check_peak_private_mib": 131,
+     "output": "Checked 14323 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.matrixfree_entry_error",
+     "module": "CertifyMathlib.Enclosure.MatrixFree",
+     "result": "accepted",
+     "declarations": 13217,
+     "export_seconds": 54.6,
+     "export_peak_private_mib": 3926,
+     "export_bytes": 51483905,
+     "check_seconds": 21.6,
+     "check_peak_private_mib": 68,
+     "output": "Checked 13217 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c",
+     "module": "CertifyMathlib.Enclosure.MatrixFree",
+     "result": "accepted",
+     "declarations": 15079,
+     "export_seconds": 43.2,
+     "export_peak_private_mib": 3926,
+     "export_bytes": 61691932,
+     "check_seconds": 20.1,
+     "check_peak_private_mib": 132,
+     "output": "Checked 15079 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.norm_kronecker_le",
+     "module": "CertifyMathlib.Enclosure.MatrixFree",
+     "result": "accepted",
+     "declarations": 19358,
+     "export_seconds": 52.2,
+     "export_peak_private_mib": 3933,
+     "export_bytes": 85573585,
+     "check_seconds": 33.7,
+     "check_peak_private_mib": 132,
+     "output": "Checked 19358 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
+     "module": "CertifyMathlib.Enclosure.Generalized",
+     "result": "accepted",
+     "declarations": 28667,
+     "export_seconds": 57.2,
+     "export_peak_private_mib": 3953,
+     "export_bytes": 147189419,
+     "check_seconds": 54.2,
+     "check_peak_private_mib": 261,
+     "output": "Checked 28667 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
+     "module": "CertifyMathlib.Enclosure.Generalized",
+     "result": "accepted",
+     "declarations": 35475,
+     "export_seconds": 88.6,
+     "export_peak_private_mib": 3993,
+     "export_bytes": 202564401,
+     "check_seconds": 93.2,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35475 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 15441,
+     "export_seconds": 48.8,
+     "export_peak_private_mib": 3503,
+     "export_bytes": 62479406,
+     "check_seconds": 20.6,
+     "check_peak_private_mib": 132,
+     "output": "Checked 15441 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 13792,
+     "export_seconds": 41.8,
+     "export_peak_private_mib": 3502,
+     "export_bytes": 55181031,
+     "check_seconds": 24.3,
+     "check_peak_private_mib": 132,
+     "output": "Checked 13792 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 27664,
+     "export_seconds": 73.7,
+     "export_peak_private_mib": 3549,
+     "export_bytes": 148553659,
+     "check_seconds": 63.0,
+     "check_peak_private_mib": 261,
+     "output": "Checked 27664 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 2
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+     "module": "CertifyMathlib.Enclosure.FloatUnderflow",
+     "result": "accepted",
+     "declarations": 18999,
+     "export_seconds": 68.3,
+     "export_peak_private_mib": 4038,
+     "export_bytes": 156047915,
+     "check_seconds": 48.2,
+     "check_peak_private_mib": 312,
+     "output": "Checked 18999 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.d02b_key",
+     "module": "CertifyMathlib.Enclosure.MatrixFree",
+     "result": "accepted",
+     "declarations": 7817,
+     "export_seconds": 37.1,
+     "export_peak_private_mib": 3931,
+     "export_bytes": 33434974,
+     "check_seconds": 12.1,
+     "check_peak_private_mib": 67,
+     "output": "Checked 7817 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.d02b_radius",
+     "module": "CertifyMathlib.Enclosure.MatrixFree",
+     "result": "accepted",
+     "declarations": 18871,
+     "export_seconds": 50.3,
+     "export_peak_private_mib": 3948,
+     "export_bytes": 93048872,
+     "check_seconds": 33.1,
+     "check_peak_private_mib": 132,
+     "output": "Checked 18871 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 13160,
+     "export_seconds": 39.7,
+     "export_peak_private_mib": 3925,
+     "export_bytes": 50397241,
+     "check_seconds": 17.1,
+     "check_peak_private_mib": 67,
+     "output": "Checked 13160 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex",
+     "module": "CertifyMathlib.Enclosure.FloatAccounting",
+     "result": "accepted",
+     "declarations": 14934,
+     "export_seconds": 41.2,
+     "export_peak_private_mib": 3924,
+     "export_bytes": 58889166,
+     "check_seconds": 20.6,
+     "check_peak_private_mib": 131,
+     "output": "Checked 14934 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.pencil_inertia",
+     "module": "CertifyMathlib.Enclosure.Generalized",
+     "result": "accepted",
+     "declarations": 35404,
+     "export_seconds": 72.7,
+     "export_peak_private_mib": 3987,
+     "export_bytes": 202796473,
+     "check_seconds": 93.8,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35404 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.pencil_count_perturbed",
+     "module": "CertifyMathlib.Enclosure.Generalized",
+     "result": "accepted",
+     "declarations": 35424,
+     "export_seconds": 73.3,
+     "export_peak_private_mib": 3991,
+     "export_bytes": 203206971,
+     "check_seconds": 91.8,
+     "check_peak_private_mib": 261,
+     "output": "Checked 35424 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 27681,
+     "export_seconds": 58.7,
+     "export_peak_private_mib": 3551,
+     "export_bytes": 149531794,
+     "check_seconds": 60.2,
+     "check_peak_private_mib": 261,
+     "output": "Checked 27681 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 27742,
+     "export_seconds": 58.8,
+     "export_peak_private_mib": 3553,
+     "export_bytes": 150296286,
+     "check_seconds": 59.7,
+     "check_peak_private_mib": 261,
+     "output": "Checked 27742 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 27761,
+     "export_seconds": 58.2,
+     "export_peak_private_mib": 3552,
+     "export_bytes": 150685014,
+     "check_seconds": 60.2,
+     "check_peak_private_mib": 261,
+     "output": "Checked 27761 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 7434,
+     "export_seconds": 31.7,
+     "export_peak_private_mib": 3504,
+     "export_bytes": 27699144,
+     "check_seconds": 10.6,
+     "check_peak_private_mib": 67,
+     "output": "Checked 7434 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 7514,
+     "export_seconds": 32.2,
+     "export_peak_private_mib": 3504,
+     "export_bytes": 28226550,
+     "check_seconds": 10.0,
+     "check_peak_private_mib": 68,
+     "output": "Checked 7514 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 7016,
+     "export_seconds": 31.2,
+     "export_peak_private_mib": 3504,
+     "export_bytes": 26320713,
+     "check_seconds": 9.0,
+     "check_peak_private_mib": 35,
+     "output": "Checked 7016 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec",
+     "module": "CertifyMathlib.Enclosure.ExpLn",
+     "result": "accepted",
+     "declarations": 7016,
+     "export_seconds": 30.7,
+     "export_peak_private_mib": 3504,
+     "export_bytes": 26319750,
+     "check_seconds": 9.6,
+     "check_peak_private_mib": 35,
+     "output": "Checked 7016 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]",
+     "round": 3
+    },
+    {
+     "theorem": "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
+     "module": "CertifyMathlib.Enclosure.FloatUnderflow",
+     "export_seconds": 50.3,
+     "export_peak_private_mib": 4099,
+     "export_bytes": 273051368,
+     "result": "accepted",
+     "declarations": 34948,
+     "check_seconds": 52.6,
+     "check_peak_private_mib": 463,
+     "output": "Checked 34948 declarations with no typechecker errors, 1 pretty printer errors: [\n    \"Unable to print axioms\",\n]\n",
+     "round": "integration",
+     "note": "re-run on 11 November 2026 after the final build with a memory limit of 6 GiB (Audit/run_final_checks.py); the export needed 4099 MiB, just above the earlier limit of 4 GiB"
+    }
+   ]
+  }
+ ],
+ "statements": [
+  {
+   "id": "T1",
+   "name": "Theorem 1 (residual enclosure)",
+   "source": "code/certify-ed/docs/theory.md §2; manuscript_v4/sections/s3_math.tex thm:residual",
+   "lean": [
+    "CertifyMathlib.Enclosure.residual_enclosure",
+    "CertifyMathlib.Enclosure.EigenData.exists_eig_near"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.residual_enclosure"
+   ],
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "status": "proved",
+   "correspondence": "Document: for Hermitian A, x != 0 and real mu some eigenvalue satisfies |lambda - mu| <= ||Ax - mu x||/||x||. Lean: the same over RCLike (real or complex), x in EuclideanSpace with the Euclidean norm, eigenvalues hA.eigenvalues (Mathlib's unsorted indexing). No difference beyond the field being any RCLike field.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.residual_enclosure": "accepted"
+   }
+  },
+  {
+   "id": "T1-family",
+   "name": "Theorem 1, multi-pair form used by S2",
+   "source": "code/certify-ed/docs/theory.md §2 (existence only for each pair)",
+   "lean": [
+    "CertifyMathlib.Enclosure.residual_enclosure_family",
+    "CertifyMathlib.Enclosure.EigenData.exists_eig_near_family"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.residual_enclosure_family"
+   ],
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "status": "proved",
+   "correspondence": "Document: every claimed pair gets its own interval; distinctness is not claimed (two copies of one vector share an eigenvalue). Lean: a function f from the pair index to eigenvalue indices with each bound; f is not claimed injective.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.residual_enclosure_family": "accepted"
+   }
+  },
+  {
+   "id": "T1-shift",
+   "name": "Theorem 1 with the S1 model shift sigma",
+   "source": "code/certify-ed/docs/theory.md §2 step 6; docs/proofs/appA_model-shift.md §5 (v)",
+   "lean": [
+    "CertifyMathlib.Enclosure.residual_enclosure_of_shift",
+    "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm",
+    "CertifyMathlib.Enclosure.EigenData.exists_eig_near_of_shift"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.residual_enclosure_of_shift",
+    "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm"
+   ],
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "status": "proved",
+   "correspondence": "Document: radius add_up(r, sigma) for the eigenvalues of H with ||H - A|| <= sigma. Lean: radius ||Ax - mu x||/||x|| + sigma for the eigenvalues of Hermitian H, with the hypothesis either pointwise (||(H - A)v|| <= sigma ||v|| for all v) or as Mathlib's spectral norm ||H - A|| <= sigma (scope Matrix.Norms.L2Operator). Proved by the triangle inequality and Theorem 1 for H; the outward rounding of add_up is not part of the statement.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.residual_enclosure_of_shift": "accepted",
+    "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm": "accepted"
+   }
+  },
+  {
+   "id": "FP-model",
+   "name": "Floating-point model: standard model, INT-05 additive term, directed rounding; Higham Lemmas 3.1 and 3.3, sums in any order, dot product and matrix-vector bounds, complex product (Higham Lemma 3.5)",
+   "source": "Higham 2002 Lemmas 3.1, 3.3, 3.5 and eqs. (3.4), (3.11); code/certify-ed/docs/proofs/int05_underflow.md model M-U and Lemma U1; certify_ed/fp.py add_up, sub_down",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.higham_lemma_3_1",
+    "CertifyMathlib.Enclosure.FP.gam_succ",
+    "CertifyMathlib.Enclosure.FP.gam_add",
+    "CertifyMathlib.Enclosure.FP.one_add_gam_mul_le",
+    "CertifyMathlib.Enclosure.FP.gam_mono",
+    "CertifyMathlib.Enclosure.FP.mul_gam_le",
+    "CertifyMathlib.Enclosure.FP.gam_div_one_sub",
+    "CertifyMathlib.Enclosure.FP.STree.comp_error",
+    "CertifyMathlib.Enclosure.FP.dot_error",
+    "CertifyMathlib.Enclosure.FP.matvec_error",
+    "CertifyMathlib.Enclosure.FP.cmul_err",
+    "CertifyMathlib.Enclosure.FP.crnd_err",
+    "CertifyMathlib.Enclosure.FP.Binary64.outward_interval",
+    "CertifyMathlib.Enclosure.FP.rel_mul",
+    "CertifyMathlib.Enclosure.FP.rel_rnd"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.higham_lemma_3_1",
+    "CertifyMathlib.Enclosure.FP.gam_succ",
+    "CertifyMathlib.Enclosure.FP.STree.comp_error",
+    "CertifyMathlib.Enclosure.FP.dot_error",
+    "CertifyMathlib.Enclosure.FP.cmul_err"
+   ],
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean; CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "The model is a structure of hypotheses on an abstract rounding rnd on a normed group V (R or C): every result is representable, |rnd z - z| <= u|z| + eta for every exact result z (INT-05 model M-U), and sums of representable numbers carry no absolute term. Binary64 fixes u = 2^-53, eta = 2^-1075 and adds monotonicity and the neighbours succ, pred used by add_up and sub_down (outward_interval). Lemma 3.1 is stated for a list of factors (1 + delta)^(+-1); Lemma 3.3 as the inequalities gamma_k + u(1 + gamma_k) <= gamma_(k+1), gamma_j + gamma_k + gamma_j gamma_k <= gamma_(j+k), c gamma_k <= gamma_(ck), gamma_k + u <= gamma_(k+1)(1 - u). A sum in any order and association is a binary tree (STree); comp_error bounds the computed tree sum for leaf errors gamma_a|t| + beta, which gives the dot product bound gamma_k sum|a_i b_i| + k(1 + gamma_(k-1)) eta (U1) and, with eta = 0, the row bound |fl(Ax)_i - (Ax)_i| <= gamma_w (|A||x|)_i. For complex data, crnd rounds both components and cmul forms (ac - bd) + i(ad + bc) from four rounded real products and two rounded sums; cmul_err is |fl(ab) - ab| <= gamma_3 |ab| (from sqrt(2) gamma_2 <= gamma_3, proved as 2(2u + u^2)^2 <= (3u)^2).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.higham_lemma_3_1": "accepted",
+    "CertifyMathlib.Enclosure.FP.gam_succ": "accepted",
+    "CertifyMathlib.Enclosure.FP.STree.comp_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.dot_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.cmul_err": "accepted"
+   }
+  },
+  {
+   "id": "T1-fl",
+   "name": "Theorem 1 floating-point accounting, real data",
+   "source": "code/certify-ed/docs/proofs/thm1_fp-accounting.md; certify_ed/enclosure.py residuals, _rounding_bound; certify_ed/fp.py gamma, norm2_upper, norm2_lower",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl",
+    "CertifyMathlib.Enclosure.FP.resid_le_roundBound",
+    "CertifyMathlib.Enclosure.FP.norm2Up_ge",
+    "CertifyMathlib.Enclosure.FP.norm2Low_le",
+    "CertifyMathlib.Enclosure.FP.gamHat_bounds",
+    "CertifyMathlib.Enclosure.FP.matvec_error",
+    "CertifyMathlib.Enclosure.FP.absMatvec_ge"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl"
+   ],
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "The computation of residuals is modelled operation by operation: y_i as the rounded products A_ij x_j summed along a tree T_i with at most w leaves covering the stored entries of row i, R_i = fl(y_i - fl(x_i mu)), the bound E_i = fl(fl(fl(fl(fl(a_i / fl(1 - gamma_hat_(w+1))) (1 + 4u)) + fl(|x_i||mu|)) gamma_hat_(w+2)) (1 + 4u)) with a_i the computed |A||x| along a second tree and gamma_hat_k = fl(ku / fl(1 - ku)) (fp.gamma, ku exact), norm2_upper and norm2_lower with fl(||v||) = fl(sqrt(sum of rounded squares along a tree over all entries)), the factors fl(1 +- gamma_hat_(n+2)), the guard 1 + 8u and arbitrary nonnegative tails, and rel = fl(fl(fl(fl(fl(R_up + E_up) + c1) / x_low)(1 + 4u)) + c0) with c0, c1 >= 0 (the INT-05 terms of the code). Hypotheses: standard model (eta = 0), u <= 2^-53, 1 <= w <= 2^26, n <= 2^26, x_low > 0. Conclusion: ||Ax - mu x|| / ||x|| <= rel (residual_radius_fl), and for a real symmetric matrix some eigenvalue lies within rel of mu (residual_enclosure_fl). The summation order is arbitrary; products are rounded separately (no fused multiply-add). The per-stage slack is as in the document: norm2_upper >= (1 + u)||v|| and norm2_lower <= (1 - u)||v||, which absorbs the fourth rounding of the final quotient. The underflow-tolerant model of INT-05, with the additive terms of the code computed as in fp.py, is the statement T1-fl-int05.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl": "accepted",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl": "accepted"
+   }
+  },
+  {
+   "id": "T1-fl-complex",
+   "name": "Theorem 1 floating-point accounting, complex data",
+   "source": "code/certify-ed/docs/proofs/thm1_fp-accounting.md; certify_ed/enclosure.py _rounding_bound (gamma_(w+3), gamma_dot = 2 gamma_(w+6)); certify_ed/fp.py norm2_upper",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl_c",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c",
+    "CertifyMathlib.Enclosure.FP.residC_le_roundBound",
+    "CertifyMathlib.Enclosure.FP.residC_entry_err",
+    "CertifyMathlib.Enclosure.FP.roundBoundC_ge",
+    "CertifyMathlib.Enclosure.FP.norm2UpC_ge",
+    "CertifyMathlib.Enclosure.FP.norm2LowC_le",
+    "CertifyMathlib.Enclosure.FP.matvecC_error",
+    "CertifyMathlib.Enclosure.FP.absMatvecC_ge",
+    "CertifyMathlib.Enclosure.FP.cmul_err"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl_c",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c"
+   ],
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "As the real case with: complex products cmul (error gamma_3), complex sums and the product x_i mu rounded componentwise, each modulus |A_ij|, |x_j|, |x_i| rounded once (hypot modelled as one rounding of the exact modulus), the computed |A||x| divided by 1 - gamma_hat_(w+3), the entrywise bound with fl(2 gamma_hat_(w+6)), the norms of complex vectors as sums of the 2n squares of the real components with the factor 1 +- gamma_hat_(n+2) of norm2_upper (n the complex length). Hypotheses: eta = 0, u <= 2^-53, 1 <= w, w + 4 <= 2^26, n <= 2^26. The complex norm bounds use sqrt(1 - g) >= 1 - g/2 - g^2/4 with g = gamma_(2n) and (nu)^2 <= u/2.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.residual_radius_fl_c": "accepted",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c": "accepted"
+   }
+  },
+  {
+   "id": "T1-fl-int05",
+   "name": "Theorem 1 floating-point accounting under the underflow-tolerant model (INT-05, Theorem U5), real data",
+   "source": "code/certify-ed/docs/proofs/int05_underflow.md (model M-U, Lemmas U3 and U4, Theorem U5); docs/proofs/thm1_fp-accounting.md; certify_ed/fp.py norm_underflow_term, residual_entry_count, residual_additive_term, ULP_MIN, norm2_upper, norm2_lower, gamma; certify_ed/enclosure.py residuals, _rounding_bound",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
+    "CertifyMathlib.Enclosure.FP.resid_le_roundBound_U",
+    "CertifyMathlib.Enclosure.FP.resid_entry_U",
+    "CertifyMathlib.Enclosure.FP.addTerm_ge",
+    "CertifyMathlib.Enclosure.FP.cwHat_ge",
+    "CertifyMathlib.Enclosure.FP.cw_bridge",
+    "CertifyMathlib.Enclosure.FP.normUnder_ge",
+    "CertifyMathlib.Enclosure.FP.norm2Up_ge_U",
+    "CertifyMathlib.Enclosure.FP.norm2Low_le_U",
+    "CertifyMathlib.Enclosure.FP.matvec_error_U",
+    "CertifyMathlib.Enclosure.FP.absMatvec_ge_U",
+    "CertifyMathlib.Enclosure.FP.roundBound_ge_U",
+    "CertifyMathlib.Enclosure.FP.chain_final_U",
+    "CertifyMathlib.Enclosure.FP.UModel.le_rnd_normal",
+    "CertifyMathlib.Enclosure.FP.UModel.gamHat_bounds",
+    "CertifyMathlib.Enclosure.FP.UModel",
+    "CertifyMathlib.Enclosure.FP.normUnder",
+    "CertifyMathlib.Enclosure.FP.addTerm",
+    "CertifyMathlib.Enclosure.FP.cwHat",
+    "CertifyMathlib.Enclosure.FP.cwExact",
+    "CertifyMathlib.Enclosure.FP.normalMin"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_int05"
+   ],
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "status": "proved",
+   "correspondence": "Model: a Rounding on the reals with |rnd z - z| <= u|z| + eta for every exact result and no absolute term for the sum of two representable numbers (FloatModel.lean), and UModel: u = 2^-53, eta <= 2^-1075 (u_min), no absolute term for an exact result with |z| >= 2^-1022 (normalMin, the normal range), and representable numbers closed under negation. The computation is that of T1-fl (the same summation trees and the same order of operations), every rounding now with its absolute term, together with the additive terms of the code, each computed with every operation rounded: T_N = norm_underflow_term(N) = fl(sqrt(N/2) 2^-537 (1 + 2 gamma_hat_(N+2)) (1 + 8u)(1 + 8u)) (normUnder), added by norm2_upper to R_up and E_up and subtracted by norm2_lower in x_low (N = n); A_(n,w) = residual_additive_term(n, w) = fl(ldexp(fl(sqrt(n) c_w (1 + 8u)(1 + 8u)), -1075) + ULP_MIN) with c_w = residual_entry_count(w) as computed (addTerm, cwHat), added to R_up + E_up; and 2 ULP_MIN = 2^-1073, added to the quotient fl(fl(upper / x_low)(1 + 4u)). Hypotheses: 1 <= w <= 2^26, n <= 2^26, x_low > 0; no hypothesis on the magnitude of A, x or mu. Conclusion: ||Ax - mu x|| / ||x|| <= rel (residual_radius_int05), and for a real symmetric matrix some eigenvalue lies within rel of mu (residual_enclosure_int05). Why the terms suffice: Lemma U4 holds as |R_hat_i - r_i| <= E_hat_i + c_w eta with the exact c_w = (w + 1)(1 + gamma_(w+1)) + 2 gamma_(w+2) w (1 + gamma_w)(1 + 4u) + 3 gamma_(w+2)(1 + 4u)^2 + 2(1 + 4u) (resid_le_roundBound_U, cwExact), the formula of residual_entry_count; the computed A_(n,w) is at least sqrt(n) c_w (1 + u) u_min (addTerm_ge), because the computed c_w is bounded below term by term (cwHat_ge, cw_bridge) and ULP_MIN covers the rounding of ldexp to the subnormal grid; norm2_upper(v) >= (1 + u)||v|| and norm2_lower(v) <= (1 - u)||v|| for vectors of any magnitude, T_N covering the squares lost to underflow (normUnder_ge, norm2Up_ge_U, norm2Low_le_U); and 2^-1073 covers the absolute terms of the division and of the product by (1 + 4u) (chain_final_U). Document note: the proof of Theorem U5 states fl(sqrt(n) c_w (1 + 8u)^2) >= sqrt(n) c_w (1 - u)^k (1 + 8u)^2 >= sqrt(n) c_w (1 + 10u) for k <= 12 roundings, but (1 - u)^12 (1 + 8u)^2 is about 1 + 4u; the conclusion is unaffected, since the proof needs only A_(n,w) >= sqrt(n) c_w (1 + u) u_min, which addTerm_ge proves.",
+   "gap": "Complex data under the underflow-tolerant model (residual_entry_count with 4w + 2 real products, T_N with N = 2n) is not formalized; the complex accounting T1-fl-complex is proved in the standard model only. That binary64 arithmetic and NumPy satisfy UModel (in particular that the sum of two binary64 values is exact when it underflows, and that ldexp rounds to the subnormal grid with error at most u_min) is part of the correspondence and is not checked by Lean.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.residual_radius_int05": "accepted",
+    "CertifyMathlib.Enclosure.FP.residual_enclosure_int05": "accepted"
+   }
+  },
+  {
+   "id": "T3",
+   "name": "Theorem 3 (Kato-Temple)",
+   "source": "code/certify-ed/docs/theory.md §2; manuscript_v4/sections/s3_math.tex thm:kato",
+   "lean": [
+    "CertifyMathlib.Enclosure.kato_temple",
+    "CertifyMathlib.Enclosure.EigenData.kato_temple_upper",
+    "CertifyMathlib.Enclosure.EigenData.kato_temple_lower",
+    "CertifyMathlib.Enclosure.EigenData.kato_temple_upper_mul",
+    "CertifyMathlib.Enclosure.EigenData.kato_temple_lower_mul"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.kato_temple"
+   ],
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "status": "proved",
+   "correspondence": "Document: ||x|| = 1, theta = x^H A x, r = ||Ax - theta x||, (alpha, beta) containing theta and exactly one eigenvalue lambda: theta - r^2/(beta - theta) <= lambda <= theta + r^2/(theta - alpha). Lean (kato_temple): the same, theta written as re<x, Ax> (inner_apply_self_eq_re shows it equals <x, Ax>), 'exactly one eigenvalue' as: every eigenvalue in (alpha, beta) equals lambda (multiplicity allowed). The abstract forms need only lambda in [alpha, beta], use alpha < theta for the upper and theta < beta for the lower bound, and include division-free forms that need no hypothesis on theta.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.kato_temple": "accepted"
+   }
+  },
+  {
+   "id": "Gershgorin",
+   "name": "Gershgorin for Hermitian matrices and the norm bound ||A||_2 <= ||A||_inf",
+   "source": "Mathlib eigenvalue_mem_ball; code/certify-ed/docs/proofs/thm2_polar-factor.md §3 (inf_norm_upper(A) >= ||A||_inf >= ||A||_2 for Hermitian A)",
+   "lean": [
+    "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin",
+    "CertifyMathlib.Enclosure.abs_eigenvalue_le_row_sum",
+    "CertifyMathlib.Enclosure.norm_toEuclideanLin_le_of_row_sum",
+    "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin",
+    "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum"
+   ],
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "status": "proved",
+   "correspondence": "Mathlib's disc theorem is stated for an eigenvalue of toLin' A over a normed field; eigenvalue_mem_gershgorin applies it to each hA.eigenvalues i through the eigenvector eigenvectorBasis i. The statement the code uses is the consequence ||A v|| <= R ||v|| (and Mathlib's spectral norm ||A|| <= R) for Hermitian A and any R >= 0 above every row sum; Lean adds the harmless hypothesis R >= 0.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin": "accepted",
+    "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum": "accepted"
+   }
+  },
+  {
+   "id": "Weyl",
+   "name": "Weyl's inequality (sorted and counting forms)",
+   "source": "code/certify-ed/docs/proofs/appA_model-shift.md Theorem A5 (Horn-Johnson Cor. 4.3.15)",
+   "lean": [
+    "CertifyMathlib.Enclosure.weyl_eigenvalues₀",
+    "CertifyMathlib.Enclosure.sorted_weyl",
+    "CertifyMathlib.Enclosure.card_le_le_card_le_add",
+    "CertifyMathlib.Enclosure.card_lt_le_card_lt_add",
+    "CertifyMathlib.Enclosure.card_ge_le_card_ge_sub"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.weyl_eigenvalues₀",
+    "CertifyMathlib.Enclosure.card_le_le_card_le_add"
+   ],
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "status": "proved",
+   "correspondence": "Document: |lambda_j(H_spec) - lambda_j(H_h)| <= Delta for every sorted index j when ||H_h - H_spec||_2 <= Delta. Lean: the same for Mathlib's sorted eigenvalues eigenvalues₀ (decreasing order; the document's increasing order is the reversal of both sequences, which leaves the statement unchanged), with the norm hypothesis pointwise. The counting forms #{lambda(T) <= t} <= #{lambda(S) <= t + eps} and the strict form are proved first, by a Courant-Fischer dimension count.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.weyl_eigenvalues₀": "accepted",
+    "CertifyMathlib.Enclosure.card_le_le_card_le_add": "accepted"
+   }
+  },
+  {
+   "id": "A1-A2",
+   "name": "Appendix A, Lemmas A1 and A2 (builder rounding, symmetrisation rounding)",
+   "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.mono_error",
+    "CertifyMathlib.Enclosure.FP.builder_entry_error",
+    "CertifyMathlib.Enclosure.FP.builder_error",
+    "CertifyMathlib.Enclosure.FP.sym_entry_error",
+    "CertifyMathlib.Enclosure.FP.symmetrised_error",
+    "CertifyMathlib.Enclosure.FP.monoFl",
+    "CertifyMathlib.Enclosure.FP.EntryBuilt",
+    "CertifyMathlib.Enclosure.FP.abs_sum_error",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.builder_error",
+    "CertifyMathlib.Enclosure.FP.symmetrised_error",
+    "CertifyMathlib.Enclosure.FP.mono_error",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex"
+   ],
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "A monomial amplitude is modelled as fl(...fl(fl(c f1_hat) f2_hat)... fL_hat) with f_hat = fl(f) for every factor (an exact factor is a special case of the bound) over R or C; a product of a complex number with a real or purely imaginary one is one rounding of relative error u in modulus, which is the Rounding hypothesis on C. mono_error: |t_hat - t| <= gamma_2L |t|. An entry of H_ref is the computed amplitudes of its monomials S_ij summed along a tree with at most m leaves, or 0 when S_ij is empty (leak = 0 is the hypothesis that S_ij lists exactly the monomials from j to i). Lemma A1 (builder_error): |H_ref - H_spec|_ij <= gamma_(m+2L-1) (|H|_abs)_ij. Lemma A2 (symmetrised_error): for Hermitian H_spec, |fl(H_ij + conj H_ji)/2 - H_spec,ij| <= gamma_(m+2L)((|H|_abs)_ij + (|H|_abs)_ji)/2 <= gamma_(m+2L) max(...), the halving exact; the unitarily invariant part of A2 is used through schur_split (Lemma A3 row). Second sentence of Lemma A1: a row sum of abs_matvec(ones) (a column sum of abs_rmatvec(ones)) is modelled as the computed moduli of the amplitudes of the monomials of that row (column), multiplied by the entries 1.0 of ones without rounding (a product with 1.0 is exact in binary64), summed in any order along a tree with at most m leaves (EntryBuilt). With |t_hat - t| <= gamma_2L |t| (mono_error), the computed sum lies in [(1 - gamma_(m+2L-1)) sum |t_k|, (1 + gamma_(m+2L-1)) sum |t_k|] for real amplitudes, where np.abs is exact (abs_sum_bounds_real), and in [(1 - gamma_(m+2L)) sum |t_k|, (1 + gamma_(m+2L)) sum |t_k|] for complex amplitudes, where np.abs rounds the modulus once (abs_sum_bounds_complex); abs_sum_error is the general form for moduli of relative error gamma_a.",
+   "gap": "Document note: for complex amplitudes the factor of the second sentence of Lemma A1 is 1 +- gamma_(m+2L), one index more than the document states, because np.abs of a complex number is rounded. That a row or column of the operator has at most m monomials is the size of the summation tree (a hypothesis, as for an entry).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.builder_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.symmetrised_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.mono_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real": "accepted",
+    "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex": "accepted"
+   }
+  },
+  {
+   "id": "A3",
+   "name": "Appendix A, Lemma A3 (||E||_2^2 <= ||E||_1 ||E||_inf <= max^2)",
+   "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+   "lean": [
+    "CertifyMathlib.Enclosure.schur_bound",
+    "CertifyMathlib.Enclosure.norm_le_max_of_row_col",
+    "CertifyMathlib.Enclosure.FP.schur_split",
+    "CertifyMathlib.Enclosure.FP.builder_shift",
+    "CertifyMathlib.Enclosure.FP.symmetrised_shift"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.schur_bound",
+    "CertifyMathlib.Enclosure.FP.builder_shift",
+    "CertifyMathlib.Enclosure.FP.symmetrised_shift"
+   ],
+   "file": "CertifyMathlib/Enclosure/Weyl.lean; CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "Document: ||E||_2 <= sqrt(||E||_1 ||E||_inf) <= max(||E||_1, ||E||_inf) for any (rectangular) E. Lean: ||E x||^2 <= R C ||x||^2 and ||E x|| <= max(R, C) ||x|| for any upper bounds R >= 0, C >= 0 on the row and column sums. The proof is the Schur test with Cauchy-Schwarz instead of the document's route through lambda_max(E^H E); the inequality is the same. With the floating-point model: Delta_builder = gamma_W sqrt(r c) bounds ||H_ref - H_spec||_2 (builder_shift) and ||fl(H_hat) - H_spec||_2 (symmetrised_shift) for W >= m + 2L and r, c upper bounds of the row and column sums of |H|_abs; the symmetrised case uses schur_split (|M_ij| <= kappa (P_ij + P_ji) gives ||M||_2 <= 2 kappa sqrt(r c), by splitting M into two parts bounded by P and by its transpose).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.schur_bound": "accepted",
+    "CertifyMathlib.Enclosure.FP.builder_shift": "accepted",
+    "CertifyMathlib.Enclosure.FP.symmetrised_shift": "accepted"
+   }
+  },
+  {
+   "id": "A4",
+   "name": "Appendix A, Theorem A4 (the model shift Delta)",
+   "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+   "lean": [
+    "CertifyMathlib.Enclosure.model_shift_bound",
+    "CertifyMathlib.Enclosure.FP.model_shift_fl",
+    "CertifyMathlib.Enclosure.FP.weyl_transfer_fl"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.model_shift_fl",
+    "CertifyMathlib.Enclosure.model_shift_bound"
+   ],
+   "file": "CertifyMathlib/Enclosure/Weyl.lean; CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "proved",
+   "correspondence": "model_shift_fl: ||(H_h - H_spec) x|| <= (max(R, C) + gamma_W sqrt(r c)) ||x|| with R, C bounds of the row and column sums of D = H_h - H_ref, H_ref built as in Lemma A1, W >= m + 2L, r, c bounds of the exact row and column sums of |H|_abs; weyl_transfer_fl composes it with Theorem A5 for the sorted eigenvalues.",
+   "gap": "The theorem takes r, c, R, C as upper bounds. For r and c computed from abs_matvec(ones) and abs_rmatvec(ones), the second sentence of Lemma A1 (A1-A2, abs_sum_bounds_real, abs_sum_bounds_complex) gives exact sum <= computed sum / (1 - gamma_(m+2L-1)) (gamma_(m+2L) for complex amplitudes); the rounding of up(g sqrt(row col)/(1 - gamma(width))(1 + 4u)) and inf_norm_upper of the computed D are not formalized.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.model_shift_fl": "accepted",
+    "CertifyMathlib.Enclosure.model_shift_bound": "accepted"
+   }
+  },
+  {
+   "id": "A5",
+   "name": "Appendix A, Theorem A5 (Weyl transfer for S2 and S3)",
+   "source": "code/certify-ed/docs/proofs/appA_model-shift.md §1",
+   "lean": [
+    "CertifyMathlib.Enclosure.weyl_transfer_enclosure",
+    "CertifyMathlib.Enclosure.weyl_transfer_count"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.weyl_transfer_enclosure",
+    "CertifyMathlib.Enclosure.weyl_transfer_count",
+    "CertifyMathlib.Enclosure.FP.weyl_transfer_fl"
+   ],
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "status": "proved",
+   "correspondence": "Document: (S2) an enclosure of radius r for H_h becomes one of radius r + Delta for H_spec at the same sorted index, so a matching to distinct indices stays a matching; (S3) #{lambda(H_h) < sigma - beta} <= nu <= #{lambda(H_h) <= sigma + beta} becomes the same with beta + Delta. Lean: both, with the S2 part for a family of claims mapped to sorted indices of eigenvalues₀; S4 (separations shrink by 2 Delta) is not stated separately; it follows from the S2 part.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.weyl_transfer_enclosure": "accepted",
+    "CertifyMathlib.Enclosure.weyl_transfer_count": "accepted",
+    "CertifyMathlib.Enclosure.FP.weyl_transfer_fl": "accepted"
+   }
+  },
+  {
+   "id": "polar",
+   "name": "Polar-factor lemma (a) to (d)",
+   "source": "code/certify-ed/docs/proofs/thm2_polar-factor.md §1; manuscript_v4/sections/s3_math.tex lem:polar",
+   "lean": [
+    "CertifyMathlib.Enclosure.polarQ_norm",
+    "CertifyMathlib.Enclosure.polarM_sub_le",
+    "CertifyMathlib.Enclosure.polarMinv_le",
+    "CertifyMathlib.Enclosure.sub_polarQ_le",
+    "CertifyMathlib.Enclosure.polarQ_residual_le",
+    "CertifyMathlib.Enclosure.sqrt_dev_le"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.polarQ_norm",
+    "CertifyMathlib.Enclosure.sub_polarQ_le",
+    "CertifyMathlib.Enclosure.polarQ_residual_le"
+   ],
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "status": "proved",
+   "correspondence": "Document: M = G^(1/2), Q = X M^-1 with G = X^H X, ||G - I|| = eta < 1: (a) Q^H Q = I, (b) ||M - I|| <= delta and ||M^-1|| <= (1 - eta)^(-1/2), (c) ||X - Q|| <= delta, (d) ||AQ - Q Lambda|| <= rho. Lean: X a linear map F -> E, G given by <Xu, Xv> = <Gu, v>, M and M^-1 built in an orthonormal eigenbasis of G; (a) is stated as norm preservation ||Qz|| = ||z|| (inner products are preserved too, polarQ_inner in ClusterPrime.lean); the norms in (d) are any upper bounds nR, nA >= 0, nLambda; the hypothesis 0 <= eta is added (eta is a norm in the document).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.polarQ_norm": "accepted",
+    "CertifyMathlib.Enclosure.sub_polarQ_le": "accepted",
+    "CertifyMathlib.Enclosure.polarQ_residual_le": "accepted"
+   }
+  },
+  {
+   "id": "Kahan",
+   "name": "Kahan's inclusion theorem (general Hermitian block)",
+   "source": "code/certify-ed/docs/proofs/thm2_polar-factor.md §1 and §2",
+   "lean": [
+    "CertifyMathlib.Enclosure.kahan",
+    "CertifyMathlib.Enclosure.kahan_antitone",
+    "CertifyMathlib.Enclosure.kahan_interval_count",
+    "CertifyMathlib.Enclosure.exists_strictMono_matching"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.kahan",
+    "CertifyMathlib.Enclosure.kahan_antitone"
+   ],
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "status": "proved",
+   "correspondence": "Document: Q with orthonormal columns, H Hermitian with eigenvalues theta_j, r = ||AQ - QH||: g distinct indices with |lambda_{i_j} - theta_j| <= r. Lean: Q an isometry, eigenvalues of A and H sorted; the conclusion is a strictly increasing (so injective) index map, which is stronger. Step 1 (interval lemma) is the document's; Step 2 replaces Hall's marriage theorem by an explicit greedy order-preserving matching on the real line.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.kahan": "accepted",
+    "CertifyMathlib.Enclosure.kahan_antitone": "accepted"
+   }
+  },
+  {
+   "id": "T2",
+   "name": "Theorem 2 (clusters, radius rho)",
+   "source": "code/certify-ed/docs/theory.md §2; docs/proofs/thm2_polar-factor.md; manuscript_v4/sections/s3_math.tex thm:cluster",
+   "lean": [
+    "CertifyMathlib.Enclosure.cluster_enclosure",
+    "CertifyMathlib.Enclosure.cluster_rho"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.cluster_enclosure"
+   ],
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "status": "proved",
+   "correspondence": "Document: X n x g, eta = ||X^H X - I|| < 1, Lambda Hermitian with eigenvalues mu_j, R = AX - X Lambda, delta = 1 - sqrt(1 - eta), rho = ||R|| + (||A|| + ||Lambda||) delta: g distinct indices with |lambda_{i_j} - mu_j| <= rho. Lean (cluster_enclosure): X : Matrix n m, Lambda : Matrix m m Hermitian, the norm hypotheses pointwise with any upper bounds nR, nA >= 0, nLambda (as the manuscript allows), 0 <= eta added; the conclusion pairs Mathlib's sorted eigenvalues eigenvalues₀ of Lambda with those of A through a strictly increasing index map.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.cluster_enclosure": "accepted"
+   }
+  },
+  {
+   "id": "T2prime",
+   "name": "Theorem 2' (sharper radius eps*) and min(rho, eps*)",
+   "source": "code/certify-ed/docs/theory.md §2; docs/proofs/thm2prime_eps-star.md; manuscript_v4/sections/s3_math.tex lem:epsstar",
+   "lean": [
+    "CertifyMathlib.Enclosure.cluster_enclosure_eps_star",
+    "CertifyMathlib.Enclosure.cluster_eps_star",
+    "CertifyMathlib.Enclosure.cluster_min",
+    "CertifyMathlib.Enclosure.rayleigh_residual_le",
+    "CertifyMathlib.Enclosure.rayleigh_sub_le"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.cluster_enclosure_eps_star",
+    "CertifyMathlib.Enclosure.cluster_min"
+   ],
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "status": "proved",
+   "correspondence": "Document: eps* = ||R||/sqrt(1 - eta) + ||X^H R||/(1 - eta) + delta spread(Lambda)/sqrt(1 - eta), g distinct indices within eps*; min(rho, eps*) is a valid common radius. Lean: the same with upper bounds nR >= 0 and nXR >= 0 on ||R|| and ||X^H R|| (X^H R written as the matrix Xᴴ * (A * X - X * Λ) or the adjoint of X applied to R), and spread(Lambda) replaced by hi - lo for any lo <= mu_j <= hi (equal to the document's for lo = mu_min, hi = mu_max). cluster_min takes the two matchings and returns one with radius min(rho, eps*).",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.cluster_enclosure_eps_star": "accepted",
+    "CertifyMathlib.Enclosure.cluster_min": "accepted"
+   }
+  },
+  {
+   "id": "E-05",
+   "name": "E-05 variational certificates",
+   "source": "code/certify-ed/docs/proofs/E-05_variational.md §1",
+   "lean": [
+    "CertifyMathlib.Enclosure.rayleigh_ritz_matrix",
+    "CertifyMathlib.Enclosure.temple_matrix",
+    "CertifyMathlib.Enclosure.EigenData.residual_sq_eq",
+    "CertifyMathlib.Enclosure.EigenData.norm_apply_sq_eq",
+    "CertifyMathlib.Enclosure.EigenData.temple",
+    "CertifyMathlib.Enclosure.rayleigh_perturb",
+    "CertifyMathlib.Enclosure.quotient_mem_corners",
+    "CertifyMathlib.Enclosure.FP.rayleigh_numerator_error",
+    "CertifyMathlib.Enclosure.FP.rayleigh_numerator_bound"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.rayleigh_ritz_matrix",
+    "CertifyMathlib.Enclosure.temple_matrix",
+    "CertifyMathlib.Enclosure.rayleigh_perturb"
+   ],
+   "file": "CertifyMathlib/Enclosure/Variational.lean; CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "status": "partial",
+   "correspondence": "Lemma 1 (lambda_min <= theta <= lambda_max), Lemma 2 (an eigenvalue within r of theta, which is Theorem 1 at mu = theta, and r^2 = <psi, H^2 psi>/<psi, psi> - theta^2) and Proposition 1 (Temple: theta < rho <= lambda_2 gives lambda_1 >= theta - r^2/(rho - theta)) are kernel-checked; 'rho <= lambda_2' is written as 'at most one eigenvalue, counted with multiplicity, is below rho'. Lemmas 3 and 4 (floating-point enclosure of theta and r, MPS contraction error) and Lemma 5 (Rayleigh quotient of the source state) are not formalized. Lemma 5 is rayleigh_perturb: for a symmetric T with ||T z|| <= n_H ||z||, n_H >= 0, and ||psi - psi_hat|| <= e < ||psi_hat||, |theta(psi) - theta(psi_hat)| <= (2 ||T psi_hat - theta_hat psi_hat|| e + (n_H + |theta_hat|) e^2)/(||psi_hat|| - e)^2, the first term being 2 r(psi_hat)||psi_hat|| e. From Lemma 3: (i) the numerator, |N_hat - <psi, H psi>| <= e_N + gamma_w |psi|^T |H| |psi| for y = fl(H psi) with rows of at most w entries and the exact_dot contract |N_hat - <psi, y>| <= e_N (rayleigh_numerator_bound, real data); (iii) the quotient lies between the extreme corner quotients (quotient_mem_corners).",
+   "gap": "Lemma 3: the computed bound E_N with fl(|psi|^T a_hat)(1 + gamma_(n+2))/(1 - gamma_(w+1)) and its guard, the outward 4u of the corners, r_stored and the rounding of the Temple bound (v), and complex data; Lemma 4 (MPS contraction) is not formalized.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.rayleigh_ritz_matrix": "accepted",
+    "CertifyMathlib.Enclosure.temple_matrix": "accepted",
+    "CertifyMathlib.Enclosure.rayleigh_perturb": "accepted"
+   }
+  },
+  {
+   "id": "D-02",
+   "name": "D-02 matrix-free residual bounds",
+   "source": "code/certify-ed/docs/proofs/D-02_matrix-free.md",
+   "lean": [
+    "CertifyMathlib.Enclosure.FP.chain_err",
+    "CertifyMathlib.Enclosure.FP.tree_entry_error",
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error",
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c",
+    "CertifyMathlib.Enclosure.FP.norm_kronecker_le",
+    "CertifyMathlib.Enclosure.FP.norm_kron_one_le",
+    "CertifyMathlib.Enclosure.FP.norm_one_kron_le",
+    "CertifyMathlib.Enclosure.FP.norm_diagonal_unit",
+    "CertifyMathlib.Enclosure.FP.norm_sum_terms_le",
+    "CertifyMathlib.Enclosure.FP.norm_list_prod_le",
+    "CertifyMathlib.Enclosure.FP.d02b_poly",
+    "CertifyMathlib.Enclosure.FP.d02b_key",
+    "CertifyMathlib.Enclosure.FP.d02b_entry",
+    "CertifyMathlib.Enclosure.FP.d02b_radius",
+    "CertifyMathlib.Enclosure.FP.roundBoundOf",
+    "CertifyMathlib.Enclosure.FP.residualRadiusOf"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error",
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c",
+    "CertifyMathlib.Enclosure.FP.norm_kronecker_le",
+    "CertifyMathlib.Enclosure.FP.d02b_key",
+    "CertifyMathlib.Enclosure.FP.d02b_radius"
+   ],
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "status": "partial",
+   "correspondence": "Theorem D-02 (a): every contribution is a chain of products from the exact coupling with stored factors of relative error gamma_(e_l) (e_l = 0 exact letter, 1 rounded amplitude), each product rounded (real, error gamma_1) or formed by cmul (complex, gamma_3), then multiplied by the source entry; at most w_row contributions are summed along a tree. matrixfree_entry_error: |fl(Hx)_i - (H_spec x)_i| <= gamma_(w_row + L + rho)(|H_spec|_abs |x|)_i = gamma_(W-1)(...), W = w_row + L + rho + 1; matrixfree_entry_error_c: gamma_(w_row + 3L + rho + 2) = gamma_(W-1), W = w_row + 3L + rho + 3. Lemma N: ||(A (x) B) x|| <= a b ||x|| for pointwise bounds a, b (norm_kronecker_le, via A (x) B = (A (x) 1)(1 (x) B)), a diagonal sign factor preserves norms, a product of operators is bounded by the product of bounds and sum_t c_t O_t by sum_t |c_t| n_t. Part (b), real data, standard model: residualRadiusOf is the radius of residuals computed from a given product vector yh and a given computed |H||x| vector ah (any operator adapter), with the entrywise bound _rounding_bound evaluated with adapter.width = W - 2 (roundBoundOf). d02b_radius: for 3 <= W <= 2^26 + 2 and n <= 2^26, if |yh_i - (H_spec x)_i| <= gamma_(W-1) a_i with a_i >= |(H_spec x)_i| (part (a), matrixfree_entry_error, with a = |H_spec|_abs |x|) and ah_i >= a_i (1 - gamma_(W-1)) (the second pass of Lemma M3), then ||H_spec x - mu x|| / ||x|| <= rel. The entry step d02b_entry rests on the second-order inequality d02b_key: with k = W - 1 <= 2^26 + 1 and u <= 2^-53, (gamma_k + u(1 + gamma_k))(1 - gamma_k (1 - u)^2)(1 + u) <= gamma_(k+1) (1 - u)^7 (1 + 4u)^2 (1 - gamma_k), reduced to the polynomial inequality d02b_poly in x = k u; the margin is of order k u^2.",
+   "gap": "Lemma M1 (at most w_row contributions per output entry) enters as the size of the summation tree; Lemma M3 (the second pass, computed |H||x| >= a (1 - gamma_(W-1))) is a hypothesis of d02b_radius; part (b) is proved for real data in the standard model only (complex data and the INT-05 additive terms on the matrix-free path are not formalized). The reverse inequality ||A (x) B|| >= ||A|| ||B|| of the Kronecker identity and the rounding of norm_bound() are not formalized. Document note: the argument of the document that (b) holds by the slack of one gamma index should be replaced by the second-order inequality d02b_key: with adapter.width = W - 2 the residual error index gamma_(W-1) + u(1 + gamma_(W-1)) is covered by gamma_W and the rounding factors of the code only with a margin of about W u^2.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error": "accepted",
+    "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c": "accepted",
+    "CertifyMathlib.Enclosure.FP.norm_kronecker_le": "accepted",
+    "CertifyMathlib.Enclosure.FP.d02b_key": "accepted",
+    "CertifyMathlib.Enclosure.FP.d02b_radius": "accepted"
+   }
+  },
+  {
+   "id": "E-03",
+   "name": "E-03 generalized eigenproblems (Cholesky reduction)",
+   "source": "code/certify-ed/docs/proofs/E-03_generalized.md",
+   "lean": [
+    "CertifyMathlib.Enclosure.generalized_residual_enclosure",
+    "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
+    "CertifyMathlib.Enclosure.norm_inv_le_of_lower_bound",
+    "CertifyMathlib.Enclosure.norm_sq_adjoint_eq",
+    "CertifyMathlib.Enclosure.reducedOp_isSymmetric",
+    "CertifyMathlib.Enclosure.pencil_eigenpair_of_reduced",
+    "CertifyMathlib.Enclosure.pencil_det_eq_charpoly",
+    "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
+    "CertifyMathlib.Enclosure.reduced_eigenpair_of_pencil",
+    "CertifyMathlib.Enclosure.reducedMat_isHermitian",
+    "CertifyMathlib.Enclosure.reducedMat_conj",
+    "CertifyMathlib.Enclosure.pencil_sub_eq",
+    "CertifyMathlib.Enclosure.pencil_shift_isHermitian",
+    "CertifyMathlib.Enclosure.pencil_inertia",
+    "CertifyMathlib.Enclosure.qf_pencil",
+    "CertifyMathlib.Enclosure.cntLt_anti",
+    "CertifyMathlib.Enclosure.pencil_count_perturbed"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
+    "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
+    "CertifyMathlib.Enclosure.pencil_inertia",
+    "CertifyMathlib.Enclosure.pencil_count_perturbed"
+   ],
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "status": "partial",
+   "correspondence": "Lemma 2 of E-03 (|lambda - mu| <= ||Ax - mu Bx||_{B^-1}/||x||_B <= ||Ax - mu Bx||_2/(sqrt(beta_c) ||x||_B) for 0 < beta_c <= lambda_min(B)) is kernel-checked for the eigenvalues of C = L^-1 A L^-H, with B = L L^H for an invertible L (Cholesky in the document; any invertible L in Lean), ||L^-1 s|| standing for ||s||_{B^-1} and ||L^H x|| = ||x||_B (norm_sq_adjoint_eq), and lambda_min(B) >= beta_c written as beta_c ||w||^2 <= w^H B w for all w. Of Lemma 1, C Hermitian and 'an eigenpair (y, lambda) of C gives the pencil eigenpair (L^-H y, lambda)' are kernel-checked; the converse, that the pencil eigenvalues (roots of det(A - lambda B)) are exactly those of C with multiplicity, is not. The converse half of Lemma 1 is stated for matrices: with B = L L^H, L invertible and C = L^-1 A L^-H, det(A - X B) = det B (-1)^n charpoly C as polynomials (pencil_det_eq_charpoly), so the roots of det(A - X B) with multiplicity are the eigenvalues of the Hermitian C (pencil_roots_eq_eigenvalues), and a pencil eigenpair (x, lambda) gives the eigenpair (L^H x, lambda) of C (reduced_eigenpair_of_pencil). Lemma 3 uses Sylvester's law of inertia of the counting track (CertifyMathlib.Counting.Inertia, sylvester_inertia, cntLt, cntLe; imported unchanged): with B = L L^H and C = L^-1 A L^-H, A - sigma B = L (C - sigma I) L^H (pencil_sub_eq), so the number of negative eigenvalues of A - sigma B is the number of eigenvalues of C below sigma, N(sigma), and the number of non-positive ones is the number of eigenvalues of C at or below sigma (pencil_inertia; the eigenvalues of C are the pencil eigenvalues with multiplicity by pencil_roots_eq_eigenvalues). For a Hermitian M' with |x^H (M' - (A - sigma B)) x| <= b ||x||^2 for all x (which ||M' - (A - sigma B)||_2 <= b gives), b >= 0, and beta_c ||x||^2 <= x^H B x with beta_c > 0: N(sigma - b/beta_c) <= nu(M') <= N(sigma + b/beta_c) <= #{j : lambda_j <= sigma + b/beta_c} (pencil_count_perturbed); the middle bound, with the strict count, is stronger than the document's upper bound. The monotonicity of the count under the Loewner order (cntLt_anti, from the subspace characterisation of the counting track) takes the place of the cited Weyl monotonicity theorem.",
+   "gap": "Propositions 1 to 3 (the Bunch-Kaufman count of B - beta I and of fl(A - fl(sigma B)), and the floating-point residual radii) are not formalized; the step from ||M' - (A - sigma B)||_2 <= b to the quadratic-form bound is not stated in Lean.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta": "accepted",
+    "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues": "accepted",
+    "CertifyMathlib.Enclosure.pencil_inertia": "accepted",
+    "CertifyMathlib.Enclosure.pencil_count_perturbed": "accepted"
+   }
+  },
+  {
+   "id": "L17",
+   "name": "Lemma 17 (dyadic exp and ln enclosures)",
+   "source": "code/certify-ed/docs/proofs/L17_dyadic_exp_ln.md",
+   "lean": [
+    "CertifyMathlib.Enclosure.Dyadic.from_fraction_mem",
+    "CertifyMathlib.Enclosure.Dyadic.mul_mem_corners",
+    "CertifyMathlib.Enclosure.Dyadic.grid_mul_mem",
+    "CertifyMathlib.Enclosure.Dyadic.sq_step",
+    "CertifyMathlib.Enclosure.Dyadic.termDn_le",
+    "CertifyMathlib.Enclosure.Dyadic.termUp_ge",
+    "CertifyMathlib.Enclosure.Dyadic.exp_point_mem",
+    "CertifyMathlib.Enclosure.Dyadic.sqIter_mem",
+    "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem",
+    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
+    "CertifyMathlib.Enclosure.Dyadic.pwDn_le",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
+    "CertifyMathlib.Enclosure.Dyadic.log_eq_atanh_form",
+    "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div",
+    "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div_div",
+    "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+    "CertifyMathlib.Enclosure.Dyadic.div_mem_corners",
+    "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+    "CertifyMathlib.Enclosure.Dyadic.pwUp_ge",
+    "CertifyMathlib.Enclosure.Dyadic.atanh_tail_le",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+    "CertifyMathlib.Enclosure.Dyadic.atanh_form_mono",
+    "CertifyMathlib.Enclosure.Dyadic.log_two_eq_atanh_form",
+    "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+    "CertifyMathlib.Enclosure.Dyadic.u_grid_bounds",
+    "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec",
+    "CertifyMathlib.Enclosure.Dyadic.from_fraction_tiny",
+    "CertifyMathlib.Enclosure.Dyadic.two_pow_neg_1074_grid",
+    "CertifyMathlib.Enclosure.Dyadic.halveIter",
+    "CertifyMathlib.Enclosure.Dyadic.pwUp",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp"
+   ],
+   "main": [
+    "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem",
+    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+    "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+    "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+    "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+    "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec"
+   ],
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "status": "partial",
+   "correspondence": "Integers stand for grid points k 2^-P; Python floor and ceiling division by a positive integer are the floor and ceiling of the real quotient. Proved for any P and N: (i) from_fraction encloses its argument; (ii) the grid product with the four corner products rounded outward, and the squaring step of a nonnegative interval; (iii) the floor-rounded and ceiling-rounded Taylor terms bound 2^P tau^k/k! from below and above, so (S_N_lo(t), S_N_hi(t) + rem) contains exp(t 2^-P) for 0 <= t <= 2^P (remainder from Real.exp_bound, 2 tau^(N+1)/(N+1)! for tau <= 1), s squarings give exp(2^s y), which with t_lo <= x/2^s <= t_hi gives exp(x 2^-P) for x >= 0, and the reciprocal step gives x < 0; (iv) the lower atanh sum A_lo(u) 2^-P <= log(1 + x) - log(1 - x) for x = u 2^-P < 1, and log m = log(1 + x) - log(1 - x) for x = (m - 1)/(m + 1). Added in this round: the halving identity ceil(ceil(x)/c) = ceil(x/c) for a positive integer c, in the form ceil(ceil(a/b)/c) = ceil(a/(bc)) (ceil_ceil_div, ceil_ceil_div_div), so the loop t <- ceil(t/2) started at x gives t = ceil(x/2^s) = t_hi after s steps (halveIter_eq); the quotient X/Y of (ii) for 0 not in Y, the four corner quotients x_i 2^P / y_j floored and ceiled (div_mem_corners, grid_div_mem); the upper atanh sum A_up(u) = 2 (sum_(j<=M) ceil(pw_j/(2j+1)) + ceil(ceil(8 pw_(M+1)/7)/(2M+3))) with pw_(j+1) = ceil(pw_j ceil(u^2/2^P)/2^P) satisfies log(1 + x) - log(1 - x) <= A_up(u) 2^-P for x = u 2^-P <= 0.35 (pwUp_ge, atanh_tail_le with the tail bound 8/7 for x^2 <= 1/8, lnSeriesUp_ge); the enclosure of ln 2, A_lo(floor(2^P/3)) <= 2^P ln 2 <= A_up(ceil(2^P/3)) for P >= 6 (ln2_mem); the grid arguments u_lo = max(0, floor((m_lo - 2^P) 2^P/(m_lo + 2^P))) and u_hi = max(0, ceil((m_hi - 2^P) 2^P/(m_hi + 2^P))) bracket 2^P (m - 1)/(m + 1) and u_hi <= 0.35 2^P (u_grid_bounds); the assembly of _ln_point: for z = 2^k m, 2^P log z lies in (A_lo(u_lo), A_up(u_hi)) + k L2 with k L2 the scale_int of L2 (ends swapped for k < 0) (ln_point_mem); and (v): with F a set of reals standing for the finite binary64 values, f in F nearest to q and nextafter given as the neighbour of f in F, to_float_down returns the largest element of F at or below q and to_float_up the smallest at or above (to_float_down_spec, to_float_up_spec).",
+   "gap": "Not formalized: the bit-length decomposition of _ln_point (k = bitlength(v) - 1 - P and m_lo <= m 2^P <= m_hi <= 2 2^P), which enters ln_point_mem and u_grid_bounds as hypotheses; the binary64 facts of (v) (float(Fraction) correctly rounded to nearest, nextafter the adjacent binary64), which enter as hypotheses on F; the argument guards of exp_interval (the shortcut for arguments <= -1000 and the limit 2^16). P >= 6 is a hypothesis of ln2_mem (the code has P = 192). Document note: from_float is exact (width 0) only when f 2^P is an integer; for a binary64 below the grid resolution, for example 2^-1074 with P = 192, from_fraction returns (0, 1) (from_fraction_tiny, two_pow_neg_1074_grid); the enclosure property is unaffected.",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2",
+   "nanoda": {
+    "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.ln2_mem": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.ln_point_mem": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.halveIter_eq": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.grid_div_mem": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec": "accepted",
+    "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec": "accepted"
+   }
+  }
+ ],
+ "theorems": [
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.repr_apply",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.norm_sq_eq",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.repr_sub_smul",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.norm_sub_smul_sq",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.re_inner_apply",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.exists_repr_ne_zero",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.norm_sub_smul_le",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.norm_apply_le",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.sq_mul_norm_sq_lt",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.re_inner_le",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.le_re_inner",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.re_inner_lt",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.lt_re_inner",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_span",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.repr_eq_zero_of_mem_span",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.basis_mem_span",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.exists_ne_zero_mem_inf",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_eq_card",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_le_card_of_support",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_le_card_near",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_le_card_le",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.finrank_le_card_lt",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.hermitianEigenData_eig",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.isSymmetric_of_isHermitian",
+   "file": "CertifyMathlib/Enclosure/Spectral.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.exists_eig_near",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.exists_eig_near_of_shift",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.exists_eig_near_family",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.residual_enclosure",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.residual_enclosure_family",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.residual_enclosure_of_shift",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_toEuclideanLin_le_l2_opNorm",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.residual_enclosure_of_l2_opNorm",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.eigenvalue_mem_gershgorin",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.abs_eigenvalue_le_row_sum",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_toEuclideanLin_le_of_row_sum",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.l2_opNorm_le_of_row_sum",
+   "file": "CertifyMathlib/Enclosure/Residual.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_identity",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_sum_nonneg",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_upper_mul",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_lower_mul",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_upper",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.kato_temple_lower",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.inner_apply_self_eq_re",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.kato_temple",
+   "file": "CertifyMathlib/Enclosure/KatoTemple.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.re_inner_le_add",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.card_le_le_card_le_add",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.card_lt_le_card_lt_add",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.card_filter_le_eq_sub",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.card_ge_le_card_ge_sub",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.sorted_weyl_ge",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.sorted_weyl",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.sortedEigenData_eig",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.weyl_eigenvalues₀",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.weyl_transfer_enclosure",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.weyl_transfer_count",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.schur_bound",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_le_max_of_row_col",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.model_shift_bound",
+   "file": "CertifyMathlib/Enclosure/Weyl.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.lt_nBelow_of_lt",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.le_of_nBelow_le",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.nBelow_le_of_le",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.card_filter_fin_Ico_le",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.le_greedyIndex",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.exists_greedyIndex_eq",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.greedyIndex_strictMono",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.greedyIndex_upper",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.exists_strictMono_matching",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.kahan_interval_count",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.kahan",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.kahan_antitone",
+   "file": "CertifyMathlib/Enclosure/Kahan.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.repr_diagMap",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.diagMap_comp",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.diagMap_one",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.diagMap_congr",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.diagMap_isSymmetric",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.sqrt_dev_le",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.delta_nonneg",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.gram_isSymmetric",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.gram_eig_bound",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.gram_eig_pos",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarMinv_polarM",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarM_polarMinv",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.gram_eq_diagMap",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarMinv_gram",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarQ_norm",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarM_sub_le",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarMinv_le",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarQ_polarM",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.sub_polarQ_le",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarQ_residual_le",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cluster_rho",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.inner_toEuclideanLin_gram",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cluster_enclosure",
+   "file": "CertifyMathlib/Enclosure/Cluster.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.polarQ_inner",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.adjoint_polarQ_polarQ",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_sub_proj_le",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.adjoint_polarQ_apply",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.rayleighBlock_isSymmetric",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.A_polarQ_eq",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.rayleigh_residual_le",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.rayleigh_sub_le",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cluster_eps_star",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cluster_min",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cluster_enclosure_eps_star",
+   "file": "CertifyMathlib/Enclosure/ClusterPrime.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.rayleigh_ritz",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.residual_sq_eq",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.norm_apply_sq_eq",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.temple_identity",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.temple_of_sep",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.EigenData.temple",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.rayleigh_ritz_matrix",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.temple_matrix",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.rayleigh_perturb",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.quotient_mem_corners",
+   "file": "CertifyMathlib/Enclosure/Variational.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.adjoint_invAdj",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.invAdj_adjoint",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.reducedOp_isSymmetric",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_eigenpair_of_reduced",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_sq_adjoint_eq",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.reduced_residual",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.generalized_residual_enclosure",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.norm_inv_le_of_lower_bound",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.generalized_residual_enclosure_beta",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.reducedMat_isHermitian",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.reducedMat_conj",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_det_eq_charpoly",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_roots_eq_eigenvalues",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.reduced_eigenpair_of_pencil",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.cntLt_anti",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_sub_eq",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_shift_isHermitian",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_inertia",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.qf_pencil",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.pencil_count_perturbed",
+   "file": "CertifyMathlib/Enclosure/Generalized.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_zero",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.one_add_gam",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_mono",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_succ",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_add",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.one_add_gam_mul_le",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_div_one_sub",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.mul_gam_le",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.u_le_gam_one",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.fac_step",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.higham_lemma_3_1",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Binary64.le_addUp",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Binary64.subDown_le",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Binary64.outward_interval",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_ge_of_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_le_of_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_le_abs",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.length_leaves",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.eval_eq_sum",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.absEval_eq_sum",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.norm_eval_le",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.absEval_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.comp_isFloat",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.comp_error",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.eval_eq_finset_sum",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.absEval_le_finset_sum",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.STree.absEval_eq_finset_sum",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.dot_error",
+   "file": "CertifyMathlib/Enclosure/FloatModel.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.abs_rnd_sub_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_le_of_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.le_rnd_of_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.le_rnd_mul",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.rnd_le_mul",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.one_sub_mul_le_pow",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.one_add_pow_five_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gam_regime",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.small_consts",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_norm_up",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_norm_low",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_abs",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_E",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_final",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gamHat_bounds",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_up",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_low",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_abs",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_E",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.resid_entry",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_final",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_eq",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_le_add",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_le_of_abs_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_ofLp",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_residual",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sum_sq_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normFl_bounds",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2Up_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2Low_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matvec_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.absMatvec_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.resid_le_roundBound",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_radius_fl",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_enclosure_fl",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_le_add_norm_sub",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rel_mul",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rel_rnd",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.mono_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.builder_entry_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.absMat_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_specMat_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_star_eq",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.builder_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sym_entry_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.symmetrised_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.add_le_two_max",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.le_of_sq_le_schur",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.schur_split",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.builder_shift",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.symmetrised_shift",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.model_shift_fl",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.weyl_transfer_fl",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.abs_add_le'",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.crnd_err",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.pair_err",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sq_pair_bound",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.pair_err_sq",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.cmul_err",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_eq_sqrt",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_eq",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_le_add",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_le_of_norm_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_ofLp",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2c_residual",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sqrt_one_sub_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sqrt_one_add_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normFl_sqrt_bounds",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.complex_norm_consts",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_norm_up_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_norm_low_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2UpC_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2LowC_le",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.chain_E_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.resid_entry_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matvecC_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.absMatvecC_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.complex_width_consts",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residC_entry_err",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.roundBoundC_ge",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residC_le_roundBound",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_radius_fl_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_enclosure_fl_c",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rayleigh_numerator_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rayleigh_numerator_bound",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.abs_sum_error",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.abs_sum_bounds",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.abs_sum_bounds_real",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.abs_sum_bounds_complex",
+   "file": "CertifyMathlib/Enclosure/FloatAccounting.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.chain_err",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.tree_entry_error",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rnd_mul_rel",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matrixfree_entry_error",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matrixfree_entry_error_c",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_sq_prod_eq",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_sq_prod_eq'",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_kron_one_le",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_one_kron_le",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_kronecker_le",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_diagonal_unit",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_list_prod_le",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm_sum_terms_le",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.d02b_poly",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.d02b_key",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.d02b_entry",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.d02b_radius",
+   "file": "CertifyMathlib/Enclosure/MatrixFree.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.from_fraction_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.mul_mem_corners",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.grid_mul_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.sq_step",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.termDn_le",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.termUp_ge",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.termDn_nonneg",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.exp_point_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.sqIter_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.exp_nonneg_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.exp_neg_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.pwDn_le",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.lnSeriesDn_le",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.log_eq_atanh_form",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.ceil_ceil_div_div",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.halveIter_eq",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.div_mem_corners",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.grid_div_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.pwUp_ge",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.atanh_tail_le",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.lnSeriesUp_ge",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.atanh_form_mono",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.log_two_eq_atanh_form",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.ln2_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.u_grid_bounds",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.ln_point_mem",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.to_float_down_spec",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.to_float_up_spec",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.from_fraction_tiny",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.Dyadic.two_pow_neg_1074_grid",
+   "file": "CertifyMathlib/Enclosure/ExpLn.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normalMin_pos",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normalMin_le_pow",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normalMin_le_half",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.abs_err",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.Rounding.abs_add_err",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.lo_of_err",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.hi_of_err",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.u_pos",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.u_le53",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.u_small",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.le_rnd_normal",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.rnd_le_normal",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.UModel.gamHat_bounds",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sqrt_sub_le'",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sqrt_add_le'",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rootN_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.half_le_sqrt",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.rootN_ge",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.sqrt_sigma_le",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.eta_le_rootN",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normUnder_ge",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_under_up",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_under_low",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normFl_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.chain_up_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.chain_low_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.kb_bound",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.tail_low_aux",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.fullTree_card_pos",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.normUnder_isFloat",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2Up_ge_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.norm2Low_le_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matvec_error_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.absMatvec_ge_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.matvecFl_isFloat",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.resid_entry_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_D",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.roundBound_ge_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.resid_le_roundBound_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.pow_lower",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.pow_guard",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.num_cw",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.gw_le_one",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.mul_ge'",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.cwHat_ge",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.cw_bridge",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.addTerm_ge",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.chain_final_U",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_add_le'",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.l2_const",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.cwExact_nonneg",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K+"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_radius_int05",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  },
+  {
+   "name": "CertifyMathlib.Enclosure.FP.residual_enclosure_int05",
+   "file": "CertifyMathlib/Enclosure/FloatUnderflow.lean",
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "trust_level": "K2"
+  }
+ ],
+ "trust_note": "Every theorem listed is level K: kernel-checked by the build, no sorry, admit or native_decide, axioms printed. Every module, and the root module, was replayed and accepted by leanchecker (four runs, see second_checker; the fourth after the round 3 edits), so every theorem is at least K+. Level K2 means that the theorem, exported with all its dependencies by leanexport, was accepted by the independent kernel nanoda; nanoda was run on the main theorems of each statement (field main) and a statement is K2 when all its main theorems were accepted. A theorem that is only used inside an accepted export is still listed as K+."
+}

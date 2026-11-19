@@ -56,7 +56,7 @@ checked exactly over n, w ∈ {1, …, 2·10⁴} ∪ {2^j : 15 ≤ j ≤ 26} by 
   (w + 2)u ≤ 1/3.
 
   *Erratum (10 Nov 2026, found by the Lean formalization `CertifyCore.Theorems.Thm1`, theorems `lambda6` and
-  `lambda6_fails_at_boundary`, certify-ed-project reverification_lean/CORE.md section 8).* The closing condition
+  `lambda6_fails_at_boundary`, docs/lean/CORE.md section 8).* The closing condition
   (w + 2)u ≤ 1/3 admits exactly one value, w + 2 = 3002399751580330 = ⌊2⁵³/3⌋, at which Λ6 fails; a correct closing
   condition is (w + 2)u ≤ (1 − 5u)/3. Λ6 as stated, for 1 ≤ w ≤ 2²⁶, holds (kernel-checked). Likewise the upper
   norm guard Λ4 with N = 2n holds for n ≤ 2²⁶ as stated and fails from n = 84886744 (exact computation). The code

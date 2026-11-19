@@ -1,0 +1,48 @@
+decorated_square: threshold 1213900630589/25000000000000
+  reduced dims L 144, C 12, R 192; Gamma boundaries 144, 144; unit cosines >= 1728 [2s]
+  [certCount n=144] build 14 ms, ldl 7 ms, limbs 1 ms
+  [certCount n=12] build 0 ms, ldl 0 ms, limbs 0 ms
+  [certCount n=192] build 28 ms, ldl 16 ms, limbs 3 ms
+  [certCount n=144] build 17 ms, ldl 10 ms, limbs 3 ms
+  [certCount n=144] build 18 ms, ldl 6 ms, limbs 1 ms
+  symmetry group of order 4 checked exactly; C signs #[1, 1, 1, 1] [3s]
+  [certCount n=2] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 20 chi 0: size 2, 0 positive pivots, beta 3.84e8 [0.001000s] [3s]
+  [certCount n=14] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 21 chi 0: size 14, 0 positive pivots, beta 2.53e9 [0.001000s] [3s]
+  [certCount n=11] build 0 ms, ldl 0 ms, limbs 0 ms
+    block 21 chi 1: size 11, 0 positive pivots, beta 1.41e9 [0.000000s] [3s]
+  [certCount n=83] build 10 ms, ldl 1 ms, limbs 1 ms
+    block 22 chi 0: size 83, 1 positive pivots, beta 3.76e9 [0.026000s] [3s]
+  [certCount n=68] build 5 ms, ldl 1 ms, limbs 1 ms
+    block 22 chi 1: size 68, 0 positive pivots, beta 3.78e9 [0.015000s] [3s]
+  [certCount n=302] build 133 ms, ldl 63 ms, limbs 15 ms
+    block 23 chi 0: size 302, 5 positive pivots, beta 9.72e9 [0.544000s] [4s]
+  [certCount n=284] build 105 ms, ldl 46 ms, limbs 12 ms
+    block 23 chi 1: size 284, 4 positive pivots, beta 8.67e9 [0.392000s] [5s]
+  [certCount n=843] build 943 ms, ldl 1145 ms, limbs 103 ms
+    block 24 chi 0: size 843, 22 positive pivots, beta 1.75e10 [6.482000s] [16s]
+  [certCount n=794] build 779 ms, ldl 937 ms, limbs 82 ms
+    block 24 chi 1: size 794, 17 positive pivots, beta 1.56e10 [5.400000s] [22s]
+  [certCount n=1770] build 4020 ms, ldl 10617 ms, limbs 490 ms
+    block 25 chi 0: size 1770, 56 positive pivots, beta 3.01e10 [50.040000s] [91s]
+  [certCount n=1722] build 3777 ms, ldl 9793 ms, limbs 433 ms
+    block 25 chi 1: size 1722, 52 positive pivots, beta 2.86e10 [46.400000s] [142s]
+  [certCount n=2989] build 11660 ms, ldl 60503 ms, limbs 1877 ms
+    block 26 chi 0: size 2989, 112 positive pivots, beta 4.81e10 [254.712000s] [449s]
+  [certCount n=2896] build 10727 ms, ldl 47059 ms, limbs 1200 ms
+    block 26 chi 1: size 2896, 101 positive pivots, beta 4.45e10 [210.646000s] [673s]
+  [certCount n=4034] build 19816 ms, ldl 126521 ms, limbs 2380 ms
+    block 27 chi 0: size 4034, 161 positive pivots, beta 5.96e10 [538.122000s] [1306s]
+  [certCount n=3959] build 19181 ms, ldl 123112 ms, limbs 2864 ms
+    block 27 chi 1: size 3959, 154 positive pivots, beta 5.57e10 [514.929000s] [1847s]
+  [certCount n=2275] build 7826 ms, ldl 22299 ms, limbs 795 ms
+    block 28 chi 0: size 2275, 99 positive pivots, beta 3.94e10 [109.988000s] [2120s]
+  [certCount n=2146] build 7153 ms, ldl 20054 ms, limbs 705 ms
+    block 28 chi 1: size 2146, 80 positive pivots, beta 3.67e10 [93.150000s] [2234s]
+  [certCount n=2203] build 7572 ms, ldl 21115 ms, limbs 826 ms
+    block 28 chi 2: size 2203, 87 positive pivots, beta 3.93e10 [97.276000s] [2350s]
+  [certCount n=2218] build 7749 ms, ldl 20701 ms, limbs 868 ms
+    block 28 chi 3: size 2218, 92 positive pivots, beta 3.72e10 [98.022000s] [2467s]
+  t = 4.85560e-2: 1728 positive pivots (need <= 1728); beta = 5.96e10; t' = 4.8556025224e-2; certified true [2468s]
+decorated_square: Lean t' 4.85560252242e-2 vs record 4.85560260374e-2; agreement true; record t' re-certified true
