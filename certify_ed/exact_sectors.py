@@ -22,6 +22,7 @@ import numpy as np
 
 from .basis import CyclicSymmetry
 from .checker import exact_matrix, inertia_exact
+from .precision import check_values
 
 
 def site_permutation(spec, perm, name="site_permutation") -> CyclicSymmetry:
@@ -298,6 +299,7 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     irrep met is one-dimensional with Gaussian character values (e.g. translations at k = 0 or pi with
     reflection and spin flip). X: claimed vectors in the coordinates of `states`; each must have a nonzero
     exact projection onto the fixed sector (Theorem 1 hypothesis), otherwise the result is INCONCLUSIVE."""
+    check_values(lam, "lam")          # as in certify() (precision.py)
     from .checker import (_float_vector_to_int, scaled_test_vector, radius_exact, _components, certify_by_counts,
                           _float_out, _round_up_float)
     ex = exact_matrix(spec, states)

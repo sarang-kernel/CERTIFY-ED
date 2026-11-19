@@ -17,6 +17,8 @@ from fractions import Fraction
 
 import numpy as np
 
+from .precision import check_values
+
 
 def _arb():
     import flint
@@ -320,6 +322,7 @@ def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
     and rounded up; for Hermitian H and x_i' != 0 the interval contains an eigenvalue. A zero test vector
     has no interval: its radius is reported as inf and its index is listed under 'zero_test_vectors'.
     Hermiticity of the declared model is checked exactly. No floating-point assumption is involved."""
+    check_values(lam, "lam")          # a value binary64 cannot hold is refused, as in certify() (precision.py)
     ex = exact if exact is not None else exact_matrix(spec, states)
     X = np.asarray(X)
     if X.ndim == 1:
@@ -570,6 +573,7 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
        values lie in its 'level enclosure' between the bracketing points: per-vector residuals do not
        show m *distinct* eigenvalues, so the counts locate them. 'enclosures' lists both kinds; the
        next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere."""
+    check_values(lam, "lam")          # as in certify() (precision.py)
     lam = np.atleast_1d(np.asarray(lam, dtype=float))
     X = np.asarray(X)
     if X.ndim == 1:
