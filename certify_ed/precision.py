@@ -33,8 +33,9 @@ hash of the input as given); certify() writes them to the certificate's arithmet
 records to their `input_widening` field, only when there are any, so a binary64 input gives the same record as before.
 Every converted input is recorded, integers and lists included; the claimed eigenvalues, which were always converted
 with dtype=float, are checked and not recorded. Hashes are taken of the binary64 data, after the conversion:
-matrix_sha256 has always hashed binary64 entries (an operator's hash does not change), and an eigenvector hash is that
-of the converted array, which is the array the arrays sidecar stores.
+matrix_sha256 widens before it sums repeated entries, so the hash of the caller's matrix is the hash in its
+certificate; it differs from the 3.x hash only for a matrix in a narrower format whose repeated entries sum differently
+in that format. An eigenvector hash is that of the converted array, which is the array the arrays sidecar stores.
 """
 
 from __future__ import annotations
