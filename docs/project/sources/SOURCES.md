@@ -23,16 +23,17 @@ and `fa86456` (four errata found by the Lean formalization), change no computati
 `746958b63a65b43e`), tag `v3.2.3` at `9f42adc` (source hash `bfc115e824386443`) and the line 3.3.0.dev0 at `c29e968`, whose
 full test suite at `6939734` gave 1265 passed, 19 skipped, 0 failed.
 
-`runs/` holds the result documents of the two evidence runs of this phase, `RESULT_evidence_run_3.2.2.md` and
-`RESULT_evidence_run_3.2.3.md`. The run records themselves are not in this repository: git does not track `results/`
-(see `.gitignore`), and their logs contain absolute paths of the machine they ran on. They are kept with the archive, in
-`../archive/runs/` seen from the repository root. `run_full_20261112_v3.2.2.tar.gz` (SHA-256
-`129fa6695034d4053a8f6b176a9805db850849039e9c717e4af6c3aba352a40e`) is the 3.2.2 run `results/run_full_20261112`, with its
-comparison against the 3.2.1 run; it is incomplete (see `RESULT_evidence_run_3.2.2.md`).
-`run_full_20261112b_v3.2.3.tar.gz` (SHA-256 `cb87c3b756bb90d11191907988e6506bdae5c4deef4d53274dd77d3299b39ed6`) is the 3.2.3 run
-`results/run_full_20261112b`, with its comparison against the 3.2.1 run and the manifest and summary as they were before
-the numbers step was resumed at `5dedf9d` (see `RESULT_evidence_run_3.2.3.md`). Until 18 November 2026 both tarballs were
-in `sources/runs/` of certify-ed-project. The 3.2.1 run `results/run_full_20261105` is in `archive_v5/code/certify-ed/results/`.
+The result documents of the two evidence runs of this phase are `docs/results/RESULT_evidence_run_3.2.2.md` and
+`docs/results/RESULT_evidence_run_3.2.3.md` (until 20 November 2026 a copy of each was in `runs/` here). The run records
+themselves are not in this repository: git does not track `results/` (see `.gitignore`), and their logs contain absolute
+paths of the machine they ran on. They are kept with the archive, in `../archive/runs/` seen from the repository root.
+`run_full_20261112_v3.2.2.tar.gz` (SHA-256 `129fa6695034d4053a8f6b176a9805db850849039e9c717e4af6c3aba352a40e`) is the
+3.2.2 run `results/run_full_20261112`, with its comparison against the 3.2.1 run; it is incomplete (see
+`RESULT_evidence_run_3.2.2.md`). `run_full_20261112b_v3.2.3.tar.gz` (SHA-256
+`cb87c3b756bb90d11191907988e6506bdae5c4deef4d53274dd77d3299b39ed6`) is the 3.2.3 run `results/run_full_20261112b`, with
+its comparison against the 3.2.1 run and the manifest and summary as they were before the numbers step was resumed at
+`5dedf9d` (see `RESULT_evidence_run_3.2.3.md`). Until 18 November 2026 both tarballs were in `sources/runs/` of
+certify-ed-project. The 3.2.1 run `results/run_full_20261105` is in `archive_v5/code/certify-ed/results/`.
 
 The history of certify-ed-project was rewritten before the import, so its commit ids here differ from those of the
 original repository. Besides the moved paths, the rewrite left out the two code bundles and the two run tarballs and

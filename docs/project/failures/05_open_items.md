@@ -111,13 +111,13 @@ hold: that mutant changes no built matrix, so its test pins the contract of `shi
 of 3.2.2 (`run_full_20261112`) did not complete: the memory gate refused S1 in two cases that the 3.2.1 run had
 certified (for the chain N=22 at k = 0 it estimated 16896 MB, where the 3.2.1 certifier peaked at 2989 MB), and the E6
 baseline failed because git could not create a repository under the temporary directory of the restricted environment
-(`docs/project/sources/runs/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
+(`docs/results/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
 cap (an explicit `budget_mb` still gates it) and makes E6 copy next to the repository. Its evidence run
 `run_full_20261112b` completed on 13 November 2026 at source `bfc115e824386443`, after a change of the number script
 alone (`5dedf9d`). Against the 3.2.1 run no record reached the guard range and no statement changed status, except one
 E2 point whose 3.2.1 certifier had reached the time limit and which now ends with S1 and S2 CERTIFIED and S3, S4 and S8
 NOT_CHECKED by the gate; the other differences are the summary texts of statements NOT_CHECKED in both runs and the size
-of the E6 copy (`docs/project/sources/runs/RESULT_evidence_run_3.2.3.md`). Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.3)
+of the E6 copy (`docs/results/RESULT_evidence_run_3.2.3.md`). Which version the manuscript cites (3.1.0, 3.2.1 or 3.2.3)
 stays Sarang's decision.
 
 Two new derivation documents are on `dev/3.3`. `docs/proofs/E-02_non_hermitian.md` (non-Hermitian eigenpairs:

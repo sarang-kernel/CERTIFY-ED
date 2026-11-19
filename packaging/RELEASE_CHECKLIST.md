@@ -88,5 +88,5 @@ python -m sigstore sign dist/*.tar.gz dist/*.whl dist/SHA256SUMS
 
 - [ ] Open the next development version: `__version__ = "X.Y+1.0.dev0"` in `certify_ed/__init__.py` and
       `pyproject.toml`; CHANGELOG gets an `Unreleased` heading.
-- [ ] Close the milestone; move unfinished roadmap items to the next one (`ROADMAP.md`).
+- [ ] Close the milestone; move unfinished roadmap items to the next one (`docs/roadmap/ROADMAP.md`).
 - [ ] If anything on this list was skipped, say so in the CHANGELOG entry rather than in a private note.

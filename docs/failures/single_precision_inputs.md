@@ -59,7 +59,7 @@ float64 copy.
 
 No evidence-run input, example or test of the repository passes single-precision data (git grep: float32 appears only as
 the storage of a fixture's vectors, converted to float64 before use, in tests/test_whole_spectrum.py and
-RESULT_whole_spectrum.md), so no published number changes.
+docs/results/RESULT_whole_spectrum.md), so no published number changes.
 
 ## How to recognise an affected 3.x certificate
 

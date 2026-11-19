@@ -19,4 +19,4 @@ statement of `docs/theory.md` the feature rests on (D-12: no new mathematics wit
 
 **Roadmap**
 
-The `ROADMAP.md` item it belongs to, if any.
+The `docs/roadmap/ROADMAP.md` item it belongs to, if any.

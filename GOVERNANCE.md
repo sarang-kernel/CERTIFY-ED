@@ -29,7 +29,7 @@ file by a pull request.
 
 * A **patch** release (x.y.Z) whenever a known issue of the current release has a fix and its own run
   (`CHANGELOG.md` known-issues sections), typically within weeks.
-* A **minor** release (x.Y.0) when a wave of the roadmap (`ROADMAP.md`) lands, roughly every three to
+* A **minor** release (x.Y.0) when a wave of the roadmap (`docs/roadmap/ROADMAP.md`) lands, roughly every three to
   six months, with a full evidence run (D-44) on the reference stack and a two-stack comparison.
 * A **major** release (X.0.0) only for a certificate-schema major version or a change of what
   CERTIFIED means; it is announced one minor release ahead.

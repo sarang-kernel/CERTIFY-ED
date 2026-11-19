@@ -123,7 +123,7 @@ def main():
     data, rec = C.load_record(a.results, "e6_mutation")
     cls_path = C.require(os.path.join(os.path.dirname(os.path.join(a.results, rec)), "classification.json"))
     classification = json.load(open(cls_path, encoding="utf-8"))
-    md = C.require(os.path.join(C.ROOT, "RESULT_integration_3.2.md"))
+    md = C.require(os.path.join(C.ROOT, "docs", "results", "RESULT_integration_3.2.md"))
     integ = parse_integration(md)
     fig, numbers = draw(data, classification, integ, run_version(a.results))
     numbers["record"] = rec

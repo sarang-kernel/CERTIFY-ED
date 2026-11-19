@@ -1,7 +1,7 @@
 # Containers: the 3.1.0 evidence-run stack
 
 `Dockerfile` and `certify-ed.def` (Apptainer) build the software stack on which the 3.1.0 evidence run
-was made (`RESULT_evidence_run_3.1.0.md`, `docs/reproducibility.md`):
+was made (`docs/results/RESULT_evidence_run_3.1.0.md`, `docs/reproducibility.md`):
 
 | component | version | why pinned |
 |---|---|---|
