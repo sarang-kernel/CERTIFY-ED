@@ -109,13 +109,16 @@ entries), and certify() converts it; `source_sha256` in the record is that of th
 summed in binary64, so the files of a float32 matrix and of its float64 copy certify alike; such a matrix therefore
 reads back as float64 (a round trip changes its dtype, and an .npz file is larger). The Matrix Market writers write 17
 significant digits (`mmwrite(..., precision=17)`), so that binary64 values round-trip on every scipy version (below 1.12
-scipy writes 16 by default); the text of such files changes, their values do not. Claimed vectors on disk (numpy memmap,
-HDF5 dataset) are converted block by block; any other matrix on disk is read into memory, an HDF5 dataset in binary64 as
-well (it is then a stored matrix, like a float32 dataset). An operator given as a list of lists or as an array-like (an
-object with `__array__` and no `matvec`) is a stored matrix whatever its dtype; in 3.x it failed as a black box without
-a `matvec`. `compose.certify_low_energy` converts each sector's isometry, block and vectors once, before the U(1)
-restriction and the decomposition audit, and lists the conversions in its record. A binary64 sparse matrix in the other
-byte order is copied to native order.
+scipy writes 16 by default); a narrower dense array (vectors, eigenvalues, a dense operator or isometry) is written
+there as its exact binary64 copy and reads back as that copy (scipy 1.17's writer stops the process on float32 data and
+writes an unreadable file for complex64 data at this precision); the other formats keep a dense array's dtype. The text
+of such files changes, their values do not. Claimed vectors on disk (numpy memmap, HDF5 dataset) are converted block by
+block; any other matrix on disk is read into memory, an HDF5 dataset in binary64 as well (it is then a stored matrix,
+like a float32 dataset). An operator given as a list of lists or as an array-like (an object with `__array__` and no
+`matvec`) is a stored matrix whatever its dtype; in 3.x it failed as a black box without a `matvec`.
+`compose.certify_low_energy` converts each sector's isometry, block and vectors once, before the U(1) restriction and
+the decomposition audit, and lists the conversions in its record. A binary64 sparse matrix in the other byte order is
+copied to native order.
 
 Record and hashes. `arithmetic.input_widening` of the certificate (`input_widening` of the standalone records and of the
 composition) lists, only when there are any, the inputs that were in a narrower floating format, with the caller's dtype
