@@ -534,8 +534,9 @@ def _complex_chain(N, phi=0.3, J2=0.5):
 
 
 def test_spec_invariants_take_each_modulus_once(monkeypatch):
-    """S1 evidence: spec_invariants forms the upper moduli of each coupling and each local factor once (T (N + 1) calls),
-    not inside its double sum over pairs of terms, and gets the same bounds as with the moduli taken there."""
+    """S1 evidence: spec_invariants forms the upper moduli of each coupling and each local factor once
+    (T (N + 1) calls), not inside its double sum over pairs of terms, and gets the same bounds as with the moduli taken
+    there."""
     import certify_ed.invariants as inv
     from certify_ed.fp import gamma, up
     spec = _complex_chain(5)
@@ -559,9 +560,9 @@ def test_spec_invariants_take_each_modulus_once(monkeypatch):
 
 def test_inf_norm_upper_on_the_hard_arguments():
     """fp.inf_norm_upper, the norm bound of every certificate: bit for bit max_i sum_j m_ij (1 + gamma_{w+1}) (1 + 8u)
-    with m_ij from fp.modulus_up (dense) and fp.abs_up (sparse), on matrices built from the three hard arguments at three
-    scales, so that a modulus reverted to np.abs changes the value; and in exact arithmetic it bounds the largest exact
-    row sum of moduli (_sum_sqrt_upper)."""
+    with m_ij from fp.modulus_up (dense) and fp.abs_up (sparse), on matrices built from the three hard arguments at
+    three scales, so that a modulus reverted to np.abs changes the value; and in exact arithmetic it bounds the largest
+    exact row sum of moduli (_sum_sqrt_upper)."""
     from certify_ed.fp import _GUARD, gamma, inf_norm_upper
     z0, z1, z2 = EXAMPLES
     differs = 0
@@ -595,28 +596,31 @@ def _sum_sqrt_upper(qs):
 # --------------------------------------------------------- dynamic pin: no complex modulus bypasses fp in the bounds
 
 def _tripwire_allowed():
-    """(file, function) of the places tests/abs_audit_allowlist.txt classifies as taking a modulus of complex data
-    that is not an upper modulus of a rigorous bound (not part of a bound; Arb balls; the open lower-bound use)."""
+    """(file, function) -> expressions of the places tests/abs_audit_allowlist.txt classifies as taking a modulus of
+    complex data that is not an upper modulus of a rigorous bound (not part of a bound; Arb balls; the open lower-bound
+    use), the expressions without white space."""
     import os
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "abs_audit_allowlist.txt")
-    out = set()
+    out = {}
     for line in open(path, encoding="utf-8"):
         if line.startswith("#") or not line.strip():
             continue
-        f, scope, _expr, cls = line.rstrip("\n").split("\t")
+        f, scope, expr, cls = line.rstrip("\n").split("\t")
         if not cls.startswith("real data only"):
-            out.add((f, scope))
+            out.setdefault((f, scope), []).append("".join(expr.split()).replace('"', "'"))
     return out
 
 
 def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     """numpy's absolute value (np.abs, np.absolute), the builtin abs and the absolute value of scipy sparse matrices are
     replaced by functions that record every call on complex data whose nearest caller in certify_ed is not one of the
-    places the audit allows (tests/abs_audit_allowlist.txt, classes other than real data); fp.modulus_up and
+    places the audit allows (tests/abs_audit_allowlist.txt, classes other than real data, matched on the function and
+    the expression of the line); fp.modulus_up and
     fp.abs_up take only real components, so they record nothing. The main entry points then run on complex data; a
     modulus that bypasses fp is recorded whatever its spelling (recorded rather than raised, because certify() turns
     exceptions into INCONCLUSIVE statements)."""
     import builtins
+    import linecache
     import os
     import sys
 
@@ -656,8 +660,10 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
         if f is None:
             return                                      # called from the test itself or from outside certify_ed
         rel = os.path.relpath(os.path.abspath(f.f_code.co_filename), root).replace(os.sep, "/")
-        scope = getattr(f.f_code, "co_qualname", f.f_code.co_name).replace(".<locals>", "")
-        if (rel, scope) not in allowed:
+        qual = getattr(f.f_code, "co_qualname", f.f_code.co_name)
+        scope = ".".join(p for p in qual.split(".") if not p.startswith("<"))   # comprehensions, lambdas: their def
+        line = "".join(linecache.getline(f.f_code.co_filename, f.f_lineno).split()).replace('"', "'")
+        if not any(e in line for e in allowed.get((rel, scope), ())):
             found.append((rel, scope, f.f_lineno))
 
     def np_abs(x, *a, **k):
@@ -687,7 +693,8 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     spec = _complex_chain(6)
     Hs = build_bitwise(spec, full_state_set(spec))
     ws, Vs = np.linalg.eigh(Hs.toarray())
-    ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], operator=Hs, kind="lowest"), spec, ce.Options(seed=1))
+    ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], operator=Hs, kind="lowest"), spec,
+               ce.Options(seed=1))
     certify_variational(operator=H, psi=V[:, 0] + 1e-3 * _vectors(n, 1, True, 33)[:, 0])
     state_from_mps([rng.standard_normal((1, 2, 3)) + 1j * rng.standard_normal((1, 2, 3)),
                     rng.standard_normal((3, 2, 1)) + 1j * rng.standard_normal((3, 2, 1))])
@@ -709,6 +716,30 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     matrix_affinity_defect(H, H + 0.5 * S, 0.5, S)
     ozaki_residual(H, w[:2], V[:, :2])
     enclose(OperatorAdapter(H), w[:3], V[:, :3])
+    # paths the calls above do not take: a dense operator; the spec operator of S2 (reference above
+    # reference_max_dim) and the matrix-free operator of D-02; the sparse factorization with its residual bound; the
+    # moment sum rules; the label audit of a cyclic symmetry; a sweep with its norm bounds
+    ce.certify(ce.Claim(eigenvalues=w[:2], eigenvectors=V[:, :2], operator=H.toarray(), kind="lowest"), None,
+               ce.Options(seed=1))
+    for opts in (ce.Options(seed=1, reference_max_dim=8), ce.Options(seed=1, matrix_free=True)):
+        ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], kind="lowest"), spec, opts)
+    ce.certify(claim, None, ce.Options(seed=1, inertia_method="sparse"))
+    certified_moments(H, O, V[:, :1], 1e-12, 1e-12, K=1, level=(w[0] - 0.1, w[0] + 0.1))
+    from certify_ed.basis import cyclic_isometry, translation
+    from certify_ed.sectors import audit_label
+    from certify_ed.sweep import certified_sweep
+    hspec = ce.heisenberg_chain(4)
+    Vk = cyclic_isometry(full_state_set(hspec), translation(hspec), 1) * (1 + 2.0 ** -40)   # Gram defect nonzero
+    audit_label(hspec, Vk, "translation")
+    certified_sweep(lambda c: _complex_chain(4, J2=c), [0.4, 0.5], k=1)
+    from certify_ed.construct import SpecOperator
+    from certify_ed.inertia import inertia_sparse
+    from certify_ed.matrixfree import matrix_free_operator
+    for op in (SpecOperator(spec), matrix_free_operator(spec)):
+        op.abs_matvec(Vs[:, :2])                        # complex vectors, as a direct caller passes them
+        op.abs_matvec(Vs[:, 0])
+        OperatorAdapter(op).abs_matvec(Vs[:, :2])
+    inertia_sparse(H, float(w[0]) + 0.01, residual="apriori")
     assert not found, sorted(set(found))[:20]
     # positive control: a modulus of fp.inf_norm_upper reverted to the builtin abs is recorded
     monkeypatch.setattr(fp, "abs_up", lambda M: abs(M))
