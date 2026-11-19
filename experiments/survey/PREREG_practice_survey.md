@@ -81,7 +81,8 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
      allows one revision; the remaining disagreement is reported, not corrected, and the result file marks the affected
      percentages as provisional. The subset coded in the check reading is reported alongside.
 - v0.3 (2026-11-19, wording only): steps 3 and 4, the known limits and items 5, 6 and 7 of v0.2 name the coder and the
-  check reading in neutral terms. The check reading was a second automatic reading by a different reader than the
-  first pass, not a human check, so the sentences on what the check measures say agreement, not error. The procedure, the data and every number are unchanged; the file name
-  `survey_handcheck.csv`, the key `handcheck_agreement` and the macro names keep their old names. The text of v0.1
-  and v0.2 as registered is in the history of this file (commit 28737733 and earlier).
+  check reading in neutral terms. The check reading was a second automatic reading by a different reader than the first
+  pass, not a human check, so the sentences on what the check measures say agreement, not error. The procedure, the data
+  and every number are unchanged; the file name `survey_handcheck.csv`, the key `handcheck_agreement` and the macro
+  names keep their old names. The text of v0.2 as registered, which carries the text of v0.1, is in the history of this
+  file (commit 28737733).

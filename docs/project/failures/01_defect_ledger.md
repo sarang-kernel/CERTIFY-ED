@@ -15,7 +15,7 @@ repository. An internal mathematical review (`certify_ed_verification.md`) found
 makes no theorem claims of that kind, its figures and numbers come from real runs (v1.0.0 had 53 tests and 81
 validator tests, agreement with QuSpin to 1.6e-14 and with mpmath to 1.6e-15), it has a public repository and a Zenodo
 record, and the claim of bitwise reproducibility was dropped. The reason these defects existed is the one decision
-D-12 later states as a rule: drafted text and mathematics can be fluent and wrong, and only a check
+D-12 later states as a rule: text and mathematics drafted with tools can be fluent and wrong, and only a check
 against measured data or a re-derivation finds that.
 
 ## June to July 2026: the audits of v1

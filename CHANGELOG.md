@@ -16,12 +16,12 @@ first), not a human check (`tests/test_proofs_props.py` pins the new wording). E
 quote these status lines quote the new wording. The practice survey calls its re-coding of 12 papers a check reading, a
 second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording only); the blog, a decision
 record and the roadmap had called it a hand check or a hand coding. Suggested readings of mutation survivors are called
-automatic suggestions. Sentences on how the texts were prepared and on the statement on assistance made at each
-submission are worded without naming a tool. Working notes of the development environment are removed from the track
-reports, the project changelog and the derivation documents, except where they give the reason for a failed run.
-`tools/lint_docs.py` compares product and tool names by their SHA-256 digests, so that it does not spell them, and
-`tests/test_process_words.py` applies that check to every tracked text file except the third-party survey data and the
-commit table of the project changelog.
+automatic suggestions, and one free-text note of a Lean result file (`lean/results/apps/mathlib_apps.json`) is dated.
+Sentences on how the texts were prepared and on the statement on assistance made at each submission are worded without
+naming a tool. Working notes of the development environment are removed from the track reports, the project changelog
+and the derivation documents, except where they give the reason for a failed run. `tools/lint_docs.py` compares product
+and tool names by their SHA-256 digests, so that it does not spell them, and `tests/test_process_words.py` applies that
+check to every tracked text file except the third-party survey data.
 
 ### Single-precision inputs (soundness fix)
 

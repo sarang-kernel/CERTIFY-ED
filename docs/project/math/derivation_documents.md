@@ -546,10 +546,10 @@ modulus hypothesis $h \ge 2$.
 | `D-01_sparse-residual.md` | D-01 | `verify_D-01.py` | 400 + 17 | AGREES-WITH-REMARKS | measured sparse $\beta$ (tighter, justified by the document) |
 | `D-02_matrix-free.md` | D-02 | `verify_D-02.py` | 182 + 18 | GAP | $\gamma_{w+3}$ for complex data (looser) |
 
-Every document has the status: derived, machine-checked, independently re-derived (a second derivation written from the
-statement alone, not a human check), Sarang's check pending. The reduced runs of the original scripts and the counts of
-the independent adversarial scripts are listed per row in `code/certify-ed/docs/proofs/VERDICTS.md`; all report 0
-violations, except the two pre-correction counts quoted above for `int05_underflow.md` and
+Every document has the status: derived, machine-checked, independently re-derived (a second derivation written before
+the original proof was read, not a human check), Sarang's check pending. The reduced runs of the original scripts and
+the counts of the independent adversarial scripts are listed per row in `code/certify-ed/docs/proofs/VERDICTS.md`; all
+report 0 violations, except the two pre-correction counts quoted above for `int05_underflow.md` and
 `E-04_parameter_intervals.md`.
 
 ## What the checks show and do not show

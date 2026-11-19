@@ -90,7 +90,7 @@ general one, and what a producer can export is a design input for the importers 
 
 This is the rule that governs the status of every derivation in the project. Colleagues of Sarang act as reviewers,
 and anyone willing to re-derive mathematics is reserved for the sections that contain new mathematics. The reason
-recorded is that drafted mathematics can be fluent and subtly wrong, that Ritu Goel reads without
+recorded is that mathematics drafted with tools can be fluent and subtly wrong, that Ritu Goel reads without
 re-deriving, and that one person who re-derives is worth more than several who check plausibility. In the documents of
 this repository the rule has a fixed consequence: a new result counts as established only after Sarang Vehale has
 re-derived it. The 22 derivation documents in `code/certify-ed/docs/proofs/` are therefore described as derived,
@@ -114,12 +114,12 @@ gap in the project's own audit.
 
 ## D-15 (21 July 2026): no response to the third rejecting report
 
-A further SciPost report called the contribution insubstantial, read the paper as claiming that checking BLAS and
-LAPACK was its main contribution (the third misreading of that kind), and questioned how the text had been
-produced. No response was sent. Three rejections settled the outcome; the repeated misreading confirmed the
-diagnosis of D-05; the remark on provenance was substantially correct (the drafting method had been disclosed
-at submission), and the criticism of style matched flaws that the project's own audit of
-the manuscript had already listed. A rebuttal and any defence of the drafting method were rejected.
+A further SciPost report called the contribution insubstantial, read the paper as claiming that checking BLAS and LAPACK
+was its main contribution (the third misreading of that kind), and remarked on how the text had been produced. No
+response was sent. Three rejections settled the outcome; the repeated misreading confirmed the diagnosis of D-05; the
+remark on provenance was substantially correct (the text had been drafted with tools, and this had been disclosed at
+submission), and the criticism of style matched flaws that the project's own audit of the manuscript had already listed.
+A rebuttal and any defence of the drafting method were rejected.
 
 ## D-16 (21 July 2026): Sarang drafts the prose of every manuscript
 

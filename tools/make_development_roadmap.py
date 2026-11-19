@@ -1,7 +1,7 @@
 """make_development_roadmap.py: write docs/project/roadmap/DEVELOPMENT_ROADMAP.md.
 
 The prose is in this file; the item table is generated from the roadmap CSV of the archive, of which this repository
-holds a copy with two cells reworded (B-10 and G-09; experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv,
+holds a copy with three cells reworded (A-03, B-10 and G-09; experiments/figures/data/ROADMAP_expansion_items_2026-11-03.csv,
 column status_2026-11-03) and from the list NEW
 below, which holds the candidates that appeared after that CSV (from the Lean re-verification and the applications).
 The outcomes of the first phase are the dict OUTCOME. Run from the repository root:
@@ -11,7 +11,7 @@ import csv
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# a copy of the CSV of the archive (project_docs/roadmap/ROADMAP_expansion_items.csv) with two cells reworded (B-10, G-09)
+# a copy of the CSV of the archive (project_docs/roadmap/ROADMAP_expansion_items.csv) with three cells reworded (A-03, B-10, G-09)
 CSV = os.path.join(ROOT, "experiments", "figures", "data", "ROADMAP_expansion_items_2026-11-03.csv")
 OUT = os.path.join(ROOT, "docs", "project", "roadmap", "DEVELOPMENT_ROADMAP.md")
 STATUS = "status_2026-11-03"

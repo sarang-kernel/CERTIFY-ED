@@ -1,5 +1,5 @@
 """No tracked text file names a product or tool of the writing process: the digests of tools/lint_docs.py are applied
-to every tracked text file, apart from the third-party survey data and the commit table that mirrors the history."""
+to every tracked text file, apart from the third-party survey data."""
 import os
 import subprocess
 import sys
@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 import lint_docs  # noqa: E402
 
 EXCLUDED = {"experiments/survey/survey_sample.json", "experiments/survey/survey_coded.csv",
-            "experiments/survey/survey_handcheck.csv", "tools/changelog/commits.tsv"}
+            "experiments/survey/survey_handcheck.csv"}
 
 
 def _tracked():
