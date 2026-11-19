@@ -36,7 +36,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, gamma_dot, up, inf_norm_upper
+from .fp import U, gamma_dot, up, inf_norm_upper, abs_up, modulus_up
 from .precision import binary64
 
 
@@ -129,9 +129,12 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
     cplx = np.iscomplexobj(Xg) or np.iscomplexobj(O.data if sp.issparse(O) else O)
     n = Xg.shape[0]
     width = n if not sp.issparse(O) else int(np.diff(sp.csr_matrix(O).indptr).max())
-    absOX = (abs(O) if sp.issparse(O) else np.abs(O)) @ np.abs(Xg)
-    rnd = gamma_dot(width + n + 2, cplx) * float(np.sum(np.abs(Xg) * absOX)) * (1 + 8 * U)
-    bound = up(2 * g * O_norm * ec.projector_error + rnd)
+    aXg = modulus_up(Xg)                                     # upper moduli of complex data (fp.modulus_up)
+    absOX = abs_up(O) @ aXg
+    rnd = gamma_dot(width + n + 2, cplx) * float(np.sum(aXg * absOX)) * (1 + 8 * U)
+    bound = float(up(2 * g * O_norm * ec.projector_error + rnd))
+    if not math.isfinite(bound):
+        bound = math.inf       # a product or a sum overflowed (inf, or inf * 0 = nan): no finite interval
     rec = {"value": float(val), "bound": float(bound), "O_norm_bound": float(O_norm),
            "statement": f"tr(P {name}) in [{val - bound:.15g}, {val + bound:.15g}]"}
     ec.observables[name] = rec

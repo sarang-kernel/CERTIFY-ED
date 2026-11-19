@@ -133,6 +133,7 @@
                   "NEEDS_SPEC",
                   "NEEDS_TEMPERATURES",
                   "NEEDS_WHOLE_SPECTRUM",
+                  "NONFINITE_BOUND",
                   "NOT_APPLICABLE",
                   "NOT_IMPLEMENTED",
                   "NO_CLUSTERS",
@@ -141,6 +142,7 @@
                   "OUT_OF_SCOPE_EXTRAPOLATION",
                   "SIZE_LIMIT",
                   "UNDERFLOW_RISK",
+                  "UNRESOLVED_VECTOR_NORM",
                   "UNSUPPORTED_CLAIM",
                   "UNSUPPORTED_MODEL"
                 ]

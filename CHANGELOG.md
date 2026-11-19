@@ -161,23 +161,25 @@ converted matrix, and a Linux run.
 
 ### The caller's matrices stay as given
 
-`certify()` and `certify_variational()` now work on private copies of the CSR matrices they are given whose indices
-are unsorted or repeated: for `certify()` the operator, the sector isometry, and the matrices in `Options.observables`
-and `Options.approximate_symmetries`, on every device and again for the CPU recompute of a failed GPU run. A matrix
-given in several places (the operator also as an observable, say) is copied once, so that a step working through one
-place sees what the others did, as on the caller's matrix. The copies keep the index dtypes of the caller's matrices.
-Before, the first run summed their duplicates and sorted their indices in place, through arrays shared with the
-caller's matrices: the absolute value of the adapter, the S1 comparison, the sector audit, the S4 norm bounds and the
-label records all did so. Without a model, or with a sector isometry, observables or approximate symmetries, a second
-call with the same input then saw different matrices and gave a different certificate (or record); otherwise the
-statuses and bounds were equal (S1's comparison record and the plan could differ), but the caller's operator was
-changed and could be left with more stored values than `nnz`. The first certificate is unchanged, since the copies go
-through the same steps as the caller's matrices did before, with two exceptions: the no-underflow scan below, and,
-with `device="gpu"`, the certificate after a failed device run, which now equals the CPU certificate (the recompute saw
-matrices of `Options` that the failed run had summed, and a matrix given both as the operator and elsewhere had two
-copies). The second certificate is now equal to the first (`tests/test_input_unchanged.py`,
-`tests/test_gpu.py`). Other entry points that take a matrix, for example `OperatorAdapter`, `enclose_spectrum` and
-`certified_moments`, still sum it in place.
+`certify()` and `certify_variational()` now work on private copies of the CSR matrices they are given whose indices are
+unsorted or repeated: for `certify()` the operator, the sector isometry, and the matrices in `Options.observables` and
+`Options.approximate_symmetries`, on every device and again for the CPU recompute of a failed GPU run. A matrix given in
+several places (the operator also as an observable, say) is copied once, so that a step working through one place sees
+what the others did, as on the caller's matrix. Two matrix objects that share their arrays (the operator `D` and
+`sp.csr_matrix(D)` as an observable) count as two matrices and get two copies; their first certificate can differ from
+the one of 3.x in the last digits (statuses equal) and equals the certificate for two independent matrices. The copies
+keep the index dtypes of the caller's matrices. Before, the first run summed their duplicates and sorted their indices
+in place, through arrays shared with the caller's matrices: the absolute value of the adapter, the S1 comparison, the
+sector audit, the S4 norm bounds and the label records all did so. Without a model, or with a sector isometry, a lifted
+observable or approximate symmetries, a second call with the same input then saw different matrices and could give a
+different certificate (or record); otherwise the statuses and bounds were equal (S1's comparison record and the plan
+could differ), but the caller's operator was changed and could be left with more stored values than `nnz`. The first
+certificate is unchanged, since the copies go through the same steps as the caller's matrices did before, with two
+exceptions: the no-underflow scan below, and, with `device="gpu"`, the certificate after a failed device run, which now
+equals the CPU certificate (the recompute saw matrices of `Options` that the failed run had summed, and a matrix given
+both as the operator and elsewhere had two copies). The second certificate is now equal to the first
+(`tests/test_input_unchanged.py`, `tests/test_gpu.py`). Other entry points that take a matrix, for example
+`OperatorAdapter`, `enclose_spectrum` and `certified_moments`, still sum it in place.
 
 The copies cost one more matrix in memory each, for such inputs only, also for matrices of statements that are
 skipped. They are made before the budget and memory gates, and the plan does not count them, so an operator that fits
@@ -192,8 +194,84 @@ spurious UNDERFLOW_RISK; inside `certify()` this depended on whether the caller 
 
 The computational source hash changes (`certify.py`, `variational.py`).
 
+### Upper moduli in `fp`
 
-### GPU products (roadmap D-05; track/gpu-d05)
+`fp.modulus_up` returns, entrywise, an upper bound m ≥ |z| on the modulus of a real or complex array, formed from
+correctly rounded products, sums and square roots with exact scaling by powers of two, at most a relative 12u above
+|z| for normal values (`docs/proofs/fp_modulus-up.md`, Lemma M); `fp.abs_up` does the same for a dense array or a
+scipy sparse matrix. No bound uses them in this change, and no bound, status rule or record changes. `modulus_up`
+returns real floating input as `np.abs` gives it, integer and boolean input as float64 (one step up from 2⁵³), a float
+for every scalar, and raises TypeError for a scipy sparse matrix, an object array and a complex type wider than
+complex128; it works in passes of at most 2¹⁸ entries without copying its input. Known issues: the moduli of
+float16, float32 and complex64 data are upper bounds, but a bound whose products are formed in single precision is not
+covered (the corollary counts binary64 roundings; such input is the subject of the separate change
+`fix/single-precision`); `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in
+place, so a product formed with the matrix before the call is not covered by its moduli (direct calls of
+`commutator_bound`, `audit_sector`, `compress_operator` and `certify_observable` on a matrix with duplicates); the
+floating-point items that the lemma assumes beyond those `probe_float_environment` checks are tested with the test
+suite, not probed at run time. The derivation is new and unverified: Sarang's check (D-12) is pending (independent
+re-derivation: verdict AGREES on the lemma, GAP on its corollary, resolved; `docs/proofs/verify_modulus-up.py`,
+`tests/test_modulus_up.py`). The computational source hash changes (`fp.py`).
+
+### Non-finite bounds give no statement
+
+A bound of the floating-point accounting that is not finite now gives no statement. Such a bound arises when a
+product, a sum or a modulus overflows, for operator entries near the largest float (∞, and nan where an ∞ meets a zero
+or another ∞), for real and complex data alike. S2 and S3 are INCONCLUSIVE with the new reason code `NONFINITE_BOUND`
+(listed in `scope.REASON_CODES`, docs/SCOPE_MATRIX.md and the published schemas) and say that the radius is not finite
+(the S2 summary used to say that an eigenvalue lies within it); S2 makes no accuracy statement, with the same code,
+when the sector lift shift is not finite; the residual bounds and radii of the certificate are stored as ∞ instead of
+nan. A nonzero claimed vector whose norm binary64 does not resolve (its squared norm underflows or overflows, as for
+entries of about 10⁻¹⁷⁰ or 10¹⁷⁰) gets the new reason code `UNRESOLVED_VECTOR_NORM` instead, with the advice to
+normalise the vectors (S2 and S3 were INCONCLUSIVE without a code). `inertia_dense` and `inertia_sparse` give no count
+when their backward error is not finite (β = ∞, `conclusive` false; before, β could be ∞ or nan with a count, and
+`certify(kind="lowest")` could then raise ValueError in the factorization of S3); the guard of `inertia_sparse` is
+defensive (no input of the test suite reaches it; a test reaches it through a stand-in residual bound). A sector audit
+with a non-finite defect does not pass (inf ≤ tol · inf passed before): S1 on a sector isometry is INCONCLUSIVE, and
+the sector composition is INCONCLUSIVE with a summary that says the audit bounds are not finite. The variational
+records (V1 to V3) and the moment records (M1 to M3) are INCONCLUSIVE with `NONFINITE_BOUND` when a bound of their
+accounting is not finite (before, V1 and V2 could be CERTIFIED with a nan bound and M1 was CERTIFIED unconditionally),
+and a sum-rule verdict on a nan endpoint is INCONCLUSIVE instead of CERTIFIED or FAILED. A non-finite observable bound
+is reported as ∞ instead of nan. Records of real data change here: the label record of a cyclic symmetry gains the keys
+`separation` (the floating-point root separation it divides by), `separation_note` (it is not a certified lower bound)
+and `separation_rigorous` (false). Known issue: the label record's `certified` flag still rests on the floating-point
+separation (an open D-12 item). `tests/test_nonfinite_bounds.py` covers these cases; the correlation records, the
+sweeps, the MPS contraction, the Ozaki prototype and the GPU path are not covered by a test. The computational source
+hash changes.
+
+### Upper bounds for complex moduli
+
+The bounds now take every modulus of complex data from `fp.modulus_up` (`fp.abs_up` for matrices; "Upper moduli in
+`fp`" above). Before, they used NumPy's complex absolute value and counted it as one to three roundings; on Windows
+(NumPy 2.4.4) its error reaches 2.47u, and no bound on it is established. This covers the residual bounds of S2 (on
+the CPU and on the GPU, whose moduli are formed on the host by the same functions, so that they equal the CPU moduli
+by construction; the device path was not run after the change), the Rayleigh intervals of the Kato-Temple step and of
+the variational records, the norm bounds, the backward errors of S3, and the bounds of observables, moments,
+commutators, sector audits, pencils, non-Hermitian operators, sweeps, MPS contractions and the Ozaki prototype. Two
+two-sided values, the C-13 fidelity and the Frobenius invariant of the S1 evidence, are formed from the squares of the
+components instead. No constant and no status rule changes. For complex128 data the bound values change in the last
+bits (each modulus lies at or above the exact one and, for normal values, at most a relative 12u above it, where
+NumPy's could lie below it). For complex64 data the moduli were float32 values before and are binary64 upper bounds
+now, so those bounds can move either way by more than that (a bound formed in single precision is not covered; the
+separate change `fix/single-precision`). An operator with an entry within a relative 12u of the largest float now has
+an infinite modulus, and the statements that rest on it state nothing, by the rules of the previous entry: S2, V1, V2,
+N1 and G2 are INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and
+`commutator_bound` is ∞ where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment,
+observable and sweep-affinity bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well.
+Real data, and complex data whose entries all have a zero real or imaginary part, give the same bounds and records as
+before, except the non-Hermitian record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod,
+which the bounds no longer need (its four assumption strings and its record hash change, for real data too). Cost: a
+modulus pass takes about four times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the
+S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at
+commit cdf6ebb; 8.9 s and 9.0 s against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host);
+matrix-free operators pay the moduli in every |H||x| application. The derivation is new and unverified: Sarang's check
+(D-12) is pending (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation
+documents; `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
+`tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic
+symmetry divides by a floating-point root separation and its record's `certified` flag rests on it (an open D-12 item;
+the record says so, previous entry). The computational source hash changes.
+
+### GPU products (roadmap D-05; branch feature/gpu-d05, first named track/gpu-d05)
 
 With `device` left at `"cpu"` no bound, status rule or record field of `certify()` changes. With `device="gpu"`, S2's
 evidence gains a `device` record and every other number of the certificate is the same bit for bit. The computational
@@ -218,6 +296,10 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   products were taken from it (`gpu_products_at_fallback` > 0), those products are not trusted and `certify()` computes
   the whole certificate again with the CPU products (`recomputed_on_cpu`). The device copy of H is freed when
   `certify()` returns. The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
+  `Options.device` must be `"cpu"` or `"gpu"`; any other value, `None` included, makes `certify()` raise
+  `ValueError`. A recorded device error is put on one line and cut to 300 characters. A CSR operator with duplicate
+  entries that is certified with its model is served by the CPU (`|A| does not share the pattern of A`), because the
+  S1 comparison compacts it in place before the products are formed.
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.

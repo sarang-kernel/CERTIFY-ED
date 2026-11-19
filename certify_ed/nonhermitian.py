@@ -31,8 +31,9 @@ cluster statements with per-disc radii are not implemented.
 
 Arithmetic (docs/proofs/E-02_non_hermitian.md, Propositions 5 to 7): binary64 round-to-nearest, the standard model
 with the additive term of the underflow-tolerant model, BLAS inner products within gamma_n (gamma_dot for complex data),
-the modulus of a complex number within 3u (hypothesis H-mod, as docs/proofs/D-01_sparse-residual.md), and the
-no-underflow scan of the inputs (fp.underflow_scan; nonzero magnitudes >= 2^-900) unless underflow_check=False.
+complex moduli formed as upper bounds by fp.modulus_up (3.3.0.dev0; before, hypothesis H-mod: the modulus of a complex
+number within 3u, as docs/proofs/D-01_sparse-residual.md), and the no-underflow scan of the inputs (fp.underflow_scan;
+nonzero magnitudes >= 2^-900) unless underflow_check=False.
 """
 from __future__ import annotations
 
@@ -44,8 +45,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
-from .fp import (U, ULP_MIN, gamma, gamma_dot, inf_norm_upper, norm2_lower, norm2_upper, safe_sqrt_upper, sub_down,
-                 underflow_scan, up)
+from .fp import (U, ULP_MIN, gamma, gamma_dot, inf_norm_upper, modulus_up, norm2_lower, norm2_upper, safe_sqrt_upper,
+                 sub_down, underflow_scan, up)
 from .precision import binary64, check_values, widening_record
 from .spec import canonical_json
 
@@ -57,7 +58,7 @@ UNVERIFIED = ("UNVERIFIED: derived in docs/proofs/E-02_non_hermitian.md and re-d
               "check); Sarang's check (D-12) pending")
 STANDARD_MODEL = ("IEEE-754 binary64 round-to-nearest, standard model fl(a op b) = (a op b)(1 + delta), |delta| <= u, with "
                   "the additive term of the underflow-tolerant model (|eta| <= 2^-1075 per product); BLAS inner products "
-                  "within gamma_n (complex: 2 gamma_{n+4}); modulus of a complex number within 3u (H-mod); no-underflow "
+                  "within gamma_n (complex: 2 gamma_{n+4}); complex moduli rounded up (fp.modulus_up); no-underflow "
                   "scan of the stored inputs (nonzero magnitudes >= 2^-900)")
 _G8 = 1.0 + 8.0 * U          # exact binary64 numbers (1 + 4 * 2^-52 and 1 + 6 * 2^-52)
 _G12 = 1.0 + 12.0 * U
@@ -111,8 +112,9 @@ def additive_term(n: int, w: int) -> float:
 
 def _bound_constants(cplx: bool, w: int):
     """(G, g): G = gamma_dot(w + 2) bounds the rounding of one residual entry relative to (|A||x|)_i + |mu||x_i|;
-    1/(1 - g) undoes the roundings of the computed fl(|A||x|) (w products and sums; for complex data the two moduli of
-    each term, 3u each under H-mod: g = gamma_{w+6}; real data: g = gamma_{w+1})."""
+    1/(1 - g) undoes the roundings of the computed fl(|A||x|) (w products and sums; real data: g = gamma_{w+1}). For
+    complex data g = gamma_{w+6} was set for two moduli of 3u each (H-mod); the moduli are now upper bounds
+    (fp.modulus_up, docs/proofs/fp_modulus-up.md), so the constant is kept with spare counts."""
     return gamma_dot(w + 2, cplx), (gamma(w + 6) if cplx else gamma(w + 1))
 
 
@@ -131,10 +133,11 @@ def residual_bounds(A: np.ndarray, mu: np.ndarray, X: np.ndarray, return_arrays:
     AX = A @ X
     S_hat = AX - X * mu[None, :]
     del AX
-    absAX = np.abs(A) @ np.abs(X)
+    aX = modulus_up(X)                                       # upper moduli (fp.modulus_up): H-mod is not needed
+    absAX = modulus_up(A) @ aX
     E = absAX / (1.0 - g)
     del absAX
-    E += (np.abs(X) * np.abs(mu)[None, :]) * _G8
+    E += (aX * modulus_up(mu)[None, :]) * _G8
     E *= G
     E *= _G12
     T = additive_term(n, n)
@@ -159,7 +162,7 @@ def residual_bounds(A: np.ndarray, mu: np.ndarray, X: np.ndarray, return_arrays:
 
 def matrix_norm2_upper(M: np.ndarray) -> float:
     """c >= ||M||_2: the smaller of the Frobenius bound and sqrt(||M||_1 ||M||_inf) (fp.inf_norm_upper on M^T and M;
-    for complex M valid under H-mod, Proposition 6 (iii))."""
+    for complex M through the upper moduli of fp.inf_norm_upper, Proposition 6 (iii))."""
     M = binary64(np.asarray(M), "matrix")          # exact (precision.py)
     fro = norm2_upper(np.asarray(M).ravel())
     hoelder = safe_sqrt_upper(up(inf_norm_upper(np.asarray(M).T) * inf_norm_upper(np.asarray(M))))
@@ -199,10 +202,10 @@ def inverse_bound(V: np.ndarray, W: Optional[np.ndarray] = None, return_arrays: 
     P = W @ V
     G_hat = np.eye(n, dtype=P.dtype) - P
     del P
-    B = np.abs(W) @ np.abs(V)
+    B = modulus_up(W) @ modulus_up(V)                        # upper moduli (fp.modulus_up): H-mod is not needed
     B /= (1.0 - g)
     B *= Gn
-    B[np.diag_indices(n)] += (4.0 * U) * np.abs(np.diag(G_hat))
+    B[np.diag_indices(n)] += (4.0 * U) * modulus_up(np.diag(G_hat))
     B *= _G12
     T_G = math.ldexp(float(n) * (10.0 * n + 20.0) * _G8 * _G8, -1075) + ULP_MIN
     theta = up(norm2_upper(G_hat.ravel()) + norm2_upper(B.ravel()) + T_G)

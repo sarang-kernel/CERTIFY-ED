@@ -213,6 +213,12 @@ longer need the hypothesis. ∎
 Rounding direction: every additive term is rounded towards +∞ (the `ldexp` grid rounding is covered by the
 following `+ ULP_MIN`; `norm_underflow_term` by two guards); every new term is non-negative.
 
+**Correction (2026-11-18), moduli of subnormal complex components; UNVERIFIED (D-12).** The remark of VERDICTS.md on
+Lemma U4 for complex data concerns the absolute errors of the `hypot` moduli |a_ij|, |x_j| of subnormal components.
+Since 3.3.0.dev0 these moduli come from `fp.modulus_up`, which returns m ≥ |z| for subnormal components too (Lemma M
+of `docs/proofs/fp_modulus-up.md`: an upward step after the rescaling), so the moduli add no shortfall to absHX_i. The additive terms of the
+products remain as counted by c_w. No constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_int05_underflow.py` (exact rationals: `fractions.Fraction` represents every binary64 number,
@@ -265,3 +271,4 @@ eigenvalues lie inside the tiny intervals.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (2 500 residual + 2 500 monotonicity + 5 000 dot + 5 000 exact_dot + 5 000 norm + 18 992 model operations random + 373 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

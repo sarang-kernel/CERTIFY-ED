@@ -39,7 +39,7 @@ import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .enclosure import OperatorAdapter, rayleigh_interval
-from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, norm2_upper, sub_down, underflow_scan, up
+from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, modulus_up, norm2_upper, sub_down, underflow_scan, up
 from .precision import binary64, widening_record
 from .spec import ModelSpec, canonical_json
 
@@ -136,12 +136,12 @@ def state_from_mps(tensors: Sequence[Any], max_dim: int = MPS_MAX_DIM, widened: 
         return TrialState(None, "mps", rec, reason_code="SIZE_LIMIT",
                           reason=f"the contracted vector has dimension {n} > max_dim = {max_dim}")
     T = As[0][0].astype(complex if cplx else float)            # (d_1, D_1)
-    P = np.abs(As[0][0]).astype(float)                           # |A^(1)|, same shape
+    P = modulus_up(As[0][0]).astype(float)                       # |A^(1)| rounded up (fp.modulus_up), same shape
     m_total = 0                                                 # M = sum_j m_j, c_L = prod (1 + g_j) - 1 <= gamma_M
     for A in As[1:]:
         D = int(A.shape[0])
         T = np.tensordot(T, A, axes=([1], [0])).reshape(-1, A.shape[2])
-        P = np.tensordot(P, np.abs(A).astype(float), axes=([1], [0])).reshape(-1, A.shape[2])
+        P = np.tensordot(P, modulus_up(A).astype(float), axes=([1], [0])).reshape(-1, A.shape[2])
         m_total += (2 * (D + 4)) if cplx else D                  # 1 + 2 gamma_{D+4} <= 1 + gamma_{2(D+4)}
     psi = T[:, 0]
     # |psi_hat - psi| <= c_L |A^(1)|...|A^(L)| <= gamma_M |A^(1)|...|A^(L)| entrywise (Higham Lemma 3.3); the computed
@@ -386,7 +386,16 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                     rec["state"]["note"] = ("the statements are about the contracted vector psi_hat as stored; the source "
                                             "MPS psi has ||psi_hat - psi|| <= contraction_error and a Rayleigh quotient "
                                             "within theta_source_vs_contracted of theta(psi_hat) (Lemma 5)")
-                if True:
+                if not all(math.isfinite(v) for v in (th_lo, th_hi, r, upper)):
+                    # a bound of the accounting is inf or nan (a product, a sum or a modulus overflowed; inf * 0 =
+                    # nan in a product): no statement rests on it
+                    note = ("the floating-point accounting of theta is not finite (a bound of the accounting "
+                            "overflowed): no bound is stated")
+                    ev_nf = {"theta": theta_rec, "refers_to": refers_to}
+                    for sid in VARIATIONAL_STATEMENT_IDS[:3]:
+                        statements.append(_vstmt(sid, "INCONCLUSIVE", note, ev_nf, assumptions=assume,
+                                                 reason_code="NONFINITE_BOUND"))
+                else:
                     statements.append(_vstmt("V1.rayleigh_upper", "CERTIFIED",
                                              f"lambda_1 <= {upper:.17g} (Rayleigh quotient of the trial state, upper endpoint"
                                              + (f" + model shift {sigma:.3e})" if sigma > 0 else ")"),

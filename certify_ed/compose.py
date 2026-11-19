@@ -233,8 +233,16 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
         out["input_widening"] = widening
     status, summary = "CERTIFIED", ""
+    nonfinite = [p["label"] for p in per
+                 if not (math.isfinite(p["isometry_defect"]) and math.isfinite(p["invariance_defect"]))]
     bad_audit = [p["label"] for p in per if not p["audit_passed"]]
-    if bad_audit:
+    if nonfinite:
+        # an audit bound that is not finite (a bound of the accounting overflowed) is no finding about the sector
+        # bases
+        status = "INCONCLUSIVE"
+        summary = (f"the audit bounds of {len(nonfinite)} sector(s) are not finite (a bound of the floating-point "
+                   f"accounting overflowed; e.g. {nonfinite[:4]}): nothing is stated")
+    elif bad_audit:
         status = "FAILED"
         summary = (f"{len(bad_audit)} sector basis/bases are not orthonormal H-invariant subspaces "
                    f"(e.g. {bad_audit[:4]})")

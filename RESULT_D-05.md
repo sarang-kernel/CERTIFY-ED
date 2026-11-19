@@ -1,4 +1,7 @@
-# RESULT: D-05, GPU products for S2 (branch track/gpu-d05)
+# RESULT: D-05, GPU products for S2 (branch feature/gpu-d05, first named track/gpu-d05)
+
+The code as reviewed and merged is `937ae1e` (computational source hash `7fc028c29b1173fd`); its re-test on an H100 is
+the last paragraph of the section Tests. The rest of this document describes the first runs at `cc4af9e`.
 
 Date: 17 November 2026. Branch `track/gpu-d05` from `dev/3.3` at `c29e968`; the code commit is `cc4af9e` (computational
 source hash `9f190f7e9047d953`, tests hash `af3552384494fc84`), followed by a second commit with this document, a
@@ -55,6 +58,17 @@ and empty rows, one pass for both products, column blocks, enclosures and residu
 arrays; spot-check rejection, injected fallback, no device, dense and unknown devices). The full suite of the branch
 with no device visible: 1222 passed, 70 skipped, 4 failed; plain `dev/3.3` in the same environment: 1218 passed, 57
 skipped, the same 4 failed (see the Linux findings below).
+
+Re-test of 18 November 2026 at the head of the branch after the reviews (`937ae1e`, source hash
+`7fc028c29b1173fd`, tests hash `6bbd879b8887b05a`; one H100, CuPy 13.6.0, CUDA runtime 13.0): the device probe holds
+(full range, narrow range, low range, gradual underflow, kernels equal to SciPy's), and `tests/test_gpu.py` gives 21
+passed. `certify()` with `device="gpu"` against `device="cpu"` on a banded matrix of dimension 20000 (real and
+complex, four claimed pairs, S2, S3 and Kato-Temple) and on the Heisenberg chain of 18 sites with its model gives the
+same statuses, the same records apart from timings and the `device` field, and the same arrays bit for bit, with the
+GPU products used (4, 4 and 2 products; spot checks on 128, 128 and 64 rows). For the same chain stored with every
+entry split into two halves the device was not used (`|A| does not share the pattern of A`), and the CPU products
+gave the same certificate as the CPU run. Such an operator is compacted in place by the S1 comparison
+before the products are formed, and the device refuses its arrays; using the device there is left for later.
 
 ## Products and residual bounds against the CPU (`experiments/d05_gpu_bench.py`)
 

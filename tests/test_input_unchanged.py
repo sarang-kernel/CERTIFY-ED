@@ -41,14 +41,14 @@ def _unsorted(H):
     return sp.csr_matrix((D.data, D.indices, D.indptr), shape=D.shape)
 
 
-def _model_claim(isometry, split_isometry=False):
+def _model_claim(isometry, split_isometry=False, k=3):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
     w, V = np.linalg.eigh(H.toarray())
     iso = sp.identity(spec.dim, format="csr") if isometry else None
     if split_isometry:
         iso = _with_duplicates(iso)
-    claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=_with_duplicates(H), kind="lowest",
+    claim = ce.Claim(eigenvalues=w[:k], eigenvectors=V[:, :k], operator=_with_duplicates(H), kind="lowest",
                      sector_isometry=iso)
     return claim, spec
 
@@ -76,6 +76,10 @@ def _same(a, b):
 
 def _arrays(M):
     return M.indptr.copy(), M.indices.copy(), M.data.copy()
+
+
+def _unchanged_arrays(M, before):
+    return all(np.array_equal(x, y) for x, y in zip(before, (M.indptr, M.indices, M.data)))
 
 
 def _unchanged(M, before):
@@ -112,7 +116,7 @@ def test_certify_leaves_a_non_canonical_matrix_as_given_and_repeats_exactly(case
 SymmetryEntry = collections.namedtuple("SymmetryEntry", "S lattice")
 
 
-@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array", "list", "deque", "UserList"])
+@pytest.mark.parametrize("shape", ["tuple", "namedtuple", "object array", "list", "deque", "UserList", "mapping"])
 def test_certify_leaves_matrices_of_the_options_as_given(shape):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
@@ -129,7 +133,8 @@ def test_certify_leaves_matrices_of_the_options_as_given(shape):
                                                      "object array": lambda: np.array([Sz, 1.0], dtype=object),
                                                      "list": lambda: [Sz, 1.0],
                                                      "deque": lambda: collections.deque([Sz, 1.0]),
-                                                     "UserList": lambda: collections.UserList([Sz, 1.0])}[shape]()})
+                                                     "UserList": lambda: collections.UserList([Sz, 1.0]),
+                                                     "mapping": lambda: {0: Sz, 1: 1.0}}[shape]()})
     a = ce.certify(claim, spec, opts)
     assert _unchanged(Sz, before["Sz"]) and _unchanged(Obs, before["Obs"])
     _same(a, ce.certify(claim, spec, opts))
@@ -177,7 +182,7 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
         opts = ce.Options(seed=1, eigenspaces="all", observables={"Sz": Sz}, approximate_symmetries={"Sz": (Sz, 1.0)})
         given = [Sz]
     else:
-        claim, spec = _model_claim(False) if case.endswith("model") else _random_claim()
+        claim, spec = _model_claim(False, k=4) if case.endswith("model") else _random_claim()
         if case.startswith("unsorted"):
             D = claim.operator.copy()
             D.sum_duplicates()
@@ -196,21 +201,44 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
     assert all(_unchanged(M, x) for M, x in zip(given, before))
     _same(ref, a)
     _same(a, ce.certify(claim, spec, opts))
+    if spec is not None:                                   # the observable records exist (k = 4: S3, S4 certified)
+        assert a.statement("S4.eigenspaces")["status"] == "CERTIFIED", a.summary()
 
 
 @pytest.mark.parametrize("cls", [sp.csr_matrix, sp.csr_array])
-def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls):
+@pytest.mark.parametrize("past_nnz", [False, True])
+def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls, past_nnz):
     from certify_ed.certify import _private_copies
     D = cls(_with_duplicates(_random_claim()[0].operator))
     D.indices, D.indptr = D.indices.astype(np.int64), D.indptr.astype(np.int64)
+    if past_nnz:                                   # flag cached as False, then summed through a second object
+        assert not D.has_canonical_format
+        cls(D).sum_duplicates()
+        assert len(D.data) > D.nnz
     own = _private_copies()
     C = own(D)
     assert C is not D and type(C) is type(D) and own(D) is C
     assert C.indices.dtype == C.indptr.dtype == np.int64
-    assert all(np.array_equal(x, y) for x, y in zip(_arrays(C), _arrays(D)))
+    assert len(C.indices) == len(C.data) >= C.nnz
+    assert (C != D).nnz == 0
     H = _random_claim()[0].operator.copy()
     H.sum_duplicates()
     assert own(H) is H and own(None) is None
+
+
+def test_int64_indices_with_values_past_nnz_are_accepted():
+    claim, spec = _model_claim(False)
+    D = claim.operator
+    D.indices, D.indptr = D.indices.astype(np.int64), D.indptr.astype(np.int64)
+    assert not D.has_canonical_format
+    sp.csr_matrix(D).sum_duplicates()
+    before = _arrays(D)
+    a = ce.certify(claim, spec, ce.Options(seed=1))
+    assert _unchanged_arrays(D, before)
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+    _same(a, ce.certify(claim, spec, ce.Options(seed=1)))
+    rec = certify_variational(D, claim.eigenvectors[:, 0])
+    assert _unchanged_arrays(D, before) and rec["statements"]
 
 
 def _record_without_times(rec):
@@ -278,3 +306,38 @@ def test_a_block_isometry_and_a_lifted_observable_stay_as_given():
     assert a.statement("S1.model_fidelity")["status"] == "CERTIFIED", a.summary()
     _same(ref, a)
     _same(a, ce.certify(claim, spec, opts))
+
+
+def test_a_mapping_entry_is_read_by_index_like_a_tuple():
+    """labels_hook reads an approximate-symmetry entry by index, so {0: S, 1: lattice} means (S, lattice); a lattice of
+    0.3 (not the keys' 1) changes the label record."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec)
+    w, V = np.linalg.eigh(H.toarray())
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
+    Sz = _with_duplicates(sp.diags(_total_sz(spec)).tocsr())
+    as_tuple = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", approximate_symmetries={"Sz": (Sz, 0.3)}))
+    as_mapping = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all",
+                                                    approximate_symmetries={"Sz": {0: Sz, 1: 0.3}}))
+    _same(as_tuple, as_mapping)
+
+
+@pytest.mark.parametrize("empty", [[], ()])
+def test_empty_sequences_of_observables_and_symmetries_are_accepted(empty):
+    claim, spec = _model_claim(False)
+    ref = ce.certify(claim, spec, ce.Options(seed=1))
+    _same(ref, ce.certify(claim, spec, ce.Options(seed=1, observables=empty, approximate_symmetries=empty)))
+
+
+def test_a_second_object_on_the_same_arrays_is_copied_separately():
+    """The operator D and sp.csr_matrix(D), which shares D's arrays, are two objects: each gets its own copy, so the
+    certificate is that of two independent matrices (documented in the changelog)."""
+    claim, spec = _model_claim(False, k=4)
+    D = claim.operator
+    view = sp.csr_matrix(D)
+    assert view is not D and np.shares_memory(view.data, D.data)
+    before = _arrays(D)
+    a = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", observables={"H": view}))
+    assert _unchanged(D, before)
+    independent = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", observables={"H": D.copy()}))
+    _same(independent, a)

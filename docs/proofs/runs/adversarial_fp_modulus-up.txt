@@ -1,0 +1,202 @@
+# python docs/proofs/independent/adversarial_fp_modulus-up.py --workers 6 (scale 1), 2026-11-18, on branch fix/upper-moduli after the second review round (certify_ed.fp, commit 249b8ae); Windows, Python 3.11.17, NumPy 2.4.4
+adversarial_modulus_up.py -- independent exact check of Lemma M and its corollary (D-12; UNVERIFIED (D-12))
+code under test: certify_ed.fp of <repository> (_GUARD == 1 + 2^-50: True)
+host: Python 3.11.17, NumPy 2.4.4, SciPy 1.17.1, Windows-10-10.0.26200-SP0, CPU features in use: AVX2, FMA3, AVX512F, AVX512_SKX; scale 1, workers 6
+
+== 0. The observations of the statement's 'Why' paragraph (numpy.abs on this host) ==
+  z = (0.02019294356747192-0.5012539518584045j): (np.abs(z)/|z| - 1)/u = -2.4661 (statement: -2.466; reproduced); (modulus_up(z)/|z| - 1)/u = +9.4941
+  z = (1.9986893956853402+0.07375207458660175j): (np.abs(z)/|z| - 1)/u = -2.4617 (statement: -2.462; reproduced); (modulus_up(z)/|z| - 1)/u = +7.5380
+  z = (1.010573342221019+0.3330018761835207j): (np.abs(z)/|z| - 1)/u = +2.2687 (statement: +2.269; reproduced); (modulus_up(z)/|z| - 1)/u = +7.9077
+  np.abs(2^-1074 (1 + i)) = 1.0 2^-1074 (statement: 1; |z| = 1.41421... 2^-1074); modulus_up gives 2.0 2^-1074
+
+== 1. Hypotheses FP-M on this host (exact comparison with integer reference arithmetic) ==
+n per check = 200000 (products with a subnormal nonzero result: 1332)
+  np.multiply(a, b) != correctly rounded a b                                     0
+  np.multiply(a, a) != correctly rounded a^2                                     0
+  np.add(a, b) != correctly rounded a + b                                        0
+  np.sqrt(a) != correctly rounded sqrt(a)                                        0
+  math.sqrt(a) != correctly rounded sqrt(a)                                      0
+  np.frexp(v): f not in [1/2, 1) or f 2^e != v (v > 0, subnormals included)      0
+  np.ldexp(v, k) != v 2^k when v 2^k is a normal binary64 number                 0
+  np.ldexp(v, k) != inf when v 2^k >= 2^1024                                     0
+  np.ldexp subnormal results:
+      inexact                                              197010
+      inexact: == round to nearest even                    197010
+      inexact: == truncation                               148796
+      inexact: == rounded up                               48214
+      inexact: not a neighbour (error >= 2^-1074)          0
+      exactly representable                                2990
+      exactly representable but not returned               0
+  np.nextafter(t, inf) != t + 2^-1074 for 0 <= t < 2^-1022                       0
+
+  ... exact checks done, 437 s
+== 2. Lemma M on the code, exact (Fractions) ==
+sets:
+  A boundary magnitudes, all ordered pairs (183 magnitudes)
+  B component ratios 2^-k and 2^+k, k = 0..1100 (23 + 10 bases)
+  C equal components, every exponent -1074..1023
+  D the three NumPy counterexamples, signs, orders, scaled by 2^j
+  F Pythagorean triples scaled by 2^j
+  G larger component within 200 ulps of 2^-1022 (border of the subnormal step)
+  Z one component zero (+0 or -0), the other any magnitude; and 0 + 0i
+  E1 random, larger component in [1/4, 4), ratio 2^0..2^-3
+  E2 random, independent exponents -1074..1023
+  E3 random, exponent of the larger -1074..1023, ratio 2^0..2^-60
+  E4 random, larger component in [2^-1074, 2^-1014), ratio 2^0..2^-56
+  E5 random, larger component in [2^1017, Omega], ratio 2^0..2^-56
+  E6 random, larger component within 3 binades of 2^-500 or 2^500
+  E7 random, unscaled low end: larger in [2^-500, 2^-486), smaller in [2^-536, 2^-510)
+  E8a random, scaled high: ratio 2^-505..2^-520 or 2^-1016..2^-1080
+  E8b random, scaled low: larger in [2^-560, 2^-500), ratio 2^-505..2^-520
+  E9 hard cases selected by a double-double screen of 5000000 random z in the unscaled branch (12000 kept: lowest/highest error of the unguarded root and of m)
+  screen estimates (double-double, a selector, not exact): unguarded root rel. error in [-1.8567 u, 1.8760 u]; m/|z| - 1 in [5.4586 u, 10.5130 u]
+
+violations / checked, per set (code under test):
+  set     cases    (i)  (ii)+2^-1073   (ii)|z|>=2^-1022         (iii)          (iv)   m=inf  m<2^-1022 code!=ref
+  A       33489      0             0           0/31640        0/1469        0/0         1469        307         0
+  B       97880      0             0           0/93086        0/4410        0/0         4410        384         0
+  C       16668      0             0           0/16366        0/4           0/0            4        297         0
+  D       12596      0             0           0/12300        0/2           0/0            2        294         0
+  F       16782      0             0           0/16366        0/2           0/0            2        414         0
+  G        9626      0             0           0/6830         0/0           0/0            0       2724         0
+  Z       40370      0             0           0/39316        0/0           0/40370        0       1054         0
+  E1     150000      0             0           0/150000       0/0           0/0            0          0         0
+  E2      60000      0             0           0/59963        0/0           0/0            0         37         0
+  E3     150000      0             0           0/146267       0/1           0/0            1       3732         0
+  E4     100000      0             0           0/13130        0/0           0/0            0      86870         0
+  E5      60000      0             0           0/59861        0/139         0/0          139          0         0
+  E6     100000      0             0           0/100000       0/0           0/0            0          0         0
+  E7      60000      0             0           0/60000        0/0           0/0            0          0         0
+  E8a     60000      0             0           0/60000        0/0           0/0            0          0         0
+  E8b     30000      0             0           0/30000        0/0           0/0            0          0         0
+  E9      12000      0             0           0/12000        0/0           0/0            0          0         0
+  ALL   1009411      0             0           0/907125       0/6027        0/40370     6027      96113         0
+  (code!=ref: entries where the code differs bit for bit from the exact reference model with a correctly rounded ldexp; code m = nan: 0)
+lower margin, not claimed by the statement (finite m, both components nonzero, 963014 cases): m < |z|(1 + 4u): 0; m < |z|(1 + 5u): 0; m < |z|(1 + 6u) [control]: 4157
+
+cases of the proof reached (reference model, all sets):
+  S-1/R-inf                                                                   2363
+  S-1/R-normal                                                                295810
+  S-1/R-rounded-up-to-2^-1022                                                 4
+  S-1/R-subnormal-exact                                                       4118
+  S-1/R-subnormal-inexact                                                     90953
+  S-2(square of the scaled smaller underflows)/R-inf                          2486
+  S-2(square of the scaled smaller underflows)/R-normal                       70067
+  S-3(scaled smaller rounded to the subnormal grid)/R-inf                     1178
+  S-3(scaled smaller rounded to the subnormal grid)/R-normal                  46993
+  U-A                                                                         326967
+  U-B(square of the smaller underflows)                                       128102
+  zero                                                                        40370
+  |z| < 2^-1022: 96259 cases
+
+reference model with other np.ldexp roundings allowed by FP-M (violations, all sets):
+  ref_RN             (i) 0   (ii)+2^-1073 0   (ii)|z|>=2^-1022 0   (iii) 0   [differs from ref_RN in 0 cases; additive term 2^-1074 instead of 2^-1073 violated in 11320 cases]
+  ref_ldexp_trunc    (i) 0   (ii)+2^-1073 0   (ii)|z|>=2^-1022 0   (iii) 0   [differs from ref_RN in 13639 cases; additive term 2^-1074 instead of 2^-1073 violated in 0 cases]
+  ref_ldexp_up       (i) 0   (ii)+2^-1073 0   (ii)|z|>=2^-1022 0   (iii) 0   [differs from ref_RN in 77314 cases; additive term 2^-1074 instead of 2^-1073 violated in 87618 cases]
+
+== 3. Negative controls (the checks can fail) and sensitivity, per set: violations of (i) ==
+  set     cases NC_guard_1+2u NC_no_guard NC_no_subnormal_step NC_no_subnormal_step_ldexp_trunc NC_no_scaling NC_flush_to_zero_products np.abs INFO_guard_1+4u INFO_guard_1+6u
+  A       33489             0       29832                  114                              140          2212                       288  30840               0               0
+  B       97880             0       95902                  336                              366          7990                       158  96494               0               0
+  C       16668             0        4091                  142                              276          4196                         0    154               0               0
+  D       12596             0        4100                  138                              272          3290                         0   8358               0               0
+  F       16782             0           0                   18                               24          4308                         0     18               0               0
+  G        9626             0        4014                    0                                0          9626                         0   6262               0               0
+  Z       40370             0           0                    0                                0             0                         0      0               0               0
+  E1     150000             8       74940                    0                                0             0                         0  75026               0               0
+  E2      60000             0       59206                   27                               34          4114                         4  59443               0               0
+  E3     150000            13      113734                 3097                             3541         39239                       102 125209               0               0
+  E4     100000             0        9996                70856                            82171        100000                         0  86118               0               0
+  E5      60000             3       45453                    0                                0             0                         0  49311               0               0
+  E6     100000            11       76011                    0                                0             0                      5754  82271               0               0
+  E7      60000             7       48672                    0                                0             0                     14973  54553               0               0
+  E8a     60000             0       60000                    0                                0             0                         0  60000               0               0
+  E8b     30000             0       30000                    0                                0         17080                         0  30000               0               0
+  E9      12000           127        6000                    0                                0             0                         0   5927               0               0
+  ALL   1009411           169      661951                74728                            86824        192055                     21279 769984               0               0
+  NC_no_scaling also returns inf where (iii) forbids it: 213912 cases
+  tightness controls on the code's m (cases with |z| >= 2^-1022, 907125 checked): m > |z|(1 + 8u): 382140; (1 + 9u): 31248; (1 + 10u): 2602; (1 + 11u): 0; (1 + 12u) [the claim]: 0
+  additive-term controls on the code's m (cases with |z| < 2^-1022, 96259): m > |z|(1 + 12u) + 0: 90279; + 2^-1074: 11320; + 2^-1073 [the claim]: counted in (ii) above
+
+extremes on the code's m (floats evaluated from exact rationals; not pass/fail):
+  max (m/|z| - 1)/u over |z| >= 2^-1022: 10.5130 at x=0x1.06f9ed7599117p+0 y=0x1.d6d61f1926164p-2 m=0x1.201e325cf81c3p+0
+  min (m/|z| - 1)/u over |z| >= 2^-1022, both components nonzero: 5.4586 at x=0x1.1e5d663bd8c6dp+0 y=0x1.4647f79c27cbdp-4 m=0x1.1f170b81c344ap+0
+  max (m - |z|(1 + 12u))/2^-1074 over |z| < 2^-1022, both components nonzero: 1.5000 at x=0x0.000000c000000p-1022 y=0x0.0000000006000p-1022 m=0x0.000000c000003p-1022
+
+examples (first few per kind):
+  ADD_term_0*2^-1074_viol              [A] x=0x0.0000000000001p-1022 y=0x0.0000000000001p-1022 m=0x0.0000000000002p-1022
+  ADD_term_0*2^-1074_viol              [A] x=0x0.0000000000001p-1022 y=0x0.0000000000002p-1022 m=0x0.0000000000003p-1022
+  ADD_term_1*2^-1074_viol              [A] x=0x0.0000000000002p-1022 y=0x0.0000000000002p-1022 m=0x0.0000000000004p-1022
+  ADD_term_1*2^-1074_viol              [A] x=0x0.0000000000002p-1022 y=0x0.0000000000003p-1022 m=0x0.0000000000005p-1022
+  NC_flush_to_zero_products:i_viol     [B] x=0x1.0000000000000p-499 y=0x1.0000000000000p-512 m=0x1.0000000000004p-499
+  NC_flush_to_zero_products:i_viol     [B] x=0x1.0000000000000p-512 y=0x1.0000000000000p-499 m=0x1.0000000000004p-499
+  NC_guard_1+2u:i_viol                 [E3] x=0x1.1e0ec215253c7p+66 y=0x1.73e524b0c66a5p+84 m=0x1.73e524b0cd4a9p+84
+  NC_guard_1+2u:i_viol                 [E3] x=0x1.e727f25416c20p-796 y=0x1.6c2bdd2d47bedp-787 m=0x1.6c2c2ea2d052cp-787
+  NC_no_guard:i_viol                   [A] x=0x0.0000000000001p-1022 y=0x1.0000000000000p-1022 m=0x1.0000000000000p-1022
+  NC_no_guard:i_viol                   [A] x=0x0.0000000000001p-1022 y=0x1.0000000000001p-1022 m=0x1.0000000000001p-1022
+  NC_no_scaling:i_viol                 [A] x=0x0.0000000000001p-1022 y=0x0.0000000000001p-1022 m=0x0.0p+0
+  NC_no_scaling:i_viol                 [A] x=0x0.0000000000001p-1022 y=0x0.0000000000002p-1022 m=0x0.0p+0
+  NC_no_scaling:iii_viol               [A] x=0x0.0000000000001p-1022 y=0x1.0000000000000p+512 m=inf
+  NC_no_scaling:iii_viol               [A] x=0x0.0000000000001p-1022 y=0x1.0000000000001p+512 m=inf
+  NC_no_subnormal_step:i_viol          [A] x=0x0.0000000000001p-1022 y=0x0.0000000000001p-1022 m=0x0.0000000000001p-1022
+  NC_no_subnormal_step:i_viol          [A] x=0x0.0000000000001p-1022 y=0x0.0000000000002p-1022 m=0x0.0000000000002p-1022
+  NC_no_subnormal_step_ldexp_trunc:i_viol [A] x=0x0.0000000000001p-1022 y=0x0.0000000000001p-1022 m=0x0.0000000000001p-1022
+  NC_no_subnormal_step_ldexp_trunc:i_viol [A] x=0x0.0000000000001p-1022 y=0x0.0000000000002p-1022 m=0x0.0000000000002p-1022
+  np.abs:i_viol                        [A] x=0x0.0000000000001p-1022 y=0x0.0000000000001p-1022 m=0x0.0000000000001p-1022
+  np.abs:i_viol                        [A] x=0x0.0000000000001p-1022 y=0x0.0000000000002p-1022 m=0x0.0000000000002p-1022
+
+== 4. Special inputs (code against statement) ==
+  S1     checks 272     failures 0    zero component, +0 and -0, array and scalar calls: m = |other component| exactly, sign +
+  S2     checks 51      failures 0    inf or nan component (inf wins over nan and over 0; nan otherwise; same as np.abs); no FP error raised under np.errstate(all='raise')
+  S3     checks 50025   failures 0    complex64 input: float64 result, bit-identical with the complex128 call, (i) exact
+  S4     checks 22      failures 0    scalar input (complex, np.complex128, np.complex64, 0-d array): a Python float equal to the array result
+  S5     checks 9       failures 0    shapes (3-d C and Fortran order, strided view, read-only, empty, big-endian): same values, input unchanged
+  S6     checks 2       failures 0    real floating input: np.abs(z), exact
+  S7     checks 5       failures 0    large array (2000003 entries, all branches): results independent of offset, order, stride; 20000 entries equal to one-entry calls
+  S8     checks 16      failures 0    abs_up: dense = modulus_up; sparse (coo, csr, csc, bsr, dia, lil, dok; matrix and array): same pattern, real, entries >= |a_ij| exactly; real sparse = abs
+  note: real integer input: modulus_up(int64 [-2^63, -5]) = [9.223372036854778e+18, 5.0] (np.abs wraps at the most negative integer; the statement's 'np.abs(z), which is exact' holds for floating dtypes)
+  note: object-dtype array of Python complex numbers: rejected with TypeError (modulus_up: no upper modulus for dtype object (convert to a numeric dtype first))
+  note: np.clongdouble on this host: itemsize 16 bytes, 52 mantissa bits (binary64 here: the path that rounds wider components to float64 with astype cannot be exercised on this host)
+  note: abs_up on a COO matrix with duplicate entries sums the duplicates of the argument in place (stored entries 600 -> 507), as its docstring says; the moduli bounded are those of the summed (rounded) entries
+
+== 5. Corollary: fl(sum_j m_ij m_j) >= (1 - gamma_w) sum_j |a_ij||x_j|, exact rational comparison ==
+  CONTROL numpy.abs in place of modulus_up, no underflow, exponents -3..3: fl(sum abs abs) < (1 - gamma_w) sum |a||x| 42
+  CONTROL numpy.abs in place of modulus_up, no underflow, exponents -3..3: sums checked                        848
+  CONTROL numpy.abs in place of modulus_up, no underflow, exponents -300..300: fl(sum abs abs) < (1 - gamma_w) sum |a||x| 9
+  CONTROL numpy.abs in place of modulus_up, no underflow, exponents -300..300: sums checked                    848
+  CONTROL products underflow, exponents -620..-480: fl(sum m m) < (1 - gamma_w) sum m m                        440
+  CONTROL products underflow, exponents -620..-480: fl(sum m m) < (1 - gamma_w) sum |a||x|                     432
+  CONTROL products underflow, exponents -620..-480: fl(sum m m) < (1 - w u) sum |a||x|  (stronger than claimed) 432
+  CONTROL products underflow, exponents -620..-480: sums checked                                               1696
+  no underflow, exponents -3..3: sums checked                                                                  3392
+  no underflow, exponents -300..300: sums checked                                                              3392
+  first violation in 'CONTROL products underflow, exponents -620..-480': w=1, left to right: fl=0x0.0p+0
+  explicit: a = x = 2^-600: m_a = 0x1.0000000000000p-600, m_x = 0x1.0000000000000p-600 (exact moduli), fl(m_a m_x) = 0.0, |a||x| = 2^-1200 > 0; fl < (1 - gamma_1)|a||x|: True
+  explicit: a = x = 2^-600 (1 + i): m_a = 0x1.6a09e667f3bd3p-600, fl(m_a m_a) = 0.0, |a||x| = 2^-1199; fl < (1 - gamma_1)|a||x|: True
+  explicit: a = Omega (1 + i), x = 0: m_a = inf, m_x = 0.0, fl(m_a m_x) = nan (inf * 0), |a||x| = 0; the comparison fl >= ... is false for nan: True
+
+== 6. Expectations ==
+  [ok] statement's numpy.abs observations reproduced on this host
+  [ok] FP-M primitives on this host: 0 deviations
+  [ok] (i) m >= |z|: 0 violations in 1009411 cases
+  [ok] (ii) m <= |z|(1+12u) + 2^-1073: 0 violations; m <= |z|(1+12u) for |z| >= 2^-1022: 0 violations in 907125
+  [ok] (iii) m = inf only if |z|(1+12u) > Omega: 0 violations in 6027 infinite results
+  [ok] lower margin m >= |z|(1+4u) for two nonzero components: 0 violations in 963014; control 1+6u violated (4157 > 0)
+  [ok] (iv) zero component: m = |z| exactly: 0 violations in 40370 (+ S1)
+  [ok] code bit-identical with the exact reference model (ldexp to nearest): 0 differences
+  [ok] reference model with truncating / upward ldexp: 0 violations of (i), (ii), (iii)
+  [ok] negative control NC_guard_1+2u fails (i): 169 violations (> 0 expected)
+  [ok] negative control NC_no_guard fails (i): 661951 violations (> 0 expected)
+  [ok] negative control NC_no_subnormal_step fails (i): 74728 violations (> 0 expected)
+  [ok] negative control NC_no_subnormal_step_ldexp_trunc fails (i): 86824 violations (> 0 expected)
+  [ok] negative control NC_no_scaling fails (i): 192055 violations (> 0 expected)
+  [ok] negative control NC_flush_to_zero_products fails (i): 21279 violations (> 0 expected)
+  [ok] negative control np.abs fails (i): 769984 violations (> 0 expected)
+  [ok] negative control: tightness constant 1 + 8u is violated (382140 > 0)
+  [ok] negative control: additive term 0 is violated (90279 > 0)
+  [ok] special inputs: 0 failures
+  [ok] corollary control: with numpy.abs in place of modulus_up the inequality fails (51 > 0)
+  [ok] corollary, no underflow: 0 violations in 6784 sums
+  [ok] corollary control: the inequality fails when products underflow (432 > 0) and for inf * 0 (explicit cases: (True, True, True))
+
+total exact Lemma-M cases: 1009411 (of which 12000 selected by the screen of 5000000); expectations not met: 0; wall time 454 s

@@ -129,6 +129,12 @@ branch only when they do not (then the claim's vectors must be duplicates up to 
 Rounding directions: residual and radius up (`norm2_upper`, `up`), xᴴBx and β_c down (`sub_down`, (1 − 4u)), the collar
 up, σ − c down.
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Proposition 2 and G3 use â = fl(|A||x|),
+b̂ = fl(|B||x|), u(1 + 2u)|ŝ|, fl(|x|ᵀb̂) and the forming error u|σ||B| + u|M| with the computed moduli taken as exact
+("sums of non-negative products with relative error ≤ γ_n"). For complex data the code took them from `numpy.abs`,
+whose error is not bounded (`docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0 `generalized` takes them from `fp.abs_up` and
+`fp.modulus_up` (≥ the exact moduli, Lemma M there), so the steps hold as written. No constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_E-03.py` (seed 20261030, `--cases 80`; mpmath at 60 digits: Cholesky of B, C = L⁻¹AL⁻ᴴ and its
@@ -166,3 +172,4 @@ the dense size limit, JSON round trip and the record schema.
 
 Derived by Claude on 2026-10-30; machine-checked (303 random + 100 adversarial cases, 0 violations; negative control
 undercut 40/40); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

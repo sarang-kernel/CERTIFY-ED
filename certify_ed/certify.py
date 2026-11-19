@@ -304,6 +304,35 @@ def _underflow_statement_note(findings):
             "assumes it)")
 
 
+def _nonfinite_pairs(enc, X):
+    """(overflowed, unresolved): the claimed pairs with a nonzero vector whose certified radius is not finite.
+
+    unresolved: the lower bound of the vector's 2-norm is 0 (fp.norm2_lower: the squared norm underflows, or overflows
+    above about 1.3e154), so no radius can be formed whatever the operator; normalising the vectors removes it.
+    overflowed: the others; their residual bound, rounding bound or radius quotient overflowed (inf, or inf * 0 = nan,
+    stored as inf). A zero vector has an infinite radius by Theorem 1 and is in neither list."""
+    bad = np.nonzero(~np.isfinite(enc.radius))[0].tolist()
+    if not bad or X is None:
+        return [], []
+    over, unresolved = [], []
+    for j in bad:
+        if np.any(np.asarray(X[:, j]) != 0):
+            (over if enc.residual.xnorm_lower[j] > 0 else unresolved).append(int(j))
+    return over, unresolved
+
+
+def _nonfinite_text(over, unresolved):
+    """Summary and reason code for claimed pairs without a finite radius (_nonfinite_pairs)."""
+    parts = []
+    if over:
+        parts.append(f"the certified radius of claimed pairs {over[:8]} is not finite (a bound of the floating-point "
+                     f"accounting overflowed)")
+    if unresolved:
+        parts.append(f"the norm of the claimed vectors {unresolved[:8]} is not resolvable in binary64 (its squared "
+                     f"norm underflows or overflows; normalise the vectors)")
+    return "; ".join(parts), ("NONFINITE_BOUND" if over else "UNRESOLVED_VECTOR_NORM")
+
+
 def _guard_range_note(findings):
     what = ", ".join(f"{f['quantity']} = {f['value']} ({f['where']})" for f in findings)
     return (f"outside the range of the floating-point guards: {what} exceeds {findings[0]['limit']}; the guards of "
@@ -435,15 +464,24 @@ def check_model_fidelity(claim: Claim, spec: ModelSpec, opts: Options, H_full_re
         audit = audit_sector(H_full_ref, V_audit, Hs, label="producer sector")
         ev["sector_audit"] = audit.to_dict()
         ev["model_shift_bound"] = _builder_shift(spec, st_u1 if red is not None else None)
-        status = "CERTIFIED" if audit.passed else "FAILED"
-        summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
-                f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
-                f"{audit.invariance_defect:.1e})" if status == "CERTIFIED" else
-                f"sector audit failed (isometry defect {audit.isometry_defect:.1e}, invariance "
-                f"defect {audit.invariance_defect:.1e}, hermiticity {herm:.1e})")
-        return _stmt("S1.model_fidelity", status, summ, ev,
+        finite = all(math.isfinite(v) for v in (audit.isometry_defect, audit.invariance_defect,
+                                                audit.compression_defect))
+        status = "CERTIFIED" if audit.passed else ("FAILED" if finite else "INCONCLUSIVE")
+        if status == "CERTIFIED":
+            summ = (f"producer sector block is an invariant, orthonormal restriction of the spec "
+                    f"operator (isometry defect {audit.isometry_defect:.1e}, invariance defect "
+                    f"{audit.invariance_defect:.1e})")
+        elif status == "FAILED":
+            summ = (f"sector audit failed (isometry defect {audit.isometry_defect:.1e}, invariance "
+                    f"defect {audit.invariance_defect:.1e}, hermiticity {herm:.1e})")
+        else:
+            summ = (f"sector audit bounds are not finite (isometry defect {audit.isometry_defect:.1e}, invariance "
+                    f"defect {audit.invariance_defect:.1e}): a bound of the floating-point accounting overflowed; "
+                    f"nothing is stated about the sector block")
+        stmt = _stmt("S1.model_fidelity", status, summ, ev,
                      ["full-space reference built by CERTIFY-ED from the spec (bitwise path)"],
-                     time.time() - t0), H_full_ref, audit
+                     time.time() - t0, reason_code="NONFINITE_BOUND" if status == "INCONCLUSIVE" else None)
+        return stmt, H_full_ref, audit
 
     n_ref = claim.states.size if claim.states is not None else spec.dim
     if opts.matrix_free and op is None:
@@ -924,7 +962,7 @@ def _private_copies(widened=None):
                     return m
                 c = m.copy()
                 if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
-                    c.indices, c.indptr = m.indices.copy(), m.indptr.copy()
+                    c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
             hit = copies[id(m)] = (m, c, note)    # m is kept, so that its id is not reused during the run
         if widened is not None:
             widened.extend(dict(w, input=what) for w in hit[2])
@@ -968,14 +1006,15 @@ def _options_as_given(opts: Options, own) -> Options:
         S_own = own(S, what)
         if S_own is S:
             return v
-        rest = list(v)[1:]
-        return [S_own, *rest] if type(v) is list else (S_own, *rest)
-    obs = {k: own(v, f"options.observables[{k}]") for k, v in opts.observables.items()}
-    asym = {k: entry(v, f"options.approximate_symmetries[{k}]") for k, v in opts.approximate_symmetries.items()}
-    syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in opts.symmetries.items()}
-    if all(obs[k] is opts.observables[k] for k in obs) and \
-            all(asym[k] is opts.approximate_symmetries[k] for k in asym) and \
-            all(syms[k] is opts.symmetries[k] for k in syms):
+        return (S_own, *(v[i] for i in range(1, len(v))))      # read by index, as labels_hook reads it
+    obs_given = opts.observables or {}                 # [] and () as accepted before
+    asym_given = opts.approximate_symmetries or {}
+    syms_given = opts.symmetries or {}
+    obs = {k: own(v, f"options.observables[{k}]") for k, v in obs_given.items()}
+    asym = {k: entry(v, f"options.approximate_symmetries[{k}]") for k, v in asym_given.items()}
+    syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in syms_given.items()}
+    if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym) and \
+            all(syms[k] is syms_given[k] for k in syms):
         return opts
     return replace(opts, observables=obs, approximate_symmetries=asym, symmetries=syms)
 
@@ -1214,8 +1253,17 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
               "model_shift": model_shift,
               "radius_refers_to": ("declared model (spec)" if model_shift > 0 or (spec is not None and
                                    statements[0]["status"] == "CERTIFIED") else "producer operator")}
+        nf_over, nf_unres = _nonfinite_pairs(enc, X)
+        code_nf = None
         if not enc.rigorous:
             st, summ = "INCONCLUSIVE", "residuals computed but rounding not boundable for this operator (estimates only)"
+        elif nf_over or nf_unres:
+            # a bound of the accounting overflowed, or a vector norm is not resolvable in binary64: the radius of
+            # these pairs is infinite, and nothing is stated about them or the matching
+            text, code_nf = _nonfinite_text(nf_over, nf_unres)
+            st, summ = "INCONCLUSIVE", text + ": no enclosure is stated for them"
+            ev["pairs_with_nonfinite_radius"] = nf_over[:16]
+            ev["pairs_with_unresolved_vector_norm"] = nf_unres[:16]
         elif not enc.all_distinct:
             st, summ = "INCONCLUSIVE", ("each claimed value has an eigenvalue within its radius, but some "
                                         "claimed pairs could not be matched to distinct eigenvalues "
@@ -1238,8 +1286,10 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
             worst = int(np.argmax(enc.radius))
             g = enc.groups[enc.group_of[worst]]
             if not np.isfinite(enc.radius.max() + eps_shift):
-                st = "INCONCLUSIVE"
-                summ = f"certified radius of pair {worst} is not finite: no accuracy statement"
+                # the radii are finite here (S2 was CERTIFIED): the sector lift shift is not, an audit bound overflowed
+                st, code_nf = "INCONCLUSIVE", "NONFINITE_BOUND"
+                summ = (f"certified radius of pair {worst} plus the sector lift shift {eps_shift:.1e} is not finite (a "
+                        f"bound of the floating-point accounting overflowed): no accuracy statement")
             elif enc.existence_radius.max() + eps_shift <= target and g.eta is not None:
                 # IMP-13: the claim is accurate (every Theorem-1 interval meets the target) but the vectors
                 # are too far from orthonormal to certify distinct eigenvalues at that accuracy
@@ -1260,7 +1310,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
         # every magnitude of the intermediate quantities (docs/proofs/int05_underflow.md); the scan covers the
         # stored inputs and the model shift, on which the remaining standard-model bounds (inertia, Gram,
         # Rayleigh quotients) rest.
-        code2 = None
+        code2 = code_nf
         if underflow:
             st, code2 = "INCONCLUSIVE", "UNDERFLOW_RISK"
             summ = _underflow_statement_note(uf_findings) + "; would otherwise be: " + summ
@@ -1312,12 +1362,18 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                                 {"n_claimed": int(mu.size), "guard_range": {"findings": gr_findings}},
                                 reason_code="FP_GUARD_RANGE"))
     elif enc is not None and not np.all(np.isfinite(enc.radius)) and claim.kind in ("lowest", "window", "all"):
-        # a zero claimed vector has an infinite Theorem-1 radius: there is no enclosure to count against
-        # (the shift sigma = inf would otherwise crash the factorization, IMP-23)
+        # a zero claimed vector has an infinite Theorem-1 radius, and so has a pair whose accounting overflowed or
+        # whose vector norm binary64 does not resolve: there is no enclosure to count against (the shift sigma = inf
+        # would otherwise crash the factorization, IMP-23)
+        nf_over, nf_unres = _nonfinite_pairs(enc, X)
+        text, code_nf = _nonfinite_text(nf_over, nf_unres)
         statements.append(_stmt("S3.completeness", "INCONCLUSIVE",
-                                "some claimed pair has no finite enclosure (zero eigenvector): "
-                                "counts cannot be matched to the claimed set",
-                                {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]}))
+                                (f"some claimed pair has no finite enclosure ({text}): counts cannot be matched to the "
+                                 f"claimed set" if nf_over or nf_unres else
+                                 "some claimed pair has no finite enclosure (zero eigenvector): "
+                                 "counts cannot be matched to the claimed set"),
+                                {"pairs_without_enclosure": np.nonzero(~np.isfinite(enc.radius))[0].tolist()[:16]},
+                                reason_code=code_nf if nf_over or nf_unres else None))
     elif claim.kind == "all":
         if enc is not None and enc.all_distinct and mu.size == adapter.shape[0]:
             statements.append(_stmt("S3.completeness", "CERTIFIED",

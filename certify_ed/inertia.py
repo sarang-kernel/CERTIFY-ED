@@ -50,7 +50,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from .fp import U, GuardRangeError, gamma_dot, up, fro_upper
+from .fp import U, GuardRangeError, gamma_dot, up, fro_upper, modulus_up
 from .precision import binary64, require_binary64
 
 
@@ -69,6 +69,16 @@ class InertiaResult:
 
     def to_dict(self):
         return asdict(self)
+
+
+def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
+    """A backward-error bound beta that is not finite (a bound of the accounting overflowed; inf * 0 = nan) gives no
+    count: beta = inf and conclusive False."""
+    if np.isfinite(res.beta):
+        return res
+    res.beta, res.negative, res.conclusive = float("inf"), None, False
+    res.note = (res.note + "; " if res.note else "") + "backward-error bound not finite (an overflowed bound)"
+    return res
 
 
 def _exact_sign(x: float) -> int:
@@ -126,14 +136,15 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
         return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman",
                              time.time() - t0, False, "factor not lower triangular after permutation")
     R = lu @ d @ lu.conj().T - S
-    # rounding in forming lu d lu^H (two products, inner length <= n) and S
-    absprod = np.abs(lu) @ np.abs(d) @ np.abs(lu).T
+    # rounding in forming lu d lu^H (two products, inner length <= n) and S; complex moduli rounded up (fp.modulus_up)
+    alu = modulus_up(lu)
+    absprod = alu @ modulus_up(d) @ alu.T
     g = gamma_dot(2 * n + 2, cplx)
-    beta = fro_upper(R) + g * fro_upper(absprod) + U * float(np.max(np.abs(np.diag(S)))) * 2
+    beta = fro_upper(R) + g * fro_upper(absprod) + U * float(np.max(modulus_up(np.diag(S)))) * 2
     beta = up(beta)
     res = InertiaResult(float(sigma), None if amb else int(neg), float(beta), "dense-bunch-kaufman",
                         time.time() - t0, not amb, "zero pivot or singular 2x2 block" if amb else "")
-    return res
+    return _no_count_on_nonfinite(res)
 
 
 def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", block_mb: Optional[float] = None,
@@ -182,15 +193,16 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
         g2 = gamma_dot(2, cplx)
         beta = (gamma_dot(w + 1, cplx) * Lf * Uff + Lf * asym_f
                 + Lf * g2 * (Uff + float(np.max(np.abs(Dreal))) * Lf)
-                + U * float(np.max(np.abs(S.diagonal()))) * 2)
+                + U * float(np.max(modulus_up(S.diagonal()))) * 2)
         beta = up(beta)
-        return InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
-                             time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz))
+        return _no_count_on_nonfinite(InertiaResult(float(sigma), neg, float(beta), "sparse-superlu-apriori",
+                                                    time.time() - t0, True, "", fill_nnz=int(L.nnz + Uf.nnz)))
     from .ldl_residual import sparse_ldl_residual_bound
     del Uf
     rb = sparse_ldl_residual_bound(L, dU, S, f.perm_c, block_mb=block_mb, threads=threads)
-    return InertiaResult(float(sigma), neg, float(rb.beta), "sparse-superlu-residual",
-                         time.time() - t0, True, "", fill_nnz=int(2 * L.nnz - n), residual=rb.to_dict())
+    return _no_count_on_nonfinite(InertiaResult(float(sigma), neg, float(rb.beta), "sparse-superlu-residual",
+                                                time.time() - t0, True, "", fill_nnz=int(2 * L.nnz - n),
+                                                residual=rb.to_dict()))
 
 
 def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget_mb: Optional[float] = None) -> InertiaResult:

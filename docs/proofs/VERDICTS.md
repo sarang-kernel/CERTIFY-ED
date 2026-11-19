@@ -32,6 +32,7 @@ results is described as verified; Sarang's check (D-12) is pending for all of th
 | D-01_sparse-residual.md | a-posteriori backward error of the stored sparse L D Lᴴ factors: entrywise (a), row-sum (b), β ≥ ‖E‖₂ + 2u max\|S_ii\| (c), inertia sandwich | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS | (Λ-R1) first-order margin is 6u, not 5u (harmless); fl(\|z\|) via C `hypot` is a library function outside the one-rounding model (assume ≤ 3u relative error); the counted factorisation is L·Re(D)·Lᴴ (imaginary parts of complex pivots land in E); E_c is not Hermitian — the mirrored lower triangle is valid because the exact E is; (H1) Hermiticity supplied by the callers via `hermitian_part`, underflow hypothesis for L, D not scanned | verify_D-01.py --cases 60 --seed 11: 60 random + 17 adversarial cases, 4 skipped, 0 violations | independent/adversarial_D-01_sparse-residual.py --cases 40 --seed 103 (exact-rational residual, mp sandwich, corrupted factors): 0 violations; --cases 16 --seed 104: 0 violations | 0 | 2026-10-30 |
 | D-02_matrix-free.md | matrix-free rounding width W = w_row + L + ρ + 1 (real) / w_row + 3L + ρ + 3 (complex): entrywise (a), Theorem-1 radius for the exact spec operator (b), spec norm bound (Lemma N) | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | GAP | Lemma M3 omits the rounding of \|x_j\| for complex vectors: for a real spec applied to complex-typed claim vectors (reachable) the second-pass inequality (1 − γ_{W−1}) is 1–2 counts short, so absHX_up ≥ \|H_spec\|_abs\|x\| is not established; (b) unaffected (complex branch uses 2γ_{W+4}). The modulus model is not in section 1; measured NumPy complex \|z\| error on this host up to 1.88u (> one rounding). Lemma N evaluates the local norms on stored, not exact, amplitudes (covered by the guard). | verify_D-02.py --cases 40 --seed 13: 72 random + 18 adversarial cases, 0 skipped, 0 violations | independent/adversarial_D-02_matrix-free.py --cases 40 --seed 107 (independent mp H_spec, (a), (b), M1, M3 per family, Lemma N, exact letters, hypot accuracy): 0 violations | 0 | 2026-10-30 |
 | E-02_non_hermitian.md | Lemma 1 (backward errors of right and left residuals), Theorem 2 (Bauer–Fike), Lemma 3 (inverse from a computed inverse), Theorem 4 (discs from a computed eigenvector matrix and their count), Propositions 5–7 (floating-point accounting of N1–N4) | 1→2→3→4→5 (sections 1 and 3 read first; own proof written; then section 2 compared; verify script run at reduced size; adversarial search) | AGREES-WITH-REMARKS | Own proofs by other routes (vector forms of Theorem 2 and Lemma 3; argument principle on a δ/2-neighbourhood instead of continuous root functions for the count); same constants and rounding budgets. Remarks: (1) Proposition 5 (ii) mixed the standard-model inequality with the additive budget (wording, applied); (2) (FP) did not mention fused multiply-adds in NumPy's complex products (bound 2u ≤ γ₃, applied); (3) with underflow_check=False H-mod is assumed for subnormal components (applied; the targeted Part D search found no violation); (4) the radius is uniform, per-disc radii not implemented; (5) N4 is certified when uninformative (one group), the summary says so. An instrument fault of verify_E-02.py (σ_min through MᴴM at 60 digits) was found and corrected; recorded runs are from the corrected script. | verify_E-02.py --cases 40 --seed 7: 539 random + 558 adversarial, negative controls detected, 0 violations | adversarial_E-02_non_hermitian.py --cases 120 --seed 113: 120 matrices (perturbed Jordan blocks, nearly parallel eigenvectors, graded scales, wrong and random supplied inverses), 360 centre pairs at the separation boundary, 59 opt-out matrices with subnormal complex components; negative controls 57/76 and 10/24; 0 violations | 0 | 2026-11-11 |
+| fp_modulus-up.md | Lemma M (i)-(iv) (m ≥ \|z\|; m ≤ \|z\|(1 + 12u) + 2⁻¹⁰⁷³; ∞ only if \|z\|(1 + 12u) > Ω; exact for a zero component) and the corollary (no rounding count for upper moduli) | statement (section 1) and code excerpt only; own proof written; exact adversarial search; the author's proof not read (fresh-context session, 2026-11-18) | GAP | Lemma M (i)-(iv) AGREES: same statement by an own proof; the guard 1 + 4u would suffice, 12 is the least integer the count gives, the term 2⁻¹⁰⁷³ is needed. Corollary GAP: true only for finite moduli and products that do not underflow (a = x = 2⁻⁶⁰⁰ gives fl(m m) = 0; ∞ · 0 = nan); the same for its general sentence. Code against statement: object arrays took the real branch (m < \|z\| in 49 842 of 100 000 entries), integer input wraps at the most negative value, np.clongdouble wider than binary64 would be rounded (reasoning only). Resolved 2026-11-18 (UNVERIFIED, D-12): the corollary is stated for finite moduli with the term w·2⁻¹⁰⁷⁵, absent without underflow; TypeError for object, sparse and wider complex input; integers stepped up from 2⁵³; with the upper moduli in the bounds, a non-finite bound makes the records that rest on it INCONCLUSIVE (`tests/test_nonfinite_moduli.py`). | verify_modulus-up.py (defaults, third run, after the second review round): 199 953 random + 26 815 adversarial (2 000 over the subnormal band), 0 violations; (iv) 461 zero-component cases | adversarial_fp_modulus-up.py: 1 009 411 exact cases, 0 violations of (i)-(iv); lower margin 1 + 4u 0 violations in 963 014; corollary 6 784 sums without underflow, 0 violations; all controls detected (on the excerpt, and again on certify_ed.fp at 249b8ae of fix/upper-moduli) | 0 | 2026-11-18 |
 
 ## Required corrections
 
@@ -133,3 +134,98 @@ the opt-out `underflow_check=False` assumes H-mod also for subnormal components.
 `verify_E-02.py`: σ_min(A − μI) is computed with mpmath's SVD instead of the eigenvalues of (A − μI)ᴴ(A − μI), which at 60
 digits does not resolve σ_min below about 10⁻³⁰‖A − μI‖ (a false report on a matrix with subnormal complex entries; the
 exact checks held). The code (`certify_ed/nonhermitian.py`) carries the UNVERIFIED marker until Sarang's check.
+
+### Upper moduli (2026-11-18; UNVERIFIED, D-12)
+
+New derivation, not a human check: `fp_modulus-up.md` adds `fp.modulus_up` and `fp.abs_up` (Lemma M: m ≥ |z| from
+correctly rounded ×, +, √ and exact scaling by powers of two; m ≤ |z|(1 + 12u) + 2⁻¹⁰⁷³); no bound uses them in that
+change. The D-02 verdict above asks for a stated modulus hypothesis |fl(|z|) − |z|| ≤ hu|z| with h ≥ 2 and the counts
+redone with it. Measured in exact arithmetic on the Windows reference host (NumPy 2.4.4, AVX512F), NumPy's complex
+absolute value errs by −2.466u for z = 0.02019294356747192 − 0.5012539518584045i, −2.462u for z = 1.9986893956853402 +
+0.07375207458660175i and +2.269u for z = 1.010573342221019 + 0.3330018761835207i; for z = 2⁻¹⁰⁷⁴(1 + i) it returns a
+value below |z|. The 1.88u above came from 140 000 random arguments, and "within 1 ulp" is not established, so no
+small h is adopted; the upper moduli replace the hypothesis. Machine-checked by `verify_modulus-up.py` (199 953
+random + 26 815 adversarial cases, 0 violations; negative controls detected). Independent re-derivation: done
+2026-11-18 (row fp_modulus-up.md above; verdict AGREES on Lemma M, GAP on the corollary, resolved as said there);
+Sarang's check (D-12): pending.
+
+Review rounds of 2026-11-18 (an EGM review of `fp_modulus-up.md`, code reviews of the branch, the independent
+re-derivation, and a second round by three reviewers; UNVERIFIED, D-12). Resolved in the code: `modulus_up` rejects
+sparse, object and wider complex input (TypeError), steps integers up from 2⁵³, returns a float for every scalar,
+takes 0 + 0i on the unscaled branch, and works in passes of at most 2¹⁸ entries without copying its input
+(temporaries 6.8 MiB measured, bounded by about 12 MiB, for every memory layout); `abs_up` uses only public scipy
+calls (COO from `coords` where scipy has it, which covers a 1-D `coo_array`, from `row` and `col` before
+scipy 1.13), steps integer and boolean sparse data up, and keeps its in-place
+summation of duplicate entries; a test covers the subnormal band of results. Open items:
+- Duplicate entries: direct calls of `davis_kahan.commutator_bound`, `sectors.audit_sector`,
+  `correlations.compress_operator` and `eigenspace.certify_observable` form a product before the moduli sum the
+  duplicates in place, and are not valid for a matrix with duplicate entries (as before; example in
+  `fp_modulus-up.md`, What is not claimed). An `abs_up` that bounds the stored entries without summing is not written.
+- Single precision: Lemma M and the corollary do not cover products formed in float32 or complex64; a false S2
+  certificate for a float32 operator with float32 vectors was reproduced (as before). Refusing or widening such input
+  at the entry points is not written here (not covered; the separate change `fix/single-precision`).
+- The FP-M items that `fp.probe_float_environment` does not probe (correctly rounded square root, frexp, ldexp,
+  nextafter) are tested with the test suite only, and the certificate does not name them; a run-time probe and an
+  assumption line are not written.
+- For P15's D-12 check: `P15_summed_bounds.md` prints (1 − u)³(1 + 8u) = 1 + 5u − 21u² + 13u³ − 8u⁴, where the
+  coefficient is 23u³, and reports a worst main-branch overestimate of 2.2·10⁻¹⁵ relative, above the 12u ≈
+  1.33·10⁻¹⁵ of Lemma M (ii) for the same computation (probably m²/|z|² − 1). P15 is not changed here.
+
+### Non-finite bounds (2026-11-19; UNVERIFIED, D-12)
+
+A bound of the floating-point accounting can be ∞ or nan: a product, a sum or a modulus overflows for operator entries
+near the largest float (∞, and nan where an ∞ meets a zero or another ∞), for real and complex data. Resolved in the
+code, each with a test in `tests/test_nonfinite_bounds.py` (real entries of 1.7·10³⁰⁸ and one step below the largest
+float, the complex entry 1.5·10³⁰⁸(1 + i), whose modulus exceeds the largest float; controls at 10¹⁰⁰ certified): S2
+and S3 of `certify()` are INCONCLUSIVE with the reason code `NONFINITE_BOUND` and a summary that says the radius is not
+finite (before, the S2 summary of such a pair said that an eigenvalue lies within its radius), the residual bounds and
+radii are stored as ∞, not nan, and S2 makes no accuracy statement, with the same code, when the sector lift shift is
+not finite; a nonzero claimed vector whose norm binary64 does not resolve (its squared norm underflows or overflows)
+has the reason code `UNRESOLVED_VECTOR_NORM` and the advice to normalise the vectors instead; `inertia_dense` and
+`inertia_sparse` give no count on a non-finite backward error (the sparse guard is reached through a stand-in residual
+bound only); a sector audit with a non-finite defect does not pass (inf ≤ tol · inf held before), so S1 on a sector
+isometry is INCONCLUSIVE and the sector composition is INCONCLUSIVE with a summary that names the audit bounds; the
+variational records (V1 to V3; V1 and V2 were CERTIFIED with a nan bound) and the moment records (M1 to M3, and a
+sum-rule verdict on a nan endpoint) are INCONCLUSIVE with `NONFINITE_BOUND`; a non-finite observable bound is reported
+as ∞. The label record of a cyclic symmetry carries its separation as a float, a note that it is not a certified lower
+bound and `separation_rigorous: false`; its `certified` flag is unchanged (open, D-12). Not covered by a test: the
+correlation records, the sweeps, the MPS contraction, the Ozaki prototype and the GPU path. Open, as at the base:
+`certify(kind="lowest")` raises ValueError in `scipy.linalg.ldl` when the shifted matrix of S3 is not finite (couplings
+of 10¹⁶⁰ without a sector isometry).
+
+### Complex moduli (2026-11-18; UNVERIFIED, D-12)
+
+The moduli of complex data in rigorous bounds now come from `fp.modulus_up` and `fp.abs_up` (section "Upper moduli"
+above), and the analyses count no rounding for a modulus. New, not an independent re-derivation and not a human check.
+What this changes in the documents (a correction note in each, marked UNVERIFIED, with a line after its status line
+pointing to it): `thm1_fp-accounting.md` (S2) holds for complex data with the kept constant γ_{w+3} by (Λ5′), the
+monotone form of (Λ5) with the division index k ≥ w + 1, checked at k = w + 3; `D-02_matrix-free.md` Lemma M3 holds as
+first stated (h_a = h_x = 0), and Lemma N counts nothing for |c_t|; `D-01_sparse-residual.md` no longer needs "≤ 3u"
+for the moduli (the factors (1 − u)³ are spare); `E-02_non_hermitian.md` no longer needs H-mod; `appA_model-shift.md`
+no longer needs the extra index of its erratum of 10 Nov 2026; `E-05_variational.md` Lemmas 3 and 4,
+`C-07_moments.md`, `E-03_generalized.md`, `C-04_correlation_lift.md`, `E-04_parameter_intervals.md`,
+`E-07_davis_kahan.md` (Lemma 5 (c) now formed as stated, which settles the remark in its row), `int05_underflow.md`
+(the Lemma U4 remark on `hypot` moduli of subnormal components) and the draft `D-03_ozaki_draft.md` hold as written
+with upper moduli. No code constant changes; the complex γ_{w+3} of `_rounding_bound` and the constants of D-01, D-02,
+D-03 and E-02 keep spare counts. For complex128 data the bound values change in the last bits (each modulus lies at or
+above the exact one and, for normal values, at most a relative 12u above it); for complex64 data the moduli were
+float32 values before, so those bounds can move either way by more (a bound formed in single precision is not covered;
+the separate change `fix/single-precision`); an entry within a relative 12u of the largest float has an infinite
+modulus now (S2 INCONCLUSIVE instead of CERTIFIED). The records that rest on such a modulus state nothing, by the
+rules of the section above (`tests/test_nonfinite_moduli.py`), as the independent re-derivation asks for a nan bound
+(suggested edit 1 of its row). Real data and complex data whose entries have a zero component are unchanged, except
+for the arithmetic text of the non-Hermitian record, which names `fp.modulus_up` instead of the hypothesis H-mod.
+
+Review rounds of 2026-11-18 (UNVERIFIED, D-12). Resolved: the audit pin of `tests/test_abs_audit.py` covers every
+spelling of a modulus, called or referenced, whatever the object it is taken from, the 1- and ∞-type norm orders and
+hand-written moduli, and fails on stale lines of its list; a dynamic pin runs the main entry points on complex data
+with numpy's modulus recorded outside the classified places (nothing recorded; with the source pin left out it records
+66 of the 74 routed moduli reverted one at a time, all but the 8 of the device path in `gpu.py`); `fp.inf_norm_upper`
+has an exact and bit-for-bit test; the S1 invariants take each modulus once (their time is back at the base's: N = 20,
+T = 120: 7.3 s against 8.9 s at commit cdf6ebb and 80.5 s before the fix; 8.9 s and 9.0 s against 11.7 s and 10.4 s at
+cd0ca97, the base of the stack, on a busier host); the moduli of an S2 block are formed once. Open items: -
+`sectors.audit_label` divides by the separation of the computed roots of unity, a floating-point value, and its
+record's `certified` flag rests on it (the record says so: `separation_note`, `separation_rigorous: false`). A
+rigorous version needs a lower bound on 2 sin(π/n) and a bound on the distance of the computed roots from the exact
+ones: a D-12 item, not started. - The GPU products were not run after the change (no CuPy on the reference host); the
+moduli are those of the CPU path by construction.

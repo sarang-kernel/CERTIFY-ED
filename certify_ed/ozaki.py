@@ -37,7 +37,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import U, ULP_MIN, _GUARD, gamma, norm2_upper, norm2_lower, up
+from .fp import U, ULP_MIN, _GUARD, abs_up, gamma, norm2_upper, norm2_lower, up
 from .precision import binary64, require_binary64
 
 DEFAULT_MAX_SLICES = 8
@@ -493,7 +493,7 @@ def ozaki_residual(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES, block_cols: O
     kb = k if block_cols is None else max(1, int(block_cols))
     R = np.empty((n, k), dtype=complex if cplx else float)
     E = np.empty((n, k))
-    absH = abs(Hc) if sp.issparse(Hc) else np.abs(Hc)
+    absH = abs_up(Hc)                       # upper moduli of complex entries (fp.abs_up)
     abs_mu = np.abs(mu)
     rem_any = not (HS.exhausted and XR.exhausted and XI.exhausted and MU.exhausted)
     n_terms = 0
@@ -540,8 +540,9 @@ def ozaki_residual(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES, block_cols: O
                 RHa = RHa + (abs(HS.rem_imag) if sp.issparse(HS.rem_imag) else np.abs(HS.rem_imag))
             B = (np.asarray(absH @ RXa) + np.asarray(RHa @ Xsa) + Xsa * np.abs(MU.remainder[:, cols])
                  + RXa * abs_mu[cols][None, :])
-            # w nonnegative products per entry in each matvec, three additions, the moduli (one rounding each for
-            # complex data, hypot): gamma_{w+6} covers them; underflow: at most 2w + 2 products per entry
+            # w nonnegative products per entry in each matvec, three additions (the moduli of H are upper bounds,
+            # fp.abs_up, and those of the slices sums of exact component moduli): gamma_{w+6} covers them, with spare
+            # counts; underflow: at most 2w + 2 products per entry
             B = B * (1.0 + gamma(w + 6)) * _GUARD * _GUARD + (2 * w + 4) * ULP_MIN
             Eb = up(1.0) * (Eb + B)
         E[:, cols] = Eb

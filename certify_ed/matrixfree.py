@@ -34,7 +34,7 @@ from typing import Dict, Optional
 import numpy as np
 
 from .construct import SpecOperator, StateSet, _apply_string
-from .fp import up, _GUARD
+from .fp import up, _GUARD, modulus_up
 from .spec import ModelSpec
 
 
@@ -99,7 +99,7 @@ def letter_counts(local, letter: str) -> int:
 
 def local_norm_bound(local, letter: str) -> float:
     """Upper bound on ||o||_2 from sqrt(||o||_1 ||o||_inf) of the exact local matrix (moduli rounded up)."""
-    M = np.abs(local.matrix(letter))
+    M = modulus_up(local.matrix(letter))
     rows = M.sum(axis=1).max()
     cols = M.sum(axis=0).max()
     return up(math.sqrt(float(rows) * float(cols)) * (1 + 8 * 2.0 ** -53))
@@ -129,7 +129,7 @@ class MatrixFreeOperator(SpecOperator):
         for t in spec.terms:
             ht = math.prod(norms[ch] for ch in t.op) if t.op else 1.0
             for c, _sites in t.couplings:
-                s += abs(complex(c)) * ht
+                s += modulus_up(complex(c)) * ht
         # the sum of n_terms non-negative products: (1 + gamma_{n_terms + L + 2}) covers its roundings
         from .fp import gamma
         self._norm = up(s * (1.0 + gamma(max(1, spec.n_terms + L + 2)))) if spec.n_terms else 0.0
@@ -179,9 +179,9 @@ class MatrixFreeOperator(SpecOperator):
                         rr = r[found]
                     if transpose:
                         src, rr = rr, src
-                    if absolute:
-                        contrib = np.abs(a)[:, None] * np.abs(x[src]).reshape(len(src), -1) if x.ndim > 1 \
-                            else np.abs(a) * np.abs(x[src])
+                    if absolute:          # upper moduli of complex amplitudes and entries (fp.modulus_up)
+                        contrib = modulus_up(a)[:, None] * modulus_up(x[src]).reshape(len(src), -1) if x.ndim > 1 \
+                            else modulus_up(a) * modulus_up(x[src])
                     else:
                         contrib = (a[:, None] * x[src].reshape(len(src), -1)) if x.ndim > 1 else a * x[src]
                         if out_dtype == np.float64:

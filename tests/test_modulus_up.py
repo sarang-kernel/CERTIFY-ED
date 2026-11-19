@@ -1,0 +1,785 @@
+"""fp.modulus_up and fp.abs_up: upper moduli from IEEE *, +, sqrt and exact power-of-two scaling
+(docs/proofs/fp_modulus-up.md, Lemma M; UNVERIFIED until Sarang's check, D-12). Exact rational checks:
+m^2 >= re^2 + im^2 for every finite z, and the tightness m <= |z| (1 + 12u) + 2^-1073."""
+from fractions import Fraction
+
+import numpy as np
+import pytest
+import scipy.sparse as sp
+
+from certify_ed.fp import U, abs_up, modulus_up
+
+# relative errors of NumPy's complex absolute value measured on the Windows reference host (numpy 2.4.4, AVX512F):
+# 2.466u, 2.462u and 2.269u (docs/proofs/fp_modulus-up.md, section 1)
+EXAMPLES = [0.02019294356747192 - 0.5012539518584045j, 1.9986893956853402 + 0.07375207458660175j,
+            1.010573342221019 + 0.3330018761835207j]
+_T = Fraction(2) ** -1073
+_C = 1 + 12 * Fraction(U)
+
+
+def _upper_ok(z, m):
+    if m == np.inf:
+        return True
+    x, y = Fraction(float(np.real(z))), Fraction(float(np.imag(z)))
+    return Fraction(float(m)) ** 2 >= x * x + y * y
+
+
+def _tight_ok(z, m):
+    """Lemma M (ii) for a finite m, and (iii) for m = inf: inf only when |z| (1 + 12u) exceeds the largest float
+    (z with an infinite component: test_inf_and_nan_follow_numpy)."""
+    if not np.isfinite(z):
+        return m == np.inf
+    x, y = Fraction(float(np.real(z))), Fraction(float(np.imag(z)))
+    if m == np.inf:
+        return (x * x + y * y) * _C * _C > Fraction(float(np.finfo(float).max)) ** 2
+    t = Fraction(float(m)) - _T
+    return t <= 0 or t * t <= (x * x + y * y) * _C * _C
+
+
+def _boundary_values():
+    tiny = 2.0 ** -1074
+    v = [0.0, tiny, 3 * tiny, 2.0 ** -1022 - tiny, 2.0 ** -1022, 2.0 ** -1022 + tiny, 2.0 ** -537, 2.0 ** -512,
+         2.0 ** -511, 2.0 ** -511 * 1.5, 2.0 ** -500, np.nextafter(2.0 ** -500, 0), 2.0 ** -60, 0.1, 1.0,
+         1.0 - 2.0 ** -53, 2.0 ** 60, 2.0 ** 500, np.nextafter(2.0 ** 500, np.inf), 2.0 ** 511, 2.0 ** 512,
+         2.0 ** 1022, 2.0 ** 1023, np.finfo(float).max, np.nextafter(np.finfo(float).max, 0)]
+    return v
+
+
+def _adversarial():
+    v = _boundary_values()
+    out = list(EXAMPLES)
+    for a in v:
+        for b in v:
+            out += [complex(a, b), complex(-a, b), complex(a, -b)]
+    for a in (1.0, 0.75, 2.0 ** -1000, 2.0 ** 1000):
+        out += [complex(a, a), complex(a, a * 2.0 ** 60), complex(a, a * 2.0 ** -60), complex(a * 2.0 ** -60, a)]
+    return np.array(out, dtype=complex)
+
+
+def test_upper_modulus_is_an_upper_bound_and_tight_on_adversarial_cases():
+    Z = _adversarial()
+    M = modulus_up(Z)
+    bad = [(z, m) for z, m in zip(Z, M) if not (_upper_ok(z, m) and _tight_ok(z, m))]
+    assert not bad, bad[:5]
+    for z in EXAMPLES:
+        assert _upper_ok(z, modulus_up(z)) and _tight_ok(z, modulus_up(z))
+
+
+def test_the_guard_leaves_a_margin_above_3u():
+    """Pins the guard factor (1 + 8u) of both branches. In the proof of Lemma M (i), (1 - u)^3 (1 + 8u) >= 1 + 4u; so
+    when both components are nonzero and m is a normal float, m >= |z| (1 + 4u)(1 - 2^-73) > |z| (1 + 3u). A guard
+    of (1 + 2u) would leave m below |z| (1 + 3u) for many z."""
+    rng = np.random.default_rng(20261119)
+    n = 4000
+    scaled = [z * 2.0 ** k for z in EXAMPLES for k in (-1000, -600, 600, 1000)]
+    with np.errstate(over="ignore", invalid="ignore"):
+        R = (rng.standard_normal(n) * np.exp2(rng.integers(-1074, 1024, n))
+             + 1j * rng.standard_normal(n) * np.exp2(rng.integers(-1074, 1024, n)))
+        Z = np.concatenate([_adversarial(), R, np.array(scaled)])
+        Z = Z[np.isfinite(Z) & (Z.real != 0) & (Z.imag != 0)]
+    M = modulus_up(Z)
+    keep = np.isfinite(M) & (M >= 2.0 ** -1021)
+    assert keep.sum() > 2000
+    c = 1 + 3 * Fraction(U)
+    bad = [(z, m) for z, m in zip(Z[keep], M[keep])
+           if Fraction(float(m)) ** 2 < (Fraction(z.real) ** 2 + Fraction(z.imag) ** 2) * c * c]
+    assert not bad, bad[:5]
+
+
+def test_upper_modulus_on_random_magnitudes():
+    rng = np.random.default_rng(20261118)
+    n = 4000
+    Z = (rng.standard_normal(n) * np.exp2(rng.integers(-1074, 1024, n))
+         + 1j * rng.standard_normal(n) * np.exp2(rng.integers(-1074, 1024, n)))
+    with np.errstate(over="ignore", invalid="ignore"):
+        Z = Z[np.isfinite(Z)]
+    M = modulus_up(Z)
+    assert all(_upper_ok(z, m) and _tight_ok(z, m) for z, m in zip(Z, M))
+
+
+def test_the_step_up_covers_the_whole_subnormal_band():
+    """Lemma M, Step 4 (c): the step up below 2^-1022, on 2 400 z with both components nonzero and |z| log-uniform in
+    [2^-1074, 2^-1022], and 400 more just below 2^-1022 (exact check m^2 >= x^2 + y^2, and (ii)). Measured: no step,
+    or a step only below 2^-1025, 2^-1026 or 2^-1030, gives m < |z| on some of them. A step only below 2^-1023 or
+    2^-1024 passes. It is sound when np.ldexp rounds to nearest (IEEE scaleB): there the rescaling loses at most
+    2^-1075 <= 4u v, less than the lower margin (1 - u)^3 (1 + 8u) - 1 >= 5u - 21u^2 of the guard, so no check of (i)
+    can catch it on such a host. The weaker FP-M clause on np.ldexp that the code relies on (a point of the subnormal
+    grid within 2^-1074) does not cover these two variants; the code, which steps below 2^-1022, is covered by it."""
+    rng = np.random.default_rng(20261120)
+    e = np.concatenate([rng.uniform(-1074.0, -1022.0, 2400), rng.uniform(-1023.0, -1022.0, 400)])
+    t = rng.uniform(0.0, np.pi / 2, e.size)
+    r = np.exp2(e)
+    Z = r * np.cos(t) + 1j * (r * np.sin(t))
+    Z = Z[(Z.real != 0) & (Z.imag != 0) & (np.abs(Z) <= 2.0 ** -1022)]
+    assert Z.size > 2000
+    M = modulus_up(Z)
+    bad = [(z, m) for z, m in zip(Z, M) if not (_upper_ok(z, m) and _tight_ok(z, m))]
+    assert not bad, bad[:5]
+
+
+def test_the_exact_check_rejects_a_value_one_step_below():
+    """Negative control of the check itself: one binary64 step below fl(sqrt(re^2 + im^2)) rounded down is never an
+    upper bound (whatever NumPy's complex absolute value returns on a given platform)."""
+    for z in EXAMPLES:
+        x, y = Fraction(z.real), Fraction(z.imag)
+        s = float(np.sqrt(np.float64(z.real) ** 2 + np.float64(z.imag) ** 2))
+        while Fraction(s) ** 2 >= x * x + y * y:
+            s = float(np.nextafter(s, 0.0))
+        assert not _upper_ok(z, s)
+
+
+def test_real_input_is_returned_exactly():
+    rng = np.random.default_rng(3)
+    for a in (rng.standard_normal(17), rng.standard_normal((4, 5)).astype(np.float32)):
+        m = modulus_up(a)
+        assert m.dtype == np.abs(a).dtype and np.array_equal(m, np.abs(a))
+    # a scalar gives a float, whatever its type (exact: every type here is at most binary64)
+    for a in (-2.5, np.float64(-0.0), np.float32(-1.5), np.float16(-3.0), -7, np.int32(-4), True, 3 + 4j,
+              np.complex64(1j), np.asarray(-0.25), np.asarray(1 - 1j)):
+        m = modulus_up(a)
+        assert type(m) is float and m >= abs(complex(a)), a
+        if not np.iscomplexobj(a):
+            assert m == abs(float(a))
+    w = np.longdouble(-1.5)
+    assert modulus_up(w) == 1.5 and (type(modulus_up(w)) is float) == (np.finfo(np.longdouble).nmant <= 52)
+    # complex data with a zero component: the other's absolute value, exact
+    a = rng.standard_normal(9)
+    assert np.array_equal(modulus_up(a + 0j), np.abs(a)) and np.array_equal(modulus_up(1j * a), np.abs(a))
+
+
+def test_dtypes_outside_binary64_components():
+    """Integers and booleans: float64 absolute values, exact below 2^53 and one step up from there (the conversion may
+    round; np.abs itself wraps at the most negative integer). Rejected: scipy sparse input (abs_up takes it), object
+    arrays and complex types wider than complex128. complex64 is widened exactly and gives the complex128 result (the
+    modulus only: a bound formed in single precision is not covered, fp_modulus-up.md, Risks and limits)."""
+    ints = np.array([-3, 0, 7, -2 ** 63, 2 ** 63 - 1, 2 ** 53 + 1, -(2 ** 53) - 1], dtype=np.int64)
+    m = modulus_up(ints)
+    assert m.dtype == np.float64
+    assert all(Fraction(float(v)) >= abs(int(n)) for v, n in zip(m, ints))
+    assert np.array_equal(m[:3], [3.0, 0.0, 7.0])
+    assert modulus_up(np.array([2 ** 64 - 1], dtype=np.uint64))[0] >= 2 ** 64 - 1
+    assert np.array_equal(modulus_up(np.array([True, False])), [1.0, 0.0])
+    assert modulus_up(np.int64(-5)) == 5.0
+    for bad in (np.array([1 + 1j, 2], dtype=object), sp.csr_matrix(np.eye(2) * (1 + 1j)), np.array(["a"])):
+        with pytest.raises(TypeError):
+            modulus_up(bad)
+    with pytest.raises(TypeError, match="abs_up"):                 # the message names the function for matrices
+        modulus_up(sp.csr_matrix(np.eye(2) * (1 + 1j)))
+    Z = np.array(EXAMPLES) * np.array([1.0, 2.0 ** -600, 2.0 ** 600])
+    if np.finfo(np.clongdouble).nmant > 52:
+        with pytest.raises(TypeError):
+            modulus_up(Z.astype(np.clongdouble))
+    else:
+        assert np.array_equal(modulus_up(Z.astype(np.clongdouble)), modulus_up(Z))
+    z64 = (np.array(EXAMPLES) * 2.0 ** -100).astype(np.complex64)
+    assert np.array_equal(modulus_up(z64), modulus_up(z64.astype(np.complex128)))
+
+
+def test_chunks_do_not_change_the_values():
+    """modulus_up processes the input in passes of at most fp._CHUNK entries; every entry is computed by itself, so the
+    result equals the one-entry calls, at the pass boundaries too."""
+    from certify_ed.fp import _CHUNK
+    rng = np.random.default_rng(8)
+    n = 2 * _CHUNK + 5
+    with np.errstate(over="ignore"):
+        Z = rng.standard_normal(n) * np.exp2(rng.integers(-1074, 1000, n)) + 1j * rng.standard_normal(n) * np.exp2(
+            rng.integers(-1074, 1000, n))
+    M = modulus_up(Z)
+    for i in (0, _CHUNK - 1, _CHUNK, _CHUNK + 1, 2 * _CHUNK - 1, 2 * _CHUNK, n - 1):
+        assert M[i] == modulus_up(Z[i:i + 1])[0] == modulus_up(complex(Z[i]))
+    assert np.array_equal(M[_CHUNK - 3:_CHUNK + 3], modulus_up(Z[_CHUNK - 3:_CHUNK + 3]))
+
+
+def test_layouts_give_the_same_values_and_no_copy_of_the_input():
+    """modulus_up walks the input in passes of at most fp._CHUNK entries along its leading axes and makes no copy of it:
+    Fortran-ordered, transposed and sliced arrays larger than a pass give the values of the C-ordered array, and the
+    temporaries beyond the float64 result stay below 12 MiB (tracemalloc; a copy of the input would be 32 MiB)."""
+    import tracemalloc
+
+    from certify_ed.fp import _CHUNK
+    rng = np.random.default_rng(13)
+    X = rng.standard_normal((_CHUNK, 8)) + 1j * rng.standard_normal((_CHUNK, 8))
+    X[::5] = 0.0
+    M = modulus_up(X)
+    F = np.asfortranarray(X)
+    for z, ref in ((F, M), (X.T, M.T), (X[:, 2:5], M[:, 2:5]), (F[:, 3], M[:, 3]), (X[::-3, ::2], M[::-3, ::2]),
+                   (np.ascontiguousarray(X.T)[None], M.T[None])):
+        got = modulus_up(z)
+        assert got.shape == z.shape and np.array_equal(got, ref)
+        tracemalloc.start()
+        base = tracemalloc.get_traced_memory()[0]
+        got = modulus_up(z)
+        peak = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+        assert peak - base - got.nbytes < 12 * 2 ** 20, (z.shape, z.strides, peak - base - got.nbytes)
+
+
+def _nearest(t, p):
+    """Whether the binary64 number p is a nearest binary64 number to the rational t (exact comparison)."""
+    if not np.isfinite(p):
+        return False
+    d = abs(Fraction(float(p)) - t)
+    return all(abs(Fraction(float(q)) - t) >= d for q in (np.nextafter(p, -np.inf), np.nextafter(p, np.inf))
+               if np.isfinite(q))
+
+
+def test_fp_m_hypotheses_on_this_host():
+    """Known answers for the items of FP-M that fp.probe_float_environment does not probe at run time (Lemma M uses
+    them; fp_modulus-up.md, section 1): correctly rounded np.multiply (subnormal results included), np.add and
+    np.sqrt; np.frexp exact (subnormal arguments included); np.ldexp exact when the result is a binary64 number, inf
+    above the largest float, within 2^-1074 below 2^-1022; np.nextafter(t, inf) = t + 2^-1074 for t < 2^-1022. Each
+    is one NumPy call per operation, as in modulus_up. This runs with the test suite on the host that runs it."""
+    rng = np.random.default_rng(20261118)
+    n = 3000
+    tiny = 2.0 ** -1074
+    a = rng.uniform(0.5, 1.0, n) * np.exp2(rng.integers(-560, 520, n))
+    b = rng.uniform(0.5, 1.0, n) * np.exp2(rng.integers(-560, 520, n))
+    with np.errstate(over="ignore", under="ignore"):
+        P, S, R = np.multiply(a, b), np.add(a, b), np.sqrt(a)
+    for i in range(n):
+        x, y = Fraction(float(a[i])), Fraction(float(b[i]))
+        if abs(x * y) <= Fraction(float(np.finfo(float).max)):
+            assert P[i] == 0.0 and x * y <= Fraction(tiny) / 2 or _nearest(x * y, P[i]), (a[i], b[i])
+        assert _nearest(x + y, S[i]), (a[i], b[i])
+        r = Fraction(float(R[i]))
+        h = (Fraction(float(np.nextafter(R[i], np.inf))) - r) / 2
+        assert (r - h) ** 2 <= x <= (r + h) ** 2, a[i]
+    v = np.concatenate([a, np.array([tiny, 3 * tiny, 2.0 ** -1022, 2.0 ** -1023 * 3])])
+    f, e = np.frexp(v)
+    assert np.all((f >= 0.5) & (f < 1.0))
+    assert all(Fraction(float(f[i])) * Fraction(2) ** int(e[i]) == Fraction(float(v[i])) for i in range(v.size))
+    k = rng.integers(-1200, 1100, v.size)
+    with np.errstate(over="ignore", under="ignore"):
+        L = np.ldexp(v, k)
+    big = Fraction(float(np.finfo(float).max))
+    for i in range(v.size):
+        t = Fraction(float(v[i])) * Fraction(2) ** int(k[i])
+        if t > big:
+            assert L[i] == np.inf
+        elif t >= Fraction(2) ** -1022:
+            assert Fraction(float(L[i])) == t
+        else:
+            assert abs(Fraction(float(L[i])) - t) < Fraction(tiny)
+    t = np.array([0.0, tiny, 2.0 ** -1030, 2.0 ** -1022 - tiny])
+    assert np.array_equal(np.nextafter(t, np.inf), t + tiny)
+
+
+def test_inf_and_nan_follow_numpy():
+    vals = [0.0, 1.0, -2.0 ** -1074, np.inf, -np.inf, np.nan]
+    Z = np.array([complex(a, b) for a in vals for b in vals])
+    M, R = modulus_up(Z), np.abs(Z)
+    assert np.array_equal(np.isinf(M), np.isinf(R)) and np.array_equal(np.isnan(M), np.isnan(R))
+    # huge components: inf rather than a finite value below |z|
+    big = np.finfo(float).max
+    assert modulus_up(complex(big, big)) == np.inf and modulus_up(complex(big, 1.0)) == np.inf
+    assert modulus_up(complex(big, 0.0)) == big
+
+
+def test_zero_entries_take_the_unscaled_branch(monkeypatch):
+    """An entry 0 + 0i is exact on the unscaled branch (0, then the zero override), so it does not pay for the scaled
+    one: arrays of Pauli type never call _modulus_up_scaled, and the values are unchanged."""
+    import certify_ed.fp as fp
+    calls = []
+    real_scaled = fp._modulus_up_scaled
+
+    def spy(x, y):
+        calls.append(x.size)
+        return real_scaled(x, y)
+    monkeypatch.setattr(fp, "_modulus_up_scaled", spy)
+    for a in (np.array([[0, -1j], [1j, 0]]), np.array([[1, 0], [0, -1]], dtype=complex), np.zeros(5, dtype=complex)):
+        assert np.array_equal(fp.modulus_up(a), np.abs(a)) and not calls
+    assert fp.modulus_up(complex(2.0 ** -600, 0.0)) == 2.0 ** -600 and calls == [1]
+
+
+def test_shapes_dtypes_and_elementwise_identity():
+    rng = np.random.default_rng(5)
+    X = rng.standard_normal((30, 7)) + 1j * rng.standard_normal((30, 7))
+    M = modulus_up(X)
+    assert M.shape == X.shape and M.dtype == np.float64
+    assert np.array_equal(modulus_up(np.asfortranarray(X)), M)
+    assert np.array_equal(modulus_up(X[::3, 1:5]), M[::3, 1:5])          # strided view
+    rows = np.array([3, 0, 17, 29])
+    assert np.array_equal(modulus_up(X[rows]), M[rows])                  # what the GPU spot check relies on
+    assert modulus_up(np.zeros((0, 3), dtype=complex)).shape == (0, 3)
+    assert isinstance(modulus_up(3 + 4j), float) and modulus_up(3 + 4j) >= 5.0
+    z64 = (X[:, 0] * 0.3).astype(np.complex64)
+    m64 = modulus_up(z64)
+    assert m64.dtype == np.float64 and all(_upper_ok(complex(z), m) for z, m in zip(z64, m64))
+
+
+def test_abs_up_of_sparse_and_dense_matrices():
+    rng = np.random.default_rng(8)
+    A = sp.random(40, 40, density=0.2, format="csr", random_state=np.random.RandomState(8))
+    B = A.copy()
+    B.data = rng.standard_normal(B.nnz)
+    C = (A + 1j * B).tocsr()
+    for M in (A, C, C.tocoo(), C.tocsc()):
+        got, ref = abs_up(M), abs(M.copy())
+        assert got.format == ref.format and got.shape == ref.shape
+        G, R = got.tocsr(), ref.tocsr()
+        assert np.array_equal(G.indptr, R.indptr) and np.array_equal(G.indices, R.indices)
+        assert np.array_equal(G.data, modulus_up(M.tocsr().data)) and G.dtype == np.float64
+    assert abs_up(A).data is not A.data and np.array_equal(abs_up(A).data, abs(A).data)
+    D = C.toarray()
+    assert np.array_equal(abs_up(D), modulus_up(D))
+    # duplicate entries are summed first, as abs() does
+    Dup = sp.csr_matrix((np.array([1 + 1j, 2 - 1j]), np.array([0, 0]), np.array([0, 2, 2])), shape=(2, 2))
+    got = abs_up(Dup)
+    assert got.nnz == 1 and _upper_ok(3 + 0j, got.data[0]) and got.data[0] == 3.0
+
+
+def test_abs_up_of_integer_sparse_data_is_stepped_up():
+    """Integer and boolean sparse data take modulus_up (float64, exact below 2^53, one step up from there), not abs(A),
+    which wraps at the most negative integer; real floating data keep abs(A)."""
+    lo = np.iinfo(np.int64).min
+    for mk in (sp.csr_matrix, sp.csc_array, sp.coo_matrix):
+        A = mk(np.array([[lo, 1], [0, -(2 ** 53) - 1]], dtype=np.int64))
+        got = abs_up(A)
+        assert got.dtype == np.float64 and type(got) is type(A)
+        D = got.toarray()
+        assert Fraction(float(D[0, 0])) >= 2 ** 63 and D[0, 1] == 1.0 and Fraction(float(D[1, 1])) >= 2 ** 53 + 1
+    B = sp.csr_matrix(np.array([[True, False], [False, True]]))
+    assert abs_up(B).dtype == np.float64 and np.array_equal(abs_up(B).toarray(), np.eye(2))
+    R = sp.csr_matrix(np.array([[-1.5, 0.0], [2.0, -0.25]], dtype=np.float32))
+    assert abs_up(R).dtype == np.float32 and np.array_equal(abs_up(R).toarray(), abs(R).toarray())
+
+
+def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
+    """For CSR, CSC, BSR and COO input with duplicate entries, abs_up sums them in place (A.sum_duplicates(), binary64,
+    as abs(A) does), so the moduli and the products formed with A afterwards refer to the same summed matrix. DIA (no
+    duplicates) keeps its diagonals; LIL is converted (A unchanged). The result has A's format and class (sparse
+    matrix or sparse array)."""
+    rng = np.random.default_rng(12)
+    idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
+    for mk in (sp.csr_matrix, sp.csc_matrix, sp.csr_array, sp.csc_array):
+        for cplx in (False, True):
+            v = rng.standard_normal(9) + (1j * rng.standard_normal(9) if cplx else 0)
+            A = mk((v.copy(), idx.copy(), indptr.copy()), shape=(3, 3))
+            ref = A.copy()
+            ref.sum_duplicates()
+            got = abs_up(A)
+            assert A.has_canonical_format and A.nnz == ref.nnz == 5 and np.array_equal(A.data, ref.data)
+            assert type(got) is type(A) and np.array_equal(got.data, modulus_up(ref.data))
+            assert np.array_equal(got.indices, ref.indices) and np.array_equal(got.indptr, ref.indptr)
+    r, c = rng.integers(0, 4, 30), rng.integers(0, 4, 30)
+    v = rng.standard_normal(30) + 1j * rng.standard_normal(30)
+    for mk in (sp.coo_matrix, sp.coo_array):
+        A = mk((v, (r, c)), shape=(4, 4))
+        n0 = A.nnz
+        got = abs_up(A)
+        assert A.nnz < n0 and type(got) is type(A) and np.array_equal(got.data, modulus_up(A.data))
+        assert np.array_equal(got.row, A.row) and np.array_equal(got.col, A.col) and got.row is not A.row
+    # a 1-D coo_array has one index array (A.coords); its row and col do not index it
+    V = sp.coo_array(np.array([1 + 1j, 0, 2, -3j, 0]))
+    if V.ndim == 1:                                       # scipy >= 1.13 (older versions give a 1 x 5 array)
+        got = abs_up(V)
+        assert type(got) is type(V) and got.shape == V.shape == (5,)
+        assert np.array_equal(got.toarray(), modulus_up(V.toarray())) and got.coords[0] is not V.coords[0]
+    B = sp.coo_matrix((v, (r, c)), shape=(4, 4)).tobsr(blocksize=(2, 2))
+    assert np.array_equal(abs_up(B).toarray(), modulus_up(B.toarray()))
+    Dg = sp.dia_matrix((np.array([[1 + 1j, 2, 3j], [4, 5 - 1j, 6]]), np.array([0, 1])), shape=(3, 3))
+    assert np.array_equal(abs_up(Dg).data, modulus_up(Dg.data)) and Dg.data.shape == (2, 3)
+    L = sp.lil_matrix(np.diag([1 + 1j, 2j, 3.0]))
+    assert abs_up(L).format == "csr" and L.format == "lil"
+
+
+def test_the_s2_adapter_takes_the_width_before_and_the_products_after_the_summation():
+    """The adapter of the S2 products: width counted on the stored entries, products on the summed matrix (abs_up sums
+    the duplicates in place, as abs does)."""
+    from certify_ed.enclosure import OperatorAdapter
+    idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
+    A = sp.csr_matrix(((1 + 1j) * np.ones(9), idx.copy(), indptr.copy()), shape=(3, 3))
+    ad = OperatorAdapter(A)
+    assert ad.width == 4 and ad.A is A and A.has_canonical_format and A.nnz == 5
+
+
+# ------------------------------------------------------------------------- the S2 bounds use the upper moduli
+
+def _hermitian(n, cplx, seed, density=0.15):
+    rng = np.random.default_rng(seed)
+    A = sp.random(n, n, density=density, format="csr", random_state=np.random.RandomState(seed))
+    if cplx:
+        B = A.copy()
+        B.data = rng.standard_normal(B.nnz)
+        A = (A + 1j * B).tocsr()
+    return ((A + A.conj().T) * 0.5 + sp.identity(n, format="csr")).tocsr()
+
+
+def _vectors(n, k, cplx, seed):
+    rng = np.random.default_rng(seed)
+    X = rng.standard_normal((n, k))
+    return X + 1j * rng.standard_normal((n, k)) if cplx else X
+
+
+def test_abs_matvec_takes_the_upper_moduli():
+    from certify_ed.enclosure import OperatorAdapter
+    for cplx_a in (False, True):
+        H = _hermitian(50, cplx_a, 1)
+        for cplx_x in (False, True):
+            X = _vectors(50, 3, cplx_x, 2)
+            for op in (H, H.toarray()):
+                ad = OperatorAdapter(op)
+                ref = abs_up(op) @ modulus_up(X)
+                assert np.array_equal(ad.abs_matvec(X), ref)
+
+
+def test_rounding_bound_constant_and_moduli_bit_for_bit():
+    """enclosure._rounding_bound: gamma_{w+1} for real data, gamma_{w+3} for complex data (kept from 3.2.0; with upper
+    moduli it has two spare counts), moduli of X from fp.modulus_up. Compared bit for bit, so a change of the constant
+    or a reverted modulus fails."""
+    from certify_ed.enclosure import OperatorAdapter, _rounding_bound
+    from certify_ed.fp import gamma, gamma_dot
+    mu = np.array([0.5, -1.25])
+    for cplx in (False, True):
+        H = _hermitian(60, cplx, 3)
+        ad = OperatorAdapter(H)
+        X = _vectors(60, 2, cplx, 4)
+        E = abs_up(H) @ modulus_up(X)
+        E /= (1.0 - gamma(ad.width + (3 if cplx else 1)))
+        E *= (1 + 4 * U)
+        aX = modulus_up(X)
+        aX *= np.abs(mu)[None, :]
+        E += aX
+        E *= gamma_dot(ad.width + 2, cplx)
+        E *= (1 + 4 * U)
+        assert np.array_equal(_rounding_bound(ad, mu, X), E)
+
+
+def test_the_s2_rounding_bound_forms_the_moduli_of_x_once(monkeypatch):
+    """_rounding_bound forms fp.modulus_up(X) once and passes it to abs_matvec (the same values as two calls; the
+    dearer step of a complex block is not repeated); rayleigh_interval forms |x| once for |A||x| and the dot, and once
+    more in the radius (_rounding_bound of the column x)."""
+    import certify_ed.enclosure as enc
+    calls = []
+    real = enc.modulus_up
+
+    def spy(z):
+        calls.append(np.shape(z))
+        return real(z)
+    monkeypatch.setattr(enc, "modulus_up", spy)
+    H = _hermitian(40, True, 7)
+    ad = enc.OperatorAdapter(H)
+    X = _vectors(40, 3, True, 8)
+    E = enc._rounding_bound(ad, np.array([0.5, 1.0, -2.0]), X)
+    assert calls == [(40, 3)]
+    calls.clear()
+    assert enc.rayleigh_interval(ad, X[:, 0]) is not None and calls == [(40,), (40, 1)]
+    monkeypatch.setattr(enc, "modulus_up", real)
+    assert np.array_equal(E, enc._rounding_bound(ad, np.array([0.5, 1.0, -2.0]), X))
+
+
+def test_rayleigh_interval_constants_and_moduli(monkeypatch):
+    """enclosure.rayleigh_interval's own constants (finding S7 of the 18 Nov 2026 review): gamma_{w+1} for the division
+    and gamma_{n+2} for the dot, for real and complex data alike once the moduli are upper bounds. The calls made before
+    `residuals` are pinned, and the argument of the guard that forms num_err is compared bit for bit."""
+    import certify_ed.enclosure as enc
+    from certify_ed.fp import exact_dot, gamma, gamma_dot, up
+    calls, ups = [], []
+
+    def spy_gamma(m):
+        calls.append(m)
+        return gamma(m)
+
+    def spy_up(x):
+        ups.append(float(x))
+        return up(x)
+    monkeypatch.setattr(enc, "gamma", spy_gamma)
+    monkeypatch.setattr(enc, "up", spy_up)
+    for cplx in (False, True):
+        H = _hermitian(80, cplx, 5)
+        ad = enc.OperatorAdapter(H)
+        x = _vectors(80, 1, cplx, 6)[:, 0]
+        Ax = ad.matvec(x)
+        _, num_e = exact_dot(x, Ax)
+        absAx = ad.abs_matvec(x) / (1 - gamma(ad.width + 1))
+        expected = num_e + gamma_dot(ad.width + 2, cplx) * float(modulus_up(x) @ absAx) * (1 + gamma(x.size + 2))
+        calls.clear()
+        ups.clear()
+        assert enc.rayleigh_interval(ad, x) is not None
+        assert calls[:2] == [ad.width + 1, x.size + 2], calls
+        assert ups[0] == expected
+
+
+def test_upper_moduli_close_stage_S2_on_the_hard_examples():
+    """thm1 (S2): absHX_up_i >= (|A||x|)_i in exact arithmetic, with the upper moduli, when the entries of A and x are
+    the arguments on which NumPy's complex absolute value is below |z| on the reference host, at three scales. This
+    shows that the stage holds with the upper moduli there; it does not show that it fails with np.abs (with the spare
+    counts of gamma_{w+3} it may hold)."""
+    from certify_ed.enclosure import OperatorAdapter
+    from certify_ed.fp import gamma
+    z0, z1 = EXAMPLES[0], EXAMPLES[1]
+    for scale in (1.0, 2.0 ** -500, 2.0 ** 400):
+        A = np.array([[1.0, z0 * scale, z1 * scale], [np.conj(z0) * scale, 2.0, z0 * scale],
+                      [np.conj(z1) * scale, np.conj(z0) * scale, 3.0]])
+        x = np.array([z0, z1, z0])
+        ad = OperatorAdapter(A)
+        absHX_up = ad.abs_matvec(x[:, None])[:, 0] / (1.0 - gamma(ad.width + 3)) * (1 + 4 * U)
+        for i in range(3):
+            q = [(Fraction(A[i, j].real) ** 2 + Fraction(A[i, j].imag) ** 2)
+                 * (Fraction(x[j].real) ** 2 + Fraction(x[j].imag) ** 2) for j in range(3)]
+            assert Fraction(float(absHX_up[i])) >= _sum_sqrt_upper(q)
+
+
+def _complex_chain(N, phi=0.3, J2=0.5):
+    """A Heisenberg-type chain with a complex phase on the flip terms (nearest and next-nearest neighbours)."""
+    from certify_ed.spec import LocalSpace, ModelSpec, _bonds_1d
+    local = LocalSpace.spin_space("1/2", "spin")
+    w = 0.5 * np.exp(1j * phi)
+    static = []
+    for Jr, r in ((1.0, 1), (J2, 2)):
+        bonds = _bonds_1d(N, r, "periodic")
+        static += [["+-", [[Jr * w, i, j] for i, j in bonds]], ["-+", [[Jr * np.conj(w), i, j] for i, j in bonds]],
+                   ["zz", [[Jr, i, j] for i, j in bonds]]]
+    return ModelSpec.from_static(N, local, static, name="complex_chain")
+
+
+def test_spec_invariants_take_each_modulus_once(monkeypatch):
+    """S1 evidence: spec_invariants forms the upper moduli of each coupling and each local factor once
+    (T (N + 1) calls), not inside its double sum over pairs of terms, and gets the same bounds as with the moduli taken
+    there."""
+    import certify_ed.invariants as inv
+    from certify_ed.fp import gamma, up
+    spec = _complex_chain(5)
+    calls = []
+    real = inv.modulus_up
+
+    def spy(z):
+        calls.append(1)
+        return real(z)
+    monkeypatch.setattr(inv, "modulus_up", spy)
+    r = inv.spec_invariants(spec)
+    T, N = r["n_couplings"], spec.n_sites
+    assert len(calls) == T * (N + 1)
+    items = [(complex(c), inv._site_factors(spec, t.op, s)) for t in spec.terms for c, s in t.couplings]
+    g = gamma(2 * (N + 2) + spec.q ** 3 + T * T)
+    ref_tr = sum(real(c) * np.prod([real(m).trace() for m in f]) for c, f in items)
+    ref_fro = sum(real(ca) * real(cb) * np.prod([(real(fa[k]).T @ real(fb[k])).trace() for k in range(N)])
+                  for ca, fa in items for cb, fb in items)
+    assert r["trace_err"] == float(up(g * ref_tr)) and r["fro2_err"] == float(up(g * ref_fro))
+
+
+def test_inf_norm_upper_on_the_hard_arguments():
+    """fp.inf_norm_upper, the norm bound of every certificate: bit for bit max_i sum_j m_ij (1 + gamma_{w+1}) (1 + 8u)
+    with m_ij from fp.modulus_up (dense) and fp.abs_up (sparse), on matrices built from the three hard arguments at
+    three scales, so that a modulus reverted to np.abs changes the value; and in exact arithmetic it bounds the largest
+    exact row sum of moduli (_sum_sqrt_upper)."""
+    from certify_ed.fp import _GUARD, gamma, inf_norm_upper
+    z0, z1, z2 = EXAMPLES
+    differs = 0
+    for scale in (1.0, 2.0 ** -500, 2.0 ** 400):
+        A = np.array([[z0, z1, z2], [z2, z0, z1], [z1, np.conj(z2), z0], [z0, 0, 0]]) * scale
+        dense = float(modulus_up(A).sum(axis=1).max()) * (1.0 + gamma(4)) * _GUARD
+        S = sp.csr_matrix(A)
+        sparse = float(np.asarray(abs_up(S).sum(axis=1)).ravel().max()) * (1.0 + gamma(4)) * _GUARD
+        assert inf_norm_upper(A) == dense and inf_norm_upper(sp.csr_matrix(A)) == sparse
+        differs += float(np.abs(A).sum(axis=1).max()) * (1.0 + gamma(4)) * _GUARD != dense
+        exact = max(_sum_sqrt_upper([Fraction(v.real) ** 2 + Fraction(v.imag) ** 2 for v in row]) for row in A)
+        assert Fraction(dense) >= exact and Fraction(sparse) >= exact
+    assert differs == 3
+
+
+def _sum_sqrt_upper(qs):
+    """A rational number >= sum_j sqrt(q_j) for rational q_j >= 0 (per term a start above sqrt(q), then one Newton
+    step, which stays above sqrt(q) by the inequality of arithmetic and geometric means)."""
+    total = Fraction(0)
+    for q in qs:
+        if q == 0:
+            continue
+        r = Fraction(float(np.sqrt(float(q)))) * (1 + Fraction(1, 2 ** 40))
+        while r * r < q:
+            r *= 1 + Fraction(1, 2 ** 40)
+        r = (r + q / r) / 2
+        total += r
+    return total
+
+
+# --------------------------------------------------------- dynamic pin: no complex modulus bypasses fp in the bounds
+
+def _tripwire_allowed():
+    """(file, function) -> expressions of the places tests/abs_audit_allowlist.txt classifies as taking a modulus of
+    complex data that is not an upper modulus of a rigorous bound (not part of a bound; Arb balls; the open lower-bound
+    use), the expressions without white space."""
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "abs_audit_allowlist.txt")
+    out = {}
+    for line in open(path, encoding="utf-8"):
+        if line.startswith("#") or not line.strip():
+            continue
+        f, scope, expr, cls = line.rstrip("\n").split("\t")
+        if not cls.startswith("real data only"):
+            out.setdefault((f, scope), []).append("".join(expr.split()).replace('"', "'"))
+    return out
+
+
+def _tripwire_scope(code):
+    """The function a frame's code belongs to, as the allowlist names it: co_qualname without its <locals>, <genexpr>,
+    <listcomp> and <lambda> parts (a comprehension or a lambda counts as its def). None on Python 3.9 and 3.10, which
+    have no co_qualname: there co_name names a comprehension '<genexpr>' and a method without its class."""
+    qual = getattr(code, "co_qualname", None)
+    if qual is None:
+        return None
+    return ".".join(p for p in qual.split(".") if not p.startswith("<"))
+
+
+def _tripwire_allows(allowed, rel, code, line):
+    """True if the allowlist classifies an expression on this source line of file rel in the function of code; without
+    a qualified name (Python 3.9 and 3.10) an expression of any function of the file counts."""
+    scope = _tripwire_scope(code)
+    if scope is None:
+        exprs = [e for (f, _s), es in allowed.items() if f == rel for e in es]
+    else:
+        exprs = allowed.get((rel, scope), ())
+    return any(e in line for e in exprs)
+
+
+def test_the_tripwire_scope_without_co_qualname():
+    """The scope of the tripwire on interpreters without co_qualname (requires-python >= 3.9): the allowlisted modulus
+    in the generator expression of sectors.audit_label is allowed whether the code object has a qualified name (3.11
+    and later: its def) or only co_name '<genexpr>' (3.9, 3.10: matched on the file); co_name alone would give the
+    scope '' and report it. Stand-in code objects emulate the older interpreters."""
+    import types
+    allowed = _tripwire_allowed()
+    line = "".join("sep = min(abs(lam - roots[j]) for j in range(n) if j != k) if n > 1 else np.inf".split())
+    rel = "certify_ed/sectors.py"
+    new = types.SimpleNamespace(co_name="<genexpr>", co_qualname="audit_label.<locals>.<genexpr>")
+    old = types.SimpleNamespace(co_name="<genexpr>")
+    assert _tripwire_scope(new) == "audit_label" and _tripwire_scope(old) is None
+    assert _tripwire_allows(allowed, rel, new, line) and _tripwire_allows(allowed, rel, old, line)
+    assert not allowed.get((rel, ""), ())                     # the scope that co_name alone gives
+    other = types.SimpleNamespace(co_name="audit_sector", co_qualname="audit_sector")
+    assert not _tripwire_allows(allowed, rel, other, line)    # 3.11+: the expression is allowed in audit_label only
+    assert not _tripwire_allows(allowed, rel, old, "m=np.abs(z)")
+
+
+def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
+    """numpy's absolute value (np.abs, np.absolute), the builtin abs and the absolute value of scipy sparse matrices are
+    replaced by functions that record every call on complex data whose nearest caller in certify_ed is not one of the
+    places the audit allows (tests/abs_audit_allowlist.txt, classes other than real data, matched on the function and
+    the expression of the line); fp.modulus_up and
+    fp.abs_up take only real components, so they record nothing. The main entry points then run on complex data; a
+    modulus that bypasses fp is recorded whatever its spelling (recorded rather than raised, because certify() turns
+    exceptions into INCONCLUSIVE statements)."""
+    import builtins
+    import linecache
+    import os
+    import sys
+
+    import scipy.sparse._data as spdata
+
+    import certify_ed as ce
+    import certify_ed.fp as fp
+    from certify_ed.construct import build_bitwise, full_state_set
+    from certify_ed.correlations import compress_operator
+    from certify_ed.davis_kahan import commutator_bound
+    from certify_ed.enclosure import OperatorAdapter, enclose
+    from certify_ed.generalized import certify_generalized
+    from certify_ed.moments import certified_moments
+    from certify_ed.nonhermitian import certify_nonhermitian
+    from certify_ed.ozaki import ozaki_residual
+    from certify_ed.sectors import audit_sector
+    from certify_ed.sweep import matrix_affinity_defect
+    from certify_ed.variational import certify_variational, state_from_mps
+
+    pkg = os.path.dirname(os.path.abspath(ce.__file__))
+    root = os.path.dirname(pkg)
+    allowed = _tripwire_allowed()
+    found = []
+    real_np_abs, real_builtin_abs, real_sparse_abs = np.abs, builtins.abs, spdata._data_matrix.__abs__
+
+    def is_complex(x):
+        if sp.issparse(x):
+            return np.iscomplexobj(x.data)
+        return isinstance(x, complex) or np.iscomplexobj(x)
+
+    def check(x):
+        if not is_complex(x):
+            return
+        f = sys._getframe(2)
+        while f is not None and not os.path.abspath(f.f_code.co_filename).startswith(pkg + os.sep):
+            f = f.f_back
+        if f is None:
+            return                                      # called from the test itself or from outside certify_ed
+        rel = os.path.relpath(os.path.abspath(f.f_code.co_filename), root).replace(os.sep, "/")
+        line = "".join(linecache.getline(f.f_code.co_filename, f.f_lineno).split()).replace('"', "'")
+        if not _tripwire_allows(allowed, rel, f.f_code, line):
+            found.append((rel, _tripwire_scope(f.f_code), f.f_lineno))
+
+    def np_abs(x, *a, **k):
+        check(x)
+        return real_np_abs(x, *a, **k)
+
+    def builtin_abs(x):
+        check(x)
+        return real_builtin_abs(x)
+
+    def sparse_abs(self):
+        check(self)
+        return real_sparse_abs(self)
+    monkeypatch.setattr(np, "abs", np_abs)
+    monkeypatch.setattr(np, "absolute", np_abs)
+    monkeypatch.setattr(builtins, "abs", builtin_abs)
+    monkeypatch.setattr(spdata._data_matrix, "__abs__", sparse_abs)
+
+    rng = np.random.default_rng(31)
+    n = 48
+    H = _hermitian(n, True, 31, density=0.2)
+    w, V = np.linalg.eigh(H.toarray())
+    O = _hermitian(n, True, 32, density=0.1)
+    claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest")
+    cert = ce.certify(claim, None, ce.Options(seed=1, observables={"O": O}))
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    spec = _complex_chain(6)
+    Hs = build_bitwise(spec, full_state_set(spec))
+    ws, Vs = np.linalg.eigh(Hs.toarray())
+    ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], operator=Hs, kind="lowest"), spec,
+               ce.Options(seed=1))
+    certify_variational(operator=H, psi=V[:, 0] + 1e-3 * _vectors(n, 1, True, 33)[:, 0])
+    state_from_mps([rng.standard_normal((1, 2, 3)) + 1j * rng.standard_normal((1, 2, 3)),
+                    rng.standard_normal((3, 2, 1)) + 1j * rng.standard_normal((3, 2, 1))])
+    certified_moments(H, O, V[:, :1], 1e-12, 1e-12)
+    S = _hermitian(n, True, 34, density=0.05)
+    commutator_bound(H, S)
+    Vi = sp.csr_matrix(V[:, :4])
+    audit_sector(H, Vi, sp.csr_matrix(np.diag(w[:4]).astype(complex)))
+    compress_operator(Vi, O)
+    A = rng.standard_normal((12, 12)) + 1j * rng.standard_normal((12, 12))
+    lam, R = np.linalg.eig(A)
+    certify_nonhermitian(A, lam, R)
+    Bm = rng.standard_normal((12, 12)) + 1j * rng.standard_normal((12, 12))
+    Bm = Bm @ Bm.conj().T + 12 * np.eye(12)
+    Ah = (A + A.conj().T) / 2
+    import scipy.linalg as sla
+    lg, Xg = sla.eigh(Ah, Bm)
+    certify_generalized(Ah, Bm, lg[:2], Xg[:, :2])
+    matrix_affinity_defect(H, H + 0.5 * S, 0.5, S)
+    ozaki_residual(H, w[:2], V[:, :2])
+    enclose(OperatorAdapter(H), w[:3], V[:, :3])
+    # paths the calls above do not take: a dense operator; the spec operator of S2 (reference above
+    # reference_max_dim) and the matrix-free operator of D-02; the sparse factorization with its residual bound; the
+    # moment sum rules; the label audit of a cyclic symmetry; a sweep with its norm bounds
+    ce.certify(ce.Claim(eigenvalues=w[:2], eigenvectors=V[:, :2], operator=H.toarray(), kind="lowest"), None,
+               ce.Options(seed=1))
+    for opts in (ce.Options(seed=1, reference_max_dim=8), ce.Options(seed=1, matrix_free=True)):
+        ce.certify(ce.Claim(eigenvalues=ws[:2], eigenvectors=Vs[:, :2], kind="lowest"), spec, opts)
+    ce.certify(claim, None, ce.Options(seed=1, inertia_method="sparse"))
+    certified_moments(H, O, V[:, :1], 1e-12, 1e-12, K=1, level=(w[0] - 0.1, w[0] + 0.1))
+    from certify_ed.basis import cyclic_isometry, translation
+    from certify_ed.sectors import audit_label
+    from certify_ed.sweep import certified_sweep
+    hspec = ce.heisenberg_chain(4)
+    Vk = cyclic_isometry(full_state_set(hspec), translation(hspec), 1) * (1 + 2.0 ** -40)   # Gram defect nonzero
+    audit_label(hspec, Vk, "translation")
+    certified_sweep(lambda c: _complex_chain(4, J2=c), [0.4, 0.5], k=1)
+    from certify_ed.construct import SpecOperator
+    from certify_ed.inertia import inertia_sparse
+    from certify_ed.matrixfree import matrix_free_operator
+    for op in (SpecOperator(spec), matrix_free_operator(spec)):
+        op.abs_matvec(Vs[:, :2])                        # complex vectors, as a direct caller passes them
+        op.abs_matvec(Vs[:, 0])
+        OperatorAdapter(op).abs_matvec(Vs[:, :2])
+    inertia_sparse(H, float(w[0]) + 0.01, residual="apriori")
+    assert not found, sorted(set(found))[:20]
+    # positive control: a modulus of fp.inf_norm_upper reverted to the builtin abs is recorded
+    monkeypatch.setattr(fp, "abs_up", lambda M: abs(M))
+    fp.inf_norm_upper(H)
+    assert found and {k[:2] for k in found} == {("certify_ed/fp.py", "inf_norm_upper")}

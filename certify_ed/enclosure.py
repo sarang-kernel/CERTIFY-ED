@@ -66,7 +66,7 @@ import scipy.sparse as sp
 
 from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro_upper,
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
-                 sub_down, add_up, sub_up, check_guard_range)
+                 sub_down, add_up, sub_up, check_guard_range, modulus_up, abs_up)
 from .gpu import GPUUnavailable
 from .precision import binary64, require_binary64
 
@@ -112,8 +112,9 @@ class OperatorAdapter:
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
             self.width = max_nnz_per_row(self.A)
             # |A| is kept for a sparse matrix (cheap); for a dense one it is formed when needed, so that the
-            # adapter does not hold a second n x n array (the product |A| |X| is the same gemm either way)
-            self._absA = abs(self.A) if sp.issparse(self.A) else None
+            # adapter does not hold a second n x n array (the product |A| |X| is the same gemm either way). The moduli
+            # of complex entries are upper bounds (fp.abs_up, docs/proofs/fp_modulus-up.md), as are those of X below
+            self._absA = abs_up(self.A) if sp.issparse(self.A) else None
             self._norm = inf_norm_upper(self.A)
         elif hasattr(op, "abs_matvec") and hasattr(op, "spec"):
             self.kind = "spec"
@@ -211,11 +212,13 @@ class OperatorAdapter:
             return np.column_stack([self.op.matvec(X[:, i]) for i in range(X.shape[1])])
         return self.op.matvec(X)
 
-    def abs_matvec(self, X):
+    def abs_matvec(self, X, aX=None):
+        """|A| |X| from upper moduli. `aX` = fp.modulus_up(X) may be passed when the caller has formed it already
+        (the same values; it is read, not changed)."""
         require_binary64(X, "OperatorAdapter.abs_matvec")      # fail closed (precision.py)
         if self.kind == "matrix":
-            absA = self._absA if self._absA is not None else np.abs(self.A)
-            aX = np.abs(X)
+            absA = self._absA if self._absA is not None else abs_up(self.A)
+            aX = modulus_up(X) if aX is None else aX
             if getattr(self, "_gpu", None) is not None:
                 try:
                     return self._gpu.matmul(aX, absolute=True)
@@ -223,7 +226,7 @@ class OperatorAdapter:
                     self._gpu_fallback(e)
             return absA @ aX
         if self.kind == "spec":
-            return self.op.abs_matvec(np.abs(X))
+            return self.op.abs_matvec(modulus_up(X) if aX is None else aX)
         raise RuntimeError("no |H| access for black-box operator")
 
     def both_products(self, X):
@@ -259,7 +262,8 @@ class OperatorAdapter:
 # ---------------------------------------------------------------------------
 
 DEFAULT_BLOCK_MB = 512.0   # memory for the dense n x b temporaries of one column block (residuals)
-_BLOCK_TEMPORARIES = 4     # X block, H X block, |X| block, |H| |X| block (the E block reuses the last)
+_BLOCK_TEMPORARIES = 4     # X block, H X block, |X| block, |H| |X| block (the E block reuses the last); fp.modulus_up
+                           # adds about 12 MiB at most (passes of fp._CHUNK entries, no copy of X), not a block
 
 
 class StreamedColumns:
@@ -391,24 +395,29 @@ class ResidualReport:
 
 def _rounding_bound(adapter: OperatorAdapter, mu: np.ndarray, X: np.ndarray, absHX: Optional[np.ndarray] = None):
     """E = gamma_dot(w+2) (|H||X| / (1 - gamma_{w+1}) (1 + 4u) + |X| |mu|) (1 + 4u), componentwise, as in the
-    Theorem-1 accounting (docs/theory.md section 1); for complex data gamma_{w+3} replaces gamma_{w+1} (the two extra
-    modulus roundings). Computed in place on `absHX` when given.
+    Theorem-1 accounting (docs/theory.md section 1); for complex data gamma_{w+3} replaces gamma_{w+1}. The moduli
+    |h_ij| and |x_j| are upper bounds (fp.modulus_up), so they add no rounding count; the complex gamma_{w+3}, set on
+    3.2.0 for one rounding per modulus, is kept and has two spare counts. Computed in place on `absHX` when given.
 
     The guards Lambda5 and Lambda6 behind these constants are established for row widths w <= 2^26 and the norms
     that follow for n <= 2^26 entries; outside that range fp.GuardRangeError is raised (3.2.2, finding L-3)."""
     check_guard_range(n=int(np.shape(X)[0]), w=adapter.width, where="enclosure._rounding_bound")
     cplx = adapter.complex or np.iscomplexobj(X)
     g = gamma_dot(adapter.width + 2, cplx)
-    # real data: |H||x| is formed with w products and w - 1 additions (gamma_{w+1} covers them). Complex data: the
-    # moduli |a_ij| and |x_j| are each rounded once more (hypot), so the division needs gamma_{w+3} for
-    # absHX_up >= (|H||x|)_i to hold (docs/proofs/VERDICTS.md, thm1 correction; looser than before)
+    # |H||x| is formed from upper moduli m_ij >= |a_ij|, m_j >= |x_j| (fp.modulus_up; exact for real data) with w
+    # products and w - 1 additions, so gamma_{w+1} covers it (Lambda5). Complex data keep gamma_{w+3} (3.2.0, when
+    # the moduli came from np.abs and were counted as one rounding each): two spare counts, Lambda5 holds a fortiori
+    # (docs/proofs/thm1_fp-accounting.md, corrections of 2026-11-03 and 2026-11-18)
     gw = gamma(adapter.width + (3 if cplx else 1))
-    E = adapter.abs_matvec(X) if absHX is None else absHX
+    aX = modulus_up(X)                                   # formed once: for |H||X| here and for |X||mu| below
+    if absHX is not None:
+        E = absHX
+    else:                                                # another adapter type takes X alone (the same values)
+        E = adapter.abs_matvec(X, aX) if isinstance(adapter, OperatorAdapter) else adapter.abs_matvec(X)
     if E.ndim == 1:
         E = E[:, None]
     E /= (1.0 - gw)
     E *= (1 + 4 * U)
-    aX = np.abs(X)
     aX *= np.abs(mu)[None, :]
     E += aX
     E *= g
@@ -503,6 +512,10 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         # the absolute errors of a division and a product whose results are subnormal
         rel = np.where(xl > 0, upper / xl, np.inf) * (1 + 4 * U) + 2 * ULP_MIN
         est = computed / xn
+    # a nan bound (inf - inf or inf * 0 after an overflow of the accounting) is no bound: inf, as for a zero vector,
+    # so that the records never store nan and every comparison treats it as unbounded
+    upper = np.where(np.isnan(upper), np.inf, upper)
+    rel = np.where(np.isnan(rel), np.inf, rel)
     return ResidualReport(computed, upper, xl, rel, est, R, E_up, adapter.rigorous, adapter, mu, X)
 
 
@@ -795,7 +808,9 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     """Rigorous enclosure [lo, hi] of theta = x^* A x / x^* x and the Theorem-1 radius at theta_hat.
 
     A x is computed in floating point (componentwise error <= gamma_w |A||x|); the two inner
-    products are evaluated with error-free transformations (see fp.exact_dot). `Ax` and `absAx` may be
+    products are evaluated with error-free transformations (see fp.exact_dot). The moduli of complex data are upper
+    bounds (fp.modulus_up), so the real constants gamma_{w+1} and gamma_{n+2} hold for complex data too
+    (docs/proofs/E-05_variational.md, Lemma 3 and the correction of 2026-11-18). `Ax` and `absAx` may be
     supplied when fl(A x) and |A| |x| were already formed (certify.py forms them for all isolated pairs in
     one product each); the bound is the same function of them.
     """
@@ -811,10 +826,12 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     den = float(np.real(den_c))
     gdw = gamma_dot(adapter.width + 2, cplx)
     gw = gamma(adapter.width + 1)
-    absAx_raw = (adapter.abs_matvec(x) if absAx is None
-                 else require_binary64(np.asarray(absAx), "rayleigh_interval: absAx").ravel())
+    xa = modulus_up(x)
+    if absAx is not None:
+        absAx_raw = require_binary64(np.asarray(absAx), "rayleigh_interval: absAx").ravel()
+    else:
+        absAx_raw = adapter.abs_matvec(x, xa) if isinstance(adapter, OperatorAdapter) else adapter.abs_matvec(x)
     absAx = absAx_raw / (1 - gw)
-    xa = np.abs(x)
     # |x^*(Ax - fl(Ax))| <= |x|^T gdw |A||x|, bounded with a guarded float dot of non-negatives
     num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
     den_err = up(den_e)

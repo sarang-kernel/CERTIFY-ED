@@ -37,6 +37,11 @@ NEXT_ACTION_BY_CODE: Dict[str, str] = {
                     "the cost model), or narrow the selection with Options.only so the remaining statements start in time"),
     "BUDGET_MEMORY": ("raise Options.budget_mb / --budget-mb above the estimate in the evidence, use "
                       "inertia_method='sparse', or certify one symmetry sector (Claim.states) instead of the full space"),
+    "NONFINITE_BOUND": ("rescale the operator (and the claimed values with it) so that its entries lie well below the "
+                        "largest float (about 1.8e308), then certify again; the evidence names the bound that is not "
+                        "finite"),
+    "UNRESOLVED_VECTOR_NORM": ("normalise the claimed eigenvectors (unit 2-norm) and certify again; the evidence "
+                               "lists the pairs whose vector norm binary64 does not resolve"),
     "NEEDS_EIGENVECTORS": ("supply the eigenvectors (Claim.eigenvectors, one column per claimed value): kind='lowest', "
                            "S2, S3, S4, S6 and S8 need them"),
     "NEEDS_SPEC": ("declare the model: pass a ModelSpec (certify_ed.heisenberg_chain(...), spec_from_quspin(...), "
@@ -105,8 +110,9 @@ def _cluster_reasons(stmt: dict) -> List[str]:
 
 def _inconclusive(stmt: dict, ctx: dict) -> str:
     sid, text = stmt["id"], _text(stmt)
-    if (stmt.get("evidence") or {}).get("reason_code") == "FP_GUARD_RANGE":
-        return NEXT_ACTION_BY_CODE["FP_GUARD_RANGE"]
+    if (stmt.get("evidence") or {}).get("reason_code") in ("FP_GUARD_RANGE", "NONFINITE_BOUND",
+                                                            "UNRESOLVED_VECTOR_NORM"):
+        return NEXT_ACTION_BY_CODE[stmt["evidence"]["reason_code"]]
     if "floating-point environment" in text and "standard model" in text:
         return ("run on a platform where the floating-point probe passes (no fast-math, no flush-to-zero; see "
                 "arithmetic.runtime_probe.failed): the bounds are not certified under this environment")

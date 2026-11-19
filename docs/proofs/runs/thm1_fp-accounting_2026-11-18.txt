@@ -1,0 +1,6 @@
+# python docs/proofs/verify_thm1_fp-accounting.py --cases 200 (seed 6), 2026-11-18, Windows, Python 3.11, NumPy 2.4.4 (branch fix/complex-moduli, after the moduli of an S2 block are formed once)
+  ... 0 random cases
+scalar lemmas (L2), (L4), (L5), (L5'), (L6): 20000 random + 12 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+rel >= exact radius: 200 random + 606 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+stage inequalities (S2)-(S5): 400 random + 1200 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+RESULT: 0 violations

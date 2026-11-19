@@ -159,6 +159,25 @@ arithmetic; `tests/test_backlog_proofs.py::test_theorem1_accounting_slack_consta
 
 **Correction after the independent re-derivation (2026-11-03, `docs/proofs/VERDICTS.md`).** For complex data the moduli |a_ij| and |x_j| are each rounded once (hypot), so (S2) `absHX_up_i >= a_i` needs the division constant γ_{w+3} in place of γ_{w+1}; `enclosure._rounding_bound` now uses `gamma(width + 3)` when the data are complex (looser bound; real data unchanged). The (Λ5) argument then applies with w + 2 in place of w. Section 1 (S2) and Step 2 of section 2 are to be read with this constant for complex data; Sarang's check (D-12) remains pending.
 
+**Correction (2026-11-18), upper moduli; UNVERIFIED (D-12).** The correction above counts one rounding per modulus.
+NumPy's complex absolute value is not within one rounding: its relative error reaches 2.47u on the reference host,
+and no bound on it is established (`docs/proofs/fp_modulus-up.md`, section 1). Since 3.3.0.dev0 the moduli of complex data come from
+`fp.modulus_up` and `fp.abs_up`, which return m ≥ |z| (Lemma M there). Step 2 then reads, for complex data as for real
+data: `absHX_i` = fl(Σ_j m_ij m_j) ≥ a_i(1 − γ_w), with no count for the moduli (the corollary of Lemma M). The code
+keeps `gamma(width + 3)` for complex data. (Λ5) is stated with the division index w + 1; its left side increases with
+the index, since γ_k does, so
+
+    (Λ5′)  (1 − γ_w)(1 − u)³(1 + 4u)/(1 − γ_k(1 − u)²) ≥ 1 + u   for every k ≥ w + 1, in particular k = w + 3,
+
+and (S2) `absHX_up_i` ≥ a_i(1 + u) ≥ a_i holds for complex data with two spare counts. The sentence "The (Λ5) argument
+then applies with w + 2 in place of w" of the correction above is superseded, and so is the parenthesis of Step 2 on
+moduli "rounded once each". In Step 3, |x_i||μ| is formed from m_i ≥ |x_i| with one rounding, as written; the complex
+slack E*_i/2 is no longer needed for the moduli. `verify_thm1_fp-accounting.py` now checks (S2) with the code's
+constant (w + 3 for complex data) and the upper moduli, requires its replica of E to equal `_rounding_bound` bit for
+bit, checks (Λ5′) at k = w + 3 on the grid, and adds complex cases whose entries are the arguments on which `np.abs`
+is too small: run of 2026-11-18 (`--cases 200`, `docs/proofs/runs/thm1_fp-accounting_2026-11-18.txt`): Λ 20 000 grid
+points + 12 powers of two; R 200 random + 606 adversarial cases; S 400 random + 1 200 adversarial checks; 0 violations.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_thm1_fp-accounting.py` (exact rationals: `fractions.Fraction` for every stored number,
@@ -201,3 +220,4 @@ is the fourth rounding of step 5 (the INT-05 term), paid by the step-4 slack.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (20 000 (40 000 stage checks, 20 000 lemma grid points) random + 246 (480 stage checks, 12 lemma grid points) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for upper moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

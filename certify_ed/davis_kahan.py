@@ -36,7 +36,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .eigenspace import EigenspaceCertificate
-from .fp import U, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, sub_down, up
+from .fp import U, abs_up, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, sub_down, up
 from .precision import binary64
 
 __all__ = ["sin_theta_davis_kahan", "commutator_bound", "approximate_symmetry_label", "certified_fidelity",
@@ -80,8 +80,9 @@ def commutator_bound(H, S) -> Dict[str, float]:
     C = (H @ S - S @ H).tocsr()
     wH = int(np.diff(H.indptr).max()) if H.shape[0] else 1
     wS = int(np.diff(S.indptr).max()) if S.shape[0] else 1
-    absHS = (abs(H) @ abs(S)).tocsr()
-    absSH = (abs(S) @ abs(H)).tocsr()
+    aH, aS = abs_up(H), abs_up(S)                            # upper moduli of complex data (fp.abs_up)
+    absHS = (aH @ aS).tocsr()
+    absSH = (aS @ aH).tocsr()
     # entrywise |fl(HS) - HS| <= gamma_{w_H} |H||S|, the subtraction adds one rounding (index + 1); the computed absolute
     # products underestimate the exact ones by at most a relative gamma_{w} entrywise
     gH, gS = gamma_dot(wH + 1, cplx), gamma_dot(wS + 1, cplx)
@@ -89,7 +90,7 @@ def commutator_bound(H, S) -> Dict[str, float]:
     # [H, S] is anti-Hermitian, so ||C||_2 <= (||C||_1 ||C||_inf)^(1/2) = ||C||_inf; the exact commutator is within E
     # entrywise of the computed one, and |C| + E has the row sums of a bound on |C_exact|
     comp = float(inf_norm_upper(C))
-    total = float(inf_norm_upper((abs(C) + E).tocsr()))
+    total = float(inf_norm_upper((abs_up(C) + E).tocsr()))
     return {"bound": float(up(total)), "computed_inf_norm": comp, "rounding_entrywise_inf_norm": float(inf_norm_upper(E))}
 
 
@@ -184,7 +185,8 @@ def certified_fidelity(X1: np.ndarray, s1: float, eta1: float, X2: np.ndarray, s
     n, g = X1.shape
     cplx = np.iscomplexobj(X1) or np.iscomplexobj(X2)
     C = X1.conj().T @ X2
-    F_hat = float(np.sum(np.abs(C) ** 2))
+    # |C_ij|^2 from the components (two squares and a sum, inside the gamma_{g^2 + 2} below; no modulus is formed)
+    F_hat = float(np.sum(C.real ** 2 + C.imag ** 2))
     # rounding: |fl(C) - C|_F <= gamma_n ||X1||_F ||X2||_F; | ||C_hat||^2 - ||C||^2 | <= (2 ||C_hat||_F + e) e; the sum of
     # squares of g^2 terms adds gamma_{g^2 + 2} ||C_hat||_F^2
     e = gamma_dot(n, cplx) * fro_upper(X1) * fro_upper(X2)

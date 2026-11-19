@@ -7,6 +7,7 @@ import scipy.sparse.linalg as spla
 
 from certify_ed import gpu
 from certify_ed.enclosure import OperatorAdapter, enclose, residuals
+from certify_ed.fp import abs_up, modulus_up
 
 
 def _device_or_skip():
@@ -45,8 +46,8 @@ def test_products_equal_scipy_bit_for_bit(cplx_a, sorted_idx):
     Xc = X + 1j * rng.standard_normal((1400, 7))
     for Xv in (X, Xc, X[:, 2], Xc[:, 1], np.asfortranarray(X)):
         assert gpu.same_bits(D.matmul(Xv), np.asarray(A @ Xv))
-        aX = np.abs(Xv)
-        assert gpu.same_bits(D.matmul(aX, absolute=True), np.asarray(abs(A) @ aX))
+        aX = modulus_up(Xv)
+        assert gpu.same_bits(D.matmul(aX, absolute=True), np.asarray(abs_up(A) @ aX))
     assert D.record["spot_checked_rows"] > 0
 
 
@@ -59,7 +60,7 @@ def test_both_products_in_one_pass_equal_the_two_cpu_products(cplx):
               rng.standard_normal(2000)):
         ad = OperatorAdapter(H, device="gpu")
         hx, ahx = ad.both_products(X)
-        assert gpu.same_bits(hx, H @ X) and gpu.same_bits(ahx, abs(H) @ np.abs(X))
+        assert gpu.same_bits(hx, H @ X) and gpu.same_bits(ahx, abs_up(H) @ modulus_up(X))
         assert ad.device_record["gpu"]["products"] == 2 and "fallback" not in ad.device_record
     cpu = OperatorAdapter(H)
     X = rng.standard_normal((2000, 3))
@@ -199,7 +200,7 @@ class _StandIn:
     fail_at = None
 
     def __init__(self, A, absA=None):
-        self.A, self.absA = A, (abs(A) if absA is None else absA)
+        self.A, self.absA = A, (abs_up(A) if absA is None else absA)
         self.record = {"products": 0}
         self.calls = 0
 
@@ -215,7 +216,7 @@ class _StandIn:
 
     def products(self, X):
         self._count()
-        return self.A @ X, self.absA @ np.abs(X)
+        return self.A @ X, self.absA @ modulus_up(X)
 
     def close(self):
         pass
@@ -242,6 +243,21 @@ def _same_certificate(a, b):
     assert sorted(a.arrays) == sorted(b.arrays)
     for key in a.arrays:
         assert gpu.same_bits(np.asarray(a.arrays[key]), np.asarray(b.arrays[key])), key
+
+
+def test_stand_in_device_gives_the_cpu_certificate_for_complex_data(monkeypatch):
+    """Complex operator and vectors: the moduli of both paths come from fp.abs_up and fp.modulus_up, so the device
+    path (here the stand-in, which forms the scipy products as the kernels do) gives the CPU certificate bit for bit."""
+    import certify_ed as ce
+    monkeypatch.setattr(gpu, "DeviceCSR", _StandIn)
+    H = _hermitian(240, 0.04, True, 9) + sp.diags(np.arange(240) * 0.02)
+    H = H.tocsr()
+    w, V = np.linalg.eigh(H.toarray())
+    claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest")
+    a = ce.certify(claim, None, ce.Options(seed=1))
+    b = ce.certify(claim, None, ce.Options(seed=1, device="gpu"))
+    assert b.statement("S2.eigenpairs")["evidence"]["device"]["used"] is True
+    _same_certificate(a, b)
 
 
 def test_options_device_must_be_cpu_or_gpu():

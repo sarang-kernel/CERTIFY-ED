@@ -31,7 +31,7 @@ from typing import List, Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import ULP_MIN, fro_upper, gamma_dot, norm2_upper, up, U
+from .fp import ULP_MIN, abs_up, fro_upper, gamma_dot, modulus_up, norm2_upper, up, U
 from .precision import binary64, require_binary64
 
 
@@ -67,12 +67,16 @@ def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "
     VHs = V @ Hs
     D = (HV - VHs).tocsr()
     wh = int(np.diff(H.indptr).max()) if H.shape[0] else 1
+    aH, aV = abs_up(H), abs_up(V)                            # upper moduli of complex data (fp.abs_up)
     rnd = gamma_dot(wh + int(np.diff(Hs.indptr).max() if ds else 1) + 2, cplx) * (
-        fro_upper(abs(H) @ abs(V)) + fro_upper(abs(V) @ abs(Hs)))
+        fro_upper(aH @ aV) + fro_upper(aV @ abs_up(Hs)))
     inv = up(fro_upper(D) + rnd)
     C = (V.conj().T @ HV - Hs).tocsr()
-    comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(abs(V).T @ abs(H) @ abs(V)))
-    passed = iso <= tol and inv <= tol * max(1.0, fro_upper(H) / max(1.0, np.sqrt(H.shape[0])))
+    comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(aV.T @ aH @ aV))
+    # a defect bound that is not finite (a bound of the accounting overflowed) passes nothing: inf <= tol * inf would
+    # hold otherwise
+    finite = bool(np.isfinite(iso) and np.isfinite(inv) and np.isfinite(comp))
+    passed = finite and iso <= tol and inv <= tol * max(1.0, fro_upper(H) / max(1.0, np.sqrt(H.shape[0])))
     return SectorAudit(label, int(ds), float(iso), float(inv), float(comp), bool(passed))
 
 
@@ -221,6 +225,10 @@ def symmetry_matrix(states, g) -> sp.csr_matrix:
     return sp.csr_matrix((ph, (idx, np.arange(n))), shape=(n, n))
 
 
+_SEP_NOTE = ("floating-point value of min |lambda_l - lambda_k| over the computed roots of unity, not a certified "
+             "lower bound; the leakage bound divides by it")
+
+
 def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     """Which eigenvalue of a cyclic symmetry g a sector carries, with a certified leakage bound.
 
@@ -229,7 +237,12 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     the lambda_k-eigenspace of norm at most delta / ((1 - iso) min_{l != k} |lambda_l - lambda_k|),
     where delta >= ||G V - lambda_k V||_2 and iso = ||V^+ V - I|| (a bound, from computed
     quantities plus their rounding). Labels are reported as the eigenvalue exp(2 pi i j / n) of g (for
-    translation, g maps site i to i+1) and as QuSpin's block index q."""
+    translation, g maps site i to i+1) and as QuSpin's block index q.
+
+    The separation min_{l != k} |lambda_l - lambda_k| is the floating-point value over the computed roots (np.exp, then
+    np.abs of the differences), not a certified lower bound; the record says so ("separation_note", and
+    "separation_rigorous": False for a consumer that filters on it). A lower bound on it, and on the distance of the
+    computed roots from the exact ones, is open (a D-12 item); the "certified" flag still rests on the float value."""
     from .basis import translation, spin_flip, reflection
     from .fp import fro_upper, gamma_dot, up
     gfun = {"translation": translation, "spin_flip": spin_flip, "reflection": reflection}[symmetry]
@@ -251,11 +264,11 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     k = int(np.argmin(defects))
     lam = roots[k]
     width = 4
-    rnd = gamma_dot(width, True) * 2 * fro_upper(np.abs(Vd.data))   # rounding in lam*V and the difference
+    rnd = gamma_dot(width, True) * 2 * fro_upper(modulus_up(Vd.data))   # rounding in lam*V and the difference
     delta = up(defects[k] + rnd)
     gram = (Vd.conj().T @ Vd - sp.identity(Vd.shape[1])).tocsr()
     iso = up(fro_upper(gram.data) + gamma_dot(int(np.diff(Vd.tocsc().indptr).max()) + 1, True)
-             * fro_upper(np.abs(Vd.data)) ** 2) if gram.nnz else 0.0
+             * fro_upper(modulus_up(Vd.data)) ** 2) if gram.nnz else 0.0
     sep = min(abs(lam - roots[j]) for j in range(n) if j != k) if n > 1 else np.inf
     leak = delta / ((1 - iso) * sep) if iso < 1 else np.inf
     # QuSpin's block index q: eigenvalue exp(-2 pi i q/n) of its translation, which maps site i to
@@ -265,4 +278,5 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     return {"symmetry": symmetry, "order": n, "eigenvalue": [lam.real, lam.imag],
             "j_physics": k, "quspin_q": q_quspin, "defect_upper": float(delta),
             "isometry_defect_upper": float(iso), "leakage_bound": float(leak),
+            "separation": float(sep), "separation_note": _SEP_NOTE, "separation_rigorous": False,
             "certified": bool(leak < 0.5)}

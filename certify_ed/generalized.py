@@ -31,7 +31,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
-from .fp import U, add_up, exact_dot, gamma, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
+from .fp import U, abs_up, add_up, exact_dot, gamma, gamma_dot, inf_norm_upper, modulus_up, norm2_upper, sub_down, up
 from .inertia import inertia_dense
 from .precision import binary64, check_values, widening_record
 from .spec import canonical_json
@@ -134,8 +134,9 @@ def pencil_residual_radii(A: np.ndarray, B: np.ndarray, mu: np.ndarray, X: np.nd
     gn = gamma(n)
     AX = A @ X
     BX = B @ X
-    absAX = np.abs(A) @ np.abs(X) / (1 - gn)
-    absBX = np.abs(B) @ np.abs(X) / (1 - gn)
+    aX = modulus_up(X)                                       # upper moduli of complex data (fp.modulus_up)
+    absAX = abs_up(A) @ aX / (1 - gn)
+    absBX = abs_up(B) @ aX / (1 - gn)
     s_up = np.empty(k)
     s_fl = np.empty(k)
     xb_lo = np.empty(k)
@@ -143,12 +144,12 @@ def pencil_residual_radii(A: np.ndarray, B: np.ndarray, mu: np.ndarray, X: np.nd
     for i in range(k):
         c = mu[i] * BX[:, i]
         s = AX[:, i] - c
-        E = gd * absAX[:, i] + abs(mu[i]) * gd1 * absBX[:, i] + U * (1 + 2 * U) * np.abs(s)
+        E = gd * absAX[:, i] + abs(mu[i]) * gd1 * absBX[:, i] + U * (1 + 2 * U) * modulus_up(s)
         s_fl[i] = float(np.linalg.norm(s))
         s_up[i] = float(up(norm2_upper(s) + norm2_upper(E)))
         num_c, num_e = exact_dot(X[:, i], BX[:, i])
         val = float(np.real(num_c))
-        err = up(num_e + gd * float(np.abs(X[:, i]) @ absBX[:, i]) * (1 + gamma(n + 2)))
+        err = up(num_e + gd * float(modulus_up(X[:, i]) @ absBX[:, i]) * (1 + gamma(n + 2)))
         xb_val[i] = val
         xb_lo[i] = val - err
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -168,7 +169,7 @@ def pencil_count_below(A: np.ndarray, B: np.ndarray, sigma: float, beta_c: float
     A, B = binary64(np.asarray(A), "A"), binary64(np.asarray(B), "B")    # exact (precision.py)
     M = A - sigma * B
     res = inertia_dense(M, 0.0)
-    form = inf_norm_upper(U * abs(sigma) * np.abs(B) + U * np.abs(M))
+    form = inf_norm_upper(U * abs(sigma) * abs_up(B) + U * abs_up(M))
     b_tot = float(up(res.beta + form)) if math.isfinite(res.beta) else float("inf")
     collar = float(up(b_tot / beta_c)) if (math.isfinite(b_tot) and beta_c > 0) else float("inf")
     return {"sigma": float(sigma), "inertia": res.to_dict(), "nu": res.negative, "conclusive": bool(res.conclusive),
