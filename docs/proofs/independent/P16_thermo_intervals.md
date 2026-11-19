@@ -1,6 +1,6 @@
 # Independent re-derivation: Proposition 16 (thermodynamic intervals from a complete whole-spectrum enclosure)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../P16_thermo_intervals.md` read first, with
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../P16_thermo_intervals.md` read first, with
 `certify_ed/thermo.py`; proof written before section 2 was opened. Lemma 17 (enclosure property of every `ivl`
 operation, re-derived in `independent/L17_dyadic_exp_ln.md`) is used as a black box: "X ∋ x and Y ∋ y imply
 op(X, Y) ∋ op(x, y)" for +, −, ·, /, square, exp, ln, `scale_int`, `sum_intervals`, `intersect_nonneg` (for a

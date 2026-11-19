@@ -1,6 +1,6 @@
 # Independent re-derivation: Proposition 16′ (C-06, thermodynamics from the k lowest eigenvalues and a tail bound)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../C06_truncated_thermodynamics.md` read first, with
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../C06_truncated_thermodynamics.md` read first, with
 the `tail` branch of `thermo._rows` (lines 72–79, 94–130, 146, 151); proof written before section 2 was opened.
 Proposition 16 and Lemma 17 as re-derived in `independent/P16_thermo_intervals.md`, `independent/L17_dyadic_exp_ln.md`.
 

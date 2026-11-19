@@ -216,5 +216,5 @@ Closed-form special cases, all reproduced by the enclosures (part of the adversa
 
 ## 6. Status
 
-Derived by Claude on 2026-10-30; machine-checked (6000 random + 140 adversarial cases, 0 violations);
-independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (6000 random + 140 adversarial cases, 0 violations);
+independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

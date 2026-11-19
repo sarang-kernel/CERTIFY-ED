@@ -1,6 +1,6 @@
 # Independent re-derivation: C-16 (exact eigenvalue count and multiplicities in a rational bracket)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../C16_exact_bracket.md` read first, with
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../C16_exact_bracket.md` read first, with
 `certify_ed/exact_degeneracy.py`; proof written before section 2 was opened. (H2) — exactness of python-flint's
 integer/rational arithmetic, `charpoly`, `factor_squarefree`, polynomial division and evaluation — is taken as
 the trusted base, as the statement says; the construction of `exact_sectors.sector_integer_matrix` (that N, G

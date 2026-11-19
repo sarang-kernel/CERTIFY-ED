@@ -1,6 +1,6 @@
 """Shared helpers of the independent adversarial searches (docs/proofs/independent/adversarial_<id>.py).
 
-Written in the fresh-context re-derivation session (2026-10-30) without reading docs/proofs/_common.py, so that the
+Written for the independent re-derivations (2026-10-30) without reading docs/proofs/_common.py, so that the
 ground truth here is computed by different code from the one the original verify_<id>.py scripts use. Exact
 ground truth: mpmath at 60 significant digits (eigenvalues) or fractions.Fraction (rational quantities).
 """

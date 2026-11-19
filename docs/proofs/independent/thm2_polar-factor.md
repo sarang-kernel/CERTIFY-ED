@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 2 (cluster radius ρ) and the polar-factor lemma
 
-Fresh-context session, 2026-10-30. Protocol (D-12): sections 1 and 3 of `../thm2_polar-factor.md` were read
+Written from the statement alone on 2026-10-30 (not a human check). Protocol (D-12): sections 1 and 3 of `../thm2_polar-factor.md` were read
 first; this proof was written before section 2 was opened; the comparison follows at the end.
 Notation as in `docs/theory.md`: A Hermitian n × n, λ₁ ≤ … ≤ λₙ, ‖·‖ the spectral norm.
 

@@ -1,6 +1,6 @@
 # Independent re-derivation: D-02 (matrix-free residual bounds from the spec)
 
-Fresh-context re-derivation (rules D-12/D-59). Written from sections 1 and 3 of `docs/proofs/D-02_matrix-free.md`
+Independent re-derivation (rules D-12/D-59; not a human check). Written from sections 1 and 3 of `docs/proofs/D-02_matrix-free.md`
 and the code (`certify_ed/matrixfree.py`, `construct._apply_string`, `construct.SpecOperator._apply`,
 `localops.LocalSpace.shift_components/matrix`, `enclosure.OperatorAdapter.__init__` 89–131, `enclosure._rounding_bound`
 295–311) before section 2 was read. Theorem 1-fl (`thm1_fp-accounting.md`, re-derived in the first track) is used as a

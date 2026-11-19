@@ -49,21 +49,22 @@ PROOF_DOCUMENTS = ("thm2_polar-factor", "thm2prime_eps-star", "cor5_pairing", "t
 ORIGINAL_SIX = ("L17_dyadic_exp_ln", "P14_degeneracy_bracketing", "P15_summed_bounds", "P16_thermo_intervals",
                 "C06_truncated_thermodynamics", "C16_exact_bracket")
 VERDICTS = ("AGREES", "AGREES-WITH-REMARKS", "GAP", "ERROR")
-STATUS_RE = re.compile(r"independent re-derivation: done 2026-10-30 \(fresh-context session, verdict ("
+STATUS_RE = re.compile(r"independent re-derivation: done 2026-10-30 \(from the statement alone, not a human check; "
+                       r"verdict ("
                        + "|".join(re.escape(v) for v in VERDICTS) + r"), docs/proofs/VERDICTS\.md\); "
                        r"Sarang's check \(D-12\): pending\.")
 
 
 @pytest.mark.parametrize("name", PROOF_DOCUMENTS)
 def test_proof_documents_exist_with_the_six_sections(name):
-    """Every derivation document has the six sections, the 'Derived by Claude' / 'machine-checked' status, the
+    """Every derivation document has the six sections, the 'Derived on' / 'machine-checked' status, the
     independent re-derivation status line in the fixed format (one of the four verdicts, pointing at VERDICTS.md,
     Sarang's check still pending) and nowhere the word 'verified' for these results (D-12/D-59)."""
     text = open(os.path.join(PROOFS, name + ".md"), encoding="utf-8").read()
     for num, title in enumerate(("Statement", "Proof", "Where the code implements it", "Computational verification",
                                  "Analytic cross-check", "Status"), start=1):
         assert re.search(rf"^## {num}\.? {re.escape(title)}", text, flags=re.M), (name, title)
-    assert "Derived by Claude on" in text
+    assert "Derived on 20" in text
     assert "machine-checked (" in text or "machine-checked: NOT RUN" in text      # appA's script is gated (NOT RUN)
     status = text[text.index("Status", text.rindex("## 6")):]
     assert len(STATUS_RE.findall(status)) == 1, (name, status[-400:])
@@ -100,8 +101,9 @@ def test_fp_modulus_up_document_has_the_format_and_its_independent_files():
     assert "**UNVERIFIED (D-12):**" in text and "machine-checked (" in text
     status = text[text.index("Status", text.rindex("## 6")):]
     assert status.startswith("Status\n\nDerived on 2026-11-18; machine-checked (")
-    assert ("independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the "
-            "corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md)") in status
+    assert ("independent re-derivation: done 2026-11-18 (from the statement alone, not a human check; verdict "
+            "AGREES on Lemma M and GAP on the corollary, docs/proofs/independent/fp_modulus-up.md, "
+            "docs/proofs/VERDICTS.md)") in status
     assert "Sarang's check (D-12): pending." in status and "UNVERIFIED (D-12) until that check." in status
     cleaned = status.lower().replace("unverified", "").replace("machine-checked", "")
     assert "verified" not in cleaned

@@ -1,6 +1,6 @@
 # Independent re-derivation: C-03 (entanglement entropy and entanglement spectrum of a certified eigenspace)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../C-03_entanglement.md` read first, with
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../C-03_entanglement.md` read first, with
 `certify_ed/entanglement.py`; proof written before section 2 was opened. Notation as in the original.
 
 ## Statements checked

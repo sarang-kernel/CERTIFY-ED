@@ -489,7 +489,7 @@ with certified orthogonalisation defects). None of this is implemented; the reco
 
 Each statement below has a derivation document with exactly the sections Statement, Proof, Where the code
 implements it, Computational verification, Analytic cross-check and Status, and a verification script
-`docs/proofs/verify_<id>.py`. All are **[derived by Claude; independent re-derivation pending, D-12]**.
+`docs/proofs/verify_<id>.py`. All are **[derived; independent re-derivation pending, D-12]**.
 
 ### 10.1 Entanglement entropy and spectrum (C-03, `entanglement.py`, `docs/proofs/C-03_entanglement.md`)
 

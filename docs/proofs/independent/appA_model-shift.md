@@ -1,8 +1,8 @@
 # Independent re-derivation: Appendix A (the model shift Δ)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../appA_model-shift.md` read first; proof written before
-section 2 was opened. `verify_appA_model-shift.py` was NOT run (held by a safety gate in another session; the task
-forbids running it here). Notation as in the original's preamble; a := |H|_abs (entrywise, exact amplitudes),
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../appA_model-shift.md` read first; proof written before
+section 2 was opened. `verify_appA_model-shift.py` was not run for this re-derivation (its run of 2026-11-03
+is `docs/proofs/runs/appA_model-shift.txt`). Notation as in the original's preamble; a := |H|_abs (entrywise, exact amplitudes),
 γ_k = ku/(1 − ku), Higham, *Accuracy and Stability of Numerical Algorithms* (2002): Lemma 3.1 (products of
 1 + δ_i), Lemma 3.3 (γ_j + γ_k + γ_jγ_k ≤ γ_{j+k}), §4.2 eq. (4.4) (summation of m terms in any order:
 |fl(Σx) − Σx| ≤ γ_{m−1}Σ|x|).
@@ -123,7 +123,7 @@ Lemma A3 uses — the average form (a + aᵀ)/2 should be stated in A2; two unna
 
 ## Runs
 
-- `verify_appA_model-shift.py`: NOT RUN (held by a safety gate in another session; task instruction).
+- `verify_appA_model-shift.py`: not run for this re-derivation (run of 2026-11-03: `docs/proofs/runs/appA_model-shift.txt`).
 - `adversarial_appA_model-shift.py --cases 16 --seed 17`: N1 4 random + 12 adversarial, W1 4 + 12, D1 4 + 12,
   A5 transfer 4 + 12, negative controls 16; 0 violations (1235 s: the mp eigendecompositions of the 81 × 81
   spin-1 cases dominate; a second batch `--cases 24 --seed 18` is reported in VERDICTS.md if it finished).

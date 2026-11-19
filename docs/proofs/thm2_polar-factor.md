@@ -170,4 +170,4 @@ inequality pairs the sorted eigenvalues within ρ — the same constant as Theor
 
 ## 6 Status
 
-Derived by Claude on 2026-10-30; machine-checked (17 224 (34 448 lemma checks, 5 000 Kahan-block checks) random + 600 (900 lemma checks, 600 Kahan-block checks) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (17 224 (34 448 lemma checks, 5 000 Kahan-block checks) random + 600 (900 lemma checks, 600 Kahan-block checks) adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

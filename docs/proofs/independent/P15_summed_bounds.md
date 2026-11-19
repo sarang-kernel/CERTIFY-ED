@@ -1,6 +1,6 @@
 # Independent re-derivation: Proposition 15 (linear combinations of certified observables)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../P15_summed_bounds.md` read first, with
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../P15_summed_bounds.md` read first, with
 `certify_ed/correlations.py` 130–164; proof written before section 2 was opened. u = 2⁻⁵³, γ_n = nu/(1 − nu);
 Higham (2002) Lemma 3.1, Lemma 3.3, Lemma 3.5 (complex arithmetic: |fl(xy) − xy| ≤ √2 γ₂|x||y|, |fl(x + y) − (x + y)|
 ≤ u|x + y|), §4.2 (summation in any order: each term carries a factor 1 + θ_{m−1}).

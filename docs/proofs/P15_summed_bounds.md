@@ -176,5 +176,5 @@ against Theorem 6 bounds of order 10^−10 but not against exact degeneracies, w
 
 ## 6. Status
 
-Derived by Claude on 2026-10-30; machine-checked (1111 random + 32 adversarial cases, 0 violations);
-independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (1111 random + 32 adversarial cases, 0 violations);
+independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

@@ -1,6 +1,6 @@
 # Independent re-derivation: fp_modulus-up (Lemma M, upper bounds on complex moduli, and its corollary)
 
-Fresh-context session, 2026-11-18; the third leg of rule D-12 (a derivation, a machine check, an independent
+Written on 2026-11-18 (not a human check); the third leg of rule D-12 (a derivation, a machine check, an independent
 re-derivation from the statement alone). Written from section 1 of `docs/proofs/fp_modulus-up.md` as it stood on
 2026-11-18 (statement-only extract, SHA-256 d79c905c...f6ed) and the code excerpt of `certify_ed/fp.py` at branch
 `fix/complex-moduli` (`modulus_up`, `_modulus_up_scaled`, `abs_up`, `_GUARD`; SHA-256 915a39cc...5ead). The author's
@@ -267,7 +267,7 @@ on which the code does something the statement does not describe, or describes o
 
 ## 5 Machine check
 
-Script `docs/proofs/independent/adversarial_fp_modulus-up.py` (written in this session as `adversarial_modulus_up.py`,
+Script `docs/proofs/independent/adversarial_fp_modulus-up.py` (first written as `adversarial_modulus_up.py`,
 SHA-256 641df231...75f4; in the repository it tests `certify_ed.fp` itself, or an excerpt given with `--code`). Host:
 Python 3.11.17, NumPy 2.4.4, SciPy 1.17.1, Windows (build 26200), AVX512F; run of 18 Nov 2026 on the excerpt, 620 s.
 The run was made twice (the second after the lower-margin count below was added); every other count was identical in
@@ -348,7 +348,7 @@ exact; everything else is.
 
 ## 7 Runs and resolution (added in the repository)
 
-* Run of 18 Nov 2026 in this session, on the excerpt: the counts of section 5 (1,009,411 exact cases, 620 s).
+* Run of 18 Nov 2026, on the excerpt: the counts of section 5 (1,009,411 exact cases, 620 s).
 * `python docs/proofs/independent/adversarial_fp_modulus-up.py --workers 6`, on `certify_ed.fp` at commit 249b8ae of
   `fix/upper-moduli` (after two review rounds; the second added passes
   without a copy of the input, 0 + 0i on the unscaled branch, a float for every scalar, integer sparse data stepped

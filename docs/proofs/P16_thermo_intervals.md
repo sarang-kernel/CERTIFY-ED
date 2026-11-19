@@ -158,5 +158,5 @@ binary64 conversion: the conversion dominates, as observed.
 
 ## 6. Status
 
-Derived by Claude on 2026-10-30; machine-checked (4000 random + 95 adversarial cases, 0 violations);
-independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (4000 random + 95 adversarial cases, 0 violations);
+independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

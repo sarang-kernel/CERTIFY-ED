@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 2′ (sharper cluster radius ε*)
 
-Fresh-context session, 2026-10-30. Sections 1 and 3 of `../thm2prime_eps-star.md` read first; proof written
+Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../thm2prime_eps-star.md` read first; proof written
 before section 2 was opened. Disclosure: `docs/theory.md` §2, read for the notation, carries a proof *sketch* of
 Theorem 2′ (steps (i)–(iii) in three lines); the proof below fills in every step and justifies each inequality.
 Notation as in `independent/thm2_polar-factor.md`: G = XᴴX, η = ‖G − I‖ < 1, M = G^{1/2}, Q̂ = XM⁻¹,
@@ -65,7 +65,7 @@ which is added to `res.upper` (enclosure.py 368) but not to `E_norm`. The bound 
 real and complex: at most 1.4e-153). So the stated direction is correct for a reason the document does not give;
 the table row should read "`norm2_upper(E_norm)` ≥ ‖(E_norm_i)‖₂ + T_g ≥ ‖Rc − R‖_F, the INT-05 shortfall
 √g√n c_w u_min being below T_g = `norm_underflow_term(g)`". No code change is needed (an earlier draft of this
-session recorded a looser-bound change as a required correction; it was withdrawn once the slack was quantified,
+re-derivation recorded a looser-bound change as a required correction; it was withdrawn once the slack was quantified,
 and no code change was committed).
 
 **Verdict: AGREES-WITH-REMARKS** (proof valid, same constant; one justification in section 3 incomplete but

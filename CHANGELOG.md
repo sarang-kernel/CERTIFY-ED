@@ -861,7 +861,7 @@ existing bound became tighter; new bounds are combined with old ones as min(old,
 Six items of the UNVERIFIED backlog derived in `docs/proofs/` (one document per statement in the D-59 format:
 statement, proof, where the code implements it, computational verification, analytic cross-check, status line) with
 verification scripts `docs/proofs/verify_<id>.py` and their recorded outputs in `docs/proofs/runs/`. Every status line
-reads "Derived by Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's
+reads "Derived on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's
 check (D-12): pending" — nothing is called verified.
 
 - **Theorem 2 with Kahan's constant** (`thm2_polar-factor.md`). The polar-factor lemma (Q̂ = X(XᴴX)^{−1/2} is an
@@ -918,9 +918,9 @@ check (D-12): pending" — nothing is called verified.
   in exact rational arithmetic or mpmath at 200 digits: `L17_dyadic_exp_ln.md` (dyadic interval arithmetic,
   exp and ln by truncated series with proved remainders), `P16_thermo_intervals.md` (S7), `P14_degeneracy_bracketing.md`
   (S8), `P15_summed_bounds.md` (S4 combinations), `C06_truncated_thermodynamics.md` (Proposition 16'),
-  `C16_exact_bracket.md`. Each document has the six sections of D-59 and ends with the status line "Derived by
-  Claude on 2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's check
-  (D-12): pending". `tests/test_proofs_props.py` runs every script at reduced size and pins the code facts the
+  `C16_exact_bracket.md`. Each document has the six sections of D-59 and ends with the status line "Derived on
+  2026-10-30; machine-checked (...); independent re-derivation: pending (Phase 2); Sarang's check (D-12):
+  pending". `tests/test_proofs_props.py` runs every script at reduced size and pins the code facts the
   proofs use. The statement strings keep the word UNVERIFIED in the D-12 sense (independent re-derivation
   pending) and name the derivation document.
 - **Corrections found by the derivations (both make a bound looser, never tighter).** `ivl.py`: the atanh
