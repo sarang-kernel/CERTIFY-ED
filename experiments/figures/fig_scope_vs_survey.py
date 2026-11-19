@@ -1,7 +1,7 @@
 """E6 fig_scope_vs_survey: what ED papers report (practice survey) against what a certificate states.
 
 Reads experiments/survey/survey_for_scope.json (quantities reported by the n papers of the analysis set,
-with Wilson 95 % intervals; model-coded, see RESULT_practice_survey.md for the hand-check agreement) and
+with Wilson 95 % intervals; coded automatically, see RESULT_practice_survey.md for the agreement of the check reading) and
 experiments/survey/survey_coded.csv (per-paper quantity lists, for the coverage count). Each bar is one
 reported quantity; its colour is the status of the corresponding row of docs/SCOPE_MATRIX.md: a certified
 statement (with the statement id), a derived record that carries no status, nothing (not certified), or

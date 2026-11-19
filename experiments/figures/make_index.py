@@ -175,7 +175,7 @@ def caption_scope_vs_survey(n):
     top = sorted(q, key=lambda k: -q[k]["percent"])
     t1, t2 = top[0], top[1]
     return (f"What ED papers report against what a certificate states. Bars: the share of the n = {n['n']} papers of "
-            f"the practice survey's analysis set reporting each quantity (model-coded; Wilson 95 % intervals), "
+            f"the practice survey's analysis set reporting each quantity (coded automatically; Wilson 95 % intervals), "
             f"from experiments/survey/survey_for_scope.json; colours: the status of the matching row of "
             f"docs/SCOPE_MATRIX.md. The two most reported quantities, {t1} ({q[t1]['percent']:g} %, "
             f"{q[t1]['wilson95_percent'][0]:g}–{q[t1]['wilson95_percent'][1]:g} %) and {t2} ({q[t2]['percent']:g} %), are "

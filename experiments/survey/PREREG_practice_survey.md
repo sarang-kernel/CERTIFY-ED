@@ -34,8 +34,8 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
 
 1. Fetch and store metadata for the full sample (`survey_sample.json`).
 2. For the coded subsample, fetch the LaTeX source (preferred) or PDF text.
-3. First pass: one haiku-class model call per paper with the coding scheme as a fixed schema, on the full text (truncated to the first 60k characters if longer, with the methods and results sections prioritised when a `\section` structure is present).
-4. Hand check: 12 papers (15 %) drawn at random with seed 20261022 are re-coded by the reviewing session by reading the extracted text; per-field agreement is reported. Fields with agreement below 80 % are re-coded for the whole subsample with a revised prompt, and the revision is recorded.
+3. First pass: one call of an automatic coder per paper with the coding scheme as a fixed schema, on the full text (truncated to the first 60k characters if longer, with the methods and results sections prioritised when a `\section` structure is present).
+4. Check reading: 12 papers (15 %) drawn at random with seed 20261022 are re-coded in a second automatic reading of the extracted text (not a human check); per-field agreement is reported. Fields with agreement below 80 % are re-coded for the whole subsample with revised coding instructions, and the revision is recorded.
 5. Outputs: `survey_sample.json`, `survey_coded.csv`, `survey_handcheck.csv`, one generated LaTeX table (quantities and evidence frequencies), one figure, `RESULT_practice_survey.md`.
 
 ## Stop rules and what each outcome means
@@ -47,7 +47,7 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
 ## Known limits
 
 - Abstract-level query misses papers that use ED without naming it in the abstract.
-- The model-based first pass can mislabel; the hand check measures this, not corrects it everywhere.
+- The automatic first pass can mislabel; the check reading measures this, not corrects it everywhere.
 - Full text is used only as far as arXiv provides source or PDF text; supplementary material is not fetched.
 
 ## Changelog
@@ -68,15 +68,18 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
      problem_class: hermitian-quantum/non-hermitian/classical/other) so that the pre-registered exclusions could be recorded
      per paper, plus max_sites, quotes, confidence and notes as free text. `sectors` was coded as multi-label (the
      pre-registration lists sector types but does not say single-label).
-  5. Hand check. Drawn as random.Random(20261022).sample(range(80), 12) over the subsample in draw order. Coding was done by
-     the reviewing session from keyword-focused excerpts of the extracted text plus targeted full-text searches, not a
-     complete linear reading. Agreement on multi-label fields is reported as the Jaccard index between label sets
+  5. Check reading. Drawn as random.Random(20261022).sample(range(80), 12) over the subsample in draw order. Coding was done
+     in a second automatic reading of keyword-focused excerpts of the extracted text plus targeted full-text searches, not a
+     human check and not a complete linear reading. Agreement on multi-label fields is reported as the Jaccard index between label sets
      (label-wise presence/absence agreement is given alongside).
   6. Re-coding. Pass-1 agreement was below 80 % on 10 of 13 fields. As pre-registered, those fields
-     were re-coded for the whole subsample with a revised prompt (coding_scheme2.py: every positive label must carry a
+     were re-coded for the whole subsample with revised coding instructions (coding_scheme2.py: every positive label must carry a
      verbatim quote; labels without a quote are dropped; tightened definitions for sectors, evidence, producer, precision).
      uses_ed, paper_type, max_dim and max_sites were kept from pass 1. Two papers (2601.03902v2, 2408.00576v2) keep pass-1
-     values on the re-coded fields because the session's LLM token budget was exhausted before their pass-2 call.
+     values on the re-coded fields because the coding budget was exhausted before their pass-2 call.
   7. After re-coding, 9 fields remain below 80 % (producer_category, method, eigenvectors_used, precision_stated, data_available, sectors, quantities, evidence, use). The pre-registration
      allows one revision; the remaining disagreement is reported, not corrected, and the result file marks the affected
-     percentages as provisional. The hand-coded subset is reported alongside.
+     percentages as provisional. The subset coded in the check reading is reported alongside.
+- v0.3 (2026-11-19, wording only): steps 3 and 4, the known limits and items 5, 6 and 7 of v0.2 name the coder and the
+  check reading in neutral terms. The check reading was a second automatic reading, not a human check. The procedure,
+  the data and every number are unchanged.

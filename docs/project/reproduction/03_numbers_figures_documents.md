@@ -79,8 +79,8 @@ latexmk -pdf main.tex
 ```
 
 `make_survey_table.py` writes `numbers_survey.tex` and `tables/survey_table.tex` from the coded survey, and labels the
-model-coded fractions as provisional, because the pre-registered hand check left 9 of 13 fields below 80 % agreement
-(its docstring and `experiments/survey/RESULT_practice_survey.md`). `make_scope_table.py` writes
+automatically coded fractions as provisional, because the pre-registered check reading left 9 of 13 fields below 80 %
+agreement (its docstring and `experiments/survey/RESULT_practice_survey.md`). `make_scope_table.py` writes
 `tables/scope_matrix.tex` from `docs/SCOPE_MATRIX.md`. `make_figure_macros.py` writes the caption macros from the
 numbers files of the two figure directories. The two checks report undefined and duplicate macros; the scaffold README
 records no undefined macro (232 names) and no duplicate. The last built PDF in the archive is
