@@ -458,7 +458,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
         mub = mu[a:b]
         gpu_absHX = None
         if products is not None:
-            HX = np.asarray(products[0])
+            HX = require_binary64(np.asarray(products[0]), "residuals: products[0]")     # fail closed (precision.py)
         elif adapter.rigorous and getattr(adapter, "_gpu", None) is not None:
             HX, gpu_absHX = adapter.both_products(Xb)   # D-05: both products in one pass, bit for bit the CPU ones
         else:
@@ -476,7 +476,8 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
             if gpu_absHX is not None:
                 absHX, gpu_absHX = gpu_absHX, None
             else:
-                absHX = None if products is None else np.asarray(products[1], dtype=float)
+                absHX = (None if products is None else
+                         np.asarray(require_binary64(np.asarray(products[1]), "residuals: products[1]"), dtype=float))
             Eb = _rounding_bound(adapter, mub, Xb, absHX)
             del absHX
             for i in range(b - a):
@@ -802,14 +803,16 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     # the |A||x| guard below is the one of Theorem 1 (Lambda5): established for w <= 2^26 and n <= 2^26 (3.2.2)
     check_guard_range(n=x.size, w=adapter.width, where="enclosure.rayleigh_interval")
     cplx = adapter.complex or np.iscomplexobj(x)
-    Ax = adapter.matvec(x) if Ax is None else np.asarray(Ax).ravel()
+    # caller-supplied products must be binary64 products (fail closed, precision.py)
+    Ax = adapter.matvec(x) if Ax is None else require_binary64(np.asarray(Ax), "rayleigh_interval: Ax").ravel()
     num_c, num_e = exact_dot(x, Ax)
     num = float(np.real(num_c))
     den_c, den_e = exact_dot(x, x)
     den = float(np.real(den_c))
     gdw = gamma_dot(adapter.width + 2, cplx)
     gw = gamma(adapter.width + 1)
-    absAx_raw = adapter.abs_matvec(x) if absAx is None else np.asarray(absAx).ravel()
+    absAx_raw = (adapter.abs_matvec(x) if absAx is None
+                 else require_binary64(np.asarray(absAx), "rayleigh_interval: absAx").ravel())
     absAx = absAx_raw / (1 - gw)
     xa = np.abs(x)
     # |x^*(Ax - fl(Ax))| <= |x|^T gdw |A||x|, bounded with a guarded float dot of non-negatives
