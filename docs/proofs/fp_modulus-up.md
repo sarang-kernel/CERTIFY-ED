@@ -154,11 +154,14 @@ other analyses the treatment is the one each document states (not re-checked her
   nothing against it; `inertia_dense` gives no count (β = ∞, `conclusive` false); the variational record (V1 to V3)
   and the moment record (M1 to M3) are INCONCLUSIVE with `NONFINITE_BOUND`; the observable bound is ∞; the
   non-Hermitian record (N1) and the pencil record (G2) are INCONCLUSIVE; `commutator_bound` and
-  `matrix_affinity_defect` return a non-finite bound. The sector audits, `inertia_sparse` and the S2 accuracy path are
-  tested on overflowing real entries only. Label and quantum-number decisions compare with ∞ or nan and come out false
-  (not tested). Not covered by a test: the correlation records (their intervals become unbounded), the sweeps beyond
-  `matrix_affinity_defect`, the MPS contraction, the Ozaki prototype and the GPU path. `modulus_up` raises no
-  floating-point error under `np.errstate(all="raise")`; its callers may raise FloatingPointError then (not tested).
+  `matrix_affinity_defect` return a non-finite bound. For this entry the moment, observable and affinity bounds and
+  the backward error of `inertia_dense` overflow with `np.abs` as well; S2, V1, V2, N1, G2 and `commutator_bound`
+  change because of the infinite modulus (checked on both sides of this change). The sector audits, `inertia_sparse`
+  and the S2 accuracy path are tested on overflowing real entries only. Label and quantum-number decisions compare
+  with ∞ or nan and come out false (not tested). Not covered by a test: the correlation records (their intervals
+  become unbounded), the sweeps beyond `matrix_affinity_defect`, the MPS contraction, the Ozaki prototype and the GPU
+  path. `modulus_up` raises no floating-point error under `np.errstate(all="raise")`; its callers may raise
+  FloatingPointError then (not tested).
 - Dtypes. As in Inputs; other dtypes are rejected with TypeError.
 - The lower-bound use in `sectors.audit_label` (What is not claimed). Open (D-12 item).
 - Looser bounds. Each modulus of complex data rises to between |z|(1 + 4u) and |z|(1 + 12u) when both components are
