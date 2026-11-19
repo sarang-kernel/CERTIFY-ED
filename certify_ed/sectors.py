@@ -175,7 +175,7 @@ def restrict_to_u1(spec, V, cache: Optional[dict] = None):
     Returns None otherwise (the caller then needs the full-space operator)."""
     from .basis import digit_sum, u1_state_set
     from .construct import build_bitwise, full_state_set
-    V = sp.csr_matrix(V)
+    V = sp.csr_matrix(binary64(V, "sector isometry"))     # exact, widened before the conversion (precision.py)
     rows = np.unique(V.nonzero()[0])
     if rows.size == 0:
         return None
