@@ -2,9 +2,12 @@
 spellings of _is_abs, called or referenced) is listed in tests/abs_audit_allowlist.txt, where each was classified as real
 data, as not part of a bound, or as one of the complex uses that need no upper modulus (Arb balls, squares of the
 components; one open question), and the list holds nothing else. The moduli of complex data in rigorous bounds go
-through fp.modulus_up or fp.abs_up (docs/proofs/fp_modulus-up.md), so reverting one of them to abs() fails here; the
-dynamic pin of tests/test_modulus_up.py (numpy's modulus made to raise on complex input) covers the spellings that no
-source pattern sees."""
+through fp.modulus_up or fp.abs_up (docs/proofs/fp_modulus-up.md), so reverting one of them to abs() fails here.
+
+The scan is by spelling: a modulus written in a way that none of the patterns below names, for example
+np.sqrt(np.vdot(c, c).real) or the norm of the stacked real and imaginary parts, is not seen. The dynamic pin of
+tests/test_modulus_up.py (numpy's, the builtin and scipy's absolute values record every call on complex data) sees
+those functions whatever they are called through, but not a modulus that calls none of them."""
 import ast
 import os
 from collections import Counter
@@ -16,13 +19,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # self.cp, math, cmath, operator, builtins, ...): abs, absolute, hypot, fabs, polar and __abs__, called or referenced
 # as a value (map(abs, ...), key=abs, f = np.abs, np.abs.reduce, np.vectorize(abs)), getattr(m, "abs"); the norms
 # norm, vector_norm, matrix_norm and cond with an order other than None, 2 or 'fro' (1, inf, -inf, ... sum or compare
-# moduli); onenormest; isclose and allclose (they compare moduli of differences); and a square root of an expression
-# that reads both .real and .imag, or calls .conj() (a hand-written modulus)
+# moduli); onenormest; isclose and allclose (they compare moduli of differences); a square root of an expression
+# that reads both .real and .imag, or calls .conj() (a hand-written modulus); and a power with exponent 0.5, written
+# x ** 0.5, x ** (1 / 2), np.power(x, 0.5), np.float_power, pow or math.pow (any base: (re ** 2 + im ** 2) ** 0.5)
 _NAMES = {"abs", "absolute", "hypot", "fabs", "polar", "__abs__"}
 _BARE_NAMES = {"abs", "hypot", "fabs", "polar"}        # 'absolute' is also a parameter name in certify_ed
 _NORMS = {"norm": ("ord", 1), "vector_norm": ("ord", None), "matrix_norm": ("ord", None), "cond": ("p", 1)}
 _SAFE_ORDS = {"None", "2", "2.0", "'fro'"}
 _OTHER = {"onenormest", "isclose", "allclose"}
+_POWERS = {"power", "float_power", "pow"}                # np.power(x, 0.5), math.pow(x, 0.5), pow(x, 0.5)
+_HALF = {"0.5", "1/2", "1.0/2", "1/2.0", "1.0/2.0"}
 
 
 def _name(fn):
@@ -49,9 +55,20 @@ def _hand_written_modulus(call):
     return ("real" in attrs and "imag" in attrs) or "conj" in attrs or "conjugate" in attrs
 
 
+def _is_half(node):
+    return ast.unparse(node).replace(" ", "") in _HALF
+
+
+def _is_half_power(node):
+    """x ** 0.5 (or ** (1 / 2)): a square root written as a power, as in (re ** 2 + im ** 2) ** 0.5."""
+    return isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow) and _is_half(node.right)
+
+
 def _is_abs(call):
     name = _name(call.func)
     if name in _NAMES or name in _OTHER:
+        return True
+    if name in _POWERS and len(call.args) >= 2 and _is_half(call.args[1]):
         return True
     if name in _NORMS:
         kw_name, pos = _NORMS[name]
@@ -100,7 +117,7 @@ def _visit(node, scope, rel, out, imported_absolute, func_position=False):
                 _visit(ch, scope + [ch.name], rel, out, imported_absolute)
                 continue
             in_func = isinstance(node, ast.Call) and field == "func"
-            if isinstance(ch, ast.Call) and _is_abs(ch):
+            if (isinstance(ch, ast.Call) and _is_abs(ch)) or _is_half_power(ch):
                 out[(rel, ".".join(scope) or "<module>", ast.unparse(ch))] += 1
             elif not in_func and _is_reference(ch, imported_absolute):
                 out[(rel, ".".join(scope) or "<module>", "<reference> " + ast.unparse(ch))] += 1
@@ -160,7 +177,9 @@ def test_the_pattern_sees_every_spelling():
             "scipy.sparse.linalg.norm(A, -np.inf)", "la.norm(z, 1)", "norm(z, 1)", "np.linalg.vector_norm(z, ord=1)",
             "np.linalg.matrix_norm(A, ord=1)", "np.linalg.cond(A, 1)", "np.linalg.cond(A, p=np.inf)",
             "onenormest(A)", "np.isclose(a, b)", "np.allclose(a, b)", "getattr(np, 'abs')(z)",
-            "np.sqrt(z.real ** 2 + z.imag ** 2)", "np.sqrt((z * z.conj()).real)", "math.sqrt(x.real * x.real + x.imag * x.imag)"]
+            "np.sqrt(z.real ** 2 + z.imag ** 2)", "np.sqrt((z * z.conj()).real)",
+            "math.sqrt(x.real * x.real + x.imag * x.imag)", "(re ** 2 + im ** 2) ** 0.5", "(re * re + im * im) ** (1 / 2)",
+            "np.power(re ** 2 + im ** 2, 0.5)", "np.float_power(s, 0.5)", "pow(s, 0.5)", "math.pow(s, 0.5)"]
     refs = ["map(abs, zs)", "sorted(zs, key=abs)", "f = np.abs", "np.abs.reduce(z)", "np.vectorize(abs)(z)",
             "a = abs\na(z)", "self.cp.absolute.reduce(z)", "fns = [math.fabs, np.hypot]"]
     for s in seen:
@@ -171,7 +190,7 @@ def test_the_pattern_sees_every_spelling():
     for s in ("np.linalg.norm(z)", "np.linalg.norm(z, 2)", "np.linalg.norm(A, 'fro')", "np.linalg.norm(z, ord=None)",
               "np.linalg.vector_norm(z)", "np.linalg.matrix_norm(A)", "np.linalg.cond(A)", "np.sqrt(z)",
               "np.sqrt(x * x + y * y)", "op.matmul(x, absolute=True)", "def f(absolute):\n    return absolute",
-              "abs_up(A)", "modulus_up(z)"):
+              "abs_up(A)", "modulus_up(z)", "x ** 2", "x ** 0.25", "np.power(x, 2)", "pow(x, 3)"):
         assert not _scan(s), s
 
 

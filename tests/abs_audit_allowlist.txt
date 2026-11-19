@@ -6,6 +6,7 @@
 certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GL)	real data only
 certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GC)	real data only
 certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GR)	real data only
+certify_ed/apps/aklt/eta.py	certify_eta	float(tprime) ** 0.5	real data only
 certify_ed/apps/aklt/kernel.py	scaled_pmax	abs(S1 - S2)	real data only
 certify_ed/apps/aklt/kernel.py	kernel_check	abs(int(x))	real data only
 certify_ed/apps/aklt/kernel.py	kernel_check	np.abs(H.data)	real data only

@@ -312,34 +312,37 @@ edits only the comment above these functions and `inf_norm_upper` below them).
 
 **The audit.** Searched: the 182 lines of `certify_ed` that contain the text `abs(` on branch `fix/keep-caller-matrix`
 (commit cdf6ebb, the base of the first version of this change; the line numbers of the audit CSV are those of that
-commit). They hold 243 calls of `abs()`, `np.abs` and `np.absolute` (an AST count at cdf6ebb). Classes: real data
-only 92 lines; complex data in a rigorous bound 66; not part of a bound (heuristic, display, selection) 24. Of the 66,
-60 lines now use `modulus_up` or `abs_up`; 3 form the squares of the components for values that are enclosed from both
+commit). They hold 243 calls of `abs()`, `np.abs` and `np.absolute` (an AST count at cdf6ebb). Classes: real data only
+92 lines; complex data in a rigorous bound 66; not part of a bound (heuristic, display, selection) 24. Of the 66, 60
+lines now use `modulus_up` or `abs_up`; 3 form the squares of the components for values that are enclosed from both
 sides (`davis_kahan` fidelity, `invariants` Frobenius sums); 2 are Arb ball arithmetic (`rigorous.py`, already
 rigorous); 1 needs a lower bound and is unchanged (`sectors.audit_label`, What is not claimed). The 119 unchanged
-lines hold 145 calls. `tests/abs_audit_allowlist.txt` lists the 156 moduli left: the 145, three real scalars on
+lines hold 145 calls. `tests/abs_audit_allowlist.txt` lists the 157 moduli left: the 145, three real scalars on
 changed lines (`abs(mu[i])`, `abs(sigma)`, `abs(dc)`), seven calls inside `modulus_up`, `_modulus_up_into` and
-`abs_up` (the real and integer branches and the components), and one `np.allclose` on real data (an exact symmetry
-test in `apps/pyrochlore`), each with its class (real data 124, not part of a bound 29, complex data left unchanged
-3). `tests/test_abs_audit.py` scans every module of `certify_ed` for these spellings, whatever the object they are
-taken from (`np`, `xp`, `self.cp`, `math`, `builtins`, ...): `abs`, `absolute`, `hypot`, `fabs`, `polar` and
-`__abs__`, called or referenced as a value (`map(abs, ...)`, `key=abs`, `f = np.abs`, `np.abs.reduce`,
-`np.vectorize(abs)`), `getattr(m, "abs")`; `norm`, `vector_norm`, `matrix_norm` and `cond` with an order other than
-None, 2 or 'fro'; `onenormest`, `isclose`, `allclose`; and a square root of an expression that reads both `.real`
-and `.imag` or calls `.conj()`. It fails when the moduli found and the list differ as multisets, so a new modulus
-must be classified and a removed one must leave the list; it also fails on an import of these names under another
-name. There are no others in `certify_ed`. A dynamic pin (`tests/test_modulus_up.py`) replaces `np.abs`,
-`np.absolute`, the builtin `abs` and the absolute value of scipy sparse matrices by functions that record each call
-on complex data made from a place the list does not classify as complex (matched on the function and the expression
-of the line), and runs the main entry points on complex data: `certify()` with a sparse and a dense operator, an
-observable, a spec, a spec operator above `reference_max_dim`, the matrix-free operator and the sparse inertia;
-`certify_variational`, `state_from_mps`, `certified_moments` with its sum rules, `commutator_bound`, `audit_sector`,
-`audit_label`, `compress_operator`, `certify_nonhermitian`, `certify_generalized`, `matrix_affinity_defect`,
-`certified_sweep`, `ozaki_residual`, `enclose`, `inertia_sparse` with the a-priori bound, and the spec and matrix-free
-operators applied to complex vectors directly. It records nothing. With the source pin left out, each of the 74
-routed occurrences of `modulus_up` and `abs_up` reverted alone to `np.abs` or `abs` is recorded, except the 8 in
-`gpu.py`, whose device path does not run without CuPy (the source pins catch those); also recorded: a revert to
-`np.vectorize(abs)`.
+`abs_up` (the real and integer branches and the components), one `np.allclose` on real data (an exact symmetry test in
+`apps/pyrochlore`) and one power with exponent 0.5 on real data (`apps/aklt/eta.py`, a printed estimate), each with
+its class (real data 125, not part of a bound 29, complex data left unchanged 3). `tests/test_abs_audit.py` scans
+every module of `certify_ed` for these spellings, whatever the object they are taken from (`np`, `xp`, `self.cp`,
+`math`, `builtins`, ...): `abs`, `absolute`, `hypot`, `fabs`, `polar` and `__abs__`, called or referenced as a value
+(`map(abs, ...)`, `key=abs`, `f = np.abs`, `np.abs.reduce`, `np.vectorize(abs)`), `getattr(m, "abs")`; `norm`,
+`vector_norm`, `matrix_norm` and `cond` with an order other than None, 2 or 'fro'; `onenormest`, `isclose`,
+`allclose`; a square root of an expression that reads both `.real` and `.imag` or calls `.conj()`; and a power with
+exponent 0.5 (`x ** 0.5`, `np.power(x, 0.5)`, `pow`, `math.pow`, `np.float_power`). The scan is by spelling: a modulus
+written in a way none of these names, such as `np.sqrt(np.vdot(c, c).real)` or the norm of the stacked real and
+imaginary parts, is not seen, and the dynamic pin below does not see it either, since it calls none of the abs
+functions. It fails when the moduli found and the list differ as multisets, so a new modulus must be classified and a
+removed one must leave the list; it also fails on an import of these names under another name. There are no others in
+`certify_ed`. A dynamic pin (`tests/test_modulus_up.py`) replaces `np.abs`, `np.absolute`, the builtin `abs` and the
+absolute value of scipy sparse matrices by functions that record each call on complex data made from a place the list
+does not classify as complex (matched on the function and the expression of the line), and runs the main entry points
+on complex data: `certify()` with a sparse and a dense operator, an observable, a spec, a spec operator above
+`reference_max_dim`, the matrix-free operator and the sparse inertia; `certify_variational`, `state_from_mps`,
+`certified_moments` with its sum rules, `commutator_bound`, `audit_sector`, `audit_label`, `compress_operator`,
+`certify_nonhermitian`, `certify_generalized`, `matrix_affinity_defect`, `certified_sweep`, `ozaki_residual`,
+`enclose`, `inertia_sparse` with the a-priori bound, and the spec and matrix-free operators applied to complex vectors
+directly. It records nothing. With the source pin left out, each of the 74 routed occurrences of `modulus_up` and
+`abs_up` reverted alone to `np.abs` or `abs` is recorded, except the 8 in `gpu.py`, whose device path does not run
+without CuPy (the source pins catch those); also recorded: a revert to `np.vectorize(abs)`.
 
 **The call sites.** Direction: "upper" where the bound needs m ≥ |z| (a modulus in a sum or product of non-negative
 terms), "lower" where it would need m ≤ |z|.
