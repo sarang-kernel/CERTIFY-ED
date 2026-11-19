@@ -140,6 +140,23 @@ def test_certify_leaves_matrices_of_the_options_as_given(shape):
     _same(a, ce.certify(claim, spec, opts))
 
 
+def test_an_entry_that_cannot_be_read_by_index_is_passed_on_as_given():
+    """{0: S, "lattice": 1.0} cannot be read as (S, lattice): certify() passes it on unchanged, so a run whose
+    statements do not read it certifies as before, and S is left as given."""
+    spec = ce.heisenberg_chain(8)
+    H = ce.build_bitwise(spec)
+    w, V = np.linalg.eigh(H.toarray())
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
+    n_sites = int(round(np.log2(spec.dim)))
+    z = np.array([sum(0.5 - ((b >> i) & 1) for i in range(n_sites)) for b in range(spec.dim)])
+    Sz = _with_duplicates(sp.diags(z).tocsr())
+    before = _arrays(Sz)
+    opts = ce.Options(seed=1, only=["S2.eigenpairs"], approximate_symmetries={"Sz": {0: Sz, "lattice": 1.0}})
+    a = ce.certify(claim, spec, opts)
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+    assert _unchanged(Sz, before)
+
+
 @pytest.mark.parametrize("read_flag", [True, False])
 def test_entries_absorbed_by_the_sum_are_not_scanned_for_underflow(read_flag):
     """Each entry stored as v and 2^-950: summed, the tiny parts vanish (v + 2^-950 == v), so the stored operator is H

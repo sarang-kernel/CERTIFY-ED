@@ -941,12 +941,13 @@ def _options_as_given(opts: Options, own) -> Options:
             return v
         try:
             S = v[0]
+            rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
         except (TypeError, IndexError, KeyError):
-            return v
+            return v                       # not readable so: passed on as given, read (or refused) where it is used
         S_own = own(S)
         if S_own is S:
             return v
-        return (S_own, *(v[i] for i in range(1, len(v))))      # read by index, as labels_hook reads it
+        return (S_own, *rest)
     obs_given = opts.observables or {}                 # [] and () as accepted before
     asym_given = opts.approximate_symmetries or {}
     obs = {k: own(v) for k, v in obs_given.items()}
