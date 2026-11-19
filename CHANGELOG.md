@@ -100,21 +100,22 @@ two-sided values, the C-13 fidelity and the Frobenius invariant of the S1 eviden
 components instead. No constant and no status rule changes. For complex128 data the bound values change in the last
 bits (each modulus lies at or above the exact one and, for normal values, at most a relative 12u above it, where
 NumPy's could lie below it). For complex64 data the moduli were float32 values before and are binary64 upper bounds
-now, so those bounds can move either way by more than that. An operator with an entry within a relative 12u of the
-largest float now has an infinite modulus, and the statements that rest on it state nothing, by the rules of the
-previous entry: S2, S3, V1 to V3, M1 to M3, N1 and G2 are INCONCLUSIVE where they were CERTIFIED, the observable bound
-is ∞ and `inertia_dense` gives no count (`tests/test_nonfinite_moduli.py`). Real data, and complex data whose entries
-all have a zero real or imaginary part, give the same bounds and records as before, except the non-Hermitian record:
-its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod, which the bounds no longer need (its four
-assumption strings and its record hash change, for real data too). Cost:
-a modulus pass takes about four times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones;
-the S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against
-8.9 s); matrix-free operators pay the moduli in every |H||x| application. The derivation is new and unverified:
-Sarang's check (D-12) is pending (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13
-derivation documents; `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
-`tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic
-symmetry divides by a floating-point root separation and its record's `certified` flag rests on it (an open D-12
-item; the record says so, previous entry). The computational source hash changes.
+now, so those bounds can move either way by more than that (a bound formed in single precision is not covered; the
+separate change `fix/single-precision`). An operator with an entry within a relative 12u of the largest float now has
+an infinite modulus, and the statements that rest on it state nothing, by the rules of the previous entry: S2, S3, V1
+to V3, M1 to M3, N1 and G2 are INCONCLUSIVE where they were CERTIFIED, the observable bound is ∞ and `inertia_dense`
+gives no count (`tests/test_nonfinite_moduli.py`). Real data, and complex data whose entries all have a zero real or
+imaginary part, give the same bounds and records as before, except the non-Hermitian record: its arithmetic text names
+`fp.modulus_up` instead of the hypothesis H-mod, which the bounds no longer need (its four assumption strings and its
+record hash change, for real data too). Cost: a modulus pass takes about four times as long as `np.abs` on large
+arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus once and cost what they cost
+before (Heisenberg chain, N = 20: 7.3 s against 8.9 s); matrix-free operators pay the moduli in every |H||x|
+application. The derivation is new and unverified: Sarang's check (D-12) is pending (`docs/proofs/fp_modulus-up.md`,
+sections 3 and 4, and the correction notes of 13 derivation documents; `tests/test_abs_audit.py`, which also fails on
+stale lines of its list, and the dynamic pin of `tests/test_modulus_up.py`;
+`docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic symmetry divides by a
+floating-point root separation and its record's `certified` flag rests on it (an open D-12 item; the record says so,
+previous entry). The computational source hash changes.
 
 ### GPU products (roadmap D-05; branch feature/gpu-d05, first named track/gpu-d05)
 

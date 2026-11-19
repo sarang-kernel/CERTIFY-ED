@@ -199,22 +199,22 @@ The moduli of complex data in rigorous bounds now come from `fp.modulus_up` and 
 above), and the analyses count no rounding for a modulus. New, not an independent re-derivation and not a human check.
 What this changes in the documents (a correction note in each, marked UNVERIFIED, with a line after its status line
 pointing to it): `thm1_fp-accounting.md` (S2) holds for complex data with the kept constant γ_{w+3} by (Λ5′), the
-monotone form of (Λ5) with the division index k ≥ w + 1, checked at k = w + 3; `D-02_matrix-free.md` Lemma M3 holds
-as first stated (h_a = h_x = 0), and Lemma N counts nothing for |c_t|; `D-01_sparse-residual.md` no longer needs
-"≤ 3u" for the moduli (the factors (1 − u)³ are spare); `E-02_non_hermitian.md` no longer needs H-mod;
-`appA_model-shift.md` no longer needs the extra index of its erratum of 10 Nov 2026; `E-05_variational.md` Lemmas 3
-and 4, `C-07_moments.md`, `E-03_generalized.md`, `C-04_correlation_lift.md`, `E-04_parameter_intervals.md`,
+monotone form of (Λ5) with the division index k ≥ w + 1, checked at k = w + 3; `D-02_matrix-free.md` Lemma M3 holds as
+first stated (h_a = h_x = 0), and Lemma N counts nothing for |c_t|; `D-01_sparse-residual.md` no longer needs "≤ 3u"
+for the moduli (the factors (1 − u)³ are spare); `E-02_non_hermitian.md` no longer needs H-mod; `appA_model-shift.md`
+no longer needs the extra index of its erratum of 10 Nov 2026; `E-05_variational.md` Lemmas 3 and 4,
+`C-07_moments.md`, `E-03_generalized.md`, `C-04_correlation_lift.md`, `E-04_parameter_intervals.md`,
 `E-07_davis_kahan.md` (Lemma 5 (c) now formed as stated, which settles the remark in its row), `int05_underflow.md`
 (the Lemma U4 remark on `hypot` moduli of subnormal components) and the draft `D-03_ozaki_draft.md` hold as written
 with upper moduli. No code constant changes; the complex γ_{w+3} of `_rounding_bound` and the constants of D-01, D-02,
-D-03 and E-02 keep spare counts. For complex128 data the bound values change in the last bits (each modulus lies at
-or above the exact one and, for normal values, at most a relative 12u above it); for complex64 data the moduli were
-float32 values before, so those bounds can move either way by more; an entry within a relative 12u of the largest
-float has an infinite modulus now (S2 INCONCLUSIVE instead of CERTIFIED). The records that rest on such a modulus
-state nothing, by the rules of the section above (`tests/test_nonfinite_moduli.py`), as the independent re-derivation
-asks for a nan bound (suggested edit 1 of its row). Real data and complex data whose entries have a zero component are
-unchanged, except for the arithmetic text of the non-Hermitian record, which names `fp.modulus_up` instead of the
-hypothesis H-mod.
+D-03 and E-02 keep spare counts. For complex128 data the bound values change in the last bits (each modulus lies at or
+above the exact one and, for normal values, at most a relative 12u above it); for complex64 data the moduli were
+float32 values before, so those bounds can move either way by more (a bound formed in single precision is not covered;
+the separate change `fix/single-precision`); an entry within a relative 12u of the largest float has an infinite
+modulus now (S2 INCONCLUSIVE instead of CERTIFIED). The records that rest on such a modulus state nothing, by the
+rules of the section above (`tests/test_nonfinite_moduli.py`), as the independent re-derivation asks for a nan bound
+(suggested edit 1 of its row). Real data and complex data whose entries have a zero component are unchanged, except
+for the arithmetic text of the non-Hermitian record, which names `fp.modulus_up` instead of the hypothesis H-mod.
 
 Review rounds of 2026-11-18 (UNVERIFIED, D-12). Resolved: the audit pin of `tests/test_abs_audit.py` covers every
 spelling of a modulus, called or referenced, whatever the object it is taken from, the 1- and ∞-type norm orders and
