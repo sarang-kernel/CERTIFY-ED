@@ -457,8 +457,8 @@ S1 evidence (seconds, Windows reference host, one process each, two runs; the fi
 work): `invariants.spec_invariants` and the S1 statement of `certify(..., Options(only=["S1"]))` for the Heisenberg
 chain with J2 = 0.5 (T = 6N terms) and for the same chain with the phase e^{0.3i} on its flip terms (complex). Base:
 commit cdf6ebb (`np.abs`), 14 commits before cd0ca97, the base of this stack, whose `certify.py` and `variational.py`
-differ (see the second table); the routing before the moduli of S1 were taken once per term (commit 51c6d7f, first
-run only); this change.
+differ (see the second table); the routing before the moduli of S1 were taken once per term (the first version of this
+stack at its commit "Use upper moduli in model invariant tolerances", first run only); this change.
 
 | model | spec_invariants: base | before the fix | now | S1: base | before the fix | now |
 |---|---|---|---|---|---|---|
