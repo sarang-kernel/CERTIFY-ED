@@ -325,8 +325,8 @@ cover these two variants; the code, which steps below 2⁻¹⁰²², is covered 
 integers stepped up; a float for every scalar); the passes (equal to one-entry calls at the boundaries;
 Fortran-ordered, transposed and sliced input give the values of the C-ordered array, with temporaries below 12 MiB);
 zero entries on the unscaled branch; the FP-M items marked *tested*; real input, inf and nan, shapes, the elementwise
-identity used by the GPU spot check; `abs_up` on CSR, CSC, BSR, COO, DIA, LIL and dense input, with duplicates summed
-in place and the format kept, and on integer and boolean sparse data (stepped up).
+identity used by the GPU spot check; `abs_up` on CSR, CSC, BSR, COO (and a 1-D `coo_array`), DIA, LIL and dense input,
+with duplicates summed in place and the format kept, and on integer and boolean sparse data (stepped up).
 
 **Cost** (best and median of five, seconds, Windows reference host, branch `fix/upper-moduli` at commit 249b8ae). A
 complex vector of 2²⁴ entries: `np.abs` 0.162 and 0.171, `modulus_up` 0.698 and 0.739 (about 4.3 times); the scaled
