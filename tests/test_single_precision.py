@@ -392,12 +392,20 @@ def test_float16_is_widened_exactly():
     assert w == [{"input": "h", "dtype": "float16", "converted_to": "float64", "source_sha256": array_sha256(h)}]
 
 
-def test_integer_input_is_widened_when_exact():
+def test_integer_inputs_are_checked_and_not_recorded():
+    """Integer inputs were not affected: they are checked (every value a binary64 number), used as given and not
+    recorded, so their certificates are those of 3.x (tests compare with cd0ca97 in the methods record). Integer
+    vectors with an integer operator, which 3.x refused with a numpy casting error, now certify."""
+    from certify_ed.certificate_v2 import array_sha256
     A = np.array([[2, 1], [1, 2]], dtype=np.int64)              # eigenvalues 1 and 3
-    c = certify(Claim([3.0], np.array([[1], [1]], dtype=np.int32), A, kind="subset"))
-    assert _s2(c)["status"] == "CERTIFIED"
-    assert _widened(c) == {("claim.operator", "int64", "float64"), ("claim.eigenvectors", "int32", "float64")}
-    _same_certificate(c, certify(Claim([3.0], np.array([[1.0], [1.0]]), A.astype(float), kind="subset")))
+    xi = np.array([[1], [1]], dtype=np.int32)
+    c = certify(Claim([3.0], xi, A, kind="subset"), options=Options(store_eigenvectors=True))
+    assert _s2(c)["status"] == "CERTIFIED" and "input_widening" not in c.body["arithmetic"]
+    assert c.arrays["eigenvectors"].dtype == np.int32
+    assert c.body["claim"]["eigenvectors_sha256"] == array_sha256(xi)
+    ref = certify(Claim([3.0], xi.astype(float), A.astype(float), kind="subset"))
+    assert c.arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
+    assert c.body["subject"]["operator"]["matrix_sha256"] == ref.body["subject"]["operator"]["matrix_sha256"]
     from certify_ed.precision import binary64
     assert binary64(np.array([2 ** 60, -(2 ** 60)], dtype=np.int64)).tolist() == [2.0 ** 60, -2.0 ** 60]
 
@@ -416,9 +424,14 @@ def test_integers_binary64_cannot_hold_are_refused():
 
 def test_non_numeric_and_wider_types_are_refused():
     from certify_ed.precision import PrecisionError, binary64, target_dtype
-    obj = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=object)
+    from fractions import Fraction
+    obj = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=object)       # exact values: accepted (one rule, precision.py)
+    _same_certificate(certify(Claim([1.0], _x(np.float64), obj, kind="subset")),
+                      certify(Claim([1.0], _x(np.float64), obj.astype(float), kind="subset")))
+    with pytest.raises(PrecisionError, match="not exactly a binary64 number"):
+        certify(Claim([1.0], _x(np.float64), np.array([[Fraction(1, 3), 0], [0, 1]], dtype=object), kind="subset"))
     with pytest.raises(PrecisionError, match="not numeric"):
-        certify(Claim([1.0], _x(np.float64), obj, kind="subset"))
+        certify(Claim([1.0], _x(np.float64), np.array([["a", 0], [0, 1]], dtype=object), kind="subset"))
     with pytest.raises(PrecisionError, match="not numeric"):
         binary64(np.array(["a"]))
     if np.finfo(np.longdouble).nmant > 52:                     # x87 extended or quad long double
@@ -573,7 +586,7 @@ def test_array_like_vectors_are_widened_and_recorded(dtype):
     assert a.radius.tobytes() == enclose(OperatorAdapter(_wide(_A(dtype))), [1.0], _wide(_x(dtype))).radius.tobytes()
 
 
-def test_widening_entries_carry_the_source_hash_and_lists_are_recorded_like_arrays():
+def test_widening_entries_carry_the_source_hash_and_lists_are_treated_like_arrays():
     from certify_ed.certificate_v2 import array_sha256
     from certify_ed.precision import source_sha256
     A, x = _A("float32", "sparse"), _x("float32")
@@ -581,10 +594,10 @@ def test_widening_entries_carry_the_source_hash_and_lists_are_recorded_like_arra
     rows = {w["input"]: w for w in c.body["arithmetic"]["input_widening"]["converted"]}
     assert rows["claim.eigenvectors"]["source_sha256"] == array_sha256(x)
     assert rows["claim.operator"]["source_sha256"] == source_sha256(A) != source_sha256(_wide(A))
-    # integers: an int64 array and the same Python list give the same entry and the same certificate
+    # integers: an int64 array and the same Python list give the same certificate, without a widening entry
     cs = [certify(_claim_all(), options=Options(eigenspaces="all", symmetries={"d": (d, 1.0)}))
           for d in (np.array([1, -1], dtype=np.int64), [1, -1])]
-    assert _widened(cs[0]) == _widened(cs[1]) == {("options.symmetries[d]", "int64", "float64")}
+    assert _widened(cs[0]) == _widened(cs[1]) == set()
     _same_certificate(*cs)
 
 
@@ -705,8 +718,11 @@ def test_every_sparse_format_is_widened(dtype, fmt):
     assert W.format == fmt and W.dtype == M64.dtype and np.array_equal(W.toarray(), ref) and M.dtype == dense.dtype
     lam, x = (3.0, np.array([[1.0], [1.0]])) if dtype == "int64" else (1.0, _x(dtype))
     c = certify(Claim([lam], x, M, kind="subset"))
-    assert _s2(c)["status"] == "CERTIFIED" and ("claim.operator", dtype, M64.dtype.name) in _widened(c)
-    assert dtype == "int64" or c.arrays["radius"][0] >= E
+    assert _s2(c)["status"] == "CERTIFIED"
+    if dtype == "int64":                                     # checked, used as given, not recorded
+        assert _widened(c) == set()
+    else:
+        assert ("claim.operator", dtype, M64.dtype.name) in _widened(c) and c.arrays["radius"][0] >= E
     _same_certificate(c, certify(Claim([lam], x.astype(ref.dtype), M64, kind="subset")))
     assert matrix_sha256(M) == matrix_sha256(M64) == c.body["subject"]["operator"]["matrix_sha256"]
     if fmt in ("lil", "dok"):
@@ -766,6 +782,9 @@ def test_repeated_entries_in_sector_blocks_and_isometries(dtype):
     a = certify_low_energy(spec, secs, E_cut, H_full=Hf, label_symmetries=("translation",))
     b = certify_low_energy(spec, ref, E_cut, H_full=Hf, label_symmetries=("translation",))
     _same_record(a, b)
+    assert "input_widening" not in b
+    assert {w["input"] for w in a["input_widening"]["converted"]} == {f"sector nup={k}: {p}" for k in range(5)
+                                                                       for p in ("isometry", "block", "eigenvectors")}
     rec = {s["label"]: s for s in a["sectors"]}
     assert rec["nup=4"]["invariance_defect"] < 1e-12                          # the block is h + t, as in Hf
     assert rec["nup=0"]["isometry_defect"] >= 2 ** -24 and a["eta"] >= 2 ** -24
@@ -788,12 +807,12 @@ def test_repeated_entries_in_sector_blocks_and_isometries(dtype):
 @pytest.mark.parametrize("dtype", ["float64", "float32", "int64"])
 def test_array_like_and_list_operators_are_stored_matrices(dtype):
     """An operator given as a list of lists or as an array-like (an object with __array__ and no matvec) is a stored
-    matrix whatever its dtype; it is recorded only when its numbers were converted (a list of Python floats is
-    binary64 already)."""
+    matrix whatever its dtype; it is recorded only when a narrower floating format was converted (a list of Python
+    floats is binary64 already; integers are not recorded)."""
     dense = _int_A() if dtype == "int64" else _A(dtype)
     lam, x = (3.0, np.array([[1.0], [1.0]])) if dtype == "int64" else (1.0, _x(np.float64))
     ref = certify(Claim([lam], x, dense.astype(np.float64), kind="subset"))
-    for op, rec in ((_ArrayLike(dense), dtype != "float64"), (dense.tolist(), dtype == "int64")):
+    for op, rec in ((_ArrayLike(dense), dtype == "float32"), (dense.tolist(), False)):
         c = certify(Claim([lam], x, op, kind="subset"))
         assert c.body["subject"]["operator"]["kind"] == "matrix" and _s2(c)["status"] == "CERTIFIED"
         assert _widened(c) == ({("claim.operator", dtype, "float64")} if rec else set())
@@ -834,3 +853,261 @@ def test_compose_decomposition_audit_in_binary64(dtype):
     G = [[sum(Wx[i][p] * Wx[i][q] for i in range(H.shape[0])) - (p == q) for q in range(len(cols))]
          for p in range(len(cols))]
     assert a["eta"] >= max(abs(float(x)) for row in G for x in row)
+
+
+
+# ------------------------------------------------------------------------------------------- council round 1
+def _coo_files(tmp_path, dtype):
+    """The repeated-entry matrix diag(1 + 2^-25, 3) of _repeated as files: scipy COO npz, npz row/col/data, HDF5
+    row/col/data group; eigenvalues (1, 3) and vectors I."""
+    h5py = pytest.importorskip("h5py")
+    M = _repeated("coo", dtype)
+    sp.save_npz(str(tmp_path / "H_scipy.npz"), M, compressed=False)
+    np.savez(str(tmp_path / "H_rcd.npz"), row=M.row, col=M.col, data=M.data, shape=np.array(M.shape))
+    with h5py.File(str(tmp_path / "H.h5"), "w") as f:
+        g = f.create_group("H")
+        for k, v in (("row", M.row), ("col", M.col), ("data", M.data), ("shape", np.array(M.shape))):
+            g.create_dataset(k, data=v)
+    np.save(str(tmp_path / "ev.npy"), np.array([1.0, 3.0]))
+    np.save(str(tmp_path / "X.npy"), np.eye(2))
+    return M, ["H_scipy.npz", "H_rcd.npz", "H.h5"]
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_file_readers_keep_single_precision_coo_files_as_read(tmp_path, dtype):
+    """read_operator (claim_from_file, claim_from_bundle, the CLI) returns a single-precision COO file in its stored
+    layout, so certify() converts it exactly and sums the repeated entry in binary64: the certificate is that of the
+    in-memory matrix, its hash is matrix_sha256 of the file's data, and source_sha256 is that of the arrays as read."""
+    from certify_ed.certificate_v2 import matrix_sha256
+    from certify_ed.cli import main
+    from certify_ed.importers import claim_from_file
+    from certify_ed.io.formats import read_operator
+    from certify_ed.precision import source_sha256
+    M, names = _coo_files(tmp_path, dtype)
+    ref = certify(Claim([1.0, 3.0], np.eye(2), M, kind="subset"))
+    assert ref.arrays["radius"][0] >= T
+    for name in names:
+        path = str(tmp_path / name)
+        A = read_operator(path)
+        assert A.format == "coo" and A.nnz == 3 and A.dtype == np.dtype(dtype)
+        c = certify(claim_from_file(str(tmp_path / "ev.npy"), str(tmp_path / "X.npy"), path))
+        assert c.arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
+        assert c.body["subject"]["operator"]["matrix_sha256"] == matrix_sha256(M)
+        row = {w["input"]: w for w in c.body["arithmetic"]["input_widening"]["converted"]}["claim.operator"]
+        assert row["dtype"] == dtype and row["source_sha256"] == source_sha256(A)
+        out = str(tmp_path / f"c_{name}")
+        assert main(["certify", str(tmp_path / "ev.npy"), "--eigenvectors", str(tmp_path / "X.npy"), "--operator", path,
+                     "--kind", "subset", "-o", out]) == 0
+        assert ce.Certificate.load(out + ".json").arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_writers_store_the_binary64_copy_of_a_single_precision_sparse_matrix(tmp_path, dtype):
+    """write_operator, write_bundle and export_npz would sum a single-precision COO matrix's repeated entries in single
+    precision when they convert it to CSR; they write its exact binary64 copy instead, summed in binary64."""
+    from certify_ed.importers import claim_from_bundle, claim_from_npz, export_npz
+    from certify_ed.io.bundle import write_bundle
+    from certify_ed.io.formats import read_operator, write_operator
+    M = _repeated("coo", dtype)
+    want = sp.csr_matrix(_wide(M)).toarray()                   # (0, 0) = 1 + 2^-25
+    for ext in (".npz", ".mtx", ".h5", ".json", ".txt"):
+        write_operator(str(tmp_path / f"op{ext}"), M)
+        assert np.array_equal(read_operator(str(tmp_path / f"op{ext}")).toarray(), want), ext
+    write_bundle(str(tmp_path / "b"), [1.0, 3.0], np.eye(2), operator=M, basis=sp.identity(2, dtype=dtype, format="coo"))
+    claim = claim_from_bundle(str(tmp_path / "b"))[0]
+    assert np.array_equal(claim.operator.toarray(), want)
+    export_npz(str(tmp_path / "e.npz"), [1.0, 3.0], np.eye(2), M)
+    assert np.array_equal(claim_from_npz(str(tmp_path / "e.npz")).operator.toarray(), want)
+    assert certify(claim).arrays["radius"][0] >= T
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_matrix_affinity_defect_and_sweep_isometry(dtype):
+    from certify_ed.sweep import certified_sweep, matrix_affinity_defect
+    one, zero = (np.array([[v]], dtype=dtype) for v in (1, 0))
+    dc = 1 + 2.0 ** -30                                         # exact defect |1 - dc| = 2^-30
+    d = matrix_affinity_defect(zero, one, dc, one)
+    assert d >= 2.0 ** -30 and d == matrix_affinity_defect(_wide(zero), _wide(one), dc, _wide(one))
+    # a single-precision COO sector isometry with a repeated entry, as sector_fn returns it
+
+    def sector(dt):
+        def fn(spec, states):
+            return sp.coo_matrix((np.array([1.0, T, 1.0, 1.0, 1.0], dtype=dt), ([0, 0, 1, 2, 3], [0, 0, 1, 2, 3])),
+                                 shape=(4, 4))
+        return fn
+
+    def solver(H, k):
+        w, V = np.linalg.eigh(H.toarray() if sp.issparse(H) else H)
+        return w[:k], V[:, :k]
+    recs = [certified_sweep(lambda h: ce.tfim_chain(2, 1.0, h), [0.5, 0.6], k=1, solver=solver, sector_fn=sector(dt))
+            for dt in (dtype, SINGLE[dtype])]
+    certs = [r.pop("_certificates") for r in recs]
+    for a, b in zip(*certs):
+        assert a.arrays["radius"].tobytes() == b.arrays["radius"].tobytes()
+    for r in recs:                                              # certificate hashes carry the time of the run
+        r.pop("record_sha256")
+        for p in r["points"]:
+            p.pop("hash")
+    _same_record(*recs)
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_symveig_symmetrized_part_and_exact_helpers(dtype):
+    from certify_ed.compat.symveig import enclose_global
+    from certify_ed.eigenspace import commutes_signed_permutation
+    from certify_ed.sectors import trace_moments_check
+    H = np.array([[0, 1], [2.0 ** -25, 0]], dtype=dtype)       # Hermitian part: eigenvalues -+(0.5 + 2^-26)
+    e = enclose_global(H, symmetrize=True)
+    lam = 0.5 + 2.0 ** -26
+    assert any(x.lo <= -lam <= x.hi for x in e) and any(x.lo <= lam <= x.hi for x in e)
+    assert [(x.lo, x.hi) for x in e] == [(x.lo, x.hi) for x in enclose_global(_wide(H), symmetrize=True)]
+    A = sp.coo_matrix((np.array([1.0, T, 0.5, 0.5, 1.0], dtype=dtype), ([0, 0, 0, 1, 1], [0, 0, 1, 0, 1])), shape=(2, 2))
+    swap, sign = np.array([1, 0]), np.array([1, 1])           # (0, 0) = 1 + 2^-25 != (1, 1): no commutation
+    assert commutes_signed_permutation(A, swap, sign) is False
+    assert commutes_signed_permutation(_wide(A), swap, sign) is False
+    rng = np.random.default_rng(3)
+    B = sp.csr_matrix(rng.standard_normal((12, 12)).astype(dtype))
+    assert trace_moments_check(B, [B]) == trace_moments_check(_wide(B), [_wide(B)])
+
+
+@pytest.mark.parametrize("vdtype", ["float32", "complex64"])
+def test_binary64_operator_with_single_precision_vectors(vdtype):
+    """3.x formed fp.norm2_lower of single-precision vectors in single precision; it can exceed the exact norm by a
+    relative 6e-8, so the radius fell below the true distance: [[1, 2^-20], [2^-20, 1]] with x = (7, 7) in float32,
+    accuracy_target 1e-5, gave S2 CERTIFIED with radius 9.536742991635583e-07 < 2^-20."""
+    A = sp.csr_matrix(np.array([[1, 2.0 ** -20], [2.0 ** -20, 1]]))
+    x = np.array([[7], [7]], dtype=vdtype)
+    c = certify(Claim([1.0], x, A, kind="subset", accuracy_target=1e-5))
+    assert _s2(c)["status"] == "CERTIFIED" and c.arrays["radius"][0] >= 2.0 ** -20
+    ref = certify(Claim([1.0], _wide(x), A, kind="subset", accuracy_target=1e-5))
+    assert c.arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
+
+
+def test_one_refusal_rule(tmp_path, capsys):
+    """Inexact values are refused wherever they enter: integers beyond 2^53 in a list next to floats or beyond 2^64,
+    object values v with float(v) != v, a complex claimed eigenvalue of a Hermitian claim, an array-like that cannot
+    be converted, and the eigenvalue file of claim_from_file before its conversion. Exact object values are accepted."""
+    from fractions import Fraction
+    from certify_ed.cli import main
+    from certify_ed.importers import claim_from_file
+    from certify_ed.precision import PrecisionError, binary64, check_values
+    from certify_ed.variational import certify_variational
+    for bad in ([[2 ** 53 + 1, 0.5], [0.5, 1.0]], [[2 ** 70 + 1, 0], [0, 1]]):
+        with pytest.raises(PrecisionError, match="not exactly"):
+            binary64(bad)
+        with pytest.raises(PrecisionError, match="not exactly"):
+            certify(Claim([1.0], _x(np.float64), bad, kind="subset"))
+    for bad in ([2 ** 53 + 1, 1.5], [2 ** 70 + 1], np.array([Fraction(1, 3)], dtype=object)):
+        with pytest.raises(PrecisionError, match="not exactly"):
+            check_values(bad)
+    with pytest.raises(PrecisionError, match="imaginary"):
+        certify(Claim(np.array([1 + 2.0 ** -30 + 0.5j]), _x(np.float64), _A(np.float64), kind="subset"))
+    c = certify(Claim(np.array([1 + 0j]), _x(np.float64), _A(np.float64), kind="subset"))
+    assert _s2(c)["status"] == "CERTIFIED"
+    A2 = np.diag([1.0, 2.0])
+    r = certify_variational(A2, np.array([Fraction(1), Fraction(0)], dtype=object))
+    assert r == certify_variational(A2, np.array([1.0, 0.0]))
+    with pytest.raises(PrecisionError, match="not exactly"):
+        certify_variational(A2, np.array([Fraction(1, 3), Fraction(2, 3)], dtype=object))
+
+    class Device:
+        dtype, shape = np.dtype(np.float32), (2, 1)
+
+        def __array__(self, dtype=None, copy=None):
+            raise RuntimeError("the data live on a device")
+    with pytest.raises(PrecisionError, match="could not be converted"):
+        certify(Claim([1.0], Device(), _A(np.float64), kind="subset"))
+    np.save(str(tmp_path / "ev.npy"), np.array([2 ** 53 + 1], dtype=np.int64))
+    np.save(str(tmp_path / "X.npy"), _x(np.float64))
+    np.save(str(tmp_path / "H.npy"), _A(np.float64))
+    with pytest.raises(PrecisionError, match="not exactly representable"):
+        claim_from_file(str(tmp_path / "ev.npy"), str(tmp_path / "X.npy"), str(tmp_path / "H.npy"))
+    assert main(["certify", str(tmp_path / "ev.npy"), "--eigenvectors", str(tmp_path / "X.npy"), "--operator",
+                 str(tmp_path / "H.npy"), "-o", str(tmp_path / "c")]) == 2
+    assert "certify: refused" in capsys.readouterr().out
+
+
+def test_every_cli_command_refuses_with_exit_2(tmp_path, capsys):
+    from certify_ed.cli import main
+    big = np.array([[2 ** 53 + 1, 0], [0, 1]], dtype=np.int64)
+    np.save(str(tmp_path / "big.npy"), big)
+    np.savez(str(tmp_path / "big.npz"), H=big)
+    assert main(["spectrum", str(tmp_path / "big.npz")]) == 2
+    assert "spectrum: refused" in capsys.readouterr().out
+    np.save(str(tmp_path / "psi.npy"), np.array([1.0, 0.0]))
+    assert main(["variational", "--operator", str(tmp_path / "big.npy"), "--state", str(tmp_path / "psi.npy")]) == 2
+    assert "variational: refused" in capsys.readouterr().out
+
+
+def test_binary64_hdf5_dataset_is_a_stored_matrix_like_a_float32_one(tmp_path):
+    h5py = pytest.importorskip("h5py")
+    with h5py.File(str(tmp_path / "A.h5"), "w") as f:
+        f.create_dataset("A64", data=_A(np.float64))
+        f.create_dataset("A32", data=_A(np.float32))
+    with h5py.File(str(tmp_path / "A.h5"), "r") as f:
+        c64 = certify(Claim([1.0], _x(np.float64), f["A64"], kind="subset"))
+        c32 = certify(Claim([1.0], _x(np.float64), f["A32"], kind="subset"))
+    assert c64.body["subject"]["operator"]["kind"] == c32.body["subject"]["operator"]["kind"] == "matrix"
+    assert c64.arrays["radius"].tobytes() == c32.arrays["radius"].tobytes()
+    assert "input_widening" not in c64.body["arithmetic"] and "input_widening" in c32.body["arithmetic"]
+
+
+def test_integer_checks_are_vectorized_and_skip_dia_padding():
+    import time as _time
+    from certify_ed.precision import PrecisionError, binary64
+    a = np.arange(2_000_000, dtype=np.int64)
+    a[7] = 2 ** 60
+    t0 = _time.perf_counter()
+    assert binary64(a)[7] == 2.0 ** 60
+    assert _time.perf_counter() - t0 < 2.0                      # one comparison, then only the large values
+    a[8] = 2 ** 60 + 1
+    with pytest.raises(PrecisionError, match="not exactly representable"):
+        binary64(a)
+    D = sp.dia_matrix((np.array([[2 ** 53 + 1, 2, 3]], dtype=np.int64), [1]), shape=(3, 3))   # first entry: padding
+    assert np.array_equal(binary64(D).toarray(), D.toarray().astype(float))
+
+
+def test_long_double_decision_on_every_platform(monkeypatch):
+    """The format decision is classify_format (significand bits, exponent range, item size), so the refusal of the
+    x87 80-bit and IEEE 128-bit long double is tested here too, where long double is binary64."""
+    from certify_ed import precision
+    from certify_ed.precision import PrecisionError, classify_format, target_dtype
+    assert classify_format(52, 1024, -1022, 8) == "binary64" and classify_format(52, 1024, -1022, 16, "c") == "binary64"
+    assert classify_format(63, 16384, -16381, 16) == "wider" and classify_format(63, 16384, -16381, 12) == "wider"
+    assert classify_format(112, 16384, -16381, 16) == "wider"
+    assert classify_format(23, 128, -126, 4) == "narrower" and classify_format(10, 16, -14, 2) == "narrower"
+    assert classify_format(52, 1024, -1022, 16) == "narrower"   # binary64 padded to 16 bytes: converted exactly
+    real = precision._format_of
+    monkeypatch.setattr(precision, "_format_of", lambda dt: "wider" if dt == np.dtype(np.float32) else real(dt))
+    with pytest.raises(PrecisionError, match="wider than binary64"):
+        target_dtype(np.float32, "x")
+    with pytest.raises(PrecisionError, match="wider than binary64"):
+        certify(Claim([1.0], _x(np.float64), _A(np.float32), kind="subset"))
+
+
+def test_small_branches(tmp_path):
+    """bool, float16 and big-endian inputs, integer vectors on disk, ragged lists and numpy scalars."""
+    from certify_ed.precision import PrecisionError, binary64
+    for A, X in ((np.eye(2, dtype=bool), _x(np.float64)), (np.eye(2), np.array([[True], [True]]))):
+        c = certify(Claim([1.0], X, A, kind="subset"))               # 3.x: TypeError
+        assert _s2(c)["status"] == "CERTIFIED" and "input_widening" not in c.body["arithmetic"]
+    c16 = certify(Claim([1.0], _x(np.float16), _A(np.float16), kind="subset"))
+    assert _s2(c16)["status"] == "CERTIFIED" and ("claim.operator", "float16", "float64") in _widened(c16)
+    be = sp.csr_matrix(_A(np.float64))
+    be.data = be.data.astype(">f8")
+    _same_certificate(certify(Claim([1.0], _x(np.float64), be, kind="subset")),
+                      certify(Claim([1.0], _x(np.float64), _A(np.float64, "sparse"), kind="subset")))
+    for vals, ok in (([[1], [1]], True), ([[2 ** 53 + 1], [1]], False)):
+        mm = np.lib.format.open_memmap(str(tmp_path / f"x{ok}.npy"), mode="w+", dtype=np.int64, shape=(2, 1))
+        mm[:] = np.array(vals, dtype=np.int64)
+        mm.flush()
+        X = np.load(str(tmp_path / f"x{ok}.npy"), mmap_mode="r")
+        if ok:
+            assert _s2(certify(Claim([1.0], X, _A(np.float64), kind="subset")))["status"] == "CERTIFIED"
+        else:
+            with pytest.raises(PrecisionError, match="not exactly representable"):
+                certify(Claim([1.0], X, _A(np.float64), kind="subset"))
+    ragged = [[1.0], [1.0, 2.0]]
+    assert binary64(ragged) is ragged                           # not array data: left to the caller
+    s = np.float64(1.5)
+    assert binary64(s) is s and binary64(np.float32(1.5)).dtype == np.float64
