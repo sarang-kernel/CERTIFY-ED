@@ -217,8 +217,13 @@ def _exact_objects(a: np.ndarray, what: str) -> np.ndarray:
 
 
 def _stored_values(a):
-    """The values a sparse matrix holds (DIA without its padding, LIL and DOK through COO)."""
-    return a.tocoo().data if a.format in ("dia", "lil", "dok") else a.data
+    """The values a sparse matrix holds: DIA without its padding, LIL and DOK through COO, CSR, CSC and BSR up to
+    nnz."""
+    if a.format in ("dia", "lil", "dok"):
+        return a.tocoo().data
+    if a.format in ("csr", "csc", "bsr"):
+        return a.data[:a.indptr[-1]]              # values past nnz (BSR: blocks) are not held
+    return a.data
 
 
 def _exact_ints_streamed(src, shape, dtype: np.dtype, what: str) -> None:

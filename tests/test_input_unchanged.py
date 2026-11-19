@@ -259,6 +259,18 @@ def test_int64_indices_with_values_past_nnz_are_accepted():
     assert _unchanged_arrays(D, before) and rec["statements"]
 
 
+def test_an_integer_past_nnz_that_binary64_cannot_hold_is_not_read():
+    """Only the nnz stored values of an integer CSR matrix are checked for exactness; a value left past them is not part
+    of the matrix."""
+    A = sp.csr_matrix(np.array([[2, 1], [1, 2]], dtype=np.int64))
+    A.data, A.indices = np.r_[A.data, 2 ** 60 + 1], np.r_[A.indices, 0]
+    assert A.data.size == A.nnz + 1
+    w, V = np.linalg.eigh(A.toarray().astype(float))
+    a = ce.certify(ce.Claim(eigenvalues=w, eigenvectors=V, operator=A, kind="lowest"), None,
+                   ce.Options(seed=1, only=["S2.eigenpairs"]))
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+
+
 def test_single_precision_int64_indices_with_values_past_nnz_are_accepted():
     """The same matrix in float32: its binary64 copy (precision.binary64) keeps consistent index arrays."""
     claim, spec = _model_claim(False)
