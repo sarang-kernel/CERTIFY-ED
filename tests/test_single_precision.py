@@ -466,7 +466,7 @@ def test_repeated_entries_are_summed_in_binary64(dtype, fmt):
     """Every entry point widens the caller's matrix before a format conversion (tocsr, csr_matrix, csc_matrix,
     toarray), which sums repeated entries in the matrix's own precision."""
     from certify_ed.certificate_v2 import matrix_sha256
-    from certify_ed.correlations import certify_observable_general
+    from certify_ed.correlations import certify_observable_general, certify_observable_lifted, compress_operator
     from certify_ed.davis_kahan import commutator_bound
     from certify_ed.enclosure import OperatorAdapter, enclose
     from certify_ed.generalized import certify_generalized
@@ -494,6 +494,10 @@ def test_repeated_entries_are_summed_in_binary64(dtype, fmt):
     assert commutator_bound(M, S) == commutator_bound(W(), S)
     ob = certify_observable_general(_ec_at(x), x, M, "M")
     assert abs(ob["value"] - lam) <= ob["bound"]
+    Oh, rnd, _ = compress_operator(sp.identity(2), M)
+    assert abs(Oh[0, 0] - lam) <= rnd and (Oh != compress_operator(sp.identity(2), W())[0]).nnz == 0
+    li = certify_observable_lifted(_ec_at(x), x, sp.identity(2), M, "M", 0.0)
+    assert abs(li["value"] - lam) <= li["bound"]
     nh = certify_nonhermitian(M, [1.0], x, kind="subset")
     assert nh["pairs"][0]["eps_right"] >= T
     g2 = next(s for s in certify_generalized(M, np.eye(2), [1.0], x, kind="subset")["statements"] if s["id"].startswith("G2"))
@@ -675,3 +679,158 @@ def test_plan_counts_the_callers_narrower_arrays():
     lines = []
     c = certify(c32, options=Options(plan=True, progress=lines.append))
     assert c.body["plan"]["peak_mb"] == round(p32.peak_mb, 1)
+
+
+
+# ------------------------------------------------------------------------------------------- round 2 of the review
+_FORMATS = ["csr", "csc", "bsr", "coo", "dia", "lil", "dok"]
+
+
+def _int_A():
+    return np.array([[2, 1], [1, 2]], dtype=np.int64)                # eigenvalues 1 and 3
+
+
+@pytest.mark.parametrize("fmt", _FORMATS)
+@pytest.mark.parametrize("dtype", ["float32", "complex64", "int64"])
+def test_every_sparse_format_is_widened(dtype, fmt):
+    """Every scipy format, LIL and DOK included (one value per position, converted by their own astype), in single
+    precision and as integers: binary64 keeps the format, certify() gives the certificate of the binary64 copy, and
+    matrix_sha256 is the hash in that certificate."""
+    from certify_ed.certificate_v2 import matrix_sha256
+    from certify_ed.precision import PrecisionError, binary64
+    dense = _int_A() if dtype == "int64" else _A(dtype)
+    ref = dense.astype(np.complex128 if dtype == "complex64" else np.float64)
+    M, M64 = (getattr(sp, f"{fmt}_matrix")(a) for a in (dense, ref))
+    W = binary64(M, "m")
+    assert W.format == fmt and W.dtype == M64.dtype and np.array_equal(W.toarray(), ref) and M.dtype == dense.dtype
+    lam, x = (3.0, np.array([[1.0], [1.0]])) if dtype == "int64" else (1.0, _x(dtype))
+    c = certify(Claim([lam], x, M, kind="subset"))
+    assert _s2(c)["status"] == "CERTIFIED" and ("claim.operator", dtype, M64.dtype.name) in _widened(c)
+    assert dtype == "int64" or c.arrays["radius"][0] >= E
+    _same_certificate(c, certify(Claim([lam], x.astype(ref.dtype), M64, kind="subset")))
+    assert matrix_sha256(M) == matrix_sha256(M64) == c.body["subject"]["operator"]["matrix_sha256"]
+    if fmt in ("lil", "dok"):
+        if dtype == "int64":
+            big = getattr(sp, f"{fmt}_matrix")(np.array([[2 ** 53 + 1, 0], [0, 1]], dtype=np.int64))
+            with pytest.raises(PrecisionError, match="not exactly representable"):
+                binary64(big, "m")
+        else:
+            O, O64 = (getattr(sp, f"{fmt}_matrix")(_A(t)) for t in (dtype, SINGLE[dtype]))
+            co = certify(_claim_all(), options=Options(eigenspaces="all", observables={"O": O}))
+            assert ("options.observables[O]", dtype, SINGLE[dtype]) in _widened(co)
+            _same_certificate(co, certify(_claim_all(), options=Options(eigenspaces="all", observables={"O": O64})))
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_repeated_entries_in_sector_blocks_and_isometries(dtype):
+    """compose.certify_low_energy, sectors.restrict_to_u1 and sectors.audit_label widen a COO block or isometry with
+    repeated entries before they convert it. (i) The block of the all-up sector stored as h and t, where h + t is not a
+    single-precision number, with h + t in the full matrix: summed in single precision the block would be h and the
+    sector not invariant. (ii) The all-down isometry entry stored as 1 and 2^-25: an isometry defect of about 2^-24,
+    which a single-precision sum (to 1) would hide in the audit, the label audit and the decomposition's eta."""
+    from certify_ed.compose import SectorResult, certify_low_energy
+    from certify_ed.sectors import audit_label, restrict_to_u1
+    wide = SINGLE[dtype]
+    spec = ce.heisenberg_chain(4)
+    H = ce.build_bitwise(spec).tocsr()
+    full = ce.full_state_set(spec)
+    idx = {nup: full.index_of(ce.u1_state_set(spec, nup).states_in_order())[0] for nup in range(spec.n_sites + 1)}
+    k_up, k_down = int(idx[4][0]), int(idx[0][0])
+    h = float(H[k_up, k_up].real)
+    t = float(np.spacing(np.float32(h))) / 2
+    assert np.float32(h) + np.float32(t) == np.float32(h) and h + t != h
+    Hf = (H + sp.csr_matrix(([t], ([k_up], [k_up])), shape=H.shape)).tocsr()
+    wf = np.linalg.eigvalsh(Hf.toarray())
+    E_cut = float((wf[2] + wf[3]) / 2)
+
+    def coo1(n, i, a, b, dt):        # n x 1 (or 1 x 1) COO with the entry (i, 0) stored twice, as a and b
+        return sp.coo_matrix((np.array([a, b], dtype=dt), (np.array([i, i]), np.array([0, 0]))), shape=(n, 1))
+
+    secs, ref = [], []
+    for nup, ix in idx.items():
+        V = sp.csr_matrix((np.ones(ix.size), (ix, np.arange(ix.size))), shape=(H.shape[0], ix.size))
+        Hs = (V.T @ Hf @ V).toarray()
+        ws, Ys = np.linalg.eigh(Hs)
+        sel = np.where(ws < E_cut)[0]
+        if nup == 4:
+            blk = lambda dt: coo1(1, 0, h, t, dt)                           # noqa: E731
+        else:
+            blk = lambda dt, Hs=Hs: sp.coo_matrix(Hs.astype(dt))           # noqa: E731
+        if nup == 0:
+            iso = lambda dt: coo1(H.shape[0], k_down, 1.0, T, dt)           # noqa: E731
+        else:
+            iso = lambda dt, V=V: V.astype(dt)                              # noqa: E731
+        Y = Ys[:, sel].astype(dtype)
+        secs.append(SectorResult(f"nup={nup}", iso(dtype), blk(dtype), ws[sel], Y))
+        ref.append(SectorResult(f"nup={nup}", iso(wide), blk(wide), ws[sel], _wide(Y)))
+    a = certify_low_energy(spec, secs, E_cut, H_full=Hf, label_symmetries=("translation",))
+    b = certify_low_energy(spec, ref, E_cut, H_full=Hf, label_symmetries=("translation",))
+    _same_record(a, b)
+    rec = {s["label"]: s for s in a["sectors"]}
+    assert rec["nup=4"]["invariance_defect"] < 1e-12                          # the block is h + t, as in Hf
+    assert rec["nup=0"]["isometry_defect"] >= 2 ** -24 and a["eta"] >= 2 ** -24
+    assert rec["nup=0"]["label_audit"]["translation"]["isometry_defect_upper"] >= 2 ** -24
+    V0 = coo1(H.shape[0], k_down, 1.0, T, dtype)
+    Vu = restrict_to_u1(spec, V0)[1]
+    assert Vu.dtype == np.dtype(wide) and Vu[0, 0] == 1 + T
+    la = audit_label(spec, V0, "translation")
+    assert la == audit_label(spec, coo1(H.shape[0], k_down, 1.0, T, wide), "translation")
+    assert la["isometry_defect_upper"] >= 2 ** -24
+
+    def mixed(dt):                   # support in two U(1) sectors: audit_label converts V itself (no restriction)
+        return sp.coo_matrix((np.array([1.0, T, 2.0 ** -20], dtype=dt), (np.array([k_down, k_down, k_up]),
+                                                                         np.zeros(3, dtype=int))), shape=(H.shape[0], 1))
+    assert restrict_to_u1(spec, mixed(dtype)) is None
+    lm = audit_label(spec, mixed(dtype), "translation")
+    assert lm == audit_label(spec, mixed(wide), "translation") and lm["isometry_defect_upper"] >= 2 ** -24
+
+
+@pytest.mark.parametrize("dtype", ["float64", "float32", "int64"])
+def test_array_like_and_list_operators_are_stored_matrices(dtype):
+    """An operator given as a list of lists or as an array-like (an object with __array__ and no matvec) is a stored
+    matrix whatever its dtype; it is recorded only when its numbers were converted (a list of Python floats is
+    binary64 already)."""
+    dense = _int_A() if dtype == "int64" else _A(dtype)
+    lam, x = (3.0, np.array([[1.0], [1.0]])) if dtype == "int64" else (1.0, _x(np.float64))
+    ref = certify(Claim([lam], x, dense.astype(np.float64), kind="subset"))
+    for op, rec in ((_ArrayLike(dense), dtype != "float64"), (dense.tolist(), dtype == "int64")):
+        c = certify(Claim([lam], x, op, kind="subset"))
+        assert c.body["subject"]["operator"]["kind"] == "matrix" and _s2(c)["status"] == "CERTIFIED"
+        assert _widened(c) == ({("claim.operator", dtype, "float64")} if rec else set())
+        _same_certificate(c, ref)
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_compose_decomposition_audit_in_binary64(dtype):
+    """The decomposition audit of certify_low_energy (eta >= ||W^* W - I||_2, W = [V_1 ... V_m]) forms W^* W from the
+    widened isometries: with V entries float32(1/sqrt 2) it was formed in single precision before (eta 8.43e-08 against
+    4.84e-08 for the binary64 copy, both above the exact max |G_pq| = 3.42e-08)."""
+    from fractions import Fraction
+    from certify_ed.compose import SectorResult, certify_low_energy
+    spec = ce.heisenberg_chain(2)
+    H = ce.build_bitwise(spec).toarray()
+    st = list(ce.full_state_set(spec).states_in_order())
+    c = float(np.float32(1 / np.sqrt(2)))
+    cols = [[(st.index(0), 1.0)], [(st.index(3), 1.0)], [(st.index(1), c), (st.index(2), c)],
+            [(st.index(1), c), (st.index(2), -c)]]
+
+    def sectors(dt):
+        out = []
+        for j, entries in enumerate(cols):
+            v = np.zeros((H.shape[0], 1))
+            for i, a in entries:
+                v[i, 0] = a
+            Hs = v.T @ H @ v
+            w, Y = np.linalg.eigh(Hs)
+            out.append(SectorResult(f"s{j}", sp.csr_matrix(v.astype(dt)), sp.csr_matrix(Hs), w, Y))
+        return out
+    a = certify_low_energy(spec, sectors(dtype), 10.0, H_full=sp.csr_matrix(H))
+    b = certify_low_energy(spec, sectors(SINGLE[dtype]), 10.0, H_full=sp.csr_matrix(H))
+    _same_record(a, b)
+    Wx = [[Fraction(0)] * len(cols) for _ in range(H.shape[0])]
+    for j, entries in enumerate(cols):
+        for i, v in entries:
+            Wx[i][j] = Fraction(v)
+    G = [[sum(Wx[i][p] * Wx[i][q] for i in range(H.shape[0])) - (p == q) for q in range(len(cols))]
+         for p in range(len(cols))]
+    assert a["eta"] >= max(abs(float(x)) for row in G for x in row)
