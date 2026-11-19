@@ -21,8 +21,9 @@ conversion (tocsr, csr_matrix, toarray), since such a conversion sums repeated e
 Claimed eigenvectors on disk (numpy memmap, HDF5 dataset) are wrapped in an enclosure.StreamedColumns that widens each
 block as it is read (stream=True); any other memmap (an operator, a symmetry diagonal, an observable) becomes an array
 in memory. Operators with a matvec (LinearOperators, spec operators) and callables are returned unchanged: their
-products are their own. A list or tuple of numbers, or an array-like (an object with __array__), is converted only
-when its numbers need it.
+products are their own. A list or tuple of numbers, or an array-like (an object with __array__ and no matvec), becomes
+an ndarray whatever its dtype, so that an operator given this way is a stored matrix in binary64 as in a narrower
+format; it is recorded when its numbers were converted.
 
 Claimed eigenvalues are always converted with dtype=float by the callers; `check_values` only refuses the types for
 which that conversion would round (a wider float, an integer beyond 2^53 that binary64 cannot hold).
@@ -200,20 +201,18 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
         _note(widened, what, a, a.dtype, tgt)
         return a.astype(tgt)
     if isinstance(a, (list, tuple, np.generic)) or (hasattr(a, "__array__") and not hasattr(a, "matvec")):
-        # a list or tuple of numbers, or an array-like (an object with __array__: a data frame, a tensor on the CPU, a
-        # zarr array); operators with a matvec are the producer's and stay as given
-        dt = getattr(a, "dtype", None)
-        try:
-            if dt is not None and not isinstance(a, (list, tuple)) and target_dtype(np.dtype(dt), what) is None:
-                return a                          # binary64 already: left to the caller's own conversion
-        except (TypeError, PrecisionError):
-            pass
+        # numeric array data given as a list or tuple of numbers or as an array-like (an object with __array__: a data
+        # frame, a tensor on the CPU, a zarr array) becomes an ndarray whatever its dtype, so that an operator given
+        # this way is a stored matrix in binary64 as in any narrower format; binary64 data are not recorded. Numpy
+        # scalars in binary64 stay scalars. Operators with a matvec are the producer's and stay as given.
         try:
             arr = np.asarray(a)
         except (ValueError, TypeError):           # ragged or mixed: left to the caller, as before
             return a
-        if arr.dtype.kind not in "biufc" or target_dtype(arr.dtype, what) is None:
+        if arr.dtype.kind not in "biufc":
             return a
+        if target_dtype(arr.dtype, what) is None:
+            return a if isinstance(a, np.generic) else arr
         return binary64(arr, what, widened)
     return a
 
