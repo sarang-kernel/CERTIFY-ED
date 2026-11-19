@@ -34,7 +34,7 @@ from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
-from .precision import binary64, check_values
+from .precision import binary64, check_values, widening_record
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
 from .spec import ModelSpec
@@ -52,14 +52,15 @@ class SectorResult:
 _UNSET = object()
 
 
-def _binary64_sector(s: SectorResult) -> SectorResult:
+def _binary64_sector(s: SectorResult, widened: Optional[list] = None) -> SectorResult:
     """s with its isometry, block and vectors converted exactly to binary64 where they are stored in a narrower format
-    (precision.binary64), before the U(1) restriction, the audits and the decomposition sum or multiply them; the same
-    object when nothing is converted. The claimed eigenvalues are checked (precision.check_values)."""
+    (precision.binary64, noted in `widened`), before the U(1) restriction, the audits and the decomposition sum or
+    multiply them; the same object when nothing is converted. The claimed eigenvalues are checked
+    (precision.check_values)."""
     check_values(s.eigenvalues, f"sector {s.label}: eigenvalues")
-    V = binary64(s.V, f"sector {s.label}: isometry")
-    H = binary64(s.H, f"sector {s.label}: block")
-    X = binary64(s.eigenvectors, f"sector {s.label}: eigenvectors")
+    V = binary64(s.V, f"sector {s.label}: isometry", widened)
+    H = binary64(s.H, f"sector {s.label}: block", widened)
+    X = binary64(s.eigenvectors, f"sector {s.label}: eigenvectors", widened)
     if V is s.V and H is s.H and X is s.eigenvectors:
         return s
     return replace(s, V=V, H=H, eigenvectors=X)
@@ -169,8 +170,9 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     The result does not depend on `workers` (tests/test_parallel.py); with workers > 1 it carries the scheduling
     record under 'parallel'."""
     t0 = time.time()
-    sectors = [_binary64_sector(s) for s in sectors]       # exact, before any conversion or product (precision.py)
-    H = None if H_full is None else hermitian_part(sp.csr_matrix(binary64(H_full, "H_full")))   # exact (precision.py)
+    widened: list = []
+    sectors = [_binary64_sector(s, widened) for s in sectors]   # exact, before any conversion or product (precision.py)
+    H = None if H_full is None else hermitian_part(sp.csr_matrix(binary64(H_full, "H_full", widened)))   # exact
     n = spec.dim
     cache = {}
     Hn = inf_norm_upper(H) if H is not None else 0.0
@@ -227,6 +229,9 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     out = {"n": n, "covered_dim": covered, "n_sectors": len(sectors), "eta": eta,
            "invariance_total": D, "E_cut": E_cut, "sectors": per,
            "symmetrised_blocks": symmetrised}
+    widening = widening_record(widened)
+    if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
+        out["input_widening"] = widening
     status, summary = "CERTIFIED", ""
     bad_audit = [p["label"] for p in per if not p["audit_passed"]]
     if bad_audit:

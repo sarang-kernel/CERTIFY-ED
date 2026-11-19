@@ -307,13 +307,13 @@ def moments_from_certificate(cert, H, O, K: int = 2, members: Sequence[int] = (0
     mu = np.asarray(cert.arrays["eigenvalues"], dtype=float)[list(members)]
     rad = np.asarray(cert.arrays["radius"], dtype=float)[list(members)]
     level = (float(np.min(sub_down(mu, rad))), float(np.max(add_up(mu, rad))))
-    Hm = _as_matrix(H, "H")
-    stored = (cert.body.get("subject", {}).get("operator") or {}).get("matrix_sha256")
-    note = None
-    if stored is not None and stored != matrix_sha256(Hm):
-        note = "WARNING: the matrix H differs from the certificate's stored operator (hash mismatch); the projector P is the certified operator's"
     rec = certified_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K, level=level,
                             cluster={"members": list(members), "claimed": cl.get("claimed"), "status": cl.get("status")}, **kw)
+    # the record's H_sha256 is matrix_sha256 of the binary64 H it worked on (one copy of a narrower H, precision.py)
+    stored = (cert.body.get("subject", {}).get("operator") or {}).get("matrix_sha256")
+    note = None
+    if stored is not None and stored != rec["operator"]["H_sha256"]:
+        note = "WARNING: the matrix H differs from the certificate's stored operator (hash mismatch); the projector P is the certified operator's"
     from .crossings import certificate_hash
     rec["certificate"] = {"hash": certificate_hash(cert), "members": list(members), "operator_hash_matches": stored is None or note is None}
     if note:
