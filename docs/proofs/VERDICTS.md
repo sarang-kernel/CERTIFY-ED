@@ -163,7 +163,7 @@ summation of duplicate entries; a test covers the subnormal band of results. Ope
   `fp_modulus-up.md`, What is not claimed). An `abs_up` that bounds the stored entries without summing is not written.
 - Single precision: Lemma M and the corollary do not cover products formed in float32 or complex64; a false S2
   certificate for a float32 operator with float32 vectors was reproduced (as before). Refusing or widening such input
-  at the entry points is not written.
+  at the entry points is not written here (not covered; the separate change `fix/single-precision`).
 - The FP-M items that `fp.probe_float_environment` does not probe (correctly rounded square root, frexp, ldexp,
   nextafter) are tested with the test suite only, and the certificate does not name them; a run-time probe and an
   assumption line are not written.

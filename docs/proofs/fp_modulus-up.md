@@ -60,7 +60,8 @@ absolute values as float64; from 2⁵³ on, where the conversion rounds to neare
 m ≥ |z| (`np.abs` itself is not used on integers: it wraps at the most negative integer). complex64 and complex128:
 the computation below; complex64 components are widened to binary64 exactly. A scalar gives a Python float (a NumPy
 scalar for a real type wider than binary64, which a float would round). These are statements about the moduli only:
-a bound formed in single precision is not covered (Risks and limits). Rejected with TypeError: scipy sparse
+a bound formed in single precision is not covered (Risks and limits; the separate change `fix/single-precision`).
+Rejected with TypeError: scipy sparse
 matrices (`abs_up` takes them), object arrays (their entries need not be binary64 numbers, and `np.abs` of them is
 not an upper bound: m < |z| in 49 842 of 100 000 random entries, independent re-derivation, section 4), complex types
 wider than complex128 (`np.clongdouble` where long double is wider than binary64: the components would be rounded on
@@ -138,12 +139,13 @@ other analyses the treatment is the one each document states (not re-checked her
   structural zeros). A caller must treat a non-finite bound as no bound; this change has no callers. `modulus_up`
   raises no floating-point error under `np.errstate(all="raise")`; its callers may raise FloatingPointError then.
 - Dtypes. As in Inputs; other dtypes are rejected with TypeError.
-- Single precision. The moduli of float16, float32 and complex64 data are exact or upper bounds, but Lemma M and the
-  corollary say nothing about products formed in single precision. With a float32 or complex64 operator and vectors
-  of the same type, A x and |A||x| are rounded with u = 2⁻²⁴ while the bounds count u = 2⁻⁵³: a reviewer obtained a
-  false S2 certificate of `certify()` for the float32 2 × 2 matrix [[1, 2⁻³⁰], [2⁻³⁰, 1]] with x = (1, 1) (enclosure
-  [0.999999999999999, 1.000000000000001], eigenvalues 1 ∓ 2⁻³⁰), at the base of this change too. Not covered here;
-  open (a separate change): refuse or widen every non-binary64 operator and vector at the entry points.
+- Single precision (not covered). The moduli of float16, float32 and complex64 data are exact or upper bounds, but
+  Lemma M and the corollary say nothing about products formed in single precision. With a float32 or complex64
+  operator and vectors of the same type, A x and |A||x| are rounded with u = 2⁻²⁴ while the bounds count u = 2⁻⁵³: a
+  reviewer obtained a false S2 certificate of `certify()` for the float32 2 × 2 matrix [[1, 2⁻³⁰], [2⁻³⁰, 1]] with x =
+  (1, 1) (enclosure [0.999999999999999, 1.000000000000001], eigenvalues 1 ∓ 2⁻³⁰), at the base of this change too. Not
+  covered here; open, in the separate change `fix/single-precision`: refuse or widen every non-binary64 operator and
+  vector at the entry points.
 - Cost. On large arrays one `modulus_up` pass takes about four times as long as one `np.abs` pass (section 4); a call
   on a small array costs a fixed overhead of tens of microseconds (section 4). Its temporaries beyond the float64
   result are bounded by about 12 MiB (six arrays of 2¹⁸ float64 numbers) whatever the size and memory layout of the

@@ -172,7 +172,9 @@ def modulus_up(z):
 
     Real floating input: np.abs(z), which is exact. Integer and boolean input: the absolute values as float64, one step
     up (np.nextafter) from 2^53 on, where the conversion may round (np.abs itself wraps at the most negative integer).
-    Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M):
+    Complex input z = x + iy, complex64 or complex128 (docs/proofs/fp_modulus-up.md, Lemma M; for float16, float32 and
+    complex64 input these are moduli only, a bound formed in single precision is not covered: Risks and limits there,
+    and the separate change fix/single-precision):
     m = fl(fl(sqrt(fl(fl(x x) + fl(y y)))) (1 + 8u)) when max(|x|, |y|) is 0 or lies in [2^-500, 2^500]; otherwise
     the same with the components first scaled by the power of two 2^-e, max(|x|, |y|) = f 2^e with f in [1/2, 1)
     (np.frexp, np.ldexp), the result scaled back by 2^e and moved one step up (np.nextafter) when it is below

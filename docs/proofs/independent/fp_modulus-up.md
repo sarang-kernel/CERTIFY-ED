@@ -241,7 +241,8 @@ on which the code does something the statement does not describe, or describes o
    (Section 2.5). nan with ∞ gives ∞; 0 with ∞ gives ∞; 0 with nan gives nan. This is also what np.abs returns (51
    checks, and no floating-point error is raised under `np.errstate(all="raise")`).
 4. *complex64.* The components are widened to float64 exactly; the result is float64 and equals the complex128 call
-   bit for bit; Lemma M applies (50,025 checks).
+   bit for bit; Lemma M applies (50,025 checks). This is about the modulus only: a bound formed in single precision
+   is not covered (the author's document, Risks and limits).
 5. *Scalars.* A Python complex, a NumPy complex scalar and a 0-d array give a Python float equal to the array result.
 6. *Shapes and layouts.* Fortran order, strided views, read-only, big-endian and empty arrays give the same values,
    and the input is not modified.

@@ -150,7 +150,8 @@ def test_real_input_is_returned_exactly():
 def test_dtypes_outside_binary64_components():
     """Integers and booleans: float64 absolute values, exact below 2^53 and one step up from there (the conversion may
     round; np.abs itself wraps at the most negative integer). Rejected: scipy sparse input (abs_up takes it), object
-    arrays and complex types wider than complex128. complex64 is widened exactly and gives the complex128 result."""
+    arrays and complex types wider than complex128. complex64 is widened exactly and gives the complex128 result (the
+    modulus only: a bound formed in single precision is not covered, fp_modulus-up.md, Risks and limits)."""
     ints = np.array([-3, 0, 7, -2 ** 63, 2 ** 63 - 1, 2 ** 53 + 1, -(2 ** 53) - 1], dtype=np.int64)
     m = modulus_up(ints)
     assert m.dtype == np.float64

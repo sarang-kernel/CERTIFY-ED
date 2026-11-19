@@ -51,8 +51,9 @@ scipy sparse matrix. No bound uses them in this change, and no bound, status rul
 returns real floating input as `np.abs` gives it, integer and boolean input as float64 (one step up from 2⁵³), a float
 for every scalar, and raises TypeError for a scipy sparse matrix, an object array and a complex type wider than
 complex128; it works in passes of at most 2¹⁸ entries without copying its input. Known issues: the moduli of
-float16, float32 and complex64 data are covered, but bounds whose products are formed in single precision are not
-(the corollary counts binary64 roundings); `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in
+float16, float32 and complex64 data are upper bounds, but a bound whose products are formed in single precision is not
+covered (the corollary counts binary64 roundings; such input is the subject of the separate change
+`fix/single-precision`); `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in
 place, so a product formed with the matrix before the call is not covered by its moduli (direct calls of
 `commutator_bound`, `audit_sector`, `compress_operator` and `certify_observable` on a matrix with duplicates); the
 floating-point items that the lemma assumes beyond those `probe_float_environment` checks are tested with the test
