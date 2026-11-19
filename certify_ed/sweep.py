@@ -34,6 +34,7 @@ import scipy.sparse as sp
 from .certificate_v2 import Certificate, _jsonable, canonical_json
 from .construct import build_bitwise
 from .fp import U, add_up, inf_norm_upper, sub_down, up
+from .precision import binary64, check_values
 from .spec import ModelSpec, Term
 
 __all__ = ["derivative_spec", "affinity_defect", "matrix_affinity_defect", "term_norm_bound", "h1_norm_bound", "certified_sweep",
@@ -101,8 +102,10 @@ def h1_norm_bound(h1: ModelSpec, H1_matrix=None, builder_shift: float = 0.0) -> 
 def matrix_affinity_defect(Ha, Hb, dc: float, H1) -> float:
     """Upper bound on ||H_b - H_a - dc H1||_2 for stored Hermitian matrices (a sector block family): the row-sum
     bound of the computed difference plus the rounding of its three operations per entry, gamma_3 (|H_b| + |H_a| +
-    |dc||H1|) entrywise."""
-    Ha, Hb, H1 = sp.csr_matrix(Ha), sp.csr_matrix(Hb), sp.csr_matrix(H1)
+    |dc||H1|) entrywise. Data in a narrower format than binary64 are converted exactly first, before the conversion to
+    CSR (precision.py)."""
+    Ha, Hb, H1 = (sp.csr_matrix(binary64(M if sp.issparse(M) else np.asarray(M), name))
+                  for M, name in ((Ha, "Ha"), (Hb, "Hb"), (H1, "H1")))
     g3 = 3 * U / (1 - 3 * U)
     diff = (Hb - Ha - dc * H1).tocsr()
     rnd = (abs(Hb) + abs(Ha) + abs(dc) * abs(H1)).tocsr() * (g3 * (1 + 4 * U))
@@ -206,7 +209,7 @@ def certified_sweep(spec_fn: Callable[[float], ModelSpec], couplings: Sequence[f
     V0 = sector_fn(specs[0], states) if sector_fn is not None else None
     V_full = None
     if V0 is not None:
-        V0 = sp.csr_matrix(V0)
+        V0 = sp.csr_matrix(binary64(V0, "sector isometry"))     # exact, before the conversion (precision.py)
         if states is not None:
             full_idx, _ = full_state_set(specs[0]).index_of(states.states_in_order())
             P = sp.csr_matrix((np.ones(states.size), (full_idx, np.arange(states.size))), shape=(specs[0].dim, states.size))
@@ -230,6 +233,7 @@ def certified_sweep(spec_fn: Callable[[float], ModelSpec], couplings: Sequence[f
             H = sector_matrix(H, V0)
             blocks.append(H)
         w, Y = solver(H, k)
+        check_values(w, "solver eigenvalues")          # before the conversion (precision.py)
         w = np.asarray(w, dtype=float)
         Y = np.asarray(Y)
         claim = Claim(w[:k], Y[:, :k], operator=H, kind=kind, states=states if V0 is None else None,

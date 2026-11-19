@@ -244,7 +244,8 @@ def labels_hook(ec: EigenspaceCertificate, X, requests: Dict[str, object], H_ref
             ec.quantum_numbers[name] = {"status": "NOT-CHECKED", "reason_code": "NEEDS_MATRIX",
                                         "reason": "the commutator bound ||[H, S]|| needs a stored reference matrix"}
             continue
-        Sm = sp.diags(np.asarray(S)) if np.ndim(S) == 1 else sp.csr_matrix(S)
+        S = binary64(S if sp.issparse(S) else np.asarray(S), name)     # exact, before the conversion (precision.py)
+        Sm = sp.diags(S) if np.ndim(S) == 1 else sp.csr_matrix(S)
         cb = commutator_bound(H_ref, Sm)
         approximate_symmetry_label(ec, X, Sm, name, cb["bound"], J, lattice=lattice, allowed_values=allowed, c_record=cb)
         ec.quantum_numbers[name]["approximate_symmetry"] = True

@@ -62,8 +62,9 @@ def hermitian_parts(O, name: str = "O"):
     O = H + iK. Classical decomposition; both parts are formed in floating point and the formation is checked
     to be exact entrywise (Knuth's TwoSum error term zero; halving and the multiplication by -i are exact).
     Returns (H, K, exact). When `exact` is False the parts are rounded and the record that uses them must not
-    be CERTIFIED (no bound on the rounding is claimed)."""
-    O = sp.csr_matrix(O)
+    be CERTIFIED (no bound on the rounding is claimed). A matrix in a narrower format is converted exactly first, so
+    that the sums and the TwoSum check are binary64 (precision.py)."""
+    O = sp.csr_matrix(binary64(O if sp.issparse(O) else np.asarray(O), name))
     Oh = sp.csr_matrix(O.conj().T)
     S = (O + Oh).tocsr()
     D = (O - Oh).tocsr()
