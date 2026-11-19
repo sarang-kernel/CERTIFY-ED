@@ -228,8 +228,9 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     translation, g maps site i to i+1) and as QuSpin's block index q.
 
     The separation min_{l != k} |lambda_l - lambda_k| is the floating-point value over the computed roots (np.exp, then
-    np.abs of the differences), not a certified lower bound; the record says so ("separation_note"). A lower bound on
-    it, and on the distance of the computed roots from the exact ones, is open (a D-12 item)."""
+    np.abs of the differences), not a certified lower bound; the record says so ("separation_note", and
+    "separation_rigorous": False for a consumer that filters on it). A lower bound on it, and on the distance of the
+    computed roots from the exact ones, is open (a D-12 item); the "certified" flag still rests on the float value."""
     from .basis import translation, spin_flip, reflection
     from .fp import fro_upper, gamma_dot, up
     gfun = {"translation": translation, "spin_flip": spin_flip, "reflection": reflection}[symmetry]
@@ -264,5 +265,5 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     return {"symmetry": symmetry, "order": n, "eigenvalue": [lam.real, lam.imag],
             "j_physics": k, "quspin_q": q_quspin, "defect_upper": float(delta),
             "isometry_defect_upper": float(iso), "leakage_bound": float(leak),
-            "separation": float(sep), "separation_note": _SEP_NOTE,
+            "separation": float(sep), "separation_note": _SEP_NOTE, "separation_rigorous": False,
             "certified": bool(leak < 0.5)}

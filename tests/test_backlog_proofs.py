@@ -355,6 +355,7 @@ def test_label_audit_defect_within_rounding_allowance_of_the_threshold():
     assert r["j_physics"] == 0 and not r["certified"] and r["leakage_bound"] >= 0.5
     # the separation is recorded as a floating-point value (not a certified lower bound; open item)
     assert r["separation"] == 2.0 and "not a certified lower bound" in r["separation_note"]
+    assert r["separation_rigorous"] is False
     # the allowance is present: delta >= computed defect + rnd
     from certify_ed.basis import translation
     from certify_ed.sectors import symmetry_matrix
