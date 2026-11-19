@@ -110,7 +110,8 @@ Real data, and complex data whose entries all have a zero real or imaginary part
 before, except the non-Hermitian record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod,
 which the bounds no longer need (its four assumption strings and its record hash change, for real data too). Cost: a
 modulus pass takes about four times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the
-S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s);
+S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at
+commit cdf6ebb; 8.9 s and 9.0 s against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host);
 matrix-free operators pay the moduli in every |H||x| application. The derivation is new and unverified: Sarang's check
 (D-12) is pending (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation
 documents; `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of

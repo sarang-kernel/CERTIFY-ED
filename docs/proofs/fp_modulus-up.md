@@ -455,9 +455,10 @@ for the Fortran-ordered and transposed array and 30.8 MiB for the slice X[:, 2:5
 
 S1 evidence (seconds, Windows reference host, one process each, two runs; the first run shared the host with other
 work): `invariants.spec_invariants` and the S1 statement of `certify(..., Options(only=["S1"]))` for the Heisenberg
-chain with J2 = 0.5 (T = 6N terms) and for the same chain with the phase e^{0.3i} on its flip terms (complex). Base
-cdf6ebb (`np.abs`); the routing before the moduli of S1 were taken once per term (commit 51c6d7f, first run only);
-this change.
+chain with J2 = 0.5 (T = 6N terms) and for the same chain with the phase e^{0.3i} on its flip terms (complex). Base:
+commit cdf6ebb (`np.abs`), 14 commits before cd0ca97, the base of this stack, whose `certify.py` and `variational.py`
+differ (see the second table); the routing before the moduli of S1 were taken once per term (commit 51c6d7f, first
+run only); this change.
 
 | model | spec_invariants: base | before the fix | now | S1: base | before the fix | now |
 |---|---|---|---|---|---|---|
@@ -467,7 +468,18 @@ this change.
 | N = 20, T = 120 | 6.97, 8.86 | 80.45 | 7.65, 7.32 | 159.1, 171.9 | 245.3 | 161.3, 173.8 |
 
 At N = 20 the S1 time is dominated by the reference matrix of 2²⁰ states, not by the invariants. The bounds
-(`trace_err`, `fro2_err`) of the real chains are bit for bit those of the base.
+(`trace_err`, `fro2_err`) of the real chains are bit for bit those of the base (in both tables).
+
+Against cd0ca97, the base of this stack (two runs each, 2026-11-19, on a busier host, so every time is higher than in
+the first table; compare within a row). "Now": branch `fix/complex-moduli` at commit 6ecf015, whose code is that of
+the branch head.
+
+| model | spec_invariants: cd0ca97 | now | S1: cd0ca97 | now |
+|---|---|---|---|---|
+| N = 8, T = 48 | 0.73, 0.81 | 0.75, 0.72 | 1.03, 1.35 | 1.39, 1.09 |
+| N = 14, T = 84 | 3.47, 3.65 | 3.17, 2.87 | 7.72, 7.34 | 8.49, 8.16 |
+| N = 14, complex | 3.74, 3.58 | 3.42, 2.67 | 8.13, 6.82 | 9.56, 6.40 |
+| N = 20, T = 120 | 11.67, 10.35 | 8.86, 9.04 | 263.35, 245.56 | 275.03, 222.85 |
 
 ## 5 Analytic cross-check
 

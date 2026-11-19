@@ -219,13 +219,13 @@ for the arithmetic text of the non-Hermitian record, which names `fp.modulus_up`
 Review rounds of 2026-11-18 (UNVERIFIED, D-12). Resolved: the audit pin of `tests/test_abs_audit.py` covers every
 spelling of a modulus, called or referenced, whatever the object it is taken from, the 1- and ∞-type norm orders and
 hand-written moduli, and fails on stale lines of its list; a dynamic pin runs the main entry points on complex data
-with numpy's modulus recorded outside the classified places (nothing recorded; with the source pin left out it
-records 66 of the 74 routed moduli reverted one at a time, all but the 8 of the device path in `gpu.py`);
-`fp.inf_norm_upper` has an exact and bit-for-bit test; the S1 invariants take each modulus once (S1 time back at the
-base's: N = 20, T = 120: 7.3 s against 8.9 s at the base, 80.5 s before); the moduli of an S2 block are formed once.
-Open items:
-- `sectors.audit_label` divides by the separation of the computed roots of unity, a floating-point value, and its
-  record's `certified` flag rests on it (the record says so: `separation_note`, `separation_rigorous: false`). A rigorous version needs a lower bound on 2 sin(π/n) and a bound on the
-  distance of the computed roots from the exact ones: a D-12 item, not started.
-- The GPU products were not run after the change (no CuPy on the reference host); the moduli are those of the CPU path
-  by construction.
+with numpy's modulus recorded outside the classified places (nothing recorded; with the source pin left out it records
+66 of the 74 routed moduli reverted one at a time, all but the 8 of the device path in `gpu.py`); `fp.inf_norm_upper`
+has an exact and bit-for-bit test; the S1 invariants take each modulus once (their time is back at the base's: N = 20,
+T = 120: 7.3 s against 8.9 s at commit cdf6ebb and 80.5 s before the fix; 8.9 s and 9.0 s against 11.7 s and 10.4 s at
+cd0ca97, the base of the stack, on a busier host); the moduli of an S2 block are formed once. Open items: -
+`sectors.audit_label` divides by the separation of the computed roots of unity, a floating-point value, and its
+record's `certified` flag rests on it (the record says so: `separation_note`, `separation_rigorous: false`). A
+rigorous version needs a lower bound on 2 sin(π/n) and a bound on the distance of the computed roots from the exact
+ones: a D-12 item, not started. - The GPU products were not run after the change (no CuPy on the reference host); the
+moduli are those of the CPU path by construction.
