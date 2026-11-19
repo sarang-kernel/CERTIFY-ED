@@ -1253,8 +1253,10 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certific
             worst = int(np.argmax(enc.radius))
             g = enc.groups[enc.group_of[worst]]
             if not np.isfinite(enc.radius.max() + eps_shift):
-                st = "INCONCLUSIVE"
-                summ = f"certified radius of pair {worst} is not finite: no accuracy statement"
+                # the radii are finite here (S2 was CERTIFIED): the sector lift shift is not, an audit bound overflowed
+                st, code_nf = "INCONCLUSIVE", "NONFINITE_BOUND"
+                summ = (f"certified radius of pair {worst} plus the sector lift shift {eps_shift:.1e} is not finite (a "
+                        f"bound of the floating-point accounting overflowed): no accuracy statement")
             elif enc.existence_radius.max() + eps_shift <= target and g.eta is not None:
                 # IMP-13: the claim is accurate (every Theorem-1 interval meets the target) but the vectors
                 # are too far from orthonormal to certify distinct eigenvalues at that accuracy
