@@ -37,8 +37,15 @@ _PROCESS_SHA256 = frozenset((
     "3ea125d0bff386e6754b3782b300016fc79a9cf8f8669c0a5c3db64467ddb681",
     "487b91042c7cf27a19e23ea8699f5f354b1a0c3af9e418138dc6150d830f970d",
     "5eff592cc497fccb48ebfffaca38a83f9167bc1661b4477e1fc1b66b658cd5a0",
+    "e12ce8285efc67c6d93d3a122e2589ed95089bcbb775ba5634d94e2b8385db07",
+    "c9ad8f2cc1294afa0ef22fc2c019ff7243cdd272b2147ddca3f34c5036b05768",
+    "5a5110ebe1544b31e6d4207a419bc1deb148735f89ae984ff0a2ab809b51f1df",
+    "09cf980b5ff304ac11b7f6d2c5c263da2a867425798ef5cc5d2ebcf55c4fcd23",
 ))
+# Upper-case abbreviations compared by digest with their case (a code identifier in lower case is not one of them).
+_CASED_SHA256 = frozenset(("11fb682be0a0233d5fb899721ecfc1827d20f0d2ff2e093310efa61efca8af1c",))
 _WORD = re.compile(r"[a-z0-9]+")
+_UPPER = re.compile(r"\b[A-Z][A-Z0-9]+\b")
 CLAIM = ["verified", "proven"]
 # The private address of the author is never written here: a candidate "local part@" is compared by its SHA-256.
 _PRIVATE_SHA256 = "c8491228ab3de827c6ef569bf05ef7a5222512e0ce0a2fabef89719783e58b16"
@@ -62,9 +69,12 @@ LIST = re.compile(r"^([-*+\u2022\u25cf]\s|\d+[.)]\s|\([a-z0-9]+\)\s)")
 DASHES = ("\u2014", "\u2013", "\u2012", "\u2015")
 
 
-def _process_digest_hit(low):
-    """True when a word of `low`, or a pair of adjacent words, has its digest in _PROCESS_SHA256 (a final s dropped)."""
+def _process_digest_hit(low, line=""):
+    """True when a word of `low`, or a pair of adjacent words, has its digest in _PROCESS_SHA256 (a final s dropped),
+    or an upper-case word of `line` has its digest in _CASED_SHA256."""
     import hashlib
+    if any(hashlib.sha256(w.encode()).hexdigest() in _CASED_SHA256 for w in _UPPER.findall(line)):
+        return True
     words = _WORD.findall(low)
     cands = set()
     for k, w in enumerate(words):
@@ -112,7 +122,7 @@ def lint(text, bundle=None, allow_process=False):
             for w in PROCESS:
                 if re.search(r"\b" + re.escape(w) + r"s?\b", low):
                     probs.append((i, "process word: " + w, raw[:80]))
-            if _process_digest_hit(low):
+            if _process_digest_hit(low, line):
                 probs.append((i, "process word (listed by digest)", raw[:80]))
     if bundle is not None:
         b = bundle.replace(",", "")
