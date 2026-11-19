@@ -3,7 +3,7 @@
 (a) e6_mutation_*/data.json of the evidence run (64 sampled mutants): killed and survived per module;
 survivors are split by the category assigned in classification.json (experiments/e6_classify.py's rules,
 the "needs inspection" class awaiting a human verdict). (b) the most recent 16-mutant sample recorded in
-RESULT_integration_3.2.md (the last section whose heading says "sample"; the 3.2.0 release sample): killed count
+docs/results/RESULT_integration_3.2.md (the last section whose heading says "sample"; the 3.2.0 release sample): killed count
 and the surviving mutants named there. The title of (a) names the run's certify-ed version from its manifest. The two samples are drawn from different code (different mutation
 sites) and different sizes; the figure places them side by side, it does not compare the scores.
 """
@@ -27,7 +27,7 @@ CAT_COLORS = ["#c8372d", "#e0a21b", "#7b5ea7", "#b8b7b3", "#8fd1c6"]
 
 
 def parse_integration(md_path):
-    """(killed, n, [mutant labels], heading) of the LAST mutation sample recorded in RESULT_integration_3.2.md.
+    """(killed, n, [mutant labels], heading) of the LAST mutation sample in docs/results/RESULT_integration_3.2.md.
 
     The file accumulates one section per sample (the 2026-10-29 integration sample, the 3.2.0 release sample);
     the figure shows the most recent one."""

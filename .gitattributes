@@ -1,7 +1,6 @@
 # project record: git keeps the bytes of these files as committed (recorded hashes, Lean sources with CRLF,
 # generated documents that a regeneration must reproduce byte for byte on every platform)
 lean/** -text
-docs/project/sources/runs/** -text
 tools/changelog/*.tsv -text
 docs/project/** -text
 docs/blog/** -text

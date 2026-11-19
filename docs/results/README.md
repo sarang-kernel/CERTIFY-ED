@@ -2,7 +2,8 @@
 
 Result documents of the code: the evidence runs, the development tracks and the inspection of the mutation survivors.
 Until 20 November 2026 these files were at the root of the repository. Commits before that date have them there, and
-documents written before it cite them by file name only; the names did not change.
+documents written before it cite them by file name or by their path in the archived clone of the code
+(`code/certify-ed/...`); the names did not change.
 
 | file | what it records |
 |---|---|
