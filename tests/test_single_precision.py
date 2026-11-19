@@ -984,9 +984,11 @@ def test_binary64_operator_with_single_precision_vectors(vdtype):
 
 
 def test_one_refusal_rule(tmp_path, capsys):
-    """Inexact values are refused wherever they enter: integers beyond 2^53 in a list next to floats or beyond 2^64,
-    object values v with float(v) != v, a complex claimed eigenvalue of a Hermitian claim, an array-like that cannot
-    be converted, and the eigenvalue file of claim_from_file before its conversion. Exact object values are accepted."""
+    """Inexact values are refused wherever they enter: integers beyond 2^53 in a list next to floats (Python
+    integers, numpy integer scalars, integer arrays), beyond 2^64 or of 2^1024 or more, object values v with
+    float(v) != v, an array-like that cannot be converted, and the eigenvalue file of claim_from_file before its
+    conversion. Exact object values are accepted, NaN goes on to the finite check, and a complex eigenvalue array of
+    a Hermitian claim is converted as in 3.x (the real part, with numpy's ComplexWarning)."""
     from fractions import Fraction
     from certify_ed.cli import main
     from certify_ed.importers import claim_from_file
@@ -997,13 +999,24 @@ def test_one_refusal_rule(tmp_path, capsys):
             binary64(bad)
         with pytest.raises(PrecisionError, match="not exactly"):
             certify(Claim([1.0], _x(np.float64), bad, kind="subset"))
-    for bad in ([2 ** 53 + 1, 1.5], [2 ** 70 + 1], np.array([Fraction(1, 3)], dtype=object)):
-        with pytest.raises(PrecisionError, match="not exactly"):
+    for bad in ([[1.0, np.int64(2 ** 60 + 1)], [np.int64(2 ** 60 + 1), 1.0]],
+                [np.array([1.0, 0.0]), np.array([2 ** 60 + 1, 1], dtype=np.int64)], [[1.0, 10 ** 400]]):
+        with pytest.raises(PrecisionError, match="not exactly|not a binary64 number"):
+            binary64(bad)
+    for bad in ([2 ** 53 + 1, 1.5], [2 ** 70 + 1], np.array([Fraction(1, 3)], dtype=object), [0.5, np.int64(2 ** 60 + 1)],
+                [np.uint64(2 ** 64 - 1), 1.5], [10 ** 400], [1.0, 10 ** 400]):
+        with pytest.raises(PrecisionError, match="not exactly|not a binary64 number"):
             check_values(bad)
-    with pytest.raises(PrecisionError, match="imaginary"):
-        certify(Claim(np.array([1 + 2.0 ** -30 + 0.5j]), _x(np.float64), _A(np.float64), kind="subset"))
-    c = certify(Claim(np.array([1 + 0j]), _x(np.float64), _A(np.float64), kind="subset"))
-    assert _s2(c)["status"] == "CERTIFIED"
+    check_values([0.5, np.int64(2 ** 60)])
+    nan = binary64(np.array([float("nan"), Fraction(1, 2)], dtype=object))
+    assert np.isnan(nan[0]) and nan[1] == 0.5 and nan.dtype == np.float64
+    cw = getattr(np, "exceptions", np).ComplexWarning
+    with pytest.warns(cw):                                      # as in 3.x: the real part, numpy's warning
+        c = certify(Claim(np.array([1 + 2.0 ** -30 + 0.5j]), _x(np.float64), _A(np.float64), kind="subset"))
+    ref = certify(Claim([1 + 2.0 ** -30], _x(np.float64), _A(np.float64), kind="subset"))
+    assert c.arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
+    assert c.body["claim"]["eigenvalues"] == ref.body["claim"]["eigenvalues"]
+    assert "input_widening" not in c.body["arithmetic"]
     A2 = np.diag([1.0, 2.0])
     r = certify_variational(A2, np.array([Fraction(1), Fraction(0)], dtype=object))
     assert r == certify_variational(A2, np.array([1.0, 0.0]))
@@ -1052,14 +1065,21 @@ def test_binary64_hdf5_dataset_is_a_stored_matrix_like_a_float32_one(tmp_path):
     assert "input_widening" not in c64.body["arithmetic"] and "input_widening" in c32.body["arithmetic"]
 
 
-def test_integer_checks_are_vectorized_and_skip_dia_padding():
-    import time as _time
+def test_integer_checks_are_vectorized_and_skip_dia_padding(monkeypatch):
+    import builtins
+    from certify_ed import precision
     from certify_ed.precision import PrecisionError, binary64
     a = np.arange(2_000_000, dtype=np.int64)
     a[7] = 2 ** 60
-    t0 = _time.perf_counter()
+    calls = []
+
+    def counting_int(*args):
+        calls.append(1)
+        return builtins.int(*args)
+    monkeypatch.setattr(precision, "int", counting_int, raising=False)
     assert binary64(a)[7] == 2.0 ** 60
-    assert _time.perf_counter() - t0 < 2.0                      # one comparison, then only the large values
+    assert len(calls) < 100                                     # one comparison, then only the large values
+    monkeypatch.undo()
     a[8] = 2 ** 60 + 1
     with pytest.raises(PrecisionError, match="not exactly representable"):
         binary64(a)
@@ -1111,3 +1131,48 @@ def test_small_branches(tmp_path):
     assert binary64(ragged) is ragged                           # not array data: left to the caller
     s = np.float64(1.5)
     assert binary64(s) is s and binary64(np.float32(1.5)).dtype == np.float64
+
+
+
+def test_exact_layer_checks_the_claimed_values():
+    """The exported entry points of the exact layer apply the one rule to lam: a Fraction 1/3 was rounded silently."""
+    from fractions import Fraction
+    from certify_ed.checker import exact_eigenpair_radii, exact_recheck_lowest
+    from certify_ed.exact_sectors import exact_recheck_sector_lowest
+    from certify_ed.precision import PrecisionError
+    spec = ce.heisenberg_chain(2)
+    x = np.array([0.0, 1.0, -1.0, 0.0]) / np.sqrt(2)
+    for call in (lambda lam: exact_eigenpair_radii(spec, lam, x), lambda lam: exact_recheck_lowest(spec, lam, x),
+                 lambda lam: exact_recheck_sector_lowest(spec, None, [], {}, lam, x)):
+        with pytest.raises(PrecisionError, match="not exactly"):
+            call([Fraction(1, 3)])
+    assert exact_eigenpair_radii(spec, [Fraction(-3, 4)], x) == exact_eigenpair_radii(spec, [-0.75], x)
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_comparison_and_invariant_helpers_sum_in_binary64(dtype):
+    """construct.matrix_difference (the S1 comparator), construct.hermitian_part, invariants.matrix_invariants (which
+    carries a rounding bound) and basis.sector_matrix convert a narrower matrix before they sum its entries."""
+    from certify_ed.basis import sector_matrix
+    from certify_ed.construct import hermitian_part, matrix_difference
+    from certify_ed.invariants import matrix_invariants
+    M = _repeated("coo", dtype)                                 # diag(1 + 2^-25, 3), (0, 0) stored as 1 and 2^-25
+    W = sp.csr_matrix(_wide(M))
+    assert matrix_difference(M, W)["max_abs_diff"] == 0.0
+    assert hermitian_part(M)[0, 0] == 1 + T and hermitian_part(M).dtype == np.dtype(SINGLE[dtype])
+    assert matrix_invariants(M)["trace"] == 4 + T and matrix_invariants(M) == matrix_invariants(W)
+    V = sp.identity(2, dtype=dtype, format="coo")
+    assert sector_matrix(M, V).toarray().tolist() == sector_matrix(W, _wide(V)).toarray().tolist()
+
+
+@pytest.mark.parametrize("fmt", ["dense", "csr"])
+def test_integer_matrices_with_large_row_sums(fmt):
+    """3.x summed |a_ij| of an int64 matrix in int64: beyond 2^63 the norm bound was negative and S2 FAILED
+    spuriously (norm_upper_bound -9.22e18 at cd0ca97); now the bounds are those of the float64 copy."""
+    A = np.full((2, 2), 2 ** 62, dtype=np.int64)
+    A = A if fmt == "dense" else sp.csr_matrix(A)
+    x = np.array([[1.0], [-1.0]])
+    c, cf = (certify(Claim([0.0], x, M, kind="subset")) for M in (A, A.astype(float)))
+    assert c.body["subject"]["operator"]["norm_upper_bound"] > 0 and _s2(c)["status"] == "CERTIFIED"
+    assert c.body["subject"]["operator"]["norm_upper_bound"] == cf.body["subject"]["operator"]["norm_upper_bound"]
+    assert c.arrays["radius"].tobytes() == cf.arrays["radius"].tobytes()
