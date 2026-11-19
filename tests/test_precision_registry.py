@@ -19,13 +19,67 @@ import scipy.sparse as sp
 import certify_ed as ce
 from certify_ed.certify import Claim, Options, certify
 
-MODULES = ["certify_ed.certificate_v2", "certify_ed.certify", "certify_ed.compat.symveig", "certify_ed.compose",
-           "certify_ed.correlations", "certify_ed.davis_kahan", "certify_ed.eigenspace", "certify_ed.enclosure",
-           "certify_ed.entanglement", "certify_ed.fp", "certify_ed.generalized", "certify_ed.importers",
-           "certify_ed.inertia", "certify_ed.io.bundle", "certify_ed.io.formats", "certify_ed.ldl_residual",
-           "certify_ed.moments", "certify_ed.nonhermitian", "certify_ed.ozaki", "certify_ed.precision",
-           "certify_ed.rigorous", "certify_ed.sectors", "certify_ed.spectrum", "certify_ed.sweep",
-           "certify_ed.variational"]
+MODULES = ["certify_ed.basis", "certify_ed.certificate_v2", "certify_ed.certify", "certify_ed.checker",
+           "certify_ed.compat.symveig", "certify_ed.compose", "certify_ed.construct", "certify_ed.correlations",
+           "certify_ed.davis_kahan", "certify_ed.eigenspace", "certify_ed.enclosure", "certify_ed.entanglement",
+           "certify_ed.exact_sectors", "certify_ed.fp", "certify_ed.generalized", "certify_ed.importers",
+           "certify_ed.inertia", "certify_ed.invariants", "certify_ed.io.bundle", "certify_ed.io.formats",
+           "certify_ed.ldl_residual", "certify_ed.moments", "certify_ed.nonhermitian", "certify_ed.ozaki",
+           "certify_ed.precision", "certify_ed.rigorous", "certify_ed.sectors", "certify_ed.spectrum",
+           "certify_ed.sweep", "certify_ed.variational"]
+
+
+# every other module of the package, with the reason it is not in MODULES; test_every_module_is_listed fails for a
+# module in neither (a key also covers the modules below it)
+EXEMPT_MODULES = {
+    "certify_ed": "package namespace: re-exports names of the listed modules",
+    "certify_ed.api": "quick() wraps certify() (registered), which converts its inputs",
+    "certify_ed.apps": "application studies (AKLT, pyrochlore) that build their own binary64 operators from models; "
+                       "not imported by the package",
+    "certify_ed.cli": "command-line front end: reads files with io.formats and importers and calls certify() and the "
+                      "record functions (registered); one PrecisionError handler (tests/test_single_precision.py)",
+    "certify_ed.compat": "package namespace (compat.symveig is listed)",
+    "certify_ed.conformance": "checks producer bundles through io.bundle and certify() (registered)",
+    "certify_ed.corroborate": "S5 corroboration: independent eigensolvers as evidence, no rigorous bound; certify() "
+                              "passes it the converted operator",
+    "certify_ed.cost": "time and memory model from sizes and dtypes; narrow_input_mb and the plan are tested in "
+                       "tests/test_single_precision.py",
+    "certify_ed.crossings": "works on certificates",
+    "certify_ed.degeneracy": "degeneracy_counts hands the matrix to inertia.inertia (registered), which converts it; "
+                             "its own arithmetic is on the enclosure's binary64 radii",
+    "certify_ed.diagnostics": "text for statements",
+    "certify_ed.exact_degeneracy": "exact arithmetic on the ExactMatrix built from the spec",
+    "certify_ed.external": "runs an external verifier on a certificate file",
+    "certify_ed.extrapolation": "works on certificates",
+    "certify_ed.gaps": "works on the enclosure's binary64 radii",
+    "certify_ed.gpu": "DeviceCSR refuses data that are not float64 or complex128; OperatorAdapter passes it the "
+                      "converted matrix (D-05; no device here)",
+    "certify_ed.integrations": "package namespace",
+    "certify_ed.integrations.pauli": "builds model specs; no stored matrix",
+    "certify_ed.integrations.quspin": "wraps certify(); checks the solver's eigenvalues (check_values)",
+    "certify_ed.io": "package namespace (io.formats and io.bundle are listed)",
+    "certify_ed.io.alps": "parses the producer's files into float64 arrays and builds a claim for certify()",
+    "certify_ed.io.diagham": "parses the producer's files into float64 arrays (binary '<f8') and builds a claim",
+    "certify_ed.io.hphi": "parses the producer's files into float64 / complex128 arrays ('<c16') and builds a claim",
+    "certify_ed.io.spinpack": "parses the producer's text files into float64 arrays and builds a claim",
+    "certify_ed.ivl": "dyadic interval arithmetic on Python integers (exact)",
+    "certify_ed.levelstats": "works on certificates",
+    "certify_ed.localops": "local operator definitions of the spec",
+    "certify_ed.matrixfree": "applies the spec operator matrix-free (its own binary64 arithmetic)",
+    "certify_ed.operators": "parses operator expressions into binary64 sparse matrices of the spec",
+    "certify_ed.parallel": "runs certify() (registered) in workers",
+    "certify_ed.presets": "statement selection",
+    "certify_ed.provenance": "source hashes",
+    "certify_ed.recorder": "records producer calls and hands their arrays to certify() (registered)",
+    "certify_ed.report": "formats certificates",
+    "certify_ed.schema": "JSON schemas",
+    "certify_ed.scope": "scope block of a certificate",
+    "certify_ed.spec": "model specifications",
+    "certify_ed.su2": "SU(2) structure of the spec",
+    "certify_ed.testing": "random specs for the tests",
+    "certify_ed.thermo": "dyadic interval arithmetic on enclosures",
+    "certify_ed.viewer": "renders certificates",
+}
 
 N, K = 8, 2
 WIDE = {"float32": np.float64, "complex64": np.complex128}
@@ -350,8 +404,6 @@ R.update({
     "certify_ed.davis_kahan.labels_hook": lambda D: _labels(D),
     "certify_ed.eigenspace.commutes_diagonal": lambda D: [_es().commutes_diagonal(D.S, np.zeros(N)),
                                                           _es().commutes_diagonal(D.S, np.arange(N))],
-    "certify_ed.eigenspace.commutes_signed_permutation": lambda D: _es().commutes_signed_permutation(
-        D.S, np.arange(N)[::-1].copy(), np.ones(N, dtype=np.int64)),
     "certify_ed.eigenspace.certify_eigenspace": lambda D: _es().certify_eigenspace(D.X, [0], np.asarray(D.mu), 1e-6, 1e-6, 1.0),
     "certify_ed.eigenspace.certify_observable": lambda D: _es().certify_observable(D.ec(), D.X, D.O, "O"),
     "certify_ed.eigenspace.certify_quantum_numbers": lambda D: _es().certify_quantum_numbers(
@@ -433,6 +485,44 @@ R.update({
     "certify_ed.variational.state_from_mps": lambda D: ce_var().state_from_mps(D.T),
     "certify_ed.variational.certify_variational": lambda D: [ce_var().certify_variational(D.S, D.X[:, 0]),
                                                              ce_var().certify_variational(D.A, D.X[:, 0])],
+})
+
+
+def _narrow(D):
+    return D.A.dtype.name in WIDE
+
+
+def _swap_matrix(D):
+    """(0, 0) stored as 1 and 2^-25, (0, 1) = (1, 0) = 0.5, (1, 1) = 1: the swap of the two sites is not a symmetry
+    of the stored matrix (exact sum 1 + 2^-25), but it is of the single-precision sum."""
+    M = sp.coo_matrix((np.array([1.0, 2.0 ** -25, 0.5, 0.5, 1.0], dtype=D.dtype), ([0, 0, 0, 1, 1], [0, 0, 1, 0, 1])),
+                      shape=(2, 2))
+    return M if _narrow(D) else _wide(M)
+
+
+def _mod(name):
+    return importlib.import_module(name)
+
+
+def _r_exact_recheck_lowest(D):
+    pytest.importorskip("flint")
+    return _mod("certify_ed.checker").exact_recheck_lowest(D.spec, D.mu, D.X)
+
+
+R.update({
+    "certify_ed.eigenspace.commutes_signed_permutation": lambda D: [
+        _es().commutes_signed_permutation(D.S, np.arange(N)[::-1].copy(), np.ones(N, dtype=np.int64)),
+        _es().commutes_signed_permutation(_swap_matrix(D), np.array([1, 0]), np.array([1, 1]))],
+    "certify_ed.construct.hermitian_part": lambda D: [_mod("certify_ed.construct").hermitian_part(sp.coo_matrix(D.Anh)),
+                                                      _mod("certify_ed.construct").hermitian_part(D.S)],
+    "certify_ed.construct.matrix_difference": lambda D: _mod("certify_ed.construct").matrix_difference(
+        D.S, _wide(D.S).tocsr()),
+    "certify_ed.basis.sector_matrix": lambda D: _mod("certify_ed.basis").sector_matrix(D.S, sp.coo_matrix(D.V)),
+    "certify_ed.invariants.matrix_invariants": lambda D: [_mod("certify_ed.invariants").matrix_invariants(D.S),
+                                                          _mod("certify_ed.invariants").matrix_invariants(D.A)],
+    "certify_ed.checker.exact_eigenpair_radii": lambda D: _mod("certify_ed.checker").exact_eigenpair_radii(
+        D.spec, D.mu, D.X),
+    "certify_ed.checker.exact_recheck_lowest": _r_exact_recheck_lowest,
 })
 
 
@@ -725,6 +815,54 @@ EXEMPT = {
     "certify_ed.variational.TrialState": "container",
     "certify_ed.variational.gap_from_certificate": "takes a certificate",
     "certify_ed.variational.format_variational": "formats a record",
+    # basis
+    "certify_ed.basis.CyclicSymmetry": "symmetry container",
+    "certify_ed.basis.cyclic_isometry": "builds a binary64 isometry from integer states",
+    "certify_ed.basis.digit_sum": "integer states",
+    "certify_ed.basis.magnetization_state_set": "state set of the spec",
+    "certify_ed.basis.reflection": "symmetry of the spec",
+    "certify_ed.basis.spin_flip": "symmetry of the spec",
+    "certify_ed.basis.translation": "symmetry of the spec",
+    "certify_ed.basis.u1_state_set": "state set of the spec",
+    # checker (exact layer: every stored binary64 or narrower value is taken as the exact rational it is)
+    "certify_ed.checker.ExactMatrix": "container of the exact spec matrix",
+    "certify_ed.checker.certify_by_counts": "exact counts on the ExactMatrix",
+    "certify_ed.checker.check_semidefinite_exact": "exact integer residual of the factors of an integer matrix",
+    "certify_ed.checker.check_semidefinite_lower_bound": "ball-arithmetic residual of the stored factors: the bound "
+                                                         "holds whatever precision the factorization used",
+    "certify_ed.checker.exact_dense": "exact matrix",
+    "certify_ed.checker.exact_matrix": "built from the spec",
+    "certify_ed.checker.inertia_exact": "exact inertia of the ExactMatrix",
+    "certify_ed.checker.inertia_exact_int": "exact inertia of an integer matrix",
+    "certify_ed.checker.is_hermitian_exact": "exact matrix",
+    "certify_ed.checker.negative_count_exact": "exact rational count on the stored values",
+    "certify_ed.checker.radius_exact": "exact integer arithmetic on the test vector's integers",
+    "certify_ed.checker.residual_inf_norm_exact": "exact integer arithmetic on the stored values",
+    "certify_ed.checker.residual_inf_norm_upper": "ball arithmetic on the exact rationals of the stored values",
+    "certify_ed.checker.scaled_test_vector": "any test vector gives a valid interval; numpy promotes the division to "
+                                             "binary64",
+    # construct
+    "certify_ed.construct.SpecOperator": "applies the spec operator (its own binary64 products)",
+    "certify_ed.construct.StateSet": "container of integer basis states",
+    "certify_ed.construct.build_bitwise": "builds the spec matrix in binary64",
+    "certify_ed.construct.build_kron": "builds the spec matrix in binary64",
+    "certify_ed.construct.cross_construct": "builds the spec matrix twice and compares",
+    "certify_ed.construct.full_state_set": "state set of the spec",
+    "certify_ed.construct.product_tolerance": "a tolerance from the spec and a float",
+    # exact_sectors
+    "certify_ed.exact_sectors.FiniteGroup": "symmetry group of the spec",
+    "certify_ed.exact_sectors.check_commutes": "exact matrix of the spec",
+    "certify_ed.exact_sectors.exact_count_below": "exact counts of the spec",
+    "certify_ed.exact_sectors.exact_recheck_sector_lowest": "exact arithmetic; the vectors become exact integers; "
+                                                            "lam is checked (check_values, tests/test_single_precision.py)",
+    "certify_ed.exact_sectors.orbit_columns": "integer orbits",
+    "certify_ed.exact_sectors.sector_integer_matrix": "exact matrix of the spec",
+    "certify_ed.exact_sectors.sector_matrices": "exact matrices of the spec",
+    "certify_ed.exact_sectors.site_permutation": "symmetry of the spec",
+    # invariants
+    "certify_ed.invariants.compare_invariants": "compares two records",
+    "certify_ed.invariants.spec_invariants": "from the spec",
+    "certify_ed.invariants.spectrum_invariants": "converts the eigenvalues with dtype=float (exact) before its sums",
 }
 
 
@@ -748,6 +886,28 @@ def test_registry_is_complete():
     assert not (set(R) & set(EXEMPT)), sorted(set(R) & set(EXEMPT))
     missing, stale = sorted(found - listed), sorted(listed - found)
     assert not missing and not stale, f"not listed: {missing}; listed but not public: {stale}"
+
+
+def _package_modules():
+    """Every module of the package by its file (packages without __init__.py, such as apps, included)."""
+    root = os.path.dirname(ce.__file__)
+    out = []
+    for d, _dirs, files in os.walk(root):
+        for f in files:
+            if f.endswith(".py"):
+                rel = os.path.relpath(os.path.join(d, f), os.path.dirname(root))[:-3].replace(os.sep, ".")
+                out.append(rel[:-len(".__init__")] if rel.endswith(".__init__") else rel)
+    return sorted(out)
+
+
+def test_every_module_is_listed():
+    """Every module of certify_ed is in MODULES (its public names checked above) or in EXEMPT_MODULES with a reason
+    (a key covers the modules below it); a new module fails here until it is listed."""
+    covered = lambda m: m in MODULES or any(m == k or m.startswith(k + ".") for k in EXEMPT_MODULES)   # noqa: E731
+    missing = [m for m in _package_modules() if not covered(m)]
+    stale = [k for k in EXEMPT_MODULES if not any(m == k or m.startswith(k + ".") for m in _package_modules())]
+    assert not missing and not stale, f"not listed: {missing}; exempt but absent: {stale}"
+    assert not set(MODULES) & set(EXEMPT_MODULES) and all(EXEMPT_MODULES.values())
 
 
 @pytest.mark.parametrize("name", sorted(R))
@@ -793,3 +953,16 @@ def test_low_level_products_and_splits_refuse_single_precision():
         with pytest.raises(PrecisionError, match="did not convert"):
             f(*args)
     assert json.dumps(canon(ad.matvec(D.Xw))) == json.dumps(canon(OperatorAdapter(_wide(D.S)).matvec(D.Xw)))
+    # caller-supplied products (the fast path of certify()) must be binary64 products too
+    from certify_ed.enclosure import kato_temple, rayleigh_interval, residuals
+    aw, x = OperatorAdapter(_wide(D.S)), D.Xw[:, 0]
+    Ax, absAx = aw.matvec(x), aw.abs_matvec(x)
+    HX, absHX = aw.matvec(D.Xw), aw.abs_matvec(D.Xw)
+    for call in (lambda: rayleigh_interval(aw, x, Ax.astype(np.float32), absAx),
+                 lambda: rayleigh_interval(aw, x, Ax, absAx.astype(np.float32)),
+                 lambda: kato_temple(aw, x, -10.0, 10.0, Ax.astype(np.float32), absAx),
+                 lambda: residuals(aw, D.mu, D.Xw, products=(HX.astype(np.float32), absHX)),
+                 lambda: residuals(aw, D.mu, D.Xw, products=(HX, absHX.astype(np.float32)))):
+        with pytest.raises(PrecisionError, match="did not convert"):
+            call()
+    assert json.dumps(canon(rayleigh_interval(aw, x, Ax, absAx))) == json.dumps(canon(rayleigh_interval(aw, x)))
