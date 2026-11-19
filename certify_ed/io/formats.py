@@ -232,7 +232,7 @@ def write_array(path: str, a, key: Optional[str] = None, role: str = "eigenvalue
             json.dump({key: _jsonable_array(a)}, f)
     elif e == ".mtx":
         from scipy.io import mmwrite
-        mmwrite(path, a.reshape(-1, 1) if a.ndim == 1 else a)
+        mmwrite(path, a.reshape(-1, 1) if a.ndim == 1 else a, precision=17)    # 17 digits: exact round trip
     else:
         raise FormatError(f"{path}: unsupported extension {e!r}")
     return path
@@ -409,7 +409,7 @@ def write_operator(path: str, A, key: str = "H") -> str:
             sp.save_npz(path, A)
         elif e == ".mtx":
             from scipy.io import mmwrite
-            mmwrite(path, A)
+            mmwrite(path, A, precision=17)    # 17 significant digits: binary64 round trip on every scipy
         elif e in (".h5", ".hdf5", ".hdf"):
             import h5py
             with h5py.File(path, "w") as f:
