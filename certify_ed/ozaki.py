@@ -38,7 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, ULP_MIN, _GUARD, gamma, norm2_upper, norm2_lower, up
-from .precision import binary64
+from .precision import binary64, require_binary64
 
 DEFAULT_MAX_SLICES = 8
 MAX_EXPONENT = 480          # |entries| < 2^480: products of two slices and their sums stay far below 2^1024
@@ -128,7 +128,7 @@ def _slice_values(v: np.ndarray, t, beta: int, max_slices: int):
 
 def split_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> Split:
     """Column-wise split of a real 2-D array (the exponent of column j is shared by its entries)."""
-    A = np.asarray(A, dtype=float)
+    A = np.asarray(require_binary64(A, "ozaki.split_columns"), dtype=float)    # fail closed (precision.py)
     if A.ndim == 1:
         A = A[:, None]
     _check_finite(A)
@@ -142,7 +142,7 @@ def split_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES
 
 def split_complex_columns(A: np.ndarray, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> Tuple[Split, Split]:
     """Real and imaginary parts split with one exponent per column (the larger of the two parts)."""
-    A = np.asarray(A)
+    A = np.asarray(require_binary64(A, "ozaki.split_complex_columns"))        # fail closed (precision.py)
     if A.ndim == 1:
         A = A[:, None]
     Ar = np.ascontiguousarray(A.real, dtype=float)
@@ -199,6 +199,7 @@ def _pad(parts, k, like):
 
 def split_rows(H, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> RowSplit:
     """Split a stored matrix by rows (sparse: on its stored entries; dense: on all entries)."""
+    require_binary64(H, "ozaki.split_rows")                                   # fail closed (precision.py)
     if sp.issparse(H):
         H = sp.csr_matrix(H)
         H.sort_indices()

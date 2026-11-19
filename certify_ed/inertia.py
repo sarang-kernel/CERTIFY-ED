@@ -51,7 +51,7 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
 from .fp import U, GuardRangeError, gamma_dot, up, fro_upper
-from .precision import binary64
+from .precision import binary64, require_binary64
 
 
 @dataclass
@@ -110,6 +110,7 @@ def _count_block_diagonal(D: np.ndarray):
 def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     t0 = time.time()
     A = binary64(np.asarray(A), "operator")     # exact; LAPACK in single precision would break the beta below
+    require_binary64(A, "inertia_dense")        # fail closed (precision.py)
     n = A.shape[0]
     cplx = np.iscomplexobj(A)
     S = A - sigma * np.eye(n)
@@ -143,7 +144,7 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     t0 = time.time()
     # exact, and before csc_matrix (which sums repeated entries in the narrower format); SuperLU in single precision
     # would break the beta below
-    A = sp.csc_matrix(binary64(A, "operator"))
+    A = require_binary64(sp.csc_matrix(binary64(A, "operator")), "inertia_sparse")   # fail closed (precision.py)
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()

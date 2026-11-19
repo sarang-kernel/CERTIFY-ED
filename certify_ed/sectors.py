@@ -32,7 +32,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import ULP_MIN, fro_upper, gamma_dot, norm2_upper, up, U
-from .precision import binary64
+from .precision import binary64, require_binary64
 
 
 @dataclass
@@ -56,6 +56,8 @@ def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "
     H = sp.csr_matrix(binary64(H, "operator"))
     V = sp.csr_matrix(binary64(V, "sector isometry"))
     Hs = sp.csr_matrix(binary64(Hs, "sector block"))
+    for M, name in ((H, "H"), (V, "V"), (Hs, "Hs")):
+        require_binary64(M, f"audit_sector: {name}")           # fail closed (precision.py)
     ds = V.shape[1]
     cplx = np.iscomplexobj(V.data) or np.iscomplexobj(H.data) or np.iscomplexobj(Hs.data)
     G = (V.conj().T @ V - sp.identity(ds, format="csr")).tocsr()
@@ -117,7 +119,10 @@ def audit_decomposition(H: sp.spmatrix, Vs: List[sp.spmatrix], Hss: List[sp.spma
 
 
 def trace_moments_check(H: sp.spmatrix, Hss: List[sp.spmatrix], rtol: float = 1e-10) -> dict:
-    """Necessary conditions without isometries: tr and Frobenius norm additivity."""
+    """Necessary conditions without isometries: tr and Frobenius norm additivity. Matrices in a narrower format are
+    converted exactly first, so that the sums are formed in binary64 (precision.py)."""
+    H = binary64(H, "operator")
+    Hss = [binary64(M, "sector block") for M in Hss]
     tH = complex(sp.csr_matrix(H).diagonal().sum())
     fH = float(sp.linalg.norm(H) ** 2)
     ts = complex(sum(sp.csr_matrix(M).diagonal().sum() for M in Hss))

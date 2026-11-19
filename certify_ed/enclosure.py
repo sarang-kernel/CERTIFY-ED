@@ -68,7 +68,7 @@ from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range)
 from .gpu import GPUUnavailable
-from .precision import binary64
+from .precision import binary64, require_binary64
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -107,7 +107,7 @@ class OperatorAdapter:
             # count binary64 arithmetic, and a single-precision product would not satisfy them
             # (widened before tocsr, which would sum repeated entries in the narrower format)
             w = binary64(op if sp.issparse(op) else np.asarray(op), "operator")
-            self.A = w.tocsr() if sp.issparse(w) else w
+            self.A = require_binary64(w.tocsr() if sp.issparse(w) else w, "OperatorAdapter")
             self.shape = self.A.shape
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
             self.width = max_nnz_per_row(self.A)
@@ -195,6 +195,7 @@ class OperatorAdapter:
         return self.kind in ("matrix", "spec")
 
     def matvec(self, X):
+        require_binary64(X, "OperatorAdapter.matvec")          # fail closed (precision.py)
         if self.kind == "matrix":
             if getattr(self, "_gpu", None) is not None:
                 try:
@@ -211,6 +212,7 @@ class OperatorAdapter:
         return self.op.matvec(X)
 
     def abs_matvec(self, X):
+        require_binary64(X, "OperatorAdapter.abs_matvec")      # fail closed (precision.py)
         if self.kind == "matrix":
             absA = self._absA if self._absA is not None else np.abs(self.A)
             aX = np.abs(X)
@@ -227,6 +229,7 @@ class OperatorAdapter:
     def both_products(self, X):
         """(H X, |H| |X|), the same arrays as (matvec(X), abs_matvec(X)); with the GPU products of D-05 both are
         formed in one pass over H."""
+        require_binary64(X, "OperatorAdapter.both_products")   # fail closed (precision.py)
         if self.kind == "matrix" and getattr(self, "_gpu", None) is not None:
             try:
                 return self._gpu.products(X)
@@ -424,7 +427,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
     already formed for in-memory X (one block; the |H| |X| array is consumed in place). Vectors in a narrower format
     are converted exactly to binary64 first (precision.binary64)."""
     mu = np.asarray(mu, dtype=float)
-    X = binary64(X, "eigenvectors", stream=True)
+    X = require_binary64(binary64(X, "eigenvectors", stream=True), "residuals")    # fail closed (precision.py)
     streamed = is_streamed(X)
     if not streamed:
         X = np.asarray(X)
