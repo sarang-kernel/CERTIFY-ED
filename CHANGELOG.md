@@ -16,21 +16,27 @@ CERTIFIED with radius 8.9e-16 (3.6e-15 for complex64), although the stored matri
 Affected: every 3.x release, checked at the release commits of 3.0.0, 3.1.0, 3.2.0, 3.2.1, 3.2.2 and 3.2.3, and dev/3.3
 up to this fix. The other records and helpers that formed products of the given arrays were affected the same way
 (variational, generalized pencil and its inertia count, moments, `enclose_spectrum`, the Rayleigh interval of
-Kato-Temple, the S4 observable and label records, the sector audits, the norm bounds of `fp`); the non-Hermitian record
-converted its inputs to binary64 already. Format conversions (tocsr, csr_matrix, toarray) summed the repeated entries of
-a single-precision sparse matrix in single precision as well. No evidence-run input, example or test of the repository
-uses single precision. S2 certificates and the records listed above that 3.0.0 to 3.2.3 issued for float16, float32 or
-complex64 inputs are not supported and should be recomputed.
+Kato-Temple, the S4 observable and label records, the sector audits and the decomposition audit of the sector
+composition, the norm bounds of `fp`); the non-Hermitian record converted its inputs to binary64 already. Format
+conversions (tocsr, csr_matrix, toarray) summed the repeated entries of a single-precision sparse matrix in single
+precision as well. No evidence-run input, example or test of the repository uses single precision. S2 certificates and
+the records listed above that 3.0.0 to 3.2.3 issued for float16, float32 or complex64 inputs are not supported and
+should be recomputed.
 
 Every entry point that takes a stored operator, vectors or another matrix into a bound now passes the caller's object
 through `precision.binary64` first, before any format conversion: float16, float32 and complex64 data are widened
-exactly to float64 or complex128 (a sparse matrix keeps its repeated entries, which are then summed in binary64), so the
-statements concern the values as stored; integer data are widened when every value is a binary64 number (integer vectors
-with an integer operator raised a numpy casting error before); a long double wider than binary64, non-numeric data and
-integers that binary64 cannot hold are refused with `PrecisionError` (a `ValueError`, exported by the package;
-`certify-ed certify` and `certify-ed variational` print `refused: ...` and exit with 2). Claimed eigenvectors on disk
-are widened block by block; any other matrix on disk is converted in memory. The binary64 copies live next to the
-caller's arrays, and the plan (`cost.plan_for_claim`) adds the caller's narrower arrays to its peaks.
+exactly to float64 or complex128 (a sparse matrix keeps its repeated entries, which are then summed in binary64; LIL and
+DOK matrices, one value per position, through their own astype), so the statements concern the values as stored; integer
+data are widened when every value is a binary64 number (integer vectors with an integer operator raised a numpy casting
+error before); a long double wider than binary64, non-numeric data and integers that binary64 cannot hold are refused
+with `PrecisionError` (a `ValueError`, exported by the package; `certify-ed certify` and `certify-ed variational` print
+`refused: ...` and exit with 2). Claimed eigenvectors on disk are widened block by block; any other matrix on disk is
+converted in memory. An operator given as a list of lists or as an array-like (an object with `__array__` and no
+`matvec`) is a stored matrix whatever its dtype; in 3.x only arrays and scipy.sparse matrices were, and such an operator
+failed as a black box without a `matvec`. `compose.certify_low_energy` converts every sector's isometry, block and
+vectors once, before the U(1) restriction and the decomposition audit, whose W^H W was formed in the isometries' own
+precision. The binary64 copies live next to the caller's arrays, and the plan (`cost.plan_for_claim`) adds the caller's
+narrower arrays to its peaks.
 
 The certificate's `arithmetic.input_widening` (`input_widening` in the standalone records) lists every converted input,
 integers and Python lists included, with the caller's dtype and `source_sha256` (the hash of the input as given), only
@@ -41,7 +47,8 @@ vectors is that of the widened array, which is also the array the arrays sidecar
 integer inputs therefore change too: they gain the field, and their vector hash changes.
 
 float64 and complex128 inputs give the same certificates and records as before, bit for bit (bodies without environment
-and times, and arrays, on 14 models and records against cd0ca97). The computational source hash changes (new module
+and times, and arrays, on 14 models and records against cd0ca97, and for vectors, observables and symmetry diagonals
+given as lists or array-likes and for the sector composition). The computational source hash changes (new module
 `precision.py`; `certify.py`, `certificate_v2.py`, `cost.py`, `enclosure.py`, `fp.py`, `inertia.py`, the record modules
 and the eigenspace, correlation, sector, spectrum, compose, Ozaki and Arb helpers). Tests:
 `tests/test_single_precision.py`. Not exercised here: the GPU products of D-05 (no device), which now receive the
