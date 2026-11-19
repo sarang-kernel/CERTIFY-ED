@@ -6,9 +6,9 @@ Usage:  python tools/lint_docs.py FILE.md [FILE.md ...]        (or a directory: 
 
 The rules are those of docs/project/STYLE.md, adapted from the style checker of the mm3x3 release (lint_paper.py):
 no list lines, no em or en dashes and no "--" used as a dash, no promotional or filler vocabulary, no
-mention of the writing process (tools, sessions, prompts), no claim that a statement is "verified" or
-"proven" (a statement is kernel-checked, machine-checked, or checked by a named person; D-12), and never the
-private e-mail address of the author. Fenced code blocks and inline code spans are skipped, so file names and
+mention of the writing process (tools, sessions, prompts; a guard against accidents, not a proof of absence), no
+claim that a statement is "verified" or "proven" (a statement is kernel-checked, machine-checked, or checked by a named
+person; D-12), and never the private e-mail address of the author. Fenced code blocks and inline code spans are skipped, so file names and
 record fields such as `spin1_landscape` do not trip the word list. Markdown pipe tables are allowed.
 Exit code 0 means clean.
 """
@@ -41,6 +41,10 @@ _PROCESS_SHA256 = frozenset((
     "c9ad8f2cc1294afa0ef22fc2c019ff7243cdd272b2147ddca3f34c5036b05768",
     "5a5110ebe1544b31e6d4207a419bc1deb148735f89ae984ff0a2ab809b51f1df",
     "09cf980b5ff304ac11b7f6d2c5c263da2a867425798ef5cc5d2ebcf55c4fcd23",
+    "386ebc0efd04339aa982703eb666c335d8458b8657343d9783185debf0bf0c26",
+    "803b3eb2b6af027151950019f2d5ede506a6636a9eafd262b27c23e3f834056f",
+    "2d333f8f9bda4688794a73a1fbbf57732f4720b88330d46568188e8a63cb3e0e",
+    "72c029d91640da92f2a795199d8d952103ac228a33ed85b29c1e0479be2f37d7",
 ))
 # Upper-case abbreviations compared by digest with their case (a code identifier in lower case is not one of them).
 _CASED_SHA256 = frozenset(("11fb682be0a0233d5fb899721ecfc1827d20f0d2ff2e093310efa61efca8af1c",))
