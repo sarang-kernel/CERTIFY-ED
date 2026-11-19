@@ -89,6 +89,28 @@ def test_verdicts_table_lists_every_document_with_its_status_line_verdict():
         assert os.path.exists(os.path.join(independent, "adversarial_" + name + ".py")), name
 
 
+def test_fp_modulus_up_document_has_the_format_and_its_independent_files():
+    """docs/proofs/fp_modulus-up.md (2026-11-18): the six sections, the UNVERIFIED (D-12) marking, the status line
+    ('Derived on', machine-checked, an independent re-derivation done on 2026-11-18 with its verdicts, Sarang's check
+    pending), nowhere 'verified' in the status; the independent derivation and its adversarial script exist."""
+    text = open(os.path.join(PROOFS, "fp_modulus-up.md"), encoding="utf-8").read()
+    for num, title in enumerate(("Statement", "Proof", "Where the code implements it", "Computational verification",
+                                 "Analytic cross-check", "Status"), start=1):
+        assert re.search(rf"^## {num}\.? {re.escape(title)}", text, flags=re.M), title
+    assert "**UNVERIFIED (D-12):**" in text and "machine-checked (" in text
+    status = text[text.index("Status", text.rindex("## 6")):]
+    assert status.startswith("Status\n\nDerived on 2026-11-18; machine-checked (")
+    assert ("independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the "
+            "corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md)") in status
+    assert "Sarang's check (D-12): pending." in status and "UNVERIFIED (D-12) until that check." in status
+    cleaned = status.lower().replace("unverified", "").replace("machine-checked", "")
+    assert "verified" not in cleaned
+    independent = os.path.join(PROOFS, "independent")
+    for f in ("fp_modulus-up.md", "adversarial_fp_modulus-up.py"):
+        assert os.path.exists(os.path.join(independent, f)), f
+    assert "UNVERIFIED (D-12)" in open(os.path.join(independent, "fp_modulus-up.md"), encoding="utf-8").read()
+
+
 # ------------------------------------------------------------------------------------------- Lemma 17 pins
 def test_atanh_series_argument_range_is_enforced():
     with pytest.raises(ValueError):
