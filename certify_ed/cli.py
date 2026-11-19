@@ -979,7 +979,12 @@ def main(argv=None):
     n = sub.add_parser("numbers", help="regenerate numbers and tables from a run directory")
     n.add_argument("--run"); n.add_argument("--manuscript"); n.set_defaults(fn=cmd_numbers)
     a = p.parse_args(argv)
-    return a.fn(a)
+    from .precision import PrecisionError
+    try:
+        return a.fn(a)
+    except PrecisionError as e:              # one rule for every command: data binary64 cannot hold exactly, or not
+        print(f"{a.cmd}: refused: {e}")      # numeric data; nothing is written (precision.py)
+        return 2
 
 
 if __name__ == "__main__":
