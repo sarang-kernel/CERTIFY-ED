@@ -903,9 +903,12 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
 def _private_copies(widened=None):
     """own(m, what): the matrix certify() works on in place of the caller's matrix m.
 
-    A matrix in a narrower format than binary64 (float32, complex64, float16, integers) becomes a private exact binary64
-    copy (precision.binary64), listed in `widened` under `what`; a wider format is refused (PrecisionError). A CSR
-    matrix whose indices are unsorted or repeated becomes a private copy. Any other value is returned unchanged.
+    A matrix in a narrower floating format than binary64 (float16, float32, complex64) becomes a private exact binary64
+    copy (precision.binary64), listed in `widened` under `what`; a wider format is refused (PrecisionError). Integer
+    matrices are checked (every value a binary64 number) and used as given, as in 3.x: the steps that multiply them
+    convert them exactly, and their certificates are those of 3.x. Boolean matrices (3.x raised a TypeError) are
+    converted exactly, not listed. A CSR matrix whose indices are unsorted or repeated becomes a private copy. Any
+    other value is returned unchanged.
 
     A matrix given in several places (the operator also as an observable, say) gets one copy, so that a summation done
     through one place is seen through the others, as it was on the caller's matrix. A new own() for each run."""
@@ -915,7 +918,7 @@ def _private_copies(widened=None):
         hit = copies.get(id(m))
         if hit is None:
             note = []
-            c = binary64(m, what, note)       # a narrower matrix on disk becomes binary64 in memory; matvec objects stay
+            c = binary64(m, what, note, keep_integers=True)   # narrower floats: binary64 copies; integers checked
             if c is m:
                 if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
                     return m
@@ -944,7 +947,7 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
     which that conversion would round is refused."""
     check_values(claim.eigenvalues, "claim.eigenvalues")
     op, iso = own(claim.operator, "claim.operator"), own(claim.sector_isometry, "claim.sector_isometry")
-    X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True)
+    X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True, keep_integers=True)
     if op is claim.operator and iso is claim.sector_isometry and X is claim.eigenvectors:
         return claim
     return replace(claim, operator=op, sector_isometry=iso, eigenvectors=X)
@@ -1018,7 +1021,8 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
-    mu = np.asarray(claim.eigenvalues, dtype=float)
+    mu = np.asarray(claim.eigenvalues)
+    mu = np.asarray(mu.real if mu.dtype.kind == "c" else mu, dtype=float)    # imaginary parts are 0 (check_values)
     X = claim.eigenvectors
     streamed = X is not None and is_streamed(X)
     if streamed and not isinstance(X, (np.memmap, StreamedColumns)):

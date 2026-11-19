@@ -520,25 +520,26 @@ def plan_certification(n: int, nnz: Optional[int], k: int, kind: str = "lowest",
 
 
 def narrow_input_mb(claim, options) -> float:
-    """Megabytes of the caller's inputs stored in a narrower format than binary64 (or as integers): certify() works on
-    exact binary64 copies of them (precision.py), which live next to the caller's arrays. The plan's baseline counts
+    """Megabytes of the caller's inputs stored in a narrower floating format than binary64 (float16, float32,
+    complex64): certify() works on exact binary64 copies of them (precision.py), which live next to the caller's arrays
+    (integer inputs are used as given, as in 3.x, and add nothing here). The plan's baseline counts
     the binary64 arrays; this is the memory of the caller's arrays on top (operator, sector isometry, in-memory vectors,
     the matrices of Options.observables, approximate_symmetries and symmetries). Vectors read from disk add none."""
     import numpy as np
     import scipy.sparse as sp
     from .enclosure import is_streamed
-    from .precision import PrecisionError, target_dtype
+    from .precision import PrecisionError, is_narrow_float
 
     def mb(a) -> float:
         try:
             if sp.issparse(a):
-                if target_dtype(a.dtype) is None:
+                if not is_narrow_float(a.dtype):
                     return 0.0
                 if a.format in ("lil", "dok"):    # one value per position: the values (not their Python containers)
                     return float(a.nnz * a.dtype.itemsize) / 2 ** 20
                 return sum(int(getattr(a, k).nbytes) for k in ("data", "indices", "indptr", "row", "col", "offsets")
                            if isinstance(getattr(a, k, None), np.ndarray)) / 2 ** 20
-            if isinstance(a, np.ndarray) and not is_streamed(a) and target_dtype(a.dtype) is None:
+            if isinstance(a, np.ndarray) and not is_streamed(a) and not is_narrow_float(a.dtype):
                 return 0.0
             if isinstance(a, np.ndarray) and not is_streamed(a):
                 return float(a.nbytes) / 2 ** 20

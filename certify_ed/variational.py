@@ -72,8 +72,9 @@ class TrialState:
 
 
 def state_from_dense(psi, widened: Optional[list] = None) -> TrialState:
-    """The stored vector psi; a narrower format (float32, complex64, integers) is converted exactly to binary64
-    (precision.binary64, noted in `widened`), a wider one refused."""
+    """The stored vector psi in binary64 (precision.binary64): a narrower floating format (float16, float32, complex64;
+    noted in `widened`), integers and exact object values (a Fraction 1/2) are converted exactly; a wider format and
+    values binary64 cannot hold (an integer beyond 2^53, a Fraction 1/3; 3.x rounded them) are refused."""
     v = binary64(np.asarray(psi), "trial state", widened)
     if v.ndim == 2 and 1 in v.shape:
         v = v.ravel()
