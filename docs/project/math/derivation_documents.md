@@ -50,7 +50,7 @@ the integration of 3 November 2026 (5 AGREES, 7 AGREES-WITH-REMARKS, 3 GAP, 2 ER
 Each entry below has four parts: what the document derives, its machine check (the script, the arguments of the recorded
 run where the document gives them, and the counts of its status line), the independent verdict with its remarks, and the
 outcome for the code. The status of every document is the same: derived, machine-checked, independently re-derived (a
-second derivation written from the statement alone, not a human check), Sarang's check pending.
+second derivation written before the original proof was read, not a human check), Sarang's check pending.
 
 ## Theorem 1 and the arithmetic
 

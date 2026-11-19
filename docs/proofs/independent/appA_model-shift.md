@@ -1,6 +1,6 @@
 # Independent re-derivation: Appendix A (the model shift Δ)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../appA_model-shift.md` read first; proof written before
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../appA_model-shift.md` read first; proof written before
 section 2 was opened. `verify_appA_model-shift.py` was not run for this re-derivation (its run of 2026-11-03
 is `docs/proofs/runs/appA_model-shift.txt`). Notation as in the original's preamble; a := |H|_abs (entrywise, exact amplitudes),
 γ_k = ku/(1 − ku), Higham, *Accuracy and Stability of Numerical Algorithms* (2002): Lemma 3.1 (products of

@@ -205,4 +205,4 @@ limit; bad subsets; no spec; sector claim).
 ## 6 Status
 
 Derived on 2026-10-30; machine-checked (1 150 random + 20 026 adversarial cases, 0 violations);
-independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.

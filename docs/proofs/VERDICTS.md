@@ -1,6 +1,6 @@
 # Independent re-derivation verdicts (Phase 2, rule D-12/D-59)
 
-Written from the statement alone on 2026-10-30 (not a human check). For every derivation document in `docs/proofs/` the statement (section 1) and the
+Written on 2026-10-30 before the original proof was read (not a human check). For every derivation document in `docs/proofs/` the statement (section 1) and the
 code mapping (section 3) were read first, an independent proof was written in `docs/proofs/independent/<id>.md`,
 then section 2 of the original was compared step by step, the original `verify_<id>.py` was run at a reduced
 size and an independent adversarial search `docs/proofs/independent/adversarial_<id>.py` was run (exact arithmetic or
@@ -126,7 +126,7 @@ complex-typed vectors through `residuals` and, if the hypothesis h ≤ 2 is adop
 
 ### E-02_non_hermitian.md
 
-Written and checked on 2026-11-11 under the same protocol (a second derivation written from the statement alone, not
+Written and checked on 2026-11-11 under the same protocol (a second derivation written before the original proof was read, not
 a human check). No statement-level gap. Wording changes applied to section 1 before delivery: Proposition 5 (ii) now
 separates the standard-model inequality from the additive budget (2w + 10)u_min of E; (FP) states that NumPy's complex
 products may use fused multiply-adds (error at most 2u, Jeannerod, Kornerup, Louvet and Muller 2017, below γ₃) and that

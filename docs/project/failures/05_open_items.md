@@ -9,7 +9,7 @@ D-61.
 ## The check of the derivation documents by Sarang Vehale
 
 All 22 documents in `code/certify-ed/docs/proofs/` are derived, machine-checked and independently re-derived (a second
-derivation written from the statement alone, not a human check), with Sarang's check pending (decisions D-12 and
+derivation written before the original proof was read, not a human check), with Sarang's check pending (decisions D-12 and
 D-59). They are open in this sense until he has re-derived them. The handover suggests an order: first the documents
 that changed bounds (`thm2_polar-factor`, `thm1_fp-accounting`, `int05_underflow`, `appA_model-shift`), then the ERROR
 and GAP rows of `VERDICTS.md` (`int05`, `E-04`, `thm1`, `C-04`, `E-07`, `E-05`, `D-02`), then the rest. Each document

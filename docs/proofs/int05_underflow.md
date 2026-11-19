@@ -270,5 +270,5 @@ eigenvalues lie inside the tiny intervals.
 
 ## 6 Status
 
-Derived on 2026-10-30; machine-checked (2 500 residual + 2 500 monotonicity + 5 000 dot + 5 000 exact_dot + 5 000 norm + 18 992 model operations random + 373 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-30; machine-checked (2 500 residual + 2 500 monotonicity + 5 000 dot + 5 000 exact_dot + 5 000 norm + 18 992 model operations random + 373 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

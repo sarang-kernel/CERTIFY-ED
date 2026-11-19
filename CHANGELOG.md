@@ -11,12 +11,16 @@
 
 No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of
 the derivation documents and the headers of the independent re-derivations in `docs/proofs/` name no tool; an
-independent re-derivation is described as written from the statement alone, not a human check
-(`tests/test_proofs_props.py` pins the new wording). The practice survey calls its re-coding of 12 papers a check
-reading, a second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording only; the blog
-had said that the 12 papers were re-coded by hand). Working notes of the development environment are removed from
-the track reports, the project changelog and the derivation documents. `tools/lint_docs.py` compares product and tool
-names by their SHA-256 digests, so that it does not spell them.
+independent re-derivation is described as written before the original proof was read (the statement and the code
+mapping were read first), not a human check (`tests/test_proofs_props.py` pins the new wording). Entries of earlier
+versions below that quote these status lines quote the new wording. The practice survey calls its re-coding of 12
+papers a check reading, a second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording
+only); the blog, a decision record and the roadmap had called it a hand check or a hand coding. Suggested readings of
+mutation survivors are called automatic suggestions. Working notes of the development environment are removed from
+the track reports, the project changelog and the derivation documents, except where they give the reason for a failed
+run. `tools/lint_docs.py` compares product and tool names by their SHA-256 digests, so that it does not spell them,
+and `tests/test_process_words.py` applies that check to every tracked text file except the third-party survey data
+and the commit table of the project changelog.
 
 ### Single-precision inputs (soundness fix)
 
@@ -898,7 +902,7 @@ check (D-12): pending" — nothing is called verified.
   the Weyl transfer of S2/S3 (Theorem A5). `_builder_shift` divides by (1 − γ_W) where it multiplied by (1 + γ_W)
   (the latter is sufficient only for Wu ≲ 10⁻⁸). `OperatorAdapter.width` for a spec operator is m + 2L_max + 2 (was
   m + L_max + 2, short by L_max − 4 roundings for strings of five or more letters). Its verification script was
-  written but not executed at the time (it ran on 2026-11-03); the document says so.
+  written but not executed at the time (it ran on 2026-11-03); the document records the later run.
 - **Theorem 1 accounting** (`thm1_fp-accounting.md`, `appendixA_scaffold.tex`): the INT-04 list as a proof with the
   scalar lemmas behind every factor ((1 − γ₃)(1 + 4u) ≥ 1; the norm guards give a 3u slack; the |A||x| and E guards),
   hypotheses n, w ≤ 2²⁶, and a statement-level LaTeX scaffold for the manuscript's Appendix A.

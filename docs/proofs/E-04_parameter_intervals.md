@@ -186,5 +186,5 @@ dense block diagonalisation; the CLI.
 ## 6 Status
 
 Derived on 2026-10-30; machine-checked (1 049 random + 107 adversarial cases, 0 violations; negative
-controls detected); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+controls detected); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

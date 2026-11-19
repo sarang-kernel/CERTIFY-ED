@@ -161,7 +161,7 @@ CHANGELOG.md.
 ## Tests and lint
 
 Full suite: `pytest -q tests` -> `2 failed, 763 passed, 2 skipped, 1 warning in 2118.06s (0:35:18)` (run while the 12870 memmap test was also running).
-Both failures are pre-existing at f080586 and named by the lead as fixed on dev/3.2 68e26d0 (`test_fix_3_1_1::test_scope_validator_rejects_a_statement_dropped_from_the_scope_block`, `test_schema_conformance::test_unknown_status_and_reason_code_fail_at_load`: two validators guard the same tampering, `Certificate.load` order); the other two of the four pre-existing failures (rendered schema out of date) pass here because the schema was re-rendered for the `plan` property. The 2 skips are the `CERTIFY_ED_LARGE_FIXTURE`-gated 12870 memmap test (run separately: passed, 811 s) and one pre-existing skip.
+Both failures are pre-existing at f080586 and recorded as fixed on dev/3.2 68e26d0 (`test_fix_3_1_1::test_scope_validator_rejects_a_statement_dropped_from_the_scope_block`, `test_schema_conformance::test_unknown_status_and_reason_code_fail_at_load`: two validators guard the same tampering, `Certificate.load` order); the other two of the four pre-existing failures (rendered schema out of date) pass here because the schema was re-rendered for the `plan` property. The 2 skips are the `CERTIFY_ED_LARGE_FIXTURE`-gated 12870 memmap test (run separately: passed, 811 s) and one pre-existing skip.
 ruff: `ruff check certify_ed tests experiments conformance` -> All checks passed!
 
 ## Expected merge conflicts with the other Wave-1 tracks

@@ -200,5 +200,5 @@ subspaces' overlap contains tr(P₁P₂), shape and missing-vector errors, and 2
 ## 6 Status
 
 Derived on 2026-10-30; machine-checked (529 random + 24 adversarial cases, 0 violations; both negative
-controls detected 20/20); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+controls detected 20/20); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

@@ -35,7 +35,7 @@ CI workflows and container recipes syntax-checked only; wheel installed offline;
 
 ## Mutation sample on the merged branch (2026-10-29)
 
-`experiments/e6_mutation.py 16 2` at c59131e (baseline timeout raised to 3600 s; the baseline suite took 1195 s): **13 of 16 killed** (3.1.0's 64-mutant sample: 38 of 64). Record: `experiments/results/e6_mutation_20261029_164910/`. Survivors, with the lead's suggestions (not verdicts, RA-25):
+`experiments/e6_mutation.py 16 2` at c59131e (baseline timeout raised to 3600 s; the baseline suite took 1195 s): **13 of 16 killed** (3.1.0's 64-mutant sample: 38 of 64). Record: `experiments/results/e6_mutation_20261029_164910/`. Survivors, with suggested readings (automatic, not verdicts, RA-25):
 
 | mutant | suggestion |
 |---|---|
@@ -68,7 +68,7 @@ Full suite at e1ebaed (release tree, idle machine, `--basetemp` in the workspace
 
 `experiments/e6_mutation.py 16 2` at e1ebaed (record `experiments/results/e6_mutation_20261104_043326/`; baseline 2355 s): **10 of 16 killed** (3.2.0.dev0 sample: 13 of 16; 3.1.0's 64-mutant sample: 38 of 64). An earlier attempt at b832d8e aborted because the baseline failed: `tests/test_whole_spectrum.py::test_enclosure_radii_bit_identical_complex_operator` compared complex-data radii bit for bit against the frozen oracle after the gamma_{w+3} change (fixed in e1ebaed: the complex comparison is >= and within 1 + 1e-12; real data stay bit-identical). The full suite of 2026-11-03 (1161 passed) had been started before that change was imported and did not see it; the release suite above does.
 
-Survivors, with the lead's reading (suggestions, not verdicts, RA-25):
+Survivors, with suggested readings (automatic, not verdicts, RA-25):
 
 | mutant | reading |
 |---|---|

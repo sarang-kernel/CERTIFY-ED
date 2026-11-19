@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 8 (sector assembly with radius ρ)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../thm8_rho.md` read first; proof written before section 2
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../thm8_rho.md` read first; proof written before section 2
 was opened. Notation as in the preamble of the original: W = [V₁ ⋯ V_m] (n × n when Σd_s = n), B = ⊕_s H_s,
 η = ‖WᴴW − I‖ < 1, D ≥ ‖HW − WB‖, δ = 1 − √(1 − η), ρ = D + (‖H‖ + ‖B‖)δ, ‖H − H_spec‖ ≤ m, ε = ρ + m.
 

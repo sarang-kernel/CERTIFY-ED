@@ -35,7 +35,7 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
 1. Fetch and store metadata for the full sample (`survey_sample.json`).
 2. For the coded subsample, fetch the LaTeX source (preferred) or PDF text.
 3. First pass: one call of an automatic coder per paper with the coding scheme as a fixed schema, on the full text (truncated to the first 60k characters if longer, with the methods and results sections prioritised when a `\section` structure is present).
-4. Check reading: 12 papers (15 %) drawn at random with seed 20261022 are re-coded in a second automatic reading of the extracted text (not a human check); per-field agreement is reported. Fields with agreement below 80 % are re-coded for the whole subsample with revised coding instructions, and the revision is recorded.
+4. Check reading: 12 papers (15 %) drawn at random with seed 20261022 are re-coded in a second automatic reading of the extracted text by a different reader (not a human check); per-field agreement is reported. Fields with agreement below 80 % are re-coded for the whole subsample with revised coding instructions, and the revision is recorded.
 5. Outputs: `survey_sample.json`, `survey_coded.csv`, `survey_handcheck.csv`, one generated LaTeX table (quantities and evidence frequencies), one figure, `RESULT_practice_survey.md`.
 
 ## Stop rules and what each outcome means
@@ -81,5 +81,7 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
      allows one revision; the remaining disagreement is reported, not corrected, and the result file marks the affected
      percentages as provisional. The subset coded in the check reading is reported alongside.
 - v0.3 (2026-11-19, wording only): steps 3 and 4, the known limits and items 5, 6 and 7 of v0.2 name the coder and the
-  check reading in neutral terms. The check reading was a second automatic reading, not a human check. The procedure,
-  the data and every number are unchanged.
+  check reading in neutral terms. The check reading was a second automatic reading by a different reader than the
+  first pass, not a human check. The procedure, the data and every number are unchanged; the file name
+  `survey_handcheck.csv`, the key `handcheck_agreement` and the macro names keep their old names. The text of v0.1
+  and v0.2 as registered is in the history of this file (commit 28737733 and earlier).

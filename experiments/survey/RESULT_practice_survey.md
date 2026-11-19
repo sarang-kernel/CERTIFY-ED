@@ -3,6 +3,7 @@
 Generated 2026-10-21 19:27 UTC by `survey/analyze.py` + `survey/make_result.py`.
 Pre-registration: PREREG_practice_survey.md (v0.1 written before any fetch; v0.2 changelog records every deviation).
 Wording revised 2026-11-19 (pre-registration v0.3: neutral terms for the coder and the check reading); the numbers are unchanged.
+`survey_handcheck.csv` holds the codes of the check reading (its name is the old one).
 Status: **full survey per the pre-registered stop rule (n_analysis >= 40)**.
 
 ## 1. Sample

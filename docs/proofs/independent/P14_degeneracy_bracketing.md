@@ -1,6 +1,6 @@
 # Independent re-derivation: Proposition 14 (number of eigenvalues in a bracket around a cluster)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../P14_degeneracy_bracketing.md` read first, with
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../P14_degeneracy_bracketing.md` read first, with
 `certify_ed/degeneracy.py`; proof written before section 2 was opened. Notation: N(x) := #{i : λ_i < x},
 N̄(x) := #{i : λ_i ≤ x} (counts with multiplicity); for a < b, #(a, b) = N(b) − N̄(a) and #[a, b] = N̄(b) − N(a).
 

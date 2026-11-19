@@ -4,7 +4,7 @@
 
 Independent adversarial check (project rule D-12, the independent re-derivation) of Lemma M and its corollary for
 certify_ed/fp.py: modulus_up, _modulus_up_scaled, abs_up (docs/proofs/fp_modulus-up.md; independent derivation in
-docs/proofs/independent/fp_modulus-up.md). Written on 2026-11-18 from the statement alone, against an excerpt of
+docs/proofs/independent/fp_modulus-up.md). Written on 2026-11-18 before the original proof was read, against an excerpt of
 fp.py at branch fix/complex-moduli; in the repository it tests certify_ed.fp itself (or an excerpt given by --code).
 UNVERIFIED (D-12): this script is one of the three legs of D-12; it is not a check by Sarang.
 

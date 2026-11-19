@@ -171,5 +171,5 @@ the dense size limit, JSON round trip and the record schema.
 ## 6 Status
 
 Derived on 2026-10-30; machine-checked (303 random + 100 adversarial cases, 0 violations; negative control
-undercut 40/40); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+undercut 40/40); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

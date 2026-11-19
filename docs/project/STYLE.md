@@ -27,7 +27,7 @@ was not.
 Rule 5. The documents describe the work, not the writing process. They do not mention the tools, sessions, prompts
 or conversations through which a text was produced; that record is kept apart, in a separate private repository (see
 README.md). Where a check was produced automatically rather than by a person, the text says so in those
-words ("a second derivation written independently from the statement alone, not a human check").
+words ("a second derivation written independently, before the original proof was read, not a human check").
 
 Rule 6. Every experiment and every failure gets a reason. For each one write, as prose and in this order: why it was a
 reasonable next step (which earlier result, gap, theorem or cost argument made it worth doing, and what outcome would

@@ -1,6 +1,6 @@
 {
  "module": "CertifyMathlib.Apps",
- "root_import_note": "the root CertifyMathlib.lean does not import it yet; the lead adds it",
+ "root_import_note": "the root CertifyMathlib.lean does not import it yet; it is to be added",
  "date": "10 November 2026",
  "lean": "4.35.0",
  "mathlib": "v4.35.0",

@@ -94,7 +94,7 @@ recorded is that automatically drafted mathematics can be fluent and subtly wron
 re-deriving, and that one person who re-derives is worth more than several who check plausibility. In the documents of
 this repository the rule has a fixed consequence: a new result counts as established only after Sarang Vehale has
 re-derived it. The 22 derivation documents in `code/certify-ed/docs/proofs/` are therefore described as derived,
-machine-checked and independently re-derived (a second derivation written from the statement alone, not a human
+machine-checked and independently re-derived (a second derivation written before the original proof was read, not a human
 check), with Sarang's check pending (see D-59).
 
 ## D-13 (13 July 2026): documentation is mandatory
@@ -115,19 +115,19 @@ gap in the project's own audit.
 ## D-15 (21 July 2026): no response to the third rejecting report
 
 A further SciPost report called the contribution insubstantial, read the paper as claiming that checking BLAS and
-LAPACK was its main contribution (the third misreading of that kind), and said the text read as mostly
-machine-generated. No response was sent. Three rejections settled the outcome; the repeated misreading confirmed the
-diagnosis of D-05; the remark on provenance was substantially correct (the drafting had relied heavily on automated
-text generation, disclosed at submission), and the criticism of style matched flaws that the project's own audit of
+LAPACK was its main contribution (the third misreading of that kind), and questioned how the text had been
+produced. No response was sent. Three rejections settled the outcome; the repeated misreading confirmed the
+diagnosis of D-05; the remark on provenance was substantially correct (the drafting method had been disclosed
+at submission), and the criticism of style matched flaws that the project's own audit of
 the manuscript had already listed. A rebuttal and any defence of the drafting method were rejected.
 
 ## D-16 (21 July 2026): Sarang drafts the prose of every manuscript
 
 From version 2 on, Sarang drafts the prose of the manuscripts. Other contributors and tools may audit, check facts,
 tighten and review adversarially, but they do not write the load-bearing sections. Two alternatives were rejected:
-continuing with machine-drafted prose, which had produced the style the referees criticised and does not build
+continuing with the earlier drafting method, which had produced the style the referees criticised and does not build
 Sarang's own record as a writer, and concealing the assistance, which was never an option. The style targets recorded
 with the decision are that every paragraph carries a specific claim tied to a number or a mechanism, that sentences
 without content are cut, that central claims are stated once, and that nothing is asserted that is not shown.
-Assistance continues to be disclosed at every submission. Machine-drafted text remains acceptable for internal
+Assistance continues to be disclosed at every submission. Text drafted with tools remains acceptable for internal
 documents, audits and code documentation, which is the category the documents of this repository belong to.

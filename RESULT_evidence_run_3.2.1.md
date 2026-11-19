@@ -64,7 +64,7 @@ grow radii by multiples of 2^-1074); none changes a status.
 
 ## E6 survivors
 
-28 of 64 mutants survived (the automatic classes of `e6_classify.py` cover 10; 18 await a human verdict). The lead's readings of all
+28 of 64 mutants survived (the automatic classes of `e6_classify.py` cover 10; 18 await a human verdict). Suggested readings (automatic, not verdicts) of all
 28, by class, are in `E6_inspection_worksheet_3.2.0.md` (the 3.2.0 run's sample; the 3.2.1 sample has the same sites). Seven are
 soundness-relevant test gaps of the pinning-test kind (sectors.py:57, eigenspace.py:151/147/129, exact_sectors.py:202, localops.py:189,
 spectrum.py:103); none changes a statement of this run (the records were produced by the unmutated code). The tests belong to 3.2.2

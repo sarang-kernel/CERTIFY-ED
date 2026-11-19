@@ -195,5 +195,5 @@ model shift. (iii) *Lemma N for a single Pauli string* reduces to ‖c σ^{a}⊗
 
 ## 6 Status
 
-Derived on 2026-10-31; machine-checked (182 random + 18 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (from the statement alone, not a human check; verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Derived on 2026-10-31; machine-checked (182 random + 18 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

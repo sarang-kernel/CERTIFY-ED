@@ -1,6 +1,6 @@
 # Independent re-derivation: Corollary 5 (completeness and sorted pairing)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../cor5_pairing.md` read first; proof written before
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../cor5_pairing.md` read first; proof written before
 section 2 was opened. Notation: λ_i := λ_i(A_u) ascending; A_m the model operator with ‖A_u − A_m‖ ≤ Δ.
 
 ## Statement checked

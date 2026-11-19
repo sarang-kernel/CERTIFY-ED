@@ -1,7 +1,7 @@
 # Independent re-derivation: fp_modulus-up (Lemma M, upper bounds on complex moduli, and its corollary)
 
 Written on 2026-11-18 (not a human check); the third leg of rule D-12 (a derivation, a machine check, an independent
-re-derivation from the statement alone). Written from section 1 of `docs/proofs/fp_modulus-up.md` as it stood on
+re-derivation written before the original proof was read). Written from section 1 of `docs/proofs/fp_modulus-up.md` as it stood on
 2026-11-18 (statement-only extract, SHA-256 d79c905c...f6ed) and the code excerpt of `certify_ed/fp.py` at branch
 `fix/complex-moduli` (`modulus_up`, `_modulus_up_scaled`, `abs_up`, `_GUARD`; SHA-256 915a39cc...5ead). The author's
 proof (section 2 there) was not read and not asked for. The script of section 5 is

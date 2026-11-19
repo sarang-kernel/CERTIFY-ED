@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 1-fl (floating-point evaluation of the residual radius)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../thm1_fp-accounting.md` read first; proof written before
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../thm1_fp-accounting.md` read first; proof written before
 section 2 was opened. (`docs/theory.md` §2, read for the notation, carries the code-facing list from which the
 original document was written; the derivations below are mine.) Notation as in the original: r = Ax − μx exact,
 a_i = (|A||x|)_i, q_i = |μx_i|, Rc the computed residual, E the computed entrywise bound, w = `adapter.width`,

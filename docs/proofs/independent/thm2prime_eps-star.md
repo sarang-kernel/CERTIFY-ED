@@ -1,6 +1,6 @@
 # Independent re-derivation: Theorem 2′ (sharper cluster radius ε*)
 
-Written from the statement alone on 2026-10-30 (not a human check). Sections 1 and 3 of `../thm2prime_eps-star.md` read first; proof written
+Written on 2026-10-30 before the original proof was read (not a human check). Sections 1 and 3 of `../thm2prime_eps-star.md` read first; proof written
 before section 2 was opened. Disclosure: `docs/theory.md` §2, read for the notation, carries a proof *sketch* of
 Theorem 2′ (steps (i)–(iii) in three lines); the proof below fills in every step and justifies each inequality.
 Notation as in `independent/thm2_polar-factor.md`: G = XᴴX, η = ‖G − I‖ < 1, M = G^{1/2}, Q̂ = XM⁻¹,
