@@ -7,6 +7,17 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Wording of the records
+
+No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of
+the derivation documents and the headers of the independent re-derivations in `docs/proofs/` name no tool; an
+independent re-derivation is described as written from the statement alone, not a human check
+(`tests/test_proofs_props.py` pins the new wording). The practice survey calls its re-coding of 12 papers a check
+reading, a second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording only; the blog
+had said that the 12 papers were re-coded by hand). Working notes of the development environment are removed from
+the track reports, the project changelog and the derivation documents. `tools/lint_docs.py` compares product and tool
+names by their SHA-256 digests, so that it does not spell them.
+
 ### Single-precision inputs (soundness fix)
 
 Certificates computed from inputs in a floating format narrower than binary64 (float16, float32, complex64) could state
