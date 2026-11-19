@@ -72,7 +72,7 @@ for a complex operator; (ii) `tests/fixtures/whole_spectrum_252_{claim,sparse,de
 radii of a fixed claim (vectors stored as float32, eigenvalues dyadic, so the inputs are identical on every
 machine); exact on this machine, asserted at 1e-12 with a warning when a different BLAS rounds a 2-norm
 differently (stated in the test); (iii) the recorded 924 sparse and dense certificates of the base code equal
-the new ones array for array (done in-session, not a committed test: the 924 inputs come from `eigh`).
+the new ones array for array (checked once during development, not a committed test: the 924 inputs come from `eigh`).
 
 Deliberately not done: S8 was not added to the `whole-spectrum` preset (one factorization pair per cluster,
 thousands at 12870; `labels` has it), and S8 for `kind="all"` was not re-derived from the Prop-9 spectrum

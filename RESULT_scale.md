@@ -1,20 +1,16 @@
 # RESULT: track/scale (D-01, D-02)
 
-Branch `track/scale` on `dev/3.2` (ac52920). Head: see `git log` (the RESULT commit is the head; its hash is in the structured output). Bundle artifact `track-scale.bundle`
-(724ae31a-4c42-496d-8ade-ec74bdbe8e99), patches `patches_scale.zip` (`git format-patch dev/3.2..track/scale`).
+Branch `track/scale` on `dev/3.2` (ac52920). Head: the commit that adds this file (`git log`). Bundle `track-scale.bundle`,
+patches `patches_scale.zip` (`git format-patch dev/3.2..track/scale`).
 
-Deviations from the task text: (1) the E2 reach is a reproduction on the Heisenberg chain S^z = 0 blocks
+Deviations from the plan: (1) the E2 reach is a reproduction on the Heisenberg chain S^z = 0 blocks
 (N = 12–18, d = 924–48620; no record of `results/run_full_20261022` is in the clone), with S1–S3 only and the
 eigenpairs from `scipy.sparse.linalg.eigsh` instead of QuSpin; d = 184756 was not attempted (the fill model
 predicts far above 8 GiB, as it already does at 48620). (2) The D-01 verification uses n ≤ 13 for the exact
 rational residual (the check is O(n⁴) in rational arithmetic); the sandwich on random sparse matrices up to
 n = 160 (dense `eigh` ground truth) and the chain blocks up to 12870 is covered by the tests and the reach run; an
 independent Sylvester-on-blocks count above d = 3000 was not done. (3) The D-02 scale run uses an exact one-magnon
-eigenvector (certified radius at rounding level), not a Lanczos result; it measures time and memory. The
-session was interrupted once by a usage limit with the workspace swept before any checkpoint had been saved;
-everything was re-created from the transcript and the checkpoint rule was followed from then on. Nothing on
-this track was refused by a safety gate (one early `read_file` of a document tail was held for approval; the
-document was read another way).
+eigenvector (certified radius at rounding level), not a Lanczos result; it measures time and memory.
 
 ## Item 1 — D-01 a-posteriori residual for the sparse S3 path (MS-M11): done
 

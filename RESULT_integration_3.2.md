@@ -50,7 +50,7 @@ Merged into `dev/3.2` on 38b0212: track/new-statements (ec8163a), track/figures 
 
 Full suite at d5ddf17: 1047 passed, 8 skipped, 5 warnings in 1992.79s (0:33:12). ruff clean.
 
-Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not run (held by a platform safety gate in the track's session; awaiting the user's decision); C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
+Open from the tracks (carried into Phase 2/3): Appendix A verification script `docs/proofs/verify_appA_model-shift.py` written but not yet run; C-16 sector path at the API only; `exact_bracket` capped at dimension 600; E6 survivors of the 3.1.0 run still need Sarang's verdicts; fig_scope_vs_survey and fig_rounding_accounting to be regenerated from the final tree (Phase 3).
 
 
 ## Completion plan Phase 2 integration (2026-11-03)

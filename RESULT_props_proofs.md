@@ -1,7 +1,7 @@
 # RESULT: track/props-proofs (Props 14-16 + Lemma 17 derivations, C-06, C-16)
 
-Branch `track/props-proofs` on `dev/3.2` (38b0212). Code head: b95d942 (the full suite ran there); branch head including this file: the commit that adds it (`git log -1`). Bundle: `track-props-proofs.bundle`
-(artifact c563cea1-fc67-4951-b482-b9f473cc4c78, version 6); patches: `patches_props_proofs.zip` (`git format-patch dev/3.2..track/props-proofs`, 6 patches).
+Branch `track/props-proofs` on `dev/3.2` (38b0212). Code head: b95d942 (the full suite ran there); branch head including this file: the commit that adds it (`git log -1`). Bundle: `track-props-proofs.bundle`;
+patches: `patches_props_proofs.zip` (`git format-patch dev/3.2..track/props-proofs`, 6 patches).
 
 ## Item status
 

@@ -1,10 +1,7 @@
 # RESULT: track/variational (E-05, E-03, C-07 first part)
 
 Branch `track/variational` on `dev/3.2` (ac52920). Head: the commit that adds this file (five commits: the four below and this record). Four content commits: c0aa14b (E-05), 8319055 (E-03),
-f3c5f1a (C-07 code checkpoint), d383d07 (C-07 derivation and docs). Session note: the workspace was swept once between
-8319055 and the C-07 commit; the two finished items were restored from the saved bundle, the uncommitted C-07 files were
-re-created from the transcript (identical content, plus the fixes recorded below). No tool call was refused by a safety
-gate.
+f3c5f1a (C-07 code checkpoint), d383d07 (C-07 derivation and docs).
 
 ## Item status
 
@@ -27,7 +24,7 @@ stochastic estimates (DECLARED, reason code DECLARED_ESTIMATE, nothing rests on 
 `contraction_error`, and Lemma 5 for the Rayleigh quotient of the source state; the certified statements are about the
 contracted vector); sparse CI (`state_from_sparse_ci`). Matrix-free and non-Hermitian operators are refused.
 
-**Representation of "certified under hypothesis"** (asked for in the task): the three modules write standalone JSON
+**Representation of "certified under hypothesis"** (asked for in the plan): the three modules write standalone JSON
 records (not certificates) validated by the new `schema/statement-record-1.0.schema.json` (`schema.STATEMENT_RECORD_SCHEMA`,
 `schema.validate_record`). Their status vocabulary is CERTIFIED, CERTIFIED_UNDER_HYPOTHESIS, DECLARED, INCONCLUSIVE,
 NOT_CHECKED, FAILED; every statement carries a `hypotheses` list, the schema requires it to be non-empty for
@@ -87,7 +84,7 @@ the schema and diagnostics changes. Full suite (`pytest -q` on the branch head):
 
 ## Not done, and why
 
-- C-07 second part (continued-fraction / Lanczos bounds on the spectral function): out of the task's scope by design;
+- C-07 second part (continued-fraction / Lanczos bounds on the spectral function): out of the track's scope by design;
   documented as open (M4 NOT_IMPLEMENTED, `docs/theory.md` §9.4, scope matrix).
 - E-03: no cluster bound (Theorem 2 in the B-inner product), no 'window'/'all' pencils, no sparse LDLᴴ path; each refused
   with a reason code, listed in the scope-matrix row.
@@ -95,7 +92,7 @@ the schema and diagnostics changes. Full suite (`pytest -q` on the branch head):
   recorded, never bounded (no certified sampling-error statement).
 - No claim kind "variational" was added to `certify.Claim`: the variational statements live in a standalone record
   (dedicated function and CLI command), which keeps `certify.py`, `schema.py`'s certificate schema and the viewer
-  unchanged and avoids the conflict surface the task warned about.
+  unchanged and avoids the conflict surface named in the plan.
 - The verification scripts were run at `--cases 200` (E-05), `80` (E-03) and `40` (C-07); the documents and this file
   record exactly those counts.
 

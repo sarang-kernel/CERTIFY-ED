@@ -10,13 +10,13 @@ Branch `track/backlog-proofs` on `dev/3.2` (38b0212). Head: see the last line. D
 | 1 Theorem 2′ (ε*) | done | `docs/proofs/thm2prime_eps-star.md` | 17 094 (51 282 inequality checks) + 621 (1 863), 0 violations |
 | 2 Corollary 5 pairing | done | `docs/proofs/cor5_pairing.md` | 20 000 lemma + 347 code cases + 400 negative controls + 500 ties, 0 violations |
 | 2 Theorem 8 ρ | done | `docs/proofs/thm8_rho.md` | 240 + 49 statement checks against the exact spectrum, 160 + 32 inequality checks, 5 negative controls, 0 violations |
-| 3 Appendix A model shift Δ | partial | `docs/proofs/appA_model-shift.md` | derivation complete; `verify_appA_model-shift.py` written but **not executed**: its run was held by the platform's safety gate pending the user's approval (the gate's instruction was not to attempt it another way); the document's status line says NOT RUN. Pilot evidence of the builder bound exists only through `tests/test_backlog_proofs.py::test_builder_shift_dominates_the_build_error_for_a_spin1_chain` |
+| 3 Appendix A model shift Δ | partial | `docs/proofs/appA_model-shift.md` | derivation complete; `verify_appA_model-shift.py` written but **not executed**: it had not been run when this record was written, and the document's status line said NOT RUN (the run of 2026-11-03 is `docs/proofs/runs/appA_model-shift.txt`). Pilot evidence of the builder bound exists only through `tests/test_backlog_proofs.py::test_builder_shift_dominates_the_build_error_for_a_spin1_chain` |
 | 4 Theorem 1 floating-point accounting | done | `docs/proofs/thm1_fp-accounting.md`, scaffold `docs/proofs/appendixA_scaffold.tex` | 20 000 + 246 radius checks, 40 000 + 480 stage checks, 20 012 scalar-lemma grid points, 0 violations |
 | 5 INT-05 underflow term | done | `docs/proofs/int05_underflow.md` | 18 992 model operations, 5 000 dot, 5 200 exact_dot, 205 023 norm/T_N, 2 650 residual, 2 500 monotonicity, 0 violations |
 | 6a sectors.py:240 mutant | done | — | `test_label_audit_defect_within_rounding_allowance_of_the_threshold` (planted defect two ulps below 1/2; the mutant `defects[k] − rnd` would certify, found by bisection over binary64 ε) |
 | 6b certify.py Kato–Temple `pos > 0` | done (by test) | — | `test_kato_temple_second_lowest_pair_uses_its_lower_neighbour_as_isolation_end`: with the mutant the isolation interval of the second-lowest pair starts at −∞ and Kato–Temple's upper end collapses to the Rayleigh quotient θ < λ₂ of a ground-state-contaminated vector; the test asserts λ₂ ∈ [lower, upper] and a finite lower isolation end |
 | 6c checker.py:261 mantissa 2⁵³ | done (test + equivalence argument) | — | `test_float_vector_to_int_reconstructs_the_vector_exactly`. Equivalence note: the mutant 2⁵⁴ doubles every entry of y; `radius_exact` is homogeneous of degree 0 in (yr, yi) and `_float_vector_to_int` is used only there (and the zero test is scale invariant), so no certificate output changes — the mutant is equivalent at the output level and is killed only by the reconstruction test |
-| 6d 15 E6 survivors of the 3.1.0 run | skipped | — | the worksheet `results/run_full_20261022/E6_inspection_worksheet.md` is not in the clone, as the task anticipated |
+| 6d 15 E6 survivors of the 3.1.0 run | skipped | — | the worksheet `results/run_full_20261022/E6_inspection_worksheet.md` is not in the clone, as expected |
 
 ## Mathematics: what was found
 
@@ -76,7 +76,7 @@ written, not run).
 
 ## What was not done and why
 
-- Item 3's computational verification was not executed (platform safety gate; awaiting the user). The document
+- Item 3's computational verification was not executed at the time (it ran on 2026-11-03). The document
   and the script are in place; running `python docs/proofs/verify_appA_model-shift.py` and filling the counts into
   §4 and §6 of `appA_model-shift.md` is the remaining step.
 - Item 6d: worksheet unavailable.

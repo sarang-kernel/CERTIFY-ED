@@ -590,7 +590,7 @@ can change only by the documented bound changes (listed per track below) and the
   D-02 Lemma M3 gaps; looser), `fp.norm2_lower` returns 0 when the squared norm overflows (int05 ERROR; looser),
   `sweep.certified_crossing_interval` adds the affinity defects at interior grid points (E-04 ERROR; looser),
   `exact_degeneracy._record` names the exact bracket (C-16 wording). Negative controls in `tests/test_independent_check.py`.
-- Appendix A verification script run after the user's approval (386 random + 681 adversarial, 0 violations).
+- Appendix A verification script run (386 random + 681 adversarial, 0 violations).
 - Figures regenerated from the final tree: `fig_scope_vs_survey` (3.2 scope), `fig_rounding_accounting` (INT-05 terms),
   `fig_roadmap_progress` (status 2026-11-03: 43 of 78 items, 270 of 470 points).
 - Release suite 1168 passed / 8 skipped; 16-mutant sample 10 killed, the two reachable survivors (exact_sectors weights branch,
@@ -887,7 +887,7 @@ check (D-12): pending" — nothing is called verified.
   the Weyl transfer of S2/S3 (Theorem A5). `_builder_shift` divides by (1 − γ_W) where it multiplied by (1 + γ_W)
   (the latter is sufficient only for Wu ≲ 10⁻⁸). `OperatorAdapter.width` for a spec operator is m + 2L_max + 2 (was
   m + L_max + 2, short by L_max − 4 roundings for strings of five or more letters). Its verification script was
-  written but could not be executed in the track's session (platform safety gate); the document says so.
+  written but not executed at the time (it ran on 2026-11-03); the document says so.
 - **Theorem 1 accounting** (`thm1_fp-accounting.md`, `appendixA_scaffold.tex`): the INT-04 list as a proof with the
   scalar lemmas behind every factor ((1 − γ₃)(1 + 4u) ≥ 1; the norm guards give a 3u slack; the |A||x| and E guards),
   hypotheses n, w ≤ 2²⁶, and a statement-level LaTeX scaffold for the manuscript's Appendix A.

@@ -5,7 +5,7 @@ items as a sortable table in `ROADMAP_expansion_items.csv`; both are kept with t
 lists 78 items in eight themes, each scored on **Adoption** (A, 0-5: how much it removes a reason not to
 use the tool) and **Rigor/coverage** (R, 0-5: how much more, or more soundly, a certificate states), with
 Score = A + R and an effort class S (days) / M (weeks) / L (months) / XL (a year or more). The scores are
-one session's judgment and are meant to be re-weighted by the maintainers; the CSV is the place to do it.
+a first estimate and are meant to be re-weighted by the maintainers; the CSV is the place to do it.
 
 ## What adoption depends on
 
