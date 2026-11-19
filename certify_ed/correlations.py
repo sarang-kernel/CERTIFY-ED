@@ -91,7 +91,7 @@ def certify_observable_general(ec: EigenspaceCertificate, X: np.ndarray, O, name
     with bound b_H + b_K (Proposition 15 with coefficients 1 and i). The record names both parts and how to
     recombine them; `value` is then [re, im]. Records land in ec.observables[name]. An operator in a narrower format
     than binary64 is converted exactly first (precision.py)."""
-    Oc = binary64(sp.csr_matrix(O), name)
+    Oc = sp.csr_matrix(binary64(O, name))
     dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0
     if dev == 0:
         rec = certify_observable(ec, X, Oc, name)
@@ -295,8 +295,8 @@ def compress_operator(V, O):
     floating point adds at most u |Otilde_fl| entrywise. ||.||_2 <= ||.||_F closes the bound.
     Returns (Otilde_h (csr, exactly Hermitian), rnd, norm_upper) with norm_upper >= ||Otilde_h||_2. Data in a narrower
     format than binary64 are converted exactly first (precision.py)."""
-    V = binary64(sp.csr_matrix(V), "sector isometry")
-    O = binary64(sp.csr_matrix(O), "operator")
+    V = sp.csr_matrix(binary64(V, "sector isometry"))     # widened before the conversion (precision.py)
+    O = sp.csr_matrix(binary64(O, "operator"))
     cplx = np.iscomplexobj(V.data) or np.iscomplexobj(O.data)
     OV = (O @ V).tocsr()
     Ot = (V.conj().T @ OV).tocsr()
@@ -329,7 +329,7 @@ def certify_observable_lifted(ec: EigenspaceCertificate, X: np.ndarray, V, O, na
     tr(Pi_Q O) (`bound`). Non-Hermitian O: the exact Hermitian decomposition O = H + iK (C-05) in the full space,
     each part lifted, recombined with bound b_H + b_K (Proposition 15); `value` is then [re, im]. Data in a narrower
     format than binary64 are converted exactly first (precision.py)."""
-    Oc = binary64(sp.csr_matrix(O), name)
+    Oc = sp.csr_matrix(binary64(O, name))
     g = len(ec.members)
     iota = float(isometry_defect)
     dev = abs(Oc - Oc.conj().T).max() if Oc.nnz else 0.0

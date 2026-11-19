@@ -48,10 +48,12 @@ __all__ = ["GENERALIZED_SCHEMA", "GENERALIZED_STATEMENT_IDS", "DEFAULT_MAX_DIM",
 
 
 def _dense_hermitian(M, name: str, widened: Optional[list] = None) -> np.ndarray:
-    M = M.toarray() if sp.issparse(M) else np.asarray(M)
+    # exact for narrower formats (noted), a wider one refused (precision.py); before toarray, which sums repeated
+    # entries in the input's precision
+    M = binary64(M if sp.issparse(M) else np.asarray(M), name, widened)
+    M = M.toarray() if sp.issparse(M) else M
     if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")
-    M = binary64(M, name, widened)        # exact for narrower formats (noted), a wider one refused (precision.py)
     if not np.all(np.isfinite(M)):
         raise ValueError(f"{name} has non-finite entries")
     D = M - M.conj().T

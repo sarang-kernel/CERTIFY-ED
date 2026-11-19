@@ -105,7 +105,9 @@ class OperatorAdapter:
             self.kind = "matrix"
             # a stored matrix in a narrower format is converted exactly to binary64 (precision.py): the bounds below
             # count binary64 arithmetic, and a single-precision product would not satisfy them
-            self.A = binary64(op.tocsr() if sp.issparse(op) else np.asarray(op), "operator")
+            # (widened before tocsr, which would sum repeated entries in the narrower format)
+            w = binary64(op if sp.issparse(op) else np.asarray(op), "operator")
+            self.A = w.tocsr() if sp.issparse(w) else w
             self.shape = self.A.shape
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))
             self.width = max_nnz_per_row(self.A)

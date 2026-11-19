@@ -52,9 +52,10 @@ class SectorAudit:
 def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "",
                  tol: float = 1e-10) -> SectorAudit:
     # exact binary64 copies of matrices in a narrower format (precision.py): the bounds count binary64 arithmetic
-    H = binary64(sp.csr_matrix(H), "operator")
-    V = binary64(sp.csr_matrix(V), "sector isometry")
-    Hs = binary64(sp.csr_matrix(Hs), "sector block")
+    # (widened before csr_matrix, which sums repeated entries of a coo matrix in the narrower format)
+    H = sp.csr_matrix(binary64(H, "operator"))
+    V = sp.csr_matrix(binary64(V, "sector isometry"))
+    Hs = sp.csr_matrix(binary64(Hs, "sector block"))
     ds = V.shape[1]
     cplx = np.iscomplexobj(V.data) or np.iscomplexobj(H.data) or np.iscomplexobj(Hs.data)
     G = (V.conj().T @ V - sp.identity(ds, format="csr")).tocsr()
@@ -228,6 +229,7 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     from .fp import fro_upper, gamma_dot, up
     gfun = {"translation": translation, "spin_flip": spin_flip, "reflection": reflection}[symmetry]
     g = gfun(spec)
+    V = binary64(V, "sector isometry")                         # exact, before any conversion (precision.py)
     red = restrict_to_u1(spec, V, cache)
     if red is not None:
         _, Vu, st = red
@@ -235,7 +237,7 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
         from .construct import full_state_set
         st, Vu = full_state_set(spec), sp.csr_matrix(V)
     G = symmetry_matrix(st, g)
-    Vd = binary64(sp.csr_matrix(Vu), "sector isometry")        # exact (precision.py)
+    Vd = sp.csr_matrix(Vu)
     GV = G @ Vd
     n = g.order
     roots = np.exp(2j * np.pi * np.arange(n) / n)

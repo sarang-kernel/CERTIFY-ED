@@ -74,8 +74,8 @@ def commutator_bound(H, S) -> Dict[str, float]:
     """Upper bound c on ||[H, S]||_2 for stored Hermitian H and S (sparse or dense): the infinity norm (anti-Hermitian
     commutator: ||C||_2 <= ||C||_inf) of |fl(HS) - fl(SH)| plus the standard-model rounding gamma_{w_H + 1} |H||S| +
     gamma_{w_S + 1} |S||H| entrywise, rounded up. Returns {'bound', 'computed_inf_norm', 'rounding_entrywise_inf_norm'}."""
-    H = binary64(sp.csr_matrix(H), "operator")       # exact for narrower formats (precision.py)
-    S = binary64(sp.csr_matrix(S), "symmetry")
+    H = sp.csr_matrix(binary64(H, "operator"))       # exact, widened before the conversion (precision.py)
+    S = sp.csr_matrix(binary64(S, "symmetry"))
     cplx = np.iscomplexobj(H.data) or np.iscomplexobj(S.data)
     C = (H @ S - S @ H).tocsr()
     wH = int(np.diff(H.indptr).max()) if H.shape[0] else 1

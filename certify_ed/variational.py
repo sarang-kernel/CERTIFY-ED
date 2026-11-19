@@ -278,13 +278,12 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
         if not (sp.issparse(operator) or isinstance(operator, np.ndarray)):
             raise ValueError("the operator must be a stored matrix (dense ndarray or scipy.sparse); matrix-free "
                              "operators have no rounding bound (docs/SCOPE_MATRIX.md)")
-        A = operator.tocsr() if sp.issparse(operator) else np.asarray(operator)
+        # a narrower format becomes an exact binary64 copy (precision.py), before tocsr, which would sum repeated
+        # entries in the narrower format
+        Aw = binary64(operator if sp.issparse(operator) else np.asarray(operator), "operator", widened)
+        A = Aw.tocsr() if sp.issparse(Aw) else Aw
         if A is operator:
-            # the adapter sums duplicates in place: the caller's matrix stays as given; a narrower format becomes an
-            # exact binary64 copy (precision.py)
-            A = _private_copies(widened)(A, "operator")
-        else:
-            A = binary64(A, "operator", widened)
+            A = _private_copies()(A)       # the adapter sums duplicates in place: the caller's matrix stays as given
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError(f"the operator must be square, got shape {A.shape}")
         D = (A - A.conj().T)

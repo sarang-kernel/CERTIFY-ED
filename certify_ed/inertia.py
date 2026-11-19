@@ -141,7 +141,9 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     the measured residual of the stored factors (ldl_residual.sparse_ldl_residual_bound); residual='apriori':
     the 3.1 bound gamma_{w+1} ||L||_F ||U||_F + ... (conditional on SuperLU's arithmetic, see module docstring)."""
     t0 = time.time()
-    A = binary64(sp.csc_matrix(A), "operator")  # exact; SuperLU in single precision would break the beta below
+    # exact, and before csc_matrix (which sums repeated entries in the narrower format); SuperLU in single precision
+    # would break the beta below
+    A = sp.csc_matrix(binary64(A, "operator"))
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()

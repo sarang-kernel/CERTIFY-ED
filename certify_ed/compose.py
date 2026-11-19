@@ -60,7 +60,7 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
     and beta of a COMPLETE sector, and whether the producer block was symmetrised. 3.3.0.dev0 (D-04): the body of
     the 3.2 loop, unchanged, so that sectors can run on separate workers. `red`: the U(1) restriction decided by the
     caller (a tuple, or None for the full matrix H); by default it is decided here as in the 3.2 loop."""
-    Hs = binary64(sp.csr_matrix(s.H), "sector block")     # exact for narrower formats (precision.py)
+    Hs = sp.csr_matrix(binary64(s.H, "sector block"))     # exact, widened before the conversion (precision.py)
     asym = abs(Hs - Hs.conj().T)
     herm_note = None
     symmetrised = False
@@ -156,7 +156,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     The result does not depend on `workers` (tests/test_parallel.py); with workers > 1 it carries the scheduling
     record under 'parallel'."""
     t0 = time.time()
-    H = None if H_full is None else hermitian_part(binary64(sp.csr_matrix(H_full), "H_full"))   # exact (precision.py)
+    H = None if H_full is None else hermitian_part(sp.csr_matrix(binary64(H_full, "H_full")))   # exact (precision.py)
     n = spec.dim
     cache = {}
     Hn = inf_norm_upper(H) if H is not None else 0.0

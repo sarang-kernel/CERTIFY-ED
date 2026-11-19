@@ -60,7 +60,7 @@ def arb_residual_radii(A, mu, X, prec: int = 128, lower: bool = False) -> np.nda
     old = flint.ctx.prec
     flint.ctx.prec = prec
     try:
-        A = binary64(sp.csr_matrix(A), "operator")    # exact; a format wider than binary64 is refused (precision.py)
+        A = sp.csr_matrix(binary64(A, "operator"))    # exact, before the conversion; wider formats refused (precision.py)
         X = binary64(np.asarray(X), "eigenvectors")
         if X.ndim == 1:
             X = X[:, None]
@@ -99,7 +99,8 @@ def arb_eigenvalues(A, prec: int = 128, algorithm: str = None) -> List[Tuple[flo
     old = flint.ctx.prec
     flint.ctx.prec = prec
     try:
-        M = binary64(A.toarray() if sp.issparse(A) else np.asarray(A), "operator")    # exact (precision.py)
+        M = binary64(A if sp.issparse(A) else np.asarray(A), "operator")    # exact, before toarray (precision.py)
+        M = M.toarray() if sp.issparse(M) else M
         n = M.shape[0]
         E, err = None, None
         for p in (prec, 2 * prec, 4 * prec, 8 * prec):
