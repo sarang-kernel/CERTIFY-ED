@@ -947,10 +947,11 @@ def _options_as_given(opts: Options, own) -> Options:
         if S_own is S:
             return v
         return (S_own, *(v[i] for i in range(1, len(v))))      # read by index, as labels_hook reads it
-    obs = {k: own(v) for k, v in opts.observables.items()}
-    asym = {k: entry(v) for k, v in opts.approximate_symmetries.items()}
-    if all(obs[k] is opts.observables[k] for k in obs) and \
-            all(asym[k] is opts.approximate_symmetries[k] for k in asym):
+    obs_given = opts.observables or {}                 # [] and () as accepted before
+    asym_given = opts.approximate_symmetries or {}
+    obs = {k: own(v) for k, v in obs_given.items()}
+    asym = {k: entry(v) for k, v in asym_given.items()}
+    if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym):
         return opts
     return replace(opts, observables=obs, approximate_symmetries=asym)
 

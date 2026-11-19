@@ -318,3 +318,10 @@ def test_a_mapping_entry_is_read_by_index_like_a_tuple():
     as_mapping = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all",
                                                     approximate_symmetries={"Sz": {0: Sz, 1: 0.3}}))
     _same(as_tuple, as_mapping)
+
+
+@pytest.mark.parametrize("empty", [[], ()])
+def test_empty_sequences_of_observables_and_symmetries_are_accepted(empty):
+    claim, spec = _model_claim(False)
+    ref = ce.certify(claim, spec, ce.Options(seed=1))
+    _same(ref, ce.certify(claim, spec, ce.Options(seed=1, observables=empty, approximate_symmetries=empty)))
