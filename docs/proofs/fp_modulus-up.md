@@ -317,14 +317,16 @@ section 7).
 
 `tests/test_modulus_up.py` pins (i), (ii) and (iv) on the adversarial grid, on random magnitudes and on 2 800 cases
 over the subnormal band; the band test catches no step and a step taken only below 2⁻¹⁰²⁵, 2⁻¹⁰²⁶ or 2⁻¹⁰³⁰, while a
-step only below 2⁻¹⁰²³ or 2⁻¹⁰²⁴ passes and is sound (there the rescaling loses at most 2⁻¹⁰⁷⁵ ≤ 4u·v, less than the
-lower margin of the guard, (1 − u)³(1 + 8u) − 1 ≥ 5u − 21u²). It also pins the guard (m ≥ |z|(1 + 3u), the remark
-after Lemma M); the dtypes of Inputs (TypeError for sparse, object and wider complex input; integers stepped up; a
-float for every scalar); the passes (equal to one-entry calls at the boundaries; Fortran-ordered, transposed and
-sliced input give the values of the C-ordered array, with temporaries below 12 MiB); zero entries on the unscaled
-branch; the FP-M items marked *tested*; real input, inf and nan, shapes, the elementwise identity used by the GPU spot
-check; `abs_up` on CSR, CSC, BSR, COO, DIA, LIL and dense input, with duplicates summed in place and the format kept,
-and on integer and boolean sparse data (stepped up).
+step only below 2⁻¹⁰²³ or 2⁻¹⁰²⁴ passes. Such a step is sound when `np.ldexp` rounds to nearest (IEEE scaleB): there
+the rescaling loses at most 2⁻¹⁰⁷⁵ ≤ 4u·v, less than the lower margin of the guard, (1 − u)³(1 + 8u) − 1 ≥ 5u − 21u².
+The weaker FP-M clause on `np.ldexp` that the code relies on (a point of the subnormal grid within 2⁻¹⁰⁷⁴) does not
+cover these two variants; the code, which steps below 2⁻¹⁰²², is covered by it. The test also pins the guard (m ≥
+|z|(1 + 3u), the remark after Lemma M); the dtypes of Inputs (TypeError for sparse, object and wider complex input;
+integers stepped up; a float for every scalar); the passes (equal to one-entry calls at the boundaries;
+Fortran-ordered, transposed and sliced input give the values of the C-ordered array, with temporaries below 12 MiB);
+zero entries on the unscaled branch; the FP-M items marked *tested*; real input, inf and nan, shapes, the elementwise
+identity used by the GPU spot check; `abs_up` on CSR, CSC, BSR, COO, DIA, LIL and dense input, with duplicates summed
+in place and the format kept, and on integer and boolean sparse data (stepped up).
 
 **Cost** (best and median of five, seconds, Windows reference host, branch `fix/upper-moduli` at commit 249b8ae). A
 complex vector of 2²⁴ entries: `np.abs` 0.162 and 0.171, `modulus_up` 0.698 and 0.739 (about 4.3 times); the scaled

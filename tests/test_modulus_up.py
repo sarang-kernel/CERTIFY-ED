@@ -101,8 +101,10 @@ def test_the_step_up_covers_the_whole_subnormal_band():
     """Lemma M, Step 4 (c): the step up below 2^-1022, on 2 400 z with both components nonzero and |z| log-uniform in
     [2^-1074, 2^-1022], and 400 more just below 2^-1022 (exact check m^2 >= x^2 + y^2, and (ii)). Measured: no step,
     or a step only below 2^-1025, 2^-1026 or 2^-1030, gives m < |z| on some of them. A step only below 2^-1023 or
-    2^-1024 passes, and is sound: there the rescaling loses at most 2^-1075 <= 4u v, less than the lower margin
-    (1 - u)^3 (1 + 8u) - 1 >= 5u - 21u^2 of the guard, so no check of (i) can catch it."""
+    2^-1024 passes. It is sound when np.ldexp rounds to nearest (IEEE scaleB): there the rescaling loses at most
+    2^-1075 <= 4u v, less than the lower margin (1 - u)^3 (1 + 8u) - 1 >= 5u - 21u^2 of the guard, so no check of (i)
+    can catch it on such a host. The weaker FP-M clause on np.ldexp that the code relies on (a point of the subnormal
+    grid within 2^-1074) does not cover these two variants; the code, which steps below 2^-1022, is covered by it."""
     rng = np.random.default_rng(20261120)
     e = np.concatenate([rng.uniform(-1074.0, -1022.0, 2400), rng.uniform(-1023.0, -1022.0, 400)])
     t = rng.uniform(0.0, np.pi / 2, e.size)
