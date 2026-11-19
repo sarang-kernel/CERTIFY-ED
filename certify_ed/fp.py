@@ -286,7 +286,11 @@ def abs_up(A):
         if A.format in ("csr", "csc", "bsr"):
             return type(A)((data, A.indices.copy(), A.indptr.copy()), shape=A.shape)
         if A.format == "coo":
-            return type(A)((data, (A.row.copy(), A.col.copy())), shape=A.shape)    # row, col: scipy >= 1.8
+            # coords (scipy >= 1.13) also serves a 1-D coo_array, whose row/col do not index it; row and col otherwise
+            coords = getattr(A, "coords", None)
+            if coords is None:
+                coords = (A.row, A.col)
+            return type(A)((data, tuple(c.copy() for c in coords)), shape=A.shape)
         return type(A)((data, A.offsets.copy()), shape=A.shape)
     return modulus_up(A)
 

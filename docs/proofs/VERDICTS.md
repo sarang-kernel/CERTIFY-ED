@@ -154,7 +154,8 @@ re-derivation, and a second round by three reviewers; UNVERIFIED, D-12). Resolve
 sparse, object and wider complex input (TypeError), steps integers up from 2⁵³, returns a float for every scalar,
 takes 0 + 0i on the unscaled branch, and works in passes of at most 2¹⁸ entries without copying its input
 (temporaries 6.8 MiB measured, bounded by about 12 MiB, for every memory layout); `abs_up` uses only public scipy
-calls of scipy 1.8 (COO from `row` and `col`), steps integer and boolean sparse data up, and keeps its in-place
+calls (COO from `coords` where scipy has it, which covers a 1-D `coo_array`, from `row` and `col` before
+scipy 1.13), steps integer and boolean sparse data up, and keeps its in-place
 summation of duplicate entries; a test covers the subnormal band of results. Open items:
 - Duplicate entries: direct calls of `davis_kahan.commutator_bound`, `sectors.audit_sector`,
   `correlations.compress_operator` and `eigenspace.certify_observable` form a product before the moduli sum the

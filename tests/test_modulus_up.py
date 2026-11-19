@@ -366,8 +366,12 @@ def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
         got = abs_up(A)
         assert A.nnz < n0 and type(got) is type(A) and np.array_equal(got.data, modulus_up(A.data))
         assert np.array_equal(got.row, A.row) and np.array_equal(got.col, A.col) and got.row is not A.row
-    import inspect
-    assert ".coords" not in inspect.getsource(abs_up)          # COO.coords is newer than the declared scipy>=1.8
+    # a 1-D coo_array has one index array (A.coords); its row and col do not index it
+    V = sp.coo_array(np.array([1 + 1j, 0, 2, -3j, 0]))
+    if V.ndim == 1:                                       # scipy >= 1.13 (older versions give a 1 x 5 array)
+        got = abs_up(V)
+        assert type(got) is type(V) and got.shape == V.shape == (5,)
+        assert np.array_equal(got.toarray(), modulus_up(V.toarray())) and got.coords[0] is not V.coords[0]
     B = sp.coo_matrix((v, (r, c)), shape=(4, 4)).tobsr(blocksize=(2, 2))
     assert np.array_equal(abs_up(B).toarray(), modulus_up(B.toarray()))
     Dg = sp.dia_matrix((np.array([[1 + 1j, 2, 3j], [4, 5 - 1j, 6]]), np.array([0, 1])), shape=(3, 3))
