@@ -1,12 +1,12 @@
 # Independent re-derivation: E-07 / C-12 / C-13 (Davis–Kahan sin Θ, approximate-symmetry labels, fidelities)
 
-Written from sections 1 and 3 of `docs/proofs/E-07_davis_kahan.md` only (section 2 read afterwards; comparison at
-the end). Notation as there. Classical facts: Davis–Kahan sin Θ theorem (Davis & Kahan 1970; Stewart & Sun 1990
-Thm V.3.6: if the spectrum of H′ lies in [α, β] and the eigenvalues of A outside the set lie outside (α − δ′, β + δ′),
-then ‖(I − P)Q̂‖ ≤ ‖R′‖/δ′ in every unitarily invariant norm; the Frobenius form needs only pointwise separation);
-Weyl; Ostrowski (Horn & Johnson Thm 4.5.9); the residual theorem (Parlett Thm 4.5.1: a unit v with ‖Sv − mv‖ ≤ r
-has an eigenvalue of S within r of m); Hölder |tr(AB)| ≤ ‖A‖₁‖B‖₂; ‖P₁ − P₂‖₂ = ‖(I − P₂)P₁‖₂ for equal-rank
-orthogonal projectors (Stewart & Sun Thm I.5.5).
+Not a human check. Written from sections 1 and 3 of `docs/proofs/E-07_davis_kahan.md` only (section 2 read afterwards;
+comparison at the end). Notation as there. Classical facts: Davis–Kahan sin Θ theorem (Davis & Kahan 1970; Stewart & Sun
+1990 Thm V.3.6: if the spectrum of H′ lies in [α, β] and the eigenvalues of A outside the set lie outside (α − δ′, β +
+δ′), then ‖(I − P)Q̂‖ ≤ ‖R′‖/δ′ in every unitarily invariant norm; the Frobenius form needs only pointwise separation);
+Weyl; Ostrowski (Horn & Johnson Thm 4.5.9); the residual theorem (Parlett Thm 4.5.1: a unit v with ‖Sv − mv‖ ≤ r has an
+eigenvalue of S within r of m); Hölder |tr(AB)| ≤ ‖A‖₁‖B‖₂; ‖P₁ − P₂‖₂ = ‖(I − P₂)P₁‖₂ for equal-rank orthogonal
+projectors (Stewart & Sun Thm I.5.5).
 
 ## Proofs
 

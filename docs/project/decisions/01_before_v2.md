@@ -90,7 +90,7 @@ general one, and what a producer can export is a design input for the importers 
 
 This is the rule that governs the status of every derivation in the project. Colleagues of Sarang act as reviewers,
 and anyone willing to re-derive mathematics is reserved for the sections that contain new mathematics. The reason
-recorded is that automatically drafted mathematics can be fluent and subtly wrong, that Ritu Goel reads without
+recorded is that drafted mathematics can be fluent and subtly wrong, that Ritu Goel reads without
 re-deriving, and that one person who re-derives is worth more than several who check plausibility. In the documents of
 this repository the rule has a fixed consequence: a new result counts as established only after Sarang Vehale has
 re-derived it. The 22 derivation documents in `code/certify-ed/docs/proofs/` are therefore described as derived,

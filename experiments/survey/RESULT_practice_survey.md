@@ -163,15 +163,15 @@ Fields below 80 %: producer_category, method, eigenvectors_used, precision_state
 
 Pass-1 agreement (before the pre-registered revision): uses_ed 92 %, paper_type 100 %, problem_class 75 %, producer_category 58 %, method 50 %, eigenvectors_used 75 %, precision_stated 58 %, data_available 58 %, max_dim_stated 100 %, sectors 43 %, quantities 46 %, evidence 38 %, use 54 %.
 Fields re-coded with the revised instructions (pass 2, quote-backed labels): problem_class, producer_category, method, eigenvectors_used, precision_stated, data_available, sectors, quantities, evidence, use.
-Residual disagreement direction on the check set (label counts summed over the 12 papers): the coder added labels the check
-reading did not — sectors 10, quantities 14, evidence 11, use 5; the check reading had labels the coder missed —
-sectors 6, quantities 13, evidence 7, use 2. The coder still over-codes `evidence` (it counts a benchmark in which
-ED is the reference as evidence *for* the ED) and under-codes `method` (it answers 'not stated' where Lanczos is named in the text).
+Residual disagreement on the check set (label counts summed over the 12 papers): labels the coder gave and the check
+reading did not — sectors 10, quantities 14, evidence 11, use 5; labels the check reading gave and the coder did not —
+sectors 6, quantities 13, evidence 7, use 2. The coder gives `evidence` more often (it counts a benchmark in which
+ED is the reference as evidence *for* the ED) and `method` less often (it answers 'not stated' where Lanczos is named in the text).
 
 **Consequence.** Percentages for `evidence`, `method`, `sectors`, `producer_category`, `precision_stated`, `data_available`,
 `use` and `quantities` (paper-level) are **provisional**: they rest on an automatic coding whose paper-level agreement with the
-check reading is below the pre-registered 80 %. Label-wise agreement for `quantities` is 86 %, so the *ranking* of quantities is
-usable for the scope matrix; the evidence percentages should be read with the re-coded subset below.
+check reading is below the pre-registered 80 %. Label-wise agreement for `quantities` is 86 %: the second reading does not contradict the *ranking* of quantities used
+for the scope matrix, which no person has checked; the evidence percentages should be read with the re-coded subset below.
 
 **Analysis-set papers of the check reading (n = 8):** quantities — ground energy 3, gaps 2, excited levels 3, degeneracies 1, quantum numbers/labels 1, correlation functions 2, structure factor 2, thermodynamics (full spectrum) 1, dynamical response/spectral function 5, time evolution 1, level statistics 1, other 4;
 evidence — residual or convergence tolerance stated 2, comparison with another code 2, comparison with literature value 1, comparison with analytic limit 1, symmetry/sum-rule check 1, none stated 4; use — benchmark anchor for another method 3, standalone physics result 6.
@@ -192,7 +192,7 @@ In this subset, 4/8 papers state no evidence for the correctness of their ED num
 - Abstract-level query: papers that use ED without naming it in the abstract are missed; papers that mention Lanczos in
   other senses (Krylov complexity, Lanczos time evolution) enter the population and are excluded at coding.
 - The first pass is an automatic coder reading LaTeX-stripped text (equations replaced by [EQ]); numbers that live
-  only in equations or figures are invisible to it. The check reading measures the error, it does not correct it everywhere.
+  only in equations or figures are invisible to it. The check reading shows how often two readings disagree; it does not correct the labels.
 - The check reading was a second automatic reading of keyword-focused excerpts of the extracted text plus targeted
   searches of the full text: not a human check, and not a complete linear reading of every paper.
 - Supplementary material is not fetched; text is truncated at 60 k characters with methods/results sections prioritised.

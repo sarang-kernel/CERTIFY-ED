@@ -9,18 +9,19 @@
 
 ### Wording of the records
 
-No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of
-the derivation documents and the headers of the independent re-derivations in `docs/proofs/` name no tool; an
-independent re-derivation is described as written before the original proof was read (the statement and the code
-mapping were read first), not a human check (`tests/test_proofs_props.py` pins the new wording). Entries of earlier
-versions below that quote these status lines quote the new wording. The practice survey calls its re-coding of 12
-papers a check reading, a second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording
-only); the blog, a decision record and the roadmap had called it a hand check or a hand coding. Suggested readings of
-mutation survivors are called automatic suggestions. Working notes of the development environment are removed from
-the track reports, the project changelog and the derivation documents, except where they give the reason for a failed
-run. `tools/lint_docs.py` compares product and tool names by their SHA-256 digests, so that it does not spell them,
-and `tests/test_process_words.py` applies that check to every tracked text file except the third-party survey data
-and the commit table of the project changelog.
+No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of the
+derivation documents and the headers of the independent re-derivations in `docs/proofs/` name no tool; an independent
+re-derivation is described as written before the original proof was read (the statement and the code mapping were read
+first), not a human check (`tests/test_proofs_props.py` pins the new wording). Entries of earlier versions below that
+quote these status lines quote the new wording. The practice survey calls its re-coding of 12 papers a check reading, a
+second automatic reading and not a human check (`PREREG_practice_survey.md` v0.3, wording only); the blog, a decision
+record and the roadmap had called it a hand check or a hand coding. Suggested readings of mutation survivors are called
+automatic suggestions. Sentences on how the texts were prepared and on the statement on assistance made at each
+submission are worded without naming a tool. Working notes of the development environment are removed from the track
+reports, the project changelog and the derivation documents, except where they give the reason for a failed run.
+`tools/lint_docs.py` compares product and tool names by their SHA-256 digests, so that it does not spell them, and
+`tests/test_process_words.py` applies that check to every tracked text file except the third-party survey data and the
+commit table of the project changelog.
 
 ### Single-precision inputs (soundness fix)
 
@@ -376,7 +377,7 @@ moved into a function).
   (the 3.2.0 E4 crash). A task predicted above the budget, failing in a worker (exception, dead worker) or showing a
   resource limit (NOT_CHECKED for memory or time, an inertia `resource_failure`) runs afterwards in this process, so
   its result is the serial one. Workers exchange pickles through files (no pipes; `multiprocessing` pools need named
-  pipes, which the sandbox of the development machine refuses). `certify_many(jobs, workers)` for (claim, spec,
+  pipes, which the restricted environment of the development machine refuses). `certify_many(jobs, workers)` for (claim, spec,
   options) triples; `compose.certify_low_energy(..., workers=1, cap_mb=None)` for sectors (the parallel path follows
   the serial loop's choice between a sector's U(1) restriction and the full matrix; the scheduling record is under
   `parallel`). `tests/test_parallel.py`: every status and every recorded number (timings excluded) identical for 1,
@@ -484,7 +485,7 @@ are explained in `RESULT_evidence_run_3.2.2.md`.
   gains `use_cap` and `certify._gate` passes it; S1 is gated by an explicit budget only, and the factorizations and the
   other statements keep the gate of 3.2.2. Test: `tests/test_memory_gate.py::test_cap_does_not_gate_s1_but_still_gates_factorizations`.
 - **E6 copies next to the repository.** `experiments/e6_mutation.py` made its copies of the repository in the system temp
-  directory. In the sandbox of the 3.2.2 run git could not create a repository there, so
+  directory. In the restricted environment of the 3.2.2 run git could not create a repository there, so
   `tests/test_review_fixes.py::test_imp05_source_fingerprint_ignores_lost_executable_bit` failed in the copy, the
   unmutated baseline counted as killed and E6 stopped before its first mutant. The copies are now made next to the
   repository (or in `CERTIFY_ED_E6_COPY_DIR`), and the test skips when git can work neither in its temp directory nor next to

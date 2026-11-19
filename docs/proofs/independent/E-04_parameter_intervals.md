@@ -1,8 +1,8 @@
 # Independent re-derivation: E-04 (certified parameter intervals / eigenvalue tubes)
 
-Written from sections 1 and 3 of `docs/proofs/E-04_parameter_intervals.md` only (section 2 read afterwards; the
-comparison is at the end). Notation as there: grid c₀ < … < c_m, F_k(c) = H(c_k) + (c − c_k)H1 on [c_k, c_{k+1}],
-d_k ≥ ‖H(c_{k+1}) − F_k(c_{k+1})‖₂, B ≥ ‖H1‖₂, λ_j(·) the j-th smallest eigenvalue. Classical facts: Weyl's
+Not a human check. Written from sections 1 and 3 of `docs/proofs/E-04_parameter_intervals.md` only (section 2 read
+afterwards; the comparison is at the end). Notation as there: grid c₀ < … < c_m, F_k(c) = H(c_k) + (c − c_k)H1 on [c_k,
+c_{k+1}], d_k ≥ ‖H(c_{k+1}) − F_k(c_{k+1})‖₂, B ≥ ‖H1‖₂, λ_j(·) the j-th smallest eigenvalue. Classical facts: Weyl's
 inequality |λ_j(A + E) − λ_j(A)| ≤ ‖E‖₂ for Hermitian A, E (Horn & Johnson, Cor. 4.3.15); the singular values of a
 Kronecker product are the products of the singular values; ρ(A) ≤ ‖A‖ for every induced norm.
 

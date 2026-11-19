@@ -110,7 +110,7 @@ replace the verdicts on the survivors, which remain Sarang's, and the worksheet'
 hold: that mutant changes no built matrix, so its test pins the contract of `shift_components` instead. The evidence run
 of 3.2.2 (`run_full_20261112`) did not complete: the memory gate refused S1 in two cases that the 3.2.1 run had
 certified (for the chain N=22 at k = 0 it estimated 16896 MB, where the 3.2.1 certifier peaked at 2989 MB), and the E6
-baseline failed because git could not create a repository under the temporary directory of the sandbox
+baseline failed because git could not create a repository under the temporary directory of the restricted environment
 (`docs/project/sources/runs/RESULT_evidence_run_3.2.2.md`). Version 3.2.3 (tag `v3.2.3`) exempts S1 from the gate derived from the
 cap (an explicit `budget_mb` still gates it) and makes E6 copy next to the repository. Its evidence run
 `run_full_20261112b` completed on 13 November 2026 at source `bfc115e824386443`, after a change of the number script

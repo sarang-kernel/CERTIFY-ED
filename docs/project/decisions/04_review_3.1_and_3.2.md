@@ -46,8 +46,8 @@ with a fixed schema, re-codes 15 % of the papers (seed 20261022) in a second rea
 enter the manuscript. The survey decides the default scope and the presets, not which statements certify-ed certifies.
 Its population is arXiv preprints of those years and categories, not the whole community, and the manuscript says so.
 Rejected were citing the earlier horizons report for claims about practice (unsourced), a survey coded only by hand
-(too slow) and an automatic coding without a check reading (the classifier can mislabel, and the check measures how
-often).
+(too slow) and an automatic coding without a check reading (the classifier can mislabel, and the check shows how
+often two readings disagree).
 
 ## D-51 (21 October 2026, evening): the note to Kránitz and Penc is corrected before sending
 

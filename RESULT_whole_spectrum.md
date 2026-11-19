@@ -174,7 +174,7 @@ ruff: `ruff check certify_ed tests experiments conformance` -> All checks passed
   has a three-line change (parse_window) in `read_bundle`; `cli.py` gained `_claim_from_args`, `cmd_plan`, the
   `--plan`, `--block-mb` and `--window` changes (textual conflicts likely if that track edits the same flags).
 - Viewer and corpus: no shared files except `CHANGELOG.md` and `mkdocs.yml` nav (additive).
-- Lead's dev/3.2 68e26d0 (schema re-render, `Certificate.load` schema-before-hash): `schema/certificate-2.1.schema.json`
+- dev/3.2 68e26d0 (schema re-render, `Certificate.load` schema-before-hash): `schema/certificate-2.1.schema.json`
   conflicts (resolution: re-render with `python -m certify_ed.schema --write schema`); `certificate_v2.py` touches
   different functions (`array_sha256` here).
 

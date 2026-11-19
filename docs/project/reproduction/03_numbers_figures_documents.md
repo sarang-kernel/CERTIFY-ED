@@ -85,7 +85,7 @@ agreement (its docstring and `experiments/survey/RESULT_practice_survey.md`). `m
 numbers files of the two figure directories. The two checks report undefined and duplicate macros; the scaffold README
 records no undefined macro (232 names) and no duplicate. The last built PDF in the archive is
 `manuscript_v4/manuscript_v4_3.1.0.pdf` (39 pages, pdflatex and bibtex, from the 3.1.0 run; `README_ARCHIVE.md`).
-`tectonic main.tex` is the alternative engine; it failed in the Windows sandbox of 21 October
+`tectonic main.tex` is the alternative engine; it failed in the restricted Windows environment of 21 October
 (`manuscript_v4/build_tectonic.log`). No TeX engine was available for the checks of 10 November 2026, so the PDF was
 not rebuilt. The prose of the manuscript is Sarang's (decision D-16); the scaffold carries only claims with evidence
 pointers.

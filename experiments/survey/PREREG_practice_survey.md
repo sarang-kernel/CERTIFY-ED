@@ -47,7 +47,7 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
 ## Known limits
 
 - Abstract-level query misses papers that use ED without naming it in the abstract.
-- The automatic first pass can mislabel; the check reading measures this, not corrects it everywhere.
+- The automatic first pass can mislabel; the check reading shows how often two readings disagree, it does not correct the labels.
 - Full text is used only as far as arXiv provides source or PDF text; supplementary material is not fetched.
 
 ## Changelog
@@ -60,7 +60,7 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
      is therefore the full set of API matches, sorted by submission date, fetched 9 pages of 100.
   2. Sampling implementation. Subsample order = numpy.random.default_rng(20261021).permutation over the stored record order;
      the first 80 fetchable papers in that order form the coded subsample. 0 fetch failures, 0 replacements.
-  3. Source host. export.arxiv.org/e-print answered HTTP 429 persistently (three back-offs of 10, 20, 40 s) and the sandbox
+  3. Source host. export.arxiv.org/e-print answered HTTP 429 persistently (three back-offs of 10, 20, 40 s) and the network
      proxy truncates responses at 1 MiB; sources were fetched from arxiv.org/e-print with HTTP Range requests (3 s between
      requests). The API query itself used export.arxiv.org as pre-registered. All 80 texts came from LaTeX sources; no PDF
      fallback was needed.
@@ -82,6 +82,6 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
      percentages as provisional. The subset coded in the check reading is reported alongside.
 - v0.3 (2026-11-19, wording only): steps 3 and 4, the known limits and items 5, 6 and 7 of v0.2 name the coder and the
   check reading in neutral terms. The check reading was a second automatic reading by a different reader than the
-  first pass, not a human check. The procedure, the data and every number are unchanged; the file name
+  first pass, not a human check, so the sentences on what the check measures say agreement, not error. The procedure, the data and every number are unchanged; the file name
   `survey_handcheck.csv`, the key `handcheck_agreement` and the macro names keep their old names. The text of v0.1
   and v0.2 as registered is in the history of this file (commit 28737733 and earlier).

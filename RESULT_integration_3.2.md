@@ -1,6 +1,6 @@
 # Integration of roadmap Waves 0 and 1 into `dev/3.2` (2026-10-29)
 
-Lead's record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `dev/3.2`, certify-ed 3.2.0.dev0.
+Record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `dev/3.2`, certify-ed 3.2.0.dev0.
 
 ## Merge order and resolutions
 
@@ -18,7 +18,7 @@ Lead's record of the merge of seven tracks (plan of 2026-10-23, D-58). Branch `d
 
 ## Checks on the merged branch
 
-- `pytest -q tests` at 73e5c2e: **953 passed, 2 skipped** (1412 s); PYTHONSAFEPATH removed from the environment of the run, as for every run on this host (the sandbox's default breaks the experiment driver test independently of the code).
+- `pytest -q tests` at 73e5c2e: **953 passed, 2 skipped** (1412 s); PYTHONSAFEPATH removed from the environment of the run, as for every run on this host (the default of the development environment breaks the experiment driver test independently of the code).
 - Before the viewer merge (cd874f8): 862 passed, 2 skipped. Base `release/3.1.0`: 541 passed, 1 skipped.
 - `ruff check certify_ed tests experiments conformance corpus`: clean. `python -m certify_ed.schema --check schema`: in sync.
 - CLI: env, certify, import, plan, statement, crossing, levelstats, extrapolate, view, presets, conform, spectrum, list, test, reproduce, numbers.
