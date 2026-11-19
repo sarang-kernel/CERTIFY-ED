@@ -41,14 +41,14 @@ def _unsorted(H):
     return sp.csr_matrix((D.data, D.indices, D.indptr), shape=D.shape)
 
 
-def _model_claim(isometry, split_isometry=False):
+def _model_claim(isometry, split_isometry=False, k=3):
     spec = ce.heisenberg_chain(8)
     H = ce.build_bitwise(spec)
     w, V = np.linalg.eigh(H.toarray())
     iso = sp.identity(spec.dim, format="csr") if isometry else None
     if split_isometry:
         iso = _with_duplicates(iso)
-    claim = ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=_with_duplicates(H), kind="lowest",
+    claim = ce.Claim(eigenvalues=w[:k], eigenvectors=V[:, :k], operator=_with_duplicates(H), kind="lowest",
                      sector_isometry=iso)
     return claim, spec
 
@@ -182,7 +182,7 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
         opts = ce.Options(seed=1, eigenspaces="all", observables={"Sz": Sz}, approximate_symmetries={"Sz": (Sz, 1.0)})
         given = [Sz]
     else:
-        claim, spec = _model_claim(False) if case.endswith("model") else _random_claim()
+        claim, spec = _model_claim(False, k=4) if case.endswith("model") else _random_claim()
         if case.startswith("unsorted"):
             D = claim.operator.copy()
             D.sum_duplicates()
@@ -201,6 +201,8 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
     assert all(_unchanged(M, x) for M, x in zip(given, before))
     _same(ref, a)
     _same(a, ce.certify(claim, spec, opts))
+    if spec is not None:                                   # the observable records exist (k = 4: S3, S4 certified)
+        assert a.statement("S4.eigenspaces")["status"] == "CERTIFIED", a.summary()
 
 
 @pytest.mark.parametrize("cls", [sp.csr_matrix, sp.csr_array])
@@ -325,3 +327,17 @@ def test_empty_sequences_of_observables_and_symmetries_are_accepted(empty):
     claim, spec = _model_claim(False)
     ref = ce.certify(claim, spec, ce.Options(seed=1))
     _same(ref, ce.certify(claim, spec, ce.Options(seed=1, observables=empty, approximate_symmetries=empty)))
+
+
+def test_a_second_object_on_the_same_arrays_is_copied_separately():
+    """The operator D and sp.csr_matrix(D), which shares D's arrays, are two objects: each gets its own copy, so the
+    certificate is that of two independent matrices (documented in the changelog)."""
+    claim, spec = _model_claim(False, k=4)
+    D = claim.operator
+    view = sp.csr_matrix(D)
+    assert view is not D and np.shares_memory(view.data, D.data)
+    before = _arrays(D)
+    a = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", observables={"H": view}))
+    assert _unchanged(D, before)
+    independent = ce.certify(claim, spec, ce.Options(seed=1, eigenspaces="all", observables={"H": D.copy()}))
+    _same(independent, a)
