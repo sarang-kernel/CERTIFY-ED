@@ -611,6 +611,46 @@ def _tripwire_allowed():
     return out
 
 
+def _tripwire_scope(code):
+    """The function a frame's code belongs to, as the allowlist names it: co_qualname without its <locals>, <genexpr>,
+    <listcomp> and <lambda> parts (a comprehension or a lambda counts as its def). None on Python 3.9 and 3.10, which
+    have no co_qualname: there co_name names a comprehension '<genexpr>' and a method without its class."""
+    qual = getattr(code, "co_qualname", None)
+    if qual is None:
+        return None
+    return ".".join(p for p in qual.split(".") if not p.startswith("<"))
+
+
+def _tripwire_allows(allowed, rel, code, line):
+    """True if the allowlist classifies an expression on this source line of file rel in the function of code; without
+    a qualified name (Python 3.9 and 3.10) an expression of any function of the file counts."""
+    scope = _tripwire_scope(code)
+    if scope is None:
+        exprs = [e for (f, _s), es in allowed.items() if f == rel for e in es]
+    else:
+        exprs = allowed.get((rel, scope), ())
+    return any(e in line for e in exprs)
+
+
+def test_the_tripwire_scope_without_co_qualname():
+    """The scope of the tripwire on interpreters without co_qualname (requires-python >= 3.9): the allowlisted modulus
+    in the generator expression of sectors.audit_label is allowed whether the code object has a qualified name (3.11
+    and later: its def) or only co_name '<genexpr>' (3.9, 3.10: matched on the file); co_name alone would give the
+    scope '' and report it. Stand-in code objects emulate the older interpreters."""
+    import types
+    allowed = _tripwire_allowed()
+    line = "".join("sep = min(abs(lam - roots[j]) for j in range(n) if j != k) if n > 1 else np.inf".split())
+    rel = "certify_ed/sectors.py"
+    new = types.SimpleNamespace(co_name="<genexpr>", co_qualname="audit_label.<locals>.<genexpr>")
+    old = types.SimpleNamespace(co_name="<genexpr>")
+    assert _tripwire_scope(new) == "audit_label" and _tripwire_scope(old) is None
+    assert _tripwire_allows(allowed, rel, new, line) and _tripwire_allows(allowed, rel, old, line)
+    assert not allowed.get((rel, ""), ())                     # the scope that co_name alone gives
+    other = types.SimpleNamespace(co_name="audit_sector", co_qualname="audit_sector")
+    assert not _tripwire_allows(allowed, rel, other, line)    # 3.11+: the expression is allowed in audit_label only
+    assert not _tripwire_allows(allowed, rel, old, "m=np.abs(z)")
+
+
 def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     """numpy's absolute value (np.abs, np.absolute), the builtin abs and the absolute value of scipy sparse matrices are
     replaced by functions that record every call on complex data whose nearest caller in certify_ed is not one of the
@@ -660,11 +700,9 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
         if f is None:
             return                                      # called from the test itself or from outside certify_ed
         rel = os.path.relpath(os.path.abspath(f.f_code.co_filename), root).replace(os.sep, "/")
-        qual = getattr(f.f_code, "co_qualname", f.f_code.co_name)
-        scope = ".".join(p for p in qual.split(".") if not p.startswith("<"))   # comprehensions, lambdas: their def
         line = "".join(linecache.getline(f.f_code.co_filename, f.f_lineno).split()).replace('"', "'")
-        if not any(e in line for e in allowed.get((rel, scope), ())):
-            found.append((rel, scope, f.f_lineno))
+        if not _tripwire_allows(allowed, rel, f.f_code, line):
+            found.append((rel, _tripwire_scope(f.f_code), f.f_lineno))
 
     def np_abs(x, *a, **k):
         check(x)
