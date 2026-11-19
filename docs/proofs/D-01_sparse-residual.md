@@ -150,6 +150,15 @@ guard. None of these paths produces a count.
 The collar logic that consumes β (`certify._certify_lowest`, `_certify_window`, `_edge_count_exact`,
 `degeneracy.degeneracy_counts`) is unchanged.
 
+**Correction (2026-11-18), moduli of complex entries; UNVERIFIED (D-12).** Step 4 takes each modulus |E_c,ij| and
+|L_jk| as "one rounded square root of a rounded sum of two rounded squares", fl(|z|) ≥ |z|(1 − u)³, and VERDICTS.md
+records the assumption "≤ 3u" for the C `hypot`. NumPy's complex absolute value is not that formula, and no bound on
+its error is established (2.47u measured on the reference host, `docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0 `ldl_residual` and
+`inertia` take these moduli and max|S_ii| from `fp.abs_up` and `fp.modulus_up` (≥ the exact moduli, Lemma M there).
+The factors (1 − u)³ per modulus in Step 4 are then not needed: `rows_abs_i` ≥ Σ_j |E_c,ij|(1 − γ_{n+len(blocks)})
+and G1_i ≥ (G 1)_i(1 − γ_{2n}). The constants γ_{m+2} and γ_{2n+6} are kept, with spare counts, and (Λ-R1) and
+(Λ-R2) hold as stated.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_D-01.py` (run from the repository root, `python docs/proofs/verify_D-01.py`, 202 s):
@@ -200,3 +209,4 @@ SuperLU.
 ## 6 Status
 
 Derived by Claude on 2026-10-31; machine-checked (400 random + 17 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

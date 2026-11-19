@@ -134,6 +134,13 @@ up. The certificate ends l_j, u_j are already outward (`fp.sub_down`/`add_up` in
 point, and the lift to the full operator (sector lift shift) is certified at the grid points only and recorded per
 point; between grid points the tube is a statement about the block family. The caveat is in the record.
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Bound (ii) evaluates `inf_norm_upper(np.abs(M))` on the
+letters and |b_t| on the couplings, and the affinity defect uses |Hb| + |Ha| + |dc||H1| and |diff|, all with the moduli
+taken as exact. For complex data these came from `numpy.abs`, whose error is not bounded (`docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0
+`sweep` takes them from `fp.modulus_up` and `fp.abs_up` (≥ the exact moduli, Lemma M there), so the bounds hold as
+written. For the letters of the three local spaces the complex entries are purely imaginary, whose modulus is exact
+either way. No constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_E-04.py` (seed 20261030; mpmath at 50 digits for eigenvalues and spectral norms; exact
@@ -180,3 +187,4 @@ dense block diagonalisation; the CLI.
 
 Derived by Claude on 2026-10-30; machine-checked (1 049 random + 107 adversarial cases, 0 violations; negative
 controls detected); independent re-derivation: done 2026-10-30 (fresh-context session, verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

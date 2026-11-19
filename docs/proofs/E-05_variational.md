@@ -133,6 +133,15 @@ I_a, I_b, so λ₂ ≥ max(lo_a, lo_b) ≥ the second smallest lower endpoint. I
 is S3's gap statement. The certificate's radii already contain its model shift (`radius_refers_to`), so ρ bounds
 λ₂ of the operator the certificate refers to; the record requires the same spec hash and dimension. ∎
 
+**Correction (2026-11-18), complex moduli in Lemmas 3 and 4; UNVERIFIED (D-12).** Lemma 3 (i) uses
+|H||ψ| ≤ â/(1 − γ_w) and bounds |ψ|ᵀâ through the computed dot, and Lemma 4 uses P_L ≤ P̂/(1 − γ_M). Both steps take
+the computed moduli as exact, or at least as upper bounds. For complex data the code took them from `numpy.abs`, whose
+error is not bounded (2.47u below |z| on the reference host, `docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0
+`enclosure.rayleigh_interval` and `variational.state_from_mps` take them from `fp.modulus_up` and `fp.abs_up`
+(≥ the exact moduli, Lemma M there), so both steps hold as written for complex data, with the constants γ_{w+1},
+γ_{n+2} and γ_M. No constant changes. The guard of E_N still covers its four roundings, and the division keeps
+its spare count (γ_w ≤ γ_{w+1}).
+
 ## 3 Where the code implements it
 
 `certify_ed/variational.py` (branch `track/variational`):
@@ -200,3 +209,4 @@ schema and the CLI.
 
 Derived by Claude on 2026-10-30; machine-checked (666 random + 294 adversarial cases, 0 violations; negative
 control broken 66/66); independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 2; UNVERIFIED, D-12).

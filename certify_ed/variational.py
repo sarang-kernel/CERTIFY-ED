@@ -39,7 +39,7 @@ import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .enclosure import OperatorAdapter, rayleigh_interval
-from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, norm2_upper, sub_down, underflow_scan, up
+from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, modulus_up, norm2_upper, sub_down, underflow_scan, up
 from .spec import ModelSpec, canonical_json
 
 VARIATIONAL_SCHEMA = "certify-ed/variational/1.0"
@@ -132,12 +132,12 @@ def state_from_mps(tensors: Sequence[Any], max_dim: int = MPS_MAX_DIM) -> TrialS
         return TrialState(None, "mps", rec, reason_code="SIZE_LIMIT",
                           reason=f"the contracted vector has dimension {n} > max_dim = {max_dim}")
     T = As[0][0].astype(complex if cplx else float)            # (d_1, D_1)
-    P = np.abs(As[0][0]).astype(float)                           # |A^(1)|, same shape
+    P = modulus_up(As[0][0]).astype(float)                       # |A^(1)| rounded up (fp.modulus_up), same shape
     m_total = 0                                                 # M = sum_j m_j, c_L = prod (1 + g_j) - 1 <= gamma_M
     for A in As[1:]:
         D = int(A.shape[0])
         T = np.tensordot(T, A, axes=([1], [0])).reshape(-1, A.shape[2])
-        P = np.tensordot(P, np.abs(A).astype(float), axes=([1], [0])).reshape(-1, A.shape[2])
+        P = np.tensordot(P, modulus_up(A).astype(float), axes=([1], [0])).reshape(-1, A.shape[2])
         m_total += (2 * (D + 4)) if cplx else D                  # 1 + 2 gamma_{D+4} <= 1 + gamma_{2(D+4)}
     psi = T[:, 0]
     # |psi_hat - psi| <= c_L |A^(1)|...|A^(L)| <= gamma_M |A^(1)|...|A^(L)| entrywise (Higham Lemma 3.3); the computed

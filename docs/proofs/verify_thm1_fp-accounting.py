@@ -4,7 +4,14 @@ the residual radius), in exact rational arithmetic (fractions.Fraction; square r
 Lambda  the scalar lemmas (L2), (L4), (L5), (L6) on the grid n, w <= 2e4 and 2^j (15 <= j <= 26)
 R       random dense/sparse, real/complex cases: the stage inequalities (S2)-(S5) and rel >= ||A x - mu x|| / ||x||
 Adv     the adversarial families of the document (zero residual, scaling, single nonzero entry, A = 0, diagonal A,
-        1 x 1, huge mu, cancellation, mixed real/complex, a spec operator against its dense build)
+        1 x 1, huge mu, cancellation, mixed real/complex, a spec operator against its dense build), and complex cases
+        whose entries are the arguments on which numpy's complex absolute value is below |z| by up to 2.47u (scaled
+        by powers of two): they show that (S2) holds with the upper moduli on these arguments, not that it fails
+        with np.abs
+(S2) is checked with the code's constants: the division constant of enclosure._rounding_bound (gamma_{w+1} for real
+data, gamma_{w+3} for complex data) and the upper moduli of fp.modulus_up; the script's replica of E must equal
+_rounding_bound bit for bit, so that it checks the code's numbers (correction of 2026-11-18). (L5') is (L5) with the
+division index w + 3.
 Usage: python docs/proofs/verify_thm1_fp-accounting.py [--cases 20000] [--seed 6]
 """
 from __future__ import annotations
@@ -24,8 +31,8 @@ from _common import Counter  # noqa: E402
 
 import certify_ed as ce  # noqa: E402
 from certify_ed.construct import SpecOperator  # noqa: E402
-from certify_ed.enclosure import OperatorAdapter, residuals  # noqa: E402
-from certify_ed.fp import U, gamma, gamma_dot, norm2_lower, norm2_upper  # noqa: E402
+from certify_ed.enclosure import OperatorAdapter, _rounding_bound, residuals  # noqa: E402
+from certify_ed.fp import U, gamma, gamma_dot, modulus_up, norm2_lower, norm2_upper  # noqa: E402
 
 getcontext().prec = 120
 u = Fraction(U)
@@ -95,6 +102,7 @@ def check_scalar_lemmas(counters):
             hi = sqrt_up(1 + gN) * (1 + u) * (1 - g2 * (1 + u) ** 2) * (1 + u) ** 3 / (1 + 8 * u)
             ok &= lo >= 1 + 3 * u and hi <= 1 - 3 * u
         ok &= (1 - g0) * (1 - u) ** 3 * (1 + 4 * u) / (1 - g1 * (1 - u) ** 2) >= 1 + u           # (L5)
+        ok &= (1 - g0) * (1 - u) ** 3 * (1 + 4 * u) / (1 - gam(k + 3) * (1 - u) ** 2) >= 1 + u   # (L5') complex
         ok &= (1 - u) ** 6 * (1 + 4 * u) * (1 + u / g2) >= 1                                    # (L6)
         counters["L"].add(k > 20_000, ok, f"scalar lemma at k={k}")
 
@@ -120,9 +128,14 @@ def check_case(A, X, mu, counters, adversarial, tag):
     Ad = A.toarray() if sp.issparse(A) else np.asarray(A)
     absAx = [sum(sqrt_up(cabs2(Ad[i, j]) * cabs2(x[j])) for j in range(n)) for i in range(n)]
     absHX_c = ad.abs_matvec(X)[:, 0]
-    gw = gamma(w + 1)
+    gw = gamma(w + (3 if cplx else 1))                 # the constant of enclosure._rounding_bound
     absHX_up = absHX_c / (1.0 - gw) * (1 + 4 * U)
     ok2 = all(F(absHX_up[i]) >= absAx[i] for i in range(n))
+    # the replica of E (the code's operations in the code's order) must be the code's E bit for bit
+    E_rep = absHX_up * 1.0
+    aX = modulus_up(x) * abs(float(mu))
+    E_rep = (E_rep + aX) * gamma_dot(w + 2, cplx) * (1 + 4 * U)
+    ok2 &= bool(np.array_equal(E_rep, _rounding_bound(ad, np.asarray([mu], dtype=float), X)[:, 0]))
     # (S3) E_i >= |Rc_i - r_i| (exact), using the exact squares
     ok3 = True
     for i in range(n):
@@ -185,6 +198,21 @@ def adversarial_cases(rng):
     out.append((Ac, np.array([[1.0], [1.0]]), 1.0, "complex A, real x"))
     out.append((A, np.array([[1.0 + 1j], [0.5], [-1j]]), 1.0, "real A, complex x"))
     out.append((sp.csr_matrix(A), np.array([[1.0], [1.4142135623730951], [1.0]]), 2.0 - 1.4142135623730951, "sparse"))
+    # complex entries on which numpy's complex absolute value is below |z| by up to 2.47u (Windows, numpy 2.4.4);
+    # with the upper moduli (S2) must hold on them (this does not test np.abs itself)
+    hard = [0.02019294356747192 - 0.5012539518584045j, 1.9986893956853402 + 0.07375207458660175j,
+            1.010573342221019 + 0.3330018761835207j]
+    for n in (2, 3, 5):
+        for scale in (2.0 ** -3, 1.0, 2.0 ** 7):
+            M = np.zeros((n, n), dtype=complex)
+            for i in range(n):
+                for j in range(i + 1, n):
+                    M[i, j] = hard[(i + 2 * j) % 3] * scale * (-1) ** (i + j)
+            Ah = M + M.conj().T + np.diag(np.arange(1.0, n + 1.0))
+            xh = np.array([[np.conj(hard[i % 3]) if i % 2 else hard[i % 3]] for i in range(n)])
+            mu = float(np.linalg.eigvalsh(Ah)[0])
+            out.append((Ah, xh, mu, f"hard moduli n={n} scale={scale}"))
+            out.append((sp.csr_matrix(Ah), xh, 0.25, f"hard moduli sparse n={n} scale={scale}"))
     return out
 
 
@@ -228,7 +256,7 @@ def main():
         counters["R"].add(True, F(float(res.rel_bound[0])) * F(float(np.linalg.norm(V[:, j]))) * (1 + Fraction(1, 10 ** 12)) >= need,
                           f"spec operator j={j}")
     ok = True
-    for key, name in (("L", "scalar lemmas (L2), (L4), (L5), (L6)"), ("R", "rel >= exact radius"),
+    for key, name in (("L", "scalar lemmas (L2), (L4), (L5), (L5'), (L6)"), ("R", "rel >= exact radius"),
                       ("S", "stage inequalities (S2)-(S5)")):
         ok &= counters[key].report(name)
     print("RESULT:", "0 violations" if ok else "VIOLATIONS FOUND")

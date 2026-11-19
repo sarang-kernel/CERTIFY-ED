@@ -30,8 +30,8 @@ import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import (U, UNDERFLOW_THRESHOLD, add_up, exact_dot, fro_upper, gamma, gamma_dot, inf_norm_upper, max_nnz_per_row,
-                 norm2_upper, sub_down, sub_up, underflow_scan, up)
+from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, fro_upper, gamma, gamma_dot, inf_norm_upper,
+                 max_nnz_per_row, modulus_up, norm2_upper, sub_down, sub_up, underflow_scan, up)
 from .spec import canonical_json
 
 MOMENTS_SCHEMA = "certify-ed/moments/1.0"
@@ -64,7 +64,8 @@ def _as_matrix(M, name):
 
 
 def _abs(M):
-    return abs(M) if sp.issparse(M) else np.abs(M)
+    """|M| with the moduli of complex entries rounded up (fp.abs_up, docs/proofs/fp_modulus-up.md)."""
+    return abs_up(M)
 
 
 def _dense(M):
@@ -182,7 +183,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     gwH = gamma(wH)
     absO, absH = _abs(O), _abs(H)
     Y = O @ X                                             # y_i = fl(O x_i)
-    e_y = np.array([float(norm2_upper(gO * (absO @ np.abs(X[:, i])) / (1 - gwO))) for i in range(g)])
+    e_y = np.array([float(norm2_upper(gO * (absO @ modulus_up(X[:, i])) / (1 - gwO))) for i in range(g)])
     ynorm_up = np.array([float(norm2_upper(Y[:, i])) for i in range(g)])
     Z = Y.copy()
     D = np.zeros(g)                                       # ||z_k - H^k y_hat||_2 bounds
@@ -190,7 +191,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     proj_norm1 = up(2 * g * s + g * eta)                  # trace-norm bound on P - X X^H
     for k in range(K + 1):
         if k > 0:
-            eps_k = np.array([float(norm2_upper(gH * (absH @ np.abs(Z[:, i])) / (1 - gwH))) for i in range(g)])
+            eps_k = np.array([float(norm2_upper(gH * (absH @ modulus_up(Z[:, i])) / (1 - gwH))) for i in range(g)])
             Z = H @ Z
             D = np.array([float(up(Hn * D[i] + eps_k[i])) for i in range(g)])
         vals, dots_err, abs_vals = [], [], []
@@ -269,7 +270,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
             HOO, E_hoo = hermitian_matrix_with_bound([H, O, O], [wH, n])
             S1 = 2.0 * OHO - OOH
             C = S1 - HOO
-            E_C = 2.0 * E_oho + E_ooh + E_hoo + U * (np.abs(S1) + np.abs(C)) * (1 + 4 * U)
+            E_C = 2.0 * E_oho + E_ooh + E_hoo + U * (modulus_up(S1) + modulus_up(C)) * (1 + 4 * U)
             Ch = (C + C.conj().T) / 2
             devC = float(up(fro_upper(E_C) + U * fro_upper(Ch)))
             Cn = float(up(4 * On * On * Hn))

@@ -1,0 +1,162 @@
+# Moduli left in certify_ed after the complex-moduli audit of 18 Nov 2026 (one line per call or reference: file,
+# enclosing function, expression, class; the spellings are those of tests/test_abs_audit.py). Every modulus of complex
+# data that enters a rigorous bound goes through fp.modulus_up or fp.abs_up (docs/proofs/fp_modulus-up.md);
+# tests/test_abs_audit.py fails on any modulus that is not listed here and on any line that names none. A new modulus
+# is added only after it is classified.
+certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GL)	real data only
+certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GC)	real data only
+certify_ed/apps/aklt/__init__.py	eta_float	np.abs(GR)	real data only
+certify_ed/apps/aklt/eta.py	certify_eta	float(tprime) ** 0.5	real data only
+certify_ed/apps/aklt/kernel.py	scaled_pmax	abs(S1 - S2)	real data only
+certify_ed/apps/aklt/kernel.py	kernel_check	abs(int(x))	real data only
+certify_ed/apps/aklt/kernel.py	kernel_check	np.abs(H.data)	real data only
+certify_ed/apps/aklt/kernel.py	kernel_check	np.abs(Ui)	real data only
+certify_ed/apps/pyrochlore/nine_coupling.py	rayleigh_upper	np.abs(v)	real data only
+certify_ed/apps/pyrochlore/nine_coupling.py	certify_nine	abs(e0)	real data only
+certify_ed/apps/pyrochlore/nine_coupling.py	count_below_by_block_float	np.abs(A.data)	real data only
+certify_ed/apps/pyrochlore/nine_coupling.py	count_below_by_block_float	np.abs(Ab)	real data only
+certify_ed/apps/pyrochlore/nine_coupling.py	count_below_by_block_float	np.allclose(Ab, Ab.T, rtol=0, atol=0)	real data only (exact symmetry check)
+certify_ed/apps/pyrochlore/spin_half.py	certify_crown	abs(e0)	real data only
+certify_ed/apps/pyrochlore/spin_one.py	sz0_basis	np.abs(cand.sum(axis=1))	real data only
+certify_ed/apps/pyrochlore/spin_one.py	heisenberg_mixed	np.abs(states[:, i] + 2 * di)	real data only
+certify_ed/apps/pyrochlore/spin_one.py	heisenberg_mixed	np.abs(states[:, j] + 2 * dj)	real data only
+certify_ed/basis.py	cyclic_isometry	abs(V)	not part of a bound
+certify_ed/certify.py	_diagnose_mismatch	abs(den)	not part of a bound
+certify_ed/certify.py	_diagnose_mismatch	abs(ai)	not part of a bound
+certify_ed/certify.py	_diagnose_mismatch	abs(c_)	not part of a bound
+certify_ed/certify.py	_diagnose_mismatch	abs(complex(*r['producer_minus_spec']))	not part of a bound
+certify_ed/certify.py	check_model_fidelity	abs(Hs - Hs.conj().T)	not part of a bound
+certify_ed/certify.py	check_model_fidelity	abs(Hp - Hp.conj().T)	not part of a bound
+certify_ed/certify.py	_certify_lowest	np.abs(mu_sorted)	real data only
+certify_ed/certify.py	_certify_window_vectorless	abs(float(a))	real data only
+certify_ed/certify.py	_certify_window_vectorless	abs(float(b))	real data only
+certify_ed/certify.py	_certify	abs(asym)	not part of a bound
+certify_ed/certify.py	_certify	np.abs(asym)	not part of a bound
+certify_ed/checker.py	residual_inf_norm_upper	abs(M[i, j])	real data only
+certify_ed/checker.py	residual_inf_norm_exact	np.abs(d)	real data only
+certify_ed/checker.py	residual_inf_norm_exact	np.abs(lu)	real data only
+certify_ed/checker.py	residual_inf_norm_exact	np.abs(d)	real data only
+certify_ed/checker.py	residual_inf_norm_exact	np.abs(Di)	real data only
+certify_ed/checker.py	residual_inf_norm_exact	abs(int(P[i, j]) - int(Ar[i, j]) * scale)	real data only
+certify_ed/checker.py	inertia_exact	abs(int(x))	real data only
+certify_ed/checker.py	inertia_exact	np.abs(d)	real data only
+certify_ed/checker.py	inertia_exact	abs(int(x))	real data only
+certify_ed/checker.py	_plan_points	abs(float(top))	real data only
+certify_ed/checker.py	_plan_points	abs(c[0])	real data only
+certify_ed/checker.py	_plan_points	abs(c[1])	real data only
+certify_ed/checker.py	certify_by_counts	abs(lo_top)	real data only
+certify_ed/compose.py	_sector_record	abs(Hs - Hs.conj().T)	not part of a bound
+certify_ed/construct.py	_finalize	np.abs(H.data.imag)	real data only
+certify_ed/construct.py	build_bitwise	np.abs(amp[m][~found])	not part of a bound
+certify_ed/construct.py	hermitian_part	abs(asym)	not part of a bound
+certify_ed/construct.py	matrix_difference	np.abs(D.data)	not part of a bound
+certify_ed/construct.py	matrix_difference	np.abs(A.data)	not part of a bound
+certify_ed/construct.py	matrix_difference	np.abs(B.data)	not part of a bound
+certify_ed/correlations.py	_hermitian_part_or_fail	abs(O - O.conj().T)	not part of a bound
+certify_ed/correlations.py	hermitian_parts	abs(O)	not part of a bound
+certify_ed/correlations.py	hermitian_parts	abs(Oh)	not part of a bound
+certify_ed/correlations.py	certify_observable_general	abs(Oc - Oc.conj().T)	not part of a bound
+certify_ed/correlations.py	modulus_upper	abs(x)	real data only
+certify_ed/correlations.py	modulus_upper	abs(y)	real data only
+certify_ed/correlations.py	modulus_upper	abs(x)	real data only
+certify_ed/correlations.py	modulus_upper	abs(y)	real data only
+certify_ed/correlations.py	modulus_upper	abs(x)	real data only
+certify_ed/correlations.py	modulus_upper	abs(y)	real data only
+certify_ed/correlations.py	certify_observable_lifted	abs(Oc - Oc.conj().T)	not part of a bound
+certify_ed/corroborate.py	jacobi_eigvalsh	np.abs(A)	real data only
+certify_ed/corroborate.py	jacobi_eigvalsh	np.abs(tau)	real data only
+certify_ed/corroborate.py	corroborate	np.abs(claimed)	real data only
+certify_ed/corroborate.py	corroborate	np.abs(w - claimed[:w.size])	real data only
+certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(est[:, None] - av[None, :])	real data only
+certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(snapped - est)	real data only
+certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(snapped - est)	real data only
+certify_ed/degeneracy.py	_probe	abs(sigma - target)	real data only
+certify_ed/degeneracy.py	degeneracy_counts	np.abs(enc.mu)	real data only
+certify_ed/eigenspace.py	certify_quantum_numbers	np.abs(est[:, None] - av[None, :])	real data only
+certify_ed/eigenspace.py	certify_quantum_numbers	np.abs(snapped - est)	real data only
+certify_ed/eigenspace.py	certify_quantum_numbers	np.abs(snapped - est)	real data only
+certify_ed/enclosure.py	_rounding_bound	np.abs(mu)	real data only
+certify_ed/enclosure.py	_cluster_bound	np.abs(mu[idx])	real data only
+certify_ed/enclosure.py	rayleigh_interval	abs(lo)	real data only
+certify_ed/enclosure.py	rayleigh_interval	abs(hi)	real data only
+certify_ed/enclosure.py	kato_temple	abs(lower)	real data only
+certify_ed/enclosure.py	kato_temple	abs(upper)	real data only
+certify_ed/fp.py	modulus_up	np.abs(z)	real data only (real floating branch of modulus_up: exact)
+certify_ed/fp.py	modulus_up	np.abs(z.astype(np.float64))	real data only (integer branch of modulus_up: stepped up from 2^53)
+certify_ed/fp.py	_modulus_up_into	np.abs(z.real, order='C')	real data only (components)
+certify_ed/fp.py	_modulus_up_into	np.abs(z.imag, order='C')	real data only (components)
+certify_ed/fp.py	_modulus_up_into	np.abs(c.real)	real data only (components)
+certify_ed/fp.py	_modulus_up_into	np.abs(c.imag)	real data only (components)
+certify_ed/fp.py	abs_up	abs(A)	real data only (real branch of abs_up: exact)
+certify_ed/fp.py	_scan_chunk	np.abs(comp)	real data only
+certify_ed/fp.py	min_nonzero_magnitude	np.abs(comp)	real data only
+certify_ed/fp.py	exact_sum	np.abs(T)	real data only
+certify_ed/fp.py	exact_sum	abs(c)	real data only
+certify_ed/fp.py	_two_product_split	np.abs(a * b)	real data only
+certify_ed/fp.py	_two_product_split	np.abs(a)	real data only
+certify_ed/fp.py	_two_product_split	np.abs(b)	real data only
+certify_ed/fp.py	exact_dot	abs(re)	real data only
+certify_ed/fp.py	exact_dot	abs(im)	real data only
+certify_ed/fp.py	exact_dot	abs(s)	real data only
+certify_ed/generalized.py	_dense_hermitian	np.abs(D)	not part of a bound
+certify_ed/generalized.py	_dense_hermitian	np.abs(D)	not part of a bound
+certify_ed/generalized.py	certify_B_positive_definite	abs(beta_c)	real data only
+certify_ed/generalized.py	pencil_residual_radii	abs(mu[i])	real data only
+certify_ed/generalized.py	pencil_count_below	abs(sigma)	real data only
+certify_ed/generalized.py	certify_generalized	abs(top)	real data only
+certify_ed/inertia.py	inertia_sparse	np.abs(Dreal)	real data only
+certify_ed/invariants.py	compare_invariants	abs(other['trace'])	real data only
+certify_ed/invariants.py	compare_invariants	abs(other['fro2'])	real data only
+certify_ed/invariants.py	compare_invariants	abs(spec_inv['trace'] - other['trace'])	real data only
+certify_ed/invariants.py	compare_invariants	abs(spec_inv['fro2'] - other['fro2'])	real data only
+certify_ed/ldl_residual.py	sparse_ldl_residual_bound	np.abs(Dr)	real data only
+certify_ed/moments.py	_as_matrix	abs(D)	not part of a bound
+certify_ed/moments.py	_as_matrix	np.abs(M - M.conj().T)	not part of a bound
+certify_ed/moments.py	_interval_mul	abs(lo)	real data only
+certify_ed/moments.py	_interval_mul	abs(hi)	real data only
+certify_ed/moments.py	certified_moments	abs(float(np.real(v)))	real data only
+certify_ed/moments.py	certified_moments	abs(total)	real data only
+certify_ed/moments.py	certified_moments	abs(m_hat)	real data only
+certify_ed/moments.py	certified_moments	abs(lo2)	real data only
+certify_ed/moments.py	certified_moments	abs(hi2)	real data only
+certify_ed/moments.py	certified_moments	abs(loC)	real data only
+certify_ed/moments.py	certified_moments	abs(hiC)	real data only
+certify_ed/nonhermitian.py	disc_groups	np.abs(np.subtract.outer(re, re))	real data only
+certify_ed/nonhermitian.py	disc_groups	np.abs(np.subtract.outer(im, im))	real data only
+certify_ed/operators.py	_build	np.abs(O.data.imag)	real data only
+certify_ed/ozaki.py	split_columns	np.abs(A)	real data only
+certify_ed/ozaki.py	split_complex_columns	np.abs(Ar)	real data only
+certify_ed/ozaki.py	split_complex_columns	np.abs(Ai)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(dr)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(dr)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(di)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(Ar)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(Ar)	real data only
+certify_ed/ozaki.py	split_rows	np.abs(Ai)	real data only
+certify_ed/ozaki.py	_Sum2.add	np.abs(t)	real data only
+certify_ed/ozaki.py	_Sum2.result	np.abs(v)	real data only
+certify_ed/ozaki.py	_abs_upper	np.abs(re)	real data only
+certify_ed/ozaki.py	_abs_upper	np.abs(re)	real data only
+certify_ed/ozaki.py	_abs_upper	np.abs(im)	real data only
+certify_ed/ozaki.py	ozaki_residual	np.abs(mu)	real data only
+certify_ed/ozaki.py	ozaki_residual	abs(HS.rem_real)	real data only
+certify_ed/ozaki.py	ozaki_residual	np.abs(HS.rem_real)	real data only
+certify_ed/ozaki.py	ozaki_residual	abs(HS.rem_imag)	real data only
+certify_ed/ozaki.py	ozaki_residual	np.abs(HS.rem_imag)	real data only
+certify_ed/ozaki.py	ozaki_residual	np.abs(MU.remainder[:, cols])	real data only
+certify_ed/report.py	round_decimal	abs(q.adjusted())	real data only
+certify_ed/report.py	_Numbers.add	abs(float(value))	real data only
+certify_ed/rigorous.py	arb_residual_radii	abs(acc)	complex data entering a rigorous bound (Arb ball arithmetic, rigorous)
+certify_ed/rigorous.py	arb_residual_radii	abs(xb[i])	complex data entering a rigorous bound (Arb ball arithmetic, rigorous)
+certify_ed/sectors.py	trace_moments_check	abs(tH - ts)	not part of a bound
+certify_ed/sectors.py	trace_moments_check	abs(fH - fs)	not part of a bound
+certify_ed/sectors.py	audit_label	abs(lam - roots[j])	complex data entering a rigorous bound (open question: needs a lower bound)
+certify_ed/spectrum.py	enclose_spectrum	abs(H - H.conj().T)	not part of a bound
+certify_ed/sweep.py	matrix_affinity_defect	abs(dc)	real data only
+certify_ed/sweep.py	tube_at	abs(c - pt[rec['parameter']])	real data only
+certify_ed/sweep.py	next_level_lower_bound_at	abs(c - pt[rec['parameter']])	real data only
+certify_ed/variational.py	certify_variational	abs(D)	not part of a bound
+certify_ed/variational.py	certify_variational	np.abs(D)	not part of a bound
+certify_ed/variational.py	certify_variational	abs(th_lo)	real data only
+certify_ed/variational.py	certify_variational	abs(th_hi)	real data only
+certify_ed/variational.py	_temple	abs(lower)	real data only

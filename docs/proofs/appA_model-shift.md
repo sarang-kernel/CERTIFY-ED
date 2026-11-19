@@ -123,6 +123,15 @@ are 0 and 1), `np.sqrt(k + 1)`, `np.sqrt(k)` for bosons, exact entries for fermi
 `np.where(parity, −1, 1)` is exact. `build_bitwise`: `coo_matrix(...).tocsr()` sums duplicate (row, col) pairs
 in floating point. `hermitian_part`: `(H + H.conj().T) / 2`, one rounding per entry. Nothing else rounds.
 
+**Correction (2026-11-18), moduli of complex amplitudes; UNVERIFIED (D-12).** The erratum of 10 Nov 2026 in
+section 2 counts `np.abs` of a computed complex amplitude as one rounding. No bound on NumPy's complex absolute value
+is established (2.47u measured on the reference host, `docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0 `construct.SpecOperator._apply`
+takes the moduli from `fp.modulus_up` (≥ the modulus of the stored amplitude, Lemma M there), so the lower side used
+by Lemma A3, computed |H|_abs sums ≥ (1 − γ_{m+2L_max−1}) times the exact ones, holds with the index of Lemma A1 as
+first written. The upper side of "within a factor (1 ± …)" gains a factor (1 + 12u) for complex amplitudes; no
+bound uses it (`_builder_shift` divides the computed sums by 1 − γ). The code's division by (1 − `gamma(width)`) does
+not change.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_appA_model-shift.py`:
@@ -164,3 +173,4 @@ reported since INT-03.
 ## 6 Status
 
 Derived by Claude on 2026-10-30; machine-checked (386 random + 681 adversarial cases, 0 violations; run of 2026-11-03 approved by the user, `docs/proofs/runs/appA_model-shift.txt`); independent re-derivation: done 2026-10-30 (fresh-context session, verdict AGREES-WITH-REMARKS, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

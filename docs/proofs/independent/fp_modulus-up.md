@@ -362,4 +362,7 @@ exact; everything else is.
   with the term w·2⁻¹⁰⁷⁵, absent when no product underflows, and its general form with the same provisos (suggested
   edit 1); "for real input" reads "real floating input", and integers are converted to float64 and stepped up from 2⁵³
   (edit 2); object arrays, sparse input and complex types wider than complex128 are rejected with TypeError (edit 3);
-  the lower margin m ≥ |z|(1 + 4u) is recorded as a remark (edit 4). Lemma M is unchanged.
+  the lower margin m ≥ |z|(1 + 4u) is recorded as a remark (edit 4). A non-finite bound makes the records that rest on
+  it INCONCLUSIVE (S2, S3, S1 on a sector isometry, the variational and moment records; `tests/test_nonfinite_bounds.py`
+  and, with an infinite upper modulus, `tests/test_nonfinite_moduli.py`), as edit 1 asks for a nan bound. Lemma M is
+  unchanged.

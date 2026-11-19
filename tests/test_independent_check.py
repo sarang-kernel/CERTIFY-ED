@@ -80,25 +80,28 @@ def test_crossing_criterion_accounts_for_the_affinity_defect_at_interior_grid_po
 
 def test_rounding_bound_uses_width_plus_three_for_complex_data():
     """thm1 correction (VERDICTS.md): for complex data the division constant is gamma_{w+3}, so the entrywise bound
-    E is never smaller than the real-data formula would give; a real operator with real vectors is unchanged."""
+    E is never smaller than the real-data formula would give; a real operator with real vectors is unchanged. Since
+    3.3.0.dev0 the moduli are upper bounds (fp.abs_up, fp.modulus_up) and the constant w + 3 has two spare counts;
+    both formulas are compared bit for bit (an rtol of 1e-12 could not tell w + 3 from w + 4)."""
     import numpy as np
     from certify_ed.enclosure import OperatorAdapter, _rounding_bound
-    from certify_ed.fp import U, gamma, gamma_dot
+    from certify_ed.fp import U, abs_up, gamma, gamma_dot, modulus_up
     rng = np.random.default_rng(7)
     A = rng.standard_normal((6, 6)); A = A + A.T
     x = rng.standard_normal((6, 2))
+    mu = np.array([0.3, -1.2])
     ad = OperatorAdapter(A)
-    E_real = _rounding_bound(ad, np.array([0.3, -1.2]), x)
-    # the real formula, reproduced
+    E_real = _rounding_bound(ad, mu, x)
+    # the real formula, reproduced (the moduli of real numbers are exact)
     absHX = np.abs(A) @ np.abs(x)
-    ref = gamma_dot(ad.width + 2, False) * (absHX / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(x) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
-    assert np.allclose(E_real, ref, rtol=1e-12, atol=0)
+    ref = gamma_dot(ad.width + 2, False) * (absHX / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(x) * np.abs(mu)[None, :]) * (1 + 4 * U)
+    assert np.array_equal(E_real, ref)
     xc = x + 1j * rng.standard_normal((6, 2))
-    E_cplx = _rounding_bound(ad, np.array([0.3, -1.2]), xc)
-    absHXc = np.abs(A) @ np.abs(xc)
-    ref_old = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
-    ref_new = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 3)) * (1 + 4 * U) + np.abs(xc) * np.abs(np.array([0.3, -1.2]))[None, :]) * (1 + 4 * U)
-    assert np.all(E_cplx >= ref_old) and np.allclose(E_cplx, ref_new, rtol=1e-12, atol=0)
+    E_cplx = _rounding_bound(ad, mu, xc)
+    absHXc = abs_up(A) @ modulus_up(xc)
+    ref_old = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 1)) * (1 + 4 * U) + modulus_up(xc) * np.abs(mu)[None, :]) * (1 + 4 * U)
+    ref_new = gamma_dot(ad.width + 2, True) * (absHXc / (1 - gamma(ad.width + 3)) * (1 + 4 * U) + modulus_up(xc) * np.abs(mu)[None, :]) * (1 + 4 * U)
+    assert np.all(E_cplx >= ref_old) and np.array_equal(E_cplx, ref_new)
 
 
 def test_real_spec_with_complex_vectors_takes_the_wider_rounding_constant():

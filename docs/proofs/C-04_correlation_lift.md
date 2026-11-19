@@ -122,6 +122,11 @@ i tr(Π K) by linearity, and |tr(Π O) − (v_H + i v_K)| ≤ b_H + b_K is Propo
 Rounding directions: every bound is an upper bound rounded up (`up`, `add_up`, index shifts); the value v is
 the computed floating-point trace and carries no rounding claim of its own beyond b₆'s rounding term.
 
+**Correction (2026-11-18), complex moduli; UNVERIFIED (D-12).** Lemma 1 bounds ‖ |V|ᵀ|O||V| ‖_F through the computed
+product of the absolute values and takes those moduli as exact. For complex data they came from `numpy.abs`, whose
+error is not bounded (`docs/proofs/fp_modulus-up.md`). Since 3.3.0.dev0 `compress_operator` takes them from `fp.abs_up` (≥ the exact
+moduli, Lemma M there), so the step holds as written. No constant changes.
+
 ## 4 Computational verification
 
 `docs/proofs/verify_C-04.py` (seed 20261030; exact rationals for parts A and C; mpmath at 50 digits for the
@@ -164,3 +169,4 @@ rounding bound is checked in exact rationals.
 
 Derived by Claude on 2026-10-30; machine-checked (240 random + 14 adversarial cases, 0 violations);
 independent re-derivation: done 2026-10-30 (fresh-context session, verdict GAP, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
+Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).

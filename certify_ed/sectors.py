@@ -31,7 +31,7 @@ from typing import List, Optional
 import numpy as np
 import scipy.sparse as sp
 
-from .fp import ULP_MIN, fro_upper, gamma_dot, norm2_upper, up, U
+from .fp import ULP_MIN, abs_up, fro_upper, gamma_dot, modulus_up, norm2_upper, up, U
 
 
 @dataclass
@@ -62,11 +62,12 @@ def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "
     VHs = V @ Hs
     D = (HV - VHs).tocsr()
     wh = int(np.diff(H.indptr).max()) if H.shape[0] else 1
+    aH, aV = abs_up(H), abs_up(V)                            # upper moduli of complex data (fp.abs_up)
     rnd = gamma_dot(wh + int(np.diff(Hs.indptr).max() if ds else 1) + 2, cplx) * (
-        fro_upper(abs(H) @ abs(V)) + fro_upper(abs(V) @ abs(Hs)))
+        fro_upper(aH @ aV) + fro_upper(aV @ abs_up(Hs)))
     inv = up(fro_upper(D) + rnd)
     C = (V.conj().T @ HV - Hs).tocsr()
-    comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(abs(V).T @ abs(H) @ abs(V)))
+    comp = up(fro_upper(C) + gamma_dot(wh + wv + 2, cplx) * fro_upper(aV.T @ aH @ aV))
     # a defect bound that is not finite (a bound of the accounting overflowed) passes nothing: inf <= tol * inf would
     # hold otherwise
     finite = bool(np.isfinite(iso) and np.isfinite(inv) and np.isfinite(comp))
@@ -251,11 +252,11 @@ def audit_label(spec, V, symmetry: str = "translation", cache=None) -> dict:
     k = int(np.argmin(defects))
     lam = roots[k]
     width = 4
-    rnd = gamma_dot(width, True) * 2 * fro_upper(np.abs(Vd.data))   # rounding in lam*V and the difference
+    rnd = gamma_dot(width, True) * 2 * fro_upper(modulus_up(Vd.data))   # rounding in lam*V and the difference
     delta = up(defects[k] + rnd)
     gram = (Vd.conj().T @ Vd - sp.identity(Vd.shape[1])).tocsr()
     iso = up(fro_upper(gram.data) + gamma_dot(int(np.diff(Vd.tocsc().indptr).max()) + 1, True)
-             * fro_upper(np.abs(Vd.data)) ** 2) if gram.nnz else 0.0
+             * fro_upper(modulus_up(Vd.data)) ** 2) if gram.nnz else 0.0
     sep = min(abs(lam - roots[j]) for j in range(n) if j != k) if n > 1 else np.inf
     leak = delta / ((1 - iso) * sep) if iso < 1 else np.inf
     # QuSpin's block index q: eigenvalue exp(-2 pi i q/n) of its translation, which maps site i to

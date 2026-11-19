@@ -1,9 +1,8 @@
 # fp.modulus_up: upper bounds on complex moduli
 
 Derivation document in the D-59 format (the six sections of `docs/proofs/`; `docs/theory.md`, section 10). Implements
-`certify_ed/fp.py` (`modulus_up`, `_modulus_up_into`, `_modulus_up_block`, `_modulus_up_scaled`, `abs_up`), for the
-rigorous bounds that take the modulus of complex data. This change adds the functions; no bound uses them yet
-(section 3).
+`certify_ed/fp.py` (`modulus_up`, `_modulus_up_into`, `_modulus_up_block`, `_modulus_up_scaled`, `abs_up`) and the
+use of these functions in the rigorous bounds that take the modulus of complex data (section 3).
 **UNVERIFIED (D-12):** new mathematics of 2026-11-18; it is not checked by Sarang, and nothing below says it is.
 
 **Context.** CERTIFY-ED certifies statements about the eigenpairs of a stored or declared matrix (enclosures, counts,
@@ -25,15 +24,15 @@ that a bound built from moduli needs no rounding count for them, and m close to 
 **Why.** Up to 3.2 the rounding analyses of the residual bounds used `numpy.abs` of complex numbers and counted it as h
 roundings, that is, they took the computed modulus within a factor (1 ± u)^h of |z|: h = 1 in `thm1_fp-accounting.md`
 (Step 2), h ≤ 2 in `D-02_matrix-free.md` (Lemma M3), h ≤ 3 in `D-01_sparse-residual.md` (Step 4) and
-`E-02_non_hermitian.md` (hypothesis H-mod of (FP)), and an exact modulus in the other documents. No bound on the
+`E-02_non_hermitian.md` (hypothesis H-mod of (FP)), and an exact modulus in the others (section 3). No bound on the
 error of NumPy's complex absolute value is established, in this project or in NumPy's documentation. On the Windows
 reference host (NumPy 2.4.4, AVX512F) its relative error (to first order from the exact squares; the values to 40 digits
 agree in the digits shown) is −2.466u for z = 0.02019294356747192 − 0.5012539518584045i, −2.462u for z =
 1.9986893956853402 + 0.07375207458660175i and +2.269u for z = 1.010573342221019 + 0.3330018761835207i. For z = 2⁻¹⁰⁷⁴(1
 + i) it returns 2⁻¹⁰⁷⁴, below |z| = √2·2⁻¹⁰⁷⁴; a correctly rounded modulus returns the same value, so this case shows
-that a rounded modulus is not an upper bound, not an error beyond rounding. `modulus_up` is an upper bound from
-correctly rounded operations, so that an analysis that takes its moduli from it counts no rounding for them; the
-routing of the bounds through it and the corrections of the documents are a separate change.
+that a rounded modulus is not an upper bound, not an error beyond rounding. Since 3.3.0.dev0 the code takes these moduli
+from `modulus_up`, an upper bound from correctly rounded operations, and the analyses count no rounding for them
+(section 3 lists the documents and their corrections).
 
 **Hypotheses (FP-M).** IEEE 754 binary64 arithmetic with the following properties. *Probed*: checked in every
 `certify()` run by `fp.probe_float_environment`; a failed probe turns every CERTIFIED floating-point statement into
@@ -110,7 +109,15 @@ other analyses the treatment is the one each document states (not re-checked her
 **What is not claimed.**
 
 - `modulus_up` is not a correctly rounded modulus and is not a lower bound. Where a bound needs a lower bound on a
-  modulus (a modulus in a denominator), it does not apply.
+  modulus (a modulus in a denominator), it does not apply. The audit of section 3 (every modulus in `certify_ed`,
+  classified) found one such use: in `sectors.audit_label`, the label audit of a cyclic symmetry, the leakage bound
+  divides by the separation min_{l≠k} |λ_l − λ_k| of the computed roots of unity λ_l. Only that line of `audit_label`
+  keeps `np.abs`; its other moduli are upper bounds. The separation is a floating-point value, so the record's leakage
+  bound and its `certified` flag are not covered by Lemma M. A rigorous version needs a lower bound on the exact
+  separation 2 sin(π/n) and a bound on the distance of the computed roots from the exact ones; it is an open D-12 item
+  (Risks and limits; VERDICTS.md, complex moduli). The record says so: it carries the separation as a float
+  (`separation`), a note (`separation_note`) and `separation_rigorous: false`; its `certified` flag is unchanged (a
+  known issue). The record is part of the sector composition (`compose.py`); no statement of `certify()` uses it.
 - Duplicate entries. For a sparse matrix in CSR, CSC, BSR or COO format, `abs_up` first sums duplicate entries in place
   (`A.sum_duplicates()`, in the type of the data, as `abs(A)` does), and its moduli are those of the summed entries;
   the exact sum of the duplicates can differ from the stored sum by a rounding, and no bound refers to it. A product
@@ -127,6 +134,9 @@ other analyses the treatment is the one each document states (not re-checked her
   given"). Open, as a separate change because it changes real-data bounds for such input: an `abs_up` that bounds the
   stored entries without summing them, valid for products with the summed and with the unsummed matrix.
   `tests/test_modulus_up.py` pins the summation as it is.
+- Earlier results. Certificates for complex data made before 3.3.0.dev0 rest on the counts h of the documents listed
+  in section 3. Those counts are not established for `numpy.abs`, and the measured deficit of 2.47u exceeds h = 1 and
+  h = 2. They are not re-checked here, and nothing is claimed about them.
 
 **Risks and limits.** One line per item, with its mitigation or "open".
 
@@ -136,9 +146,32 @@ other analyses the treatment is the one each document states (not re-checked her
   separate change, as it adds keys to every certificate): a run-time probe of these items and an assumption line.
 - ∞ and nan. `modulus_up` returns ∞ for a finite z when |z|(1 + 12u) > Ω (Lemma M (iii)); for z = x + i with x one
   step below Ω it is ∞ where `np.abs` is finite. A dense product then forms ∞ · 0 = nan (a sparse product skips the
-  structural zeros). A caller must treat a non-finite bound as no bound; this change has no callers. `modulus_up`
-  raises no floating-point error under `np.errstate(all="raise")`; its callers may raise FloatingPointError then.
+  structural zeros). A caller must treat a non-finite bound as no bound; the callers do so by the rules for non-finite
+  bounds on which this change builds (`fix/nonfinite-bounds`, reason code `NONFINITE_BOUND`, tested on overflowing
+  entries in `tests/test_nonfinite_bounds.py`). Covered with an infinite upper modulus, each with a test in
+  `tests/test_nonfinite_moduli.py` and a control certified at the entry 10³⁰⁰ + i: S2 of `certify()` makes the pair
+  INCONCLUSIVE (`NONFINITE_BOUND`; the residual bound and the radius are stored as ∞, never nan), and S3 counts
+  nothing against it; `inertia_dense` gives no count (β = ∞, `conclusive` false); the variational record (V1 to V3)
+  and the moment record (M1 to M3) are INCONCLUSIVE with `NONFINITE_BOUND`; the observable bound is ∞; the
+  non-Hermitian record (N1) and the pencil record (G2) are INCONCLUSIVE; `commutator_bound` and
+  `matrix_affinity_defect` return a non-finite bound. For this entry the moment, observable and affinity bounds and
+  the backward error of `inertia_dense` overflow with `np.abs` as well; S2, V1, V2, N1, G2 and `commutator_bound`
+  change because of the infinite modulus (checked on both sides of this change). The sector audits, `inertia_sparse`
+  and the S2 accuracy path are tested on overflowing real entries only. Label and quantum-number decisions compare
+  with ∞ or nan and come out false (not tested). Not covered by a test: the correlation records (their intervals
+  become unbounded), the sweeps beyond `matrix_affinity_defect`, the MPS contraction, the Ozaki prototype and the GPU
+  path. `modulus_up` raises no floating-point error under `np.errstate(all="raise")`; its callers may raise
+  FloatingPointError then (not tested).
 - Dtypes. As in Inputs; other dtypes are rejected with TypeError.
+- The lower-bound use in `sectors.audit_label` (What is not claimed). Open (D-12 item).
+- Looser bounds. Each modulus of complex data rises to between |z|(1 + 4u) and |z|(1 + 12u) when both components are
+  nonzero and m is normal, against NumPy's value within about 2.5u of |z| on the reference host; for complex128 data
+  the bounds move by the same relative amount, in the last bits. For complex64 data the moduli were float32 values
+  before and are binary64 upper bounds now, so those bounds can move either way, by more than the last bits (single
+  precision is not covered: see below). An entry within a relative 12u of the largest float now has an infinite
+  modulus, and the S2 status of such an operator changes from CERTIFIED to INCONCLUSIVE, by the existing rule for a
+  non-finite radius. No constant and no status rule changed; real data, and complex data whose entries all have a zero
+  component, give the same bounds as before.
 - Single precision (not covered). The moduli of float16, float32 and complex64 data are exact or upper bounds, but
   Lemma M and the corollary say nothing about products formed in single precision. With a float32 or complex64
   operator and vectors of the same type, A x and |A||x| are rounded with u = 2⁻²⁴ while the bounds count u = 2⁻⁵³: a
@@ -149,8 +182,14 @@ other analyses the treatment is the one each document states (not re-checked her
 - Cost. On large arrays one `modulus_up` pass takes about four times as long as one `np.abs` pass (section 4); a call
   on a small array costs a fixed overhead of tens of microseconds (section 4). Its temporaries beyond the float64
   result are bounded by about 12 MiB (six arrays of 2¹⁸ float64 numbers) whatever the size and memory layout of the
-  input; 6.8 MiB measured.
+  input; 6.8 MiB measured. Matrix-free operators (`construct.SpecOperator`, `matrixfree`) take the moduli of their
+  amplitudes in every application, so each |H||x| pass pays this again; not measured on the largest recorded
+  operator. The S1 evidence (`invariants.spec_invariants`) forms the moduli of each coupling and each local factor
+  once, T(N + 1) calls for T terms on N sites, and costs about what it cost with `np.abs` (section 4).
 - Duplicate entries. As in What is not claimed.
+- GPU. The moduli are formed on the host by the same functions (section 3), so they are those of the CPU path by
+  construction; the bit identity of the device products with the CPU products rests on D-05 and on the device's own
+  checks, which were not re-run after this change (no CuPy on the reference host).
 
 **Alternatives considered.**
 
@@ -258,7 +297,8 @@ while |z| = 1.414·2⁻¹⁰⁷⁴.
 
 ## 3 Where the code implements it
 
-`certify_ed/fp.py` on branch `fix/upper-moduli` (line numbers of the commit that adds this document).
+`certify_ed/fp.py` (line numbers of branch `fix/upper-moduli`, where this document was added; the routing change
+edits only the comment above these functions and `inf_norm_upper` below them).
 
 | proof object | function | lines | code |
 |---|---|---|---|
@@ -273,9 +313,76 @@ while |z| = 1.414·2⁻¹⁰⁷⁴.
 | Step 4 | `_modulus_up_scaled` | 161–164 | `np.ldexp(m, e)`; `m < 2^-1022` → `np.nextafter(m, inf)` |
 | `abs_up` | `abs_up` | 269–291 | real floating data: `abs(A)`; complex, integer and boolean sparse data: `A.sum_duplicates()` in place (CSR, CSC, BSR, COO), data `modulus_up(A.data)`, result in A's format and class (COO from `row` and `col`); LIL, DOK and others converted to CSR; dense: `modulus_up(A)` |
 
-No function of `certify_ed` other than these calls `modulus_up` or `abs_up` in this change; the bounds keep
-`numpy.abs` and `abs`. The change that routes them lists the call sites, the audit of every modulus call and the
-corrections of the documents in this section.
+**The audit.** Searched: the 182 lines of `certify_ed` that contain the text `abs(` on branch `fix/keep-caller-matrix`
+(commit cdf6ebb, the base of the first version of this change; the line numbers of the audit CSV are those of that
+commit). They hold 243 calls of `abs()`, `np.abs` and `np.absolute` (an AST count at cdf6ebb). Classes: real data only
+92 lines; complex data in a rigorous bound 66; not part of a bound (heuristic, display, selection) 24. Of the 66, 60
+lines now use `modulus_up` or `abs_up`; 3 form the squares of the components for values that are enclosed from both
+sides (`davis_kahan` fidelity, `invariants` Frobenius sums); 2 are Arb ball arithmetic (`rigorous.py`, already
+rigorous); 1 needs a lower bound and is unchanged (`sectors.audit_label`, What is not claimed). The 119 unchanged
+lines hold 145 calls. `tests/abs_audit_allowlist.txt` lists the 157 moduli left: the 145, three real scalars on
+changed lines (`abs(mu[i])`, `abs(sigma)`, `abs(dc)`), seven calls inside `modulus_up`, `_modulus_up_into` and
+`abs_up` (the real and integer branches and the components), one `np.allclose` on real data (an exact symmetry test in
+`apps/pyrochlore`) and one power with exponent 0.5 on real data (`apps/aklt/eta.py`, a printed estimate), each with
+its class (real data 125, not part of a bound 29, complex data left unchanged 3). `tests/test_abs_audit.py` scans
+every module of `certify_ed` for these spellings, whatever the object they are taken from (`np`, `xp`, `self.cp`,
+`math`, `builtins`, ...): `abs`, `absolute`, `hypot`, `fabs`, `polar` and `__abs__`, called or referenced as a value
+(`map(abs, ...)`, `key=abs`, `f = np.abs`, `np.abs.reduce`, `np.vectorize(abs)`), `getattr(m, "abs")`; `norm`,
+`vector_norm`, `matrix_norm` and `cond` with an order other than None, 2 or 'fro'; `onenormest`, `isclose`,
+`allclose`; a square root of an expression that reads both `.real` and `.imag` or calls `.conj()`; and a power with
+exponent 0.5 (`x ** 0.5`, `np.power(x, 0.5)`, `pow`, `math.pow`, `np.float_power`). The scan is by spelling: a modulus
+written in a way none of these names, such as `np.sqrt(np.vdot(c, c).real)` or the norm of the stacked real and
+imaginary parts, is not seen, and the dynamic pin below does not see it either, since it calls none of the abs
+functions. It fails when the moduli found and the list differ as multisets, so a new modulus must be classified and a
+removed one must leave the list; it also fails on an import of these names under another name. There are no others in
+`certify_ed`. A dynamic pin (`tests/test_modulus_up.py`) replaces `np.abs`, `np.absolute`, the builtin `abs` and the
+absolute value of scipy sparse matrices by functions that record each call on complex data made from a place the list
+does not classify as complex (matched on the function and the expression of the line), and runs the main entry points
+on complex data: `certify()` with a sparse and a dense operator, an observable, a spec, a spec operator above
+`reference_max_dim`, the matrix-free operator and the sparse inertia; `certify_variational`, `state_from_mps`,
+`certified_moments` with its sum rules, `commutator_bound`, `audit_sector`, `audit_label`, `compress_operator`,
+`certify_nonhermitian`, `certify_generalized`, `matrix_affinity_defect`, `certified_sweep`, `ozaki_residual`,
+`enclose`, `inertia_sparse` with the a-priori bound, and the spec and matrix-free operators applied to complex vectors
+directly. It records nothing. With the source pin left out, each of the 74 routed occurrences of `modulus_up` and
+`abs_up` reverted alone to `np.abs` or `abs` is recorded, except the 8 in `gpu.py`, whose device path does not run
+without CuPy (the source pins catch those); also recorded: a revert to `np.vectorize(abs)`.
+
+**The call sites.** Direction: "upper" where the bound needs m ≥ |z| (a modulus in a sum or product of non-negative
+terms), "lower" where it would need m ≤ |z|.
+
+| module, function | quantity | direction | document, place |
+|---|---|---|---|
+| `enclosure.OperatorAdapter` (`__init__`, `abs_matvec`), `_rounding_bound`, `rayleigh_interval` | \|A\|, \|X\|, \|x_i\| in q_i = \|x_i\|\|μ_i\|, \|x\| in the error of the Rayleigh quotient (the moduli of X formed once per block and passed to `abs_matvec`) | upper | `thm1_fp-accounting.md`, Steps 2–3; `E-05_variational.md`, Lemma 3 (i) |
+| `gpu._Ordered.run`, `DeviceCSR.__init__`, `products`, `_spot_check`, `probe` | the same moduli for the device products, their spot check and the probe (formed on the host) | upper | `RESULT_D-05.md` (bit identity) |
+| `fp.inf_norm_upper` | row sums of \|A\| | upper | norm bounds; `appA_model-shift.md`, Theorem A4 |
+| `construct.SpecOperator._apply`, `matrixfree` (`_apply`, `local_norm_bound`, the couplings \|c_t\| of Lemma N) | \|H\|_abs \|x\| (the matrix of moduli of the spec operator), local norms, couplings | upper | `appA_model-shift.md`, Lemmas A1–A3; `D-02_matrix-free.md`, Lemma M3, Lemma N |
+| `inertia.inertia_dense`, `inertia_sparse`, `ldl_residual` | \|L\|\|D\|\|L\|ᵀ, \|E_c\|, max\|S_ii\| | upper | `D-01_sparse-residual.md`, Step 4 |
+| `eigenspace.certify_observable`, `correlations.compress_operator`, `moments` | \|O\|\|X\|, \|V\|ᵀ\|O\|\|V\|, the moment chains | upper | `docs/theory.md`, Theorem 6; `C-04_correlation_lift.md`, Lemma 1; `C-07_moments.md`, Lemmas 3–4 |
+| `davis_kahan.commutator_bound`, `certified_fidelity` | \|H\|\|S\|, \|C\| + E; ‖C‖_F² as Σ(Re² + Im²) | upper; two-sided (squares) | `E-07_davis_kahan.md`, Lemma 5 (a), (c) |
+| `sectors.audit_sector`, `audit_label` (‖V‖_F and the rounding terms) | \|H\|\|V\|, \|V\|ᵀ\|H\|\|V\|, ‖V‖_F | upper | `docs/theory.md`, section 5 |
+| `sectors.audit_label`, separation of the roots | min_{l≠k} \|λ_l − λ_k\| (unchanged, `np.abs`) | lower (open) | What is not claimed |
+| `generalized.pencil_residual_radii`, `pencil_count_below` | \|A\|\|x\|, \|B\|\|x\|, \|ŝ\|, u\|σ\|\|B\| + u\|M\| | upper | `E-03_generalized.md`, Proposition 2, G3 |
+| `nonhermitian.residual_bounds`, `inverse_bound` | \|A\|\|X\|, \|X\|\|μ\|, \|W\|\|V\|, \|Ĝ_ii\| (the term 4u\|diag Ĝ\| added to the entrywise bound B) | upper | `E-02_non_hermitian.md`, Propositions 5–6 |
+| `sweep.term_norm_bound`, `h1_norm_bound`, `matrix_affinity_defect` | letter and coupling moduli, \|Hb\| + \|Ha\| + \|dc\|\|H1\| | upper | `E-04_parameter_intervals.md`, bound (ii), affinity defect |
+| `invariants.spec_invariants`, `matrix_invariants` | a-priori error bounds (each coupling and local factor taken once); ‖H‖_F² as Σ(Re² + Im²) | upper; two-sided (squares) | S1 evidence (`docs/theory.md`, section 1) |
+| `variational.state_from_mps` | P̂ = \|A⁽¹⁾\|⋯\|A⁽ᴸ⁾\| | upper | `E-05_variational.md`, Lemma 4 |
+| `ozaki.ozaki_residual` | \|H\| | upper | `D-03_ozaki_draft.md`, Theorem R |
+
+**Corrections of the documents.** Each document whose analysis counted h roundings for a complex modulus, or took the
+computed moduli as exact, has a dated note (2026-11-18, UNVERIFIED, D-12): `thm1_fp-accounting.md` (end of section 3:
+Step 2 and (Λ5′)), `E-05_variational.md` (end of section 2: Lemmas 3 and 4), `D-01_sparse-residual.md`,
+`D-02_matrix-free.md`, `appA_model-shift.md`, `E-02_non_hermitian.md` (H-mod replaced), `D-03_ozaki_draft.md`,
+`C-07_moments.md`, `E-03_generalized.md`, `E-04_parameter_intervals.md`, `E-07_davis_kahan.md`,
+`C-04_correlation_lift.md` and `int05_underflow.md` (end of section 3 each); a line after the status line of each
+points to its note (the status lines themselves are unchanged), and `VERDICTS.md` lists them. No code constant changed.
+
+**GPU.** In `gpu.py` the moduli of complex data are formed on the host by `abs_up` and `modulus_up`, the functions of
+the CPU path, and copied to the device; real |x_j| are taken with `fabs` on the device, which is exact. So the moduli
+are those of the CPU path by construction. The products are formed on the device; their bit identity with the CPU
+products rests on the ordered kernels of D-05 (`RESULT_D-05.md`) and on the device spot check and probe, which compare
+device products with CPU products bit for bit and raise `GPUUnavailable` on a difference. Neither was run after this
+change: CuPy is not installed on the reference host. `tests/test_gpu.py` runs the CPU stand-in of the device path
+(complex data included), and `tests/test_abs_audit.py` checks that `gpu.py` takes no modulus other than through `fp`.
 
 ## 4 Computational verification
 
@@ -328,7 +435,12 @@ integers stepped up; a float for every scalar); the passes (equal to one-entry c
 Fortran-ordered, transposed and sliced input give the values of the C-ordered array, with temporaries below 12 MiB);
 zero entries on the unscaled branch; the FP-M items marked *tested*; real input, inf and nan, shapes, the elementwise
 identity used by the GPU spot check; `abs_up` on CSR, CSC, BSR, COO (and a 1-D `coo_array`), DIA, LIL and dense input,
-with duplicates summed in place and the format kept, and on integer and boolean sparse data (stepped up).
+with duplicates summed in place and the format kept, and on integer and boolean sparse data (stepped up). For the
+bounds that use the moduli it pins `abs_matvec`, the constant and moduli of `_rounding_bound` and of
+`rayleigh_interval` (bit for bit), the moduli of a block formed once, `fp.inf_norm_upper` bit for bit and in exact
+arithmetic on the three arguments (dense and sparse), `spec_invariants` (each modulus taken once, the same bounds),
+stage (S2) of Theorem 1 in exact arithmetic on the three arguments, and the dynamic pin of section 3.
+`tests/test_nonfinite_moduli.py` shows the handling of an infinite upper modulus (Risks and limits).
 
 **Cost** (best and median of five, seconds, Windows reference host, branch `fix/upper-moduli` at commit 249b8ae). A
 complex vector of 2²⁴ entries: `np.abs` 0.162 and 0.171, `modulus_up` 0.698 and 0.739 (about 4.3 times); the scaled
@@ -340,6 +452,34 @@ cost from the many small NumPy calls of the two branches: 96 µs on the 2 × 2 a
 about 2 µs for `np.abs` (0.2 µs for `abs` of a scalar). Temporaries beyond the float64 result (tracemalloc): 6.8 MiB
 on 2²⁴ entries, and 6.8 MiB on C-ordered, Fortran-ordered, transposed and sliced arrays of 2¹⁹ × 8 entries (70.8 MiB
 for the Fortran-ordered and transposed array and 30.8 MiB for the slice X[:, 2:5] before the passes avoided the copy).
+
+S1 evidence (seconds, Windows reference host, one process each, two runs; the first run shared the host with other
+work): `invariants.spec_invariants` and the S1 statement of `certify(..., Options(only=["S1"]))` for the Heisenberg
+chain with J2 = 0.5 (T = 6N terms) and for the same chain with the phase e^{0.3i} on its flip terms (complex). Base:
+commit cdf6ebb (`np.abs`), 14 commits before cd0ca97, the base of this stack, whose `certify.py` and `variational.py`
+differ (see the second table); the routing before the moduli of S1 were taken once per term (the first version of this
+stack at its commit "Use upper moduli in model invariant tolerances", first run only); this change.
+
+| model | spec_invariants: base | before the fix | now | S1: base | before the fix | now |
+|---|---|---|---|---|---|---|
+| N = 8, T = 48 | 0.50, 0.61 | 5.03 | 0.61, 0.52 | 0.87, 1.02 | 5.60 | 1.00, 0.94 |
+| N = 14, T = 84 | 2.44, 2.93 | 25.68 | 2.67, 2.63 | 4.93, 6.23 | 28.70 | 5.95, 5.85 |
+| N = 14, complex | 2.41, 2.99 | 26.66 | 2.60, 2.54 | 4.74, 6.05 | 30.93 | 5.93, 5.61 |
+| N = 20, T = 120 | 6.97, 8.86 | 80.45 | 7.65, 7.32 | 159.1, 171.9 | 245.3 | 161.3, 173.8 |
+
+At N = 20 the S1 time is dominated by the reference matrix of 2²⁰ states, not by the invariants. The bounds
+(`trace_err`, `fro2_err`) of the real chains are bit for bit those of the base (in both tables).
+
+Against cd0ca97, the base of this stack (two runs each, 2026-11-19, on a busier host, so every time is higher than in
+the first table; compare within a row). "Now": branch `fix/complex-moduli` at commit 6ecf015, whose code is that of
+the branch head.
+
+| model | spec_invariants: cd0ca97 | now | S1: cd0ca97 | now |
+|---|---|---|---|---|
+| N = 8, T = 48 | 0.73, 0.81 | 0.75, 0.72 | 1.03, 1.35 | 1.39, 1.09 |
+| N = 14, T = 84 | 3.47, 3.65 | 3.17, 2.87 | 7.72, 7.34 | 8.49, 8.16 |
+| N = 14, complex | 3.74, 3.58 | 3.42, 2.67 | 8.13, 6.82 | 9.56, 6.40 |
+| N = 20, T = 120 | 11.67, 10.35 | 8.86, 9.04 | 263.35, 245.56 | 275.03, 222.85 |
 
 ## 5 Analytic cross-check
 
@@ -363,5 +503,5 @@ step the result would be 2⁻¹⁰⁷⁴ < |z| (the second negative control catc
 
 ## 6 Status
 
-Derived on 2026-11-18; machine-checked (sampled, exact rational checks: 199 953 random + 26 815 adversarial cases, 0 violations; negative controls: broken variants detected in 14 862 of 19 996, 1 166 and 87 of 26 815 cases, `np.abs` below |z| on 2 of the 3 reference arguments); independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md); resolved 2026-11-18 by stating the corollary for finite moduli with the underflow term w·2⁻¹⁰⁷⁵ (absent without underflow), and by rejecting inputs whose components are not binary64 numbers (TypeError) and stepping integer input up from 2⁵³;
+Derived on 2026-11-18; machine-checked (sampled, exact rational checks: 199 953 random + 26 815 adversarial cases, 0 violations; negative controls: broken variants detected in 14 862 of 19 996, 1 166 and 87 of 26 815 cases, `np.abs` below |z| on 2 of the 3 reference arguments); independent re-derivation: done 2026-11-18 (fresh-context session, verdict AGREES on Lemma M and GAP on the corollary, docs/proofs/independent/fp_modulus-up.md, docs/proofs/VERDICTS.md); resolved 2026-11-18 by stating the corollary for finite moduli with the underflow term w·2⁻¹⁰⁷⁵ (absent without underflow), by rejecting inputs whose components are not binary64 numbers (TypeError) and stepping integer input up from 2⁵³, and, with the upper moduli in the bounds, by the rules for non-finite bounds on which this change builds (the records that rest on an infinite modulus are INCONCLUSIVE: S2, S3, V1 to V3, M1 to M3, N1, G2);
 Sarang's check (D-12): pending. UNVERIFIED (D-12) until that check.

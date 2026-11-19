@@ -137,9 +137,9 @@ def up(x: float) -> float:
 
 # Upper moduli (3.3.0.dev0, docs/proofs/fp_modulus-up.md; UNVERIFIED until Sarang's check, D-12). NumPy's complex
 # absolute value is not correctly rounded and no bound on its error is established: on the Windows reference host
-# (numpy 2.4.4, AVX512F) its relative error reaches 2.47u (z = 0.02019294356747192 - 0.5012539518584045j). modulus_up
-# forms the modulus of complex data from correctly rounded *, +, sqrt and exact scaling by powers of two; it is >= the
-# exact modulus, so a bound that takes its moduli from it needs no rounding count for them.
+# (numpy 2.4.4, AVX512F) its relative error reaches 2.47u (z = 0.02019294356747192 - 0.5012539518584045j). Every
+# modulus of complex data that enters a rigorous bound is therefore formed by modulus_up, from correctly rounded
+# *, +, sqrt and exact scaling by powers of two; it is >= the exact modulus, and the bounds count no rounding for it.
 _SMALLEST_NORMAL = 2.0 ** -1022
 _SAFE_LO, _SAFE_HI = 2.0 ** -500, 2.0 ** 500     # max(|x|, |y|) in this range: no scaling is needed
 _CHUNK = 1 << 18                                  # entries per pass of modulus_up (bounds its temporaries)
@@ -383,18 +383,18 @@ def fro_upper(A) -> float:
 
 
 def inf_norm_upper(A) -> float:
-    """Upper bound on ||A||_inf (max absolute row sum) of a stored matrix.
+    """Upper bound on ||A||_inf (max absolute row sum) of a stored matrix (the moduli of complex entries from abs_up).
 
     For Hermitian A this also bounds ||A||_2 (since ||A||_2 <= sqrt(||A||_1 ||A||_inf)
     and ||A||_1 = ||A||_inf).
     """
     if sp.issparse(A):
         A = A.tocsr()
-        absA = abs(A)
+        absA = abs_up(A)
         rows = np.asarray(absA.sum(axis=1)).ravel()
         width = int(np.diff(A.indptr).max()) if A.shape[0] else 1
     else:
-        rows = np.abs(np.asarray(A)).sum(axis=1)
+        rows = modulus_up(np.asarray(A)).sum(axis=1)
         width = A.shape[1]
     m = float(rows.max()) if rows.size else 0.0
     return m * (1.0 + gamma(width + 1)) * _GUARD

@@ -63,7 +63,6 @@ suite, not probed at run time. The derivation is new and unverified: Sarang's ch
 re-derivation: verdict AGREES on the lemma, GAP on its corollary, resolved; `docs/proofs/verify_modulus-up.py`,
 `tests/test_modulus_up.py`). The computational source hash changes (`fp.py`).
 
-
 ### Non-finite bounds give no statement
 
 A bound of the floating-point accounting that is not finite now gives no statement. Such a bound arises when a
@@ -89,6 +88,38 @@ and `separation_rigorous` (false). Known issue: the label record's `certified` f
 separation (an open D-12 item). `tests/test_nonfinite_bounds.py` covers these cases; the correlation records, the
 sweeps, the MPS contraction, the Ozaki prototype and the GPU path are not covered by a test. The computational source
 hash changes.
+
+### Upper bounds for complex moduli
+
+The bounds now take every modulus of complex data from `fp.modulus_up` (`fp.abs_up` for matrices; "Upper moduli in
+`fp`" above). Before, they used NumPy's complex absolute value and counted it as one to three roundings; on Windows
+(NumPy 2.4.4) its error reaches 2.47u, and no bound on it is established. This covers the residual bounds of S2 (on
+the CPU and on the GPU, whose moduli are formed on the host by the same functions, so that they equal the CPU moduli
+by construction; the device path was not run after the change), the Rayleigh intervals of the Kato-Temple step and of
+the variational records, the norm bounds, the backward errors of S3, and the bounds of observables, moments,
+commutators, sector audits, pencils, non-Hermitian operators, sweeps, MPS contractions and the Ozaki prototype. Two
+two-sided values, the C-13 fidelity and the Frobenius invariant of the S1 evidence, are formed from the squares of the
+components instead. No constant and no status rule changes. For complex128 data the bound values change in the last
+bits (each modulus lies at or above the exact one and, for normal values, at most a relative 12u above it, where
+NumPy's could lie below it). For complex64 data the moduli were float32 values before and are binary64 upper bounds
+now, so those bounds can move either way by more than that (a bound formed in single precision is not covered; the
+separate change `fix/single-precision`). An operator with an entry within a relative 12u of the largest float now has
+an infinite modulus, and the statements that rest on it state nothing, by the rules of the previous entry: S2, V1, V2,
+N1 and G2 are INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and
+`commutator_bound` is ∞ where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment,
+observable and sweep-affinity bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well.
+Real data, and complex data whose entries all have a zero real or imaginary part, give the same bounds and records as
+before, except the non-Hermitian record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod,
+which the bounds no longer need (its four assumption strings and its record hash change, for real data too). Cost: a
+modulus pass takes about four times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the
+S1 invariants take each modulus once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at
+commit cdf6ebb; 8.9 s and 9.0 s against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host);
+matrix-free operators pay the moduli in every |H||x| application. The derivation is new and unverified: Sarang's check
+(D-12) is pending (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation
+documents; `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
+`tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic
+symmetry divides by a floating-point root separation and its record's `certified` flag rests on it (an open D-12 item;
+the record says so, previous entry). The computational source hash changes.
 
 ### Housekeeping after joining the histories
 

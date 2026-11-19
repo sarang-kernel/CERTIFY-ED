@@ -8,9 +8,10 @@ once to nearest (__dmul_rn, __dadd_rn, compiled with --fmad=false, so that no pr
 For complex data each product is formed as scipy forms it, (ar xr - ai xi) + i (ar xi + ai xr): four products and
 two sums, then the real and imaginary parts are added to the running sums. A real operator applied to complex
 vectors, or the reverse, is promoted to complex with a zero imaginary part, as scipy promotes it. The moduli |a_ij|
-are taken on the CPU (numpy) and stored; the moduli |x_j| are taken on the CPU for complex vectors and as fabs on the
-GPU for real ones (the same exact operation). One pass over the stored matrix forms both products for up to eight
-vectors at a time; the vectors and the results keep numpy's C layout, so no transpose is needed on either side.
+are taken on the CPU (fp.abs_up, the function of the CPU path) and stored; the moduli |x_j| are taken on the CPU
+(fp.modulus_up) for complex vectors and as fabs on the GPU for real ones (the same exact operation). One pass over the
+stored matrix forms both products for up to eight vectors at a time; the vectors and the results keep numpy's C
+layout, so no transpose is needed on either side.
 
 Under IEEE-754 binary64 arithmetic with round to nearest and gradual underflow these are the same floating-point
 operations as on the CPU, so H X and |H| |X| agree with the CPU products bit for bit, and so does every number of a
@@ -38,6 +39,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import scipy.sparse as sp
+
+from .fp import abs_up, modulus_up
 
 SPOT_ROWS = 64
 DEFAULT_MEM_GB = 8.0
@@ -270,7 +273,7 @@ class _Ordered:
             Xb = X2 if (a, w) == (0, k) else X2[:, a:b]
             if cplx:
                 Xd = cp.asarray(np.ascontiguousarray(Xb, dtype=np.complex128))
-                AXd = cp.asarray(np.ascontiguousarray(np.abs(Xb), dtype=np.float64)) if want_z else self.d_dummy
+                AXd = cp.asarray(np.ascontiguousarray(modulus_up(Xb), dtype=np.float64)) if want_z else self.d_dummy
             else:
                 Xd = cp.asarray(np.ascontiguousarray(Xb, dtype=np.float64))
                 AXd = None
@@ -316,7 +319,7 @@ class DeviceCSR:
         A = A.tocsr()
         if A.dtype not in (np.float64, np.complex128):
             raise GPUUnavailable(f"dtype {A.dtype} is not float64 or complex128")
-        absA = abs(A) if absA is None else absA.tocsr()
+        absA = abs_up(A) if absA is None else absA.tocsr()
         if not (np.array_equal(absA.indptr, A.indptr) and np.array_equal(absA.indices, A.indices)):
             raise GPUUnavailable("|A| does not share the pattern of A")
         rec = probe()
@@ -377,7 +380,7 @@ class DeviceCSR:
         if X2.dtype not in (np.float64, np.complex128):
             raise GPUUnavailable(f"vector dtype {X2.dtype} is not float64 or complex128")
         if not hx and np.iscomplexobj(X2):
-            X2 = np.abs(X2)                 # |A| |X| alone: the moduli, as the CPU path takes them
+            X2 = modulus_up(X2)             # |A| |X| alone: the upper moduli, as the CPU path takes them
         k = X2.shape[1]
         if k == 0 or nrows == 0:
             Y = np.empty((nrows, k), dtype=np.result_type(self.A.dtype, X2.dtype)) if hx else None
@@ -432,7 +435,7 @@ class DeviceCSR:
                 raise GPUUnavailable("spot check: a row of H X formed on the GPU differs from the CPU product")
         if Z is not None:
             Mc, cols = self._rows_compact(self.absA, rows)
-            ref = Mc @ np.abs(X2[cols])
+            ref = Mc @ modulus_up(X2[cols])
             if not same_bits(np.ascontiguousarray(Z[rows]), np.ascontiguousarray(ref.astype(np.float64, copy=False))):
                 raise GPUUnavailable("spot check: a row of |H| |X| formed on the GPU differs from the CPU product")
         self.record["spot_checked_rows"] += int(m)
@@ -510,16 +513,17 @@ def probe(force: bool = False) -> Dict[str, Any]:
         for cplx in (False, True):
             for sorted_idx in (True, False):
                 A = _with_empty_rows(_random_csr(rng, 300, 280, 0.05, cplx, sorted_idx, extreme=True), (0, 10, 11, 299))
-                aA = abs(A)
+                aA = abs_up(A)
                 core = _Ordered(cp, A, aA)
                 X = rng.standard_normal((280, 11)) * rng.choice(np.array([1.0, 2.0 ** -540, 2.0 ** 300]), (280, 11))
                 Xc = X + 1j * rng.standard_normal((280, 11))
                 for Xv in (X, Xc, np.ascontiguousarray(X[:, :1])):
                     for kb in (Xv.shape[1], 3):
                         Y, Z = core.run(np.ascontiguousarray(Xv), True, True, kb)
-                        kern_ok = kern_ok and same_bits(Y, np.asarray(A @ Xv)) and same_bits(Z, np.asarray(aA @ np.abs(Xv)))
-                    _, Z = core.run(np.ascontiguousarray(np.abs(Xv)), False, True, Xv.shape[1])
-                    kern_ok = kern_ok and same_bits(Z, np.asarray(aA @ np.abs(Xv)))
+                        kern_ok = (kern_ok and same_bits(Y, np.asarray(A @ Xv))
+                                   and same_bits(Z, np.asarray(aA @ modulus_up(Xv))))
+                    _, Z = core.run(np.ascontiguousarray(modulus_up(Xv)), False, True, Xv.shape[1])
+                    kern_ok = kern_ok and same_bits(Z, np.asarray(aA @ modulus_up(Xv)))
                 core.close()
         rec["checks"]["kernels_match_scipy"] = bool(kern_ok)
         rec["failed"] = [k for k, v in rec["checks"].items() if not v]
