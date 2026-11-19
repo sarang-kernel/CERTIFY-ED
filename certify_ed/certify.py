@@ -278,7 +278,7 @@ def _underflow_operands(mu, X, adapter, seed: int):
     if X is not None:
         parts.append(("claim.eigenvectors", X, T))
     if adapter.kind == "matrix":
-        parts.append(("operator.entries", adapter.A.data if sp.issparse(adapter.A) else adapter.A, T))
+        parts.append(("operator.entries", adapter.A.data[:adapter.A.nnz] if sp.issparse(adapter.A) else adapter.A, T))
     else:
         nb = adapter.norm_upper()
         if nb is not None:
@@ -899,17 +899,76 @@ def _exact_statement(claim, spec, mu, X, opts, statements, t0):
                  time.time() - t0)
 
 
+def _private_copies():
+    """own(m): a private copy of a CSR matrix whose indices are unsorted or repeated, any other value unchanged.
+
+    A matrix given in several places (the operator also as an observable, say) gets one copy, so that a summation done
+    through one place is seen through the others, as it was on the caller's matrix. A new own() for each run."""
+    copies = {}
+
+    def own(m):
+        if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
+            return m
+        hit = copies.get(id(m))
+        if hit is None:
+            c = m.copy()
+            if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
+                c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
+            hit = copies[id(m)] = (m, c)              # m is kept, so that its id is not reused during the run
+        return hit[1]
+    return own
+
+
+def _as_given(claim: Claim, own) -> Claim:
+    """The claim with private copies (own) of a CSR operator and a CSR sector isometry whose indices are unsorted or
+    repeated.
+
+    Several steps (the S1 comparison, the sector audit, the absolute value taken by the adapter) sum duplicates and
+    sort indices in place, through arrays they share with these matrices. On copies the caller's matrices stay as given,
+    and certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory."""
+    op, iso = own(claim.operator), own(claim.sector_isometry)
+    if op is claim.operator and iso is claim.sector_isometry:
+        return claim
+    return replace(claim, operator=op, sector_isometry=iso)
+
+
+def _options_as_given(opts: Options, own) -> Options:
+    """Options with private copies (own) of the CSR matrices among the observables and approximate symmetries whose
+    indices are unsorted or repeated (the S4 norm bounds and the label records take absolute values of them in place).
+    """
+    def entry(v):                          # approximate symmetry: (S, lattice[, allowed]) as a sequence
+        if sp.issparse(v) or isinstance(v, (str, bytes)):
+            return v
+        try:
+            S = v[0]
+            rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
+        except (TypeError, IndexError, KeyError):
+            return v                       # not readable so: passed on as given, read (or refused) where it is used
+        S_own = own(S)
+        if S_own is S:
+            return v
+        return (S_own, *rest)
+    obs_given = opts.observables or {}                 # [] and () as accepted before
+    asym_given = opts.approximate_symmetries or {}
+    obs = {k: own(v) for k, v in obs_given.items()}
+    asym = {k: entry(v) for k, v in asym_given.items()}
+    if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym):
+        return opts
+    return replace(opts, observables=obs, approximate_symmetries=asym)
+
+
+def _certify_as_given(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
+    """_certify on private copies of the caller's non-canonical CSR matrices; the copies go when it returns."""
+    own = _private_copies()
+    return _certify(_as_given(claim, own), spec, _options_as_given(opts, own))
+
+
 def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Options] = None) -> Certificate:
     """Certify a claimed spectrum against a declared model: statements S1-S6 (see the module docstring), returned as a Certificate."""
     opts = options or Options()
     if opts.device not in ("cpu", "gpu"):
         raise ValueError(f"Options.device must be 'cpu' or 'gpu', not {opts.device!r}")
-    first = claim
-    if (opts.device != "cpu" and sp.issparse(claim.operator) and claim.operator.format == "csr"
-            and not claim.operator.has_canonical_format):
-        # a run may sum duplicates of the caller's sparse matrix in place; a recompute must see the matrix as given
-        first = replace(claim, operator=claim.operator.copy())
-    cert = _certify(first, spec, opts)
+    cert = _certify_as_given(claim, spec, opts)
     s2 = cert.statement("S2.eigenpairs")
     rec = None if s2 is None else (s2.get("evidence") or {}).get("device")
     if rec is None:
@@ -918,7 +977,7 @@ def certify(claim: Claim, spec: Optional[ModelSpec] = None, options: Optional[Op
         # D-05: the device failed (a spot check found a product unequal to the CPU product, or CuPy raised) after
         # products had been taken from it. Those products are not trusted, so the whole certificate is computed again
         # with the CPU products; the record keeps the failure.
-        cert = _certify(claim, spec, replace(opts, device="cpu"))
+        cert = _certify_as_given(claim, spec, replace(opts, device="cpu"))
         s2 = cert.statement("S2.eigenpairs")
         if s2 is not None:
             s2["evidence"]["device"] = dict(rec, used=False, recomputed_on_cpu=True)
