@@ -34,8 +34,9 @@ an operator given this way is a stored matrix; ragged lists and lists with strin
 operators.py) are returned as given. The low-level kernels call `require_binary64` and refuse floating data other
 than binary64, so an entry point that misses its conversion fails instead of certifying.
 
-Claimed eigenvalues are converted with dtype=float by the callers; `check_values` refuses, under the same rule, the
-values for which that conversion would round, and a nonzero imaginary part of the eigenvalues of a Hermitian claim.
+Claimed eigenvalues are converted with dtype=float by the callers, as in 3.x (a complex array: the real part, with
+numpy's ComplexWarning); `check_values` refuses, under the same rule, the values for which that conversion would
+round.
 
 Records: `widened` collects one entry per input converted from a narrower floating format (the caller's dtype, the
 target dtype and source_sha256, the hash of the input as given); certify() writes them to the certificate's
@@ -151,16 +152,34 @@ def _exact_ints(a: np.ndarray, what: str) -> None:
             raise _inexact_int(v, what)
 
 
-def _check_python_ints(obj, what: str) -> None:
-    """The Python integers of a nested list or tuple, which np.asarray rounds silently when the list also holds a
-    float: PrecisionError for one beyond 2^53 that binary64 cannot hold."""
+def _check_python_ints(obj, arr: np.ndarray, what: str) -> None:
+    """The integers of a nested list or tuple (Python integers, numpy integer scalars, integer arrays), which
+    np.asarray rounds silently when the list also holds a float: PrecisionError for one beyond 2^53 that binary64
+    cannot hold. `arr` is np.asarray of the list; a rounded integer has magnitude >= 2^53 there, so the list is walked
+    only when `arr` holds such a value."""
+    if arr.size == 0 or not np.any(np.abs(arr) >= 2.0 ** 53):
+        return
     stack = [obj]
     while stack:
         o = stack.pop()
         if isinstance(o, (list, tuple)):
             stack.extend(o)
-        elif isinstance(o, int) and not isinstance(o, bool) and abs(o) > _EXACT_INT and int(float(o)) != o:
-            raise _inexact_int(o, what)
+        elif isinstance(o, np.ndarray):
+            if o.dtype.kind in "iu":
+                _exact_ints(o, what)
+            elif o.dtype.kind == "O":
+                stack.extend(o.ravel().tolist())
+        elif isinstance(o, (bool, np.bool_)):
+            continue
+        elif isinstance(o, (int, np.integer)):
+            v = int(o)
+            if abs(v) > _EXACT_INT:
+                try:
+                    exact = int(float(v)) == v
+                except OverflowError:
+                    exact = False
+                if not exact:
+                    raise _inexact_int(v, what)
 
 
 def _exact_objects(a: np.ndarray, what: str) -> np.ndarray:
@@ -175,15 +194,23 @@ def _exact_objects(a: np.ndarray, what: str) -> np.ndarray:
             if isinstance(v, (complex, np.complexfloating)):
                 raise TypeError
             f = float(v)
-            ok = f == v
+            ok = f == v or f != f                  # NaN goes on to the finite check, as in a float array
+        except OverflowError:
+            ok = False
         except (TypeError, ValueError):
             try:
                 f = complex(v)
+            except OverflowError:
+                f, ok = 0j, False
             except (TypeError, ValueError):
                 raise PrecisionError(f"{what}: {type(v).__name__} values are not numeric data") from None
-            ok, cplx = f == v, True
+            else:
+                ok = f == v or f != f
+            cplx = True
         if not ok:
-            raise PrecisionError(f"{what}: the value {v!r} is not exactly a binary64 number (float(v) != v); refused "
+            r = repr(v)
+            r = r if len(r) <= 60 else r[:57] + "..."
+            raise PrecisionError(f"{what}: the value {r} is not exactly a binary64 number (float(v) != v); refused "
                                  "(convert it yourself if a rounded value is what you mean)")
         vals.append(f)
     return np.array(vals, dtype=_C128 if cplx else _F64).reshape(a.shape)
@@ -240,8 +267,9 @@ def _note(widened: Optional[List[Dict[str, Any]]], what: str, a, dt, tgt) -> Non
 
 def _sparse_binary64(a, tgt):
     """A new matrix of the same format with the stored entries converted to `tgt` and copies of the index arrays:
-    every stored entry is kept as given (scipy's astype sums repeated entries, in the new format, where the sum may
-    round), and the caller's entries are not copied before the conversion. LIL and DOK matrices hold one value per
+    every stored entry is kept as given (scipy's astype sums repeated entries: up to scipy 1.10 before the conversion,
+    in the matrix's own format and in place on the caller's matrix, from scipy 1.11 after it), and the caller's entries
+    are not copied before the conversion. LIL and DOK matrices hold one value per
     position (no repeated entries; LIL's `data` is an array of lists, DOK has none): their own astype is used."""
     if a.format in ("csr", "csc", "bsr"):
         kw = {"blocksize": a.blocksize} if a.format == "bsr" else {}
@@ -331,6 +359,9 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
         # of operators.py) are left to the caller
         try:
             arr = np.asarray(a)
+        except OverflowError:                     # a Python integer of 2^1024 or more next to a float
+            raise PrecisionError(f"{what}: an integer of magnitude 2^1024 or more is not a binary64 number; "
+                                 "refused") from None
         except (ValueError, TypeError):
             return a
         if arr.dtype.kind in "USV":
@@ -341,7 +372,7 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
                 return a                          # mixed: an operator form
             return _exact_objects(arr, what)      # Python integers beyond 2^64, Fractions, Decimals, ...
         if arr.dtype.kind in "fc":
-            _check_python_ints(a, what)           # integers beyond 2^53 that np.asarray rounded next to a float
+            _check_python_ints(a, arr, what)      # integers beyond 2^53 that np.asarray rounded next to a float
         return binary64(arr, what, widened, keep_integers=keep_integers)
     if hasattr(a, "__array__") and not hasattr(a, "matvec"):
         # an array-like (a data frame, a tensor on the CPU, a zarr array: an object with __array__) is materialized
@@ -350,29 +381,28 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
     return a
 
 
-def check_values(values, what: str = "eigenvalues", real: bool = True) -> None:
-    """PrecisionError when converting the claimed `values` to binary64 (dtype=float, or complex for real=False) would
-    change them, under the rule of binary64(): a floating type wider than binary64, an integer that binary64 cannot
-    hold (also a Python integer in a list next to floats, or beyond 2^64), an object value v with float(v) != v
-    (a Fraction 1/3, a Decimal 0.1), and non-numeric data. real: the values of a Hermitian claim; a nonzero imaginary
-    part is refused (dtype=float would drop it). Narrower numeric types convert exactly."""
+def check_values(values, what: str = "eigenvalues") -> None:
+    """PrecisionError when converting the claimed `values` to binary64 (dtype=float, or complex) would change them,
+    under the rule of binary64(): a floating type wider than binary64, an integer that binary64 cannot hold (also an
+    integer in a list next to floats, a Python integer beyond 2^64 or of 2^1024 or more), an object value v with
+    float(v) != v (a Fraction 1/3, a Decimal 0.1), and non-numeric data. Narrower numeric types convert exactly. A
+    complex array of the eigenvalues of a Hermitian claim is converted by the callers as in 3.x (dtype=float: the real
+    part, with numpy's ComplexWarning)."""
     try:
         arr = np.asarray(values)
+    except OverflowError:
+        raise PrecisionError(f"{what}: an integer of magnitude 2^1024 or more is not a binary64 number; refused") from None
     except (ValueError, TypeError):
         raise PrecisionError(f"{what}: not a numeric array") from None
     if arr.dtype.kind == "O":
         arr = _exact_objects(arr, what)
     elif isinstance(values, (list, tuple)) and arr.dtype.kind in "fc":
-        _check_python_ints(values, what)
+        _check_python_ints(values, arr, what)
     if arr.dtype.kind not in "biufc":
         raise PrecisionError(f"{what}: dtype {arr.dtype.name} is not numeric data")
     target_dtype(arr.dtype, what)
     if arr.dtype.kind in "iu":
         _exact_ints(arr, what)
-    if real and arr.dtype.kind == "c" and arr.size and np.any(arr.imag != 0):
-        raise PrecisionError(f"{what}: the claimed eigenvalues of a Hermitian operator are real; a nonzero imaginary "
-                             f"part (max |Im| = {float(np.max(np.abs(arr.imag))):.3e}) is refused")
-
 
 def widening_record(widened: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """The record of the conversions (each input once), or None when there were none."""

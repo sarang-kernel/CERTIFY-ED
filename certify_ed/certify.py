@@ -1021,8 +1021,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
-    mu = np.asarray(claim.eigenvalues)
-    mu = np.asarray(mu.real if mu.dtype.kind == "c" else mu, dtype=float)    # imaginary parts are 0 (check_values)
+    mu = np.asarray(claim.eigenvalues, dtype=float)
     X = claim.eigenvectors
     streamed = X is not None and is_streamed(X)
     if streamed and not isinstance(X, (np.memmap, StreamedColumns)):

@@ -301,7 +301,7 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
     widened: List[dict] = []
     A = _dense_square(A, "A", widened)
     n = A.shape[0]
-    check_values(eigenvalues, "eigenvalues", real=False)   # exact conversion below (precision.py)
+    check_values(eigenvalues, "eigenvalues")   # exact conversion below (precision.py)
     mu = np.asarray(eigenvalues).ravel()
     mu = mu.astype(np.complex128 if np.iscomplexobj(mu) else np.float64)
     if not np.all(np.isfinite(mu)):
