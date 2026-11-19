@@ -81,3 +81,17 @@ def test_concept_figures_need_no_data(tmp_path):
                        capture_output=True, text=True, env=env, cwd=ROOT, timeout=300)
     assert r.returncode == 0, r.stderr[-2000:]
     assert (out / "fig_certificate_anatomy.png").exists()
+
+
+def test_mutation_figure_reads_the_integration_sample_from_docs_results():
+    """fig_mutation.py reads the 3.2 mutation sample from docs/results/ (moved from the root on 20 November 2026);
+    the record-driven smoke test above skips without run records, so the path and the parse are checked here."""
+    sys.path.insert(0, FIG_DIR)
+    try:
+        import fig_mutation
+    finally:
+        sys.path.remove(FIG_DIR)
+    path = os.path.join(ROOT, "docs", "results", "RESULT_integration_3.2.md")
+    assert os.path.exists(path) and not os.path.exists(os.path.join(ROOT, "RESULT_integration_3.2.md"))
+    killed, n, labels, heading = fig_mutation.parse_integration(path)
+    assert (killed, n) == (10, 16) and len(labels) == 6 and "sample" in heading

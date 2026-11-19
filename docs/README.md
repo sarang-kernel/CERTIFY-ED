@@ -21,7 +21,9 @@
 
 The folders `project/`, `blog/` and `lean/` hold the project record (the documentation of the whole project, the
 blog and the reports of the Lean re-verification; start at `project/README.md`). They follow their own style rules
-(`project/STYLE.md`) and are not part of the documentation site.
+(`project/STYLE.md`) and are not part of the documentation site. Neither are `results/`, the result documents of the
+evidence runs and development tracks (`results/README.md` lists them), and `roadmap/`, with the roadmap summary
+`ROADMAP.md`; both were at the repository root until 20 November 2026.
 
 The documentation site is built with `mkdocs build --strict` from `mkdocs.yml` in the repository root
 (`pip install -r docs/requirements-docs.txt`: mkdocs and the material theme). The built `site/` is not committed.

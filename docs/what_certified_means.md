@@ -89,7 +89,7 @@ runs; each value is a valid bound for the run that produced it. Quote such numbe
 you have, with the environment it records (`environment`: versions, source hash, git commit), and
 compare two runs with `experiments/compare_runs.py`, which separates statuses and counts (strict) from
 run-stack values (compared by digits, with explained differences). The evidence run of 3.1.0 is described
-in `RESULT_evidence_run_3.1.0.md`.
+in `docs/results/RESULT_evidence_run_3.1.0.md`.
 
 ## UNVERIFIED results
 

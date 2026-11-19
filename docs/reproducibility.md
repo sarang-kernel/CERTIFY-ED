@@ -12,7 +12,7 @@ python run.py --full --jobs 4  # the same, four experiments at a time (E2, E6, E
 ### Installing QuSpin 1.0.1
 
 The QuSpin 1.0.1 wheel declares the obsolete PyPI backport `importlib` as a requirement, which cannot be
-installed on Python 3.12 (`RESULT_candidate_run.md`). Install its real runtime dependencies first and then
+installed on Python 3.12 (`docs/results/RESULT_candidate_run.md`). Install its real runtime dependencies first and then
 the wheel without dependency resolution:
 
 ```bash

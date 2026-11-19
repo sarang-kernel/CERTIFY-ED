@@ -10,7 +10,7 @@ Locating the data
                                      <experiment>_<timestamp>/data.json; the compare CSV at the run root)
   records of the second-stack run    $CERTIFY_RESULTS_B (the Linux 3.0.0 run, run_full_20261021)
   documents in the repository        corpus/results/certify-ed/report.json, experiments/survey/survey_for_scope.json,
-                                     RESULT_integration_3.2.md, experiments/figures/data/*.csv
+                                     docs/results/RESULT_integration_3.2.md, experiments/figures/data/*.csv
 
 `require(path)` exits with code 3 ("data absent") when a file a figure needs is missing; the smoke test
 (tests/test_figures.py) treats that exit as a skip. Every number that a caption prints is written by the

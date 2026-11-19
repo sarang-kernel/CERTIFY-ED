@@ -9,6 +9,8 @@ experiments/results/
 htmlcov/
 legacy/v1/results/
 results/
+# the result documents of the code (moved from the repository root on 20 November 2026)
+!docs/results/
 # the committed corpus reports (report.md / report.json only; per-case checker output stays local)
 !corpus/results/
 !corpus/results/*/

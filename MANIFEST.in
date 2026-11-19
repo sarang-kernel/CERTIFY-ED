@@ -13,3 +13,6 @@ prune legacy
 prune docs/project
 prune docs/blog
 prune docs/lean
+# the result documents and the roadmap summary (moved from the root on 20 November 2026) were never in the sdist
+prune docs/results
+prune docs/roadmap

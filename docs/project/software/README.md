@@ -25,7 +25,7 @@ guards (reason code `FP_GUARD_RANGE`), gates statements by the process memory ca
 pinning tests of the E6 survivors and property tests against exact rational arithmetic. `fix/3.2.3` (tag `v3.2.3`,
 computational source hash `bfc115e824386443`) no longer lets the process memory cap gate S1 (an explicit budget still
 does) and makes the mutation analysis copy the repository next to it; its evidence run `run_full_20261112b` is complete
-(`docs/project/sources/runs/`). `dev/3.3` (version
+(`docs/results/RESULT_evidence_run_3.2.3.md`). `dev/3.3` (version
 3.3.0.dev0) adds, on top of 3.2.3, the non-Hermitian claim kind of E-02 (`certify-ed nonhermitian`, UNVERIFIED), the
 command `certify-ed verify CERT.json --external CMD`, which runs an external verifier and records its verdict in a
 separate file without changing a status, the prototype of error-free products (`certify_ed/ozaki.py`, not the default),

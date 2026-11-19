@@ -7,6 +7,19 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Result documents moved under docs/
+
+No code, bound or status changes, and the computational source hash stays the same. The result documents that were at
+the repository root move into the documentation tree: the `RESULT_*.md` files of the evidence runs and development
+tracks and `E6_inspection_worksheet_3.2.0.md` to `docs/results/` (its `README.md` lists them), `ROADMAP.md` to
+`docs/roadmap/ROADMAP.md`, and `HASH_MAP.csv` to `docs/project/HASH_MAP.csv`. The file names are unchanged, so entries
+below and earlier documents that name a file without a folder still identify it. `experiments/figures/fig_mutation.py`
+reads `docs/results/RESULT_integration_3.2.md`, `tests/test_packaging.py` checks `docs/roadmap/ROADMAP.md`, a test of
+`tests/test_figures.py` checks that path without run records, `.gitignore` keeps `docs/results/` tracked, and
+`mkdocs.yml` and `MANIFEST.in` leave both folders out of the documentation site and the source archive, as before. The
+copies of the 3.2.2 and 3.2.3 result documents in `docs/project/sources/runs/` are removed (the 3.2.2 copy lacked the
+note on single-precision inputs), and the project changelog cites `docs/results/` instead.
+
 ### Wording of the records
 
 No bound, status rule or record field changes, and the computational source hash stays the same. The status lines of the

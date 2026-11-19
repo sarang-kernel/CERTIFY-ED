@@ -66,7 +66,8 @@ def test_container_recipes_pin_the_evidence_stack(rel):
         assert re.search(r"\b" + pkg + r"\b", txt), (rel, pkg)
 
 
-GOVERNANCE_FILES = ("CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "GOVERNANCE.md", "ROADMAP.md", "docs/SCHEMA_RFC_PROCESS.md",
+GOVERNANCE_FILES = ("CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "GOVERNANCE.md", "docs/roadmap/ROADMAP.md",
+                    "docs/SCHEMA_RFC_PROCESS.md",
                     ".github/ISSUE_TEMPLATE/bug.md", ".github/ISSUE_TEMPLATE/feature.md",
                     ".github/ISSUE_TEMPLATE/could-not-certify.md", ".github/ISSUE_TEMPLATE/config.yml")
 
@@ -86,7 +87,7 @@ def test_governance_files_exist_and_say_what_they_must():
         if rel.endswith(".md") and ".github" in rel:
             front = _read(rel).split("---")[1]
             assert {"name", "about"} <= set(yaml.safe_load(front)), rel
-    rm = _read("ROADMAP.md")
+    rm = _read("docs/roadmap/ROADMAP.md")
     for item in ("B-02", "F-09", "A-03", "H-01", "H-05", "B-09", "G-05", "G-12", "B-01", "D-01"):
         assert item in rm, item
 

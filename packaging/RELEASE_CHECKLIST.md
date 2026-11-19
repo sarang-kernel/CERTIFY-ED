@@ -44,7 +44,8 @@ tree is fixed in `X.Y.(Z+1)`.
       QuSpin 1.0.1): `python run.py --full --with-mutation --jobs 4 --out results/run_full_<date>`.
 - [ ] `certify-ed numbers --run results/run_full_<date>` regenerates every number of the manuscript
       (`make_numbers` and `make_numbers_apps` with zero CHECK FAILED); the RESULT file written by
-      `experiments/make_result_candidate.py` goes into the repository as `RESULT_evidence_run_X.Y.Z.md`.
+      `experiments/make_result_candidate.py` goes into the repository as `docs/results/RESULT_evidence_run_X.Y.Z.md`,
+      with a row in `docs/results/README.md`.
 - [ ] `experiments/compare_runs.py` against the previous release's run: no MISMATCH leaf, every difference
       explained in the RESULT file.
 - [ ] The run directory's `environment.json` records `source_dirty: false` and the tag's commit.
@@ -88,5 +89,5 @@ python -m sigstore sign dist/*.tar.gz dist/*.whl dist/SHA256SUMS
 
 - [ ] Open the next development version: `__version__ = "X.Y+1.0.dev0"` in `certify_ed/__init__.py` and
       `pyproject.toml`; CHANGELOG gets an `Unreleased` heading.
-- [ ] Close the milestone; move unfinished roadmap items to the next one (`ROADMAP.md`).
+- [ ] Close the milestone; move unfinished roadmap items to the next one (`docs/roadmap/ROADMAP.md`).
 - [ ] If anything on this list was skipped, say so in the CHANGELOG entry rather than in a private note.
