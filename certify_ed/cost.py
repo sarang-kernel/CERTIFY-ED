@@ -534,6 +534,8 @@ def narrow_input_mb(claim, options) -> float:
             if sp.issparse(a):
                 if target_dtype(a.dtype) is None:
                     return 0.0
+                if a.format in ("lil", "dok"):    # one value per position: the values (not their Python containers)
+                    return float(a.nnz * a.dtype.itemsize) / 2 ** 20
                 return sum(int(getattr(a, k).nbytes) for k in ("data", "indices", "indptr", "row", "col", "offsets")
                            if isinstance(getattr(a, k, None), np.ndarray)) / 2 ** 20
             if isinstance(a, np.ndarray) and not is_streamed(a) and target_dtype(a.dtype) is None:

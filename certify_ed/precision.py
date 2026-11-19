@@ -15,7 +15,8 @@ both eigenvalues. Every entry point applies `binary64` before the data reach a p
   strings, dates, ...
 
 A sparse matrix keeps its format, its index arrays and any repeated or unsorted indices (they are summed later, in
-binary64, by the step that converts the format). Every entry point widens the caller's object before any format
+binary64, by the step that converts the format); LIL and DOK matrices, which hold one value per position, are converted
+by their own astype. Every entry point widens the caller's object before any format
 conversion (tocsr, csr_matrix, toarray), since such a conversion sums repeated entries in the input's own precision.
 Claimed eigenvectors on disk (numpy memmap, HDF5 dataset) are wrapped in an enclosure.StreamedColumns that widens each
 block as it is read (stream=True); any other memmap (an operator, a symmetry diagonal, an observable) becomes an array
@@ -144,18 +145,18 @@ def _note(widened: Optional[List[Dict[str, Any]]], what: str, a, dt, tgt) -> Non
 def _sparse_binary64(a, tgt):
     """A new matrix of the same format with the stored entries converted to `tgt` and copies of the index arrays:
     every stored entry is kept as given (scipy's astype sums repeated entries, in the new format, where the sum may
-    round), and the caller's entries are not copied before the conversion."""
-    data = a.data.astype(tgt)
+    round), and the caller's entries are not copied before the conversion. LIL and DOK matrices hold one value per
+    position (no repeated entries; LIL's `data` is an array of lists, DOK has none): their own astype is used."""
     if a.format in ("csr", "csc", "bsr"):
         kw = {"blocksize": a.blocksize} if a.format == "bsr" else {}
-        w = type(a)((data, a.indices.copy(), a.indptr.copy()), shape=a.shape, **kw)
-        if (w.indices.dtype, w.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):     # the constructor may narrow int64
+        w = type(a)((a.data.astype(tgt), a.indices.copy(), a.indptr.copy()), shape=a.shape, **kw)
+        if (w.indices.dtype, w.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):  # the constructor may narrow int64
             w.indices, w.indptr = a.indices.copy(), a.indptr.copy()
         return w
     if a.format == "coo":
-        return type(a)((data, (a.row.copy(), a.col.copy())), shape=a.shape)
+        return type(a)((a.data.astype(tgt), (a.row.copy(), a.col.copy())), shape=a.shape)
     if a.format == "dia":
-        return type(a)((data, a.offsets.copy()), shape=a.shape)
+        return type(a)((a.data.astype(tgt), a.offsets.copy()), shape=a.shape)
     return a.astype(tgt)                          # lil, dok: one value per position
 
 
