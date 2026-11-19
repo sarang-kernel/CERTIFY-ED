@@ -30,12 +30,10 @@ MODULES = ["certify_ed.basis", "certify_ed.certificate_v2", "certify_ed.certify"
 
 
 # every other module of the package, with the reason it is not in MODULES; test_every_module_is_listed fails for a
-# module in neither (a key also covers the modules below it)
+# module in none of MODULES, EXEMPT_MODULES (exact module names: a package key is its __init__ only) and EXEMPT_TREES
 EXEMPT_MODULES = {
     "certify_ed": "package namespace: re-exports names of the listed modules",
     "certify_ed.api": "quick() wraps certify() (registered), which converts its inputs",
-    "certify_ed.apps": "application studies (AKLT, pyrochlore) that build their own binary64 operators from models; "
-                       "not imported by the package",
     "certify_ed.cli": "command-line front end: reads files with io.formats and importers and calls certify() and the "
                       "record functions (registered); one PrecisionError handler (tests/test_single_precision.py)",
     "certify_ed.compat": "package namespace (compat.symveig is listed)",
@@ -79,6 +77,12 @@ EXEMPT_MODULES = {
     "certify_ed.testing": "random specs for the tests",
     "certify_ed.thermo": "dyadic interval arithmetic on enclosures",
     "certify_ed.viewer": "renders certificates",
+}
+
+# subtrees exempt as a whole: a key covers every module below it
+EXEMPT_TREES = {
+    "certify_ed.apps": "application studies (AKLT, pyrochlore) that build their own binary64 operators from models; "
+                       "not imported by the package (no certify_ed/apps/__init__.py)",
 }
 
 N, K = 8, 2
@@ -888,9 +892,10 @@ def test_registry_is_complete():
     assert not missing and not stale, f"not listed: {missing}; listed but not public: {stale}"
 
 
-def _package_modules():
-    """Every module of the package by its file (packages without __init__.py, such as apps, included)."""
-    root = os.path.dirname(ce.__file__)
+def _package_modules(root=None):
+    """Every module of the package by its file (packages without __init__.py, such as apps, included); `root` is the
+    package directory (default: the installed certify_ed)."""
+    root = root or os.path.dirname(ce.__file__)
     out = []
     for d, _dirs, files in os.walk(root):
         for f in files:
@@ -900,14 +905,41 @@ def _package_modules():
     return sorted(out)
 
 
+def _covered(m):
+    return m in MODULES or m in EXEMPT_MODULES or any(m == k or m.startswith(k + ".") for k in EXEMPT_TREES)
+
+
 def test_every_module_is_listed():
-    """Every module of certify_ed is in MODULES (its public names checked above) or in EXEMPT_MODULES with a reason
-    (a key covers the modules below it); a new module fails here until it is listed."""
-    covered = lambda m: m in MODULES or any(m == k or m.startswith(k + ".") for k in EXEMPT_MODULES)   # noqa: E731
-    missing = [m for m in _package_modules() if not covered(m)]
-    stale = [k for k in EXEMPT_MODULES if not any(m == k or m.startswith(k + ".") for m in _package_modules())]
+    """Every module of certify_ed is in MODULES (its public names checked above), in EXEMPT_MODULES with a reason (an
+    exact module name) or below a key of EXEMPT_TREES; a new module fails here until it is listed."""
+    mods = _package_modules()
+    missing = [m for m in mods if not _covered(m)]
+    stale = [k for k in EXEMPT_MODULES if k not in mods] + \
+        [k for k in EXEMPT_TREES if not any(m == k or m.startswith(k + ".") for m in mods)]
     assert not missing and not stale, f"not listed: {missing}; exempt but absent: {stale}"
-    assert not set(MODULES) & set(EXEMPT_MODULES) and all(EXEMPT_MODULES.values())
+    assert not set(MODULES) & (set(EXEMPT_MODULES) | set(EXEMPT_TREES))
+    assert all(EXEMPT_MODULES.values()) and all(EXEMPT_TREES.values())
+    # a made-up module is not covered, at the top level or in a namespace package
+    for fake in ("certify_ed.zz_not_a_module", "certify_ed.io.zz_not_a_module", "certify_ed.compat.zz_not_a_module",
+                 "certify_ed.integrations.zz_not_a_module"):
+        assert not _covered(fake), fake
+
+
+def test_a_new_module_file_fails_the_module_check(tmp_path):
+    """A copy of the package's file tree with one more file: the check reports exactly that module."""
+    root = os.path.dirname(ce.__file__)
+    copy = tmp_path / "certify_ed"
+    for d, _dirs, files in os.walk(root):
+        for f in files:
+            if f.endswith(".py"):
+                p = copy / os.path.relpath(os.path.join(d, f), root)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text("")
+    (copy / "zz_new_module.py").write_text("def norm_bound(v):\n    return 0.0\n")
+    (copy / "io" / "zz_new_reader.py").write_text("")
+    mods = _package_modules(str(copy))
+    assert sorted(m for m in mods if not _covered(m)) == ["certify_ed.io.zz_new_reader", "certify_ed.zz_new_module"]
+    assert set(mods) - {"certify_ed.io.zz_new_reader", "certify_ed.zz_new_module"} == set(_package_modules())
 
 
 @pytest.mark.parametrize("name", sorted(R))
