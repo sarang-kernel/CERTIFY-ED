@@ -275,7 +275,7 @@ def _sparse_binary64(a, tgt):
         kw = {"blocksize": a.blocksize} if a.format == "bsr" else {}
         w = type(a)((a.data.astype(tgt), a.indices.copy(), a.indptr.copy()), shape=a.shape, **kw)
         if (w.indices.dtype, w.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):  # the constructor may narrow int64
-            w.indices, w.indptr = a.indices.copy(), a.indptr.copy()
+            w.indices, w.indptr = w.indices.astype(a.indices.dtype), w.indptr.astype(a.indptr.dtype)
         return w
     if a.format == "coo":
         coords = tuple(c.copy() for c in a.coords) if hasattr(a, "coords") else (a.row.copy(), a.col.copy())
