@@ -165,7 +165,7 @@ Pass-1 agreement (before the pre-registered revision): uses_ed 92 %, paper_type 
 Fields re-coded with the revised instructions (pass 2, quote-backed labels): problem_class, producer_category, method, eigenvectors_used, precision_stated, data_available, sectors, quantities, evidence, use.
 Residual disagreement on the check set (label counts summed over the 12 papers): labels the coder gave and the check
 reading did not — sectors 10, quantities 14, evidence 11, use 5; labels the check reading gave and the coder did not —
-sectors 6, quantities 13, evidence 7, use 2. The coder gives `evidence` more often (it counts a benchmark in which
+sectors 6, quantities 13, evidence 7, use 2. By the scheme of the check reading, the coder gives `evidence` more often (it counts a benchmark in which
 ED is the reference as evidence *for* the ED) and `method` less often (it answers 'not stated' where Lanczos is named in the text).
 
 **Consequence.** Percentages for `evidence`, `method`, `sectors`, `producer_category`, `precision_stated`, `data_available`,

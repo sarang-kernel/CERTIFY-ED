@@ -18,6 +18,8 @@ def _tracked():
     try:
         out = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
+        if os.environ.get("CI"):
+            pytest.fail("git is not available in CI")
         pytest.skip("git is not available")
     return [p for p in out.decode("utf-8").split("\0") if p]
 

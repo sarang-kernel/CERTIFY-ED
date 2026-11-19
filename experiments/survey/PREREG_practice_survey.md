@@ -85,4 +85,4 @@ What do laboratories that publish exact-diagonalization (ED) results actually re
   pass, not a human check, so the sentences on what the check measures say agreement, not error. The procedure, the data
   and every number are unchanged; the file name `survey_handcheck.csv`, the key `handcheck_agreement` and the macro
   names keep their old names. The text of v0.2 as registered, which carries the text of v0.1, is in the history of this
-  file (commit 28737733).
+  file (commit 2873773).
