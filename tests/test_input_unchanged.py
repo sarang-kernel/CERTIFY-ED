@@ -78,6 +78,10 @@ def _arrays(M):
     return M.indptr.copy(), M.indices.copy(), M.data.copy()
 
 
+def _unchanged_arrays(M, before):
+    return all(np.array_equal(x, y) for x, y in zip(before, (M.indptr, M.indices, M.data)))
+
+
 def _unchanged(M, before):
     return all(np.array_equal(x, y) for x, y in zip(before, (M.indptr, M.indices, M.data))) and \
         M.nnz == len(M.data) == len(M.indices) and M.tocoo().nnz == M.nnz
@@ -199,18 +203,39 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
 
 
 @pytest.mark.parametrize("cls", [sp.csr_matrix, sp.csr_array])
-def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls):
+@pytest.mark.parametrize("past_nnz", [False, True])
+def test_a_private_copy_keeps_the_index_dtypes_and_one_copy_per_object(cls, past_nnz):
     from certify_ed.certify import _private_copies
     D = cls(_with_duplicates(_random_claim()[0].operator))
     D.indices, D.indptr = D.indices.astype(np.int64), D.indptr.astype(np.int64)
+    if past_nnz:                                   # flag cached as False, then summed through a second object
+        assert not D.has_canonical_format
+        cls(D).sum_duplicates()
+        assert len(D.data) > D.nnz
     own = _private_copies()
     C = own(D)
     assert C is not D and type(C) is type(D) and own(D) is C
     assert C.indices.dtype == C.indptr.dtype == np.int64
-    assert all(np.array_equal(x, y) for x, y in zip(_arrays(C), _arrays(D)))
+    assert len(C.indices) == len(C.data) >= C.nnz
+    assert (C != D).nnz == 0
     H = _random_claim()[0].operator.copy()
     H.sum_duplicates()
     assert own(H) is H and own(None) is None
+
+
+def test_int64_indices_with_values_past_nnz_are_accepted():
+    claim, spec = _model_claim(False)
+    D = claim.operator
+    D.indices, D.indptr = D.indices.astype(np.int64), D.indptr.astype(np.int64)
+    assert not D.has_canonical_format
+    sp.csr_matrix(D).sum_duplicates()
+    before = _arrays(D)
+    a = ce.certify(claim, spec, ce.Options(seed=1))
+    assert _unchanged_arrays(D, before)
+    assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+    _same(a, ce.certify(claim, spec, ce.Options(seed=1)))
+    rec = certify_variational(D, claim.eigenvectors[:, 0])
+    assert _unchanged_arrays(D, before) and rec["statements"]
 
 
 def _record_without_times(rec):

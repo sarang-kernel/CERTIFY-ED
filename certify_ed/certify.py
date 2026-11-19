@@ -913,7 +913,7 @@ def _private_copies():
         if hit is None:
             c = m.copy()
             if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
-                c.indices, c.indptr = m.indices.copy(), m.indptr.copy()
+                c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
             hit = copies[id(m)] = (m, c)              # m is kept, so that its id is not reused during the run
         return hit[1]
     return own
