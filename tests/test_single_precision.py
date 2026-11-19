@@ -1176,3 +1176,32 @@ def test_integer_matrices_with_large_row_sums(fmt):
     assert c.body["subject"]["operator"]["norm_upper_bound"] > 0 and _s2(c)["status"] == "CERTIFIED"
     assert c.body["subject"]["operator"]["norm_upper_bound"] == cf.body["subject"]["operator"]["norm_upper_bound"]
     assert c.arrays["radius"].tobytes() == cf.arrays["radius"].tobytes()
+
+
+
+@pytest.mark.parametrize("dtype", ["float16", "float32", "complex64"])
+def test_matrix_market_writes_narrower_dense_arrays_as_binary64(tmp_path, dtype):
+    """With 17 significant digits scipy 1.17's mmwrite stops the process on float32 data and writes an unreadable file
+    for complex64 data; write_array (and write_operator and write_basis, which use it for dense arrays) converts a
+    narrower dense array exactly first, so the file reads back as its binary64 copy."""
+    from certify_ed.io.formats import read_array, read_basis, read_operator, write_array, write_basis, write_operator
+    rng = np.random.default_rng(7)
+    cplx = dtype == "complex64"
+    wide = np.complex128 if cplx else np.float64
+
+    def rnd(*shape):
+        return (rng.standard_normal(shape) + (1j * rng.standard_normal(shape) if cplx else 0)).astype(dtype)
+    X, v, A = rnd(6, 2), rnd(7), rnd(4, 4)
+    for name, a in (("X", X), ("v", v)):
+        p = str(tmp_path / f"{name}.mtx")
+        write_array(p, a)
+        b = np.asarray(read_array(p))
+        assert b.dtype == wide and np.array_equal(b.reshape(a.shape), a.astype(wide))
+    p = str(tmp_path / "A.mtx")
+    write_operator(p, A)
+    B = read_operator(p)
+    assert np.array_equal(B.toarray() if sp.issparse(B) else np.asarray(B), A.astype(wide))
+    p = str(tmp_path / "V.mtx")
+    write_basis(p, A[:, :2])
+    kind, V = read_basis(p)
+    assert kind == "isometry" and np.array_equal(V.toarray(), A[:, :2].astype(wide))
