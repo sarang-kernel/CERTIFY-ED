@@ -112,5 +112,8 @@ def compare_invariants(spec_inv: dict, other: dict) -> dict:
     fr_tol = spec_inv["fro2_err"] + other["err_rel"] * max(abs(other["fro2"]), 1.0) + 1e-300
     dtr = abs(spec_inv["trace"] - other["trace"])
     dfr = abs(spec_inv["fro2"] - other["fro2"])
-    return {"trace_diff": dtr, "trace_tol": tr_tol, "fro2_diff": dfr, "fro2_tol": fr_tol,
+
+    def rec(v):                     # no nan in the record (inf - inf for couplings whose squares overflow): inf
+        return float("inf") if v != v else v
+    return {"trace_diff": rec(dtr), "trace_tol": rec(tr_tol), "fro2_diff": rec(dfr), "fro2_tol": rec(fr_tol),
             "consistent": bool(dtr <= tr_tol and dfr <= fr_tol)}

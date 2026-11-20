@@ -84,15 +84,16 @@ def _interval_mul(lo1, hi1, lo2, hi2):
 
 def _verdict(overlap: bool, *endpoints) -> str:
     """CERTIFIED when the two intervals of a sum rule overlap, FAILED when they are disjoint, INCONCLUSIVE when an
-    endpoint is nan (an overflowed bound): a disjointness found on a nan is not a finding."""
-    if any(math.isnan(v) for v in endpoints):
+    endpoint is not finite (an overflowed bound): an overlap with an unbounded interval, or a disjointness found on a
+    nan, is not a finding."""
+    if not all(math.isfinite(v) for v in endpoints):
         return "INCONCLUSIVE"
     return "CERTIFIED" if overlap else "FAILED"
 
 
 def _rule_text(overlap: bool, verdict: str) -> str:
     if verdict == "INCONCLUSIVE":
-        return "cannot be compared (an endpoint is nan: an overflowed bound)"
+        return "cannot be compared (an endpoint is not finite, inf or nan: an overflowed bound)"
     return "overlap (consistent)" if overlap else "are DISJOINT: inconsistent inputs or bug"
 
 
@@ -224,9 +225,11 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
                         "interval": [float(sub_down(m_hat, bound)), float(add_up(m_hat, bound))],
                         "terms": {"projector": float(proj_term / g), "rounding": float((fp_terms + sum_rnd) / g)},
                         "M_norm_upper": float(up(On * On * Hk))})
-    finite = all(math.isfinite(m["bound"]) and math.isfinite(m["value"]) for m in moments)
+    def _finite(m):
+        return all(math.isfinite(v) for v in (m["bound"], m["value"], *m["interval"]))
+    finite = all(_finite(m) for m in moments)
     for m in moments:
-        if not (math.isfinite(m["bound"]) and math.isfinite(m["value"])):
+        if not _finite(m):
             # no nan in the record: a bound that is not finite is stored as inf, with no interval; a nan value as None
             m["bound"], m["interval"] = math.inf, [None, None]
             m["value"] = None if math.isnan(m["value"]) else m["value"]
@@ -267,7 +270,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
         hi2 += abs(hi2) * 4 * U
         m0 = moments[0]["interval"]
         ok0 = _overlap(m0, (lo2, hi2))
-        v0 = _verdict(ok0, lo2, hi2)
+        v0 = _verdict(ok0, lo2, hi2, *m0)
         statements.append(_vstmt("M2.sum_rule_zeroth", v0,
                                  (f"m_0 in [{m0[0]:.12g}, {m0[1]:.12g}] (moment route) and tr(P O^2)/g in [{lo2:.12g}, {hi2:.12g}] "
                                   f"(Theorem 6 on the formed O^2): the intervals {_rule_text(ok0, v0)}"),

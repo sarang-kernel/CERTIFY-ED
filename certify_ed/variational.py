@@ -388,7 +388,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                         dth = up((2 * r_stored * xn * e + (Hn + max(abs(th_lo), abs(th_hi))) * e * e) / ((xl - e) ** 2))
                     else:
                         dth = float("inf")
-                    rec["state"]["theta_source_vs_contracted"] = float(dth)
+                    rec["state"]["theta_source_vs_contracted"] = float(dth) if math.isfinite(dth) else math.inf
                     rec["state"]["note"] = ("the statements are about the contracted vector psi_hat as stored; the source "
                                             "MPS psi has ||psi_hat - psi|| <= contraction_error and a Rayleigh quotient "
                                             "within theta_source_vs_contracted of theta(psi_hat) (Lemma 5)")

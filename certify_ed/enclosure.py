@@ -572,7 +572,8 @@ class EnclosureSet:
                         "existence_radius": float(self.existence_radius[i]),
                         "group": int(self.group_of[i]), "group_size": g.size,
                         "method": g.method, "distinct": bool(g.distinct),
-                        "residual_computed": float(self.residual.computed[i]),
+                        "residual_computed": (float(self.residual.computed[i])     # nan (inf - inf) stored as inf
+                                              if not math.isnan(self.residual.computed[i]) else math.inf),
                         "residual_bound": float(self.residual.upper[i])})
         return out
 

@@ -28,8 +28,19 @@ INCONCLUSIVE with `NONFINITE_BOUND`, and the theta record stores null and ∞ in
 `certified_moments` no longer raises for a complex observable entry whose products overflow (1e308 + 1e308i, for
 example) or for a Hamiltonian whose norm to the power k overflows (entries of 1e200), and gives M1 to M3
 INCONCLUSIVE with `NONFINITE_BOUND`; its record stores such a bound as ∞ with no interval, and a nan value as null.
-S3 takes its code from a flag set where the count is decided, not from the text of the evidence. Tests:
-`tests/test_nonfinite_followups.py` (each case fails at the base). The computational source hash changes.
+S3 takes its code from a flag set where the count is decided, not from the text of the evidence. The sum rules M2 and
+M3 are INCONCLUSIVE with `NONFINITE_BOUND` when an end of either interval is not finite (an interval (-∞, ∞) overlaps
+every interval, and M3 was CERTIFIED on one), and so is M1 when an end of a moment interval overflows. Two record fields
+that could hold nan store ∞: `theta_source_vs_contracted` of a contracted trial state and the computed residual norm
+`residual_computed` of S2, and so does the S1 comparison of the specification invariants, where couplings of 1e160
+give inf - inf. A factorization with an infinite or nan pivot gives no count (the conversion of the pivot to a
+fraction raised, for a B with entries near the largest float in `certify_generalized`), and neither does a count at a
+shift that is not finite (LAPACK raised a ValueError). The S3 count records
+carry `nonfinite_bound` only when it is true, so the record of a finite count is unchanged. The INCONCLUSIVE summary of
+a window S3 now gives the reason recorded in its evidence (for example, inertia inconclusive at a window edge) instead
+of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_VECTOR_NORM` and which give
+`NONFINITE_BOUND` for an overflowing squared norm. Tests: `tests/test_nonfinite_followups.py` (each case fails at the
+base). The computational source hash changes.
 
 ### Result documents moved under docs/
 

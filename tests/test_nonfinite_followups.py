@@ -14,7 +14,9 @@ from certify_ed.fp import exact_dot, exact_sum
 from certify_ed.generalized import certify_generalized
 from certify_ed.moments import certified_moments
 from certify_ed.nonhermitian import certify_nonhermitian
-from certify_ed.variational import certify_variational
+from certify_ed.enclosure import OperatorAdapter, kato_temple, rayleigh_interval
+from certify_ed.inertia import inertia, inertia_dense
+from certify_ed.variational import TrialState, certify_variational
 
 BIG = np.nextafter(np.finfo(float).max, 0)      # within 12u of the largest float: its upper modulus is inf
 
@@ -202,3 +204,109 @@ def test_exact_dot_keeps_inf_times_zero():
     assert math.isnan(s) and math.isnan(e)
     s, e = exact_dot(np.array([math.inf, 1.0]), np.array([1.0, 1.0]))
     assert s == math.inf
+
+
+def test_a_sum_rule_on_an_unbounded_interval_states_nothing():
+    """The formed double commutator of M3 has an infinite deviation bound (entries of 1e154 in H): its interval is
+    (-inf, inf), which overlaps every interval; M3 is INCONCLUSIVE with NONFINITE_BOUND (before: CERTIFIED)."""
+    H = np.array([[2.5, 2.5, 1e154, 2.5], [2.5, 1e154, 2.5, 1.0], [1e154, 2.5, 1e154, 2.5], [2.5, 1.0, 2.5, 0.0]])
+    O = np.array([[1.0, 1.0, 0.0, 1.0], [1.0, 0.0, 1e-170, 1.0], [0.0, 1e-170, 1e-170, 1e-170],
+                  [1.0, 1.0, 1e-170, 1e-170]])
+    x = np.array([[-0.14685366], [-0.72157702], [0.67062429], [-0.08957494]])
+    x /= np.linalg.norm(x)
+    rec = certified_moments(H, O, x, 1e-14, 1e-14, K=1, level=(-1.0, 1.0), underflow_check=False)
+    s = _stmt(rec, "M3")
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert s["evidence"]["matrix_deviation_bound"] == math.inf and "not finite" in s["summary"]
+    assert _stmt(rec, "M1")["status"] == "CERTIFIED"         # the moments themselves have finite bounds
+    assert not list(_nan_paths(rec))
+
+
+def test_the_count_records_of_finite_data_are_unchanged():
+    """The inertia records of S3 carry nonfinite_bound only when it is set: a finite count has the keys it had."""
+    H = sp.diags([1.0, 2.0, 3.0, 10.0]).tocsr()
+    claim = ce.Claim(eigenvalues=np.array([1.0, 2.0, 3.0]), eigenvectors=np.eye(4)[:, :3], operator=H, kind="lowest")
+    counts = ce.certify(claim, None, ce.Options(seed=1)).statement("S3.completeness")["evidence"]["counts"]
+    assert counts and all("nonfinite_bound" not in c for c in counts)
+    H = sp.diags([1.0, 2.0, 3.0, 1e200]).tocsr()
+    claim = ce.Claim(eigenvalues=np.array([1.0, 2.0, 3.0]), eigenvectors=np.eye(4)[:, :3], operator=H, kind="lowest")
+    counts = ce.certify(claim, None, ce.Options(seed=1)).statement("S3.completeness")["evidence"]["counts"]
+    assert any(c.get("nonfinite_bound") is True for c in counts)
+
+
+def test_the_contracted_state_record_holds_no_nan():
+    """A trial state with a contraction error (an MPS) whose Rayleigh interval has no finite end: the Lemma 5 term
+    theta_source_vs_contracted is stored as inf (before: nan)."""
+    H = np.array([[1.0, 1.797e308, 2.5], [1.797e308, -1e200, -1e154], [2.5, -1e154, 2.5]])
+    x = np.array([-0.919, -0.368, -0.140])
+    st = TrialState(x / np.linalg.norm(x), "mps", {}, contraction_error=1e-12)
+    rec = certify_variational(H, st)
+    for sid in ("V1", "V2", "V3"):
+        assert _stmt(rec, sid)["status"] == "INCONCLUSIVE"
+    assert rec["state"]["theta_source_vs_contracted"] == math.inf and not list(_nan_paths(rec))
+
+
+def test_the_s2_record_holds_no_nan_for_an_inf_minus_inf_residual():
+    """The computed residual norm is nan when H x has inf - inf; the record stores inf, as for the bound."""
+    H = sp.csr_matrix(np.array([[1e200, 2.5, 0.0], [2.5, 0.0, 1.797e308], [0.0, 1.797e308, -1e200]]))
+    x = np.full((3, 1), 6e199)
+    cert = ce.certify(ce.Claim(eigenvalues=np.array([0.0]), eigenvectors=x, operator=H, kind="subset"), None,
+                      ce.Options(seed=1))
+    assert cert.statement("S2.eigenpairs")["status"] == "INCONCLUSIVE"
+    assert not list(_nan_paths(cert.body))
+
+
+def test_an_overflowed_factorization_gives_no_count():
+    """A factorization with infinite entries in D (B of entries near the largest float): no exact sign, so no count
+    (before: OverflowError or ValueError from the conversion to a fraction)."""
+    big = 1.7976931348623155e308
+    B = np.array([[1, 0, 1.7e308, 1.7e308], [0, big, big, 1], [1.7e308, big, 0, 1.7e308], [1.7e308, 1, 1.7e308, big]],
+                 dtype=complex)
+    r = inertia_dense(B, 0.0)
+    assert not r.conclusive and r.negative is None
+    x = np.eye(4)[:, :1]
+    g = certify_generalized(np.eye(4), B, np.array([1.0]), x, kind="subset")
+    assert _stmt(g, "G1")["status"] != "CERTIFIED" and not list(_nan_paths(g))
+
+
+def test_rayleigh_interval_and_kato_temple_of_an_overflowing_vector():
+    """x^H x overflows (entries of 1e155): the Rayleigh interval has no finite end, (nan, nan, nan, inf), and the
+    Kato-Temple bound declines (None); a norm too small to resolve keeps None."""
+    ad = OperatorAdapter(sp.diags([1.0, 2.0, 3.0]).tocsr())
+    x = np.array([1e155, 1e155, 0.0])
+    ri = rayleigh_interval(ad, x)
+    assert ri is not None and all(math.isnan(v) for v in ri[:3]) and ri[3] == math.inf
+    assert kato_temple(ad, x, 0.0, 10.0) is None
+    assert rayleigh_interval(ad, np.zeros(3)) is None
+    lo, hi, th, r = rayleigh_interval(ad, np.array([1.0, 0.0, 0.0]))
+    assert lo <= 1.0 <= hi and 0.0 <= r < 1e-14
+
+
+def test_moments_whose_values_sum_past_the_largest_float():
+    """Two claimed vectors with m_0 terms of about 1.7e308 each: their exact sum exceeds the largest float, exact_sum
+    gives nan (OverflowError before), and M1 to M3 state nothing."""
+    O = np.diag([1.3e154, 1.3e154, 1.0])
+    rec = certified_moments(np.diag([1.0, 2.0, 3.0]), O, np.eye(3)[:, :2], 1e-14, 1e-14)
+    for sid in ("M1", "M2", "M3"):
+        s = _stmt(rec, sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert not list(_nan_paths(rec))
+
+
+@pytest.mark.parametrize("sigma", [math.inf, -math.inf, math.nan])
+def test_an_inertia_count_at_a_shift_that_is_not_finite(sigma):
+    """No count and no factorization (LAPACK raises ValueError for inf or nan); the result names the overflow, and a
+    nan shift is recorded as null."""
+    r = inertia(np.diag([1.0, 2.0, 3.0]), sigma)
+    assert not r.conclusive and r.negative is None and r.nonfinite_bound and r.beta == math.inf
+    assert not list(_nan_paths(r.to_dict()))
+
+
+def test_the_s1_invariants_record_holds_no_nan():
+    """Couplings of 1e160: the squared Frobenius norms overflow on both sides and their difference is inf - inf; the
+    record stores inf (before: nan)."""
+    spec = ce.heisenberg_chain(4, J=1e160)
+    cert = ce.certify(ce.Claim(eigenvalues=np.array([0.0]), eigenvectors=None, operator=None, kind="subset"), spec,
+                      ce.Options(seed=1))
+    inv = cert.statement("S1.model_fidelity")["evidence"]["spec_invariants_vs_reference"]
+    assert inv["fro2_diff"] == math.inf and not list(_nan_paths(cert.body))

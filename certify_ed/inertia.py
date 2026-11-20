@@ -69,10 +69,13 @@ class InertiaResult:
     nonfinite_bound: bool = False     # no count because the backward-error bound was not finite
 
     def to_dict(self):
-        return asdict(self)
+        d = asdict(self)
+        if not d["nonfinite_bound"]:
+            del d["nonfinite_bound"]      # written only when set: the record of a finite count is unchanged
+        return d
 
 
-NONFINITE_NOTE = "backward-error bound not finite (an overflowed bound)"     # read by certify() for the reason code
+NONFINITE_NOTE = "backward-error bound not finite (an overflowed bound)"     # the note; the code is set from nonfinite_bound
 
 
 def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
@@ -91,7 +94,10 @@ def _exact_sign(x: float) -> int:
 
 def _count_block_diagonal(D: np.ndarray):
     """Count negative eigenvalues of a block-diagonal D with 1x1/2x2 blocks.
-    Returns (neg, ambiguous) with exact sign decisions."""
+    Returns (neg, ambiguous) with exact sign decisions; an entry that is not finite (an overflowed factorization) has
+    no exact sign, so the count is ambiguous."""
+    if not np.all(np.isfinite(D)):
+        return 0, True
     n = D.shape[0]
     neg = 0
     i = 0
@@ -236,6 +242,11 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
     t0 = time.time()
     label = "dense-bunch-kaufman" if method == "dense" else ("sparse-superlu-apriori" if method == "sparse-apriori"
                                                              else "sparse-superlu-residual")
+    if not np.isfinite(sigma):
+        # a shift that is not finite (an end of an enclosure that overflowed) gives no count: the factorization of
+        # A - sigma I is not formed (LAPACK refuses inf and nan); a nan shift is recorded as null
+        return InertiaResult(None if np.isnan(sigma) else float(sigma), None, float("inf"), label, time.time() - t0,
+                             False, "the shift is not finite (an overflowed bound); no count", nonfinite_bound=True)
     if method != "dense" and budget_mb is not None:
         from .cost import sparse_inertia_mb
         n_ = int(A.shape[0])
