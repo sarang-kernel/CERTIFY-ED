@@ -603,12 +603,18 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     sum(terms) = S_1 + ... + S_K + rho with |rho| <= sum |remaining errors| (bounded with an upward guard).
     The S_k are folded with TwoSum into h + e exactly; when e together with every slack lies strictly
     inside the rounding interval of h, the correctly rounded sum is h. Otherwise (a sum within the slack of
-    a rounding boundary, a zero result, non-finite input, or fewer than EXACT_SUM_MIN_TERMS terms) the value
-    is math.fsum's, so the result never depends on the path taken.
+    a rounding boundary, a zero result, or fewer than EXACT_SUM_MIN_TERMS terms) the value is math.fsum's, so the
+    result never depends on the path taken. Non-finite terms give the IEEE sum: inf or -inf when the infinities have
+    one sign, nan for a nan term or for both signs (math.fsum raises a ValueError there).
     """
     t = np.asarray(terms, dtype=float).ravel()
     t = t[t != 0.0]
-    if t.size < EXACT_SUM_MIN_TERMS or not np.all(np.isfinite(t)):
+    if not np.all(np.isfinite(t)):
+        # IEEE semantics, where math.fsum raises for inf - inf: nan when a term is nan or both infinities occur
+        if np.isnan(t).any() or (np.isposinf(t).any() and np.isneginf(t).any()):
+            return math.nan
+        return math.inf if np.isposinf(t).any() else -math.inf
+    if t.size < EXACT_SUM_MIN_TERMS:
         return math.fsum(t.tolist())
     S = []
     T = t

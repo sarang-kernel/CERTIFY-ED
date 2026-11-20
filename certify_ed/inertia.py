@@ -71,13 +71,16 @@ class InertiaResult:
         return asdict(self)
 
 
+NONFINITE_NOTE = "backward-error bound not finite (an overflowed bound)"     # read by certify() for the reason code
+
+
 def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
     """A backward-error bound beta that is not finite (a bound of the accounting overflowed; inf * 0 = nan) gives no
     count: beta = inf and conclusive False."""
     if np.isfinite(res.beta):
         return res
     res.beta, res.negative, res.conclusive = float("inf"), None, False
-    res.note = (res.note + "; " if res.note else "") + "backward-error bound not finite (an overflowed bound)"
+    res.note = (res.note + "; " if res.note else "") + NONFINITE_NOTE
     return res
 
 

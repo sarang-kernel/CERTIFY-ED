@@ -32,6 +32,7 @@ certificate's `scope` block lists the decision (scope.py, docs/presets.md, docs/
 
 from __future__ import annotations
 
+import json
 import math
 import sys
 import time
@@ -52,6 +53,7 @@ from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, 
                         is_streamed, nonfinite_columns, read_columns)
 from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float_env_record,
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
+from .inertia import NONFINITE_NOTE as _NONFINITE_INERTIA
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .precision import binary64, check_values, widening_record
@@ -1421,6 +1423,8 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 summ = ev.get("reason", "counts at the window edges could not be made exact")
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
+            if code3 is None and st == "INCONCLUSIVE" and _NONFINITE_INERTIA in json.dumps(ev, default=repr):
+                code3 = "NONFINITE_BOUND"      # a factorization whose backward-error bound overflowed gave no count
             if st == "NOT_CHECKED":
                 # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or
                 # could not be completed (MemoryError): the code is explicit, not read from the wording
@@ -1456,6 +1460,8 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                         "NOT_CHECKED": ev.get("reason", "")}[st]
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
+            if code3 is None and st == "INCONCLUSIVE" and _NONFINITE_INERTIA in json.dumps(ev, default=repr):
+                code3 = "NONFINITE_BOUND"      # a factorization whose backward-error bound overflowed gave no count
             if st == "NOT_CHECKED":
                 # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or
                 # could not be completed (MemoryError): the code is explicit, not read from the wording

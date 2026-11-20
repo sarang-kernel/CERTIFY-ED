@@ -221,8 +221,15 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
                         "interval": [float(sub_down(m_hat, bound)), float(add_up(m_hat, bound))],
                         "terms": {"projector": float(proj_term / g), "rounding": float((fp_terms + sum_rnd) / g)},
                         "M_norm_upper": float(up(On * On * Hk))})
+    finite = all(math.isfinite(m["bound"]) and math.isfinite(m["value"]) for m in moments)
+    for m in moments:
+        if not (math.isfinite(m["bound"]) and math.isfinite(m["value"])):
+            # no nan in the record: a bound that is not finite is stored as inf, with no interval; a nan value as None
+            m["bound"], m["interval"] = math.inf, [None, None]
+            m["value"] = None if math.isnan(m["value"]) else m["value"]
+            m["terms"] = {t: (v if math.isfinite(v) else math.inf) for t, v in m["terms"].items()}
+            m["M_norm_upper"] = m["M_norm_upper"] if math.isfinite(m["M_norm_upper"]) else math.inf
     rec["moments"] = moments
-    finite = all(math.isfinite(m["bound"]) and not math.isnan(m["value"]) for m in moments)
     if not finite:
         # a bound of the accounting is inf or nan (a product, a sum or a modulus overflowed): no moment interval
         # and no sum-rule verdict rests on it
@@ -356,7 +363,8 @@ def format_moments(rec: dict) -> str:
              f"  dimension {rec['operator']['dimension']}, cluster g = {rec['state']['g']}, s = {rec['state']['sin_theta_bound']:.3e}, "
              f"eta = {rec['state']['eta']:.3e}, K = {rec['K']}"]
     for m in rec.get("moments", []):
-        lines.append(f"  m_{m['k']} = {m['value']:.15g} +/- {m['bound']:.3e}")
+        val = "nan" if m["value"] is None else f"{m['value']:.15g}"
+        lines.append(f"  m_{m['k']} = {val} +/- {m['bound']:.3e}")
     for s in rec["statements"]:
         lines.append(f"  {s['id']:24s} {s['status']:13s} {s['summary'][:160]}")
     return "\n".join(lines)

@@ -150,6 +150,10 @@ def residual_bounds(A: np.ndarray, mu: np.ndarray, X: np.ndarray, return_arrays:
         computed[i] = float(np.linalg.norm(S_hat[:, i]))
         E_up[i] = norm2_upper(E[:, i])
         upper[i] = up(norm2_upper(S_hat[:, i]) + E_up[i] + T)
+        if not math.isfinite(upper[i]):          # an overflow, or inf * 0 = nan: stored as inf (no nan in a record)
+            upper[i], E_up[i] = math.inf, (E_up[i] if math.isfinite(E_up[i]) else math.inf)
+        if math.isnan(computed[i]):
+            computed[i] = math.inf
         xl[i] = norm2_lower(X[:, i])
         eps[i] = up(upper[i] / xl[i] + 2.0 * ULP_MIN) if xl[i] > 0 and math.isfinite(upper[i]) else math.inf
     out = {"computed": computed, "upper": upper, "E_norm": E_up, "x_norm_lower": xl, "eps": eps, "complex": cplx}
@@ -381,10 +385,18 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
             None, assume))
     else:
         bad = [i for i in range(k) if not math.isfinite(be[i])]
-        statements.append(_stmt("N1.backward_errors", "INCONCLUSIVE",
-                                f"the norm of the claimed vector could not be bounded away from zero, or the residual bound "
-                                f"overflowed, for pairs {bad[:20]}: no finite backward error", {"unresolved": bad[:200]},
-                                "NOT_APPLICABLE", assume))
+        unresolved = [i for i in bad if not rec["pairs"][i]["x_norm_lower"] > 0]
+        over = [i for i in bad if i not in unresolved]
+        parts = []
+        if over:
+            parts.append(f"the residual bound of pairs {over[:20]} is not finite (a bound of the floating-point "
+                         f"accounting overflowed)")
+        if unresolved:
+            parts.append(f"the norm of the claimed vectors {unresolved[:20]} could not be bounded away from zero "
+                         f"(normalise the vectors)")
+        statements.append(_stmt("N1.backward_errors", "INCONCLUSIVE", "; ".join(parts) + ": no finite backward error",
+                                {"unresolved": bad[:200], "overflowed": over[:200]},
+                                "NONFINITE_BOUND" if over else "UNRESOLVED_VECTOR_NORM", assume))
 
     # ---- N2 to N4
     if kind != "all":
@@ -417,7 +429,7 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
     rec["radius"] = {"rho": float(rho), "residual_frobenius_upper": float(rho_R), "beta": beta}
     if not math.isfinite(rho):
         statements.append(_stmt("N3.inclusion", "INCONCLUSIVE", "the disc radius beta ||R||_F overflows", {"beta": beta},
-                                "NOT_APPLICABLE", assume))
+                                "NONFINITE_BOUND", assume))
         statements.append(_stmt("N4.counting", "NOT_CHECKED", "needs finite discs (N3)", {}, "NEEDS_DEPENDENCY", assume))
         return _finish(rec, statements)
     statements.append(_stmt(
