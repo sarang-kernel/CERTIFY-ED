@@ -180,8 +180,9 @@ Memory. A narrower dense input now costs the caller's array plus its binary64 co
 float32); `cost.plan_for_claim` adds the caller's narrower arrays to its peaks. The copies are made before the memory
 gates, so a claim that does not fit raises MemoryError instead of giving NOT_CHECKED (BUDGET_MEMORY). Array-likes are
 materialized. Integer operators are used as given and converted where they are multiplied, as in 3.x; the exactness
-check of an integer CSR, CSC or BSR matrix reads its nnz stored values only, so a value left past them is not
-refused (a test for each of the three formats, with the last stored value as negative control). Upper moduli that a caller passes to `OperatorAdapter.abs_matvec` must be binary64, like its vectors.
+check of an integer CSR, CSC or BSR matrix reads its nnz stored values only, so a value left past them is not refused (a
+test for each of the three formats, with the first and the last stored value as negative controls). Upper moduli that a
+caller passes to `OperatorAdapter.abs_matvec` must be binary64, like its vectors.
 
 float64 and complex128 inputs give the same certificates and records as before, bit for bit (bodies without environment
 and times, and arrays, on 14 models and records against cd0ca97, and claims with a complex eigenvalue array; hashes over
