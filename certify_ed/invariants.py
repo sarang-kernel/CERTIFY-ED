@@ -25,7 +25,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from .fp import gamma, modulus_up, up
-from .precision import binary64
+from .precision import binary64, summed
 from .spec import ModelSpec
 
 
@@ -88,7 +88,7 @@ def matrix_invariants(H) -> Dict[str, float]:
     narrower floating format is converted exactly to binary64 first, so that the sums are those the bound counts
     (precision.py)."""
     import scipy.sparse as sp
-    H = binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True)
+    H = summed(binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True), "H")
     if sp.issparse(H):
         H = H.tocsr()
         tr = complex(H.diagonal().sum())

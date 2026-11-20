@@ -22,7 +22,8 @@ reach a product or a format conversion:
 
 The format decision is classify_format (significand bits, exponent range, item size), so that the refusal of a wider
 long double is tested on platforms where long double is binary64. A sparse matrix keeps its format, its index arrays
-and any repeated or unsorted indices (they are summed later, in binary64, by the step that converts the format); LIL
+and any repeated or unsorted indices; the entry points then apply `summed`, which sums repeated entries on a copy, in
+binary64, before any product (so that every product, norm and modulus of a call refers to the same summed matrix). LIL
 and DOK matrices, which hold one value per position, are converted by their own astype; DIA padding is not read.
 Format conversions (tocsr, csr_matrix, toarray) come after `binary64`, since such a conversion sums repeated entries
 in the input's own precision. Claimed eigenvectors on disk (numpy memmap, HDF5 dataset) are wrapped in an
@@ -288,6 +289,38 @@ def _sparse_binary64(a, tgt):
     if a.format == "dia":
         return type(a)((a.data.astype(tgt), a.offsets.copy()), shape=a.shape)
     return a.astype(tgt)                          # lil, dok: one value per position
+
+
+def summed(a, what: str = "matrix"):
+    """`a` with its repeated entries summed, `a` itself unchanged: the same object when it is not a sparse matrix, or
+    when it is a CSR, CSC, BSR or COO matrix in canonical format (sorted indices, no repeated entries), or a DIA, LIL
+    or DOK matrix (one value per position); else a copy of the same format and index dtypes with the repeated entries
+    summed (scipy's sum_duplicates on the copy, in the type of its data, which drops the values past nnz).
+
+    The entry points apply it right after `binary64`, before any product: a product formed from the stored entries of
+    a matrix with repeated entries carries rounding errors of the size of the repeated entries, which the moduli of the
+    summed matrix (fp.abs_up) need not bound, so every product, norm and modulus of a call refers to one matrix, the
+    summed one (docs/proofs/fp_modulus-up.md, section 1). Integer data are summed exactly in their own type; the sums
+    are checked like the entries (every value a binary64 number), and a matrix whose sums could overflow the integer
+    type is refused (PrecisionError)."""
+    if not sp.issparse(a) or a.format not in ("csr", "csc", "bsr", "coo"):
+        return a
+    if getattr(a, "has_canonical_format", False):
+        return a
+    require_binary64(a, f"precision.summed: {what}")   # a narrower format would be summed in its own precision
+    c = a.astype(np.float64) if a.dtype.kind == "b" else a.copy()   # booleans: exact, as binary64 converts them
+    kind = c.data.dtype.kind
+    if kind in "iu":
+        stored = np.abs(_stored_values(c).astype(np.float64))
+        if stored.size and float(stored.sum()) * (1.0 + 2.0 ** -40) >= float(np.iinfo(c.data.dtype).max) / 2.0:
+            raise PrecisionError(f"{what}: the repeated integer entries could overflow {c.data.dtype} when summed; "
+                                 "refused (give the matrix with its entries summed, or in binary64)")
+    c.sum_duplicates()
+    if a.format in ("csr", "csc", "bsr") and (c.indices.dtype, c.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
+        c.indices, c.indptr = c.indices.astype(a.indices.dtype), c.indptr.astype(a.indptr.dtype)   # scipy may narrow
+    if kind in "iu":
+        _exact_ints(_stored_values(c), what)
+    return c
 
 
 def _materialize(a, what: str) -> np.ndarray:

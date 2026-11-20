@@ -47,7 +47,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .fp import (U, ULP_MIN, gamma, gamma_dot, inf_norm_upper, modulus_up, norm2_lower, norm2_upper, safe_sqrt_upper,
                  sub_down, underflow_scan, up)
-from .precision import binary64, check_values, widening_record
+from .precision import binary64, check_values, summed, widening_record
 from .spec import canonical_json
 
 NONHERMITIAN_SCHEMA = "certify-ed/nonhermitian/1.0"
@@ -74,7 +74,7 @@ __all__ = ["NONHERMITIAN_SCHEMA", "NONHERMITIAN_STATEMENT_IDS", "DEFAULT_MAX_DIM
 def _dense_square(M, name: str, widened: Optional[list] = None) -> np.ndarray:
     # exact for narrower formats (noted), a wider one refused (precision.py); before toarray, which sums repeated
     # entries in the input's precision
-    M = binary64(M if sp.issparse(M) else np.asarray(M), name, widened)
+    M = summed(binary64(M if sp.issparse(M) else np.asarray(M), name, widened), name)
     M = M.toarray() if sp.issparse(M) else M
     if M.ndim != 2 or M.shape[0] != M.shape[1]:
         raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")

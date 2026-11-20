@@ -37,7 +37,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, gamma_dot, up, inf_norm_upper, abs_up, modulus_up
-from .precision import binary64
+from .precision import binary64, summed
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def commutes_signed_permutation(A: sp.spmatrix, perm: np.ndarray, sign: np.ndarr
     """[A, P] = 0 for P|j> = sign_j |perm_j> with sign in {+1,-1}: checked exactly
     as A[perm_i, perm_j] * sign_i * sign_j == A[i, j] entrywise. A matrix in a narrower format is converted exactly
     first, so that repeated entries are summed in binary64 (precision.py)."""
-    A = sp.csr_matrix(binary64(A if sp.issparse(A) else np.asarray(A), "operator"))
+    A = summed(sp.csr_matrix(binary64(A if sp.issparse(A) else np.asarray(A), "operator")), "operator")
     n = A.shape[0]
     P = sp.csr_matrix((sign.astype(A.dtype), (perm, np.arange(n))), shape=(n, n))
     B = (P.T @ A @ P).tocsr()
@@ -119,7 +119,7 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
     """Certified tr(P O) for Hermitian O (dense or sparse). Data in a narrower format than binary64 are converted
     exactly first (precision.py)."""
     X = binary64(X, "eigenvectors", stream=True)
-    O = binary64(O if sp.issparse(O) else np.asarray(O), name)
+    O = summed(binary64(O if sp.issparse(O) else np.asarray(O), name), name)   # repeated entries summed first
     Xg = X[:, ec.members]
     OX = O @ Xg
     val = np.trace(Xg.conj().T @ OX).real
@@ -147,7 +147,7 @@ def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: s
     """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0). Data in a narrower format than
     binary64 are converted exactly first (precision.py)."""
     X = binary64(X, "eigenvectors", stream=True)
-    S = binary64(S if sp.issparse(S) else np.asarray(S), name)
+    S = summed(binary64(S if sp.issparse(S) else np.asarray(S), name), name)   # repeated entries summed first
     Xg = X[:, ec.members]
     M = Xg.conj().T @ (S @ Xg)
     M = (M + M.conj().T) / 2

@@ -383,14 +383,16 @@ def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
     assert abs_up(L).format == "csr" and L.format == "lil"
 
 
-def test_the_s2_adapter_takes_the_width_before_and_the_products_after_the_summation():
-    """The adapter of the S2 products: width counted on the stored entries, products on the summed matrix (abs_up sums
-    the duplicates in place, as abs does)."""
+def test_the_s2_adapter_works_on_the_summed_matrix():
+    """The adapter of the S2 products sums the repeated entries on a copy before anything else (precision.summed):
+    width, products and moduli all refer to the summed matrix, and the caller's matrix stays as given."""
     from certify_ed.enclosure import OperatorAdapter
     idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
     A = sp.csr_matrix(((1 + 1j) * np.ones(9), idx.copy(), indptr.copy()), shape=(3, 3))
     ad = OperatorAdapter(A)
-    assert ad.width == 4 and ad.A is A and A.has_canonical_format and A.nnz == 5
+    assert ad.width == 2 and ad.A is not A and ad.A.has_canonical_format and ad.A.nnz == 5
+    assert not A.has_canonical_format and A.nnz == 9 and np.array_equal(A.indices, idx)
+    assert np.array_equal(ad.A.toarray(), A.toarray())
 
 
 # ------------------------------------------------------------------------- the S2 bounds use the upper moduli

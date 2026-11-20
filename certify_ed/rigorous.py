@@ -19,7 +19,7 @@ from typing import List, Tuple
 import numpy as np
 import scipy.sparse as sp
 
-from .precision import binary64
+from .precision import binary64, summed
 
 try:
     import flint
@@ -60,7 +60,7 @@ def arb_residual_radii(A, mu, X, prec: int = 128, lower: bool = False) -> np.nda
     old = flint.ctx.prec
     flint.ctx.prec = prec
     try:
-        A = sp.csr_matrix(binary64(A, "operator"))    # exact, before the conversion; wider formats refused (precision.py)
+        A = summed(sp.csr_matrix(binary64(A, "operator")), "operator")   # exact; wider formats refused; summed
         X = binary64(np.asarray(X), "eigenvectors")
         if X.ndim == 1:
             X = X[:, None]
@@ -99,7 +99,7 @@ def arb_eigenvalues(A, prec: int = 128, algorithm: str = None) -> List[Tuple[flo
     old = flint.ctx.prec
     flint.ctx.prec = prec
     try:
-        M = binary64(A if sp.issparse(A) else np.asarray(A), "operator")    # exact, before toarray (precision.py)
+        M = summed(binary64(A if sp.issparse(A) else np.asarray(A), "operator"), "operator")   # exact, before toarray
         M = M.toarray() if sp.issparse(M) else M
         n = M.shape[0]
         E, err = None, None

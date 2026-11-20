@@ -26,7 +26,7 @@ import math
 import numpy as np
 import scipy.sparse as sp
 
-from .precision import binary64
+from .precision import _stored_values, binary64, summed
 
 U = 2.0 ** -53          # unit roundoff for binary64
 _GUARD = 1.0 + 8 * U    # relative guard applied to computed upper bounds
@@ -276,7 +276,8 @@ def abs_up(A):
 
     A sparse matrix in CSR, CSC, BSR or COO format has its duplicate entries summed in place first (A.sum_duplicates(),
     in the type of its data), as abs(A) does; the result, and every product formed with A afterwards, refer to that
-    summed matrix (docs/proofs/fp_modulus-up.md, section 1: a product formed before the call is not covered). DIA keeps
+    summed matrix (docs/proofs/fp_modulus-up.md, section 1: a product formed before the call is not covered; the entry
+    points sum the repeated entries on a copy before any product, precision.summed). DIA keeps
     its stored diagonals; LIL, DOK and other formats are converted to CSR (a copy, so A itself is not changed). The
     result has A's format (CSR for LIL, DOK and the others) and A's class (sparse matrix or sparse array). For sparse
     data narrower than binary64 the duplicates are summed in that precision; callers pass binary64 data
@@ -382,10 +383,11 @@ def norm2_lower(v: np.ndarray) -> float:
 
 
 def fro_upper(A) -> float:
-    """Upper bound on the exact Frobenius norm of a stored dense/sparse array."""
+    """Upper bound on the exact Frobenius norm of a stored dense/sparse array. A sparse matrix with repeated entries is
+    measured with them summed (precision.summed, on a copy): the norm of its stored values could be smaller (two
+    entries 1 at one position: sqrt(2) against 2). Values past nnz and DIA padding are not read."""
     if sp.issparse(A):
-        data = A.data if hasattr(A, "data") else A.tocsr().data
-        return norm2_upper(np.asarray(data))
+        return norm2_upper(np.asarray(_stored_values(summed(A, "fp.fro_upper"))).ravel())
     return norm2_upper(np.asarray(A).ravel())
 
 
@@ -393,9 +395,10 @@ def inf_norm_upper(A) -> float:
     """Upper bound on ||A||_inf (max absolute row sum) of a stored matrix (the moduli of complex entries from abs_up).
 
     For Hermitian A this also bounds ||A||_2 (since ||A||_2 <= sqrt(||A||_1 ||A||_inf)
-    and ||A||_1 = ||A||_inf). A matrix in a narrower format is converted exactly to binary64 first (precision.py).
+    and ||A||_1 = ||A||_inf). A matrix in a narrower format is converted exactly to binary64 first, and repeated entries
+    are summed on a copy (precision.py), so A itself is not changed.
     """
-    A = binary64(A if sp.issparse(A) else np.asarray(A), "fp.inf_norm_upper")
+    A = summed(binary64(A if sp.issparse(A) else np.asarray(A), "fp.inf_norm_upper"), "fp.inf_norm_upper")
     if sp.issparse(A):
         A = A.tocsr()
         absA = abs_up(A)

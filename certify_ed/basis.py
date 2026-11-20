@@ -23,7 +23,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .construct import StateSet, _popcount
-from .precision import binary64
+from .precision import binary64, summed
 from .spec import ModelSpec
 
 
@@ -167,8 +167,8 @@ def cyclic_isometry(states: StateSet, g: CyclicSymmetry, j: int,
 def sector_matrix(H: sp.spmatrix, V: sp.spmatrix) -> sp.csr_matrix:
     """Sector block V^H H V of an isometry V. Matrices in a narrower floating format are converted exactly to binary64
     first, so that the block is formed in binary64 (precision.py)."""
-    H = binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True)
-    V = binary64(V if sp.issparse(V) else np.asarray(V), "V", keep_integers=True)
+    H = summed(binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True), "H")
+    V = summed(binary64(V if sp.issparse(V) else np.asarray(V), "V", keep_integers=True), "V")
     Hs = (V.conj().T @ H @ V).tocsr()
     Hs.sum_duplicates()
     return Hs
