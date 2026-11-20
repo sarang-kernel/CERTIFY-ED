@@ -259,16 +259,44 @@ def test_int64_indices_with_values_past_nnz_are_accepted():
     assert _unchanged_arrays(D, before) and rec["statements"]
 
 
-def test_an_integer_past_nnz_that_binary64_cannot_hold_is_not_read():
-    """Only the nnz stored values of an integer CSR matrix are checked for exactness; a value left past them is not part
-    of the matrix."""
-    A = sp.csr_matrix(np.array([[2, 1], [1, 2]], dtype=np.int64))
-    A.data, A.indices = np.r_[A.data, 2 ** 60 + 1], np.r_[A.indices, 0]
-    assert A.data.size == A.nnz + 1
-    w, V = np.linalg.eigh(A.toarray().astype(float))
+def _integer_matrix_with_a_value_past_nnz(fmt):
+    """[[2, 1], [1, 2]] as an integer CSR or CSC matrix (BSR: two such blocks of 2 x 2 on the diagonal), with one more
+    value (BSR: one more block) of 2^60 + 1, which binary64 cannot hold, left past nnz."""
+    if fmt == "bsr":
+        M = np.kron(np.eye(2, dtype=np.int64), np.array([[2, 1], [1, 2]], dtype=np.int64))
+        A = sp.bsr_matrix(M, blocksize=(2, 2))
+        A.data = np.concatenate([A.data, np.full((1, 2, 2), 2 ** 60 + 1, dtype=np.int64)])
+    else:
+        A = getattr(sp, fmt + "_matrix")(np.array([[2, 1], [1, 2]], dtype=np.int64))
+        A.data = np.r_[A.data, 2 ** 60 + 1]
+    A.indices = np.r_[A.indices, 0]
+    assert A.data.size > A.nnz
+    return A
+
+
+@pytest.mark.parametrize("fmt", ["csr", "csc", "bsr"])
+def test_an_integer_past_nnz_that_binary64_cannot_hold_is_not_read(fmt):
+    """Only the nnz stored values of an integer CSR, CSC or BSR matrix are checked for exactness; a value left past them
+    is not part of the matrix. Negative controls: 2^53 + 1 in the first or in the last stored position is refused, so the
+    check reads the stored values from the first to the last."""
+    from certify_ed.precision import PrecisionError, binary64
+    A = _integer_matrix_with_a_value_past_nnz(fmt)
+    B = binary64(A, "operator")
+    assert B.dtype == np.float64 and B.format == fmt and B.data.size == A.nnz
+    pair = np.array([[2.0, 1.0], [1.0, 2.0]])
+    assert np.array_equal(B.toarray(), np.kron(np.eye(2), pair) if fmt == "bsr" else pair)
+    w, V = np.linalg.eigh(B.toarray())           # A.toarray() raises for BSR (scipy's tocoo); its binary64 copy does not
     a = ce.certify(ce.Claim(eigenvalues=w, eigenvectors=V, operator=A, kind="lowest"), None,
                    ce.Options(seed=1, only=["S2.eigenpairs"]))
     assert a.statement("S2.eigenpairs")["status"] == "CERTIFIED", a.summary()
+    for pos in (0, A.indptr[-1] - 1):            # the first and the last stored value (BSR: block)
+        C = _integer_matrix_with_a_value_past_nnz(fmt)
+        if fmt == "bsr":
+            C.data[pos][0 if pos == 0 else -1, 0 if pos == 0 else -1] = 2 ** 53 + 1
+        else:
+            C.data[pos] = 2 ** 53 + 1
+        with pytest.raises(PrecisionError, match="not exactly representable"):
+            binary64(C, "operator")
 
 
 def test_single_precision_int64_indices_with_values_past_nnz_are_accepted():
