@@ -17,10 +17,19 @@ finite is stored as ∞ (it was nan for an entry within 12u of the largest float
 code is `NONFINITE_BOUND` for an overflow and `UNRESOLVED_VECTOR_NORM` for a vector whose norm cannot be bounded away
 from zero (both were `NOT_APPLICABLE`, and G2 named the vector norm as the cause in both cases); N3 uses
 `NONFINITE_BOUND` for an overflowing disc radius. `fp.exact_sum` returns the IEEE sum of infinite terms (∞ or -∞ for
-one sign, nan for both signs or a nan term) where `math.fsum` raised a ValueError, so `certified_moments` no longer
-raises for a complex observable entry whose products overflow (1e308 + 1e308i, for example) and gives M1 to M3
+one sign, nan for both signs or a nan term) where `math.fsum` raised a ValueError, and nan for finite terms whose
+exact sum exceeds the largest float, where `math.fsum` raised an OverflowError. `fp.exact_dot` no longer applies the
+error-free split to a product that is not finite, so ∞ · 0 gives nan (the pair was dropped as tiny, and the dot
+product of (∞, 1) and (0, 1) came out as 1). The callers of these sums state nothing on a nan: the Gram entries and
+squared norms of complex vectors scaled by 1e155 (S2 and S3 INCONCLUSIVE with `UNRESOLVED_VECTOR_NORM`; this raised
+before), the Rayleigh interval used by `certify_variational` and by the Kato-Temple bound (no finite end: V1 to V3
+INCONCLUSIVE with `NONFINITE_BOUND`, and the theta record stores null and ∞ instead of nan), and x^H B x in
+`certify_generalized` (G2 `NONFINITE_BOUND`; its evidence lists the unresolved and the overflowed pairs separately).
+`certified_moments` no longer raises for a complex observable entry whose products overflow (1e308 + 1e308i, for
+example) or for a Hamiltonian whose norm to the power k overflows (entries of 1e200), and gives M1 to M3
 INCONCLUSIVE with `NONFINITE_BOUND`; its record stores such a bound as ∞ with no interval, and a nan value as null.
-Tests: `tests/test_nonfinite_followups.py` (each case fails at the base). The computational source hash changes.
+S3 takes its code from a flag set where the count is decided, not from the text of the evidence. Tests:
+`tests/test_nonfinite_followups.py` (each case fails at the base). The computational source hash changes.
 
 ### Result documents moved under docs/
 

@@ -838,7 +838,11 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
     den_err = up(den_e)
     den_lo = den - den_err
-    if den_lo <= 0:
+    if not all(math.isfinite(v) for v in (num, num_err, den, den_err)):
+        # a non-finite inner product or bound (inf, or nan from inf - inf): no interval; the callers state nothing on
+        # a nan endpoint (NONFINITE_BOUND), and None stays the answer for a norm too small to resolve
+        return math.nan, math.nan, math.nan, math.inf
+    if not den_lo > 0:
         return None
     cands = [(num - num_err) / (den + den_err), (num - num_err) / den_lo,
              (num + num_err) / (den + den_err), (num + num_err) / den_lo]
@@ -857,8 +861,8 @@ def kato_temple(adapter: OperatorAdapter, x: np.ndarray, alpha: float, beta: flo
     the hypotheses cannot be verified (theta not safely inside, or margins
     smaller than the residual). `Ax`, `absAx`: see rayleigh_interval."""
     ri = rayleigh_interval(adapter, x, Ax, absAx)
-    if ri is None:
-        return None
+    if ri is None or not all(math.isfinite(v) for v in ri):
+        return None                     # no interval (a norm too small to resolve, or a non-finite accounting)
     th_lo, th_hi, th, r_hat = ri
     # r = ||Ax - theta x|| <= ||Ax - th x|| + |theta - th| (unit-norm normalisation in rel_bound)
     r = up(r_hat + max(th_hi - th, th - th_lo))

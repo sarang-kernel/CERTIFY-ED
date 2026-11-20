@@ -30,7 +30,7 @@ import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, fro_upper, gamma, gamma_dot, inf_norm_upper,
+from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, exact_sum, fro_upper, gamma, gamma_dot, inf_norm_upper,
                  max_nnz_per_row, modulus_up, norm2_upper, sub_down, sub_up, underflow_scan, up)
 from .precision import binary64, widening_record
 from .spec import canonical_json
@@ -209,11 +209,14 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
             vals.append(float(np.real(v)))
             dots_err.append(float(e))
             abs_vals.append(abs(float(np.real(v))))
-        Hk = float(Hn ** k)
+        try:
+            Hk = float(Hn ** k)
+        except OverflowError:                             # a Python float power raises where numpy gives inf
+            Hk = math.inf
         # Step 1 (O x rounding): ||M|| (2 ||y_hat|| + e_y) e_y with ||M|| = ||H||^k; step 2-3: ||y_hat|| D_k; step 4: exact_dot error
         fp_terms = sum(up(Hk * (2 * ynorm_up[i] + e_y[i]) * e_y[i]) + up(ynorm_up[i] * D[i]) + dots_err[i] for i in range(g))
-        total = math.fsum(vals)
-        sum_rnd = gamma(g + 1) * math.fsum(abs_vals) + U * abs(total)
+        total = exact_sum(vals)                           # math.fsum's value; inf or nan where it would raise
+        sum_rnd = gamma(g + 1) * exact_sum(abs_vals) + U * abs(total)
         m_hat = total / g
         proj_term = up(proj_norm1 * On * On * Hk)
         bound = float(up((proj_term + fp_terms + sum_rnd) / g) + U * abs(m_hat) * 2)

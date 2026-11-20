@@ -66,6 +66,7 @@ class InertiaResult:
     fill_nnz: Optional[int] = None
     resource_failure: bool = False   # the factorization could not be completed (memory / library error)
     residual: Optional[dict] = None  # a-posteriori residual record (ldl_residual.ResidualBound), sparse path
+    nonfinite_bound: bool = False     # no count because the backward-error bound was not finite
 
     def to_dict(self):
         return asdict(self)
@@ -79,7 +80,7 @@ def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
     count: beta = inf and conclusive False."""
     if np.isfinite(res.beta):
         return res
-    res.beta, res.negative, res.conclusive = float("inf"), None, False
+    res.beta, res.negative, res.conclusive, res.nonfinite_bound = float("inf"), None, False, True
     res.note = (res.note + "; " if res.note else "") + NONFINITE_NOTE
     return res
 

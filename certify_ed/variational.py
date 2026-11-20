@@ -370,6 +370,12 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                 upper = float(np.nextafter(upper, np.inf))
                 theta_rec = {"computed": float(th), "lower": float(th_lo), "upper": float(th_hi),
                              "residual_radius_stored": r_stored, "residual_radius": r, "model_shift": sigma}
+                for key in ("computed", "lower", "upper"):        # no nan in the record: a value that is not finite
+                    if not math.isfinite(theta_rec[key]):         # is stored as null, a radius as inf
+                        theta_rec[key] = None
+                for key in ("residual_radius_stored", "residual_radius"):
+                    if not math.isfinite(theta_rec[key]):
+                        theta_rec[key] = math.inf
                 rec["theta"] = theta_rec
                 if st.contraction_error > 0:
                     # Lemma 5: |theta(psi) - theta(psi_hat)| <= (2 r ||psi_hat|| e + (||H|| + |theta|) e^2) / (||psi_hat|| - e)^2

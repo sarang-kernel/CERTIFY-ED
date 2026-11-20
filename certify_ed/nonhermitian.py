@@ -395,7 +395,7 @@ def certify_nonhermitian(A, eigenvalues, eigenvectors, *, kind: str = "auto", le
             parts.append(f"the norm of the claimed vectors {unresolved[:20]} could not be bounded away from zero "
                          f"(normalise the vectors)")
         statements.append(_stmt("N1.backward_errors", "INCONCLUSIVE", "; ".join(parts) + ": no finite backward error",
-                                {"unresolved": bad[:200], "overflowed": over[:200]},
+                                {"unresolved": unresolved[:200], "overflowed": over[:200]},
                                 "NONFINITE_BOUND" if over else "UNRESOLVED_VECTOR_NORM", assume))
 
     # ---- N2 to N4

@@ -32,7 +32,6 @@ certificate's `scope` block lists the decision (scope.py, docs/presets.md, docs/
 
 from __future__ import annotations
 
-import json
 import math
 import sys
 import time
@@ -53,7 +52,6 @@ from .enclosure import (OperatorAdapter, StreamedColumns, enclose, kato_temple, 
                         is_streamed, nonfinite_columns, read_columns)
 from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float_env_record,
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
-from .inertia import NONFINITE_NOTE as _NONFINITE_INERTIA
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
 from .precision import binary64, check_values, widening_record
@@ -690,6 +688,8 @@ def _certify_lowest(A, mu_sorted, enc, opts, eps_shift=0.0):
                       witness_shift=s_low)
             return "FAILED", ev, None
     if r is None or not r.conclusive:
+        if r is not None and r.nonfinite_bound:
+            ev["nonfinite_backward_error"] = True     # the decisive count has an overflowed backward-error bound
         return "INCONCLUSIVE", dict(ev, reason=last_reason or "no conclusive inertia count"), None
     beta = float(add_up(r.beta, eps_shift))
     ev.update(top_shift=sigma, beta_effective=beta)
@@ -755,6 +755,17 @@ def _estimate_next(A, k, seed=12345):
         return None
 
 
+def _decided_by_nonfinite_count(ev) -> bool:
+    """True when the inertia count that decided an INCONCLUSIVE S3 has an overflowed backward-error bound (the flag set
+    by _certify_lowest, _certify_window and _edge_count_exact; the vectorless window keeps its edge records)."""
+    if not isinstance(ev, dict):
+        return False
+    if ev.get("nonfinite_backward_error"):
+        return True
+    edges = ev.get("edges") or {}
+    return any(isinstance(e, dict) and e.get("nonfinite_backward_error") for e in edges.values())
+
+
 def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
     ra = inertia_count(A, a, method=opts.inertia_method, budget_mb=opts.budget_mb)
     if ra.resource_failure:
@@ -765,6 +776,8 @@ def _certify_window(A, enc, a, b, opts, eps_shift=0.0):
     if rb.resource_failure:
         return "NOT_CHECKED", dict(ev, reason=f"inertia count not attempted to completion: {rb.note}"), None
     if not (ra.conclusive and rb.conclusive):
+        if any(r.nonfinite_bound for r in (ra, rb) if not r.conclusive):
+            ev["nonfinite_backward_error"] = True     # an edge count has an overflowed backward-error bound
         return "INCONCLUSIVE", dict(ev, reason="inertia inconclusive at a window edge"), None
     ba, bb = add_up(ra.beta, eps_shift), add_up(rb.beta, eps_shift)
     n = rb.negative - ra.negative
@@ -808,6 +821,8 @@ def _edge_count_exact(A, e, opts, eps_shift, counts, scale):
     if r.resource_failure:
         return "NOT_CHECKED", dict(rec, reason=f"inertia count not attempted to completion: {r.note}")
     if not r.conclusive:
+        if r.nonfinite_bound:
+            rec["nonfinite_backward_error"] = True
         return "INCONCLUSIVE", dict(rec, reason=f"inertia inconclusive at the window edge {e:.10g} ({r.note})")
     beta_e = float(add_up(r.beta, eps_shift))
     rec.update(nu=int(r.negative), beta=beta_e)
@@ -823,6 +838,8 @@ def _edge_count_exact(A, e, opts, eps_shift, counts, scale):
         if r2.resource_failure:
             return "NOT_CHECKED", dict(rec, reason=f"inertia count not attempted to completion: {r2.note}")
         if not (r1.conclusive and r2.conclusive):
+            if any(r_.nonfinite_bound for r_ in (r1, r2) if not r_.conclusive):
+                rec["nonfinite_backward_error"] = True
             return "INCONCLUSIVE", dict(rec, delta=delta, reason=f"inertia inconclusive next to the window edge {e:.10g}")
         b1, b2 = float(add_up(r1.beta, eps_shift)), float(add_up(r2.beta, eps_shift))
         rec.update(delta=delta, shifts=[s1, s2], nu_below=int(r1.negative), nu_above=int(r2.negative),
@@ -1423,7 +1440,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 summ = ev.get("reason", "counts at the window edges could not be made exact")
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
-            if code3 is None and st == "INCONCLUSIVE" and _NONFINITE_INERTIA in json.dumps(ev, default=repr):
+            if code3 is None and st == "INCONCLUSIVE" and _decided_by_nonfinite_count(ev):
                 code3 = "NONFINITE_BOUND"      # a factorization whose backward-error bound overflowed gave no count
             if st == "NOT_CHECKED":
                 # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or
@@ -1456,11 +1473,11 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 summ = {"CERTIFIED": f"claim contains every eigenvalue in ({window[0] if window else a:.10g}, "
                                      f"{window[1] if window else b:.10g})" if st == "CERTIFIED" else "",
                         "FAILED": f"at least {ev.get('missing_at_least')} eigenvalue(s) in the window are not claimed",
-                        "INCONCLUSIVE": "counts could not be matched to the claimed set",
+                        "INCONCLUSIVE": ev.get("reason", "counts could not be matched to the claimed set"),
                         "NOT_CHECKED": ev.get("reason", "")}[st]
             code3 = ("FP_GUARD_RANGE" if st != "CERTIFIED" and any(_GUARD_RANGE_MARK in str(c.get("note", ""))
                                                                     for c in ev.get("counts", [])) else None)
-            if code3 is None and st == "INCONCLUSIVE" and _NONFINITE_INERTIA in json.dumps(ev, default=repr):
+            if code3 is None and st == "INCONCLUSIVE" and _decided_by_nonfinite_count(ev):
                 code3 = "NONFINITE_BOUND"      # a factorization whose backward-error bound overflowed gave no count
             if st == "NOT_CHECKED":
                 # a factorization that was not attempted (memory budget, or since 3.2.2 the process memory cap) or

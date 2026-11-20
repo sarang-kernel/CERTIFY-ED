@@ -10,10 +10,11 @@ import pytest
 import scipy.sparse as sp
 
 import certify_ed as ce
-from certify_ed.fp import exact_sum
+from certify_ed.fp import exact_dot, exact_sum
 from certify_ed.generalized import certify_generalized
 from certify_ed.moments import certified_moments
 from certify_ed.nonhermitian import certify_nonhermitian
+from certify_ed.variational import certify_variational
 
 BIG = np.nextafter(np.finfo(float).max, 0)      # within 12u of the largest float: its upper modulus is inf
 
@@ -56,6 +57,21 @@ def test_s3_names_the_overflowed_backward_error():
     assert cert.statement("S3.completeness")["status"] == "CERTIFIED"
 
 
+@pytest.mark.parametrize("vectors", [True, False], ids=["window", "vectorless-window"])
+def test_s3_code_on_the_window_paths(vectors):
+    """The same overflow on the window path (with and without vectors): the count at an edge is inconclusive, and
+    the statement names the cause (NONFINITE_BOUND, set by the inertia result, not found in the summary text)."""
+    def s3(top):
+        H = sp.diags([1.0, 2.0, 3.0, top]).tocsr()
+        claim = ce.Claim(eigenvalues=np.array([1.0, 2.0, 3.0]), eigenvectors=np.eye(4)[:, :3] if vectors else None,
+                         operator=H, kind="window", window=(0.5, 3.5))
+        return ce.certify(claim, None, ce.Options(seed=1)).statement("S3.completeness")
+    s = s3(1e200)
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    if vectors:
+        assert s3(10.0)["status"] == "CERTIFIED"
+
+
 def _overflowing(hermitian):
     A = np.diag([1.0, 2.0, 3.0]).astype(complex)
     A[1, 2] = BIG + 1j
@@ -77,6 +93,57 @@ def test_n1_and_g2_follow_the_rules_of_the_non_finite_branch():
     assert g["enclosures"][0]["radius"] == math.inf and not list(_nan_paths(g))
 
 
+def test_n3_names_an_overflowed_disc_radius():
+    """Eigenvalues of modulus near the largest float: the Bauer-Fike radius overflows; N1 and N3 store inf and name
+    the cause (before: nan and NOT_APPLICABLE); the eigenvector conditioning (N2) is still certified."""
+    A = np.diag([BIG, -BIG, 1.0])
+    w, V = np.linalg.eig(A)
+    n = certify_nonhermitian(A, w, V, kind="all")
+    for sid in ("N1", "N3"):
+        s = _stmt(n, sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert _stmt(n, "N2")["status"] == "CERTIFIED"
+    assert not list(_nan_paths(n))
+
+
+def test_g2_names_an_overflowed_xbx():
+    """x^H B x is inf - inf for B of entries near the largest float and x = (1, 1, -1): the radius is not finite,
+    and G2 names the overflow (before: ValueError from math.fsum). lambda_min(B) is declared, so G1 holds."""
+    B = np.full((3, 3), BIG)
+    x = np.array([[1.0], [1.0], [-1.0]])
+    g = certify_generalized(np.eye(3), B, np.array([1.0]), x, kind="subset", lambda_min_B=1.0,
+                            lambda_min_B_source="test")
+    s = _stmt(g, "G2")
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert "overflowed" in s["summary"] and not list(_nan_paths(g))
+
+
+def test_variational_rayleigh_interval_of_inf_minus_inf():
+    """x^H A x is inf - inf for A of entries near the largest float and x = (1, 1, -1): the Rayleigh interval has no
+    finite end, V1-V3 state nothing (NONFINITE_BOUND; before: ValueError from math.fsum), and the theta record
+    holds null and inf, not nan."""
+    rec = certify_variational(np.full((3, 3), BIG), np.array([1.0, 1.0, -1.0]))
+    for sid in ("V1", "V2", "V3"):
+        s = _stmt(rec, sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert not list(_nan_paths(rec))
+
+
+def test_complex_vectors_whose_squares_overflow():
+    """Complex eigenvectors scaled by 1e155: the Gram entries and the squared norms overflow (before: ValueError
+    from math.fsum); S2 and S3 are inconclusive with UNRESOLVED_VECTOR_NORM and no record holds nan."""
+    spec = ce.heisenberg_chain(6)
+    H = ce.build_bitwise(spec).tocsr()
+    w, V = np.linalg.eigh(H.toarray())
+    X = V[:, :3] * ((1 + 1j) / np.sqrt(2)) * 1e155
+    cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=X, operator=H, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    for sid in ("S2.eigenpairs", "S3.completeness"):
+        s = cert.statement(sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "UNRESOLVED_VECTOR_NORM", s
+    assert not list(_nan_paths(cert.body))
+
+
 def test_an_unresolvable_vector_norm_keeps_its_own_code():
     """A vector whose norm cannot be bounded away from zero in binary64 (entries of 1e-170: the squares underflow)
     names that cause, as S2 does (UNRESOLVED_VECTOR_NORM, normalise the vectors)."""
@@ -88,6 +155,16 @@ def test_an_unresolvable_vector_norm_keeps_its_own_code():
     g = certify_generalized(np.diag([1.0, 2.0, 3.0]), np.eye(3), np.array([1.0]), x, kind="subset")
     s = _stmt(g, "G2")
     assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "UNRESOLVED_VECTOR_NORM", s
+
+
+@pytest.mark.parametrize("top", [1e200, 1e300])
+def test_moments_of_a_large_hamiltonian_raise_nothing(top):
+    """||H||^k overflows (before: OverflowError from the power of a float): M1-M3 state nothing."""
+    rec = certified_moments(np.diag([1.0, 2.0, top]), np.eye(3), np.eye(3)[:, :1], 1e-14, 1e-14)
+    for sid in ("M1", "M2", "M3"):
+        s = _stmt(rec, sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert not list(_nan_paths(rec))
 
 
 @pytest.mark.parametrize("v", [1e308 + 1e308j, 1.5e308 * (1 + 1j), BIG + 1j])
@@ -110,3 +187,18 @@ def test_exact_sum_of_infinite_terms():
     assert exact_sum([-math.inf, -1.0]) == -math.inf
     terms = [1e16, 1.0, -1e16, 3.0] * 20
     assert exact_sum(terms) == math.fsum(terms)
+
+
+def test_exact_sum_of_finite_terms_that_overflow():
+    """The exact sum exceeds the largest float: nan (no value; math.fsum raises OverflowError)."""
+    assert math.isnan(exact_sum([BIG, BIG]))
+    assert math.isnan(exact_sum([-BIG, -BIG, 1.0]))
+
+
+def test_exact_dot_keeps_inf_times_zero():
+    """inf * 0 is nan, and the error-free split is not applied to a product that is not finite (before: the pair
+    was dropped as tiny and the dot product came out as 1)."""
+    s, e = exact_dot(np.array([math.inf, 1.0]), np.array([0.0, 1.0]))
+    assert math.isnan(s) and math.isnan(e)
+    s, e = exact_dot(np.array([math.inf, 1.0]), np.array([1.0, 1.0]))
+    assert s == math.inf
