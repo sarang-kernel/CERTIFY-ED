@@ -283,6 +283,8 @@ def test_an_integer_past_nnz_that_binary64_cannot_hold_is_not_read(fmt):
     A = _integer_matrix_with_a_value_past_nnz(fmt)
     B = binary64(A, "operator")
     assert B.dtype == np.float64 and B.format == fmt and B.data.size == A.nnz
+    pair = np.array([[2.0, 1.0], [1.0, 2.0]])
+    assert np.array_equal(B.toarray(), np.kron(np.eye(2), pair) if fmt == "bsr" else pair)
     w, V = np.linalg.eigh(B.toarray())           # A.toarray() raises for BSR (scipy's tocoo); its binary64 copy does not
     a = ce.certify(ce.Claim(eigenvalues=w, eigenvectors=V, operator=A, kind="lowest"), None,
                    ce.Options(seed=1, only=["S2.eigenpairs"]))
