@@ -134,7 +134,15 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     n = A.shape[0]
     cplx = np.iscomplexobj(A)
     S = A - sigma * np.eye(n)
+    if not np.all(np.isfinite(S)):
+        # an entry of A - sigma I overflowed (or A holds inf or nan): no factorization (LAPACK refuses it), no count
+        return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman", time.time() - t0, False,
+                             "A - sigma I is not finite (an overflowed entry); no count", nonfinite_bound=True)
     lu, d, perm = la.ldl(S, lower=True, hermitian=True)
+    if not (np.all(np.isfinite(lu)) and np.all(np.isfinite(d))):
+        return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman", time.time() - t0, False,
+                             "non-finite entries in the stored factors (an overflowed factorization); no count",
+                             nonfinite_bound=True)
     neg, amb = _count_block_diagonal(d)
     # Sylvester's law needs an invertible factor: unit lower triangular after the row permutation
     # (unit diagonal AND zero strict upper triangle, as checker.inertia_exact checks; IMP-14)
@@ -169,6 +177,9 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()
+    if not np.all(np.isfinite(S.data)):
+        return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric", time.time() - t0, False,
+                             "A - sigma I is not finite (an overflowed entry); no count", nonfinite_bound=True)
     try:
         f = spla.splu(S, permc_spec="MMD_AT_PLUS_A", diag_pivot_thresh=0.0,
                       options={"SymmetricMode": True, "Equil": False})
@@ -192,7 +203,7 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     neg = int(np.sum(signs < 0))
     if not (np.all(np.isfinite(L.data)) and np.all(np.isfinite(Dreal))):
         return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric",
-                             time.time() - t0, False, "non-finite entries in the stored factors")
+                             time.time() - t0, False, "non-finite entries in the stored factors", nonfinite_bound=True)
     if residual == "apriori":
         # 3.1 bound: beta <= gamma_w ||L||_F ||U||_F  (LU backward error, Higham Thm 9.3)
         #            + ||L||_F ||U - D L^H||_F   (symmetrisation)  + rounding of that difference

@@ -277,6 +277,11 @@ def test_rayleigh_interval_and_kato_temple_of_an_overflowing_vector():
     ri = rayleigh_interval(ad, x)
     assert ri is not None and all(math.isnan(v) for v in ri[:3]) and ri[3] == math.inf
     assert kato_temple(ad, x, 0.0, 10.0) is None
+    # x^H A x = inf - inf with a finite norm of x: (nan, nan, nan, inf); without the guard (-inf, inf, 0, inf)
+    ad2 = OperatorAdapter(np.array([[BIG, -BIG], [-BIG, BIG]]))
+    x2 = np.array([1.0, 1.0]) / np.sqrt(2.0)
+    ri = rayleigh_interval(ad2, x2)
+    assert all(math.isnan(v) for v in ri[:3]) and ri[3] == math.inf and kato_temple(ad2, x2, -1.0, 1.0) is None
     assert rayleigh_interval(ad, np.zeros(3)) is None
     lo, hi, th, r = rayleigh_interval(ad, np.array([1.0, 0.0, 0.0]))
     assert lo <= 1.0 <= hi and 0.0 <= r < 1e-14
@@ -309,4 +314,42 @@ def test_the_s1_invariants_record_holds_no_nan():
     cert = ce.certify(ce.Claim(eigenvalues=np.array([0.0]), eigenvectors=None, operator=None, kind="subset"), spec,
                       ce.Options(seed=1))
     inv = cert.statement("S1.model_fidelity")["evidence"]["spec_invariants_vs_reference"]
-    assert inv["fro2_diff"] == math.inf and not list(_nan_paths(cert.body))
+    assert inv["fro2_diff"] == math.inf and inv["consistent"] is None and not list(_nan_paths(cert.body))
+
+
+def test_the_sum_rule_records_hold_no_nan_when_a_formed_product_overflows():
+    """The moments are finite but O^2 and the double commutator overflow (O = diag(1e154, 1)): M2 and M3 state nothing,
+    and their records store a non-finite interval as null and a non-finite bound as inf (before: nan)."""
+    rec = certified_moments(np.diag([10.0, 2.0]), np.diag([1e154, 1.0]), np.array([[0.0], [1.0]]), 0.0, 0.0, K=1,
+                            level=(1.5, 2.5))
+    assert _stmt(rec, "M1")["status"] == "CERTIFIED"
+    for sid in ("M2", "M3"):
+        s = _stmt(rec, sid)
+        assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert not list(_nan_paths(rec))
+
+
+@pytest.mark.parametrize("method", ["dense", "sparse", "sparse-apriori"])
+def test_a_count_whose_shifted_matrix_overflows(method):
+    """A finite shift for which A - sigma I overflows (-1.5e308 - 1.6e308 is beyond the range): no count, no exception
+    (before: ValueError from LAPACK on the dense path; no reason code on the sparse path), and S3 of a vectorless
+    window at the edge of the range names the overflow."""
+    D = np.diag([-1.5e308, 0.0, 1.5e308])
+    r = inertia(sp.csr_matrix(D) if method != "dense" else D, -1.6e308, method=method)
+    assert not r.conclusive and r.negative is None and r.nonfinite_bound
+    claim = ce.Claim(eigenvalues=np.array([-1.5e308]), eigenvectors=None, operator=sp.csr_matrix(D), kind="window",
+                     window=(-1.6e308, -1.4e308))
+    s = ce.certify(claim, None, ce.Options(seed=1, inertia_method=method)).statement("S3.completeness")
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+
+
+def test_s8_names_an_overflowed_bracketing_count():
+    """The bracketing counts of S8 are refused for the same overflow as S3 (entries of 1e200): S8 is INCONCLUSIVE with
+    NONFINITE_BOUND (before: no code); the control with ordinary entries is CERTIFIED."""
+    def s8(top):
+        H = sp.diags([1.0, 1.0, 3.0, top]).tocsr()
+        claim = ce.Claim(eigenvalues=np.array([1.0, 1.0]), eigenvectors=np.eye(4)[:, :2], operator=H, kind="lowest")
+        return ce.certify(claim, None, ce.Options(seed=1)).statement("S8.degeneracy")
+    s = s8(1e200)
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert s8(10.0)["status"] == "CERTIFIED"

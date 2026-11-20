@@ -97,6 +97,16 @@ def _rule_text(overlap: bool, verdict: str) -> str:
     return "overlap (consistent)" if overlap else "are DISJOINT: inconsistent inputs or bug"
 
 
+def _rec_interval(lo, hi):
+    """An interval for the record: [lo, hi], or [None, None] when an end is not finite (no nan in the record)."""
+    return [lo, hi] if math.isfinite(lo) and math.isfinite(hi) else [None, None]
+
+
+def _rec_bound(v):
+    """A bound for the record: v, or inf when it is not finite."""
+    return v if math.isfinite(v) else math.inf
+
+
 def _overlap(i1, i2) -> bool:
     return max(i1[0], i2[0]) <= min(i1[1], i2[1])
 
@@ -274,8 +284,8 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
         statements.append(_vstmt("M2.sum_rule_zeroth", v0,
                                  (f"m_0 in [{m0[0]:.12g}, {m0[1]:.12g}] (moment route) and tr(P O^2)/g in [{lo2:.12g}, {hi2:.12g}] "
                                   f"(Theorem 6 on the formed O^2): the intervals {_rule_text(ok0, v0)}"),
-                                 {"moment_interval": m0, "theorem6_interval": [lo2, hi2], "overlap": ok0,
-                                  "matrix_deviation_bound": dev2, "note": "a consistency statement between two certified routes, not a new theorem"},
+                                 {"moment_interval": m0, "theorem6_interval": _rec_interval(lo2, hi2), "overlap": ok0,
+                                  "matrix_deviation_bound": _rec_bound(dev2), "note": "a consistency statement between two certified routes, not a new theorem"},
                                  assumptions=assume,
                                  reason_code="NONFINITE_BOUND" if v0 == "INCONCLUSIVE" else None))
         # f-sum rule: m_1 - tr(P H P O^2)/g = tr(P [O,[H,O]])/(2 g)
@@ -311,8 +321,9 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
                                      (f"m_1 - tr(P H P O^2)/g in [{lhs[0]:.12g}, {lhs[1]:.12g}] (moment route; level [a, b] = [{a:.12g}, {b:.12g}]) and "
                                       f"tr(P [O,[H,O]])/(2g) in [{loC:.12g}, {hiC:.12g}] (Theorem 6 on the formed double commutator): the intervals "
                                       f"{_rule_text(ok1, v1)}"),
-                                     {"lhs_interval": list(lhs), "rhs_interval": [loC, hiC], "overlap": ok1, "level": [a, b],
-                                      "PHPO2_interval": [plo, phi], "matrix_deviation_bound": devC,
+                                     {"lhs_interval": _rec_interval(*lhs), "rhs_interval": _rec_interval(loC, hiC), "overlap": ok1,
+                                      "level": [a, b], "PHPO2_interval": _rec_interval(plo, phi),
+                                      "matrix_deviation_bound": _rec_bound(devC),
                                       "note": "f-sum rule form; a consistency statement between two certified routes, not a new theorem"},
                                      assumptions=assume,
                                      reason_code="NONFINITE_BOUND" if v1 == "INCONCLUSIVE" else None))

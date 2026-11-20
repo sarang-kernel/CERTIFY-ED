@@ -33,9 +33,13 @@ M3 are INCONCLUSIVE with `NONFINITE_BOUND` when an end of either interval is not
 every interval, and M3 was CERTIFIED on one), and so is M1 when an end of a moment interval overflows. Two record fields
 that could hold nan store ∞: `theta_source_vs_contracted` of a contracted trial state and the computed residual norm
 `residual_computed` of S2, and so does the S1 comparison of the specification invariants, where couplings of 1e160
-give inf - inf. A factorization with an infinite or nan pivot gives no count (the conversion of the pivot to a
+give inf - inf (its `consistent` is then null, with a note: the comparison is a pre-check and decides nothing). A factorization with an infinite or nan pivot gives no count (the conversion of the pivot to a
 fraction raised, for a B with entries near the largest float in `certify_generalized`), and neither does a count at a
-shift that is not finite (LAPACK raised a ValueError). The S3 count records
+shift that is not finite or one whose shifted matrix A - σI overflows (LAPACK raised a ValueError on the dense path;
+the sparse path gave no count without a reason code). The records of M2 and M3 store a non-finite interval as null and
+a non-finite bound as ∞ when a matrix formed for a sum rule overflows while the moments are finite. S8 carries
+`NONFINITE_BOUND` when a bracketing count is refused for an overflowed bound, as S3 does (it was INCONCLUSIVE without
+a code). The S3 count records
 carry `nonfinite_bound` only when it is true, so the record of a finite count is unchanged. The INCONCLUSIVE summary of
 a window S3 now gives the reason recorded in its evidence (for example, inertia inconclusive at a window edge) instead
 of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_VECTOR_NORM` and which give

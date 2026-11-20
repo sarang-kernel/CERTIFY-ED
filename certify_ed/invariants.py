@@ -20,6 +20,8 @@ Values are computed in float64 with an a-priori rounding bound (products of
 
 from __future__ import annotations
 
+import math
+
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -115,5 +117,9 @@ def compare_invariants(spec_inv: dict, other: dict) -> dict:
 
     def rec(v):                     # no nan in the record (inf - inf for couplings whose squares overflow): inf
         return float("inf") if v != v else v
-    return {"trace_diff": rec(dtr), "trace_tol": rec(tr_tol), "fro2_diff": rec(dfr), "fro2_tol": rec(fr_tol),
-            "consistent": bool(dtr <= tr_tol and dfr <= fr_tol)}
+    out = {"trace_diff": rec(dtr), "trace_tol": rec(tr_tol), "fro2_diff": rec(dfr), "fro2_tol": rec(fr_tol),
+           "consistent": bool(dtr <= tr_tol and dfr <= fr_tol)}
+    if not all(math.isfinite(v) for v in (dtr, tr_tol, dfr, fr_tol)):
+        out["consistent"] = None    # an invariant overflowed: the comparison decides nothing (it is a pre-check)
+        out["note"] = "not compared: an invariant or its tolerance is not finite (an overflowed sum)"
+    return out
