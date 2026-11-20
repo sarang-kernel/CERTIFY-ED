@@ -14,6 +14,8 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_DIR = os.path.join(ROOT, "experiments", "figures")
+# the figure scripts run in child processes only: their helper module _common has the name of the helper of the
+# verification scripts in docs/proofs/, and an import here would shadow that one for later tests
 SCRIPTS = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(FIG_DIR, "fig_*.py")))
 DATA_ABSENT = 3
 
@@ -85,13 +87,17 @@ def test_concept_figures_need_no_data(tmp_path):
 
 def test_mutation_figure_reads_the_integration_sample_from_docs_results():
     """fig_mutation.py reads the 3.2 mutation sample from docs/results/ (moved from the root on 20 November 2026);
-    the record-driven smoke test above skips without run records, so the path and the parse are checked here."""
-    sys.path.insert(0, FIG_DIR)
-    try:
-        import fig_mutation
-    finally:
-        sys.path.remove(FIG_DIR)
+    the record-driven smoke test above skips without run records, so the path and the parse are checked here. The
+    script is imported in a separate process: its helper module `_common` would otherwise shadow the module of the
+    same name that the verification scripts of docs/proofs/ import."""
     path = os.path.join(ROOT, "docs", "results", "RESULT_integration_3.2.md")
     assert os.path.exists(path) and not os.path.exists(os.path.join(ROOT, "RESULT_integration_3.2.md"))
-    killed, n, labels, heading = fig_mutation.parse_integration(path)
+    code = ("import json, sys; sys.path.insert(0, sys.argv[1]); import fig_mutation; "
+            "print(json.dumps(fig_mutation.parse_integration(sys.argv[2])))")
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    r = subprocess.run([sys.executable, "-c", code, FIG_DIR, path], capture_output=True, text=True, env=env, cwd=ROOT,
+                       timeout=600)
+    assert r.returncode == 0, r.stderr[-2000:]
+    killed, n, labels, heading = json.loads(r.stdout.strip().splitlines()[-1])
     assert (killed, n) == (10, 16) and len(labels) == 6 and "sample" in heading
