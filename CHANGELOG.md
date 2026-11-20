@@ -7,6 +7,38 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Repeated entries summed at the start (soundness fix)
+
+A sparse matrix with repeated entries (CSR or CSC with repeated indices, COO with repeated coordinates) is now summed on
+a copy at the start of every call, before any product (`precision.summed`, applied right after `binary64`), so that
+every product, norm and modulus of the call refers to one matrix, the summed one; the caller's matrix stays as given.
+Before, several public functions formed their products from the stored entries and took the moduli of the summed
+matrix (`fp.abs_up` sums in place): with entries that cancel, the rounding of those products was not covered. Example
+(`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold
+2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned 1.0000000000000024, below
+the exact ||[H, S]||_2 = 1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper` read the stored values:
+two entries 1 at one position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector audits, the composition
+of sectors, the inertia backward error, the moments and the fidelity bound); it now measures the summed matrix, reads no
+value past nnz and no DIA padding. `fp.inf_norm_upper` no longer sums the caller's matrix in place.
+
+Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
+`approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
+`certify_quantum_numbers`, `fro_upper` and the other functions listed in `tests/test_precision_registry.py` that take a
+sparse matrix (each now applies `summed` after `binary64`). These functions have formed their products this way since
+they were added; which released certificate, if any, rests on such a product was not checked. Within `certify()` the
+private copy of such an operator, sector isometry, observable or symmetry (3.3.0.dev0, 'The caller's matrix stays as
+given') is now summed when it is made; before, the first step that took its absolute value summed it in place, and
+whether a product was formed before that step was not checked statement by statement. With entries stored as two exact
+halves (the case of the test suite) the products were covered and the certificates change only in the last bits; the
+statuses of the test suite do not change. An operator with repeated entries certified with its model is now served by
+the device (before: `|A| does not share the pattern of A`). Integer data are summed exactly in their own type and the
+sums are checked (every value a binary64 number); a matrix whose integer sums could overflow is refused
+(PrecisionError), and `summed` refuses floating data narrower than binary64 (they are converted first). Tests:
+`tests/test_duplicate_entries.py` (the example above, `fro_upper`, the direct calls against the summed matrix, the
+refusals, and `certify()` against the summed operator); `tests/test_modulus_up.py` and `tests/test_input_unchanged.py`
+pin the summation at the start. Windows full suite: 1712 passed, 33 skipped, 0 failed. The computational source hash
+changes.
+
 ### Result documents moved under docs/
 
 No code, bound or status changes, and the computational source hash stays the same. The result documents that were at
@@ -243,7 +275,8 @@ complex64 data are upper bounds, but a bound whose products are formed in single
 counts binary64 roundings; the entry points convert such input to binary64, see 'Single-precision inputs' above);
 `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in place, so a product formed with the matrix before
 the call is not covered by its moduli (direct calls of `commutator_bound`, `audit_sector`, `compress_operator` and
-`certify_observable` on a matrix with duplicates); the floating-point items that the lemma assumes beyond those
+`certify_observable` on a matrix with duplicates; fixed since, see 'Repeated entries summed at the start'); the
+floating-point items that the lemma assumes beyond those
 `probe_float_environment` checks are tested with the test suite, not probed at run time. The derivation is new and
 unverified: Sarang's check (D-12) is pending (independent re-derivation: verdict AGREES on the lemma, GAP on its
 corollary, resolved; `docs/proofs/verify_modulus-up.py`, `tests/test_modulus_up.py`). The computational source hash
@@ -345,8 +378,9 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   `certify()` returns. The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
   `Options.device` must be `"cpu"` or `"gpu"`; any other value, `None` included, makes `certify()` raise
   `ValueError`. A recorded device error is put on one line and cut to 300 characters. A CSR operator with duplicate
-  entries that is certified with its model is served by the CPU (`|A| does not share the pattern of A`), because the
-  S1 comparison compacts it in place before the products are formed.
+  entries was served by the CPU when it was certified with its model (`|A| does not share the pattern of A`), because
+  the S1 comparison compacted it in place before the products were formed; since 'Repeated entries summed at the
+  start' it is summed when certify() copies it and is served by the device like any other.
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.

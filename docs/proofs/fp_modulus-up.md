@@ -124,16 +124,17 @@ other analyses the treatment is the one each document states (not re-checked her
   formed with A after the call uses the summed matrix, and these moduli bound its rounding. A product formed before
   the call uses the stored entries, whose rounding these moduli do not bound, so a bound that combines the two is not
   valid for a matrix with duplicate entries. Direct calls of `davis_kahan.commutator_bound`, `sectors.audit_sector`,
-  `correlations.compress_operator` and `eigenspace.certify_observable` do this (they form a product, then take the
-  moduli; `abs` sums in place in the same way): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each
-  hold the two stored entries 2⁵³ and −2⁵³ + 2 (summing to 2), and S = diag(0, 0.7481628719198741),
-  `commutator_bound(H, S)` returns 1.0000000000000024, below the exact ‖[H, S]‖₂ = 1.4963257438397481 (a reviewer's
-  example, reproduced; with the duplicates summed first it returns 1.4963257438397513). Within `certify()` the
-  operators that reach these functions are canonical: built by the library, or the private copy that `certify()` makes
-  of a CSR operator whose indices are unsorted or repeated (CHANGELOG, 3.3.0.dev0, "The caller's matrix stays as
-  given"). Open, as a separate change because it changes real-data bounds for such input: an `abs_up` that bounds the
-  stored entries without summing them, valid for products with the summed and with the unsummed matrix.
-  `tests/test_modulus_up.py` pins the summation as it is.
+  `correlations.compress_operator` and `eigenspace.certify_observable` did this before the change of 3.3.0.dev0 that
+  sums the repeated entries at the start (they formed a product, then took the moduli; `abs` sums in place in the same
+  way): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold the two stored entries 2⁵³ and
+  −2⁵³ + 2 (summing to 2), and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned 1.0000000000000024,
+  below the exact ‖[H, S]‖₂ = 1.4963257438397481 (a reviewer's example, reproduced). Since that change every entry
+  point applies `precision.summed` right after `binary64`, before any product: a sparse matrix with repeated entries
+  becomes a copy with them summed, and every product, norm and modulus of the call refers to that summed matrix
+  (`commutator_bound(H, S)` returns 1.4963257438397513; `tests/test_duplicate_entries.py`); `certify()` sums the
+  private copy it makes of such an operator, isometry, observable or symmetry when it makes it. The statements then
+  concern the summed matrix, which can differ from the exact sum of the stored duplicates by the rounding of the sum.
+  Open: an `abs_up` that bounds the stored entries without summing them, valid for the unsummed matrix as well.
 - Earlier results. Certificates for complex data made before 3.3.0.dev0 rest on the counts h of the documents listed
   in section 3. Those counts are not established for `numpy.abs`, and the measured deficit of 2.47u exceeds h = 1 and
   h = 2. They are not re-checked here, and nothing is claimed about them.
