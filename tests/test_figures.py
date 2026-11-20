@@ -14,6 +14,8 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_DIR = os.path.join(ROOT, "experiments", "figures")
+# the figure scripts run in child processes only: their helper module _common has the name of the helper of the
+# verification scripts in docs/proofs/, and an import here would shadow that one for later tests
 SCRIPTS = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(FIG_DIR, "fig_*.py")))
 DATA_ABSENT = 3
 
