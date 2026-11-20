@@ -7,6 +7,21 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Non-finite follow-ups
+
+No constant changes; statuses change only on inputs whose accounting overflows. When the radii of the claimed pairs are
+finite but the backward error of a factorization overflows (entries of about 1e200: its squares exceed the largest
+float), S3 now carries `NONFINITE_BOUND` (it was INCONCLUSIVE without a code). The non-Hermitian record (N1) and the
+pencil record (G2) follow the rules of 'Non-finite bounds give no statement': a residual bound or radius that is not
+finite is stored as ∞ (it was nan for an entry within 12u of the largest float, where ∞ · 0 = nan), and the reason
+code is `NONFINITE_BOUND` for an overflow and `UNRESOLVED_VECTOR_NORM` for a vector whose norm cannot be bounded away
+from zero (both were `NOT_APPLICABLE`, and G2 named the vector norm as the cause in both cases); N3 uses
+`NONFINITE_BOUND` for an overflowing disc radius. `fp.exact_sum` returns the IEEE sum of infinite terms (∞ or -∞ for
+one sign, nan for both signs or a nan term) where `math.fsum` raised a ValueError, so `certified_moments` no longer
+raises for a complex observable entry whose products overflow (1e308 + 1e308i, for example) and gives M1 to M3
+INCONCLUSIVE with `NONFINITE_BOUND`; its record stores such a bound as ∞ with no interval, and a nan value as null.
+Tests: `tests/test_nonfinite_followups.py` (each case fails at the base). The computational source hash changes.
+
 ### Result documents moved under docs/
 
 No code, bound or status changes, and the computational source hash stays the same. The result documents that were at
@@ -294,13 +309,14 @@ modulus, and the statements that rest on it state nothing, by the rules of the p
 INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and `commutator_bound` is ∞
 where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment, observable and sweep-affinity
 bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well. Real data, and complex data whose
-entries all have a zero real or imaginary part, give the same bounds and records as before, except the non-Hermitian
+entries all have a zero real or imaginary part, give the same bounds and records as before, except in the non-Hermitian
 record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod, which the bounds no longer need (its
-four assumption strings and its record hash change, for real data too). Cost: a modulus pass takes about four times as
-long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus once and
-cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at commit cdf6ebb; 8.9 s and 9.0 s against
-11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host); matrix-free operators pay the moduli in every
-|H||x| application. The derivation is new and unverified: Sarang's check (D-12) is pending
+four assumption strings and its record hash change, for real data too), and the bounds of a real matrix with complex
+eigenpairs, whose eigenvalues and vectors are complex data, rise in the last bits. Cost: a modulus pass takes about four
+times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus
+once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at commit cdf6ebb; 8.9 s and 9.0 s
+against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host); matrix-free operators pay the moduli in
+every |H||x| application. The derivation is new and unverified: Sarang's check (D-12) is pending
 (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation documents;
 `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
 `tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic
