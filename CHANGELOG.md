@@ -9,35 +9,62 @@
 
 ### Repeated entries summed at the start (soundness fix)
 
-A sparse matrix with repeated entries (CSR or CSC with repeated indices, COO with repeated coordinates) is now summed on
-a copy at the start of every call, before any product (`precision.summed`, applied right after `binary64`), so that
-every product, norm and modulus of the call refers to one matrix, the summed one; the caller's matrix stays as given.
-Before, several public functions formed their products from the stored entries and took the moduli of the summed
-matrix (`fp.abs_up` sums in place): with entries that cancel, the rounding of those products was not covered. Example
-(`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold
-2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned 1.0000000000000024, below
-the exact ||[H, S]||_2 = 1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper` read the stored values:
-two entries 1 at one position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector audits, the composition
-of sectors, the inertia backward error, the moments and the fidelity bound); it now measures the summed matrix, reads no
-value past nnz and no DIA padding. `fp.inf_norm_upper` no longer sums the caller's matrix in place.
+A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now
+summed on a copy at the start of every call, before any product and before any format conversion (`precision.summed`,
+applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
+one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
+entries (`math.fsum`, each real part on its own; one addition for two entries) and for integer data the exact sum, so
+it does not depend on the format, the stored order of the entries or the entry point. Before, several public functions
+formed their products from the stored entries and took the moduli of the summed matrix (`fp.abs_up` summed in place):
+with entries that cancel, the rounding of those products was not covered. Example (`docs/proofs/fp_modulus-up.md`,
+section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold 2^53 and -2^53 + 2, and S =
+diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned 1.0000000000000024, below the exact ||[H, S]||_2 =
+1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper` read the stored values: two entries 1 at one
+position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector audits, the composition of sectors, the
+inertia backward error, the moments and the fidelity bound); it now measures the summed matrix, reads no value past
+nnz and no DIA padding. `fp.inf_norm_upper` and `fp.abs_up` no longer sum the caller's matrix in place.
+
+Every site that sums uses this sum: the entry points, the private copies of `certify()`, `matrix_sha256` (so the hash
+in a certificate is the hash of the caller's matrix), the file readers and the writers. scipy's conversions add
+repeated entries in stored order, and the first version of this change summed some inputs after such a conversion and
+others natively; with three or more entries at a position whose partial sums round, the summed matrix then depended on
+the route: `audit_decomposition` could pass a decomposition that no single matrix supports, and a COO operator was
+certified as a matrix other than the one its hash named. The readers summed a COO file in the type of the file
+(int8 100 + 100 gave -56, True + True gave True); they now sum as the direct path does. A COO operator with three or
+more entries at one position whose partial sums round is certified as the correctly rounded sum, where 3.x certified
+the sum in stored order; its certificate and its hash change.
+
+Integer data are summed exactly: a sum that leaves the caller's integer type is kept in int64 (int8 100 + 100 = 200),
+one beyond int64 or uint64 is refused (PrecisionError), and the sums are checked like the entries (every value a
+binary64 number). A matrix with no repeated position is not refused whatever its integer type (the first version of
+this change refused a narrow-integer COO or a CSR with unsorted indices when the total of all its entries was large).
+Booleans are converted to float64 first (True + True = 2). `summed` refuses floating data narrower than binary64; the
+entry points convert them exactly first, and `fp.fro_upper` and `fp.abs_up` now do so as well.
+
+Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; a COO built from
+arrays) is copied and sorted once per call, as before; `fp.fro_upper`, which only reads the values, skips the copy when
+no position repeats. `summed` trusts scipy's canonical flag. `fp.max_nnz_per_row` still counts the stored entries of a
+row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper bound);
+`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse factorization
+now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
 `certify_quantum_numbers`, `fro_upper` and the other functions listed in `tests/test_precision_registry.py` that take a
-sparse matrix (each now applies `summed` after `binary64`). These functions have formed their products this way since
-they were added; which released certificate, if any, rests on such a product was not checked. Within `certify()` the
-private copy of such an operator, sector isometry, observable or symmetry (3.3.0.dev0, 'The caller's matrix stays as
-given') is now summed when it is made; before, the first step that took its absolute value summed it in place, and
-whether a product was formed before that step was not checked statement by statement. With entries stored as two exact
-halves (the case of the test suite) the products were covered and the certificates change only in the last bits; the
-statuses of the test suite do not change. An operator with repeated entries certified with its model is now served by
-the device (before: `|A| does not share the pattern of A`). Integer data are summed exactly in their own type and the
-sums are checked (every value a binary64 number); a matrix whose integer sums could overflow is refused
-(PrecisionError), and `summed` refuses floating data narrower than binary64 (they are converted first). Tests:
-`tests/test_duplicate_entries.py` (the example above, `fro_upper`, the direct calls against the summed matrix, the
-refusals, and `certify()` against the summed operator); `tests/test_modulus_up.py` and `tests/test_input_unchanged.py`
-pin the summation at the start. Windows full suite: 1712 passed, 33 skipped, 0 failed. The computational source hash
-changes.
+sparse matrix. These functions have formed their products this way since they were added; which released certificate,
+if any, rests on such a product was not checked. Within `certify()` the private copy of such an operator, sector
+isometry, observable or symmetry (3.3.0.dev0, 'The caller's matrix stays as given') is now summed when it is made;
+before, the first step that took its absolute value summed it in place, and whether a product was formed before that
+step was not checked statement by statement. With entries stored as two exact halves (the case of the test suite) the
+products were covered and the certificates change only in the last bits; the statuses of the test suite do not change.
+An operator with repeated entries certified with its model is now served by the device (before: `|A| does not share
+the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above, `fro_upper`, the independence of the
+format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
+integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, and a sweep over
+the functions of the precision registry with every matrix stored as three parts that cancel, against the summed
+matrices, which fails when an entry point skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and
+`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1875 passed, 65 skipped, 0 failed. The computational
+source hash changes.
 
 ### Result documents moved under docs/
 

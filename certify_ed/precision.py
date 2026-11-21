@@ -52,6 +52,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+from fractions import Fraction
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -291,35 +293,145 @@ def _sparse_binary64(a, tgt):
     return a.astype(tgt)                          # lil, dok: one value per position
 
 
-def summed(a, what: str = "matrix"):
-    """`a` with its repeated entries summed, `a` itself unchanged: the same object when it is not a sparse matrix, or
-    when it is a CSR, CSC, BSR or COO matrix in canonical format (sorted indices, no repeated entries), or a DIA, LIL
-    or DOK matrix (one value per position); else a copy of the same format and index dtypes with the repeated entries
-    summed (scipy's sum_duplicates on the copy, in the type of its data, which drops the values past nnz).
+def _coordinates(a):
+    """(row, col, values) of the stored entries of a CSR, CSC, BSR, COO or DIA matrix, repeated ones included, values
+    past nnz left out; `a` is not changed."""
+    if a.format == "csr":
+        nnz = int(a.indptr[-1])
+        return (np.repeat(np.arange(a.shape[0], dtype=np.int64), np.diff(a.indptr)), a.indices[:nnz], a.data[:nnz])
+    if a.format == "csc":
+        nnz = int(a.indptr[-1])
+        return (a.indices[:nnz], np.repeat(np.arange(a.shape[1], dtype=np.int64), np.diff(a.indptr)), a.data[:nnz])
+    c = a if a.format == "coo" else a.tocoo()
+    return c.row, c.col, c.data
 
-    The entry points apply it right after `binary64`, before any product: a product formed from the stored entries of
-    a matrix with repeated entries carries rounding errors of the size of the repeated entries, which the moduli of the
-    summed matrix (fp.abs_up) need not bound, so every product, norm and modulus of a call refers to one matrix, the
-    summed one (docs/proofs/fp_modulus-up.md, section 1). Integer data are summed exactly in their own type; the sums
-    are checked like the entries (every value a binary64 number), and a matrix whose sums could overflow the integer
-    type is refused (PrecisionError)."""
-    if not sp.issparse(a) or a.format not in ("csr", "csc", "bsr", "coo"):
+
+def _exact_float_sum(v: np.ndarray) -> float:
+    """The correctly rounded exact sum of the binary64 values v: math.fsum, or the exact rational sum where fsum's
+    partial sums overflow (inf when the exact sum is beyond the range); the IEEE sum (inf, -inf or nan, the same in
+    every order) when a value is not finite."""
+    if not np.all(np.isfinite(v)):
+        return float(np.sum(v))
+    try:
+        return math.fsum(v.tolist())
+    except OverflowError:
+        s = sum(Fraction(x) for x in v.tolist())
+        try:
+            return float(s)
+        except OverflowError:
+            return math.inf if s > 0 else -math.inf
+
+
+def _group_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray, what: str, dtype: np.dtype) -> np.ndarray:
+    """The sum of each group v[starts[k] : starts[k] + counts[k]] of a sorted value array: for binary64 data the
+    correctly rounded exact sum (one addition for two values, which is correctly rounded and commutative; math.fsum
+    for three or more), for integer data the exact sum, in the caller's integer type when every sum fits and in int64
+    otherwise (PrecisionError beyond int64 or uint64)."""
+    if v.dtype.kind in "iu":
+        wide = v.astype(np.int64) if v.dtype.itemsize < 8 else v
+        s = np.add.reduceat(wide, starts)               # exact for 8- to 32-bit data (fewer than 2^31 values a group)
+        if v.dtype.itemsize == 8:                       # 64-bit data: groups whose moduli could overflow, exactly
+            bound = np.add.reduceat(np.abs(v.astype(np.float64)), starts)
+            info = np.iinfo(v.dtype)
+            for k in np.flatnonzero(bound * (1.0 + 2.0 ** -40) >= 2.0 ** 62).tolist():
+                t = sum(int(x) for x in v[starts[k]:starts[k] + counts[k]].tolist())
+                if not info.min <= t <= info.max:
+                    raise PrecisionError(f"{what}: a sum of repeated integer entries ({t}) is outside the range of "
+                                         f"{v.dtype}; refused (give the matrix with its entries summed, or in binary64)")
+                s[k] = t
+        info = np.iinfo(dtype)
+        if s.size and (int(s.min()) < info.min or int(s.max()) > info.max):
+            return s.astype(np.int64) if v.dtype.itemsize < 8 else s
+        return s.astype(dtype, copy=False)
+    s = np.add.reduceat(v, starts)                      # groups of one or two values: exact or correctly rounded
+    for k in np.flatnonzero(counts >= 3).tolist():
+        g = v[starts[k]:starts[k] + counts[k]]
+        if np.iscomplexobj(g):
+            s[k] = complex(_exact_float_sum(g.real), _exact_float_sum(g.imag))
+        else:
+            s[k] = _exact_float_sum(g)
+    return s
+
+
+def needs_summing(a) -> bool:
+    """True when `summed` would copy `a`: a CSR, CSC, BSR or COO matrix not flagged canonical, or a DIA matrix with a
+    repeated offset."""
+    if not sp.issparse(a):
+        return False
+    if a.format == "dia":
+        offsets = np.asarray(a.offsets)
+        return np.unique(offsets).size != offsets.size
+    return a.format in ("csr", "csc", "bsr", "coo") and not getattr(a, "has_canonical_format", False)
+
+
+def summed(a, what: str = "matrix", unsorted_ok: bool = False):
+    """`a` with its repeated entries summed, `a` itself unchanged. The same object when `a` is not a sparse matrix,
+    when it is a CSR, CSC, BSR or COO matrix flagged canonical (sorted indices, no repeated entries; the flag is
+    trusted, as scipy trusts it), a LIL or DOK matrix, or a DIA matrix with distinct offsets; else a canonical copy of
+    the same format, class and index dtypes in which each position holds the sum of its stored entries. With
+    `unsorted_ok` (for a caller that only reads the stored values), a matrix whose positions are distinct is returned
+    as it is even when its indices are unsorted; without it such a matrix is copied too, so that no later step sorts
+    the caller's arrays in place (scipy's abs and sum_duplicates do).
+
+    The sum at a position is defined independently of the format, the stored order and the platform: for binary64
+    data the correctly rounded exact sum of the stored values (each real part on its own), for integer data the exact
+    sum, kept in the caller's integer type when every sum fits and in int64 otherwise, and checked like the entries
+    (every value a binary64 number; PrecisionError otherwise, and beyond the range of int64 or uint64). Booleans are
+    converted to float64 first (True + True = 2), as binary64 converts them; a narrower floating format is refused
+    (require_binary64), so the entry points apply `binary64` first.
+
+    The entry points apply it before any product and before any format conversion (scipy's conversions add repeated
+    entries in stored order): a product formed from the stored entries of a matrix with repeated entries carries
+    rounding errors of the size of the repeated entries, which the moduli of the summed matrix (fp.abs_up) need not
+    bound, so every product, norm and modulus of a call refers to one matrix, the summed one
+    (docs/proofs/fp_modulus-up.md, section 1)."""
+    if not needs_summing(a):
         return a
-    if getattr(a, "has_canonical_format", False):
-        return a
+    fmt = a.format
     require_binary64(a, f"precision.summed: {what}")   # a narrower format would be summed in its own precision
-    c = a.astype(np.float64) if a.dtype.kind == "b" else a.copy()   # booleans: exact, as binary64 converts them
-    kind = c.data.dtype.kind
-    if kind in "iu":
-        stored = np.abs(_stored_values(c).astype(np.float64))
-        if stored.size and float(stored.sum()) * (1.0 + 2.0 ** -40) >= float(np.iinfo(c.data.dtype).max) / 2.0:
-            raise PrecisionError(f"{what}: the repeated integer entries could overflow {c.data.dtype} when summed; "
-                                 "refused (give the matrix with its entries summed, or in binary64)")
-    c.sum_duplicates()
-    if a.format in ("csr", "csc", "bsr") and (c.indices.dtype, c.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
+    if len(a.shape) == 1:                               # a 1-D coo_array (scipy >= 1.13): positions are its coords
+        key, val, ncol = np.asarray(a.coords[0], dtype=np.int64), a.data, 1
+    else:
+        row, col, val = _coordinates(a)
+        ncol = a.shape[1]
+        key = np.asarray(row, dtype=np.int64) * np.int64(ncol) + np.asarray(col, dtype=np.int64)
+    order = np.argsort(key, kind="stable")
+    ks = key[order]
+    first = np.empty(ks.size, dtype=bool)
+    first[:1] = True
+    np.not_equal(ks[1:], ks[:-1], out=first[1:])
+    if unsorted_ok and first.all():
+        return a                                        # no position is repeated: nothing to sum
+    starts = np.flatnonzero(first)
+    counts = np.diff(np.append(starts, ks.size))
+    v = np.asarray(val)[order]
+    if v.dtype.kind == "b":
+        v = v.astype(np.float64)
+    sums = _group_sums(v, starts, counts, what, np.asarray(val).dtype if v.dtype.kind in "iu" else v.dtype)
+    if sums.dtype.kind in "iu":
+        _exact_ints(sums, what)
+    pos = ks[starts]
+    coo_cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
+    if len(a.shape) == 1:
+        out = coo_cls((sums, (pos.astype(a.coords[0].dtype),)), shape=a.shape)
+        out.sum_duplicates()
+        return out
+    out = coo_cls((sums, (pos // ncol, pos % ncol)), shape=a.shape)
+    out.sum_duplicates()                                # no repeats left: sorts nothing, sets the canonical flag
+    if fmt == "coo":
+        c = out
+        if hasattr(c, "coords"):                        # scipy >= 1.13: one tuple, its index dtypes set together
+            c.coords = (c.row.astype(a.row.dtype, copy=False), c.col.astype(a.col.dtype, copy=False))
+        else:
+            c.row, c.col = c.row.astype(a.row.dtype, copy=False), c.col.astype(a.col.dtype, copy=False)
+    elif fmt == "bsr":
+        c = out.tobsr(blocksize=a.blocksize)
+    elif fmt == "dia":
+        c = out.todia()
+    else:
+        c = out.asformat(fmt)
+    if fmt in ("csr", "csc", "bsr") and (c.indices.dtype, c.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
         c.indices, c.indptr = c.indices.astype(a.indices.dtype), c.indptr.astype(a.indptr.dtype)   # scipy may narrow
-    if kind in "iu":
-        _exact_ints(_stored_values(c), what)
     return c
 
 

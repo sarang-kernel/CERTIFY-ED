@@ -943,11 +943,12 @@ def _private_copies(widened=None):
 
     A matrix in a narrower floating format than binary64 (float16, float32, complex64) becomes a private exact binary64
     copy (precision.binary64), listed in `widened` under `what`; a wider format is refused (PrecisionError). Integer
-    matrices are checked (every value a binary64 number) and used as given, as in 3.x: the steps that multiply them
-    convert them exactly, and their certificates are those of 3.x. Boolean matrices (3.x raised a TypeError) are
-    converted exactly, not listed. A CSR, CSC, BSR or COO matrix whose indices are unsorted or repeated becomes a
-    private copy with its repeated entries summed (precision.summed), so that every step of the run works on that one
-    matrix and every product is formed after the summation. Any other value is returned unchanged.
+    matrices are checked (every value a binary64 number) and kept in their integer type, as in 3.x: the steps that
+    multiply them convert them exactly. Boolean matrices (3.x raised a TypeError) are converted exactly, not listed. A
+    CSR, CSC, BSR or COO matrix whose indices are unsorted or repeated (not flagged canonical), or a DIA matrix with a
+    repeated offset, becomes a private canonical copy in which each position holds the sum of its stored entries
+    (precision.summed: the correctly rounded exact sum, the exact sum for integers), so that every step of the run
+    works on that one matrix and every product is formed after the summation. Any other value is returned unchanged.
 
     A matrix given in several places (the operator also as an observable, say) gets one copy, so that a summation done
     through one place is seen through the others, as it was on the caller's matrix. A new own() for each run."""

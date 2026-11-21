@@ -155,7 +155,7 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     t0 = time.time()
     # exact, and before csc_matrix (which sums repeated entries in the narrower format); SuperLU in single precision
     # would break the beta below
-    A = require_binary64(summed(sp.csc_matrix(binary64(A, "operator")), "operator"), "inertia_sparse")   # fail closed
+    A = require_binary64(sp.csc_matrix(summed(binary64(A, "operator"), "operator")), "inertia_sparse")   # fail closed
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()

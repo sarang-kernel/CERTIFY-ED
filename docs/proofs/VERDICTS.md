@@ -160,9 +160,9 @@ summation of duplicate entries; a test covers the subnormal band of results. Ope
 - Duplicate entries: direct calls of `davis_kahan.commutator_bound`, `sectors.audit_sector`,
   `correlations.compress_operator` and `eigenspace.certify_observable` formed a product before the moduli summed the
   duplicates in place, and were not valid for a matrix with duplicate entries (example in `fp_modulus-up.md`, What is
-  not claimed). Closed in 3.3.0.dev0 by summing the repeated entries at every entry point, before any product
-  (`precision.summed`; CHANGELOG, 'Repeated entries summed at the start'). An `abs_up` that bounds the stored entries
-  without summing is not written.
+  not claimed). Closed in 3.3.0.dev0 by summing the repeated entries at every entry point, before any product and any
+  format conversion, to the correctly rounded exact sum at each position (`precision.summed`; CHANGELOG, 'Repeated
+  entries summed at the start'). An `abs_up` that bounds the stored entries without summing is not written.
 - Single precision: Lemma M and the corollary do not cover products formed in float32 or complex64; a false S2
   certificate for a float32 operator with float32 vectors was reproduced (as before). Refusing or widening such input
   at the entry points is not written here; it is done by the single-precision change (`certify_ed/precision.py`).

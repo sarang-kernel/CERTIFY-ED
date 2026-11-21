@@ -1,6 +1,8 @@
-"""Repeated entries of a sparse matrix (CSR or CSC with repeated indices, COO with repeated coordinates) are summed
-on a copy before any product (precision.summed), so that every product, norm and modulus of a call refers to one
-matrix, the summed one, and the caller's matrix stays as given.
+"""Repeated entries of a sparse matrix (CSR, CSC or BSR with repeated indices, COO with repeated coordinates, DIA with a
+repeated offset) are summed on a copy before any product and before any format conversion (precision.summed), so that
+every product, norm and modulus of a call refers to one matrix, the summed one, and the caller's matrix stays as given.
+The sum at a position is the correctly rounded exact sum of its stored entries (the exact sum for integers), whatever
+the format, the stored order or the entry point.
 
 Before, the direct calls formed their products from the stored entries and took the moduli of the summed matrix
 (abs_up sums in place): with entries that cancel, the rounding of the products was not covered. Example below:
@@ -100,7 +102,7 @@ def test_summed_refuses_what_it_cannot_sum_exactly():
         summed(big, "op")
     wide = sp.csr_matrix((np.array([2 ** 62, 2 ** 62], dtype=np.int64), np.array([0, 0]), np.array([0, 2, 2])),
                          shape=(2, 2))
-    with pytest.raises(PrecisionError, match="overflow"):
+    with pytest.raises(PrecisionError, match="outside the range of int64"):
         summed(wide, "op")
     ok = sp.csr_matrix((np.array([3, 4], dtype=np.int64), np.array([0, 0]), np.array([0, 2, 2])), shape=(2, 2))
     assert summed(ok).dtype == np.int64 and summed(ok)[0, 0] == 7
@@ -175,3 +177,206 @@ def test_the_documented_example_of_cancelling_entries():
     S = sp.csr_matrix(np.diag([0.0, 0.7481628719198741]))
     b = commutator_bound(H, S)["bound"]
     assert b >= 1.4963257438397481 and b == commutator_bound(summed(H), S)["bound"]
+
+
+def _parts(vals, fmt, shape=(2, 2)):
+    """A matrix whose (0, 0) entry is stored as the parts `vals`, in the order given, in format `fmt`."""
+    vals = np.asarray(vals)
+    k = vals.size
+    if fmt == "coo":
+        return sp.coo_matrix((vals, (np.zeros(k, int), np.zeros(k, int))), shape=shape)
+    indptr = np.r_[0, k, np.full(shape[0] - 1, k)] if fmt != "csc" else np.r_[0, k, np.full(shape[1] - 1, k)]
+    if fmt == "csr":
+        return sp.csr_matrix((vals, np.zeros(k, int), indptr), shape=shape)
+    if fmt == "csc":
+        return sp.csc_matrix((vals, np.zeros(k, int), indptr), shape=shape)
+    return sp.bsr_matrix((vals.reshape(k, 1, 1), np.zeros(k, int), indptr), shape=shape)
+
+
+def test_the_sum_does_not_depend_on_format_or_order():
+    """1 and 2^-53 twice: in stored order 1 + 2^-53 rounds to 1 (ties to even) and the next part is lost as well; the
+    exact sum 1 + 2^-52 is a float. Every order and format gives it, real and complex, and so does matrix_sha256."""
+    import itertools
+    import math
+    from certify_ed.certificate_v2 import matrix_sha256
+    t = 2.0 ** -53
+    exact = 1.0 + 2.0 ** -52
+    assert (1.0 + t) + t == 1.0 and math.fsum([1.0, t, t]) == exact
+    ref = sp.csr_matrix(np.array([[exact, 0.0], [0.0, 0.0]]))
+    for perm in itertools.permutations([1.0, t, t]):
+        for fmt in ("coo", "csr", "csc", "bsr"):
+            for z in (1.0, 1.0 + 1.0j):
+                M = _parts(np.array(perm) * z, fmt)
+                S = summed(M)
+                assert S.format == fmt and S.toarray()[0, 0] == exact * z, (perm, fmt, z)
+                assert matrix_sha256(M) == matrix_sha256(ref * z)
+
+
+def test_audit_decomposition_sees_one_summed_isometry():
+    """Every check of audit_decomposition works on one summed copy of each isometry (a COO isometry with three parts at
+    a position gives the audit of its summed copy)."""
+    from certify_ed.sectors import audit_decomposition
+    t = 2.0 ** -53
+    H = sp.diags([1.0, 2.0]).tocsr()
+    V0 = sp.coo_matrix((np.array([1.0, t, t]), (np.zeros(3, int), np.zeros(3, int))), shape=(2, 1))
+    V1 = sp.coo_matrix((np.array([1.0]), (np.array([1]), np.array([0]))), shape=(2, 1))
+    Hss = [sp.csr_matrix(np.array([[1.0]])), sp.csr_matrix(np.array([[2.0]]))]
+    a = audit_decomposition(H, [V0, V1], Hss).to_dict()
+    assert a == audit_decomposition(H, [summed(V0), V1], Hss).to_dict()
+    assert V0.nnz == 3
+
+
+def test_the_certificate_hash_is_the_hash_of_the_callers_matrix(tmp_path):
+    """A COO operator with every entry stored as three parts (2^30, v, -2^30): certify() works on the summed matrix,
+    which is the operator itself (the exact sum is v), and the certificate records the hash of the caller's matrix,
+    of the operator, and of the file write_operator writes."""
+    from certify_ed.certificate_v2 import matrix_sha256
+    from certify_ed.io.formats import read_operator, write_operator
+    spec, H = _chain(6)
+    C = H.tocoo()
+    big = np.full(C.nnz, 2.0 ** 30)
+    rep = sp.coo_matrix((np.r_[big, C.data, -big], (np.tile(C.row, 3), np.tile(C.col, 3))), shape=H.shape)
+    w, V = np.linalg.eigh(H.toarray())
+    cert = ce.certify(ce.Claim(eigenvalues=w[:2], eigenvectors=V[:, :2], operator=rep, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    ref = ce.certify(ce.Claim(eigenvalues=w[:2], eigenvectors=V[:, :2], operator=H, kind="lowest"), spec,
+                     ce.Options(seed=1))
+    h = cert.body["subject"]["operator"]["matrix_sha256"]
+    assert h == matrix_sha256(rep) == matrix_sha256(H) == ref.body["subject"]["operator"]["matrix_sha256"]
+    assert [(s["id"], s["status"]) for s in cert.statements] == [(s["id"], s["status"]) for s in ref.statements]
+    assert cert.body["enclosures"] == ref.body["enclosures"]
+    path = str(tmp_path / "op.npz")
+    write_operator(path, rep)
+    assert matrix_sha256(read_operator(path)) == h and rep.nnz == 3 * C.nnz
+
+
+def test_integer_matrices_are_summed_exactly_and_kept_when_nothing_repeats():
+    """No repeated entry: an integer matrix in COO or with unsorted indices is accepted as it is (before: refused by a
+    guard on the sum of all its entries). Repeated entries: the exact sum, in int64 when it leaves the type
+    (int8 100 + 100 = 200, not -56)."""
+    C = sp.coo_matrix((np.array([100, 27, 100], dtype=np.int8), (np.array([0, 1, 1]), np.array([1, 0, 1]))),
+                      shape=(2, 2))
+    assert np.array_equal(summed(C).toarray(), C.toarray()) and summed(C).dtype == np.int8
+    U = sp.csr_matrix((np.array([7, 9], dtype=np.int16), np.array([1, 0]), np.array([0, 2, 2])), shape=(2, 2))
+    assert not U.has_sorted_indices and np.array_equal(summed(U).toarray(), U.toarray())
+    R = sp.coo_matrix((np.array([100, 100, 5], dtype=np.int8), (np.array([0, 0, 1]), np.array([1, 1, 0]))),
+                      shape=(2, 2))
+    S = summed(R)
+    assert S.dtype == np.int64 and S.toarray()[0, 1] == 200 and S.toarray()[1, 0] == 5
+    from certify_ed.construct import hermitian_part, matrix_difference
+    Rh = sp.coo_matrix((np.array([100, 100, 100, 100], dtype=np.int8), (np.array([0, 0, 1, 1]),
+                                                                      np.array([1, 1, 0, 0]))), shape=(2, 2))
+    assert hermitian_part(Rh).toarray()[0, 1] == 200
+    assert matrix_difference(Rh, sp.csr_matrix(np.array([[0.0, 200.0], [200.0, 0.0]])))["max_abs_diff"] == 0.0
+
+
+def test_the_file_readers_sum_as_the_direct_path(tmp_path):
+    """A COO file with repeated integer or boolean entries is read with the sums of precision.summed (before: summed
+    by tocsr in the type of the file: int8 100 + 100 = -56, True + True = True)."""
+    from certify_ed.io.formats import read_operator
+    for data, want in ((np.array([100, 100, 1], dtype=np.int8), 200), (np.array([True, True, True]), 2.0)):
+        R = sp.coo_matrix((data, (np.array([0, 0, 1]), np.array([1, 1, 1]))), shape=(2, 2))
+        path = str(tmp_path / f"op_{data.dtype.name}.npz")
+        sp.save_npz(path, R)
+        A = read_operator(path)
+        assert A.toarray()[0, 1] == want, (data.dtype, A.toarray())
+
+
+def test_single_precision_and_coo_index_dtypes():
+    """fro_upper widens a single-precision sparse matrix before summing (before: refused unless canonical); a COO
+    copy keeps the caller's int64 coordinates."""
+    C = sp.coo_matrix((np.array([1.0, 2.0], dtype=np.float32), (np.array([0, 1]), np.array([1, 0]))), shape=(2, 2))
+    assert fro_upper(C) >= np.sqrt(5.0)
+    R = sp.coo_matrix((np.array([1.0, 1.0]), (np.array([0, 0], dtype=np.int64), np.array([1, 1], dtype=np.int64))),
+                      shape=(2, 2))
+    if hasattr(R, "coords"):
+        R.coords = (R.row.astype(np.int64), R.col.astype(np.int64))
+    assert R.row.dtype == R.col.dtype == np.int64
+    S = summed(R)
+    assert S.row.dtype == S.col.dtype == np.int64 and S.toarray()[0, 1] == 2.0
+    D = sp.dia_matrix((np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([0, 1])), shape=(2, 2))
+    assert summed(D) is D                         # distinct offsets (scipy refuses repeated ones at construction)
+
+
+
+# ------------------------------------------------------------------------------------- the registry entry points
+def _three_parts(M):
+    """COO of the summed M with every stored entry v kept as three parts (2^30, v, -2^30): the correctly rounded exact
+    sum at each position is v, while the sum in stored order rounds v to a multiple of 2^-22."""
+    C = summed(sp.coo_matrix(M)) if sp.issparse(M) else sp.coo_matrix(M)
+    C = sp.coo_matrix(C)
+    t = np.full(C.nnz, 2.0 ** 30, dtype=C.dtype)
+    data = np.concatenate([t, C.data, -t])
+    rows, cols = np.tile(C.row, 3), np.tile(C.col, 3)
+    return sp.coo_matrix((data, (rows, cols)), shape=C.shape)
+
+
+_SPLIT = ("A", "S", "O", "B", "V", "Hs", "Vu", "Anh")
+
+
+def _variants(dtype):
+    import tempfile
+    from test_precision_registry import Data, _data, _ec
+    W = _data(dtype)["wide"]
+    out = {}
+    for kind in ("repeated", "summed"):
+        D = Data()
+        D.__dict__.update(W.__dict__)
+        for k in _SPLIT:
+            rep = _three_parts(getattr(W, k))
+            setattr(D, k, rep if kind == "repeated" else summed(rep))
+        D.tmp = tempfile.mkdtemp(prefix=f"dup_{dtype}_{kind}_")
+        D.ec = lambda D=D: _ec(D)
+        out[kind] = D
+    return out
+
+
+def _snapshot(D):
+    return {k: tuple(np.array(x, copy=True) for x in (getattr(D, k).data, getattr(D, k).row, getattr(D, k).col))
+            for k in _SPLIT}
+
+
+def _registry_names():
+    from test_precision_registry import R
+    return sorted(R)
+
+
+# Registered functions that read the stored entries by design: rotation_spread is summed now; max_nnz_per_row counts
+# the stored entries of a row (a width at least that of the summed matrix, so its gamma factor stays an upper bound).
+_STORED_ENTRIES_BY_DESIGN = {"certify_ed.fp.max_nnz_per_row"}
+# Recipes that convert a matrix themselves before the call (tocsr, toarray or csr_matrix in the test, which add the
+# parts in stored order): the two inputs then differ before the library sees them.
+_RECIPE_CONVERTS = {"certify_ed.construct.matrix_difference", "certify_ed.fp.fro_upper",
+                    "certify_ed.moments.moments_from_certificate"}
+
+
+@pytest.mark.parametrize("name", _registry_names())
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_every_registered_entry_point_sees_the_summed_matrix(dtype, name):
+    """Every public function of the precision registry, given matrices whose entries are stored as three parts that
+    cancel, gives bit for bit the result of the summed matrices (the correctly rounded exact sum at each position,
+    whatever the stored order) and leaves the caller's arrays as given. A recipe that raises for both inputs (a
+    dense-only function given a sparse matrix) is skipped."""
+    from test_precision_registry import R, _first_difference, canon
+    if name in _STORED_ENTRIES_BY_DESIGN:
+        pytest.skip("reads the stored entries by design")
+    if name in _RECIPE_CONVERTS:
+        pytest.skip("the recipe converts the matrix itself before the call")
+    V = _variants(dtype)
+    before = _snapshot(V["repeated"])
+    errors = []
+    results = []
+    for kind in ("repeated", "summed"):
+        try:
+            results.append(canon(R[name](V[kind])))
+            errors.append(None)
+        except Exception as e:                    # noqa: BLE001 - compared below
+            results.append(None)
+            errors.append(type(e).__name__)
+    if errors[0] is not None and errors[0] == errors[1]:
+        pytest.skip(f"raises {errors[0]} for both inputs")
+    assert errors == [None, None], f"{name}: {errors}"
+    a, b = results
+    assert a == b, f"{name}: first difference at {_first_difference(a, b)}"
+    after = _snapshot(V["repeated"])
+    assert all(all(np.array_equal(x, y) for x, y in zip(before[k], after[k])) for k in _SPLIT), name

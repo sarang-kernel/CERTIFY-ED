@@ -217,7 +217,7 @@ def hermitian_part(H: sp.spmatrix) -> sp.csr_matrix:
     need a Hermitian matrix; the builder shift certify._builder_shift covers the symmetrisation
     (docs/proofs/appA_model-shift.md, Lemma A2). A matrix in a narrower floating format is converted exactly to
     binary64 first, so that the sum is formed in binary64 (precision.py)."""
-    H = summed(sp.csr_matrix(binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True)), "H")
+    H = sp.csr_matrix(summed(binary64(H if sp.issparse(H) else np.asarray(H), "H", keep_integers=True), "H"))
     asym = H - H.conj().T
     if asym.nnz == 0 or float(abs(asym).max()) == 0.0:
         return H
@@ -294,8 +294,8 @@ class SpecOperator:
 def matrix_difference(A: sp.spmatrix, B: sp.spmatrix) -> Dict[str, float]:
     """Entrywise comparison with a rounding allowance for non-dyadic products. Matrices in a narrower floating format
     are converted exactly to binary64 first, so that repeated entries are summed in binary64 (precision.py)."""
-    A = summed(sp.csr_matrix(binary64(A if sp.issparse(A) else np.asarray(A), "A", keep_integers=True)), "A")
-    B = summed(sp.csr_matrix(binary64(B if sp.issparse(B) else np.asarray(B), "B", keep_integers=True)), "B")
+    A = sp.csr_matrix(summed(binary64(A if sp.issparse(A) else np.asarray(A), "A", keep_integers=True), "A"))
+    B = sp.csr_matrix(summed(binary64(B if sp.issparse(B) else np.asarray(B), "B", keep_integers=True), "B"))
     if A.shape != B.shape:
         return {"shape_match": False, "max_abs_diff": float("inf"), "pattern_match": False}
     D = (A - B).tocsr()

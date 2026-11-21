@@ -118,10 +118,10 @@ other analyses the treatment is the one each document states (not re-checked her
   (Risks and limits; VERDICTS.md, complex moduli). The record says so: it carries the separation as a float
   (`separation`), a note (`separation_note`) and `separation_rigorous: false`; its `certified` flag is unchanged (a
   known issue). The record is part of the sector composition (`compose.py`); no statement of `certify()` uses it.
-- Duplicate entries. For a sparse matrix in CSR, CSC, BSR or COO format, `abs_up` first sums duplicate entries in place
-  (`A.sum_duplicates()`, in the type of the data, as `abs(A)` does), and its moduli are those of the summed entries;
-  the exact sum of the duplicates can differ from the stored sum by a rounding, and no bound refers to it. A product
-  formed with A after the call uses the summed matrix, and these moduli bound its rounding. A product formed before
+- Duplicate entries. For a sparse matrix in CSR, CSC, BSR or COO format that is not canonical, `abs_up` first takes
+  its summed copy (`precision.summed`; before 3.3.0.dev0 it summed in place, `A.sum_duplicates()`, in the type of the
+  data and in stored order, as `abs(A)` does), and its moduli are those of the summed entries. A product formed with
+  the summed matrix is bounded by these moduli. A product formed before
   the call uses the stored entries, whose rounding these moduli do not bound, so a bound that combines the two is not
   valid for a matrix with duplicate entries. Direct calls of `davis_kahan.commutator_bound`, `sectors.audit_sector`,
   `correlations.compress_operator` and `eigenspace.certify_observable` did this before the change of 3.3.0.dev0 that
@@ -133,7 +133,9 @@ other analyses the treatment is the one each document states (not re-checked her
   becomes a copy with them summed, and every product, norm and modulus of the call refers to that summed matrix
   (`commutator_bound(H, S)` returns 1.4963257438397513; `tests/test_duplicate_entries.py`); `certify()` sums the
   private copy it makes of such an operator, isometry, observable or symmetry when it makes it. The statements then
-  concern the summed matrix, which can differ from the exact sum of the stored duplicates by the rounding of the sum.
+  concern the summed matrix, whose entry at each position is the correctly rounded exact sum of the stored entries
+  there (the exact sum for integers): it can differ from the exact sum by one rounding, and it is the same whatever
+  the format, the stored order or the entry point, and the same matrix that `matrix_sha256` hashes.
   Open: an `abs_up` that bounds the stored entries without summing them, valid for the unsummed matrix as well.
 - Earlier results. Certificates for complex data made before 3.3.0.dev0 rest on the counts h of the documents listed
   in section 3. Those counts are not established for `numpy.abs`, and the measured deficit of 2.47u exceeds h = 1 and
@@ -437,7 +439,7 @@ integers stepped up; a float for every scalar); the passes (equal to one-entry c
 Fortran-ordered, transposed and sliced input give the values of the C-ordered array, with temporaries below 12 MiB);
 zero entries on the unscaled branch; the FP-M items marked *tested*; real input, inf and nan, shapes, the elementwise
 identity used by the GPU spot check; `abs_up` on CSR, CSC, BSR, COO (and a 1-D `coo_array`), DIA, LIL and dense input,
-with duplicates summed in place and the format kept, and on integer and boolean sparse data (stepped up). For the
+with duplicates summed on a copy and the format kept, and on integer and boolean sparse data (stepped up). For the
 bounds that use the moduli it pins `abs_matvec`, the constant and moduli of `_rounding_bound` and of
 `rayleigh_interval` (bit for bit), the moduli of a block formed once, `fp.inf_norm_upper` bit for bit and in exact
 arithmetic on the three arguments (dense and sparse), `spec_invariants` (each modulus taken once, the same bounds),

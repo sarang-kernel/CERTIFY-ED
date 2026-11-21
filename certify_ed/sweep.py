@@ -104,7 +104,7 @@ def matrix_affinity_defect(Ha, Hb, dc: float, H1) -> float:
     bound of the computed difference plus the rounding of its three operations per entry, gamma_3 (|H_b| + |H_a| +
     |dc||H1|) entrywise. Data in a narrower format than binary64 are converted exactly first, before the conversion to
     CSR (precision.py)."""
-    Ha, Hb, H1 = (summed(sp.csr_matrix(binary64(M if sp.issparse(M) else np.asarray(M), name)), name)
+    Ha, Hb, H1 = (sp.csr_matrix(summed(binary64(M if sp.issparse(M) else np.asarray(M), name), name))
                   for M, name in ((Ha, "Ha"), (Hb, "Hb"), (H1, "H1")))
     g3 = 3 * U / (1 - 3 * U)
     diff = (Hb - Ha - dc * H1).tocsr()
@@ -209,7 +209,7 @@ def certified_sweep(spec_fn: Callable[[float], ModelSpec], couplings: Sequence[f
     V0 = sector_fn(specs[0], states) if sector_fn is not None else None
     V_full = None
     if V0 is not None:
-        V0 = summed(sp.csr_matrix(binary64(V0, "sector isometry")), "sector isometry")   # exact; summed
+        V0 = sp.csr_matrix(summed(binary64(V0, "sector isometry"), "sector isometry"))   # exact; summed
         if states is not None:
             full_idx, _ = full_state_set(specs[0]).index_of(states.states_in_order())
             P = sp.csr_matrix((np.ones(states.size), (full_idx, np.arange(states.size))), shape=(specs[0].dim, states.size))

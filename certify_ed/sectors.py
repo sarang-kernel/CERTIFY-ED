@@ -53,9 +53,9 @@ def audit_sector(H: sp.spmatrix, V: sp.spmatrix, Hs: sp.spmatrix, label: str = "
                  tol: float = 1e-10) -> SectorAudit:
     # exact binary64 copies of matrices in a narrower format (precision.py): the bounds count binary64 arithmetic
     # (widened before csr_matrix, which sums repeated entries of a coo matrix in the narrower format)
-    H = summed(sp.csr_matrix(binary64(H, "operator")), "operator")   # repeated entries summed on copies, before
-    V = summed(sp.csr_matrix(binary64(V, "sector isometry")), "sector isometry")   # any product (precision.summed)
-    Hs = summed(sp.csr_matrix(binary64(Hs, "sector block")), "sector block")
+    H = sp.csr_matrix(summed(binary64(H, "operator"), "operator"))   # repeated entries summed on copies, before
+    V = sp.csr_matrix(summed(binary64(V, "sector isometry"), "sector isometry"))   # any product (precision.summed)
+    Hs = sp.csr_matrix(summed(binary64(Hs, "sector block"), "sector block"))
     for M, name in ((H, "H"), (V, "V"), (Hs, "Hs")):
         require_binary64(M, f"audit_sector: {name}")           # fail closed (precision.py)
     ds = V.shape[1]
@@ -111,7 +111,8 @@ class DecompositionAudit:
 def audit_decomposition(H: sp.spmatrix, Vs: List[sp.spmatrix], Hss: List[sp.spmatrix],
                         labels: Optional[List[str]] = None, tol: float = 1e-10) -> DecompositionAudit:
     labels = labels or [f"sector_{i}" for i in range(len(Vs))]
-    H = summed(binary64(H, "operator"), "operator")             # exact; summed (precision.py)
+    H = summed(binary64(H, "operator"), "operator")             # exact; summed (precision.py), once for the call:
+    Vs = [summed(binary64(V, "sector isometry"), "sector isometry") for V in Vs]   # every check sees these copies
     Hss = [summed(binary64(M, "sector block"), "sector block") for M in Hss]
     audits = [audit_sector(H, V, Hs, lab, tol) for V, Hs, lab in zip(Vs, Hss, labels)]
     orth = audit_orthogonality(Vs)
@@ -184,7 +185,7 @@ def restrict_to_u1(spec, V, cache: Optional[dict] = None):
     Returns None otherwise (the caller then needs the full-space operator)."""
     from .basis import digit_sum, u1_state_set
     from .construct import build_bitwise, full_state_set
-    V = summed(sp.csr_matrix(binary64(V, "sector isometry")), "sector isometry")   # exact; summed (precision.py)
+    V = sp.csr_matrix(summed(binary64(V, "sector isometry"), "sector isometry"))   # exact; summed (precision.py)
     rows = np.unique(V.nonzero()[0])
     if rows.size == 0:
         return None

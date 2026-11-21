@@ -60,7 +60,7 @@ def arb_residual_radii(A, mu, X, prec: int = 128, lower: bool = False) -> np.nda
     old = flint.ctx.prec
     flint.ctx.prec = prec
     try:
-        A = summed(sp.csr_matrix(binary64(A, "operator")), "operator")   # exact; wider formats refused; summed
+        A = sp.csr_matrix(summed(binary64(A, "operator"), "operator"))   # exact; wider formats refused; summed
         X = binary64(np.asarray(X), "eigenvectors")
         if X.ndim == 1:
             X = X[:, None]
