@@ -208,8 +208,9 @@ def restrict_to_u1(spec, V, cache: Optional[dict] = None):
     if not np.all(found):
         return None
     Vc = V.tocoo()
-    pos = np.searchsorted(rows, Vc.row)
-    Vu = sp.csr_matrix((Vc.data, (idx[pos], Vc.col)), shape=(st.size, V.shape[1]))
+    nz = Vc.data != 0                                   # a stored zero (a cancelled sum) holds nothing: rows are those
+    pos = np.searchsorted(rows, Vc.row[nz])             # of V.nonzero(), so its row need not be among them
+    Vu = sp.csr_matrix((Vc.data[nz], (idx[pos], Vc.col[nz])), shape=(st.size, V.shape[1]))
     return Hu, Vu, st
 
 

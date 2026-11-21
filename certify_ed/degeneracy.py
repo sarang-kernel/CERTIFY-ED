@@ -61,6 +61,8 @@ def degeneracy_counts(A, enc, clusters: Sequence[Sequence[int]], method: str = "
                "distinct": bool(all(enc.groups[enc.group_of[i]].distinct for i in C))}
         if not rec["distinct"]:
             rec.update(status="INCONCLUSIVE", reason="cluster pairs not certified distinct (S2)")
+            if not np.all(np.isfinite(rad)):
+                rec["nonfinite_bound"] = True       # the S2 radii overflowed: S8 names the cause as S2 does
             out.append(rec)
             continue
         if not np.isfinite(JL) or not np.isfinite(JU):
