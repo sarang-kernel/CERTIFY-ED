@@ -429,13 +429,15 @@ def test_one_large_group_among_many_small_ones_is_linear():
 
 def test_every_group_size_across_block_boundaries(monkeypatch):
     """Groups of every size from 3 to 70 (both sides of the 64-value limit), each size spanning several blocks (the
-    block size patched to 257 values), and groups of 100 to 300 values: every summed entry is the exact rational sum's
-    correct rounding. Each group holds a cancelling pair of large parts, so a sum in stored order would lose the small
-    parts (pins the cut of a size into blocks, the limit and the math.fsum path above it)."""
+    block size patched to 257 values), groups of 100 to 300 values, and larger sizes shared by many groups (64 groups
+    of 65 and 70 of 100 values, vectorized; 63 of 66, below the shared count, by math.fsum): every summed entry is the
+    exact rational sum's correct rounding. Each group holds a cancelling pair of large parts, so a sum in stored order
+    would lose the small parts (pins the cut of a size into blocks, the limits and the math.fsum path)."""
     from certify_ed import precision
     monkeypatch.setattr(precision, "_GROUP_CHUNK", 257)
     rng = np.random.default_rng(13)
-    sizes = [k for k in range(3, 71) for _ in range(12)] + [int(x) for x in rng.integers(100, 301, 8)]
+    sizes = [k for k in range(3, 71) for _ in range(12)] + [int(x) for x in rng.integers(101, 301, 8)]
+    sizes += [65] * 52 + [100] * 70 + [66] * 51           # with the 12 above: 64 of 65, 63 of 66
     groups = []
     for k in sizes:
         b = 2.0 ** int(rng.integers(70, 90))

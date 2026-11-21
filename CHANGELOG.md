@@ -13,17 +13,18 @@ A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, CO
 summed on a copy at the start of every call, before any product and before any format conversion (`precision.summed`,
 applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
 one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
-entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64, and
-`math.fsum` for more and where the passes cannot decide) and for integer data the exact sum, so it does not depend on
-the format, the stored order of the entries or the entry point. Before, several public functions
-formed their products from the stored entries and took the moduli of the summed matrix (`fp.abs_up` summed in place):
-with entries that cancel, the rounding of those products was not covered. Example (`docs/proofs/fp_modulus-up.md`,
-section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold 2^53 and -2^53 + 2, and S =
-diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned 1.0000000000000024, below the exact ||[H, S]||_2 =
-1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper` read the stored values: two entries 1 at one
-position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector audits, the composition of sectors, the
-inertia backward error, the moments and the fidelity bound); it now measures the summed matrix, reads no value past
-nnz and no DIA padding. `fp.inf_norm_upper` and `fp.abs_up` no longer sum the caller's matrix in place.
+entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64 and for
+larger positions that share their number of entries with many others, and `math.fsum` for the rest and where the passes
+cannot decide) and for integer data the exact sum, so it does not depend on the format, the stored order of the entries
+or the entry point. Before, several public functions formed their products from the stored entries and took the moduli
+of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the rounding of those products was not
+covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0)
+positions each hold 2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned
+1.0000000000000024, below the exact ||[H, S]||_2 = 1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper`
+read the stored values: two entries 1 at one position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector
+audits, the composition of sectors, the inertia backward error, the moments and the fidelity bound); it now measures the
+summed matrix, reads no value past nnz and no DIA padding. `fp.inf_norm_upper` and `fp.abs_up` no longer sum the
+caller's matrix in place.
 
 Every site that sums uses this sum: the entry points, the private copies of `certify()`, `matrix_sha256` (so the hash
 in a certificate is the hash of the caller's matrix), the file readers, the QuSpin importer for a scipy matrix, the
@@ -47,17 +48,18 @@ holds nan for a nan or for both infinities and the infinity otherwise, whatever 
 
 Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; any product scipy
 forms; a COO built from arrays) is copied, sorted and checked for repeated positions on each call; `summed` trusts
-scipy's canonical flag. Positions with two entries take one addition, positions with three to 64 a few vectorized TwoSum
-passes, in blocks of groups of one size (so that time and memory grow with the number of stored entries), and
-`math.fsum` near a rounding boundary and for larger groups. Measured on the Windows reference host (best of three, with
-other work running; the ratios carry over, the times do not): a CSR with 4.0e6 stored entries, every entry stored as two
-halves, about 6 times the time of scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6
-positions, about 5 and 20 times scipy's `tocsr`; 1e5 positions of three entries and one of 2000 or of 1e5 entries, about
-9 times `tocsr`. The peak memory of `summed` is about 4 times the input in each case. `fp.max_nnz_per_row` still counts
-the stored entries of a row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper
-bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a certified quantity);
-`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse factorization
-now sum as well.
+scipy's canonical flag. Positions with two entries take one addition; positions with three to 64 entries, and larger
+ones up to 4096 when at least 64 positions share their number of entries, take a few vectorized TwoSum passes in blocks
+of positions with the same number of entries (so that time and memory grow with the number of stored entries), and
+`math.fsum` takes the rest and the sums near a rounding boundary. Measured on the Windows reference host in two series
+(best of three, one of them with other work running): a CSR with 4.0e6 stored entries, every entry stored as two halves,
+2 to 6 times the time of scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6 positions, 5
+to 20 times scipy's `tocsr`; 1e5 positions of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with
+100, 300 or 1000 entries at each position (5e6 stored), about 12 times, most of it the sort of the coordinates. The peak
+memory of `summed` is 2 to 5 times the input. `fp.max_nnz_per_row` still counts the stored entries of a row (a width at
+least that of the summed matrix, so the gamma factor it feeds stays an upper bound), and `corroborate.run_oracle` reads
+the matrix as given (an oracle, not a certified quantity); `eigenspace.rotation_spread` (a diagnostic),
+`eigenspace.commutes_diagonal` and the residual of the sparse factorization now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,

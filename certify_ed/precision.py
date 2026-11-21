@@ -323,27 +323,33 @@ def _exact_float_sum(v: np.ndarray) -> float:
 
 _U = 2.0 ** -53
 _GROUP_CHUNK = 1 << 22                                  # values per vectorized block (32 MiB of float64)
-_GROUP_VEC_MAX = 64                                     # larger groups take math.fsum one by one (linear, in C)
+_GROUP_VEC_MAX = 64                                     # groups of up to this many values are always vectorized
+_GROUP_VEC_SHARED = 64                                  # larger ones (up to _GROUP_VEC_CAP values) when this many
+_GROUP_VEC_CAP = 4096                                   # groups share their size; the rest take math.fsum
 
 
 def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:
     """The correctly rounded exact sum of each group v[starts[k] : starts[k] + counts[k]] of real binary64 values.
     Groups of one or two values: one addition (exact or correctly rounded, and commutative). Groups of three to
-    _GROUP_VEC_MAX values, vectorized over the groups of each size (a block holds groups of one size only, at most
-    _GROUP_CHUNK values, so the buffer is the values themselves): three passes of Knuth's TwoSum along each group
-    (error-free: the exact sum is kept) leave a leading value h and a remainder e; when e lies strictly inside the
-    rounding interval of h with the bound on its own rounding error, the correctly rounded sum is h. The other groups
-    (larger groups, a sum within that slack of a rounding boundary, h = 0, a value that is not finite, a partial sum
-    that overflows) take math.fsum's value."""
+    _GROUP_VEC_MAX values, and larger groups up to _GROUP_VEC_CAP values when at least _GROUP_VEC_SHARED groups have
+    the same size, are vectorized over the groups of each size (a block holds groups of one size only, at most
+    _GROUP_CHUNK values, so the buffer is the values themselves, and each pass over a column of a larger size covers
+    at least _GROUP_VEC_SHARED groups): three passes of Knuth's TwoSum along each group (error-free: the exact sum is
+    kept) leave a leading value h and a remainder e; when e lies strictly inside the rounding interval of h with the
+    bound on its own rounding error, the correctly rounded sum is h. The other groups (the remaining sizes, a sum within
+    that slack of a rounding boundary, h = 0, a value that is not finite, a partial sum that overflows) take
+    math.fsum's value."""
     s = np.add.reduceat(v, starts) if v.size else np.zeros(0)
     big = np.flatnonzero(counts >= 3)
-    for k in big[counts[big] > _GROUP_VEC_MAX].tolist():
-        s[k] = _exact_float_sum(v[starts[k]:starts[k] + counts[k]])
-    big = big[counts[big] <= _GROUP_VEC_MAX]
+    sizes, shared = np.unique(counts[big], return_counts=True)
     blocks = []
-    for kmax in np.unique(counts[big]).tolist():        # groups of one size per block: no padding
+    for kmax, g in zip(sizes.tolist(), shared.tolist()):
         same = big[counts[big] == kmax]
-        step = max(1, _GROUP_CHUNK // kmax)
+        if kmax > _GROUP_VEC_MAX and (g < _GROUP_VEC_SHARED or kmax > _GROUP_VEC_CAP):
+            for k in same.tolist():                     # one by one: linear, in C
+                s[k] = _exact_float_sum(v[starts[k]:starts[k] + kmax])
+            continue
+        step = max(1, _GROUP_CHUNK // kmax)             # groups of one size per block: no padding
         blocks += [(same[i:i + step], kmax) for i in range(0, same.size, step)]
     for grp, kmax in blocks:
         P = np.empty((grp.size, kmax), order="F")       # column-major: each pass walks contiguous columns
@@ -444,9 +450,9 @@ def summed(a, what: str = "matrix"):
     entries in stored order): a product formed from the stored entries of a matrix with repeated entries carries
     rounding errors of the size of the repeated entries, which the moduli of the summed matrix (fp.abs_up) need not
     bound, so every product, norm and modulus of a call refers to one matrix, the summed one
-    (docs/proofs/fp_modulus-up.md, section 1). Cost: a copy of the stored arrays, scipy's sort within rows, and one
-    vectorized pass per group; positions with three or more entries take a few vectorized TwoSum passes, and
-    math.fsum only near a rounding boundary."""
+    (docs/proofs/fp_modulus-up.md, section 1). Cost: a copy of the stored arrays, a sort of the positions (scipy's sort
+    within rows for CSR and CSC), and the sums of _exact_real_sums, whose memory is a small multiple of the stored
+    values."""
     if not needs_summing(a):
         return a
     fmt = a.format
