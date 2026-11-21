@@ -156,7 +156,8 @@ other analyses the treatment is the one each document states (not re-checked her
   INCONCLUSIVE (`NONFINITE_BOUND`; the residual bound and the radius are stored as ∞, never nan), and S3 counts
   nothing against it; `inertia_dense` gives no count (β = ∞, `conclusive` false); the variational record (V1 to V3)
   and the moment record (M1 to M3) are INCONCLUSIVE with `NONFINITE_BOUND`; the observable bound is ∞; the
-  non-Hermitian record (N1) and the pencil record (G2) are INCONCLUSIVE; `commutator_bound` and
+  non-Hermitian record (N1) and the pencil record (G2) are INCONCLUSIVE with `NONFINITE_BOUND` (their residual bounds
+  and radii stored as ∞; `tests/test_nonfinite_followups.py`); `commutator_bound` and
   `matrix_affinity_defect` return a non-finite bound. For this entry the moment, observable and affinity bounds and
   the backward error of `inertia_dense` overflow with `np.abs` as well; S2, V1, V2, N1, G2 and `commutator_bound`
   change because of the infinite modulus (checked on both sides of this change). The sector audits, `inertia_sparse`

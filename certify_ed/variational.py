@@ -371,6 +371,12 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                 upper = float(np.nextafter(upper, np.inf))
                 theta_rec = {"computed": float(th), "lower": float(th_lo), "upper": float(th_hi),
                              "residual_radius_stored": r_stored, "residual_radius": r, "model_shift": sigma}
+                for key in ("computed", "lower", "upper"):        # no nan in the record: a value that is not finite
+                    if not math.isfinite(theta_rec[key]):         # is stored as null, a radius as inf
+                        theta_rec[key] = None
+                for key in ("residual_radius_stored", "residual_radius"):
+                    if not math.isfinite(theta_rec[key]):
+                        theta_rec[key] = math.inf
                 rec["theta"] = theta_rec
                 if st.contraction_error > 0:
                     # Lemma 5: |theta(psi) - theta(psi_hat)| <= (2 r ||psi_hat|| e + (||H|| + |theta|) e^2) / (||psi_hat|| - e)^2
@@ -383,7 +389,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
                         dth = up((2 * r_stored * xn * e + (Hn + max(abs(th_lo), abs(th_hi))) * e * e) / ((xl - e) ** 2))
                     else:
                         dth = float("inf")
-                    rec["state"]["theta_source_vs_contracted"] = float(dth)
+                    rec["state"]["theta_source_vs_contracted"] = float(dth) if math.isfinite(dth) else math.inf
                     rec["state"]["note"] = ("the statements are about the contracted vector psi_hat as stored; the source "
                                             "MPS psi has ||psi_hat - psi|| <= contraction_error and a Rayleigh quotient "
                                             "within theta_source_vs_contracted of theta(psi_hat) (Lemma 5)")

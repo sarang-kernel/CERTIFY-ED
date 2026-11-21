@@ -156,8 +156,15 @@ def pencil_residual_radii(A: np.ndarray, B: np.ndarray, mu: np.ndarray, X: np.nd
         # denominator sqrt(beta_c x^H B x) rounded down: product and sqrt, (1 - 4u) covers both
         den = np.sqrt(beta_c * np.maximum(xb_lo, 0.0)) * (1 - 4 * U)
         rad = np.where(den > 0, s_up / den, np.inf)
-    rad = np.array([up(v) if math.isfinite(v) else v for v in rad])
-    return {"residual_norm": s_fl, "residual_upper": s_up, "xBx": xb_val, "xBx_lower": xb_lo, "radius": rad}
+    # a bound that is not finite (an overflow, or inf * 0 = nan) is stored as inf: no nan reaches the record
+    rad = np.array([up(v) if math.isfinite(v) else math.inf for v in rad])
+    xb_nonfinite = ~np.isfinite(xb_lo)            # x^H B x or its error overflowed: an overflow, not a small vector
+    s_up = np.where(np.isfinite(s_up), s_up, np.inf)
+    s_fl = np.where(np.isnan(s_fl), np.inf, s_fl)
+    xb_val = np.where(np.isnan(xb_val), np.inf, xb_val)
+    xb_lo = np.where(np.isnan(xb_lo), -np.inf, xb_lo)
+    return {"residual_norm": s_fl, "residual_upper": s_up, "xBx": xb_val, "xBx_lower": xb_lo, "radius": rad,
+            "xBx_nonfinite": xb_nonfinite}
 
 
 # ------------------------------------------------------------------------------------------------ G3
@@ -299,9 +306,19 @@ def certify_generalized(A, B, eigenvalues, eigenvectors, kind: str = "lowest", *
                                  hypotheses=hyps, assumptions=assume))
     else:
         bad = [i for i in range(k) if not math.isfinite(rad[i])]
-        statements.append(_vstmt("G2.eigenpairs", "INCONCLUSIVE",
-                                 f"x^H B x could not be bounded away from zero for pairs {bad} (vectors too small or B-norm unresolved)",
-                                 {"n_pairs": k, "unresolved": bad}, reason_code="NOT_APPLICABLE", assumptions=assume))
+        unresolved = [i for i in bad if not rr["xBx_nonfinite"][i] and not rr["xBx_lower"][i] > 0]
+        over = [i for i in bad if i not in unresolved]
+        parts = []
+        if over:
+            parts.append(f"the radius of pairs {over[:20]} is not finite (a bound of the floating-point accounting "
+                         f"overflowed)")
+        if unresolved:
+            parts.append(f"x^H B x could not be bounded away from zero for pairs {unresolved[:20]} (vectors too small "
+                         f"or B-norm unresolved)")
+        statements.append(_vstmt("G2.eigenpairs", "INCONCLUSIVE", "; ".join(parts),
+                                 {"n_pairs": k, "unresolved": unresolved, "overflowed": over},
+                                 reason_code="NONFINITE_BOUND" if over else "UNRESOLVED_VECTOR_NORM",
+                                 assumptions=assume))
 
     # ---- G3
     if kind == "subset":

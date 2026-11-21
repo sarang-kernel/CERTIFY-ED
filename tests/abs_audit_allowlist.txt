@@ -92,7 +92,7 @@ certify_ed/fp.py	_scan_chunk	np.abs(comp)	real data only
 certify_ed/fp.py	min_nonzero_magnitude	np.abs(comp)	real data only
 certify_ed/fp.py	exact_sum	np.abs(T)	real data only
 certify_ed/fp.py	exact_sum	abs(c)	real data only
-certify_ed/fp.py	_two_product_split	np.abs(a * b)	real data only
+certify_ed/fp.py	_two_product_split	np.abs(prod)	real data only
 certify_ed/fp.py	_two_product_split	np.abs(a)	real data only
 certify_ed/fp.py	_two_product_split	np.abs(b)	real data only
 certify_ed/fp.py	exact_dot	abs(re)	real data only
