@@ -428,16 +428,27 @@ def test_one_large_group_among_many_small_ones_is_linear():
 
 
 def test_every_group_size_across_block_boundaries(monkeypatch):
-    """Groups of every size from 3 to 70 (both sides of the 64-value limit; with the block size patched to 257 values
-    the sizes from 22 up span several blocks), groups of 100 to 300 values, and larger sizes shared by many groups (64 groups
-    of 65 and 70 of 100 values, vectorized; 63 of 66, below the shared count, by math.fsum): every summed entry is the
-    exact rational sum's correct rounding. Each group holds a cancelling pair of large parts, so a sum in stored order
-    would lose the small parts (pins the cut of a size into blocks, the limits and the math.fsum path)."""
+    """Groups of every size from 3 to 70 (both sides of the 64-value limit), groups of 101 to 199 values, and larger
+    sizes shared by many groups, with the limits patched small (blocks of 257 values, so that the sizes from 22 up span
+    several blocks; vectorized above 64 values when 64 groups share a size, up to 200 values): 64 groups of 65 and 70 of
+    100 values take the vectorized path, 63 of 66 (below the shared count) and 64 of 250 (above the cap) math.fsum.
+    Every summed entry is the exact rational sum's correct rounding, and the route of each size is checked by counting
+    what reaches the math.fsum path. Each group holds a cancelling pair of large parts, so a sum in stored order would
+    lose the small parts (pins the cut of a size into blocks, the limits and the math.fsum path)."""
     from certify_ed import precision
     monkeypatch.setattr(precision, "_GROUP_CHUNK", 257)
+    monkeypatch.setattr(precision, "_GROUP_VEC_SHARED", 64)
+    monkeypatch.setattr(precision, "_GROUP_VEC_CAP", 200)
+    calls = []
+    inner = precision._fsum_groups
+
+    def spy(v, starts, k):
+        calls.append((k, int(starts.size)))
+        return inner(v, starts, k)
+    monkeypatch.setattr(precision, "_fsum_groups", spy)
     rng = np.random.default_rng(13)
-    sizes = [k for k in range(3, 71) for _ in range(12)] + [int(x) for x in rng.integers(101, 301, 8)]
-    sizes += [65] * 52 + [100] * 70 + [66] * 51           # with the 12 above: 64 of 65, 63 of 66
+    sizes = [k for k in range(3, 71) for _ in range(12)] + [int(x) for x in rng.integers(101, 200, 8)]
+    sizes += [65] * 52 + [100] * 70 + [66] * 51 + [250] * 64   # with the 12 above: 64 of 65, 63 of 66
     groups = []
     for k in sizes:
         b = 2.0 ** int(rng.integers(70, 90))
@@ -451,7 +462,8 @@ def test_every_group_size_across_block_boundaries(monkeypatch):
     assert np.array_equal(got, ref), np.flatnonzero(got != ref)[:5]
     naive = np.add.reduceat(vals, np.r_[0, np.cumsum(sizes)[:-1]])
     assert np.count_nonzero(naive != ref) > len(groups) // 2         # the stored-order sums are wrong
-
+    whole = {k for k, n in calls if n >= 63}                        # a size sent whole to math.fsum
+    assert {66, 250} <= whole and not whole & {65, 100}, calls
 
 @pytest.mark.parametrize("size", [3, 5, 70])
 def test_non_finite_groups_of_three_or_more(size):

@@ -323,27 +323,31 @@ def _exact_float_sum(v: np.ndarray) -> float:
 
 def _fsum_groups(v: np.ndarray, starts: np.ndarray, k: int) -> np.ndarray:
     """_exact_float_sum of each group v[st : st + k], st in `starts` (groups of one size), with the per-group numpy
-    work done once for all of them: one gather, one finiteness test, one conversion to Python floats, then math.fsum
-    on each row (_exact_float_sum for a row with a value that is not finite or whose partial sums overflow)."""
-    rows = v[starts[:, None] + np.arange(k)]
-    fin = np.isfinite(rows).all(axis=1).tolist()
+    work done once per slice of at most _FSUM_ROWS groups (and _GROUP_CHUNK values): one gather, one finiteness test,
+    one conversion to Python floats, then math.fsum on each row (_exact_float_sum for a row with a value that is not
+    finite or whose partial sums overflow)."""
     out = []
-    for i, (r, f) in enumerate(zip(rows.tolist(), fin)):
-        if f:
-            try:
-                out.append(math.fsum(r))
-                continue
-            except OverflowError:
-                pass
-        out.append(_exact_float_sum(rows[i]))
+    step = max(1, min(_FSUM_ROWS, _GROUP_CHUNK // k))       # bounded buffers, as for the vectorized blocks
+    for lo in range(0, starts.size, step):
+        rows = v[starts[lo:lo + step, None] + np.arange(k)]
+        fin = np.isfinite(rows).all(axis=1).tolist()
+        for i, (r, f) in enumerate(zip(rows.tolist(), fin)):
+            if f:
+                try:
+                    out.append(math.fsum(r))
+                    continue
+                except OverflowError:
+                    pass
+            out.append(_exact_float_sum(rows[i]))
     return np.array(out, dtype=np.float64)
 
 
 _U = 2.0 ** -53
 _GROUP_CHUNK = 1 << 22                                  # values per vectorized block (32 MiB of float64)
 _GROUP_VEC_MAX = 64                                     # groups of up to this many values are always vectorized
-_GROUP_VEC_SHARED = 64                                  # larger ones (up to _GROUP_VEC_CAP values) when this many
-_GROUP_VEC_CAP = 4096                                   # groups share their size; the rest take math.fsum
+_GROUP_VEC_SHARED = 512                                 # larger ones (up to _GROUP_VEC_CAP values) when this many
+_GROUP_VEC_CAP = 4096                                   # groups share their size (break-even near 500); the rest
+_FSUM_ROWS = 1 << 16                                    # take math.fsum, at most this many groups at a time
 
 
 def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:

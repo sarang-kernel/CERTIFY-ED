@@ -49,19 +49,21 @@ holds nan for a nan or for both infinities and the infinity otherwise, whatever 
 Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; any product scipy
 forms; a COO built from arrays) is copied, sorted and checked for repeated positions on each call; `summed` trusts
 scipy's canonical flag. Positions with two entries take one addition; positions with three to 64 entries, and larger
-ones up to 4096 when at least 64 positions share their number of entries, take a few vectorized TwoSum passes in blocks
-of positions with the same number of entries (so that time and memory grow with the number of stored entries), and
-`math.fsum` takes the rest and the sums near a rounding boundary. Measured on the Windows reference host in two series
-(best of three, one of them with other work running): a CSR with 4.0e6 stored entries, every entry stored as two halves,
-2 to 6 times the time of scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6 positions, 5
-to 20 times scipy's `tocsr`; 1e5 positions of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with
-100, 300 or 1000 entries at each position (5e6 stored), about 12 times, most of it the sort of the coordinates. An input
-made only of positions whose sums lie next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding
-1, 2^-53 and 2^-106), takes about 30 times `tocsr`, about 3 µs a position. The peak memory of `summed` is 2 to 5 times
-the input. `fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so
-the gamma factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not
-a certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of
-the sparse factorization now sum as well.
+ones up to 4096 when at least 512 positions share their number of entries (below that the passes cost more than
+`math.fsum`), take a few vectorized TwoSum passes in blocks of positions with the same number of entries (so that time
+and memory grow with the number of stored entries), and `math.fsum` takes the rest and the sums near a rounding
+boundary. Measured on the Windows reference host in two series (best of three, one of them with other work running): a
+CSR with 4.0e6 stored entries, every entry stored as two halves, 2 to 6 times the time of scipy's copy and
+`sum_duplicates`; a COO with four entries at each of 1e5 and 1e6 positions, 5 to 20 times scipy's `tocsr`; 1e5 positions
+of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with 100, 300 or 1000 entries at each position
+(5e6 stored), about 12 times, most of it the sort of the coordinates. An input made only of positions whose sums lie
+next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding 1, 2^-53 and 2^-106), takes about 30
+to 50 times `tocsr`, 3 to 7 µs a position. The peak memory of `summed` is 2 to 5 times the input, and 6 times for the
+input made only of positions next to a rounding boundary (`math.fsum` takes the positions in slices of at most 2^16).
+`fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so the gamma
+factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a
+certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the
+sparse factorization now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
