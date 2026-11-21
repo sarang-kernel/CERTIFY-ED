@@ -13,8 +13,9 @@ A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, CO
 summed on a copy at the start of every call, before any product and before any format conversion (`precision.summed`,
 applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
 one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
-entries (`math.fsum`, each real part on its own; one addition for two entries) and for integer data the exact sum, so
-it does not depend on the format, the stored order of the entries or the entry point. Before, several public functions
+entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64, and
+`math.fsum` for more and where the passes cannot decide) and for integer data the exact sum, so it does not depend on
+the format, the stored order of the entries or the entry point. Before, several public functions
 formed their products from the stored entries and took the moduli of the summed matrix (`fp.abs_up` summed in place):
 with entries that cancel, the rounding of those products was not covered. Example (`docs/proofs/fp_modulus-up.md`,
 section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0) positions each hold 2^53 and -2^53 + 2, and S =
@@ -68,12 +69,13 @@ products were covered and the certificates change only in the last bits; the sta
 An operator with repeated entries certified with its model is now served by the device (before: `|A| does not share
 the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above, `fro_upper`, the independence of the
 format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
-integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on 6000 random groups, the
-integer routes, a shape of 2^33 x 2^33, and a sweep over the functions of the precision registry with every matrix
-stored as three parts that cancel, in COO and in CSR, against the summed matrices, which fails when an entry point
-skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and
-`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1957 passed, 82 skipped, 0 failed. The computational
-source hash changes.
+integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on
+6000 random groups, the exact rational sum on 7000 groups at or next to a rounding midpoint, one large group among
+many small ones, complex sums, `ozaki.split_rows`, the QuSpin importer, the integer routes, a shape of 2^33 x 2^33, and
+a sweep over the functions of the precision registry with every matrix stored as three parts that cancel, in COO and
+in CSR, against the summed matrices, which fails when an entry point skips `summed` or sums after a conversion);
+`tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
+hash changes.
 
 ### Result documents moved under docs/
 

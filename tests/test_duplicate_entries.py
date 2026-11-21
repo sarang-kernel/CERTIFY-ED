@@ -333,6 +333,149 @@ def test_the_sum_is_math_fsum_for_random_groups():
         assert np.array_equal(got, ref), np.flatnonzero(got != ref)[:5]
 
 
+def _correct_rounding(parts) -> float:
+    """The correctly rounded exact sum of binary64 values, by rational arithmetic (inf beyond the range)."""
+    s = sum(Fraction(x) for x in parts)
+    try:
+        return float(s)
+    except OverflowError:
+        return float("inf") if s > 0 else float("-inf")
+
+
+def _midpoint_groups(rng, count):
+    """Groups whose exact sum is a midpoint between two floats, or next to one, with two or more nonzero parts left
+    after the leading value: x + half an ulp (+- a part far below the ulp of the half), x + two quarters, a power of
+    two minus a quarter of its ulp (its lower gap is half the upper one), the same behind one or several cancelling
+    pairs of large parts (after the passes large parts can remain, and the remainder sum then rounds), and the largest
+    float plus half its ulp (the overflow threshold)."""
+    big = np.finfo(float).max
+    out = []
+    for k in range(count):
+        e = int(rng.integers(-60, 61))
+        x = (1.0 + float(rng.integers(0, 2 ** 52)) * 2.0 ** -52) * 2.0 ** e * float(rng.choice([1, -1]))
+        half = np.spacing(abs(x)) / 2.0 * np.sign(x)
+        tiny = half * 2.0 ** -int(rng.integers(54, 200)) * float(rng.choice([1, -1]))
+        kind = k % 10
+        if kind == 0:
+            g = [x, half, tiny]
+        elif kind == 1:
+            g = [x, half / 2, half / 2]
+        elif kind == 2:
+            g = [x, half / 2, half / 4, half / 4, tiny]
+        elif kind == 3:
+            p = 2.0 ** e * float(rng.choice([1, -1]))
+            q = -np.spacing(abs(p)) / 4.0 * np.sign(p)
+            g = [p, q, q * 2.0 ** -int(rng.integers(54, 200)) * float(rng.choice([1, -1]))]
+        elif kind == 4:
+            b = 2.0 ** int(rng.integers(100, 400)) * float(rng.choice([1, -1]))
+            g = [b, -b, x, half, tiny]
+        elif kind == 5:
+            g = [x, half, tiny, -tiny / 2, tiny / 4]
+        elif kind == 6:
+            u = big - np.nextafter(big, 0.0)              # the ulp of the largest float
+            g = [big, u / 4, u / 4] + ([] if k % 20 == 6 else [-u * 2.0 ** -60])
+        else:                                             # several large cancelling pairs: large parts can remain
+            bs = [2.0 ** int(rng.integers(60, 400)) * float(rng.choice([1, -1])) for _ in range(int(rng.integers(2, 5)))]
+            g = [x, half, tiny] + bs + [-b for b in bs]
+        out.append([g[i] for i in rng.permutation(len(g))])
+    return out
+
+
+def test_the_sum_is_the_correct_rounding_next_to_a_midpoint():
+    """Groups at or next to a rounding midpoint, with several parts left after the leading value (where accepting the
+    vectorized candidate too early gives the wrong neighbour), in COO and CSR: every summed entry equals the correctly
+    rounded exact rational sum. Pins the check that decides when the TwoSum candidate is the correct rounding (its
+    slack, its strict comparisons with both half-gaps, the single-remainder case and the gap at the largest float)."""
+    rng = np.random.default_rng(11)
+    groups = _midpoint_groups(rng, 10000)
+    ref = np.array([_correct_rounding(g) for g in groups])
+    rows = np.repeat(np.arange(len(groups)), [len(g) for g in groups])
+    vals = np.array([x for g in groups for x in g])
+    n = len(groups)
+    C = sp.coo_matrix((vals, (rows, np.zeros(rows.size, int))), shape=(n, 1))
+    indptr = np.r_[0, np.cumsum([len(g) for g in groups])]
+    R = sp.csr_matrix((vals, np.zeros(rows.size, int), indptr), shape=(n, 1))
+    for M in (C, R):
+        with np.errstate(over="ignore"):
+            got = summed(M).toarray().ravel()
+        bad = np.flatnonzero(got != ref)
+        assert bad.size == 0, [(groups[i], got[i], ref[i]) for i in bad[:3]]
+
+
+def test_one_large_group_among_many_small_ones_is_linear():
+    """One position with 2000 parts and one with 100000 among 20000 positions of three parts: the sums are the exact
+    roundings and the memory stays near the size of the values (before: a buffer of positions x largest group, 3 GB
+    for the 2000 parts and a MemoryError for the 100000)."""
+    import math
+    import tracemalloc
+    rng = np.random.default_rng(5)
+    sizes = np.r_[np.full(20000, 3), 2000, 100000]
+    rows = np.repeat(np.arange(sizes.size), sizes)
+    vals = rng.standard_normal(rows.size) * 10.0 ** rng.integers(-8, 9, rows.size)
+    perm = rng.permutation(rows.size)
+    C = sp.coo_matrix((vals[perm], (rows[perm], np.zeros(rows.size, int))), shape=(sizes.size, 1))
+    starts = np.r_[0, np.cumsum(sizes)[:-1]]
+    ref = np.array([math.fsum(vals[s:s + k].tolist()) for s, k in zip(starts, sizes)])
+    tracemalloc.start()
+    try:
+        got = summed(C).toarray().ravel()
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert np.array_equal(got, ref)
+    assert peak < 64 * 2 ** 20, peak / 2 ** 20
+
+
+def test_complex_sums_keep_each_part():
+    """The real and the imaginary sums are stored as they are: an infinite imaginary sum leaves the real sum 6 (before:
+    1j * inf made it nan), and two parts -0.0 + 1j keep the real sign -0.0."""
+    C = sp.coo_matrix((np.array([1 + 0j, 2 + 1j, complex(3.0, np.inf), complex(-0.0, 1.0), complex(-0.0, 1.0)]),
+                       (np.array([0, 0, 0, 1, 1]), np.zeros(5, int))), shape=(2, 1))
+    with np.errstate(invalid="ignore"):
+        S = summed(C)
+    got = S.data[np.argsort(S.row)]                          # stored values (toarray would add them to +0.0)
+    assert got[0].real == 6.0 and got[0].imag == np.inf
+    assert got[1].real == 0.0 and np.signbit(got[1].real) and got[1].imag == 2.0
+
+
+def test_split_rows_sums_and_leaves_the_caller_as_given():
+    """ozaki.split_rows of a COO with three parts per entry equals that of the summed matrix, and an unsorted CSR
+    keeps its arrays (before: sort_indices on the caller's matrix)."""
+    from certify_ed.ozaki import split_rows
+    rng = np.random.default_rng(3)
+    A = sp.random(30, 30, density=0.2, random_state=4, format="coo")
+    parts = [A.data * 0.5 + 2.0 ** 30, A.data * 0.5, -(2.0 ** 30) + 0.0 * A.data]
+    C = sp.coo_matrix((np.concatenate(parts), (np.tile(A.row, 3), np.tile(A.col, 3))), shape=A.shape)
+    a, b = split_rows(C, 20), split_rows(summed(C), 20)
+    assert a.k == b.k and all((x != y).nnz == 0 for x, y in zip(a.real, b.real))
+    U = sp.csr_matrix(A)
+    order = np.concatenate([rng.permutation(np.arange(s, e)) for s, e in zip(U.indptr[:-1], U.indptr[1:])])
+    U = sp.csr_matrix((U.data[order], U.indices[order], U.indptr.copy()), shape=U.shape)
+    U.has_sorted_indices = False
+    before = _arrays(U)
+    split_rows(U, 20)
+    assert _unchanged(U, before)
+
+
+def test_claim_from_quspin_sums_a_scipy_operator():
+    """claim_from_quspin given a scipy COO with three parts per entry stores the summed matrix (the exact rounding at
+    each position), not one added in stored order, and leaves the caller's arrays as given."""
+    pytest.importorskip("quspin")
+    from quspin.basis import spin_basis_1d
+
+    from certify_ed.importers import claim_from_quspin
+    spec = ce.heisenberg_chain(6)
+    H = ce.build_bitwise(spec).tocoo()
+    big = 2.0 ** 60
+    C = sp.coo_matrix((np.r_[np.full(H.nnz, big), H.data, np.full(H.nnz, -big)],
+                       (np.tile(H.row, 3), np.tile(H.col, 3))), shape=H.shape)
+    before = tuple(np.array(x, copy=True) for x in (C.data, C.row, C.col))
+    w, V = np.linalg.eigh(H.toarray())
+    claim, _ = claim_from_quspin(C, spin_basis_1d(6, pauli=0), spec.to_quspin_static(), w[:2], V[:, :2])
+    assert (sp.csr_matrix(claim.operator) != summed(C).tocsr()).nnz == 0
+    assert all(np.array_equal(x, y) for x, y in zip(before, (C.data, C.row, C.col)))
+
+
 def test_binary64_sums_sparse_integers_exactly_on_every_route():
     """Integer sparse data reach binary64 through the integer sum: [2^53, 1] at one position (exact sum 2^53 + 1, not a
     binary64 number) is refused on the integer-keeping and on the converting routes alike (before: the converting
@@ -364,7 +507,6 @@ def test_summed_groups_positions_of_any_shape():
     S = summed(C)
     got = sorted(zip(S.row.tolist(), S.col.tolist(), S.data.tolist()))
     assert got == [(0, 5, 8.0), (2 ** 31, 5, 1.0)]
-
 
 
 def test_commutes_diagonal_reads_the_summed_matrix():
