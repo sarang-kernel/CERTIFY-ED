@@ -560,6 +560,23 @@
               "type": "null"
             }
           ]
+        },
+        "dropped_imaginary_parts": {
+          "type": "object",
+          "required": [
+            "count",
+            "max_abs"
+          ],
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_abs": {
+              "$ref": "#/$defs/number_or_special"
+            }
+          },
+          "description": "present when the claimed values were complex with finite nonzero imaginary parts: the statements concern the real parts (as in 3.x); how many were dropped and the largest modulus"
         }
       },
       "if": {

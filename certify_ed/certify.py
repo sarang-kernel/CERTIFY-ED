@@ -143,7 +143,8 @@ class Options:
     cluster_tol: float = 0.0                 # claimed values closer than this form one cluster (S4)
     observables: Dict[str, Any] = field(default_factory=dict)       # name -> operator in claim space
     symmetries: Dict[str, Tuple[np.ndarray, Optional[float]]] = field(default_factory=dict)
-    #   name -> (diagonal of S in the claim space, lattice spacing of its eigenvalues or None)
+    #   name -> (diagonal of S in the claim space, lattice spacing of its eigenvalues or None), as a tuple, a list or a
+    #   mapping {0: ..., 1: ...}; an iterator is read once, when certify() starts (pass a tuple to reuse the Options)
     corroborate: Sequence[str] = ()
     store_eigenvectors: bool = False
     probe_vectors: int = 3
@@ -1025,9 +1026,12 @@ def _options_as_given(opts: Options, own) -> Options:
                 return v
             S_own = own(v[0], what)
             return v if S_own is v[0] else {**v, 0: S_own}
-        if isinstance(v, Iterator):            # read once (a generator): its items, so that S is owned and recorded
+        if isinstance(v, Iterator):            # read once, here (a generator): its items, so that S is owned and recorded
             items = tuple(v)
-            return (own(items[0], what), *items[1:]) if items else items
+            if not items:
+                raise ValueError(f"{what}: an empty iterator (an entry is (S, lattice[, allowed]); an iterator is read "
+                                 "once, so pass a tuple to reuse the Options)")
+            return (own(items[0], what), *items[1:])
         try:
             S = v[0]
             rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
@@ -1652,7 +1656,12 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                     O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
                     ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
                 corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
-                for name, (sdiag, lattice) in opts.symmetries.items():
+                for name, ent in opts.symmetries.items():
+                    # (S_diagonal, lattice), read by index as labels_hook reads the approximate symmetries, so that
+                    # a mapping {0: S, 1: lattice} (the private copy keeps its keys) is read as the pair it holds
+                    if isinstance(ent, (str, bytes)) or not (isinstance(ent, Mapping) or len(ent) == 2):
+                        raise ValueError(f"options.symmetries[{name}] must be (S_diagonal, lattice)")
+                    sdiag, lattice = ent[0], ent[1]
                     if isinstance(sdiag, str) and sdiag == "su2":
                         _total_spin(ec, X, name, spec, claim, rec)
                         continue
@@ -1887,11 +1896,19 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 ev8 = {"clusters": recs}
                 if exact_note is not None:
                     ev8["exact_bracket"] = exact_note
-                # a bracketing count refused because a bound overflowed names the cause, as S3 does
-                code8 = ("NONFINITE_BOUND" if st8 == "INCONCLUSIVE" and any(
-                    r.get("nonfinite_bound") or any(isinstance(c, dict) and c.get("nonfinite_bound")
-                                                    for c in (r.get("counts") or []))
-                    for r in recs if r.get("status") == "INCONCLUSIVE") else None)
+                # a bracketing count refused because a bound overflowed names the cause, as S3 does; a cluster that S2
+                # did not certify distinct because a radius is not finite takes S2's reason code (an overflow, or a
+                # vector norm binary64 does not resolve)
+                incon8 = [r for r in recs if r.get("status") == "INCONCLUSIVE"]
+                s2_code = next((s["evidence"].get("reason_code") for s in statements
+                                if s["id"] == "S2.eigenpairs" and isinstance(s.get("evidence"), dict)), None)
+                code8 = None
+                if st8 == "INCONCLUSIVE" and any(
+                        r.get("nonfinite_bound") or any(isinstance(c, dict) and c.get("nonfinite_bound")
+                                                        for c in (r.get("counts") or [])) for r in incon8):
+                    code8 = "NONFINITE_BOUND"
+                elif st8 == "INCONCLUSIVE" and any(r.get("radius_not_finite") for r in incon8):
+                    code8 = s2_code if s2_code in ("NONFINITE_BOUND", "UNRESOLVED_VECTOR_NORM") else "NONFINITE_BOUND"
                 statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0,
                                         reason_code=code8))
 
@@ -1913,6 +1930,11 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                  "accuracy_target": claim.accuracy_target,
                  "eigenvalues": mu.tolist(),
                  "eigenvectors_sha256": array_sha256(X) if X is not None else None}
+    lam_given = np.asarray(claim.eigenvalues)
+    if lam_given.dtype.kind == "c":              # the statements concern the real parts (as in 3.x): say what was dropped
+        im = lam_given.imag[np.isfinite(lam_given.imag) & (lam_given.imag != 0)]
+        if im.size:
+            claim_rec["dropped_imaginary_parts"] = {"count": int(im.size), "max_abs": float(np.max(np.abs(im)))}
     not_verified = [
         "that the model specification is the Hamiltonian the authors intend (only producer operator == spec is checked)",
         "correctness of the producer's code in general (only this result is checked)",

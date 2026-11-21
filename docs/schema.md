@@ -114,6 +114,7 @@ no non-finite numbers; `_jsonable` writes them as strings). All SHA-256 values a
 | `accuracy_target` | number or null | the producer's claimed absolute accuracy (S2 FAILED when a radius exceeds it) |
 | `eigenvalues` | array of number | the claimed values, in the claim's order |
 | `eigenvectors_sha256` | sha256 or null | hash of the eigenvector array (whether or not it was stored) |
+| `dropped_imaginary_parts` | object, optional | `count` and `max_abs` of the finite nonzero imaginary parts of complex claimed values; the statements concern the real parts, as in 3.x (a non-finite imaginary part makes the value non-finite) |
 
 ### `statements[]`
 

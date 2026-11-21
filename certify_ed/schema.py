@@ -248,7 +248,13 @@ def _certificate_schema() -> dict:
                     "accuracy_target": {"type": ["number", "null"]},
                     "eigenvalues": {"type": "array", "items": {"type": "number"},
                                     "description": "the claimed eigenvalues in the claim's order (finite)"},
-                    "eigenvectors_sha256": NULLABLE_SHA256},
+                    "eigenvectors_sha256": NULLABLE_SHA256,
+                    "dropped_imaginary_parts": {
+                        "type": "object", "required": ["count", "max_abs"],
+                        "properties": {"count": {"type": "integer", "minimum": 1}, "max_abs": num},
+                        "description": "present when the claimed values were complex with finite nonzero imaginary "
+                                       "parts: the statements concern the real parts (as in 3.x); how many were "
+                                       "dropped and the largest modulus"}},
                 "if": {"properties": {"kind": {"const": "window"}}},
                 "then": {"required": ["window"], "properties": {"window": {"$ref": "#/$defs/interval"}}}},
             "statement": {
