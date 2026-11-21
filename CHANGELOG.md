@@ -98,10 +98,16 @@ is a binary64 number: with BIG the largest binary64 number, `exact_dot([BIG], [1
 BIG. `fp.exact_sum` gave nan when only the partial sums of `math.fsum` overflow (BIG + BIG - BIG, for example); it now
 forms the exact sum in integers on the 2^-1074 grid and rounds it once (`fp._wide_sum`), and gives nan only when the
 exact sum rounds beyond the range. Its cascade accepted its float result h = +-BIG with an infinite gap on the overflow
-side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). For inputs below these
-thresholds the arithmetic is unchanged. No statement changes: a nan or inf value was no statement (INCONCLUSIVE with
-NONFINITE_BOUND), and the error bounds of the callers covered the gap at +-BIG. Function results change at the top of
-the range: `enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan.
+side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). Wherever the previous code
+gave finite values the results are bit-identical (the rescaled splits are exact as the unscaled ones were, and the
+complex error term keeps the form 2u(|Re s| + |Im s|) where that sum is finite), except that a sum at or beyond the
+midpoint BIG + 2^970 that the cascade accepted as +-BIG is now nan. Statements change only where an inner product was
+the one quantity that overflowed: for a trial vector whose squared norm lies within about 2^-25 of BIG (x = sqrt(BIG)
+(1 - 2^-30) e_1 with H = diag(1, 2, 3), for example), V1 and V2 of `certify_variational` and G2 and G3 of
+`certify_generalized` are now CERTIFIED, with bounds that contain the exact eigenvalue; they were INCONCLUSIVE with
+NONFINITE_BOUND. No statement changes from CERTIFIED. Above about 2^512 the norm bounds of S2, S3 and the variational
+statements overflow first, so those inputs stay INCONCLUSIVE as before. Function results change at the top of the
+range: `enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan.
 `docs/proofs/int05_underflow.md`: Lemma U2 stated its bound "for all inputs"; the statement is narrowed, and Lemma U2b
 covers the top of the range (UNVERIFIED, D-12; counter U2b of `docs/proofs/verify_int05_underflow.py`, run in
 `docs/proofs/runs/int05_underflow_2026-11-21.txt`). Tests: `tests/test_exact_dot_range.py`.

@@ -305,7 +305,8 @@ def _compressed_with_repeats(a):
 
 def _exact_float_sum(v: np.ndarray) -> float:
     """The correctly rounded exact sum of the binary64 values v: math.fsum, or the exact rational sum where fsum's
-    partial sums overflow (inf when the exact sum is beyond the range). With a value that is not finite the result is
+    partial sums overflow (inf when the exact sum is beyond the range: the summed entry is then an infinite entry, as
+    IEEE addition would give; fp._wide_sum gives nan there, its callers' convention for no value). With a value that is not finite the result is
     decided by the set of values, whatever their order: nan for a nan or for both infinities, else the infinity."""
     if not np.all(np.isfinite(v)):
         if np.isnan(v).any() or (np.isposinf(v).any() and np.isneginf(v).any()):

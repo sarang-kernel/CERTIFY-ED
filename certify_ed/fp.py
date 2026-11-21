@@ -611,7 +611,9 @@ def _fsum(t: np.ndarray) -> float:
 def _wide_sum(t: np.ndarray) -> float:
     """The correctly rounded exact sum of finite binary64 terms, nan when it rounds beyond the range. Every binary64
     number is an integer multiple of 2^-1074; the multiples are summed exactly and divided once (Python's integer true
-    division is correctly rounded and raises OverflowError for a quotient beyond the range)."""
+    division is correctly rounded and raises OverflowError for a quotient beyond the range). nan, not inf, beyond the
+    range: in fp a sum beyond the range is no value; precision._exact_float_sum, which sums repeated matrix entries,
+    gives the infinity instead (an entry that sums beyond the range is an infinite entry, refused as such)."""
     total = 0
     for x in t.tolist():
         num, den = x.as_integer_ratio()            # den is a power of two, at most 2^1074
@@ -767,7 +769,9 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
         re = exact_sum(np.concatenate([p1, e1, p2, e2]))
         im = exact_sum(np.concatenate([p3, e3, -p4, -e4]))
         s = complex(re, im)
-        err = 2 * U * abs(re) + 2 * U * abs(im) + (t1 + t2 + t3 + t4) * TINY_BOUND   # no overflow for finite parts
+        t_ri = abs(re) + abs(im)
+        # 2u(|re| + |im|) as before; 2u|re| + 2u|im| only where that sum overflows (both parts near BIG; Lemma U2b (iv))
+        err = (2 * U * t_ri if math.isfinite(t_ri) else 2 * U * abs(re) + 2 * U * abs(im)) + (t1 + t2 + t3 + t4) * TINY_BOUND
         return s, err
     p, e, t = _two_product_split(x.astype(float), y.astype(float))
     s = exact_sum(np.concatenate([p, e]))

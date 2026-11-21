@@ -49,7 +49,13 @@ same product that satisfy (i). If |fl(ab)| ≥ H_P, then (2⁻⁶⁴a, b) satisf
 number is finite, and nan otherwise: `math.fsum` where its partial sums do not overflow, else the integer sum of the
 t_j·2¹⁰⁷⁴ divided once by 2¹⁰⁷⁴ (`fp._wide_sum`); the cascade accepts its float result h only when the remainder lies
 strictly inside the rounding interval of h, whose boundary on the overflow side at h = ±BIG is ±(BIG + 2⁹⁷⁰).
-(iv) The complex error term is formed as fl(fl(2u|Re s|) + fl(2u|Im s|)) (no intermediate exceeds 2u·BIG).
+(iv) The complex error term is fl(2u·fl(|Re s| + |Im s|)) as before, and fl(fl(2u|Re s|) + fl(2u|Im s|)) where
+|Re s| + |Im s| overflows (no intermediate then exceeds 2u·BIG).
+Implementation hypotheses of (iii), properties of CPython rather than of IEEE 754: (H1) the true division of two Python
+integers is correctly rounded (to nearest, ties to even) and raises OverflowError when the rounded quotient is not
+finite; (H2) `math.fsum` of finite floats returns the correctly rounded exact sum or raises OverflowError, and it
+raises whenever a partial sum overflows. The verify script checks the result of (iii) against both neighbours in exact
+rational arithmetic, which does not use (H1).
 Consequently `fp.exact_dot(x, y)` returns (s, err) with |s − xᴴy| ≤ err (real) or |Re s − Re xᴴy| + |Im s − Im xᴴy| ≤ err
 (complex) for every input whose products round to finite values and whose exact components round into the range,
 and a pair (s, err) that is not finite otherwise.
@@ -133,8 +139,9 @@ the result ≥ 2⁻⁶ normal); both factors are then normal and the product is 
 applies. Two subnormal factors give |ab| < 2⁻²⁰⁴⁴, a tiny product. *exact_dot.* The pairs with |fl(a_j b_j)| ≥
 2⁻⁹⁶⁷ are rescaled where needed and split exactly into (p_j, e_j); `exact_sum` returns the correctly rounded sum
 of all p_j, e_j (its TwoSum steps are exact in every range by (M-U) for additions; `math.fsum` is exact-then-
-rounded), so |s − Σ_big a_j b_j| ≤ u|Σ_big| ≤ u|s|(1 + u) ≤ 2u|s| for a real result (and the 2u|Re s| + 2u|Im s| of the
-code for a complex one); the left-out pairs contribute at most n_tiny·2⁻⁹⁶⁶ = n_tiny·`TINY_BOUND` in modulus,
+rounded), so |s − Σ_big a_j b_j| ≤ u|Σ_big| ≤ u|s|(1 + u) ≤ 2u|s| for a real result (and for a complex one the
+code's 2u(|Re s| + |Im s|), whose rounding costs at most a factor 1 − u; wording corrected 2026-11-21, it read
+2u|Re s| + 2u|Im s|); the left-out pairs contribute at most n_tiny·2⁻⁹⁶⁶ = n_tiny·`TINY_BOUND` in modulus,
 which is added to err. ∎
 
 **Lemma U2b.** *(i)* With S = 2²⁷ + 1 and |a| < 2⁹⁹⁵, |Sa| < 2¹⁰²³, so c = fl(Sa) and c − a are finite and the
@@ -165,7 +172,8 @@ an overflowing step leaves h not finite, and then the value is `_fsum`'s. With f
 |r| ≤ slack, and h is returned only if e ± slack lies strictly between −dn_gap and up_gap, the half-distances to the
 neighbours of h. At h = BIG the neighbour above is the overflow: values at or above BIG + 2⁹⁷⁰ round to infinity
 (the midpoint ties away from the odd significand of BIG), so up_gap = 2⁹⁷⁰ there (np.nextafter would give an infinite
-gap); symmetrically at −BIG. *(iv)* fl(2u|z|) is exact for normal results and in error by at most u_min otherwise,
+gap); symmetrically at −BIG. *(iv)* Where |Re s| + |Im s| is finite the term is that of Lemma U2. Otherwise
+fl(2u|z|) is exact for normal results and in error by at most u_min otherwise,
 covered by the factor 2 of 2u (u|Re s| suffices for a correctly rounded component); 2u|Re s| ≤ 2u·BIG < 2⁹⁷², so the sum of
 the two terms is finite, and rounding it costs at most a factor (1 − u), again within the factor 2. *Consequence.* The
 pairs left out are those of Lemma U2. A product that does not round to a finite value makes `_two_product_split`
@@ -257,8 +265,8 @@ longer need the hypothesis. ∎
 | c_w | `residual_entry_count(w, cplx) = P (1 + gamma(w + 1)) + 2 g w (1 + gamma(w)) (1 + 4u) + 3 g (1 + 4u)^2 + 2 (1 + 4u)`, P = w + 1 or 4w + 2 | U4 |
 | A_{n,w} | `residual_additive_term(n, w, cplx) = ldexp(sqrt(n) c_w _GUARD^2, -1075) + ULP_MIN` | U5 |
 | upper, rel | `enclosure.residuals`: `upper = (R_up + E_up) + residual_additive_term(...)`; `rel = ... * (1 + 4 * U) + 2 * ULP_MIN` | U5 |
-| exact_dot | `TINY_PRODUCT = 2^-967`, `TINY_BOUND = 2^-966`, `_MIN_NORMAL = 2^-1022`; `_two_product_split`: mask `abs(a b) >= TINY_PRODUCT`, rescaling by 2^±60 of a subnormal factor; `err = 2u|s| + n_tiny TINY_BOUND` (complex: `2u|Re s| + 2u|Im s| + ...`) | U2 |
-| exact_dot, top of the range | `HUGE_FACTOR = 2^995`, `HUGE_PRODUCT = 2^996`, `_HUGE_SCALE = 2^64`; `_two_product_split`: mask `hi`, swap so the larger factor comes first, `a /= 2^64`, `b *= 2^64` for products below `HUGE_PRODUCT`, else `p, e *= 2^64` after the split | U2b (i), (ii) |
+| exact_dot | `TINY_PRODUCT = 2^-967`, `TINY_BOUND = 2^-966`, `_MIN_NORMAL = 2^-1022`; `_two_product_split`: mask `abs(a b) >= TINY_PRODUCT`, rescaling by 2^±60 of a subnormal factor; `err = 2u|s| + n_tiny TINY_BOUND` (complex: `2u(|Re s| + |Im s|) + ...`) | U2 |
+| exact_dot, top of the range | `HUGE_FACTOR = 2^995`, `HUGE_PRODUCT = 2^996`, `_HUGE_SCALE = 2^64`; `_two_product_split`: mask `hi`, swap so the larger factor comes first, `a /= 2^64`, `b *= 2^64` for products below `HUGE_PRODUCT`, else `p, e *= 2^64` after the split; complex `err`: `2u(|re| + |im|)`, or `2u|re| + 2u|im|` where the sum overflows | U2b (i), (ii), (iv) |
 | exact_sum | `_fsum`: `math.fsum`, on OverflowError `_wide_sum` (integers on the 2^-1074 grid, one correctly rounded division, nan beyond the range); `_inside_rounding_interval(h, e, slack)` with the half-gap 2^970 at ±BIG | U2b (iii) |
 | Gram, BLAS products | `gram_additive_term(g, n, cplx) = ldexp(g (3 if cplx else 1) n (1 + gamma(n)) _GUARD^2, -1075) + ULP_MIN`, used in `_cluster_bound` for the BLAS Gram path and `XR_bound` | U1, U7 |
 | products that may be subnormal | `_cluster_bound`: `rho ... + ULP_MIN`, `XR_bound ... + 3 ULP_MIN`, `eps_star ... + 4 ULP_MIN`, BLAS-Gram `eta ... + 2 ULP_MIN`; `compose.py`: `rho = up(...) + ULP_MIN`; `sectors.decomposition_shift`, `certify._subspace_shift`: `+ ULP_MIN`; `enclosure.kato_temple`: `r2 = nextafter(r r, inf) + ULP_MIN` | U7 |

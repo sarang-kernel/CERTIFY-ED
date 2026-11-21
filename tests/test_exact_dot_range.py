@@ -16,6 +16,8 @@ import scipy.sparse as sp
 from certify_ed import fp
 from certify_ed.enclosure import OperatorAdapter, rayleigh_interval
 from certify_ed.fp import HUGE_FACTOR, HUGE_PRODUCT, exact_dot, exact_sum
+from certify_ed.generalized import certify_generalized
+from certify_ed.variational import certify_variational
 
 BIG = float(np.finfo(float).max)
 ROOT = float(np.sqrt(BIG))
@@ -179,3 +181,45 @@ def test_rayleigh_interval_at_the_top_of_the_range():
     q = (Fraction(2.0 ** 1000) + Fraction(5.0) * Fraction(1e-3) ** 2) / (1 + Fraction(1e-3) ** 2)
     assert math.isfinite(lo) and math.isfinite(hi)
     assert Fraction(lo) <= q <= Fraction(hi)
+
+
+def test_statements_decided_at_the_top_of_the_range():
+    """A trial vector of norm just below sqrt(BIG): x^H x lies within 2^-25 of the overflow threshold, where exact_dot
+    gave inf before, so V1 and V2 of certify_variational and G2 and G3 of certify_generalized were INCONCLUSIVE
+    (NONFINITE_BOUND). They are now decided, on exact inner products, and their bounds contain the exact eigenvalue
+    lambda_1 = 1 of H = diag(1, 2, 3)."""
+    H = sp.diags([1.0, 2.0, 3.0]).tocsr()
+    x = np.array([ROOT * (1 - 2.0 ** -30), 0.0, 0.0])
+    st = {s["id"]: s for s in certify_variational(H, x)["statements"]}
+    v1, v2 = st["V1.rayleigh_upper"], st["V2.existence"]
+    assert v1["status"] == "CERTIFIED" and v1["evidence"]["upper_bound"] >= 1.0, v1
+    lo, hi = v2["evidence"]["interval"]
+    assert v2["status"] == "CERTIFIED" and lo <= 1.0 <= hi, v2
+    gs = {s["id"]: s for s in certify_generalized(H, sp.identity(3, format="csr"), np.array([1.0]), x[:, None])["statements"]}
+    assert gs["G2.eigenpairs"]["status"] == "CERTIFIED", gs["G2.eigenpairs"]
+    assert gs["G3.completeness"]["status"] == "CERTIFIED" and gs["G3.completeness"]["evidence"]["count_from_inertia"] == 1
+    assert 1.0 < gs["G3.completeness"]["evidence"]["next_eigenvalue_lower_bound"] <= 2.0
+
+
+def test_complex_error_term_unchanged_where_finite():
+    """The complex error term keeps the form 2u(|re| + |im|) wherever that sum is finite, so it is bit-identical with the
+    code before, also where the components are about 2^-996 with bits near 2^-1070 (products just above TINY_PRODUCT
+    that cancel): there 2u|re| + 2u|im| rounds differently, in about a quarter of these cases."""
+    rng = np.random.default_rng(3)
+    eps, b = 2.0 ** -30, np.ldexp(1.0, -483)
+    differs = 0
+    for _ in range(400):
+        r = rng.integers(1, 2 ** 20, 8)
+        xr = b * (1 + eps * np.array([r[0], r[1] + 1]))
+        yr = b * (1 + eps * np.array([r[2], -(r[2] - 1)]))
+        xi = b * (1 + eps * np.array([r[4], r[5] + 1]))
+        yi = b * (1 + eps * np.array([r[6], -(r[6] - 1)]))
+        s, err = exact_dot(xr + 1j * xi, np.array([yr[0], -yr[1]]) + 1j * np.array([yi[0], -yi[1]]))
+        assert err == 2 * fp.U * (abs(s.real) + abs(s.imag))          # every product is above TINY_PRODUCT
+        differs += err != 2 * fp.U * abs(s.real) + 2 * fp.U * abs(s.imag)
+    assert differs > 50
+    for _ in range(200):                                                 # ordinary magnitudes
+        x = rng.standard_normal(5) + 1j * rng.standard_normal(5)
+        y = rng.standard_normal(5) + 1j * rng.standard_normal(5)
+        s, err = exact_dot(x, y)
+        assert err == 2 * fp.U * (abs(s.real) + abs(s.imag))

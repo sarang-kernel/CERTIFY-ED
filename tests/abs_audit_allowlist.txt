@@ -102,6 +102,8 @@ certify_ed/fp.py	_two_product_split	np.abs(b)	real data only
 certify_ed/fp.py	_two_product_split	np.abs(b)	real data only
 certify_ed/fp.py	exact_dot	abs(re)	real data only
 certify_ed/fp.py	exact_dot	abs(im)	real data only
+certify_ed/fp.py	exact_dot	abs(re)	real data only
+certify_ed/fp.py	exact_dot	abs(im)	real data only
 certify_ed/fp.py	exact_dot	abs(s)	real data only
 certify_ed/generalized.py	_dense_hermitian	np.abs(D)	not part of a bound
 certify_ed/generalized.py	_dense_hermitian	np.abs(D)	not part of a bound
