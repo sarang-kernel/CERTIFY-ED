@@ -344,10 +344,10 @@ def _fsum_groups(v: np.ndarray, starts: np.ndarray, k: int) -> np.ndarray:
 
 _U = 2.0 ** -53
 _GROUP_CHUNK = 1 << 22                                  # values per vectorized block (32 MiB of float64)
-_GROUP_VEC_MAX = 64                                     # groups of up to this many values are always vectorized
-_GROUP_VEC_SHARED = 512                                 # larger ones (up to _GROUP_VEC_CAP values) when this many
-_GROUP_VEC_CAP = 4096                                   # groups share their size (break-even near 500); the rest
-_FSUM_ROWS = 1 << 16                                    # take math.fsum, at most this many groups at a time
+_GROUP_VEC_MAX = 64             # groups of up to this many values are always vectorized
+_GROUP_VEC_SHARED = 512         # larger groups are vectorized when this many share their size (break-even near 500)
+_GROUP_VEC_CAP = 4096           # groups of more values always take math.fsum
+_FSUM_ROWS = 1 << 16            # groups per slice of the math.fsum path
 
 
 def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:

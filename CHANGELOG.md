@@ -60,7 +60,7 @@ of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with 10
 next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding 1, 2^-53 and 2^-106), takes about 30
 to 50 times `tocsr`, 3 to 7 µs a position. The peak memory of `summed` is about 2 to 6 times the stored arrays (values
 and indices), and for the input made only of positions next to a rounding boundary about 6 to 7 times at 1e6 positions
-(8 times at 1e5, where the slice buffer dominates) (`math.fsum` takes the positions in slices of at most 2^16).
+(8 to 9 times at 1e5, where buffers of fixed size dominate) (`math.fsum` takes the positions in slices of at most 2^16).
 `fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so the gamma
 factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a
 certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the
