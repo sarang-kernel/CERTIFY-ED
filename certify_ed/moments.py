@@ -62,6 +62,9 @@ def _as_matrix(M, name, widened: Optional[list] = None):
         if M.ndim != 2 or M.shape[0] != M.shape[1]:
             raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")
         herm = float(np.max(np.abs(M - M.conj().T))) if M.size else 0.0
+    vals = M.data if sp.issparse(M) else M
+    if not np.all(np.isfinite(vals)):              # before the Hermiticity test, whose difference would be nan
+        raise ValueError(f"{name} has entries that are not finite (NaN or an infinity); refused")
     if herm != 0.0:
         raise ValueError(f"{name} is not Hermitian (max |{name} - {name}^H| = {herm:.3e})")
     return M

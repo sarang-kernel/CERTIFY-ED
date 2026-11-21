@@ -25,8 +25,9 @@ last row of the support raised an IndexError). S8 carries `NONFINITE_BOUND` when
 carries `nonfinite_bound`. The figure helper `experiments/figures/_common.py` is renamed `_figcommon.py`: `docs/proofs`
 has its own `_common`, and in one test session the module imported first was used for both (an ImportError in
 `tests/test_nonhermitian.py`, depending on the test order). `tests/test_figures.py` is skipped when
-`experiments/figures` is absent (the source distribution). Tests: `tests/test_small_followups.py` (each case fails at
-the base). The computational source hash changes.
+`experiments/figures` is absent (the source distribution). `certified_moments` refuses an operator or observable with
+entries that are not finite with that reason (it reported 'not Hermitian' with a nan difference). Tests:
+`tests/test_small_followups.py` (each case fails at the base). The computational source hash changes.
 
 ### Non-finite follow-ups
 

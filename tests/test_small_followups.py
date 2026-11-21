@@ -1,7 +1,8 @@
 """Small follow-ups: a sector isometry with a stored zero outside its support (restrict_to_u1 raised IndexError),
 the reason code of S8 when the S2 radii of a cluster overflowed (S8 had none while S2 named the overflow), claimed
 values with a non-finite imaginary part (the real part alone was certified), and (approximate) symmetries
-given as an iterator or as a mapping with further keys (passed on without a private copy or a widening record)."""
+given as an iterator or as a mapping with further keys (passed on without a private copy or a widening record), and
+the message for a moments operator with entries that are not finite."""
 import warnings
 
 import numpy as np
@@ -192,3 +193,18 @@ def test_sector_composition_with_a_non_finite_claimed_value_is_inconclusive(bad)
     assert res["status"] == "INCONCLUSIVE", res["summary"]
     rec = next(p for p in res["sectors"] if p["label"] == hit)
     assert rec["status"] == "INCONCLUSIVE" and rec["non_finite_eigenvalues"] == [0]
+
+
+@pytest.mark.parametrize("sparse", [False, True])
+def test_moments_name_entries_that_are_not_finite(sparse):
+    """certified_moments given an H with an infinite entry refuses it as not finite (before: 'not Hermitian' with a
+    nan difference, the wrong cause); a finite H with the same pattern is accepted."""
+    from certify_ed.moments import certified_moments
+    H = np.diag([1.0, 2.0, 3.0])
+    x = np.eye(3)[:, :1]
+    O = np.diag([1.0, 0.0, 0.0])
+    certified_moments(sp.csr_matrix(H) if sparse else H, O, x, 1e-12, 1e-12, K=2, sum_rules=False)
+    Hb = H.copy()
+    Hb[2, 2] = np.inf
+    with pytest.raises(ValueError, match="not finite"):
+        certified_moments(sp.csr_matrix(Hb) if sparse else Hb, O, x, 1e-12, 1e-12, K=2, sum_rules=False)
