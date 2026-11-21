@@ -322,31 +322,34 @@ def _exact_float_sum(v: np.ndarray) -> float:
 
 
 _U = 2.0 ** -53
-_GROUP_CHUNK = 1 << 22                                  # values per vectorized block of groups (32 MiB of float64)
+_GROUP_CHUNK = 1 << 22                                  # values per vectorized block (32 MiB of float64)
+_GROUP_VEC_MAX = 64                                     # larger groups take math.fsum one by one (linear, in C)
 
 
 def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:
     """The correctly rounded exact sum of each group v[starts[k] : starts[k] + counts[k]] of real binary64 values.
-    Groups of one or two values: one addition (exact or correctly rounded, and commutative). Groups of three or more,
-    vectorized over the groups: three passes of Knuth's TwoSum along each group (error-free: the exact sum is kept)
-    leave a leading value h and a remainder e; when e lies strictly inside the rounding interval of h with the bound
-    on its own rounding error, the correctly rounded sum is h. The other groups (a sum within that slack of a rounding
-    boundary, h = 0, a value that is not finite, a partial sum that overflows) take math.fsum's value."""
+    Groups of one or two values: one addition (exact or correctly rounded, and commutative). Groups of three to
+    _GROUP_VEC_MAX values, vectorized over the groups of each size (a block holds groups of one size only, at most
+    _GROUP_CHUNK values, so the buffer is the values themselves): three passes of Knuth's TwoSum along each group
+    (error-free: the exact sum is kept) leave a leading value h and a remainder e; when e lies strictly inside the
+    rounding interval of h with the bound on its own rounding error, the correctly rounded sum is h. The other groups
+    (larger groups, a sum within that slack of a rounding boundary, h = 0, a value that is not finite, a partial sum
+    that overflows) take math.fsum's value."""
     s = np.add.reduceat(v, starts) if v.size else np.zeros(0)
     big = np.flatnonzero(counts >= 3)
-    cs = np.cumsum(counts[big]) if big.size else np.zeros(0, dtype=np.int64)
-    edges = [0]
-    while edges[-1] < big.size:                        # blocks of about _GROUP_CHUNK values, at least one group each
-        nxt = int(np.searchsorted(cs, (cs[edges[-1] - 1] if edges[-1] else 0) + _GROUP_CHUNK, side="right"))
-        edges.append(max(nxt, edges[-1] + 1))
-    for pos, end in zip(edges[:-1], edges[1:]):
-        grp = big[pos:end]
-        kmax = int(counts[grp].max())
-        P = np.zeros((grp.size, kmax), order="F")       # column-major: each pass walks contiguous columns
-        st, ct = starts[grp], counts[grp]
+    for k in big[counts[big] > _GROUP_VEC_MAX].tolist():
+        s[k] = _exact_float_sum(v[starts[k]:starts[k] + counts[k]])
+    big = big[counts[big] <= _GROUP_VEC_MAX]
+    blocks = []
+    for kmax in np.unique(counts[big]).tolist():        # groups of one size per block: no padding
+        same = big[counts[big] == kmax]
+        step = max(1, _GROUP_CHUNK // kmax)
+        blocks += [(same[i:i + step], kmax) for i in range(0, same.size, step)]
+    for grp, kmax in blocks:
+        P = np.empty((grp.size, kmax), order="F")       # column-major: each pass walks contiguous columns
+        st = starts[grp]
         for j in range(kmax):
-            m = ct > j
-            P[m, j] = v[st[m] + j]
+            P[:, j] = v[st + j]
         with np.errstate(over="ignore", invalid="ignore"):
             for _ in range(3):
                 for j in range(1, kmax):
@@ -360,13 +363,17 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
             e = rest.sum(axis=1)                        # |e - (exact sum of rest)| <= slack
             slack = 2.0 * kmax * _U * np.abs(rest).sum(axis=1)
             r = h + e                                   # the candidate: the rounding of h + e
-            d = (h - r) + e                             # h - r is exact (Sterbenz); d has one rounding
+            # h - r is exact, and so is d, by FastTwoSum (|e| <= |h| is required below); the slack still counts one
+            # rounding of d
+            d = (h - r) + e
             slack = slack + 2.0 * _U * np.abs(d)
             up_gap = (np.nextafter(r, np.inf) - r) / 2.0
             dn_gap = (r - np.nextafter(r, -np.inf)) / 2.0
             # the exact sum is r + (d +- slack); r is its correct rounding when that offset lies strictly inside
-            # the rounding interval of r (no midpoint, so no tie, in between)
+            # the rounding interval of r (no midpoint, so no tie, in between). At the largest float the upper gap
+            # is infinite and decides nothing: such a candidate takes the fallback
             ok = (np.isfinite(r) & np.isfinite(d) & np.isfinite(slack) & (r != 0.0) & (np.abs(e) <= np.abs(h))
+                  & np.isfinite(up_gap) & np.isfinite(dn_gap)
                   & (np.nextafter(d + slack, np.inf) < up_gap) & (np.nextafter(d - slack, -np.inf) > -dn_gap))
             # one nonzero remainder: the exact sum is h + e with e exact, and r = fl(h + e) is its correct rounding
             # (one IEEE addition, ties to even included)
@@ -398,9 +405,11 @@ def _group_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray, what: str
         if s.size and (int(s.min()) < info.min or int(s.max()) > info.max):
             return s.astype(np.int64) if v.dtype.itemsize < 8 else s
         return s.astype(dtype, copy=False)
-    if np.iscomplexobj(v):
-        return _exact_real_sums(np.ascontiguousarray(v.real), starts, counts) + \
-            1j * _exact_real_sums(np.ascontiguousarray(v.imag), starts, counts)
+    if np.iscomplexobj(v):                              # each part on its own (1j * inf would make the real part nan)
+        out = np.empty(starts.size, dtype=np.complex128)
+        out.real = _exact_real_sums(np.ascontiguousarray(v.real), starts, counts)
+        out.imag = _exact_real_sums(np.ascontiguousarray(v.imag), starts, counts)
+        return out
     return _exact_real_sums(v, starts, counts)
 
 
