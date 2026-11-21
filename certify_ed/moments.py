@@ -53,18 +53,23 @@ def _as_matrix(M, name, widened: Optional[list] = None):
     # a narrower format (float32, complex64, integers) is converted exactly to binary64, a wider one refused
     # (precision.py): every bound below counts binary64 arithmetic
     M = binary64(M if sp.issparse(M) else np.asarray(M), name, widened)
+    # entries that are not finite are named before the Hermiticity test, whose difference would be nan
     if sp.issparse(M):
         M = M.tocsr()
-        D = (M - M.conj().T)
+        if not np.all(np.isfinite(M.data)):
+            raise ValueError(f"{name} has non-finite entries")
+        with np.errstate(over="ignore", invalid="ignore"):
+            D = (M - M.conj().T)
         herm = float(abs(D).max()) if D.nnz else 0.0
     else:
         M = np.asarray(M)
         if M.ndim != 2 or M.shape[0] != M.shape[1]:
             raise ValueError(f"{name} must be a square matrix, got shape {M.shape}")
+        if not np.all(np.isfinite(M)):
+            raise ValueError(f"{name} has non-finite entries")
         herm = float(np.max(np.abs(M - M.conj().T))) if M.size else 0.0
-    vals = M.data if sp.issparse(M) else M
-    if not np.all(np.isfinite(vals)):              # before the Hermiticity test, whose difference would be nan
-        raise ValueError(f"{name} has entries that are not finite (NaN or an infinity); refused")
+    if herm != herm:                       # finite stored values whose repeated entries sum beyond the range
+        raise ValueError(f"{name} has non-finite entries")
     if herm != 0.0:
         raise ValueError(f"{name} is not Hermitian (max |{name} - {name}^H| = {herm:.3e})")
     return M
