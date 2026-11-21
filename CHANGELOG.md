@@ -7,6 +7,46 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Non-finite follow-ups
+
+No constant changes; statuses change only on inputs whose accounting overflows. When the radii of the claimed pairs are
+finite but the backward error of a factorization overflows (entries of about 1e200: its squares exceed the largest
+float), S3 now carries `NONFINITE_BOUND` (it was INCONCLUSIVE without a code). The non-Hermitian record (N1) and the
+pencil record (G2) follow the rules of 'Non-finite bounds give no statement': a residual bound or radius that is not
+finite is stored as ∞ (it was nan for an entry within 12u of the largest float, where ∞ · 0 = nan), and the reason
+code is `NONFINITE_BOUND` for an overflow and `UNRESOLVED_VECTOR_NORM` for a vector whose norm cannot be bounded away
+from zero (both were `NOT_APPLICABLE`, and G2 named the vector norm as the cause in both cases); N3 uses
+`NONFINITE_BOUND` for an overflowing disc radius. `fp.exact_sum` returns the IEEE sum of infinite terms (∞ or -∞ for
+one sign, nan for both signs or a nan term) where `math.fsum` raised a ValueError, and nan for finite terms whose
+exact sum exceeds the largest float, where `math.fsum` raised an OverflowError. `fp.exact_dot` no longer applies the
+error-free split to a product that is not finite, so ∞ · 0 gives nan (the pair was dropped as tiny, and the dot
+product of (∞, 1) and (0, 1) came out as 1). The callers of these sums state nothing on a nan: the Gram entries and
+squared norms of complex vectors scaled by 1e155 (S2 and S3 INCONCLUSIVE with `UNRESOLVED_VECTOR_NORM`; this raised
+before), the Rayleigh interval used by `certify_variational` and by the Kato-Temple bound (no finite end: V1 to V3
+INCONCLUSIVE with `NONFINITE_BOUND`, and the theta record stores null and ∞ instead of nan), and x^H B x in
+`certify_generalized` (G2 `NONFINITE_BOUND`; its evidence lists the unresolved and the overflowed pairs separately).
+`certified_moments` no longer raises for a complex observable entry whose products overflow (1e308 + 1e308i, for
+example) or for a Hamiltonian whose norm to the power k overflows (entries of 1e200), and gives M1 to M3
+INCONCLUSIVE with `NONFINITE_BOUND`; its record stores such a bound as ∞ with no interval, and a nan value as null.
+S3 takes its code from a flag set where the count is decided, not from the text of the evidence. The sum rules M2 and
+M3 are INCONCLUSIVE with `NONFINITE_BOUND` when an end of either interval is not finite (an interval (-∞, ∞) overlaps
+every interval, and M3 was CERTIFIED on one), and so is M1 when an end of a moment interval overflows. Two record fields
+that could hold nan store ∞: `theta_source_vs_contracted` of a contracted trial state and the computed residual norm
+`residual_computed` of S2, and so does the S1 comparison of the specification invariants, where couplings of 1e160
+give inf - inf (its `consistent` is then null, with a note: the comparison is a pre-check and decides nothing). A factorization with an infinite or nan pivot gives no count (the conversion of the pivot to a
+fraction raised, for a B with entries near the largest float in `certify_generalized`), and neither does a count at a
+shift that is not finite or one whose shifted matrix A - σI overflows (LAPACK raised a ValueError on the dense path;
+the sparse path gave no count without a reason code). The records of M2 and M3 store a non-finite interval as null and
+a non-finite bound as ∞ when a matrix formed for a sum rule overflows while the moments are finite. S8 carries
+`NONFINITE_BOUND` when a bracketing count is refused for an overflowed bound or the level enclosure of a cluster is
+not finite, as S3 and S2 do (it was INCONCLUSIVE without a code). The cluster record of S2 stores an overflowed
+Theorem 2' term as ∞ (`eps_star`, `XR`; they held nan). The S3 count records
+carry `nonfinite_bound` only when it is true, so the record of a finite count is unchanged. The INCONCLUSIVE summary of
+a window S3 now gives the reason recorded in its evidence (for example, inertia inconclusive at a window edge) instead
+of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_VECTOR_NORM` and which give
+`NONFINITE_BOUND` for an overflowing squared norm. Tests: `tests/test_nonfinite_followups.py` (each case fails at the
+base). The computational source hash changes.
+
 ### Result documents moved under docs/
 
 No code, bound or status changes, and the computational source hash stays the same. The result documents that were at
@@ -294,13 +334,14 @@ modulus, and the statements that rest on it state nothing, by the rules of the p
 INCONCLUSIVE where they were CERTIFIED, S3 and V3 are INCONCLUSIVE with `NONFINITE_BOUND`, and `commutator_bound` is ∞
 where it was finite (`tests/test_nonfinite_moduli.py`); for such an entry the moment, observable and sweep-affinity
 bounds and the backward error of `inertia_dense` overflow with NumPy's moduli as well. Real data, and complex data whose
-entries all have a zero real or imaginary part, give the same bounds and records as before, except the non-Hermitian
+entries all have a zero real or imaginary part, give the same bounds and records as before, except in the non-Hermitian
 record: its arithmetic text names `fp.modulus_up` instead of the hypothesis H-mod, which the bounds no longer need (its
-four assumption strings and its record hash change, for real data too). Cost: a modulus pass takes about four times as
-long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus once and
-cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at commit cdf6ebb; 8.9 s and 9.0 s against
-11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host); matrix-free operators pay the moduli in every
-|H||x| application. The derivation is new and unverified: Sarang's check (D-12) is pending
+four assumption strings and its record hash change, for real data too), and the bounds of a real matrix with complex
+eigenpairs, whose eigenvalues and vectors are complex data, rise in the last bits. Cost: a modulus pass takes about four
+times as long as `np.abs` on large arrays and about 0.1 ms per call on small ones; the S1 invariants take each modulus
+once and cost what they cost before (Heisenberg chain, N = 20: 7.3 s against 8.9 s at commit cdf6ebb; 8.9 s and 9.0 s
+against 11.7 s and 10.4 s at cd0ca97, the base of this stack, on a busier host); matrix-free operators pay the moduli in
+every |H||x| application. The derivation is new and unverified: Sarang's check (D-12) is pending
 (`docs/proofs/fp_modulus-up.md`, sections 3 and 4, and the correction notes of 13 derivation documents;
 `tests/test_abs_audit.py`, which also fails on stale lines of its list, and the dynamic pin of
 `tests/test_modulus_up.py`; `docs/proofs/verify_thm1_fp-accounting.py`). Known issue: the label audit of a cyclic

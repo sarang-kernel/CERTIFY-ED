@@ -595,6 +595,15 @@ def _two_sum_seq(T: np.ndarray):
     return float(s[-1]), err[err != 0.0]
 
 
+def _fsum(t: np.ndarray) -> float:
+    """math.fsum of finite terms, or nan when the summation overflows (math.fsum raises OverflowError then, although
+    the exact sum may be representable; nan is no value, so the callers state nothing on it)."""
+    try:
+        return math.fsum(t.tolist())
+    except OverflowError:
+        return math.nan
+
+
 def exact_sum(terms, max_rounds: int = 6) -> float:
     """The correctly rounded sum of a float array: the same value math.fsum returns.
 
@@ -603,13 +612,20 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     sum(terms) = S_1 + ... + S_K + rho with |rho| <= sum |remaining errors| (bounded with an upward guard).
     The S_k are folded with TwoSum into h + e exactly; when e together with every slack lies strictly
     inside the rounding interval of h, the correctly rounded sum is h. Otherwise (a sum within the slack of
-    a rounding boundary, a zero result, non-finite input, or fewer than EXACT_SUM_MIN_TERMS terms) the value
-    is math.fsum's, so the result never depends on the path taken.
+    a rounding boundary, a zero result, or fewer than EXACT_SUM_MIN_TERMS terms) the value is math.fsum's, so the
+    result never depends on the path taken. Non-finite terms give the IEEE sum: inf or -inf when the infinities have
+    one sign, nan for a nan term or for both signs (math.fsum raises a ValueError there); finite terms whose summation
+    overflows give nan (math.fsum raises an OverflowError there).
     """
     t = np.asarray(terms, dtype=float).ravel()
     t = t[t != 0.0]
-    if t.size < EXACT_SUM_MIN_TERMS or not np.all(np.isfinite(t)):
-        return math.fsum(t.tolist())
+    if not np.all(np.isfinite(t)):
+        # IEEE semantics, where math.fsum raises for inf - inf: nan when a term is nan or both infinities occur
+        if np.isnan(t).any() or (np.isposinf(t).any() and np.isneginf(t).any()):
+            return math.nan
+        return math.inf if np.isposinf(t).any() else -math.inf
+    if t.size < EXACT_SUM_MIN_TERMS:
+        return _fsum(t)
     S = []
     T = t
     for _ in range(max_rounds):
@@ -634,12 +650,12 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     e = (h - (hs - bb)) + (c - bb)
     h = hs
     if h == 0.0 or not math.isfinite(h):
-        return math.fsum(t.tolist())
+        return _fsum(t)
     up_gap = (np.nextafter(h, np.inf) - h) / 2.0
     dn_gap = (h - np.nextafter(h, -np.inf)) / 2.0
     if np.nextafter(e + slack, np.inf) < up_gap and np.nextafter(e - slack, -np.inf) > -dn_gap:
         return h
-    return math.fsum(t.tolist())
+    return _fsum(t)
 
 
 # Dekker's TwoProduct (Veltkamp split of two normal numbers, then the partial products) is exact when every
@@ -655,8 +671,14 @@ _MIN_NORMAL = 2.0 ** -1022
 
 def _two_product_split(a: np.ndarray, b: np.ndarray):
     """(p, e, n_tiny): TwoProduct of the pairs whose product is at least TINY_PRODUCT in magnitude (exact),
-    and the number of pairs left out (their products are below TINY_BOUND in magnitude)."""
-    big = np.abs(a * b) >= TINY_PRODUCT
+    and the number of pairs left out (their products are below TINY_BOUND in magnitude). When a product is not
+    finite, the products themselves with zero errors and no pair left out."""
+    prod = a * b
+    if not np.all(np.isfinite(prod)):
+        # an infinite or nan product (inf * 0 included) has no error-free split, and a nan one must not be counted as
+        # tiny: the products are returned as they are, so that the sum is not finite and no bound rests on it
+        return prod, np.zeros_like(prod), 0
+    big = np.abs(prod) >= TINY_PRODUCT
     n_tiny = int(a.size - np.count_nonzero(big))
     if n_tiny:
         a, b = a[big], b[big]

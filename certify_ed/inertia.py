@@ -66,9 +66,16 @@ class InertiaResult:
     fill_nnz: Optional[int] = None
     resource_failure: bool = False   # the factorization could not be completed (memory / library error)
     residual: Optional[dict] = None  # a-posteriori residual record (ldl_residual.ResidualBound), sparse path
+    nonfinite_bound: bool = False     # no count because the backward-error bound was not finite
 
     def to_dict(self):
-        return asdict(self)
+        d = asdict(self)
+        if not d["nonfinite_bound"]:
+            del d["nonfinite_bound"]      # written only when set: the record of a finite count is unchanged
+        return d
+
+
+NONFINITE_NOTE = "backward-error bound not finite (an overflowed bound)"     # the note; the code is set from nonfinite_bound
 
 
 def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
@@ -76,8 +83,8 @@ def _no_count_on_nonfinite(res: InertiaResult) -> InertiaResult:
     count: beta = inf and conclusive False."""
     if np.isfinite(res.beta):
         return res
-    res.beta, res.negative, res.conclusive = float("inf"), None, False
-    res.note = (res.note + "; " if res.note else "") + "backward-error bound not finite (an overflowed bound)"
+    res.beta, res.negative, res.conclusive, res.nonfinite_bound = float("inf"), None, False, True
+    res.note = (res.note + "; " if res.note else "") + NONFINITE_NOTE
     return res
 
 
@@ -87,7 +94,10 @@ def _exact_sign(x: float) -> int:
 
 def _count_block_diagonal(D: np.ndarray):
     """Count negative eigenvalues of a block-diagonal D with 1x1/2x2 blocks.
-    Returns (neg, ambiguous) with exact sign decisions."""
+    Returns (neg, ambiguous) with exact sign decisions; an entry that is not finite (an overflowed factorization) has
+    no exact sign, so the count is ambiguous."""
+    if not np.all(np.isfinite(D)):
+        return 0, True
     n = D.shape[0]
     neg = 0
     i = 0
@@ -124,7 +134,15 @@ def inertia_dense(A: np.ndarray, sigma: float) -> InertiaResult:
     n = A.shape[0]
     cplx = np.iscomplexobj(A)
     S = A - sigma * np.eye(n)
+    if not np.all(np.isfinite(S)):
+        # an entry of A - sigma I overflowed (or A holds inf or nan): no factorization (LAPACK refuses it), no count
+        return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman", time.time() - t0, False,
+                             "A - sigma I is not finite (an overflowed entry); no count", nonfinite_bound=True)
     lu, d, perm = la.ldl(S, lower=True, hermitian=True)
+    if not (np.all(np.isfinite(lu)) and np.all(np.isfinite(d))):
+        return InertiaResult(float(sigma), None, float("inf"), "dense-bunch-kaufman", time.time() - t0, False,
+                             "non-finite entries in the stored factors (an overflowed factorization); no count",
+                             nonfinite_bound=True)
     neg, amb = _count_block_diagonal(d)
     # Sylvester's law needs an invertible factor: unit lower triangular after the row permutation
     # (unit diagonal AND zero strict upper triangle, as checker.inertia_exact checks; IMP-14)
@@ -159,6 +177,9 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     n = A.shape[0]
     cplx = np.iscomplexobj(A.data)
     S = (A - sigma * sp.identity(n, dtype=A.dtype, format="csc")).tocsc()
+    if not np.all(np.isfinite(S.data)):
+        return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric", time.time() - t0, False,
+                             "A - sigma I is not finite (an overflowed entry); no count", nonfinite_bound=True)
     try:
         f = spla.splu(S, permc_spec="MMD_AT_PLUS_A", diag_pivot_thresh=0.0,
                       options={"SymmetricMode": True, "Equil": False})
@@ -182,7 +203,7 @@ def inertia_sparse(A: sp.spmatrix, sigma: float, residual: str = "posteriori", b
     neg = int(np.sum(signs < 0))
     if not (np.all(np.isfinite(L.data)) and np.all(np.isfinite(Dreal))):
         return InertiaResult(float(sigma), None, float("inf"), "sparse-superlu-symmetric",
-                             time.time() - t0, False, "non-finite entries in the stored factors")
+                             time.time() - t0, False, "non-finite entries in the stored factors", nonfinite_bound=True)
     if residual == "apriori":
         # 3.1 bound: beta <= gamma_w ||L||_F ||U||_F  (LU backward error, Higham Thm 9.3)
         #            + ||L||_F ||U - D L^H||_F   (symmetrisation)  + rounding of that difference
@@ -232,6 +253,11 @@ def inertia(A, sigma: float, method: str = "auto", dense_max: int = 4096, budget
     t0 = time.time()
     label = "dense-bunch-kaufman" if method == "dense" else ("sparse-superlu-apriori" if method == "sparse-apriori"
                                                              else "sparse-superlu-residual")
+    if not np.isfinite(sigma):
+        # a shift that is not finite (an end of an enclosure that overflowed) gives no count: the factorization of
+        # A - sigma I is not formed (LAPACK refuses inf and nan); a nan shift is recorded as null
+        return InertiaResult(None if np.isnan(sigma) else float(sigma), None, float("inf"), label, time.time() - t0,
+                             False, "the shift is not finite (an overflowed bound); no count", nonfinite_bound=True)
     if method != "dense" and budget_mb is not None:
         from .cost import sparse_inertia_mb
         n_ = int(A.shape[0])

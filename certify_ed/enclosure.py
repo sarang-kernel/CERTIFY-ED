@@ -572,7 +572,8 @@ class EnclosureSet:
                         "existence_radius": float(self.existence_radius[i]),
                         "group": int(self.group_of[i]), "group_size": g.size,
                         "method": g.method, "distinct": bool(g.distinct),
-                        "residual_computed": float(self.residual.computed[i]),
+                        "residual_computed": (float(self.residual.computed[i])     # nan (inf - inf) stored as inf
+                                              if not math.isnan(self.residual.computed[i]) else math.inf),
                         "residual_bound": float(self.residual.upper[i])})
         return out
 
@@ -650,11 +651,15 @@ def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X, res: ResidualRep
     spread = up(float(sub_up(float(np.max(mu_g)), float(np.min(mu_g)))))
     eps_star = up(Rg_fro * inv_sqrt + XR_bound * inv + delta * spread * inv_sqrt) + 4 * ULP_MIN   # six roundings
     used = "eps_star" if eps_star < rho else "rho"
+    radius = eps_star if eps_star < rho else rho       # never a nan eps_star (a comparison with nan is false)
+
+    def rec(v):                                         # no nan in the record: an overflowed term is stored as inf
+        return math.inf if math.isnan(v) else float(v)
     # the ingredients are exported for the Davis-Kahan sin(theta) alternative of S4 (E-07, davis_kahan.py): upper
     # bounds on ||R||_F, ||X^H R||_2, delta = 1 - sqrt(1 - eta) and spread(mu) (3.2; additive, used nowhere else here)
-    return min(rho, eps_star), eta, rho, {"eps": float(rho), "rho": float(rho), "eps_star": float(eps_star),
-                                         "used": used, "R_fro": float(Rg_fro), "XR": float(XR_bound),
-                                         "delta": float(delta), "spread": float(spread)}
+    return radius, eta, rho, {"eps": rec(rho), "rho": rec(rho), "eps_star": rec(eps_star),
+                              "used": used, "R_fro": rec(Rg_fro), "XR": rec(XR_bound),
+                              "delta": rec(delta), "spread": rec(spread)}
 
 
 def nonfinite_columns(X, block_mb: Optional[float] = None) -> List[int]:
@@ -838,7 +843,11 @@ def rayleigh_interval(adapter: OperatorAdapter, x: np.ndarray, Ax: Optional[np.n
     num_err = up(num_e + gdw * float(xa @ absAx) * (1 + gamma(x.size + 2)))
     den_err = up(den_e)
     den_lo = den - den_err
-    if den_lo <= 0:
+    if not all(math.isfinite(v) for v in (num, num_err, den, den_err)):
+        # a non-finite inner product or bound (inf, or nan from inf - inf): no interval; the callers state nothing on
+        # a nan endpoint (NONFINITE_BOUND), and None stays the answer for a norm too small to resolve
+        return math.nan, math.nan, math.nan, math.inf
+    if not den_lo > 0:
         return None
     cands = [(num - num_err) / (den + den_err), (num - num_err) / den_lo,
              (num + num_err) / (den + den_err), (num + num_err) / den_lo]
@@ -857,8 +866,8 @@ def kato_temple(adapter: OperatorAdapter, x: np.ndarray, alpha: float, beta: flo
     the hypotheses cannot be verified (theta not safely inside, or margins
     smaller than the residual). `Ax`, `absAx`: see rayleigh_interval."""
     ri = rayleigh_interval(adapter, x, Ax, absAx)
-    if ri is None:
-        return None
+    if ri is None or not all(math.isfinite(v) for v in ri):
+        return None                     # no interval (a norm too small to resolve, or a non-finite accounting)
     th_lo, th_hi, th, r_hat = ri
     # r = ||Ax - theta x|| <= ||Ax - th x|| + |theta - th| (unit-norm normalisation in rel_bound)
     r = up(r_hat + max(th_hi - th, th - th_lo))
