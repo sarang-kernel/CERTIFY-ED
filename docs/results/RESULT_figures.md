@@ -49,7 +49,8 @@ None. This track derives no mathematics; the concept figures restate theory.md a
 - `experiments/figures/_common.py`, `fig_certificate_anatomy.py`, `fig_enclosure_geometry.py`,
   `fig_inertia_completeness.py`, `fig_rounding_accounting.py`, `fig_failure_matrix.py`, `fig_cost_memory.py`,
   `fig_two_stack.py`, `fig_mutation.py`, `fig_corpus_detection.py`, `fig_scope_vs_survey.py`,
-  `fig_roadmap_progress.py`, `fig_crown_sectors.py`, `fig_aklt_eta.py`, `make_index.py`
+  `fig_roadmap_progress.py`, `fig_crown_sectors.py`, `fig_aklt_eta.py`, `make_index.py` (the helper `_common.py`
+  is named `_figcommon.py` since fix/small-followups, 21 November 2026; this record keeps the names of its date)
 - `experiments/figures/data/ROADMAP_expansion_items_2026-10-29.csv`, `data/README.md`
 - `docs/figures/*.pdf`, `*.png`, `*.numbers.json` (13 each), `INDEX.md`, `MANUSCRIPT_PLACEMENT.md`
 - `tests/test_figures.py`
