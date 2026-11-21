@@ -18,9 +18,12 @@ ALPS reader and `write_bundle`. The rule for non-finite claimed values then appl
 INCONCLUSIVE ("claim contains non-finite values"), `exact_eigenpair_radii` gives an infinite radius and lists the index
 under `non_finite_values`, `corroborate` is INCONCLUSIVE, and `enclose`, `certify_generalized`, the ALPS reader and
 `write_bundle` refuse it. Before, the imaginary part was dropped, and w + ∞i was certified as w by `certify`,
-`certify_hamiltonian`, `certified_sweep` and both exact re-checks. Two of these also change for a real nan claimed
-value: `exact_eigenpair_radii` raised a ValueError from the rational conversion, and `write_bundle` wrote the bundle
-(whose readers then refused it). The conversion is otherwise that of 3.x: a
+`certify_hamiltonian`, `certified_sweep` and both exact re-checks. Two of these also change for real non-finite
+claimed values: `exact_eigenpair_radii` raised a ValueError from the rational conversion for a real nan, and
+`write_bundle` wrote a real nan or infinity (whose readers then refused the file). `corroborate` is INCONCLUSIVE for a
+non-finite claimed value before any recomputation runs (`non_finite_values`); for a real infinity it said CORROBORATED,
+since its tolerance was infinite. An object array of numpy complex scalars is now seen as complex: a non-finite
+imaginary part makes the value nan, and a finite one is recorded (the float conversion read the real parts). The conversion is otherwise that of 3.x: a
 finite nonzero imaginary part is dropped (with numpy's ComplexWarning) and the statements concern the real parts, and a
 list of Python complex numbers is refused with numpy's TypeError. New: the claim record of `certify` then holds
 `dropped_imaginary_parts` (`count`, `max_abs`), an optional field (`certify_ed/schema.py`, `docs/schema.md`, the
@@ -37,7 +40,8 @@ mapping with further keys was passed on as given. An entry of `Options.symmetrie
 1: lattice} is accepted in binary64 as well (it raised a TypeError; in float32 it was accepted through its converted
 copy); an iterator is read once, when `certify` starts, and an empty one is refused with that reason. A mapping entry
 without the key 0 or 1, and an entry without a length, are refused with the message of a sequence of the wrong length
-(a KeyError or a TypeError before). The planner
+(a KeyError or a TypeError before). An entry that can be iterated but not indexed (a `dict.values()` view, a class
+with `__iter__` only) is read as its items, as 3.x unpacked it. The planner
 (`cost.narrow_input_mb`) counts a mapping entry as a tuple entry. `sectors.restrict_to_u1` drops stored zeros of the
 isometry before the row look-up (a stored zero in a row after the last row of the support raised an IndexError). S8
 gives S2's reason code for a cluster whose pairs S2 did not certify distinct because a radius is not finite:

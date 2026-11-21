@@ -36,7 +36,7 @@ import math
 import sys
 import time
 from dataclasses import dataclass, field, replace
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
@@ -1033,6 +1033,11 @@ def _options_as_given(opts: Options, own) -> Options:
                 raise ValueError(f"{what}: an empty iterator (an entry is (S, lattice[, allowed]); an iterator is read "
                                  "once, so pass a tuple to reuse the Options)")
             return (own(items[0], what), *items[1:])
+        if isinstance(v, Iterable) and not hasattr(v, "__getitem__"):
+            # an iterable that cannot be indexed (a dict.values() view, a class with __iter__ only): its items, as
+            # 3.x unpacked it; an empty one is refused where the entry is read (not a pair)
+            items = tuple(v)
+            return (own(items[0], what), *items[1:]) if items else items
         try:
             S = v[0]
             rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it

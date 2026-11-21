@@ -117,7 +117,16 @@ def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.n
 
 
 def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_evr", "jacobi")) -> dict:
-    claimed = np.sort(claimed_reals(claimed))
+    vals = claimed_reals(claimed)
+    bad = np.flatnonzero(~np.isfinite(vals))
+    if bad.size:
+        # a non-finite claimed value agrees with nothing: with an infinity the tolerance was infinite and every
+        # recomputation 'agreed' (CORROBORATED), with a nan every comparison failed silently
+        return {"oracles": {}, "independence": {o: ORACLES[o] for o in oracles}, "tolerance": None,
+                "non_finite_values": bad[:8].tolist(), "status": "INCONCLUSIVE",
+                "summary": f"claim contains non-finite values (indices {bad[:8].tolist()}): nothing is compared",
+                "note": "corroboration only: agreement is evidence, not a certified statement"}
+    claimed = np.sort(vals)
     k = claimed.size
     scale = float(np.max(np.abs(claimed))) if k else 1.0
     out = {"oracles": {}, "independence": {o: ORACLES[o] for o in oracles}}

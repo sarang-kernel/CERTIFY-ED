@@ -695,16 +695,28 @@ def claimed_reals(values) -> np.ndarray:
     check_values. The conversion is that of 3.x on the values as given, so a list of Python complex numbers is refused
     with numpy's TypeError, as before."""
     out = np.array(values, dtype=float)
-    arr = np.asarray(values)
+    arr = _complex_view(values)
     if arr.dtype.kind == "c":
         out[~np.isfinite(arr.imag)] = np.nan
     return out
 
 
+def _complex_view(values) -> np.ndarray:
+    """np.asarray(values), and for an object array (numpy complex scalars in an object array, which the float
+    conversion reads through their real parts) its complex form, so that the imaginary parts are seen."""
+    arr = np.asarray(values)
+    if arr.dtype.kind == "O":
+        try:
+            return np.array(values, dtype=complex)
+        except (TypeError, ValueError):
+            return arr
+    return arr
+
+
 def dropped_imaginary_parts(values) -> Optional[Dict[str, Any]]:
     """What claimed_reals drops from complex claimed values: the number and the largest magnitude of the finite nonzero
     imaginary parts, or None (real values, or no such part). The largest magnitude is max(im.max(), -im.min()), exact."""
-    arr = np.asarray(values)
+    arr = _complex_view(values)
     if arr.dtype.kind != "c":
         return None
     im = arr.imag.ravel()

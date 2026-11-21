@@ -338,7 +338,7 @@ def test_dropped_imaginary_parts_are_listed_under_not_verified():
     so that the report shows them (before: only in the claim record); real claimed values add no such line."""
     spec, H, w, V = _chain6()
     lam = w[:3].astype(complex)
-    lam[1], lam[2] = complex(w[1], 0.5), complex(w[2], -2e-9)
+    lam[1], lam[2] = complex(w[1], 0.25), complex(w[2], -0.5)       # the largest magnitude from a negative part
     cert = ce.certify(ce.Claim(eigenvalues=lam, eigenvectors=V[:, :3], operator=H, kind="lowest"), spec,
                       ce.Options(seed=1))
     assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 2, "max_abs": 0.5}
@@ -450,3 +450,83 @@ def test_real_nan_at_exact_eigenpair_radii_and_write_bundle():
     assert r["radii"] == [np.inf] and r["non_finite_values"] == [0]
     with pytest.raises(ValueError, match="finite"):
         write_bundle(tempfile.mkdtemp(), bad, V[:, :1], H)
+
+
+def test_remaining_conversion_sites_see_a_non_finite_imaginary_part():
+    """The conversion sites the other tests do not reach: enclosure.residuals (no finite upper bound), the Ozaki
+    residuals (not applicable), the interval-arithmetic radii (not finite), the ALPS reader (refused); and
+    corroborate is INCONCLUSIVE for an infinite real claimed value (before: CORROBORATED with an infinite tolerance)."""
+    import tempfile
+
+    from certify_ed.corroborate import corroborate
+    from certify_ed.enclosure import OperatorAdapter, residuals
+    from certify_ed.ozaki import NotApplicable, ozaki_residual, residual_report
+    spec, H, w, V = _chain6()
+    bad = np.array([complex(w[0], np.inf)])
+    rep = residuals(OperatorAdapter(H), bad, V[:, :1])
+    assert not np.isfinite(rep.upper[0]) and not np.isfinite(rep.rel_bound[0])
+    with pytest.raises(NotApplicable):
+        ozaki_residual(H, bad, V[:, :1])
+    with pytest.raises(NotApplicable):
+        residual_report(H, bad, V[:, :1])
+    for v in (np.inf, -np.inf):
+        cor = corroborate(H, np.array([v, w[1]]))
+        assert cor["status"] == "INCONCLUSIVE" and cor["non_finite_values"] == [0], cor
+    assert corroborate(H, w[:2])["status"] == "CORROBORATED"
+    try:
+        import flint  # noqa: F401
+    except ImportError:
+        pass
+    else:
+        from certify_ed.rigorous import arb_residual_radii
+        assert not np.isfinite(arb_residual_radii(H, bad, V[:, :1])[0])
+    try:
+        import h5py
+    except ImportError:
+        return
+    from certify_ed.io.alps import read_alps_spectrum
+    from certify_ed.io.formats import FormatError
+    path = tempfile.mktemp(suffix=".h5")
+    with h5py.File(path, "w") as f:
+        f.create_dataset("spectrum/sectors/0/energies", data=np.array([complex(w[0], np.inf), w[1]]))
+    with pytest.raises(FormatError, match="non-finite"):
+        read_alps_spectrum(path, with_vectors=False)
+
+
+def test_object_array_of_complex_scalars_is_masked_and_recorded():
+    """An object array holding numpy complex scalars: the non-finite imaginary part is seen (nan) and a finite one is
+    recorded (before: the float conversion read the real parts, with no mask and no record)."""
+    from certify_ed.precision import dropped_imaginary_parts
+    obj = np.array([np.complex128(complex(1.0, np.inf)), np.complex128(complex(2.0, -0.5))], dtype=object)
+    out = claimed_reals(obj)
+    assert np.isnan(out[0]) and out[1] == 2.0
+    assert dropped_imaginary_parts(obj) == {"count": 1, "max_abs": 0.5}
+    assert dropped_imaginary_parts(np.array([1.0, 2.0], dtype=object)) is None
+
+
+@pytest.mark.parametrize("form", ["values-view", "iterable-only", "three-items"])
+def test_symmetry_entry_forms_without_indexing(form):
+    """An entry that can be iterated but not indexed (a dict.values() view, a class with __iter__ only) is read as its
+    items, as 3.x unpacked it (on the previous round: TypeError); a sequence of three items is refused with the
+    message of a wrong length."""
+    spec, H, w, V = _chain6()
+    full = ce.full_state_set(spec)
+    Sd = digit_sum(full.states_in_order().astype(np.int64), spec.q, spec.n_sites).astype(float)
+
+    class OnlyIter:
+        def __init__(self, *items):
+            self.items = items
+
+        def __iter__(self):
+            return iter(self.items)
+
+    def run(ent):
+        return ce.certify(ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest"), spec,
+                          ce.Options(seed=1, symmetries={"d": ent})).statement("S4.eigenspaces")
+    if form == "three-items":
+        with pytest.raises(ValueError, match=r"must be \(S_diagonal, lattice\)"):
+            run((Sd, None, None))
+        return
+    ent = {"s": Sd, "l": None}.values() if form == "values-view" else OnlyIter(Sd, None)
+    ref, got = run((Sd, None)), run(ent)
+    assert got["status"] == ref["status"] == "CERTIFIED" and got["summary"] == ref["summary"]
