@@ -453,6 +453,28 @@ def test_every_group_size_across_block_boundaries(monkeypatch):
     assert np.count_nonzero(naive != ref) > len(groups) // 2         # the stored-order sums are wrong
 
 
+@pytest.mark.parametrize("size", [3, 5, 70])
+def test_non_finite_groups_of_three_or_more(size):
+    """Groups of 3, 5 (vectorized) and 70 values (math.fsum one by one) with values that are not finite, in every
+    order: nan for a nan or for both infinities, else the infinity, whatever the order and the path."""
+    rng = np.random.default_rng(size)
+    cases = [([np.inf, -np.inf], np.nan), ([np.nan], np.nan), ([np.inf], np.inf), ([-np.inf, -np.inf], -np.inf),
+             ([np.inf, np.nan], np.nan)]
+    groups, want = [], []
+    for special, w in cases:
+        for _ in range(4):
+            g = list(special) + rng.standard_normal(size - len(special)).tolist()
+            groups.append([g[i] for i in rng.permutation(size)])
+            want.append(w)
+    rows = np.repeat(np.arange(len(groups)), size)
+    C = sp.coo_matrix((np.array([x for g in groups for x in g]), (rows, np.zeros(rows.size, int))),
+                      shape=(len(groups), 1))
+    with np.errstate(invalid="ignore", over="ignore"):
+        got = summed(C).toarray().ravel()
+    want = np.array(want)
+    assert np.array_equal(np.isnan(got), np.isnan(want)) and np.array_equal(got[~np.isnan(want)], want[~np.isnan(want)])
+
+
 def test_complex_sums_keep_each_part():
     """The real and the imaginary sums are stored as they are: an infinite imaginary sum leaves the real sum 6 (before:
     1j * inf made it nan), and two parts -0.0 + 1j keep the real sign -0.0."""

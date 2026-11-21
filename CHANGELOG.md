@@ -55,11 +55,13 @@ of positions with the same number of entries (so that time and memory grow with 
 (best of three, one of them with other work running): a CSR with 4.0e6 stored entries, every entry stored as two halves,
 2 to 6 times the time of scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6 positions, 5
 to 20 times scipy's `tocsr`; 1e5 positions of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with
-100, 300 or 1000 entries at each position (5e6 stored), about 12 times, most of it the sort of the coordinates. The peak
-memory of `summed` is 2 to 5 times the input. `fp.max_nnz_per_row` still counts the stored entries of a row (a width at
-least that of the summed matrix, so the gamma factor it feeds stays an upper bound), and `corroborate.run_oracle` reads
-the matrix as given (an oracle, not a certified quantity); `eigenspace.rotation_spread` (a diagnostic),
-`eigenspace.commutes_diagonal` and the residual of the sparse factorization now sum as well.
+100, 300 or 1000 entries at each position (5e6 stored), about 12 times, most of it the sort of the coordinates. An input
+made only of positions whose sums lie next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding
+1, 2^-53 and 2^-106), takes about 30 times `tocsr`, about 3 µs a position. The peak memory of `summed` is 2 to 5 times
+the input. `fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so
+the gamma factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not
+a certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of
+the sparse factorization now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
@@ -75,11 +77,12 @@ the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above,
 format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
 integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on
 6000 random groups, the exact rational sum on 10000 groups at or next to a rounding midpoint, every group size from 3 to
-70 across block boundaries, one large group among many small ones, complex sums, `ozaki.split_rows`, the QuSpin
-importer, the integer routes, a shape of 2^33 x 2^33, and a sweep over the functions of the precision registry with
-every matrix stored as three parts that cancel, in COO and in CSR, against the summed matrices, which fails when an
-entry point skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and `tests/test_input_unchanged.py`
-pin the summation at the start. The computational source hash changes.
+70 across block boundaries, one large group among many small ones, groups of three or more with values that are not
+finite, complex sums, `ozaki.split_rows`, the QuSpin importer, the integer routes, a shape of 2^33 x 2^33, and a sweep
+over the functions of the precision registry with every matrix stored as three parts that cancel, in COO and in CSR,
+against the summed matrices, which fails when an entry point skips `summed` or sums after a conversion);
+`tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
+hash changes.
 
 ### Non-finite follow-ups
 

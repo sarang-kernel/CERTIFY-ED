@@ -321,6 +321,24 @@ def _exact_float_sum(v: np.ndarray) -> float:
             return math.inf if s > 0 else -math.inf
 
 
+def _fsum_groups(v: np.ndarray, starts: np.ndarray, k: int) -> np.ndarray:
+    """_exact_float_sum of each group v[st : st + k], st in `starts` (groups of one size), with the per-group numpy
+    work done once for all of them: one gather, one finiteness test, one conversion to Python floats, then math.fsum
+    on each row (_exact_float_sum for a row with a value that is not finite or whose partial sums overflow)."""
+    rows = v[starts[:, None] + np.arange(k)]
+    fin = np.isfinite(rows).all(axis=1).tolist()
+    out = []
+    for i, (r, f) in enumerate(zip(rows.tolist(), fin)):
+        if f:
+            try:
+                out.append(math.fsum(r))
+                continue
+            except OverflowError:
+                pass
+        out.append(_exact_float_sum(rows[i]))
+    return np.array(out, dtype=np.float64)
+
+
 _U = 2.0 ** -53
 _GROUP_CHUNK = 1 << 22                                  # values per vectorized block (32 MiB of float64)
 _GROUP_VEC_MAX = 64                                     # groups of up to this many values are always vectorized
@@ -346,8 +364,7 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
     for kmax, g in zip(sizes.tolist(), shared.tolist()):
         same = big[counts[big] == kmax]
         if kmax > _GROUP_VEC_MAX and (g < _GROUP_VEC_SHARED or kmax > _GROUP_VEC_CAP):
-            for k in same.tolist():                     # one by one: linear, in C
-                s[k] = _exact_float_sum(v[starts[k]:starts[k] + kmax])
+            s[same] = _fsum_groups(v, starts[same], kmax)   # math.fsum on each: linear, in C
             continue
         step = max(1, _GROUP_CHUNK // kmax)             # groups of one size per block: no padding
         blocks += [(same[i:i + step], kmax) for i in range(0, same.size, step)]
@@ -385,8 +402,9 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
             # (one IEEE addition, ties to even included)
             ok |= np.isfinite(r) & (np.count_nonzero(rest, axis=1) <= 1)
         s[grp[ok]] = r[ok]
-        for k in grp[~ok].tolist():
-            s[k] = _exact_float_sum(v[starts[k]:starts[k] + counts[k]])
+        rej = grp[~ok]
+        if rej.size:
+            s[rej] = _fsum_groups(v, starts[rej], kmax)
     return s
 
 
