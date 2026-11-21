@@ -701,6 +701,19 @@ def claimed_reals(values) -> np.ndarray:
     return out
 
 
+def dropped_imaginary_parts(values) -> Optional[Dict[str, Any]]:
+    """What claimed_reals drops from complex claimed values: the number and the largest magnitude of the finite nonzero
+    imaginary parts, or None (real values, or no such part). The largest magnitude is max(im.max(), -im.min()), exact."""
+    arr = np.asarray(values)
+    if arr.dtype.kind != "c":
+        return None
+    im = arr.imag.ravel()
+    im = im[np.isfinite(im) & (im != 0)]
+    if not im.size:
+        return None
+    return {"count": int(im.size), "max_abs": float(max(im.max(), -im.min()))}
+
+
 def widening_record(widened: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """The record of the conversions (each input once), or None when there were none."""
     if not widened:

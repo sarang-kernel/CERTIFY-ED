@@ -331,3 +331,122 @@ def test_plan_counts_a_mapping_entry_as_a_tuple_entry():
     a = narrow_input_mb(claim, ce.Options(symmetries={"d": (Sd, None)}))
     b = narrow_input_mb(claim, ce.Options(symmetries={"d": {0: Sd, 1: None}}))
     assert a > 0 and a == b
+
+
+def test_dropped_imaginary_parts_are_listed_under_not_verified():
+    """Finite nonzero imaginary parts (the statements concern the real parts, as in 3.x) are listed under not_verified,
+    so that the report shows them (before: only in the claim record); real claimed values add no such line."""
+    spec, H, w, V = _chain6()
+    lam = w[:3].astype(complex)
+    lam[1], lam[2] = complex(w[1], 0.5), complex(w[2], -2e-9)
+    cert = ce.certify(ce.Claim(eigenvalues=lam, eigenvectors=V[:, :3], operator=H, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 2, "max_abs": 0.5}
+    lines = [s for s in cert.body["not_verified"] if "imaginary parts" in s]
+    assert len(lines) == 1 and "2 claimed value(s)" in lines[0] and "0.5" in lines[0], lines
+    assert lines[0] in cert.report()
+    real = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    assert not any("imaginary" in s for s in real.body["not_verified"])
+
+
+def test_sweep_and_composition_record_dropped_imaginary_parts():
+    """certified_sweep passes complex solver values to the claim as given, so the certificate records the dropped part;
+    the sector composition records it in the sector's record (before: dropped with no record at both)."""
+    import scipy.linalg as la
+
+    from certify_ed.compose import SectorResult, certify_low_energy
+    from certify_ed.sweep import certified_sweep
+
+    def solver(Hc, k):
+        ww, VV = np.linalg.eigh(Hc.toarray())
+        ww = ww.astype(complex)
+        ww[0] = complex(ww[0].real, 0.25)
+        return ww[:k], VV[:, :k]
+    sweep = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)
+    cert = sweep["_certificates"][0]
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.25}
+    spec = ce.heisenberg_chain(6)
+    H = ce.build_bitwise(spec)
+    full = ce.full_state_set(spec)
+    w = np.linalg.eigvalsh(H.toarray())
+    E_cut = float((w[3] + w[4]) / 2)
+    secs, hit = [], None
+    for nup in range(spec.n_sites + 1):
+        idx = full.index_of(ce.u1_state_set(spec, nup).states_in_order())[0]
+        Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
+        Hs = (Vs.T @ H @ Vs).tocsr()
+        ws, Ys = la.eigh(Hs.toarray())
+        sel = np.where(ws < E_cut)[0]
+        ev = ws[sel].astype(complex)
+        if sel.size and hit is None:
+            hit = f"nup={nup}"
+            ev[0] = complex(ev[0].real, -0.125)
+        secs.append(SectorResult(f"nup={nup}", Vs, Hs, ev, Ys[:, sel]))
+    res = certify_low_energy(spec, secs, E_cut)
+    rec = next(p for p in res["sectors"] if p["label"] == hit)
+    assert rec["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.125}
+    assert all("dropped_imaginary_parts" not in p for p in res["sectors"] if p["label"] != hit)
+
+
+def test_certify_hamiltonian_records_dropped_imaginary_parts():
+    """The QuSpin entry point passes complex values to the claim as given (sorted by their real parts), so the record
+    is made there too (before: S2 CERTIFIED with no record)."""
+    pytest.importorskip("quspin")
+    from quspin.basis import spin_basis_1d
+    from quspin.operators import hamiltonian
+
+    from certify_ed.integrations import quspin as cq
+    spec = ce.heisenberg_chain(6)
+    Hq = hamiltonian(spec.to_quspin_static(), [], basis=spin_basis_1d(6, pauli=0), dtype=np.float64, check_herm=False,
+                     check_symm=False, check_pcon=False)
+    w, V = Hq.eigh()
+    lam = w[:3].astype(complex)
+    lam[1] = complex(w[1], 0.5)
+    order = [2, 0, 1]                            # unsorted: the wrapper sorts values and vectors together
+    cert = cq.certify_hamiltonian(Hq, lam[order], V[:, :3][:, order], kind="lowest", seed=1)
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.5}
+    assert any("imaginary parts of 1 claimed value(s)" in s for s in cert.body["not_verified"])
+
+
+def test_s8_has_no_code_where_s2_has_none():
+    """A zero claimed vector has an infinite radius by Theorem 1, not through an overflow: S2 gives no reason code, and
+    S8 now gives none either (on the previous round: NONFINITE_BOUND)."""
+    spec, H, w, V = _chain6()
+    X = V[:, :4].copy()
+    X[:, 2] = 0.0
+    cert = ce.certify(ce.Claim(eigenvalues=w[:4], eigenvectors=X, operator=H, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    s2, s8 = cert.statement("S2.eigenpairs"), cert.statement("S8.degeneracy")
+    assert s2["status"] == "INCONCLUSIVE" and s2["evidence"].get("reason_code") is None, s2
+    assert s8["status"] == "INCONCLUSIVE" and s8["evidence"].get("reason_code") is None, s8
+
+
+@pytest.mark.parametrize("entry", ["no key 1", "no key 0", None, 5], ids=["no-key-1", "no-key-0", "none", "number"])
+def test_symmetry_entry_without_its_pair_is_refused_with_the_reason(entry):
+    """A mapping without the key 0 or 1, and an entry without a length, are refused with the message of a sequence of
+    the wrong length (before: a bare KeyError or TypeError)."""
+    spec, H, w, V = _chain6()
+    full = ce.full_state_set(spec)
+    Sd = digit_sum(full.states_in_order().astype(np.int64), spec.q, spec.n_sites).astype(float)
+    ent = {0: Sd} if entry == "no key 1" else {1: None, 2: Sd} if entry == "no key 0" else entry
+    with pytest.raises(ValueError, match=r"must be \(S_diagonal, lattice\)"):
+        ce.certify(ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest"), spec,
+                   ce.Options(seed=1, symmetries={"d": ent}))
+
+
+def test_real_nan_at_exact_eigenpair_radii_and_write_bundle():
+    """A real nan claimed value: exact_eigenpair_radii gives an infinite radius and lists the index (before: a ValueError
+    from the rational conversion), write_bundle refuses it (before: the bundle was written and its readers refused it)."""
+    import tempfile
+
+    from certify_ed.checker import exact_eigenpair_radii
+    from certify_ed.io.bundle import write_bundle
+    spec, H, w, V = _chain6()
+    bad = np.array([np.nan])
+    r = exact_eigenpair_radii(spec, bad, V[:, :1])
+    assert r["radii"] == [np.inf] and r["non_finite_values"] == [0]
+    with pytest.raises(ValueError, match="finite"):
+        write_bundle(tempfile.mkdtemp(), bad, V[:, :1], H)

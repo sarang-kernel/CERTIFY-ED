@@ -55,7 +55,7 @@ from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
-from .precision import binary64, check_values, claimed_reals, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, dropped_imaginary_parts, summed, widening_record
 from .presets import STATEMENTS, preset_options, resolve_selection
 from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
@@ -1660,7 +1660,12 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 for name, ent in opts.symmetries.items():
                     # (S_diagonal, lattice), read by index as labels_hook reads the approximate symmetries, so that
                     # a mapping {0: S, 1: lattice} (the private copy keeps its keys) is read as the pair it holds
-                    if isinstance(ent, (str, bytes)) or not (isinstance(ent, Mapping) or len(ent) == 2):
+                    try:                           # a mapping needs the keys 0 and 1, a sequence the length 2
+                        pair = not isinstance(ent, (str, bytes)) and (
+                            (0 in ent and 1 in ent) if isinstance(ent, Mapping) else len(ent) == 2)
+                    except TypeError:              # an entry without a length (None, a number)
+                        pair = False
+                    if not pair:
                         raise ValueError(f"options.symmetries[{name}] must be (S_diagonal, lattice)")
                     sdiag, lattice = ent[0], ent[1]
                     if isinstance(sdiag, str) and sdiag == "su2":
@@ -1909,7 +1914,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                                                         for c in (r.get("counts") or [])) for r in incon8):
                     code8 = "NONFINITE_BOUND"
                 elif st8 == "INCONCLUSIVE" and any(r.get("radius_not_finite") for r in incon8):
-                    code8 = s2_code if s2_code in ("NONFINITE_BOUND", "UNRESOLVED_VECTOR_NORM") else "NONFINITE_BOUND"
+                    code8 = s2_code if s2_code in ("NONFINITE_BOUND", "UNRESOLVED_VECTOR_NORM") else None
                 statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0,
                                         reason_code=code8))
 
@@ -1931,15 +1936,16 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                  "accuracy_target": claim.accuracy_target,
                  "eigenvalues": mu.tolist(),
                  "eigenvectors_sha256": array_sha256(X) if X is not None else None}
-    lam_given = np.asarray(claim.eigenvalues)
-    if lam_given.dtype.kind == "c":              # the statements concern the real parts (as in 3.x): say what was dropped
-        im = lam_given.imag[np.isfinite(lam_given.imag) & (lam_given.imag != 0)]
-        if im.size:
-            claim_rec["dropped_imaginary_parts"] = {"count": int(im.size), "max_abs": float(np.max(np.abs(im)))}
+    dropped = dropped_imaginary_parts(claim.eigenvalues)
+    if dropped is not None:                      # the statements concern the real parts (as in 3.x): say what was dropped
+        claim_rec["dropped_imaginary_parts"] = dropped
     not_verified = [
         "that the model specification is the Hamiltonian the authors intend (only producer operator == spec is checked)",
         "correctness of the producer's code in general (only this result is checked)",
     ]
+    if dropped is not None:
+        not_verified.append(f"the imaginary parts of {dropped['count']} claimed value(s), largest in magnitude "
+                            f"{dropped['max_abs']:.6g}: the statements concern the real parts")
     s6_ok = any(s["id"] == "S6.exact_recheck" and s["status"] == "CERTIFIED" for s in statements)
     if enc is not None and enc.rigorous and not s6_ok:
         not_verified.append("interval-arithmetic proof: bounds rely on the standard floating-point model (see 'arithmetic')")

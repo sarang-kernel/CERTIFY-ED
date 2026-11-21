@@ -34,7 +34,7 @@ from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
-from .precision import binary64, check_values, claimed_reals, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, dropped_imaginary_parts, summed, widening_record
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
 from .spec import ModelSpec
@@ -109,6 +109,9 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
     contrib = {"Bn": Bn, "Hn": Hn, "m_build": m_build, "symmetrised": symmetrised, "complete": False,
                "pooled": [], "rad": 0.0, "beta": 0.0}
     mu = claimed_reals(s.eigenvalues)
+    dropped = dropped_imaginary_parts(s.eigenvalues)
+    if dropped is not None:                # the record concerns the real parts, as certify's claim record says
+        rec["dropped_imaginary_parts"] = dropped
     bad = np.flatnonzero(~np.isfinite(mu))
     if bad.size:
         # a non-finite claimed value (NaN, an infinity, or a non-finite imaginary part) is rejected as in certify():
