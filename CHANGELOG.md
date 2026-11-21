@@ -14,11 +14,11 @@ summed on a copy at the start of every call, before any product and before any f
 applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
 one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
 entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64 and for
-larger positions that share their number of entries with many others, and `math.fsum` for the rest and where the passes
-cannot decide) and for integer data the exact sum, so it does not depend on the format, the stored order of the entries
-or the entry point. Before, several public functions formed their products from the stored entries and took the moduli
-of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the rounding of those products was not
-covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0)
+larger positions that share their number of entries with at least 511 others, and `math.fsum` for the rest and where the
+passes cannot decide) and for integer data the exact sum, so it does not depend on the format, the stored order of the
+entries or the entry point. Before, several public functions formed their products from the stored entries and took the
+moduli of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the rounding of those products was
+not covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0)
 positions each hold 2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned
 1.0000000000000024, below the exact ||[H, S]||_2 = 1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper`
 read the stored values: two entries 1 at one position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector
