@@ -17,7 +17,7 @@ from fractions import Fraction
 
 import numpy as np
 
-from .precision import check_values
+from .precision import check_values, claimed_reals
 
 
 def _arb():
@@ -574,7 +574,7 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
        show m *distinct* eigenvalues, so the counts locate them. 'enclosures' lists both kinds; the
        next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere."""
     check_values(lam, "lam")          # as in certify() (precision.py)
-    lam = np.atleast_1d(np.asarray(lam, dtype=float))
+    lam = np.atleast_1d(claimed_reals(lam))
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]

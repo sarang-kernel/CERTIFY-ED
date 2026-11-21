@@ -36,6 +36,7 @@ import math
 import sys
 import time
 from dataclasses import dataclass, field, replace
+from collections.abc import Iterator, Mapping
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
@@ -54,7 +55,7 @@ from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
-from .precision import binary64, check_values, widening_record
+from .precision import binary64, check_values, claimed_reals, widening_record
 from .presets import STATEMENTS, preset_options, resolve_selection
 from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
@@ -1000,8 +1001,9 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
 
     Every bound counts binary64 arithmetic (fp.U = 2^-53); numpy would form the products of single-precision data in
     single precision, so such data are widened here, before anything runs (precision.py). The widening is exact: the
-    statements concern the values as stored. Claimed eigenvalues are converted with dtype=float as before; a type for
-    which that conversion would round is refused."""
+    statements concern the values as stored. Claimed eigenvalues are converted with dtype=float as before (a value with a
+    non-finite imaginary part becomes nan: precision.claimed_reals); a type for which that conversion would round is
+    refused."""
     check_values(claim.eigenvalues, "claim.eigenvalues")
     op, iso = own(claim.operator, "claim.operator"), own(claim.sector_isometry, "claim.sector_isometry")
     X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True, keep_integers=True)
@@ -1018,6 +1020,14 @@ def _options_as_given(opts: Options, own) -> Options:
     def entry(v, what):                    # (approximate) symmetry: (S, lattice[, allowed]) as a sequence
         if sp.issparse(v) or isinstance(v, (str, bytes)):
             return v
+        if isinstance(v, Mapping):             # read by index where it is used: the copy keeps every key
+            if 0 not in v:
+                return v
+            S_own = own(v[0], what)
+            return v if S_own is v[0] else {**v, 0: S_own}
+        if isinstance(v, Iterator):            # read once (a generator): its items, so that S is owned and recorded
+            items = tuple(v)
+            return (own(items[0], what), *items[1:]) if items else items
         try:
             S = v[0]
             rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
@@ -1080,7 +1090,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
-    mu = np.asarray(claim.eigenvalues, dtype=float)
+    mu = claimed_reals(claim.eigenvalues)          # a non-finite imaginary part: nan (INCONCLUSIVE, precision.py)
     X = claim.eigenvectors
     streamed = X is not None and is_streamed(X)
     if streamed and not isinstance(X, (np.memmap, StreamedColumns)):

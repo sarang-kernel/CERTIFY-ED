@@ -35,8 +35,9 @@ operators.py) are returned as given. The low-level kernels call `require_binary6
 than binary64, so an entry point that misses its conversion fails instead of certifying.
 
 Claimed eigenvalues are converted with dtype=float by the callers, as in 3.x (a complex array: the real part, with
-numpy's ComplexWarning); `check_values` refuses, under the same rule, the values for which that conversion would
-round.
+numpy's ComplexWarning; `claimed_reals` makes a value with a non-finite imaginary part nan, so that the rule for
+non-finite claimed values applies to it); `check_values` refuses, under the same rule, the values for which that
+conversion would round.
 
 Records: `widened` collects one entry per input converted from a narrower floating format (the caller's dtype, the
 target dtype and source_sha256, the hash of the input as given); certify() writes them to the certificate's
@@ -408,6 +409,19 @@ def check_values(values, what: str = "eigenvalues") -> None:
     target_dtype(arr.dtype, what)
     if arr.dtype.kind in "iu":
         _exact_ints(arr, what)
+
+def claimed_reals(values) -> np.ndarray:
+    """The claimed eigenvalues of a Hermitian claim as binary64 reals, converted as in 3.x (dtype=float; a complex array:
+    the real part, with numpy's ComplexWarning), except that a value whose imaginary part is not finite becomes nan.
+    Such a value is not finite, and the callers' rule for non-finite claimed values applies to it (INCONCLUSIVE, or
+    refused where non-finite values are refused); its real part alone would otherwise be certified. Call after
+    check_values."""
+    arr = np.asarray(values)
+    out = np.array(arr, dtype=float)
+    if arr.dtype.kind == "c":
+        out[~np.isfinite(arr.imag)] = np.nan
+    return out
+
 
 def widening_record(widened: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """The record of the conversions (each input once), or None when there were none."""

@@ -34,7 +34,7 @@ from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
-from .precision import binary64, check_values, widening_record
+from .precision import binary64, check_values, claimed_reals, widening_record
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
 from .spec import ModelSpec
@@ -108,7 +108,14 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
         rec["label_audit"] = {g: audit_label(spec, s.V, g, cache) for g in label_symmetries}
     contrib = {"Bn": Bn, "Hn": Hn, "m_build": m_build, "symmetrised": symmetrised, "complete": False,
                "pooled": [], "rad": 0.0, "beta": 0.0}
-    mu = np.asarray(s.eigenvalues, dtype=float)
+    mu = claimed_reals(s.eigenvalues)
+    bad = np.flatnonzero(~np.isfinite(mu))
+    if bad.size:
+        # a non-finite claimed value (NaN, an infinity, or a non-finite imaginary part) is rejected as in certify():
+        # nothing is counted or enclosed (before, it was left out of the count and the sector reported as MISSING)
+        rec.update(status="INCONCLUSIVE", reason="claim contains non-finite values",
+                   non_finite_eigenvalues=bad[:8].tolist())
+        return rec, contrib, H
     mu_below = mu[mu < E_cut]
     r = inertia_count(Hs, E_cut, method=inertia_method)
     rec["inertia"] = r.to_dict()
