@@ -7,6 +7,27 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Small follow-ups
+
+No constant changes; statuses change only on the inputs named here. A claimed value whose imaginary part is not finite
+is now a non-finite value: the conversion of claimed eigenvalues (`precision.claimed_reals`, used by `certify`,
+`exact_recheck_lowest`, `exact_recheck_sector_lowest`, `certify_generalized` and `certify_low_energy`) makes it nan, so
+S2 and the exact re-checks are INCONCLUSIVE ("claim contains non-finite values") and `certify_generalized` refuses it,
+as for a nan value. Before, the imaginary part was dropped, and w + ∞i was certified as w by `certify` and by both exact
+re-checks. In the sector composition a sector with a non-finite claimed value is INCONCLUSIVE before anything is
+counted, with the indices in its record (`non_finite_eigenvalues`); a nan value was left out of the count, so the sector
+was reported MISSING and the composition FAILED, and w + ∞i was certified. An (approximate) symmetry entry given as an
+iterator, or as a mapping with keys besides 0, 1 and 2, now gets the private copy and the widening record of a tuple
+entry (it was passed on as given, and a float32 diagonal or matrix in it was converted without a record).
+`sectors.restrict_to_u1` drops stored zeros of the isometry before the row look-up (a stored zero in a row after the
+last row of the support raised an IndexError). S8 carries `NONFINITE_BOUND` when the S2 radii of a cluster overflow
+(couplings of 1e200; S8 had no code while S2 named the overflow), and the S2 record of a cluster not certified distinct
+carries `nonfinite_bound`. The figure helper `experiments/figures/_common.py` is renamed `_figcommon.py`: `docs/proofs`
+has its own `_common`, and in one test session the module imported first was used for both (an ImportError in
+`tests/test_nonhermitian.py`, depending on the test order). `tests/test_figures.py` is skipped when
+`experiments/figures` is absent (the source distribution). Tests: `tests/test_small_followups.py` (each case fails at
+the base). The computational source hash changes.
+
 ### Non-finite follow-ups
 
 No constant changes; statuses change only on inputs whose accounting overflows. When the radii of the claimed pairs are
