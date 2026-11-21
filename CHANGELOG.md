@@ -38,8 +38,9 @@ fraction raised, for a B with entries near the largest float in `certify_general
 shift that is not finite or one whose shifted matrix A - σI overflows (LAPACK raised a ValueError on the dense path;
 the sparse path gave no count without a reason code). The records of M2 and M3 store a non-finite interval as null and
 a non-finite bound as ∞ when a matrix formed for a sum rule overflows while the moments are finite. S8 carries
-`NONFINITE_BOUND` when a bracketing count is refused for an overflowed bound, as S3 does (it was INCONCLUSIVE without
-a code). The S3 count records
+`NONFINITE_BOUND` when a bracketing count is refused for an overflowed bound or the level enclosure of a cluster is
+not finite, as S3 and S2 do (it was INCONCLUSIVE without a code). The cluster record of S2 stores an overflowed
+Theorem 2' term as ∞ (`eps_star`, `XR`; they held nan). The S3 count records
 carry `nonfinite_bound` only when it is true, so the record of a finite count is unchanged. The INCONCLUSIVE summary of
 a window S3 now gives the reason recorded in its evidence (for example, inertia inconclusive at a window edge) instead
 of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_VECTOR_NORM` and which give

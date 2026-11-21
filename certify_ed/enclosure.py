@@ -651,11 +651,15 @@ def _cluster_bound(adapter: OperatorAdapter, mu: np.ndarray, X, res: ResidualRep
     spread = up(float(sub_up(float(np.max(mu_g)), float(np.min(mu_g)))))
     eps_star = up(Rg_fro * inv_sqrt + XR_bound * inv + delta * spread * inv_sqrt) + 4 * ULP_MIN   # six roundings
     used = "eps_star" if eps_star < rho else "rho"
+    radius = eps_star if eps_star < rho else rho       # never a nan eps_star (a comparison with nan is false)
+
+    def rec(v):                                         # no nan in the record: an overflowed term is stored as inf
+        return math.inf if math.isnan(v) else float(v)
     # the ingredients are exported for the Davis-Kahan sin(theta) alternative of S4 (E-07, davis_kahan.py): upper
     # bounds on ||R||_F, ||X^H R||_2, delta = 1 - sqrt(1 - eta) and spread(mu) (3.2; additive, used nowhere else here)
-    return min(rho, eps_star), eta, rho, {"eps": float(rho), "rho": float(rho), "eps_star": float(eps_star),
-                                         "used": used, "R_fro": float(Rg_fro), "XR": float(XR_bound),
-                                         "delta": float(delta), "spread": float(spread)}
+    return radius, eta, rho, {"eps": rec(rho), "rho": rec(rho), "eps_star": rec(eps_star),
+                              "used": used, "R_fro": rec(Rg_fro), "XR": rec(XR_bound),
+                              "delta": rec(delta), "spread": rec(spread)}
 
 
 def nonfinite_columns(X, block_mb: Optional[float] = None) -> List[int]:

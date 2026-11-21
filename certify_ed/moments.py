@@ -240,8 +240,10 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     finite = all(_finite(m) for m in moments)
     for m in moments:
         if not _finite(m):
-            # no nan in the record: a bound that is not finite is stored as inf, with no interval; a nan value as None
-            m["bound"], m["interval"] = math.inf, [None, None]
+            # no nan in the record: a bound that is not finite is stored as inf (a finite one as computed, when only an
+            # end of the interval overflowed), with no interval; a nan value as None
+            m["bound"] = m["bound"] if math.isfinite(m["bound"]) else math.inf
+            m["interval"] = [None, None]
             m["value"] = None if math.isnan(m["value"]) else m["value"]
             m["terms"] = {t: (v if math.isfinite(v) else math.inf) for t, v in m["terms"].items()}
             m["M_norm_upper"] = m["M_norm_upper"] if math.isfinite(m["M_norm_upper"]) else math.inf

@@ -1879,8 +1879,9 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                     ev8["exact_bracket"] = exact_note
                 # a bracketing count refused because a bound overflowed names the cause, as S3 does
                 code8 = ("NONFINITE_BOUND" if st8 == "INCONCLUSIVE" and any(
-                    isinstance(c, dict) and c.get("nonfinite_bound") for r in recs if r.get("status") == "INCONCLUSIVE"
-                    for c in (r.get("counts") or [])) else None)
+                    r.get("nonfinite_bound") or any(isinstance(c, dict) and c.get("nonfinite_bound")
+                                                    for c in (r.get("counts") or []))
+                    for r in recs if r.get("status") == "INCONCLUSIVE") else None)
                 statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0,
                                         reason_code=code8))
 

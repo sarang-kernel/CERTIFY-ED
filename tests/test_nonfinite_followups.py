@@ -353,3 +353,58 @@ def test_s8_names_an_overflowed_bracketing_count():
     s = s8(1e200)
     assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
     assert s8(10.0)["status"] == "CERTIFIED"
+
+
+def test_a_moment_interval_whose_end_overflows_states_nothing():
+    """A finite value and a finite bound whose sum overflows (m_0 next to the largest float): M1 is INCONCLUSIVE with
+    no interval and the finite bound kept (before: CERTIFIED on [1.7976931348623131e308, inf]); the same input with c
+    scaled by 1 - 2^-40 is CERTIFIED (its interval ends below the largest float)."""
+    c = 1.3407807929942596e154
+    a = 0.7071067811865475
+    X = np.array([[a], [a], [0.0]])
+
+    def m1(c):
+        rec = certified_moments(np.diag([1.0, 1.0, 3.0]), np.diag([c, c, 1.0]), X, 0.0, 0.0, K=0, level=(0.5, 1.5))
+        return rec, _stmt(rec, "M1")
+    rec, s = m1(c)
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    m = rec["moments"][0]
+    assert m["interval"] == [None, None] and math.isfinite(m["bound"]) and not list(_nan_paths(rec))
+    assert m1(c * (1 - 2.0 ** -40))[1]["status"] == "CERTIFIED"
+
+
+def test_the_cluster_bound_record_holds_no_nan():
+    """The Theorem 2' term of a cluster overflows to inf - inf (entries of 1.7e308): S2 states nothing, and the group
+    record stores eps_star and XR as inf (before: nan); the radius is rho, never a nan eps_star."""
+    H = np.array([[1.7e308, 1, 0, 1], [1, 1, 1.7e308 + 1e300j, 0], [0, 1.7e308 - 1e300j, 0, 2.5],
+                  [1, 0, 2.5, 1.7e308]], dtype=complex)
+    X = np.array([[-0.5283649431124846 - 0.0685491197023318j, -0.015247715572997738 - 0.5159036663258222j],
+                  [0.1777258675720891 - 0.45480298238794126j, -0.6068573042194345 + 0.2730350214706092j],
+                  [-0.24590006055627978 - 0.178670158981735j, 0.01219100913005814 + 0.34632907909114086j],
+                  [-0.29472282449866805 + 0.5463038161242746j, -0.24907250521438387 + 0.3296322784952174j]])
+    claim = ce.Claim(eigenvalues=np.array([-1.797e308, -1.797e308]), eigenvectors=X, operator=sp.csr_matrix(H),
+                     kind="subset")
+    cert = ce.certify(claim, None, ce.Options(seed=1, inertia_method="sparse-apriori"))
+    assert cert.statement("S2.eigenpairs")["status"] != "CERTIFIED"
+    assert not list(_nan_paths(cert.body))
+
+
+@pytest.mark.parametrize("method", ["sparse", "sparse-apriori"])
+def test_sparse_factors_that_overflow_name_the_overflow(method):
+    """A - sigma I is finite but the stored factors overflow (pivot 1e-200 against 1e200): no count, with the flag
+    that gives S3 and S8 their reason code (before: no count and no flag)."""
+    r = inertia(sp.csr_matrix(np.array([[1e-200, 1e200], [1e200, 1.0]])), 0.0, method=method)
+    assert not r.conclusive and r.negative is None and r.nonfinite_bound
+
+
+def test_s8_names_a_non_finite_level_enclosure():
+    """Couplings of 1.3e154: the level enclosure of the cluster is not finite, no count is attempted, and S8 names the
+    overflow as S2 does (before: INCONCLUSIVE without a code)."""
+    spec = ce.heisenberg_chain(4, J=1.3e154)
+    H = ce.build_bitwise(spec).tocsr()
+    w, V = np.linalg.eigh(H.toarray())
+    cert = ce.certify(ce.Claim(eigenvalues=w[:3], eigenvectors=V[:, :3], operator=H, kind="lowest"), spec,
+                      ce.Options(seed=1))
+    s = cert.statement("S8.degeneracy")
+    assert s["status"] == "INCONCLUSIVE" and s["evidence"]["reason_code"] == "NONFINITE_BOUND", s
+    assert not list(_nan_paths(cert.body))

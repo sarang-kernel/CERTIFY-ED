@@ -64,7 +64,7 @@ def degeneracy_counts(A, enc, clusters: Sequence[Sequence[int]], method: str = "
             out.append(rec)
             continue
         if not np.isfinite(JL) or not np.isfinite(JU):
-            rec.update(status="INCONCLUSIVE", reason="non-finite level enclosure")
+            rec.update(status="INCONCLUSIVE", reason="non-finite level enclosure", nonfinite_bound=True)
             out.append(rec)
             continue
         margin = max(margin_rel * scale, 16 * float(np.max(rad)))
