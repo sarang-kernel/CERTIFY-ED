@@ -37,7 +37,7 @@ import numpy as np
 
 from ..certify import Claim, Options, certify
 from ..importers import QUSPIN_HINT, _looks_like_quspin, claim_from_quspin
-from ..precision import check_values
+from ..precision import check_values, claimed_reals
 from ..spec import ModelSpec
 
 __all__ = ["certify_hamiltonian", "static_list_of"]
@@ -104,7 +104,7 @@ def certify_hamiltonian(H, w, V=None, basis=None, static=None, spec: Optional[An
     opts = Options.from_preset(preset, **options) if preset else Options(**options)
 
     check_values(w, "w")                  # before the conversion, which would round an inexact value (precision.py)
-    w = np.asarray(w, dtype=float).reshape(-1)
+    w = claimed_reals(w).reshape(-1)
     X = None if V is None else np.asarray(V)
     if X is not None and X.ndim == 1:
         X = X[:, None]

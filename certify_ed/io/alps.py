@@ -25,6 +25,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
+from ..precision import claimed_reals
 from .formats import FormatError
 
 __all__ = ["read_alps_spectrum", "states_from_alps_basis", "claim_from_alps"]
@@ -55,7 +56,7 @@ def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, o
             g = sectors[k]
             if "energies" not in g:
                 raise FormatError(f"{path}: /spectrum/sectors/{k} has no 'energies' dataset")
-            w = np.asarray(g["energies"][...], dtype=float).reshape(-1)
+            w = claimed_reals(g["energies"][...]).reshape(-1)
             if not np.all(np.isfinite(w)):
                 raise FormatError(f"{path}: sector {k}: non-finite energies")
             qn: Dict[str, float] = {}

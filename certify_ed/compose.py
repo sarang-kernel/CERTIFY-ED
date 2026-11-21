@@ -114,7 +114,7 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
         # a non-finite claimed value (NaN, an infinity, or a non-finite imaginary part) is rejected as in certify():
         # nothing is counted or enclosed (before, it was left out of the count and the sector reported as MISSING)
         rec.update(status="INCONCLUSIVE", reason="claim contains non-finite values",
-                   non_finite_eigenvalues=bad[:8].tolist())
+                   non_finite_eigenvalues=bad[:8].tolist(), n_non_finite=int(bad.size))
         return rec, contrib, H
     mu_below = mu[mu < E_cut]
     r = inertia_count(Hs, E_cut, method=inertia_method)

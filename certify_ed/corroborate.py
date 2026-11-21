@@ -22,6 +22,8 @@ import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
+from .precision import claimed_reals
+
 ORACLES = {
     "lapack_evd": {"algorithm": "Householder tridiagonalisation (?SYTRD/?HETRD) + divide and conquer",
                    "shares": ["tridiagonalisation with lapack_evr and lapack_ev", "BLAS"]},
@@ -115,7 +117,7 @@ def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.n
 
 
 def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_evr", "jacobi")) -> dict:
-    claimed = np.sort(np.asarray(claimed, dtype=float))
+    claimed = np.sort(claimed_reals(claimed))
     k = claimed.size
     scale = float(np.max(np.abs(claimed))) if k else 1.0
     out = {"oracles": {}, "independence": {o: ORACLES[o] for o in oracles}}

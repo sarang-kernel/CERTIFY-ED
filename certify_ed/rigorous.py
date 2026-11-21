@@ -19,7 +19,7 @@ from typing import List, Tuple
 import numpy as np
 import scipy.sparse as sp
 
-from .precision import binary64
+from .precision import binary64, claimed_reals
 
 try:
     import flint
@@ -64,7 +64,7 @@ def arb_residual_radii(A, mu, X, prec: int = 128, lower: bool = False) -> np.nda
         X = binary64(np.asarray(X), "eigenvectors")
         if X.ndim == 1:
             X = X[:, None]
-        mu = np.asarray(mu, dtype=float)
+        mu = claimed_reals(mu)
         n, k = X.shape
         cplx = np.iscomplexobj(A.data) or np.iscomplexobj(X)
         Num = flint.acb if cplx else flint.arb

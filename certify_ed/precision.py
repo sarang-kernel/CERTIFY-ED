@@ -415,9 +415,10 @@ def claimed_reals(values) -> np.ndarray:
     the real part, with numpy's ComplexWarning), except that a value whose imaginary part is not finite becomes nan.
     Such a value is not finite, and the callers' rule for non-finite claimed values applies to it (INCONCLUSIVE, or
     refused where non-finite values are refused); its real part alone would otherwise be certified. Call after
-    check_values."""
+    check_values. The conversion is that of 3.x on the values as given, so a list of Python complex numbers is refused
+    with numpy's TypeError, as before."""
+    out = np.array(values, dtype=float)
     arr = np.asarray(values)
-    out = np.array(arr, dtype=float)
     if arr.dtype.kind == "c":
         out[~np.isfinite(arr.imag)] = np.nan
     return out

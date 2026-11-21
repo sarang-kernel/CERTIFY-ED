@@ -26,7 +26,7 @@ import scipy.sparse as sp
 
 from ..certify import Claim
 from ..construct import StateSet
-from ..precision import is_narrow_float
+from ..precision import claimed_reals, is_narrow_float
 from ..spec import ModelSpec
 from .formats import (ARRAY_EXT, FormatError, read_array, read_basis, read_operator, write_array,
                       write_basis, write_operator)
@@ -145,7 +145,11 @@ def write_bundle(path: str, eigenvalues, eigenvectors=None, operator=None, spec:
     ofmt = (operator_fmt or fmt).lstrip(".")
     if operator is not None and sp.issparse(operator) and operator_fmt is None and ofmt == "npy":
         ofmt = "npz"           # .npy has no sparse form
-    write_array(os.path.join(path, f"eigenvalues.{fmt}"), np.asarray(eigenvalues, dtype=float), role="eigenvalues")
+    ev = claimed_reals(eigenvalues)
+    if not np.all(np.isfinite(ev)):            # the readers refuse such a file (formats.read_array): refused here
+        raise ValueError("write_bundle: the claimed eigenvalues must be finite (found NaN, an infinity or a non-finite "
+                         f"imaginary part at indices {np.flatnonzero(~np.isfinite(ev))[:8].tolist()})")
+    write_array(os.path.join(path, f"eigenvalues.{fmt}"), ev, role="eigenvalues")
     if eigenvectors is not None:
         write_array(os.path.join(path, f"eigenvectors.{fmt}"), np.asarray(eigenvectors), role="eigenvectors")
     if operator is not None:

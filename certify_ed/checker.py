@@ -320,22 +320,29 @@ def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
     For each claimed (lam_i, x_i) the radius rho_i of the Krylov-Bogolyubov interval [lam_i - rho_i,
     lam_i + rho_i] of the test vector x_i' = D fl(x_i / d) (= x_i up to one rounding) is computed exactly
     and rounded up; for Hermitian H and x_i' != 0 the interval contains an eigenvalue. A zero test vector
-    has no interval: its radius is reported as inf and its index is listed under 'zero_test_vectors'.
-    Hermiticity of the declared model is checked exactly. No floating-point assumption is involved."""
+    has no interval: its radius is reported as inf and its index is listed under 'zero_test_vectors'. A claimed
+    value that is not finite (NaN, an infinity, or a non-finite imaginary part: precision.claimed_reals) has no
+    interval either: radius inf, index under 'non_finite_values'. Hermiticity of the declared model is checked exactly.
+    No floating-point assumption is involved."""
     check_values(lam, "lam")          # a value binary64 cannot hold is refused, as in certify() (precision.py)
+    lam = np.atleast_1d(claimed_reals(lam))
     ex = exact if exact is not None else exact_matrix(spec, states)
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]
-    radii, zero = [], []
-    for i, lam_i in enumerate(np.atleast_1d(lam)):
+    radii, zero, bad = [], [], []
+    for i, lam_i in enumerate(lam):
+        if not np.isfinite(lam_i):
+            bad.append(int(i))
+            radii.append(float("inf"))
+            continue
         yr, yi, _ = _float_vector_to_int(scaled_test_vector(ex, X[:, i]))
         r = radius_exact(ex, yr, yi, lam_i)
         if r is None:
             zero.append(int(i))
         radii.append(float("inf") if r is None else _round_up_float(r))
     return {"radii": radii, "hermitian": is_hermitian_exact(ex), "den": int(ex.den), "nnz": int(len(ex.rows)),
-            "zero_test_vectors": zero}
+            "zero_test_vectors": zero, "non_finite_values": bad}
 
 
 def inertia_exact(M, rows_per_block: int = 256):
