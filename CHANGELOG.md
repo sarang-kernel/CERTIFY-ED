@@ -25,28 +25,36 @@ inertia backward error, the moments and the fidelity bound); it now measures the
 nnz and no DIA padding. `fp.inf_norm_upper` and `fp.abs_up` no longer sum the caller's matrix in place.
 
 Every site that sums uses this sum: the entry points, the private copies of `certify()`, `matrix_sha256` (so the hash
-in a certificate is the hash of the caller's matrix), the file readers and the writers. scipy's conversions add
-repeated entries in stored order, and the first version of this change summed some inputs after such a conversion and
-others natively; with three or more entries at a position whose partial sums round, the summed matrix then depended on
-the route: `audit_decomposition` could pass a decomposition that no single matrix supports, and a COO operator was
-certified as a matrix other than the one its hash named. The readers summed a COO file in the type of the file
-(int8 100 + 100 gave -56, True + True gave True); they now sum as the direct path does. A COO operator with three or
-more entries at one position whose partial sums round is certified as the correctly rounded sum, where 3.x certified
-the sum in stored order; its certificate and its hash change.
+in a certificate is the hash of the caller's matrix), the file readers, the QuSpin importer for a scipy matrix, the
+writers, `ozaki.split_rows` and `gpu.DeviceCSR`. scipy's conversions add repeated entries in stored order; since
+every site sums before any conversion, the summed matrix does not depend on the route of a call (with three or more
+entries at a position whose partial sums round, a sum taken after a conversion would differ from one taken before it).
+In 3.x the readers summed a COO file in the type of the file (int8 100 + 100 gave -56, True + True gave
+True); they now sum as the direct path does. A COO operator with three or more entries at one position whose partial
+sums round is certified as the correctly rounded sum, where 3.x certified the sum in stored order; its certificate and
+its hash change. Positions are grouped by row and column (a sort on the pair, not on a combined key, which would wrap
+for shapes of 2^63 positions or more).
 
-Integer data are summed exactly: a sum that leaves the caller's integer type is kept in int64 (int8 100 + 100 = 200),
-one beyond int64 or uint64 is refused (PrecisionError), and the sums are checked like the entries (every value a
-binary64 number). A matrix with no repeated position is not refused whatever its integer type (the first version of
-this change refused a narrow-integer COO or a CSR with unsorted indices when the total of all its entries was large).
-Booleans are converted to float64 first (True + True = 2). `summed` refuses floating data narrower than binary64; the
-entry points convert them exactly first, and `fp.fro_upper` and `fp.abs_up` now do so as well.
+Integer data are summed exactly, on every route: `binary64` sums sparse integer data this way before it converts them,
+so the routes that keep integers and those that convert them refuse the same matrices (an exact sum that is not a
+binary64 number, such as 2^53 + 1, or one beyond int64 or uint64) and use the same sums otherwise; a sum that leaves
+the caller's integer type is kept in int64 (int8 100 + 100 = 200), and the sums are checked like the entries. A matrix
+with no repeated position is accepted whatever its integer type and size, as in 3.x. Booleans are converted
+to float64 first (True + True = 2). `summed` refuses floating data narrower than binary64; the entry points convert
+them exactly first, and `fp.fro_upper` and `fp.abs_up` now do so as well. A position with a part that is not finite
+holds nan for a nan or for both infinities and the infinity otherwise, whatever the order.
 
-Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; a COO built from
-arrays) is copied and sorted once per call, as before; `fp.fro_upper`, which only reads the values, skips the copy when
-no position repeats. `summed` trusts scipy's canonical flag. `fp.max_nnz_per_row` still counts the stored entries of a
-row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper bound);
-`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse factorization
-now sum as well.
+Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; any product scipy
+forms; a COO built from arrays) is copied, sorted and checked for repeated positions on each call; `summed` trusts
+scipy's canonical flag. Positions with
+two entries take one addition, positions with three or more a few vectorized TwoSum passes and `math.fsum` only near a
+rounding boundary. Measured on the Windows reference host: a CSR with 4.0e6 stored entries, every entry stored as two
+halves, 0.43 s against 0.07 s for scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6
+positions, 0.21 s and 2.3 s against 0.03 s and 0.18 s for scipy's `tocsr`. `fp.max_nnz_per_row` still counts the
+stored entries of a row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper
+bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a certified quantity);
+`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse
+factorization now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
@@ -60,10 +68,11 @@ products were covered and the certificates change only in the last bits; the sta
 An operator with repeated entries certified with its model is now served by the device (before: `|A| does not share
 the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above, `fro_upper`, the independence of the
 format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
-integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, and a sweep over
-the functions of the precision registry with every matrix stored as three parts that cancel, against the summed
-matrices, which fails when an entry point skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and
-`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1875 passed, 65 skipped, 0 failed. The computational
+integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on 6000 random groups, the
+integer routes, a shape of 2^33 x 2^33, and a sweep over the functions of the precision registry with every matrix
+stored as three parts that cancel, in COO and in CSR, against the summed matrices, which fails when an entry point
+skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and
+`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1956 passed, 82 skipped; the one failure, `tests/test_driver.py::test_reproduce_parallel_resume_and_numbers`, came from the test environment (a relative PYTHONPATH that the experiment subprocesses could not resolve) and is to be re-run. The computational
 source hash changes.
 
 ### Result documents moved under docs/

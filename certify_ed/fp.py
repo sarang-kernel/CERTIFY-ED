@@ -287,8 +287,6 @@ def abs_up(A):
             A = summed(binary64(A, "fp.abs_up") if is_narrow_float(A.dtype) else A, "fp.abs_up")
         if A.data.dtype.kind == "f":
             return abs(A)
-        if A.format != "dia":
-            A.sum_duplicates()
         data = modulus_up(A.data)
         if A.format in ("csr", "csc", "bsr"):
             return type(A)((data, A.indices.copy(), A.indptr.copy()), shape=A.shape)
@@ -387,9 +385,8 @@ def fro_upper(A) -> float:
     measured with them summed (precision.summed, on a copy): the norm of its stored values could be smaller (two
     entries 1 at one position: sqrt(2) against 2). Values past nnz and DIA padding are not read."""
     if sp.issparse(A):
-        if needs_summing(A):                      # narrower data widened exactly first; the values only are read
-            A = summed(binary64(A, "fp.fro_upper") if is_narrow_float(A.dtype) else A, "fp.fro_upper",
-                       unsorted_ok=True)
+        if needs_summing(A):                      # narrower data widened exactly first; the canonical copy, so that
+            A = summed(binary64(A, "fp.fro_upper") if is_narrow_float(A.dtype) else A, "fp.fro_upper")   # one order
         return norm2_upper(np.asarray(_stored_values(A)).ravel())
     return norm2_upper(np.asarray(A).ravel())
 

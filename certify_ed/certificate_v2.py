@@ -90,11 +90,13 @@ def matrix_sha256(A) -> str:
     matrix in a narrower format is converted exactly first (precision.binary64), and repeated entries are summed by
     precision.summed (the correctly rounded exact sum at each position), as certify() sums them, so that the hash of
     the caller's matrix is the hash in its certificate."""
-    from .precision import PrecisionError, binary64, summed
+    from .precision import PrecisionError, binary64, needs_summing, summed
     try:
         A = summed(binary64(A if sp.issparse(A) else np.asarray(A), "matrix"), "matrix")   # the sum certify() uses
     except PrecisionError:
-        pass                              # a format binary64 cannot hold: hashed as before, cast after the summation
+        if sp.issparse(A) and A.dtype.kind in "iu" and needs_summing(A):
+            raise                         # repeated integer entries whose exact sum binary64 cannot hold: no matrix
+        # a format binary64 cannot hold: hashed as before, cast after the summation
     if not sp.issparse(A):
         A = sp.csr_matrix(np.asarray(A))
     A = sp.csr_matrix(A, copy=True)

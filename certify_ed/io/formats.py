@@ -366,8 +366,8 @@ def _read_matrix(path: str, key: Optional[str], layout: str = "auto", shape=None
         if isinstance(obj, dict) and obj.get("format") in ("coo", "csr"):
             shp = tuple(obj["shape"])
             if obj["format"] == "coo":
-                A = _as_csr(sp.coo_matrix((_json_to_array(obj["data"]), (np.asarray(obj["row"]), np.asarray(obj["col"]))),
-                                          shape=shp))
+                rc = (np.asarray(obj["row"]), np.asarray(obj["col"]))
+                A = _as_csr(sp.coo_matrix((_json_to_array(obj["data"]), rc), shape=shp))
             else:
                 A = sp.csr_matrix((_json_to_array(obj["data"]), np.asarray(obj["indices"]), np.asarray(obj["indptr"])),
                                   shape=shp)

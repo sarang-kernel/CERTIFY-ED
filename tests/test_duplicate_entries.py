@@ -298,23 +298,132 @@ def test_single_precision_and_coo_index_dtypes():
     assert summed(D) is D                         # distinct offsets (scipy refuses repeated ones at construction)
 
 
+def test_the_sum_is_math_fsum_for_random_groups():
+    """Groups of 1 to 12 parts with cancellation, ties at half an ulp, tiny and subnormal parts, in random order and
+    in COO and CSR: every summed entry equals math.fsum of its parts (the vectorized TwoSum passes and the check that
+    decides when they suffice agree with the reference)."""
+    import math
+    rng = np.random.default_rng(7)
+    rows, vals = [], []
+    for k in range(6000):
+        m = int(rng.integers(1, 13))
+        kind = k % 4
+        if kind == 0:
+            p = rng.standard_normal(m) * 10.0 ** rng.integers(-5, 6, m)
+        elif kind == 1:                                   # cancellation: big parts that sum to a small one
+            b = rng.standard_normal() * 2.0 ** 60
+            p = np.r_[b, -b, rng.standard_normal(max(m - 2, 0)) * 2.0 ** -int(rng.integers(0, 60))][:max(m, 2)]
+        elif kind == 2:                                   # a tie: 1 and two halves of an ulp
+            p = np.r_[1.0 + rng.integers(0, 8) * 2.0 ** -52, 2.0 ** -53, 2.0 ** -53 * rng.choice([1, -1]),
+                      np.zeros(max(m - 3, 0))]
+        else:                                             # tiny and subnormal parts next to normal ones
+            p = np.r_[rng.standard_normal(m) * 2.0 ** -1070, rng.standard_normal()]
+        p = rng.permutation(p)
+        rows.extend([k] * p.size)
+        vals.extend(p.tolist())
+    rows, vals = np.array(rows), np.array(vals)
+    starts = np.flatnonzero(np.r_[True, rows[1:] != rows[:-1]])
+    ref = np.array([math.fsum(vals[s:e].tolist()) for s, e in zip(starts, np.r_[starts[1:], rows.size])])
+    n = ref.size
+    C = sp.coo_matrix((vals, (rows, np.zeros(rows.size, int))), shape=(n, 1))
+    indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=n))]
+    R = sp.csr_matrix((vals, np.zeros(rows.size, int), indptr), shape=(n, 1))
+    for M in (C, R):
+        got = summed(M).toarray().ravel()
+        assert np.array_equal(got, ref), np.flatnonzero(got != ref)[:5]
+
+
+def test_binary64_sums_sparse_integers_exactly_on_every_route():
+    """Integer sparse data reach binary64 through the integer sum: [2^53, 1] at one position (exact sum 2^53 + 1, not a
+    binary64 number) is refused on the integer-keeping and on the converting routes alike (before: the converting
+    routes summed the converted values, 2^53); [2^53, 1, -2^53] gives 1 on both."""
+    from certify_ed.certificate_v2 import matrix_sha256
+    from certify_ed.enclosure import OperatorAdapter
+    from certify_ed.precision import binary64
+
+    def op(parts):
+        k = len(parts)
+        return sp.csr_matrix((np.r_[np.array(parts, dtype=np.int64), np.array([2, 3], dtype=np.int64)],
+                              np.r_[np.zeros(k, int), [1, 2]], np.array([0, k, k + 1, k + 2])), shape=(3, 3))
+    bad = op([2 ** 53, 1])
+    for call in (lambda A: summed(A), lambda A: binary64(A), lambda A: OperatorAdapter(A),
+                 lambda A: matrix_sha256(A)):
+        with pytest.raises(PrecisionError):
+            call(bad)
+    good = op([2 ** 53, 1, -(2 ** 53)])
+    assert binary64(good).toarray()[0, 0] == 1.0 and summed(good).toarray()[0, 0] == 1
+    assert OperatorAdapter(good).A.toarray()[0, 0] == 1.0
+
+
+def test_summed_groups_positions_of_any_shape():
+    """No combined row-column key: positions of a COO of shape (2^33, 2^33) stay apart (a key row * ncol + col would
+    overflow int64 and merge (0, 5) with (2^31, 5))."""
+    n = 2 ** 33
+    C = sp.coo_matrix((np.array([1.0, 1.0, 7.0]), (np.array([0, 2 ** 31, 0], dtype=np.int64),
+                                                   np.array([5, 5, 5], dtype=np.int64))), shape=(n, n))
+    S = summed(C)
+    got = sorted(zip(S.row.tolist(), S.col.tolist(), S.data.tolist()))
+    assert got == [(0, 5, 8.0), (2 ** 31, 5, 1.0)]
+
+
+
+def test_commutes_diagonal_reads_the_summed_matrix():
+    """A cross-sector position stored as [x, -x] sums to zero: the matrix commutes with diag(s) (before: the stored
+    parts counted as a nonzero entry and the check said no). The caller's arrays stay as given."""
+    from certify_ed.eigenspace import commutes_diagonal
+    A = sp.csr_matrix((np.array([1.0, 0.75, -0.75, 2.0]), np.array([0, 1, 1, 1]), np.array([0, 3, 4])), shape=(2, 2))
+    before = _arrays(A)
+    assert commutes_diagonal(A, np.array([0.0, 1.0])) and _unchanged(A, before)
+    B = sp.csr_matrix((np.array([1.0, 0.75, 2.0]), np.array([0, 1, 1]), np.array([0, 2, 3])), shape=(2, 2))
+    assert not commutes_diagonal(B, np.array([0.0, 1.0]))
+
+
+def test_the_sparse_residual_bound_reads_the_summed_matrix():
+    """The residual of a sparse factorization against S stored as three parts per entry equals the residual against
+    the summed S, bit for bit (the factors are those of the summed S)."""
+    import scipy.sparse.linalg as spla
+    from certify_ed.ldl_residual import sparse_ldl_residual_bound
+    rng = np.random.default_rng(5)
+    n = 12
+    M = rng.standard_normal((n, n)) * (rng.random((n, n)) < 0.4)
+    S = sp.csr_matrix(M + M.T + 8.0 * np.eye(n))
+    S.sum_duplicates()
+    C = S.tocoo()
+    t = np.full(C.nnz, 2.0 ** 30)
+    rep = sp.coo_matrix((np.r_[t, C.data, -t], (np.tile(C.row, 3), np.tile(C.col, 3))), shape=S.shape)
+    f = spla.splu(S.tocsc(), permc_spec="MMD_AT_PLUS_A", diag_pivot_thresh=0.0,
+                  options={"SymmetricMode": True, "Equil": False})
+    L, D = f.L.tocsr(), f.U.diagonal()
+    a = sparse_ldl_residual_bound(L, D, rep, f.perm_c, threads=1)
+    b = sparse_ldl_residual_bound(L, D, S, f.perm_c, threads=1)
+    da, db = dict(a.__dict__), dict(b.__dict__)
+    for d in (da, db):
+        for k in [k for k in d if "second" in k or "time" in k]:
+            d.pop(k)
+    assert da == db and rep.nnz == 3 * C.nnz
+
 
 # ------------------------------------------------------------------------------------- the registry entry points
-def _three_parts(M):
-    """COO of the summed M with every stored entry v kept as three parts (2^30, v, -2^30): the correctly rounded exact
-    sum at each position is v, while the sum in stored order rounds v to a multiple of 2^-22."""
+def _three_parts(M, fmt="coo"):
+    """The summed M with every stored entry v kept as three parts (2^30, v, -2^30), as a COO or as a CSR with repeated
+    indices: the correctly rounded exact sum at each position is v, while the sum in stored order rounds v to a
+    multiple of 2^-22."""
     C = summed(sp.coo_matrix(M)) if sp.issparse(M) else sp.coo_matrix(M)
     C = sp.coo_matrix(C)
     t = np.full(C.nnz, 2.0 ** 30, dtype=C.dtype)
     data = np.concatenate([t, C.data, -t])
     rows, cols = np.tile(C.row, 3), np.tile(C.col, 3)
-    return sp.coo_matrix((data, (rows, cols)), shape=C.shape)
+    if fmt == "coo":
+        return sp.coo_matrix((data, (rows, cols)), shape=C.shape)
+    o = np.argsort(rows, kind="stable")
+    indptr = np.r_[0, np.cumsum(np.bincount(rows, minlength=C.shape[0]))]
+    return sp.csr_matrix((data[o], cols[o], indptr), shape=C.shape)
 
 
 _SPLIT = ("A", "S", "O", "B", "V", "Hs", "Vu", "Anh")
 
 
-def _variants(dtype):
+def _variants(dtype, fmt="coo"):
     import tempfile
     from test_precision_registry import Data, _data, _ec
     W = _data(dtype)["wide"]
@@ -323,17 +432,18 @@ def _variants(dtype):
         D = Data()
         D.__dict__.update(W.__dict__)
         for k in _SPLIT:
-            rep = _three_parts(getattr(W, k))
+            rep = _three_parts(getattr(W, k), fmt)
             setattr(D, k, rep if kind == "repeated" else summed(rep))
-        D.tmp = tempfile.mkdtemp(prefix=f"dup_{dtype}_{kind}_")
+        D.tmp = tempfile.mkdtemp(prefix=f"dup_{dtype}_{fmt}_{kind}_")
         D.ec = lambda D=D: _ec(D)
         out[kind] = D
     return out
 
 
 def _snapshot(D):
-    return {k: tuple(np.array(x, copy=True) for x in (getattr(D, k).data, getattr(D, k).row, getattr(D, k).col))
-            for k in _SPLIT}
+    def arrays(M):
+        return (M.data, M.row, M.col) if M.format == "coo" else (M.data, M.indices, M.indptr)
+    return {k: tuple(np.array(x, copy=True) for x in arrays(getattr(D, k))) for k in _SPLIT}
 
 
 def _registry_names():
@@ -344,15 +454,15 @@ def _registry_names():
 # Registered functions that read the stored entries by design: rotation_spread is summed now; max_nnz_per_row counts
 # the stored entries of a row (a width at least that of the summed matrix, so its gamma factor stays an upper bound).
 _STORED_ENTRIES_BY_DESIGN = {"certify_ed.fp.max_nnz_per_row"}
-# Recipes that convert a matrix themselves before the call (tocsr, toarray or csr_matrix in the test, which add the
-# parts in stored order): the two inputs then differ before the library sees them.
+# Recipes that convert or assign into a matrix themselves before the call (tocsr, toarray, csr_matrix or item
+# assignment in the test, which add the parts in stored order): the two inputs then differ before the library sees them.
 _RECIPE_CONVERTS = {"certify_ed.construct.matrix_difference", "certify_ed.fp.fro_upper",
-                    "certify_ed.moments.moments_from_certificate"}
+                    "certify_ed.moments.moments_from_certificate", "certify_ed.compat.symveig.enclose_sectors"}
 
 
 @pytest.mark.parametrize("name", _registry_names())
-@pytest.mark.parametrize("dtype", ["float32", "complex64"])
-def test_every_registered_entry_point_sees_the_summed_matrix(dtype, name):
+@pytest.mark.parametrize("dtype,fmt", [("float32", "coo"), ("complex64", "coo"), ("float32", "csr")])
+def test_every_registered_entry_point_sees_the_summed_matrix(dtype, fmt, name):
     """Every public function of the precision registry, given matrices whose entries are stored as three parts that
     cancel, gives bit for bit the result of the summed matrices (the correctly rounded exact sum at each position,
     whatever the stored order) and leaves the caller's arrays as given. A recipe that raises for both inputs (a
@@ -362,7 +472,7 @@ def test_every_registered_entry_point_sees_the_summed_matrix(dtype, name):
         pytest.skip("reads the stored entries by design")
     if name in _RECIPE_CONVERTS:
         pytest.skip("the recipe converts the matrix itself before the call")
-    V = _variants(dtype)
+    V = _variants(dtype, fmt)
     before = _snapshot(V["repeated"])
     errors = []
     results = []
@@ -372,7 +482,7 @@ def test_every_registered_entry_point_sees_the_summed_matrix(dtype, name):
             errors.append(None)
         except Exception as e:                    # noqa: BLE001 - compared below
             results.append(None)
-            errors.append(type(e).__name__)
+            errors.append(f"{type(e).__name__}: {e}")
     if errors[0] is not None and errors[0] == errors[1]:
         pytest.skip(f"raises {errors[0]} for both inputs")
     assert errors == [None, None], f"{name}: {errors}"

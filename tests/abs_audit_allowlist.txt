@@ -163,3 +163,7 @@ certify_ed/variational.py	certify_variational	np.abs(D)	not part of a bound
 certify_ed/variational.py	certify_variational	abs(th_lo)	real data only
 certify_ed/variational.py	certify_variational	abs(th_hi)	real data only
 certify_ed/variational.py	_temple	abs(lower)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(rest)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(d)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(e)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(h)	real data only

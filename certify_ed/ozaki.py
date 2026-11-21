@@ -201,7 +201,7 @@ def split_rows(H, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> RowSplit:
     """Split a stored matrix by rows (sparse: on its stored entries; dense: on all entries)."""
     require_binary64(H, "ozaki.split_rows")                                   # fail closed (precision.py)
     if sp.issparse(H):
-        H = sp.csr_matrix(H)
+        H = sp.csr_matrix(summed(H, "ozaki.split_rows"))   # a canonical copy when needed: the caller's arrays stay
         H.sort_indices()
         cplx = np.iscomplexobj(H.data)
         dr = np.ascontiguousarray(H.data.real, dtype=float)

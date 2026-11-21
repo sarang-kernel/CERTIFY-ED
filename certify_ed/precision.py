@@ -293,25 +293,24 @@ def _sparse_binary64(a, tgt):
     return a.astype(tgt)                          # lil, dok: one value per position
 
 
-def _coordinates(a):
-    """(row, col, values) of the stored entries of a CSR, CSC, BSR, COO or DIA matrix, repeated ones included, values
-    past nnz left out; `a` is not changed."""
-    if a.format == "csr":
-        nnz = int(a.indptr[-1])
-        return (np.repeat(np.arange(a.shape[0], dtype=np.int64), np.diff(a.indptr)), a.indices[:nnz], a.data[:nnz])
-    if a.format == "csc":
-        nnz = int(a.indptr[-1])
-        return (a.indices[:nnz], np.repeat(np.arange(a.shape[1], dtype=np.int64), np.diff(a.indptr)), a.data[:nnz])
-    c = a if a.format == "coo" else a.tocoo()
-    return c.row, c.col, c.data
+def _compressed_with_repeats(a):
+    """A copy of the CSR or CSC matrix `a` whose indices are sorted within each row (column) and whose repeated
+    entries are kept, adjacent; `a` is not changed. scipy's own conversions would add the repeated entries."""
+    nnz = int(a.indptr[-1])
+    c = type(a)((a.data[:nnz].copy(), a.indices[:nnz].copy(), a.indptr.copy()), shape=a.shape)
+    c.has_sorted_indices = False
+    c.sort_indices()                                    # within each row (column); repeated entries stay
+    return c
 
 
 def _exact_float_sum(v: np.ndarray) -> float:
     """The correctly rounded exact sum of the binary64 values v: math.fsum, or the exact rational sum where fsum's
-    partial sums overflow (inf when the exact sum is beyond the range); the IEEE sum (inf, -inf or nan, the same in
-    every order) when a value is not finite."""
+    partial sums overflow (inf when the exact sum is beyond the range). With a value that is not finite the result is
+    decided by the set of values, whatever their order: nan for a nan or for both infinities, else the infinity."""
     if not np.all(np.isfinite(v)):
-        return float(np.sum(v))
+        if np.isnan(v).any() or (np.isposinf(v).any() and np.isneginf(v).any()):
+            return math.nan
+        return math.inf if np.isposinf(v).any() else -math.inf
     try:
         return math.fsum(v.tolist())
     except OverflowError:
@@ -322,11 +321,66 @@ def _exact_float_sum(v: np.ndarray) -> float:
             return math.inf if s > 0 else -math.inf
 
 
+_U = 2.0 ** -53
+_GROUP_CHUNK = 1 << 22                                  # values per vectorized block of groups (32 MiB of float64)
+
+
+def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:
+    """The correctly rounded exact sum of each group v[starts[k] : starts[k] + counts[k]] of real binary64 values.
+    Groups of one or two values: one addition (exact or correctly rounded, and commutative). Groups of three or more,
+    vectorized over the groups: three passes of Knuth's TwoSum along each group (error-free: the exact sum is kept)
+    leave a leading value h and a remainder e; when e lies strictly inside the rounding interval of h with the bound
+    on its own rounding error, the correctly rounded sum is h. The other groups (a sum within that slack of a rounding
+    boundary, h = 0, a value that is not finite, a partial sum that overflows) take math.fsum's value."""
+    s = np.add.reduceat(v, starts) if v.size else np.zeros(0)
+    big = np.flatnonzero(counts >= 3)
+    cs = np.cumsum(counts[big]) if big.size else np.zeros(0, dtype=np.int64)
+    edges = [0]
+    while edges[-1] < big.size:                        # blocks of about _GROUP_CHUNK values, at least one group each
+        nxt = int(np.searchsorted(cs, (cs[edges[-1] - 1] if edges[-1] else 0) + _GROUP_CHUNK, side="right"))
+        edges.append(max(nxt, edges[-1] + 1))
+    for pos, end in zip(edges[:-1], edges[1:]):
+        grp = big[pos:end]
+        kmax = int(counts[grp].max())
+        P = np.zeros((grp.size, kmax), order="F")       # column-major: each pass walks contiguous columns
+        st, ct = starts[grp], counts[grp]
+        for j in range(kmax):
+            m = ct > j
+            P[m, j] = v[st[m] + j]
+        with np.errstate(over="ignore", invalid="ignore"):
+            for _ in range(3):
+                for j in range(1, kmax):
+                    x, y = P[:, j - 1], P[:, j]
+                    t = x + y
+                    z = t - x
+                    P[:, j - 1] = (x - (t - z)) + (y - z)
+                    P[:, j] = t
+            h = P[:, -1]
+            rest = P[:, :-1]
+            e = rest.sum(axis=1)                        # |e - (exact sum of rest)| <= slack
+            slack = 2.0 * kmax * _U * np.abs(rest).sum(axis=1)
+            r = h + e                                   # the candidate: the rounding of h + e
+            d = (h - r) + e                             # h - r is exact (Sterbenz); d has one rounding
+            slack = slack + 2.0 * _U * np.abs(d)
+            up_gap = (np.nextafter(r, np.inf) - r) / 2.0
+            dn_gap = (r - np.nextafter(r, -np.inf)) / 2.0
+            # the exact sum is r + (d +- slack); r is its correct rounding when that offset lies strictly inside
+            # the rounding interval of r (no midpoint, so no tie, in between)
+            ok = (np.isfinite(r) & np.isfinite(d) & np.isfinite(slack) & (r != 0.0) & (np.abs(e) <= np.abs(h))
+                  & (np.nextafter(d + slack, np.inf) < up_gap) & (np.nextafter(d - slack, -np.inf) > -dn_gap))
+            # one nonzero remainder: the exact sum is h + e with e exact, and r = fl(h + e) is its correct rounding
+            # (one IEEE addition, ties to even included)
+            ok |= np.isfinite(r) & (np.count_nonzero(rest, axis=1) <= 1)
+        s[grp[ok]] = r[ok]
+        for k in grp[~ok].tolist():
+            s[k] = _exact_float_sum(v[starts[k]:starts[k] + counts[k]])
+    return s
+
+
 def _group_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray, what: str, dtype: np.dtype) -> np.ndarray:
-    """The sum of each group v[starts[k] : starts[k] + counts[k]] of a sorted value array: for binary64 data the
-    correctly rounded exact sum (one addition for two values, which is correctly rounded and commutative; math.fsum
-    for three or more), for integer data the exact sum, in the caller's integer type when every sum fits and in int64
-    otherwise (PrecisionError beyond int64 or uint64)."""
+    """The sum of each group v[starts[k] : starts[k] + counts[k]] of a value array whose groups are contiguous: for
+    binary64 data the correctly rounded exact sum (each real part on its own), for integer data the exact sum, in
+    the caller's integer type when every sum fits and in int64 otherwise (PrecisionError beyond int64 or uint64)."""
     if v.dtype.kind in "iu":
         wide = v.astype(np.int64) if v.dtype.itemsize < 8 else v
         s = np.add.reduceat(wide, starts)               # exact for 8- to 32-bit data (fewer than 2^31 values a group)
@@ -337,20 +391,17 @@ def _group_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray, what: str
                 t = sum(int(x) for x in v[starts[k]:starts[k] + counts[k]].tolist())
                 if not info.min <= t <= info.max:
                     raise PrecisionError(f"{what}: a sum of repeated integer entries ({t}) is outside the range of "
-                                         f"{v.dtype}; refused (give the matrix with its entries summed, or in binary64)")
+                                         f"{v.dtype}; refused (give the matrix with its entries summed, or in "
+                                         "binary64)")
                 s[k] = t
         info = np.iinfo(dtype)
         if s.size and (int(s.min()) < info.min or int(s.max()) > info.max):
             return s.astype(np.int64) if v.dtype.itemsize < 8 else s
         return s.astype(dtype, copy=False)
-    s = np.add.reduceat(v, starts)                      # groups of one or two values: exact or correctly rounded
-    for k in np.flatnonzero(counts >= 3).tolist():
-        g = v[starts[k]:starts[k] + counts[k]]
-        if np.iscomplexobj(g):
-            s[k] = complex(_exact_float_sum(g.real), _exact_float_sum(g.imag))
-        else:
-            s[k] = _exact_float_sum(g)
-    return s
+    if np.iscomplexobj(v):
+        return _exact_real_sums(np.ascontiguousarray(v.real), starts, counts) + \
+            1j * _exact_real_sums(np.ascontiguousarray(v.imag), starts, counts)
+    return _exact_real_sums(v, starts, counts)
 
 
 def needs_summing(a) -> bool:
@@ -364,75 +415,113 @@ def needs_summing(a) -> bool:
     return a.format in ("csr", "csc", "bsr", "coo") and not getattr(a, "has_canonical_format", False)
 
 
-def summed(a, what: str = "matrix", unsorted_ok: bool = False):
+def summed(a, what: str = "matrix"):
     """`a` with its repeated entries summed, `a` itself unchanged. The same object when `a` is not a sparse matrix,
     when it is a CSR, CSC, BSR or COO matrix flagged canonical (sorted indices, no repeated entries; the flag is
     trusted, as scipy trusts it), a LIL or DOK matrix, or a DIA matrix with distinct offsets; else a canonical copy of
-    the same format, class and index dtypes in which each position holds the sum of its stored entries. With
-    `unsorted_ok` (for a caller that only reads the stored values), a matrix whose positions are distinct is returned
-    as it is even when its indices are unsorted; without it such a matrix is copied too, so that no later step sorts
-    the caller's arrays in place (scipy's abs and sum_duplicates do).
+    the same format, class and index dtypes in which each position holds the sum of its stored entries. A matrix whose
+    positions are distinct but whose indices are unsorted is copied too, so that every later step sees one stored
+    order and none sorts the caller's arrays in place (scipy's abs and sum_duplicates do).
 
     The sum at a position is defined independently of the format, the stored order and the platform: for binary64
     data the correctly rounded exact sum of the stored values (each real part on its own), for integer data the exact
     sum, kept in the caller's integer type when every sum fits and in int64 otherwise, and checked like the entries
     (every value a binary64 number; PrecisionError otherwise, and beyond the range of int64 or uint64). Booleans are
     converted to float64 first (True + True = 2), as binary64 converts them; a narrower floating format is refused
-    (require_binary64), so the entry points apply `binary64` first.
+    (require_binary64), so the entry points apply `binary64` first, and `binary64` sums integer sparse data this way
+    before it converts them.
 
     The entry points apply it before any product and before any format conversion (scipy's conversions add repeated
     entries in stored order): a product formed from the stored entries of a matrix with repeated entries carries
     rounding errors of the size of the repeated entries, which the moduli of the summed matrix (fp.abs_up) need not
     bound, so every product, norm and modulus of a call refers to one matrix, the summed one
-    (docs/proofs/fp_modulus-up.md, section 1)."""
+    (docs/proofs/fp_modulus-up.md, section 1). Cost: a copy of the stored arrays, scipy's sort within rows, and one
+    vectorized pass per group; positions with three or more entries take a few vectorized TwoSum passes, and
+    math.fsum only near a rounding boundary."""
     if not needs_summing(a):
         return a
     fmt = a.format
     require_binary64(a, f"precision.summed: {what}")   # a narrower format would be summed in its own precision
     if len(a.shape) == 1:                               # a 1-D coo_array (scipy >= 1.13): positions are its coords
-        key, val, ncol = np.asarray(a.coords[0], dtype=np.int64), a.data, 1
-    else:
-        row, col, val = _coordinates(a)
-        ncol = a.shape[1]
-        key = np.asarray(row, dtype=np.int64) * np.int64(ncol) + np.asarray(col, dtype=np.int64)
-    order = np.argsort(key, kind="stable")
-    ks = key[order]
-    first = np.empty(ks.size, dtype=bool)
-    first[:1] = True
-    np.not_equal(ks[1:], ks[:-1], out=first[1:])
-    if unsorted_ok and first.all():
-        return a                                        # no position is repeated: nothing to sum
-    starts = np.flatnonzero(first)
-    counts = np.diff(np.append(starts, ks.size))
-    v = np.asarray(val)[order]
-    if v.dtype.kind == "b":
-        v = v.astype(np.float64)
-    sums = _group_sums(v, starts, counts, what, np.asarray(val).dtype if v.dtype.kind in "iu" else v.dtype)
-    if sums.dtype.kind in "iu":
-        _exact_ints(sums, what)
-    pos = ks[starts]
-    coo_cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
-    if len(a.shape) == 1:
-        out = coo_cls((sums, (pos.astype(a.coords[0].dtype),)), shape=a.shape)
+        key = np.asarray(a.coords[0], dtype=np.int64)
+        order = np.argsort(key, kind="stable")
+        ks = key[order]
+        first = np.ones(ks.size, dtype=bool)
+        first[1:] = ks[1:] != ks[:-1]
+        starts = np.flatnonzero(first)
+        counts = np.diff(np.append(starts, ks.size))
+        v = np.asarray(a.data)[order]
+        v = v.astype(np.float64) if v.dtype.kind == "b" else v
+        sums = _group_sums(v, starts, counts, what, v.dtype)
+        if sums.dtype.kind in "iu":
+            _exact_ints(sums, what)
+        cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
+        out = cls((sums, (ks[starts].astype(a.coords[0].dtype),)), shape=a.shape)
         out.sum_duplicates()
         return out
-    out = coo_cls((sums, (pos // ncol, pos % ncol)), shape=a.shape)
-    out.sum_duplicates()                                # no repeats left: sorts nothing, sets the canonical flag
-    if fmt == "coo":
-        c = out
-        if hasattr(c, "coords"):                        # scipy >= 1.13: one tuple, its index dtypes set together
-            c.coords = (c.row.astype(a.row.dtype, copy=False), c.col.astype(a.col.dtype, copy=False))
-        else:
-            c.row, c.col = c.row.astype(a.row.dtype, copy=False), c.col.astype(a.col.dtype, copy=False)
-    elif fmt == "bsr":
-        c = out.tobsr(blocksize=a.blocksize)
-    elif fmt == "dia":
-        c = out.todia()
+    if fmt in ("csr", "csc"):
+        return _summed_compressed(a, what)
+    coo = a if fmt == "coo" else a.tocoo()             # BSR and DIA through their stored entries (none summed)
+    row, col = np.asarray(coo.row), np.asarray(coo.col)
+    order = np.lexsort((col, row))                      # row-major; no combined key, so no overflow for any shape
+    rs, cs_ = row[order], col[order]
+    first = np.ones(rs.size, dtype=bool)
+    first[1:] = (rs[1:] != rs[:-1]) | (cs_[1:] != cs_[:-1])
+    starts = np.flatnonzero(first)
+    counts = np.diff(np.append(starts, rs.size))
+    v = np.asarray(coo.data)[order]
+    v = v.astype(np.float64) if v.dtype.kind == "b" else v
+    sums = _group_sums(v, starts, counts, what, v.dtype)
+    if sums.dtype.kind in "iu":
+        _exact_ints(sums, what)
+    cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
+    out = cls((sums, (rs[starts], cs_[starts])), shape=a.shape)
+    out.has_canonical_format = True                     # sorted row-major, no repeated position
+    if fmt == "bsr":
+        res = out.tobsr(blocksize=a.blocksize)
+        if (res.indices.dtype, res.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
+            res.indices, res.indptr = res.indices.astype(a.indices.dtype), res.indptr.astype(a.indptr.dtype)
+        return res
+    if fmt == "dia":
+        return out.todia()
+    if hasattr(out, "coords"):                          # scipy >= 1.13: one tuple, its index dtypes set together
+        out.coords = (out.row.astype(a.row.dtype, copy=False), out.col.astype(a.col.dtype, copy=False))
     else:
-        c = out.asformat(fmt)
-    if fmt in ("csr", "csc", "bsr") and (c.indices.dtype, c.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
-        c.indices, c.indptr = c.indices.astype(a.indices.dtype), c.indptr.astype(a.indptr.dtype)   # scipy may narrow
-    return c
+        out.row, out.col = out.row.astype(a.row.dtype, copy=False), out.col.astype(a.col.dtype, copy=False)
+    out.has_canonical_format = True
+    return out
+
+
+def _summed_compressed(a, what: str):
+    """summed for CSR and CSC input: a copy sorted within rows (columns) by scipy, the groups found by comparing
+    neighbours, the sums of _group_sums, and the canonical result in the caller's class and index dtypes."""
+    c = _compressed_with_repeats(a)
+    idx, indptr, v = c.indices, c.indptr, c.data
+    nnz = idx.size
+    first = np.ones(nnz, dtype=bool)
+    if nnz:
+        first[1:] = idx[1:] != idx[:-1]
+        row_start = indptr[:-1][indptr[:-1] < nnz]
+        first[row_start] = True                         # a new row (column) starts a new position
+    if first.all():                                     # no position repeats: the sorted copy
+        sums, new_idx, new_ptr = (v.astype(np.float64) if v.dtype.kind == "b" else v), idx, indptr
+        if sums.dtype.kind in "iu":
+            _exact_ints(sums, what)
+    else:
+        starts = np.flatnonzero(first)
+        counts = np.diff(np.append(starts, nnz))
+        vv = v.astype(np.float64) if v.dtype.kind == "b" else v
+        sums = _group_sums(vv, starts, counts, what, vv.dtype)
+        if sums.dtype.kind in "iu":
+            _exact_ints(sums, what)
+        new_idx = idx[starts]
+        new_ptr = np.concatenate([[0], np.cumsum(first)])[indptr].astype(indptr.dtype, copy=False)
+    out = type(a)((sums, new_idx, new_ptr), shape=a.shape)
+    out.has_sorted_indices = True
+    out.has_canonical_format = True
+    if (out.indices.dtype, out.indptr.dtype) != (a.indices.dtype, a.indptr.dtype):
+        out.indices, out.indptr = out.indices.astype(a.indices.dtype), out.indptr.astype(a.indptr.dtype)
+    return out
 
 
 def _materialize(a, what: str) -> np.ndarray:
@@ -468,6 +557,10 @@ def binary64(a, what: str = "input", widened: Optional[List[Dict[str, Any]]] = N
             _exact_ints(_stored_values(a), what)
             if keep_integers and a.dtype.kind in "iu":
                 return a
+            if a.dtype.kind in "iu" and needs_summing(a):
+                # repeated integer entries are summed exactly first (refused where the exact sum is not a binary64
+                # number or leaves int64), so that every route sees the matrix certify() sees (summed)
+                a = summed(a, what)
         w = _sparse_binary64(a, tgt)
         _note(widened, what, a, a.dtype, tgt)
         return w
