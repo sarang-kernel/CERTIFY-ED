@@ -72,12 +72,12 @@ An operator with repeated entries certified with its model is now served by the 
 the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above, `fro_upper`, the independence of the
 format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
 integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on
-6000 random groups, the exact rational sum on 7000 groups at or next to a rounding midpoint, one large group among
-many small ones, complex sums, `ozaki.split_rows`, the QuSpin importer, the integer routes, a shape of 2^33 x 2^33, and
-a sweep over the functions of the precision registry with every matrix stored as three parts that cancel, in COO and
-in CSR, against the summed matrices, which fails when an entry point skips `summed` or sums after a conversion);
-`tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
-hash changes.
+6000 random groups, the exact rational sum on 10000 groups at or next to a rounding midpoint, every group size from 3 to
+70 across block boundaries, one large group among many small ones, complex sums, `ozaki.split_rows`, the QuSpin
+importer, the integer routes, a shape of 2^33 x 2^33, and a sweep over the functions of the precision registry with
+every matrix stored as three parts that cancel, in COO and in CSR, against the summed matrices, which fails when an
+entry point skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and `tests/test_input_unchanged.py`
+pin the summation at the start. The computational source hash changes.
 
 ### Non-finite follow-ups
 

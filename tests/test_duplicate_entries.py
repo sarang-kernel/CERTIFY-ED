@@ -375,7 +375,8 @@ def _midpoint_groups(rng, count):
             u = big - np.nextafter(big, 0.0)              # the ulp of the largest float
             g = [big, u / 4, u / 4] + ([] if k % 20 == 6 else [-u * 2.0 ** -60])
         else:                                             # several large cancelling pairs: large parts can remain
-            bs = [2.0 ** int(rng.integers(60, 400)) * float(rng.choice([1, -1])) for _ in range(int(rng.integers(2, 5)))]
+            bs = [2.0 ** int(rng.integers(60, 400)) * float(rng.choice([1, -1]))
+                  for _ in range(int(rng.integers(2, 5)))]
             g = [x, half, tiny] + bs + [-b for b in bs]
         out.append([g[i] for i in rng.permutation(len(g))])
     return out
@@ -424,6 +425,30 @@ def test_one_large_group_among_many_small_ones_is_linear():
         tracemalloc.stop()
     assert np.array_equal(got, ref)
     assert peak < 64 * 2 ** 20, peak / 2 ** 20
+
+
+def test_every_group_size_across_block_boundaries(monkeypatch):
+    """Groups of every size from 3 to 70 (both sides of the 64-value limit), each size spanning several blocks (the
+    block size patched to 257 values), and groups of 100 to 300 values: every summed entry is the exact rational sum's
+    correct rounding. Each group holds a cancelling pair of large parts, so a sum in stored order would lose the small
+    parts (pins the cut of a size into blocks, the limit and the math.fsum path above it)."""
+    from certify_ed import precision
+    monkeypatch.setattr(precision, "_GROUP_CHUNK", 257)
+    rng = np.random.default_rng(13)
+    sizes = [k for k in range(3, 71) for _ in range(12)] + [int(x) for x in rng.integers(100, 301, 8)]
+    groups = []
+    for k in sizes:
+        b = 2.0 ** int(rng.integers(70, 90))
+        g = [b] + (rng.standard_normal(k - 2) * 2.0 ** -int(rng.integers(0, 20))).tolist() + [-b]
+        groups.append(g if k % 2 else [g[i] for i in rng.permutation(k)])
+    ref = np.array([_correct_rounding(g) for g in groups])
+    rows = np.repeat(np.arange(len(groups)), sizes)
+    vals = np.array([x for g in groups for x in g])
+    R = sp.csr_matrix((vals, np.zeros(rows.size, int), np.r_[0, np.cumsum(sizes)]), shape=(len(groups), 1))
+    got = summed(R).toarray().ravel()
+    assert np.array_equal(got, ref), np.flatnonzero(got != ref)[:5]
+    naive = np.add.reduceat(vals, np.r_[0, np.cumsum(sizes)[:-1]])
+    assert np.count_nonzero(naive != ref) > len(groups) // 2         # the stored-order sums are wrong
 
 
 def test_complex_sums_keep_each_part():
