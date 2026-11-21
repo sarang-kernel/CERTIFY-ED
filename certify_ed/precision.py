@@ -359,10 +359,12 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
     math.fsum's value."""
     s = np.add.reduceat(v, starts) if v.size else np.zeros(0)
     big = np.flatnonzero(counts >= 3)
-    sizes, shared = np.unique(counts[big], return_counts=True)
+    cb = counts[big]
+    order = np.argsort(cb, kind="stable")              # once: the groups of each size in position order
+    sizes, first, shared = np.unique(cb[order], return_index=True, return_counts=True)
     blocks = []
-    for kmax, g in zip(sizes.tolist(), shared.tolist()):
-        same = big[counts[big] == kmax]
+    for kmax, lo, g in zip(sizes.tolist(), first.tolist(), shared.tolist()):
+        same = big[order[lo:lo + g]]
         if kmax > _GROUP_VEC_MAX and (g < _GROUP_VEC_SHARED or kmax > _GROUP_VEC_CAP):
             s[same] = _fsum_groups(v, starts[same], kmax)   # math.fsum on each: linear, in C
             continue
