@@ -14,17 +14,17 @@ summed on a copy at the start of every call, before any product and before any f
 applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
 one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
 entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64 and for
-larger positions that share their number of entries with at least 511 others, and `math.fsum` for the rest and where the
-passes cannot decide) and for integer data the exact sum, so it does not depend on the format, the stored order of the
-entries or the entry point. Before, several public functions formed their products from the stored entries and took the
-moduli of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the rounding of those products was
-not covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR matrix whose (0, 1) and (1, 0)
-positions each hold 2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741), `commutator_bound(H, S)` returned
-1.0000000000000024, below the exact ||[H, S]||_2 = 1.4963257438397481; it returns 1.4963257438397513 now. `fp.fro_upper`
-read the stored values: two entries 1 at one position gave sqrt(2) for a Frobenius norm of 2 (it is used by the sector
-audits, the composition of sectors, the inertia backward error, the moments and the fidelity bound); it now measures the
-summed matrix, reads no value past nnz and no DIA padding. `fp.inf_norm_upper` and `fp.abs_up` no longer sum the
-caller's matrix in place.
+larger positions, of up to 4096 entries, that share their number of entries with at least 511 others, and `math.fsum`
+for the rest and where the passes cannot decide) and for integer data the exact sum, so it does not depend on the
+format, the stored order of the entries or the entry point. Before, several public functions formed their products from
+the stored entries and took the moduli of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the
+rounding of those products was not covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR
+matrix whose (0, 1) and (1, 0) positions each hold 2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741),
+`commutator_bound(H, S)` returned 1.0000000000000024, below the exact ||[H, S]||_2 = 1.4963257438397481; it returns
+1.4963257438397513 now. `fp.fro_upper` read the stored values: two entries 1 at one position gave sqrt(2) for a
+Frobenius norm of 2 (it is used by the sector audits, the composition of sectors, the inertia backward error, the
+moments and the fidelity bound); it now measures the summed matrix, reads no value past nnz and no DIA padding.
+`fp.inf_norm_upper` and `fp.abs_up` no longer sum the caller's matrix in place.
 
 Every site that sums uses this sum: the entry points, the private copies of `certify()`, `matrix_sha256` (so the hash
 in a certificate is the hash of the caller's matrix), the file readers, the QuSpin importer for a scipy matrix, the
@@ -58,8 +58,9 @@ CSR with 4.0e6 stored entries, every entry stored as two halves, 2 to 6 times th
 of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with 100, 300 or 1000 entries at each position
 (5e6 stored), about 12 times, most of it the sort of the coordinates. An input made only of positions whose sums lie
 next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding 1, 2^-53 and 2^-106), takes about 30
-to 50 times `tocsr`, 3 to 7 µs a position. The peak memory of `summed` is 2 to 5 times the input, and 6 times for the
-input made only of positions next to a rounding boundary (`math.fsum` takes the positions in slices of at most 2^16).
+to 50 times `tocsr`, 3 to 7 µs a position. The peak memory of `summed` is about 2 to 6 times the stored arrays (values
+and indices), and for the input made only of positions next to a rounding boundary about 6 to 7 times at 1e6 positions
+(8 times at 1e5, where the slice buffer dominates) (`math.fsum` takes the positions in slices of at most 2^16).
 `fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so the gamma
 factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a
 certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the

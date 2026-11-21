@@ -356,7 +356,7 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
     _GROUP_VEC_MAX values, and larger groups up to _GROUP_VEC_CAP values when at least _GROUP_VEC_SHARED groups have
     the same size, are vectorized over the groups of each size (a block holds groups of one size only, at most
     _GROUP_CHUNK values, so the buffer is the values themselves, and each pass over a column of a larger size covers
-    at least _GROUP_VEC_SHARED groups): three passes of Knuth's TwoSum along each group (error-free: the exact sum is
+    at least _GROUP_VEC_SHARED groups, except in the last block of a size): three passes of Knuth's TwoSum along each group (error-free: the exact sum is
     kept) leave a leading value h and a remainder e; when e lies strictly inside the rounding interval of h with the
     bound on its own rounding error, the correctly rounded sum is h. The other groups (the remaining sizes, a sum within
     that slack of a rounding boundary, h = 0, a value that is not finite, a partial sum that overflows) take

@@ -465,19 +465,31 @@ def test_every_group_size_across_block_boundaries(monkeypatch):
     whole = {k for k, n in calls if n >= 63}                        # a size sent whole to math.fsum
     assert {66, 250} <= whole and not whole & {65, 100}, calls
 
+
 @pytest.mark.parametrize("size", [3, 5, 70])
-def test_non_finite_groups_of_three_or_more(size):
+def test_non_finite_groups_of_three_or_more(size, monkeypatch):
     """Groups of 3, 5 (vectorized) and 70 values (math.fsum one by one) with values that are not finite, in every
-    order: nan for a nan or for both infinities, else the infinity, whatever the order and the path."""
+    order, and groups whose partial sums overflow (1.7e308, 1.7e308, -1.7e308): nan for a nan or for both infinities,
+    else the infinity, and the exact rounding otherwise, whatever the order and the path. The math.fsum path works in
+    slices of three groups here, so the exact fallback is taken in later slices too."""
+    from certify_ed import precision
+    monkeypatch.setattr(precision, "_FSUM_ROWS", 3)
     rng = np.random.default_rng(size)
-    cases = [([np.inf, -np.inf], np.nan), ([np.nan], np.nan), ([np.inf], np.inf), ([-np.inf, -np.inf], -np.inf),
-             ([np.inf, np.nan], np.nan)]
-    groups, want = [], []
-    for special, w in cases:
+    cases = [[np.inf, -np.inf], [np.nan], [np.inf], [-np.inf, -np.inf], [np.inf, np.nan], [1.7e308, 1.7e308, -1.7e308]]
+    groups = []
+    for special in cases:
         for _ in range(4):
-            g = list(special) + rng.standard_normal(size - len(special)).tolist()
+            g = list(special) + (rng.standard_normal(size - len(special)) * 1e-3).tolist()
             groups.append([g[i] for i in rng.permutation(size)])
-            want.append(w)
+    want = []
+    for g in groups:
+        a = np.array(g)
+        if np.isnan(a).any() or (np.isposinf(a).any() and np.isneginf(a).any()):
+            want.append(np.nan)
+        elif np.isinf(a).any():
+            want.append(np.inf if np.isposinf(a).any() else -np.inf)
+        else:
+            want.append(_correct_rounding(g))
     rows = np.repeat(np.arange(len(groups)), size)
     C = sp.coo_matrix((np.array([x for g in groups for x in g]), (rows, np.zeros(rows.size, int))),
                       shape=(len(groups), 1))
@@ -485,7 +497,6 @@ def test_non_finite_groups_of_three_or_more(size):
         got = summed(C).toarray().ravel()
     want = np.array(want)
     assert np.array_equal(np.isnan(got), np.isnan(want)) and np.array_equal(got[~np.isnan(want)], want[~np.isnan(want)])
-
 
 def test_complex_sums_keep_each_part():
     """The real and the imaginary sums are stored as they are: an infinite imaginary sum leaves the real sum 6 (before:
