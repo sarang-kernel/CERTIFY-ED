@@ -87,6 +87,25 @@ against the summed matrices, which fails when an entry point skips `summed` or s
 `tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
 hash changes.
 
+### Inner products and sums at the top of the range
+
+`fp.exact_dot` gave nan or inf for a pair whose factor exceeds about 2^997 (the Veltkamp split overflows) or whose
+product lies within about 2^-25 of the overflow threshold (the partial products overflow), although the exact product
+is a binary64 number: with BIG the largest binary64 number, `exact_dot([BIG], [1.0])` returned (nan, nan) and
+`exact_dot([sqrt(BIG)], [sqrt(BIG)])` (inf, inf). Such pairs are now split after exact rescaling by powers of two
+(`fp.HUGE_FACTOR = 2^995`, `fp.HUGE_PRODUCT = 2^996`: the larger factor by 2^-64, then the other factor or p and e by
+2^64), and the complex error term is formed as 2u|Re s| + 2u|Im s|, which does not overflow when both parts are near
+BIG. `fp.exact_sum` gave nan when only the partial sums of `math.fsum` overflow (BIG + BIG - BIG, for example); it now
+forms the exact sum in integers on the 2^-1074 grid and rounds it once (`fp._wide_sum`), and gives nan only when the
+exact sum rounds beyond the range. Its cascade accepted its float result h = +-BIG with an infinite gap on the overflow
+side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). For inputs below these
+thresholds the arithmetic is unchanged. No statement changes: a nan or inf value was no statement (INCONCLUSIVE with
+NONFINITE_BOUND), and the error bounds of the callers covered the gap at +-BIG. Function results change at the top of
+the range: `enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan.
+`docs/proofs/int05_underflow.md`: Lemma U2 stated its bound "for all inputs"; the statement is narrowed, and Lemma U2b
+covers the top of the range (UNVERIFIED, D-12; counter U2b of `docs/proofs/verify_int05_underflow.py`, run in
+`docs/proofs/runs/int05_underflow_2026-11-21.txt`). Tests: `tests/test_exact_dot_range.py`.
+
 ### Non-finite follow-ups
 
 No constant changes; statuses change only on inputs whose accounting overflows. When the radii of the claimed pairs are
