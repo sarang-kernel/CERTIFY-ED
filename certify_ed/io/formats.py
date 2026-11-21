@@ -249,18 +249,33 @@ def _as_csr(A):
     """A sparse matrix as read, in CSR when that conversion cannot round: a matrix in a narrower floating format
     (float16, float32, complex64) keeps its format (a COO keeps its repeated entries), because tocsr would sum them in
     that format; certify() and the record functions convert it exactly to binary64 first and then sum (precision.py),
-    and record the arrays as read."""
-    return A if is_narrow_float(A.dtype) else A.tocsr()
+    and record the arrays as read. Repeated entries of other data are summed by precision.summed before the conversion
+    (the correctly rounded exact sum for binary64 data, the exact sum for integers, True + True = 2 for booleans), as
+    the direct path sums them; tocsr would add them in stored order, and in the type of the file."""
+    if is_narrow_float(A.dtype):
+        return A
+    from ..precision import PrecisionError, summed
+    try:
+        return sp.csr_matrix(summed(A, "operator"))
+    except PrecisionError:
+        if A.dtype.kind in "iub":
+            raise                                   # integer sums out of range: refused, as on the direct path
+        return A.tocsr()                            # a format binary64 cannot hold (long double): as before
 
 
 def _csr_to_write(A):
     """The CSR matrix a writer stores for the sparse matrix A: a matrix in a narrower floating format is written as
     its exact binary64 copy, with its repeated entries summed in binary64 (the matrix certify() would certify), since
     a CSR conversion in its own format would sum them in that format; other matrices as before."""
+    from ..precision import PrecisionError, binary64, summed
     if is_narrow_float(A.dtype):
-        from ..precision import binary64
-        return sp.csr_matrix(binary64(A, "operator"))
-    return sp.csr_matrix(A)
+        return sp.csr_matrix(summed(binary64(A, "operator"), "operator"))
+    try:
+        return sp.csr_matrix(summed(A, "operator"))      # repeated entries summed as certify() sums them
+    except PrecisionError:
+        if A.dtype.kind in "iub":
+            raise
+        return sp.csr_matrix(A)
 
 
 def _csr_from_group(g):
@@ -281,7 +296,7 @@ def _coo_from_table(t: np.ndarray, shape=None, one_based: bool = False):
     if shape is None:
         n = int(max(i.max(), j.max())) + 1
         shape = (n, n)
-    return sp.coo_matrix((v, (i, j)), shape=tuple(shape)).tocsr()
+    return _as_csr(sp.coo_matrix((v, (i, j)), shape=tuple(shape)))
 
 
 def _coo_header_shape(path: str):
@@ -351,8 +366,8 @@ def _read_matrix(path: str, key: Optional[str], layout: str = "auto", shape=None
         if isinstance(obj, dict) and obj.get("format") in ("coo", "csr"):
             shp = tuple(obj["shape"])
             if obj["format"] == "coo":
-                A = sp.coo_matrix((_json_to_array(obj["data"]), (np.asarray(obj["row"]), np.asarray(obj["col"]))),
-                                  shape=shp).tocsr()
+                rc = (np.asarray(obj["row"]), np.asarray(obj["col"]))
+                A = _as_csr(sp.coo_matrix((_json_to_array(obj["data"]), rc), shape=shp))
             else:
                 A = sp.csr_matrix((_json_to_array(obj["data"]), np.asarray(obj["indices"]), np.asarray(obj["indptr"])),
                                   shape=shp)

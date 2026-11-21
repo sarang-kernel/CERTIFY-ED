@@ -187,9 +187,9 @@ def _total_sz(spec):
 @pytest.mark.parametrize("case", ["unsorted operator as observable", "split operator as observable",
                                   "split operator as observable, model", "split matrix as observable and symmetry"])
 def test_a_matrix_given_in_two_places_gets_one_copy(case):
-    """A matrix given in two places is one object; a summation done through one place was seen through the other.
-    certify() must give the certificate of a run on the matrices themselves (here on a deep copy, which keeps one
-    object one object), not of a run with a separate copy for each place."""
+    """A matrix given in two places is one object, and gets one copy, summed once at the start. certify() must give the
+    certificate of a run on the matrices themselves with their repeated entries summed (here on a deep copy, which
+    keeps one object one object), not of a run with a separate copy for each place."""
     from certify_ed.certify import _certify
     if case == "split matrix as observable and symmetry":
         spec = ce.heisenberg_chain(8)
@@ -214,6 +214,9 @@ def test_a_matrix_given_in_two_places_gets_one_copy(case):
     assert not any(M.has_canonical_format for M in given)
     before = [_arrays(M) for M in given]
     ref_claim, ref_opts = copy.deepcopy((claim, opts))
+    for M in [ref_claim.operator, *ref_opts.observables.values(),
+              *(v[0] for v in (ref_opts.approximate_symmetries or {}).values())]:
+        M.sum_duplicates()                                 # certify() sums at the start, on its copy
     ref = _certify(ref_claim, spec, ref_opts)               # in place, on the deep copy
     a = ce.certify(claim, spec, opts)
     assert all(_unchanged(M, x) for M, x in zip(given, before))

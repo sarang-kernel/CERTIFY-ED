@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
+from certify_ed.precision import summed
 from certify_ed.fp import U, abs_up, modulus_up
 
 # relative errors of NumPy's complex absolute value measured on the Windows reference host (numpy 2.4.4, AVX512F):
@@ -344,21 +345,21 @@ def test_abs_up_of_integer_sparse_data_is_stepped_up():
     assert abs_up(R).dtype == np.float32 and np.array_equal(abs_up(R).toarray(), abs(R).toarray())
 
 
-def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
-    """For CSR, CSC, BSR and COO input with duplicate entries, abs_up sums them in place (A.sum_duplicates(), binary64,
-    as abs(A) does), so the moduli and the products formed with A afterwards refer to the same summed matrix. DIA (no
-    duplicates) keeps its diagonals; LIL is converted (A unchanged). The result has A's format and class (sparse
-    matrix or sparse array)."""
+def test_abs_up_takes_the_summed_copy_and_keeps_the_format():
+    """For CSR, CSC, BSR and COO input with duplicate entries, abs_up takes the summed copy (precision.summed: the
+    correctly rounded exact sum at each position; before 3.3.0.dev0 it summed A in place, in stored order), so its
+    moduli refer to the summed matrix and A stays as given. DIA keeps its diagonals; LIL is converted (A unchanged).
+    The result has the format of the summed matrix and A's class (sparse matrix or sparse array)."""
     rng = np.random.default_rng(12)
     idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
     for mk in (sp.csr_matrix, sp.csc_matrix, sp.csr_array, sp.csc_array):
         for cplx in (False, True):
             v = rng.standard_normal(9) + (1j * rng.standard_normal(9) if cplx else 0)
             A = mk((v.copy(), idx.copy(), indptr.copy()), shape=(3, 3))
-            ref = A.copy()
-            ref.sum_duplicates()
+            ref = summed(A)
             got = abs_up(A)
-            assert A.has_canonical_format and A.nnz == ref.nnz == 5 and np.array_equal(A.data, ref.data)
+            assert not A.has_canonical_format and A.nnz == 9 and np.array_equal(A.data, v)
+            assert np.array_equal(A.indices, idx) and ref.nnz == 5
             assert type(got) is type(A) and np.array_equal(got.data, modulus_up(ref.data))
             assert np.array_equal(got.indices, ref.indices) and np.array_equal(got.indptr, ref.indptr)
     r, c = rng.integers(0, 4, 30), rng.integers(0, 4, 30)
@@ -366,15 +367,19 @@ def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
     for mk in (sp.coo_matrix, sp.coo_array):
         A = mk((v, (r, c)), shape=(4, 4))
         n0 = A.nnz
+        ref = summed(A)
         got = abs_up(A)
-        assert A.nnz < n0 and type(got) is type(A) and np.array_equal(got.data, modulus_up(A.data))
-        assert np.array_equal(got.row, A.row) and np.array_equal(got.col, A.col) and got.row is not A.row
+        assert A.nnz == n0 and ref.nnz < n0 and type(got) is type(A)
+        assert np.array_equal(got.data, modulus_up(ref.data))
+        assert np.array_equal(got.row, ref.row) and np.array_equal(got.col, ref.col) and got.row is not A.row
     # a 1-D coo_array has one index array (A.coords); its row and col do not index it
     V = sp.coo_array(np.array([1 + 1j, 0, 2, -3j, 0]))
     if V.ndim == 1:                                       # scipy >= 1.13 (older versions give a 1 x 5 array)
         got = abs_up(V)
         assert type(got) is type(V) and got.shape == V.shape == (5,)
         assert np.array_equal(got.toarray(), modulus_up(V.toarray())) and got.coords[0] is not V.coords[0]
+        W = sp.coo_array((np.array([1.0, 2.0 ** -53, 2.0 ** -53]), (np.array([3, 3, 3]),)), shape=(5,))
+        assert summed(W).toarray()[3] == 1.0 + 2.0 ** -52 and W.nnz == 3
     B = sp.coo_matrix((v, (r, c)), shape=(4, 4)).tobsr(blocksize=(2, 2))
     assert np.array_equal(abs_up(B).toarray(), modulus_up(B.toarray()))
     Dg = sp.dia_matrix((np.array([[1 + 1j, 2, 3j], [4, 5 - 1j, 6]]), np.array([0, 1])), shape=(3, 3))
@@ -383,14 +388,16 @@ def test_abs_up_sums_duplicates_in_place_and_keeps_the_format():
     assert abs_up(L).format == "csr" and L.format == "lil"
 
 
-def test_the_s2_adapter_takes_the_width_before_and_the_products_after_the_summation():
-    """The adapter of the S2 products: width counted on the stored entries, products on the summed matrix (abs_up sums
-    the duplicates in place, as abs does)."""
+def test_the_s2_adapter_works_on_the_summed_matrix():
+    """The adapter of the S2 products sums the repeated entries on a copy before anything else (precision.summed):
+    width, products and moduli all refer to the summed matrix, and the caller's matrix stays as given."""
     from certify_ed.enclosure import OperatorAdapter
     idx, indptr = np.array([2, 0, 2, 1, 1, 0, 0, 2, 0]), np.array([0, 3, 5, 9])
     A = sp.csr_matrix(((1 + 1j) * np.ones(9), idx.copy(), indptr.copy()), shape=(3, 3))
     ad = OperatorAdapter(A)
-    assert ad.width == 4 and ad.A is A and A.has_canonical_format and A.nnz == 5
+    assert ad.width == 2 and ad.A is not A and ad.A.has_canonical_format and ad.A.nnz == 5
+    assert not A.has_canonical_format and A.nnz == 9 and np.array_equal(A.indices, idx)
+    assert np.array_equal(ad.A.toarray(), A.toarray())
 
 
 # ------------------------------------------------------------------------- the S2 bounds use the upper moduli

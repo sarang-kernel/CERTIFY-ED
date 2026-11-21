@@ -797,6 +797,9 @@ EXEMPT = {
     "certify_ed.precision.target_dtype": "a dtype mapping",
     "certify_ed.precision.source_sha256": "hash of the input as given (by design)",
     "certify_ed.precision.binary64": "the conversion itself (test_single_precision)",
+    "certify_ed.precision.summed": "sums the repeated entries of binary64 data on a copy, after binary64; fails closed "
+                                   "for narrower formats (test_duplicate_entries)",
+    "certify_ed.precision.needs_summing": "a predicate on the sparse format and flags, no output data",
     "certify_ed.precision.check_values": "a check, no output",
     "certify_ed.precision.claimed_reals": "the conversion of claimed values (test_small_followups)",
     "certify_ed.precision.widening_record": "builds the record",

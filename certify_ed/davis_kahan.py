@@ -37,7 +37,7 @@ import scipy.sparse as sp
 
 from .eigenspace import EigenspaceCertificate
 from .fp import U, abs_up, add_up, fro_upper, gamma, gamma_dot, inf_norm_upper, sub_down, up
-from .precision import binary64
+from .precision import binary64, summed
 
 __all__ = ["sin_theta_davis_kahan", "commutator_bound", "approximate_symmetry_label", "certified_fidelity",
            "fidelity_from_certificates"]
@@ -74,8 +74,8 @@ def commutator_bound(H, S) -> Dict[str, float]:
     """Upper bound c on ||[H, S]||_2 for stored Hermitian H and S (sparse or dense): the infinity norm (anti-Hermitian
     commutator: ||C||_2 <= ||C||_inf) of |fl(HS) - fl(SH)| plus the standard-model rounding gamma_{w_H + 1} |H||S| +
     gamma_{w_S + 1} |S||H| entrywise, rounded up. Returns {'bound', 'computed_inf_norm', 'rounding_entrywise_inf_norm'}."""
-    H = sp.csr_matrix(binary64(H, "operator"))       # exact, widened before the conversion (precision.py)
-    S = sp.csr_matrix(binary64(S, "symmetry"))
+    H = sp.csr_matrix(summed(binary64(H, "operator"), "operator"))   # exact, widened before the conversion; repeated
+    S = sp.csr_matrix(summed(binary64(S, "symmetry"), "symmetry"))   # entries summed on a copy (precision.py)
     cplx = np.iscomplexobj(H.data) or np.iscomplexobj(S.data)
     C = (H @ S - S @ H).tocsr()
     wH = int(np.diff(H.indptr).max()) if H.shape[0] else 1
@@ -107,7 +107,7 @@ def approximate_symmetry_label(ec: EigenspaceCertificate, X: np.ndarray, S, name
     declared lattice (or of the allowed values), the labels snap and the record is CERTIFIED (under the recorded
     hypothesis); otherwise CERTIFIED-INTERVALS (each computed value has an S-eigenvalue within D)."""
     Xg = binary64(np.asarray(X)[:, ec.members], "eigenvectors")    # exact for narrower formats (precision.py)
-    S = binary64(S if sp.issparse(S) else np.asarray(S), name)
+    S = summed(binary64(S if sp.issparse(S) else np.asarray(S), name), name)
     g = len(ec.members)
     n = Xg.shape[0]
     cplx = np.iscomplexobj(Xg) or (np.iscomplexobj(S.data) if sp.issparse(S) else np.iscomplexobj(S))
@@ -246,7 +246,7 @@ def labels_hook(ec: EigenspaceCertificate, X, requests: Dict[str, object], H_ref
             ec.quantum_numbers[name] = {"status": "NOT-CHECKED", "reason_code": "NEEDS_MATRIX",
                                         "reason": "the commutator bound ||[H, S]|| needs a stored reference matrix"}
             continue
-        S = binary64(S if sp.issparse(S) else np.asarray(S), name)     # exact, before the conversion (precision.py)
+        S = summed(binary64(S if sp.issparse(S) else np.asarray(S), name), name)   # exact; summed (precision.py)
         Sm = sp.diags(S) if np.ndim(S) == 1 else sp.csr_matrix(S)
         cb = commutator_bound(H_ref, Sm)
         approximate_symmetry_label(ec, X, Sm, name, cb["bound"], J, lattice=lattice, allowed_values=allowed, c_record=cb)

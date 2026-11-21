@@ -41,6 +41,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import abs_up, modulus_up
+from .precision import summed
 
 SPOT_ROWS = 64
 DEFAULT_MEM_GB = 8.0
@@ -316,9 +317,9 @@ class DeviceCSR:
         self.cp = cp
         if not sp.issparse(A):
             raise GPUUnavailable("the GPU products are implemented for stored sparse matrices only")
-        A = A.tocsr()
         if A.dtype not in (np.float64, np.complex128):
             raise GPUUnavailable(f"dtype {A.dtype} is not float64 or complex128")
+        A = sp.csr_matrix(summed(A, "gpu.DeviceCSR"))   # repeated entries summed (precision.summed), then CSR
         absA = abs_up(A) if absA is None else absA.tocsr()
         if not (np.array_equal(absA.indptr, A.indptr) and np.array_equal(absA.indices, A.indices)):
             raise GPUUnavailable("|A| does not share the pattern of A")

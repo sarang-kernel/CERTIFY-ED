@@ -45,6 +45,86 @@ entries that sum beyond the range, with that reason (they reported 'not Hermitia
 conversion; the conversion control fails only on its assertions about the helper). The computational source hash
 changes.
 
+### Repeated entries summed at the start (soundness fix)
+
+A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now
+summed on a copy at the start of every call, before any product and before any format conversion (`precision.summed`,
+applied right after `binary64`), so that every product, norm and modulus of the call refers to one matrix, the summed
+one; the caller's matrix stays as given. The value at a position is the correctly rounded exact sum of its stored
+entries (each real part on its own: one addition for two entries, vectorized TwoSum passes for three to 64 and for
+larger positions, of up to 4096 entries, that share their number of entries with at least 511 others, and `math.fsum`
+for the rest and where the passes cannot decide) and for integer data the exact sum, so it does not depend on the
+format, the stored order of the entries or the entry point. Before, several public functions formed their products from
+the stored entries and took the moduli of the summed matrix (`fp.abs_up` summed in place): with entries that cancel, the
+rounding of those products was not covered. Example (`docs/proofs/fp_modulus-up.md`, section 1): for the real 2 × 2 CSR
+matrix whose (0, 1) and (1, 0) positions each hold 2^53 and -2^53 + 2, and S = diag(0, 0.7481628719198741),
+`commutator_bound(H, S)` returned 1.0000000000000024, below the exact ||[H, S]||_2 = 1.4963257438397481; it returns
+1.4963257438397513 now. `fp.fro_upper` read the stored values: two entries 1 at one position gave sqrt(2) for a
+Frobenius norm of 2 (it is used by the sector audits, the composition of sectors, the inertia backward error, the
+moments and the fidelity bound); it now measures the summed matrix, reads no value past nnz and no DIA padding.
+`fp.inf_norm_upper` and `fp.abs_up` no longer sum the caller's matrix in place.
+
+Every site that sums uses this sum: the entry points, the private copies of `certify()`, `matrix_sha256` (so the hash
+in a certificate is the hash of the caller's matrix), the file readers, the QuSpin importer for a scipy matrix, the
+writers, `ozaki.split_rows` and `gpu.DeviceCSR`. scipy's conversions add repeated entries in stored order; since
+every site sums before any conversion, the summed matrix does not depend on the route of a call (with three or more
+entries at a position whose partial sums round, a sum taken after a conversion would differ from one taken before it).
+In 3.x the readers summed a COO file in the type of the file (int8 100 + 100 gave -56, True + True gave
+True); they now sum as the direct path does. A COO operator with three or more entries at one position whose partial
+sums round is certified as the correctly rounded sum, where 3.x certified the sum in stored order; its certificate and
+its hash change. Positions are grouped by row and column (a sort on the pair, not on a combined key, which would wrap
+for shapes of 2^63 positions or more).
+
+Integer data are summed exactly, on every route: `binary64` sums sparse integer data this way before it converts them,
+so the routes that keep integers and those that convert them refuse the same matrices (an exact sum that is not a
+binary64 number, such as 2^53 + 1, or one beyond int64 or uint64) and use the same sums otherwise; a sum that leaves
+the caller's integer type is kept in int64 (int8 100 + 100 = 200), and the sums are checked like the entries. A matrix
+with no repeated position is accepted whatever its integer type and size, as in 3.x. Booleans are converted
+to float64 first (True + True = 2). `summed` refuses floating data narrower than binary64; the entry points convert
+them exactly first, and `fp.fro_upper` and `fp.abs_up` now do so as well. A position with a part that is not finite
+holds nan for a nan or for both infinities and the infinity otherwise, whatever the order.
+
+Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; any product scipy
+forms; a COO built from arrays) is copied, sorted and checked for repeated positions on each call; `summed` trusts
+scipy's canonical flag. Positions with two entries take one addition; positions with three to 64 entries, and larger
+ones up to 4096 when at least 512 positions share their number of entries (below that the passes cost more than
+`math.fsum`), take a few vectorized TwoSum passes in blocks of positions with the same number of entries (so that time
+and memory grow with the number of stored entries), and `math.fsum` takes the rest and the sums near a rounding
+boundary. Measured on the Windows reference host in two series (best of three, one of them with other work running): a
+CSR with 4.0e6 stored entries, every entry stored as two halves, 2 to 6 times the time of scipy's copy and
+`sum_duplicates`; a COO with four entries at each of 1e5 and 1e6 positions, 5 to 20 times scipy's `tocsr`; 1e5 positions
+of three entries and one of 2000 or of 1e5 entries, 7 to 10 times; a COO with 100, 300 or 1000 entries at each position
+(5e6 stored), about 12 times, most of it the sort of the coordinates. An input made only of positions whose sums lie
+next to a rounding boundary, all of which take `math.fsum` (1e5 positions holding 1, 2^-53 and 2^-106), takes about 30
+to 50 times `tocsr`, 3 to 7 µs a position. The peak memory of `summed` is about 2 to 6 times the stored arrays (values
+and indices), and for the input made only of positions next to a rounding boundary about 6 to 7 times at 1e6 positions
+(8 to 9 times at 1e5, where buffers of fixed size dominate) (`math.fsum` takes the positions in slices of at most 2^16).
+`fp.max_nnz_per_row` still counts the stored entries of a row (a width at least that of the summed matrix, so the gamma
+factor it feeds stays an upper bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a
+certified quantity); `eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the
+sparse factorization now sum as well.
+
+Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
+`approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
+`certify_quantum_numbers`, `fro_upper` and the other functions listed in `tests/test_precision_registry.py` that take a
+sparse matrix. These functions have formed their products this way since they were added; which released certificate,
+if any, rests on such a product was not checked. Within `certify()` the private copy of such an operator, sector
+isometry, observable or symmetry (3.3.0.dev0, 'The caller's matrix stays as given') is now summed when it is made;
+before, the first step that took its absolute value summed it in place, and whether a product was formed before that
+step was not checked statement by statement. With entries stored as two exact halves (the case of the test suite) the
+products were covered and the certificates change only in the last bits; the statuses of the test suite do not change.
+An operator with repeated entries certified with its model is now served by the device (before: `|A| does not share
+the pattern of A`). Tests: `tests/test_duplicate_entries.py` (the example above, `fro_upper`, the independence of the
+format and the order, `audit_decomposition`, the certificate hash against `matrix_sha256` and `write_operator`, the
+integer path, the readers, the refusals, the direct calls and `certify()` against the summed operator, `math.fsum` on
+6000 random groups, the exact rational sum on 10000 groups at or next to a rounding midpoint, every group size from 3 to
+70 across block boundaries, one large group among many small ones, groups of three or more with values that are not
+finite, complex sums, `ozaki.split_rows`, the QuSpin importer, the integer routes, a shape of 2^33 x 2^33, and a sweep
+over the functions of the precision registry with every matrix stored as three parts that cancel, in COO and in CSR,
+against the summed matrices, which fails when an entry point skips `summed` or sums after a conversion);
+`tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
+hash changes.
+
 ### Non-finite follow-ups
 
 No constant changes; statuses change only on inputs whose accounting overflows. When the radii of the claimed pairs are
@@ -321,7 +401,8 @@ complex64 data are upper bounds, but a bound whose products are formed in single
 counts binary64 roundings; the entry points convert such input to binary64, see 'Single-precision inputs' above);
 `abs_up`, like `abs`, sums the duplicate entries of a sparse matrix in place, so a product formed with the matrix before
 the call is not covered by its moduli (direct calls of `commutator_bound`, `audit_sector`, `compress_operator` and
-`certify_observable` on a matrix with duplicates); the floating-point items that the lemma assumes beyond those
+`certify_observable` on a matrix with duplicates; fixed since, see 'Repeated entries summed at the start'); the
+floating-point items that the lemma assumes beyond those
 `probe_float_environment` checks are tested with the test suite, not probed at run time. The derivation is new and
 unverified: Sarang's check (D-12) is pending (independent re-derivation: verdict AGREES on the lemma, GAP on its
 corollary, resolved; `docs/proofs/verify_modulus-up.py`, `tests/test_modulus_up.py`). The computational source hash
@@ -424,8 +505,9 @@ of the Kato-Temple step taken through `OperatorAdapter.both_products`).
   `certify()` returns. The module needs NVRTC but not the CUDA headers (it launches no CuPy elementwise kernel).
   `Options.device` must be `"cpu"` or `"gpu"`; any other value, `None` included, makes `certify()` raise
   `ValueError`. A recorded device error is put on one line and cut to 300 characters. A CSR operator with duplicate
-  entries that is certified with its model is served by the CPU (`|A| does not share the pattern of A`), because the
-  S1 comparison compacts it in place before the products are formed.
+  entries was served by the CPU when it was certified with its model (`|A| does not share the pattern of A`), because
+  the S1 comparison compacted it in place before the products were formed; since 'Repeated entries summed at the
+  start' it is summed when certify() copies it and is served by the device like any other.
   Device memory is bounded by `CERTIFY_ED_GPU_MEM_GB` or `GPU_MEM_GB` (default 8 GiB) and by 90 % of the free device
   memory; column blocks change no bit. `CERTIFY_ED_GPU_DUTY` or `GPU_DUTY` in (0, 1) sets a duty cycle for shared
   machines.

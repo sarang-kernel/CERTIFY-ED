@@ -68,7 +68,7 @@ from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range, modulus_up, abs_up)
 from .gpu import GPUUnavailable
-from .precision import binary64, claimed_reals, require_binary64
+from .precision import binary64, claimed_reals, require_binary64, summed
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -106,7 +106,8 @@ class OperatorAdapter:
             # a stored matrix in a narrower format is converted exactly to binary64 (precision.py): the bounds below
             # count binary64 arithmetic, and a single-precision product would not satisfy them
             # (widened before tocsr, which would sum repeated entries in the narrower format)
-            w = binary64(op if sp.issparse(op) else np.asarray(op), "operator")
+            w = summed(binary64(op if sp.issparse(op) else np.asarray(op), "operator"), "operator")   # repeated
+            # entries summed on a copy before any product (precision.summed)
             self.A = require_binary64(w.tocsr() if sp.issparse(w) else w, "OperatorAdapter")
             self.shape = self.A.shape
             self.complex = bool(np.iscomplexobj(self.A.data if sp.issparse(self.A) else self.A))

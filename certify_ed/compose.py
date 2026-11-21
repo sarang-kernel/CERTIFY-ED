@@ -34,7 +34,7 @@ from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
-from .precision import binary64, check_values, claimed_reals, widening_record
+from .precision import binary64, check_values, claimed_reals, summed, widening_record
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
 from .spec import ModelSpec
@@ -58,8 +58,8 @@ def _binary64_sector(s: SectorResult, widened: Optional[list] = None) -> SectorR
     multiply them; the same object when nothing is converted. The claimed eigenvalues are checked
     (precision.check_values)."""
     check_values(s.eigenvalues, f"sector {s.label}: eigenvalues")
-    V = binary64(s.V, f"sector {s.label}: isometry", widened)
-    H = binary64(s.H, f"sector {s.label}: block", widened)
+    V = summed(binary64(s.V, f"sector {s.label}: isometry", widened), f"sector {s.label}: isometry")
+    H = summed(binary64(s.H, f"sector {s.label}: block", widened), f"sector {s.label}: block")
     X = binary64(s.eigenvectors, f"sector {s.label}: eigenvectors", widened)
     if V is s.V and H is s.H and X is s.eigenvectors:
         return s
@@ -74,7 +74,7 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
     and beta of a COMPLETE sector, and whether the producer block was symmetrised. 3.3.0.dev0 (D-04): the body of
     the 3.2 loop, unchanged, so that sectors can run on separate workers. `red`: the U(1) restriction decided by the
     caller (a tuple, or None for the full matrix H); by default it is decided here as in the 3.2 loop."""
-    Hs = sp.csr_matrix(binary64(s.H, "sector block"))     # exact, widened before the conversion (precision.py)
+    Hs = sp.csr_matrix(summed(binary64(s.H, "sector block"), "sector block"))   # exact; summed (precision.py)
     asym = abs(Hs - Hs.conj().T)
     herm_note = None
     symmetrised = False
@@ -179,7 +179,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
     t0 = time.time()
     widened: list = []
     sectors = [_binary64_sector(s, widened) for s in sectors]   # exact, before any conversion or product (precision.py)
-    H = None if H_full is None else hermitian_part(sp.csr_matrix(binary64(H_full, "H_full", widened)))   # exact
+    H = None if H_full is None else hermitian_part(sp.csr_matrix(summed(binary64(H_full, "H_full", widened), "H_full")))
     n = spec.dim
     cache = {}
     Hn = inf_norm_upper(H) if H is not None else 0.0
