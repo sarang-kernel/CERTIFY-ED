@@ -530,3 +530,28 @@ def test_symmetry_entry_forms_without_indexing(form):
     ent = {"s": Sd, "l": None}.values() if form == "values-view" else OnlyIter(Sd, None)
     ref, got = run((Sd, None)), run(ent)
     assert got["status"] == ref["status"] == "CERTIFIED" and got["summary"] == ref["summary"]
+
+
+def test_malformed_symmetry_entry_is_refused_whatever_s4_does():
+    """A malformed entry of Options.symmetries is refused when certify starts, also when S4 never reads it (a claim
+    with only S2 selected, or no cluster to check): before, it was refused only when S4 reached its loop."""
+    spec, H, w, V = _chain6()
+    for only in (["S2.eigenpairs"], None):
+        with pytest.raises(ValueError, match=r"must be \(S_diagonal, lattice\)"):
+            ce.certify(ce.Claim(eigenvalues=w[:1], eigenvectors=V[:, :1], operator=H, kind="lowest"), spec,
+                       ce.Options(seed=1, symmetries={"d": (None, None, None)}, only=only))
+
+
+def test_wrappers_record_dropped_parts_of_an_object_array():
+    """certified_sweep (and certify_hamiltonian, by the same rule) passes an object array of numpy complex scalars to
+    the claim as given, so the record is made (on the previous round: only complex arrays were passed on)."""
+    from certify_ed.sweep import certified_sweep
+
+    def solver(Hc, k):
+        ww, VV = np.linalg.eigh(Hc.toarray())
+        obj = np.array([np.complex128(complex(v, 0.0)) for v in ww], dtype=object)
+        obj[0] = np.complex128(complex(ww[0], -0.375))
+        return obj[:k], VV[:, :k]
+    cert = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)["_certificates"][0]
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.375}

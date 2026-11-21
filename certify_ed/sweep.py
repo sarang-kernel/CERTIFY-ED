@@ -237,7 +237,7 @@ def certified_sweep(spec_fn: Callable[[float], ModelSpec], couplings: Sequence[f
         w_given = np.asarray(w)                        # complex values as given: certify records what it drops
         w = claimed_reals(w)
         Y = np.asarray(Y)
-        claim = Claim((w_given if w_given.dtype.kind == "c" else w)[:k], Y[:, :k], operator=H, kind=kind,
+        claim = Claim((w_given if w_given.dtype.kind in "cO" else w)[:k], Y[:, :k], operator=H, kind=kind,
                       states=states if V0 is None else None,
                       sector_isometry=V_full, accuracy_target=accuracy_target,
                       description=f"{spec.name or 'model'} at {parameter_name} = {c!r}")

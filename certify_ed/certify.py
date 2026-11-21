@@ -1013,6 +1013,19 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
     return replace(claim, operator=op, sector_isometry=iso, eigenvectors=X)
 
 
+def _symmetry_pair(name, ent):
+    """(S_diagonal, lattice) of an Options.symmetries entry, read by index: a mapping needs the keys 0 and 1, a sequence
+    the length 2; anything else (a string, an entry without a length, a wrong length) is refused with one message."""
+    try:
+        pair = not isinstance(ent, (str, bytes)) and (
+            (0 in ent and 1 in ent) if isinstance(ent, Mapping) else len(ent) == 2)
+    except TypeError:                      # an entry without a length (None, a number)
+        pair = False
+    if not pair:
+        raise ValueError(f"options.symmetries[{name}] must be (S_diagonal, lattice)")
+    return ent[0], ent[1]
+
+
 def _options_as_given(opts: Options, own) -> Options:
     """Options with private copies (own) of the sparse matrices among the observables and approximate symmetries whose
     indices are unsorted or repeated, with the repeated entries summed (the S4 bounds and the label records form
@@ -1053,6 +1066,8 @@ def _options_as_given(opts: Options, own) -> Options:
     obs = {k: own(v, f"options.observables[{k}]") for k, v in obs_given.items()}
     asym = {k: entry(v, f"options.approximate_symmetries[{k}]") for k, v in asym_given.items()}
     syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in syms_given.items()}
+    for k, v in syms.items():                          # refused here, whether or not S4 later reads the entry
+        _symmetry_pair(k, v)
     if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym) and \
             all(syms[k] is syms_given[k] for k in syms):
         return opts
@@ -1665,14 +1680,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 for name, ent in opts.symmetries.items():
                     # (S_diagonal, lattice), read by index as labels_hook reads the approximate symmetries, so that
                     # a mapping {0: S, 1: lattice} (the private copy keeps its keys) is read as the pair it holds
-                    try:                           # a mapping needs the keys 0 and 1, a sequence the length 2
-                        pair = not isinstance(ent, (str, bytes)) and (
-                            (0 in ent and 1 in ent) if isinstance(ent, Mapping) else len(ent) == 2)
-                    except TypeError:              # an entry without a length (None, a number)
-                        pair = False
-                    if not pair:
-                        raise ValueError(f"options.symmetries[{name}] must be (S_diagonal, lattice)")
-                    sdiag, lattice = ent[0], ent[1]
+                    sdiag, lattice = _symmetry_pair(name, ent)
                     if isinstance(sdiag, str) and sdiag == "su2":
                         _total_spin(ec, X, name, spec, claim, rec)
                         continue

@@ -28,8 +28,8 @@ finite nonzero imaginary part is dropped (with numpy's ComplexWarning) and the s
 list of Python complex numbers is refused with numpy's TypeError. New: the claim record of `certify` then holds
 `dropped_imaginary_parts` (`count`, `max_abs`), an optional field (`certify_ed/schema.py`, `docs/schema.md`, the
 rendered schema), and `not_verified` names those parts, so that the report shows them; claims without such parts are
-recorded as before. `certify_hamiltonian` and `certified_sweep` pass complex values to the claim as given (sorted by
-their real parts), so the record is made there as well, and the sector composition writes it into the sector's
+recorded as before. `certify_hamiltonian` and `certified_sweep` pass complex values and object arrays to the claim as
+given (sorted by their real parts), so the record is made there as well, and the sector composition writes it into the sector's
 record (`precision.dropped_imaginary_parts`). In the sector composition a sector with a non-finite
 claimed value is INCONCLUSIVE before anything is counted, with the first indices and their number in its record
 (`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of the count, so the sector was reported MISSING
@@ -40,7 +40,8 @@ mapping with further keys was passed on as given. An entry of `Options.symmetrie
 1: lattice} is accepted in binary64 as well (it raised a TypeError; in float32 it was accepted through its converted
 copy); an iterator is read once, when `certify` starts, and an empty one is refused with that reason. A mapping entry
 without the key 0 or 1, and an entry without a length, are refused with the message of a sequence of the wrong length
-(a KeyError or a TypeError before). An entry that can be iterated but not indexed (a `dict.values()` view, a class
+(a KeyError or a TypeError before); a malformed entry is refused when `certify` starts, whether or not S4 reads it
+(before, only when S4 reached the entry). An entry that can be iterated but not indexed (a `dict.values()` view, a class
 with `__iter__` only) is read as its items, as 3.x unpacked it. The planner
 (`cost.narrow_input_mb`) counts a mapping entry as a tuple entry. `sectors.restrict_to_u1` drops stored zeros of the
 isometry before the row look-up (a stored zero in a row after the last row of the support raised an IndexError). S8
