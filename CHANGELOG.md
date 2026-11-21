@@ -10,24 +10,40 @@
 ### Small follow-ups
 
 No constant changes; statuses change only on the inputs named here. A claimed value whose imaginary part is not finite
-is now a non-finite value: the conversion of claimed eigenvalues (`precision.claimed_reals`, used by `certify`,
-`exact_recheck_lowest`, `exact_recheck_sector_lowest`, `certify_generalized` and `certify_low_energy`) makes it nan, so
-S2 and the exact re-checks are INCONCLUSIVE ("claim contains non-finite values") and `certify_generalized` refuses it,
-as for a nan value. Before, the imaginary part was dropped, and w + ∞i was certified as w by `certify` and by both exact
-re-checks. In the sector composition a sector with a non-finite claimed value is INCONCLUSIVE before anything is
-counted, with the indices in its record (`non_finite_eigenvalues`); a nan value was left out of the count, so the sector
-was reported MISSING and the composition FAILED, and w + ∞i was certified. An (approximate) symmetry entry given as an
-iterator, or as a mapping with keys besides 0, 1 and 2, now gets the private copy and the widening record of a tuple
-entry (it was passed on as given, and a float32 diagonal or matrix in it was converted without a record).
-`sectors.restrict_to_u1` drops stored zeros of the isometry before the row look-up (a stored zero in a row after the
-last row of the support raised an IndexError). S8 carries `NONFINITE_BOUND` when the S2 radii of a cluster overflow
-(couplings of 1e200; S8 had no code while S2 named the overflow), and the S2 record of a cluster not certified distinct
-carries `nonfinite_bound`. The figure helper `experiments/figures/_common.py` is renamed `_figcommon.py`: `docs/proofs`
-has its own `_common`, and in one test session the module imported first was used for both (an ImportError in
-`tests/test_nonhermitian.py`, depending on the test order). `tests/test_figures.py` is skipped when
-`experiments/figures` is absent (the source distribution). `certified_moments` refuses an operator or observable with
-entries that are not finite with that reason (it reported 'not Hermitian' with a nan difference). Tests:
-`tests/test_small_followups.py` (each case fails at the base). The computational source hash changes.
+is now a non-finite value: the conversion of claimed eigenvalues (`precision.claimed_reals`) makes it nan at every entry
+point that converts them, which are `certify`, `certify_hamiltonian` (QuSpin), `certified_sweep`,
+`exact_recheck_lowest`, `exact_recheck_sector_lowest`, `exact_eigenpair_radii`, `certify_generalized`,
+`certify_low_energy`, `enclose`, `residuals`, the Ozaki residuals, the interval-arithmetic residuals, `corroborate`, the
+ALPS reader and `write_bundle`. The rule for non-finite claimed values then applies: S2 and the exact re-checks are
+INCONCLUSIVE ("claim contains non-finite values"), `exact_eigenpair_radii` gives an infinite radius and lists the index
+under `non_finite_values`, `corroborate` is INCONCLUSIVE, and `enclose`, `certify_generalized`, the ALPS reader and
+`write_bundle` refuse it, as for a nan value. Before, the imaginary part was dropped, and w + ∞i was certified as w by
+`certify`, `certify_hamiltonian`, `certified_sweep` and both exact re-checks. The conversion is otherwise that of 3.x: a
+finite nonzero imaginary part is dropped (with numpy's ComplexWarning) and the statements concern the real parts, and a
+list of Python complex numbers is refused with numpy's TypeError. New: the claim record of `certify` then holds
+`dropped_imaginary_parts` (`count`, `max_abs`), an optional field (`certify_ed/schema.py`, `docs/schema.md`, the
+rendered schema); claims without such parts are recorded as before. In the sector composition a sector with a non-finite
+claimed value is INCONCLUSIVE before anything is counted, with the first indices and their number in its record
+(`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of the count, so the sector was reported MISSING
+and the composition FAILED, and w + ∞i was certified. An (approximate) symmetry entry given as an iterator, or as a
+mapping with keys besides 0, 1 and 2, now gets the private copy and the widening record of a tuple entry; an iterator
+entry of `Options.symmetries` was read without either, one of `Options.approximate_symmetries` raised a TypeError, and a
+mapping with further keys was passed on as given. An entry of `Options.symmetries` is read by index, so a mapping {0: S,
+1: lattice} is accepted in binary64 as well (it raised a TypeError; in float32 it was accepted through its converted
+copy); an iterator is read once, when `certify` starts, and an empty one is refused with that reason. The planner
+(`cost.narrow_input_mb`) counts a mapping entry as a tuple entry. `sectors.restrict_to_u1` drops stored zeros of the
+isometry before the row look-up (a stored zero in a row after the last row of the support raised an IndexError). S8
+gives S2's reason code for a cluster whose pairs S2 did not certify distinct because a radius is not finite:
+`NONFINITE_BOUND` for couplings of 1e200, `UNRESOLVED_VECTOR_NORM` for vectors scaled by 1e-170 or 1e155 (it had no
+code; its record marks such a cluster `radius_not_finite`); `docs/SCOPE_MATRIX.md` lists S8 under both codes. The figure
+helper `experiments/figures/_common.py` is renamed `_figcommon.py`: `docs/proofs` has its own `_common`, and in one test
+session the module imported first was used for both (an ImportError in `tests/test_nonhermitian.py`, depending on the
+test order); `tests/test_figures.py` is skipped when `experiments/figures` is absent (the source distribution).
+`certified_moments` and `certify_variational` refuse an operator or observable with non-finite entries, or with repeated
+entries that sum beyond the range, with that reason (they reported 'not Hermitian' with a nan difference). Tests:
+`tests/test_small_followups.py` (each case fails at main 674efa52, run with the new helper's import replaced by the 3.x
+conversion; the conversion control fails only on its assertions about the helper). The computational source hash
+changes.
 
 ### Non-finite follow-ups
 
