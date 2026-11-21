@@ -72,7 +72,7 @@ integer path, the readers, the refusals, the direct calls and `certify()` agains
 integer routes, a shape of 2^33 x 2^33, and a sweep over the functions of the precision registry with every matrix
 stored as three parts that cancel, in COO and in CSR, against the summed matrices, which fails when an entry point
 skips `summed` or sums after a conversion); `tests/test_modulus_up.py` and
-`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1956 passed, 82 skipped; the one failure, `tests/test_driver.py::test_reproduce_parallel_resume_and_numbers`, came from the test environment (a relative PYTHONPATH that the experiment subprocesses could not resolve) and is to be re-run. The computational
+`tests/test_input_unchanged.py` pin the summation at the start. Windows full suite: 1957 passed, 82 skipped, 0 failed. The computational
 source hash changes.
 
 ### Result documents moved under docs/
