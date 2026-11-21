@@ -87,13 +87,16 @@ def array_sha256(a) -> str:
 
 def matrix_sha256(A) -> str:
     """Hash of a canonical CSR form (sorted indices, summed duplicates, no explicit zeros) of the binary64 entries. A
-    matrix in a narrower format is converted exactly first (precision.binary64), so that repeated entries are summed in
-    binary64, as certify() sums them, and the hash of the caller's matrix is the hash in its certificate."""
-    from .precision import PrecisionError, binary64
+    matrix in a narrower format is converted exactly first (precision.binary64), and repeated entries are summed by
+    precision.summed (the correctly rounded exact sum at each position), as certify() sums them, so that the hash of
+    the caller's matrix is the hash in its certificate."""
+    from .precision import PrecisionError, binary64, needs_summing, summed
     try:
-        A = binary64(A if sp.issparse(A) else np.asarray(A), "matrix")
+        A = summed(binary64(A if sp.issparse(A) else np.asarray(A), "matrix"), "matrix")   # the sum certify() uses
     except PrecisionError:
-        pass                              # a format binary64 cannot hold: hashed as before, cast after the summation
+        if sp.issparse(A) and A.dtype.kind in "iu" and needs_summing(A):
+            raise                         # repeated integer entries whose exact sum binary64 cannot hold: no matrix
+        # a format binary64 cannot hold: hashed as before, cast after the summation
     if not sp.issparse(A):
         A = sp.csr_matrix(np.asarray(A))
     A = sp.csr_matrix(A, copy=True)

@@ -54,7 +54,7 @@ from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
-from .precision import binary64, check_values, widening_record
+from .precision import binary64, check_values, summed, widening_record
 from .presets import STATEMENTS, preset_options, resolve_selection
 from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
@@ -962,10 +962,12 @@ def _private_copies(widened=None):
 
     A matrix in a narrower floating format than binary64 (float16, float32, complex64) becomes a private exact binary64
     copy (precision.binary64), listed in `widened` under `what`; a wider format is refused (PrecisionError). Integer
-    matrices are checked (every value a binary64 number) and used as given, as in 3.x: the steps that multiply them
-    convert them exactly, and their certificates are those of 3.x. Boolean matrices (3.x raised a TypeError) are
-    converted exactly, not listed. A CSR matrix whose indices are unsorted or repeated becomes a private copy. Any
-    other value is returned unchanged.
+    matrices are checked (every value a binary64 number) and kept in their integer type, as in 3.x: the steps that
+    multiply them convert them exactly. Boolean matrices (3.x raised a TypeError) are converted exactly, not listed. A
+    CSR, CSC, BSR or COO matrix whose indices are unsorted or repeated (not flagged canonical), or a DIA matrix with a
+    repeated offset, becomes a private canonical copy in which each position holds the sum of its stored entries
+    (precision.summed: the correctly rounded exact sum, the exact sum for integers), so that every step of the run
+    works on that one matrix and every product is formed after the summation. Any other value is returned unchanged.
 
     A matrix given in several places (the operator also as an observable, say) gets one copy, so that a summation done
     through one place is seen through the others, as it was on the caller's matrix. A new own() for each run."""
@@ -976,12 +978,9 @@ def _private_copies(widened=None):
         if hit is None:
             note = []
             c = binary64(m, what, note, keep_integers=True)   # narrower floats: binary64 copies; integers checked
+            c = summed(c, what)          # unsorted or repeated indices: a copy with the repeated entries summed
             if c is m:
-                if not (sp.issparse(m) and m.format == "csr") or m.has_canonical_format:
-                    return m
-                c = m.copy()
-                if (c.indices.dtype, c.indptr.dtype) != (m.indices.dtype, m.indptr.dtype):   # copy() may narrow int64
-                    c.indices, c.indptr = c.indices.astype(m.indices.dtype), c.indptr.astype(m.indptr.dtype)
+                return m
             hit = copies[id(m)] = (m, c, note)    # m is kept, so that its id is not reused during the run
         if widened is not None:
             widened.extend(dict(w, input=what) for w in hit[2])
@@ -991,12 +990,13 @@ def _private_copies(widened=None):
 
 def _as_given(claim: Claim, own, widened=None) -> Claim:
     """The claim with the operator, the sector isometry and the eigenvectors certify() works on: private copies (own)
-    of a CSR operator and a CSR sector isometry whose indices are unsorted or repeated, and exact binary64 copies of
-    every one of them (and of the vectors) stored in a narrower format.
+    of a sparse operator and a sparse sector isometry whose indices are unsorted or repeated, with the repeated entries
+    summed, and exact binary64 copies of every one of them (and of the vectors) stored in a narrower format.
 
-    Several steps (the S1 comparison, the sector audit, the absolute value taken by the adapter) sum duplicates and
-    sort indices in place, through arrays they share with these matrices. On copies the caller's matrices stay as given,
-    and certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory.
+    Summed at the start, the matrix is the same for every step, and every product is formed with it (before, the S1
+    comparison, the sector audit and the absolute value taken by the adapter summed the repeated entries in place, so
+    a product formed before them used the stored entries). On copies the caller's matrices stay as given, and
+    certifying the same claim again gives the same certificate. Each copy costs one more matrix in memory.
 
     Every bound counts binary64 arithmetic (fp.U = 2^-53); numpy would form the products of single-precision data in
     single precision, so such data are widened here, before anything runs (precision.py). The widening is exact: the
@@ -1011,8 +1011,9 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
 
 
 def _options_as_given(opts: Options, own) -> Options:
-    """Options with private copies (own) of the CSR matrices among the observables and approximate symmetries whose
-    indices are unsorted or repeated (the S4 norm bounds and the label records take absolute values of them in place),
+    """Options with private copies (own) of the sparse matrices among the observables and approximate symmetries whose
+    indices are unsorted or repeated, with the repeated entries summed (the S4 bounds and the label records form
+    products with them),
     and exact binary64 copies of the observables, approximate symmetries and symmetry diagonals stored in a narrower
     format (precision.py)."""
     def entry(v, what):                    # (approximate) symmetry: (S, lattice[, allowed]) as a sequence
@@ -1040,8 +1041,8 @@ def _options_as_given(opts: Options, own) -> Options:
 
 
 def _certify_as_given(claim: Claim, spec: Optional[ModelSpec], opts: Options) -> Certificate:
-    """_certify on private copies of the caller's non-canonical CSR matrices and on exact binary64 copies of inputs
-    stored in a narrower format; the copies go when it returns."""
+    """_certify on private copies of the caller's non-canonical sparse matrices (repeated entries summed) and on exact
+    binary64 copies of inputs stored in a narrower format; the copies go when it returns."""
     widened = []
     own = _private_copies(widened)
     narrow = None

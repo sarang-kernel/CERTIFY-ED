@@ -30,7 +30,7 @@ import scipy.sparse as sp
 
 from .enclosure import OperatorAdapter, enclose
 from .fp import add_up, sub_down
-from .precision import binary64
+from .precision import binary64, summed
 
 
 @dataclass
@@ -128,7 +128,7 @@ def enclose_spectrum(H, S_diag=None, eigh_result=None, atol: float = 1e-12) -> S
     eigh_result: optional (mu, X) for the whole matrix (no sectors), e.g. a producer's result; it is
     verified, not trusted. A matrix in a narrower format than binary64 is converted exactly first (precision.py), so
     the enclosure refers to the matrix as stored."""
-    H = binary64(H if sp.issparse(H) else np.asarray(H), "H")
+    H = summed(binary64(H if sp.issparse(H) else np.asarray(H), "H"), "H")
     n = H.shape[0]
     if not np.all(np.isfinite(H.data if sp.issparse(H) else H)):
         raise ValueError("H must have finite entries")

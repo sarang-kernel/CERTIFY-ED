@@ -40,7 +40,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .enclosure import OperatorAdapter, rayleigh_interval
 from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, modulus_up, norm2_upper, sub_down, underflow_scan, up
-from .precision import binary64, widening_record
+from .precision import binary64, summed, widening_record
 from .spec import ModelSpec, canonical_json
 
 VARIATIONAL_SCHEMA = "certify-ed/variational/1.0"
@@ -282,6 +282,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
         # a narrower format becomes an exact binary64 copy (precision.py), before tocsr, which would sum repeated
         # entries in the narrower format
         Aw = binary64(operator if sp.issparse(operator) else np.asarray(operator), "operator", widened)
+        Aw = summed(Aw, "operator")          # repeated entries summed on a copy, before any product
         A = Aw.tocsr() if sp.issparse(Aw) else Aw
         if A is operator:
             A = _private_copies()(A)       # the adapter sums duplicates in place: the caller's matrix stays as given

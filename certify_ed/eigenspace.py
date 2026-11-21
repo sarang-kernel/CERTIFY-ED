@@ -37,7 +37,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, gamma_dot, up, inf_norm_upper, abs_up, modulus_up
-from .precision import binary64
+from .precision import binary64, is_narrow_float, needs_summing, summed
 
 
 # ---------------------------------------------------------------------------
@@ -45,7 +45,10 @@ from .precision import binary64
 # ---------------------------------------------------------------------------
 
 def commutes_diagonal(A: sp.spmatrix, s_diag: np.ndarray) -> bool:
-    """[A, diag(s)] = 0 exactly iff A_ij = 0 whenever s_i != s_j (structural, exact)."""
+    """[A, diag(s)] = 0 exactly iff A_ij = 0 whenever s_i != s_j (structural, exact). Repeated entries are summed
+    first (precision.summed), so that parts that cancel do not count as a nonzero entry."""
+    if needs_summing(A):
+        A = summed(binary64(A, "operator") if is_narrow_float(A.dtype) else A, "operator")
     A = sp.coo_matrix(A)
     nz = A.data != 0
     return bool(np.all(s_diag[A.row[nz]] == s_diag[A.col[nz]]))
@@ -55,7 +58,7 @@ def commutes_signed_permutation(A: sp.spmatrix, perm: np.ndarray, sign: np.ndarr
     """[A, P] = 0 for P|j> = sign_j |perm_j> with sign in {+1,-1}: checked exactly
     as A[perm_i, perm_j] * sign_i * sign_j == A[i, j] entrywise. A matrix in a narrower format is converted exactly
     first, so that repeated entries are summed in binary64 (precision.py)."""
-    A = sp.csr_matrix(binary64(A if sp.issparse(A) else np.asarray(A), "operator"))
+    A = sp.csr_matrix(summed(binary64(A if sp.issparse(A) else np.asarray(A), "operator"), "operator"))
     n = A.shape[0]
     P = sp.csr_matrix((sign.astype(A.dtype), (perm, np.arange(n))), shape=(n, n))
     B = (P.T @ A @ P).tocsr()
@@ -119,7 +122,7 @@ def certify_observable(ec: EigenspaceCertificate, X: np.ndarray, O, name: str,
     """Certified tr(P O) for Hermitian O (dense or sparse). Data in a narrower format than binary64 are converted
     exactly first (precision.py)."""
     X = binary64(X, "eigenvectors", stream=True)
-    O = binary64(O if sp.issparse(O) else np.asarray(O), name)
+    O = summed(binary64(O if sp.issparse(O) else np.asarray(O), name), name)   # repeated entries summed first
     Xg = X[:, ec.members]
     OX = O @ Xg
     val = np.trace(Xg.conj().T @ OX).real
@@ -147,7 +150,7 @@ def certify_quantum_numbers(ec: EigenspaceCertificate, X: np.ndarray, S, name: s
     """Certified multiset of S-eigenvalues on the cluster (requires exact [A,S]=0). Data in a narrower format than
     binary64 are converted exactly first (precision.py)."""
     X = binary64(X, "eigenvectors", stream=True)
-    S = binary64(S if sp.issparse(S) else np.asarray(S), name)
+    S = summed(binary64(S if sp.issparse(S) else np.asarray(S), name), name)   # repeated entries summed first
     Xg = X[:, ec.members]
     M = Xg.conj().T @ (S @ Xg)
     M = (M + M.conj().T) / 2
@@ -192,6 +195,7 @@ def rotation_spread(X: np.ndarray, members: List[int], O, trials: int = 64, seed
     """How much per-vector expectation values vary under random rotations inside the
     cluster (all equally valid eigenbases). Diagnostic, not a certified quantity."""
     rng = np.random.default_rng(seed)
+    O = summed(binary64(O if sp.issparse(O) else np.asarray(O), "observable"), "observable")   # as the bounds see O
     Xg = X[:, members]
     g = Xg.shape[1]
     vals = []

@@ -61,6 +61,7 @@ def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None
     Needs QuSpin only in the sense that `basis` and `H` are QuSpin objects: when the package is absent the
     call raises ImportError with the name of the extra to install (QUSPIN_HINT) instead of failing inside.
     """
+    from .io.formats import _as_csr
     if not _looks_like_quspin(basis):
         require_quspin()
         if not hasattr(basis, "Ns"):
@@ -69,7 +70,9 @@ def claim_from_quspin(H, basis, static: Sequence, eigenvalues, eigenvectors=None
     if sp.issparse(H) and is_narrow_float(H.dtype):
         Hq = H                    # as given: certify() converts it exactly before it sums repeated entries
     else:
-        Hq = H.tocsr() if hasattr(H, "tocsr") else sp.csr_matrix(H)
+        # a scipy matrix: repeated entries summed as everywhere else (precision.summed; tocsr would add them in stored
+        # order and in the type of H); QuSpin's own objects convert themselves
+        Hq = (_as_csr(H) if sp.issparse(H) else H.tocsr() if hasattr(H, "tocsr") else sp.csr_matrix(H))
     producer = {"name": "QuSpin", "basis": type(basis).__name__, "Ns": int(basis.Ns)}
     try:
         import quspin

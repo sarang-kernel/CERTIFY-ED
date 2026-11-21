@@ -38,7 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, ULP_MIN, _GUARD, abs_up, gamma, norm2_upper, norm2_lower, up
-from .precision import binary64, require_binary64
+from .precision import binary64, require_binary64, summed
 
 DEFAULT_MAX_SLICES = 8
 MAX_EXPONENT = 480          # |entries| < 2^480: products of two slices and their sums stay far below 2^1024
@@ -201,7 +201,7 @@ def split_rows(H, beta: int, max_slices: int = DEFAULT_MAX_SLICES) -> RowSplit:
     """Split a stored matrix by rows (sparse: on its stored entries; dense: on all entries)."""
     require_binary64(H, "ozaki.split_rows")                                   # fail closed (precision.py)
     if sp.issparse(H):
-        H = sp.csr_matrix(H)
+        H = sp.csr_matrix(summed(H, "ozaki.split_rows"))   # a canonical copy when needed: the caller's arrays stay
         H.sort_indices()
         cplx = np.iscomplexobj(H.data)
         dr = np.ascontiguousarray(H.data.real, dtype=float)
@@ -461,7 +461,7 @@ def ozaki_residual(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES, block_cols: O
     t0 = time.time()
     mu = np.asarray(mu, dtype=float).ravel()
     X = binary64(np.asarray(X), "eigenvectors")    # the slices are error-free for binary64 data only (precision.py)
-    H = binary64(H, "operator")
+    H = summed(binary64(H, "operator"), "operator")
     if X.ndim == 1:
         X = X[:, None]
     n, k = X.shape
@@ -566,7 +566,7 @@ def residual_report(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES):
     term ||X^H R|| uses ||Rc - R|| <= ||E|| exactly as with the default report."""
     from .enclosure import OperatorAdapter, ResidualReport
     X = binary64(np.asarray(X), "eigenvectors")    # exact (precision.py)
-    H = binary64(H, "operator")
+    H = summed(binary64(H, "operator"), "operator")
     if X.ndim == 1:
         X = X[:, None]
     mu = np.asarray(mu, dtype=float).ravel()

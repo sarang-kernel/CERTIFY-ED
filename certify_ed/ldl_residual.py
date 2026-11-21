@@ -38,7 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, gamma, gamma_dot, up, _GUARD, check_guard_range, abs_up, modulus_up
-from .precision import require_binary64
+from .precision import require_binary64, summed
 
 DEFAULT_BLOCK_MB = 64.0      # memory for the sparse temporaries of one row block (F block, |E| block, S block)
 _MIN_BLOCK_ROWS = 64
@@ -107,7 +107,7 @@ def sparse_ldl_residual_bound(L: sp.spmatrix, D: np.ndarray, S: sp.spmatrix, per
     if not (np.all(np.isfinite(L.data)) and np.all(np.isfinite(Dr))):
         raise FloatingPointError("non-finite entries in the stored factors")
     ip = np.argsort(np.asarray(perm))
-    S = sp.csr_matrix(S)
+    S = sp.csr_matrix(summed(S, "ldl_residual: operator"))     # repeated entries summed (precision.summed)
     SP = S[ip][:, ip].tocsr()             # exact re-indexing
     DLt = (sp.diags(Dr) @ L.conj().T).tocsc()    # fl(D L^H): one rounding per entry
     # rounding of the product, by rows: gamma_{c_i+1} (|L| |D| |L|^T 1)_i  (one sparse matvec)

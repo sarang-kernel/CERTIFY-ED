@@ -146,6 +146,7 @@ certify_ed/ozaki.py	ozaki_residual	np.abs(HS.rem_imag)	real data only
 certify_ed/ozaki.py	ozaki_residual	np.abs(MU.remainder[:, cols])	real data only
 certify_ed/precision.py	_check_python_ints	np.abs(arr)	not part of a bound (integer exactness check)
 certify_ed/precision.py	_check_python_ints	abs(v)	not part of a bound (integer exactness check)
+certify_ed/precision.py	_group_sums	np.abs(v.astype(np.float64))	not part of a bound (overflow guard of an integer sum)
 certify_ed/report.py	round_decimal	abs(q.adjusted())	real data only
 certify_ed/report.py	_Numbers.add	abs(float(value))	real data only
 certify_ed/rigorous.py	arb_residual_radii	abs(acc)	complex data entering a rigorous bound (Arb ball arithmetic, rigorous)
@@ -162,3 +163,7 @@ certify_ed/variational.py	certify_variational	np.abs(D)	not part of a bound
 certify_ed/variational.py	certify_variational	abs(th_lo)	real data only
 certify_ed/variational.py	certify_variational	abs(th_hi)	real data only
 certify_ed/variational.py	_temple	abs(lower)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(rest)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(d)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(e)	real data only
+certify_ed/precision.py	_exact_real_sums	np.abs(h)	real data only

@@ -48,11 +48,11 @@ class Enclosure:
 
 def _prepare(H, symmetrize):
     import scipy.sparse as sp
-    from ..precision import binary64
+    from ..precision import binary64, summed
     if symmetrize:
         # the Hermitian part of the stored matrix: formed in binary64 (exact conversion first, precision.py), as the
         # enclosure counts binary64 arithmetic
-        H = binary64(H if sp.issparse(H) else np.asarray(H), "H")
+        H = summed(binary64(H if sp.issparse(H) else np.asarray(H), "H"), "H")
         H = 0.5 * (H + H.conj().T)
     return H
 
