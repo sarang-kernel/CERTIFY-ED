@@ -47,15 +47,17 @@ holds nan for a nan or for both infinities and the infinity otherwise, whatever 
 
 Cost: a CSR, CSC, BSR or COO matrix that scipy does not flag canonical (unsorted or repeated indices; any product scipy
 forms; a COO built from arrays) is copied, sorted and checked for repeated positions on each call; `summed` trusts
-scipy's canonical flag. Positions with
-two entries take one addition, positions with three or more a few vectorized TwoSum passes and `math.fsum` only near a
-rounding boundary. Measured on the Windows reference host: a CSR with 4.0e6 stored entries, every entry stored as two
-halves, 0.43 s against 0.07 s for scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6
-positions, 0.21 s and 2.3 s against 0.03 s and 0.18 s for scipy's `tocsr`. `fp.max_nnz_per_row` still counts the
-stored entries of a row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper
+scipy's canonical flag. Positions with two entries take one addition, positions with three to 64 a few vectorized TwoSum
+passes, in blocks of groups of one size (so that time and memory grow with the number of stored entries), and
+`math.fsum` near a rounding boundary and for larger groups. Measured on the Windows reference host (best of three, with
+other work running; the ratios carry over, the times do not): a CSR with 4.0e6 stored entries, every entry stored as two
+halves, about 6 times the time of scipy's copy and `sum_duplicates`; a COO with four entries at each of 1e5 and 1e6
+positions, about 5 and 20 times scipy's `tocsr`; 1e5 positions of three entries and one of 2000 or of 1e5 entries, about
+9 times `tocsr`. The peak memory of `summed` is about 4 times the input in each case. `fp.max_nnz_per_row` still counts
+the stored entries of a row (a width at least that of the summed matrix, so the gamma factor it feeds stays an upper
 bound), and `corroborate.run_oracle` reads the matrix as given (an oracle, not a certified quantity);
-`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse
-factorization now sum as well.
+`eigenspace.rotation_spread` (a diagnostic), `eigenspace.commutes_diagonal` and the residual of the sparse factorization
+now sum as well.
 
 Affected: direct calls, with a sparse matrix that has repeated entries, of `commutator_bound`,
 `approximate_symmetry_label`, `audit_sector` and the other sector audits, `compress_operator`, `certify_observable`,
