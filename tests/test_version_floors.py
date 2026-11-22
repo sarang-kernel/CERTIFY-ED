@@ -76,14 +76,17 @@ def test_sparse_array_class_kept():
     assert summed(A).toarray()[0, 1] == 3.0
 
 
-@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.complex128, np.complex64, np.int64])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16, np.complex128, np.complex64, np.int64,
+                                   np.uint64, np.int32, np.int16, np.uint16, np.int8, np.uint8, np.bool_])
 def test_linalg_eigh_matches_scipy_on_a_1x1_matrix(dtype):
     """_linalg.eigh of a 1 x 1 matrix: scipy's values, vectors and dtypes where scipy runs (the drivers ev and evx run
-    on every scipy), and scipy's refusal of a non-finite entry."""
+    on every scipy; boolean, 8- and 16-bit integer and float16 data are computed in single precision there), and
+    scipy's refusal of a non-finite entry."""
     import scipy.linalg as la
 
     from certify_ed._linalg import eigh
-    a = np.array([[3]], dtype=dtype) if dtype is np.int64 else np.array([[-2.5]], dtype=dtype)
+    kind = np.dtype(dtype).kind
+    a = np.array([[True]]) if kind == "b" else np.array([[3]], dtype=dtype) if kind in "iu" else np.array([[-2.5]], dtype=dtype)
     w, X = eigh(a)
     w_ref, X_ref = la.eigh(a, driver="ev")
     assert w.tolist() == w_ref.tolist() and abs(X.tolist()[0][0]) == abs(X_ref.tolist()[0][0]) == 1
@@ -91,7 +94,7 @@ def test_linalg_eigh_matches_scipy_on_a_1x1_matrix(dtype):
     assert eigh(a, eigvals_only=True, subset_by_index=[0, 0]).tolist() == w_ref.tolist()
     with pytest.raises(ValueError):
         eigh(a, subset_by_index=[0, 1])
-    if dtype is not np.int64:
+    if kind in "fc":
         with pytest.raises(ValueError):
             eigh(np.array([[np.nan]], dtype=dtype))
 
@@ -122,9 +125,72 @@ def test_no_1x1_standard_eigh_reaches_scipy(monkeypatch):
         la.eigh(np.array([[1.0]]))
 
 
+def _scipy_eigh_calls(tree):
+    """(name, lineno, generalized) of every call of scipy.linalg.eigh or eigvalsh in a module: through any name the
+    module binds to scipy.linalg (import scipy.linalg as X, from scipy import linalg [as X], or the dotted
+    scipy.linalg after import scipy...), and through the names it binds to the functions themselves (from scipy.linalg
+    import eigh [as Y]). Imports anywhere in the module count, also those inside functions."""
+    import ast
+    mods, funcs, dotted = set(), {}, False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name == "scipy.linalg" and a.asname:
+                    mods.add(a.asname)
+                elif a.name in ("scipy", "scipy.linalg") and not a.asname:
+                    dotted = True
+        elif isinstance(node, ast.ImportFrom) and node.level == 0:
+            for a in node.names:
+                if node.module == "scipy" and a.name == "linalg":
+                    mods.add(a.asname or "linalg")
+                elif node.module == "scipy.linalg" and a.name in ("eigh", "eigvalsh"):
+                    funcs[a.asname or a.name] = a.name
+    out = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        f, name = node.func, None
+        if isinstance(f, ast.Attribute) and f.attr in ("eigh", "eigvalsh"):
+            v = f.value
+            if isinstance(v, ast.Name) and v.id in mods:
+                name = f"{v.id}.{f.attr}"
+            elif (dotted and isinstance(v, ast.Attribute) and v.attr == "linalg" and isinstance(v.value, ast.Name)
+                  and v.value.id == "scipy"):
+                name = f"scipy.linalg.{f.attr}"
+        elif isinstance(f, ast.Name) and f.id in funcs:
+            name = f.id
+        if name:
+            generalized = len(node.args) > 1 or any(k.arg == "b" for k in node.keywords)
+            out.append((name, node.lineno, generalized))
+    return out
+
+
+def test_the_audit_resolves_import_aliases():
+    """The audit below sees a call through every binding form of scipy.linalg and of its functions, and not a call of
+    numpy.linalg.eigh (which handles a 1 x 1 matrix at every supported version)."""
+    import ast
+    src = """
+import scipy.linalg as sla
+import scipy
+import numpy as np
+from scipy import linalg as L2
+from scipy.linalg import eigh as E, eigvalsh
+from numpy import linalg
+def f(a, b):
+    import scipy.linalg as inner
+    sla.eigh(a); scipy.linalg.eigvalsh(a); L2.eigh(a); E(a); eigvalsh(a); inner.eigh(a, b)
+    np.linalg.eigh(a); linalg.eigh(a)
+"""
+    got = sorted((n, g) for n, _, g in _scipy_eigh_calls(ast.parse(src)))
+    assert got == sorted([("sla.eigh", False), ("scipy.linalg.eigvalsh", False), ("L2.eigh", False), ("E", False),
+                          ("eigvalsh", False), ("inner.eigh", True)]), got
+
+
 def test_every_standard_eigh_call_goes_through_linalg():
-    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem) appears only in _linalg.py,
-    or in an application whose matrix has a fixed dimension above 1 (listed here with that dimension)."""
+    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem), through any import alias,
+    appears only in _linalg.py, or in an application whose matrix has a fixed dimension above 1 (listed here with that
+    dimension). Generalized problems (a second matrix: generalized.py and apps/aklt) are left to scipy, which solves a
+    1 x 1 pencil at the floors (test_a_1x1_generalized_problem_runs)."""
     import ast
     import os
 
@@ -138,18 +204,24 @@ def test_every_standard_eigh_call_goes_through_linalg():
                 continue
             path = os.path.join(dirpath, f)
             rel = os.path.relpath(path, root).replace(os.sep, "/")
-            tree = ast.parse(open(path, encoding="utf-8").read())
-            for node in ast.walk(tree):
-                if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-                        and node.func.attr in ("eigh", "eigvalsh") and isinstance(node.func.value, ast.Name)
-                        and node.func.value.id in ("la", "_la", "scipy_linalg", "linalg")):
-                    continue
-                generalized = len(node.args) > 1 or any(k.arg == "b" for k in node.keywords)
-                if not generalized:
-                    found.setdefault((rel, f"{node.func.value.id}.{node.func.attr}"), []).append(node.lineno)
+            for name, line, gen in _scipy_eigh_calls(ast.parse(open(path, encoding="utf-8").read())):
+                if not gen:
+                    found.setdefault((rel, name), []).append(line)
     stray = {k: v for k, v in found.items() if k[0] != "_linalg.py" and k not in allowed}
     assert not stray, stray
     assert set(allowed) <= set(found), "an allowlisted call is gone: remove it from the list"
+
+
+@pytest.mark.parametrize("driver", [None, "gv", "gvd", "gvx"])
+def test_a_1x1_generalized_problem_runs(driver):
+    """scipy refuses a 1 x 1 standard problem with the drivers evr and evd at 1.8 and 1.10, but solves a 1 x 1 pencil
+    with every driver (run at scipy 1.8.1, 1.10.1 and the current version), so the generalized calls of the package
+    (generalized.py, apps/aklt) are left to scipy."""
+    import scipy.linalg as la
+    kw = {} if driver is None else {"driver": driver}
+    assert la.eigh(np.array([[2.0]]), np.array([[4.0]]), eigvals_only=True, **kw).tolist() == [0.5]
+    w, v = la.eigh(np.array([[2.0]]), np.array([[4.0]]), **kw)
+    assert w.tolist() == [0.5] and abs(abs(float(v[0, 0])) - 0.5) < 1e-15
 
 
 @pytest.mark.parametrize("reps", [2, 3, 70])
@@ -175,3 +247,13 @@ def test_corroborate_does_not_agree_on_a_nan_matrix(oracles):
     for A in (np.array([[np.nan]]), np.array([[1.0, np.nan], [np.nan, 2.0]])):
         cor = corroborate(A, np.array([1.0]), oracles=list(oracles))
         assert cor["status"] == "INCONCLUSIVE", cor
+
+
+def test_corroborate_keeps_a_nan_difference_after_a_finite_one(monkeypatch):
+    """The worst difference is a nan-sticky maximum: an oracle that returns nan, then one that agrees, gives an
+    INCONCLUSIVE record whose summary names the nan (the per-oracle condition alone kept the status right before)."""
+    import certify_ed.corroborate as cm
+    outs = iter([np.array([np.nan]), np.array([1.0])])
+    monkeypatch.setattr(cm, "run_oracle", lambda name, A, k=None: next(outs))
+    cor = cm.corroborate(np.array([[1.0]]), np.array([1.0]), oracles=["lapack_evr", "jacobi"])
+    assert cor["status"] == "INCONCLUSIVE" and "nan" in cor["summary"], cor

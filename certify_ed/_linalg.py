@@ -11,15 +11,16 @@ from typing import Optional, Sequence
 
 import numpy as np
 import scipy.linalg as la
+from scipy.linalg.blas import find_best_blas_type
 
 __all__ = ["eigh"]
 
 
 def _lapack_dtype(a: np.ndarray) -> np.dtype:
-    """The dtype scipy's LAPACK wrappers compute in for a: single precision kept, everything else double."""
-    if a.dtype.kind == "c":
-        return np.dtype(np.complex64 if a.dtype == np.complex64 else np.complex128)
-    return np.dtype(np.float32 if a.dtype in (np.float16, np.float32) else np.float64)
+    """The dtype scipy's LAPACK wrappers compute in for a, by scipy's own rule (find_best_blas_type, which
+    get_lapack_funcs applies): single precision for boolean, 8- and 16-bit integer, float16 and float32 data, complex64
+    for complex64, double precision (real or complex) otherwise."""
+    return np.dtype(find_best_blas_type((a,))[1])
 
 
 def eigh(a, eigvals_only: bool = False, driver: Optional[str] = None,
@@ -28,7 +29,7 @@ def eigh(a, eigvals_only: bool = False, driver: Optional[str] = None,
 
     The eigenvalue of a 1 x 1 Hermitian matrix is the real part of its entry and its eigenvector is [1]: what LAPACK
     returns where it runs. As in scipy, a non-finite entry is refused (check_finite) and the dtypes are those of the
-    LAPACK routine (single precision kept, integers in double)."""
+    LAPACK routine scipy would call (_lapack_dtype)."""
     a = np.asarray(a)
     if a.shape != (1, 1):
         kw = {} if driver is None else {"driver": driver}

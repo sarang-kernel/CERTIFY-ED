@@ -132,7 +132,8 @@ def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_
                                  "n_compared": int(w.size)}
             if o.startswith("lapack_") and A.shape == (1, 1):
                 out["oracles"][o]["note"] = "1 x 1: the eigenvalue is the entry, no LAPACK call (_linalg.eigh)"
-            worst = d if not d <= worst else worst      # a nan difference is kept (max() would drop it)
+            if worst == worst and not d <= worst:       # nan-sticky maximum: a nan difference is kept once seen
+                worst = d
         except Exception as e:  # pragma: no cover - reported, not raised
             out["oracles"][o] = {"error": f"{type(e).__name__}: {e}"}
     tol = max(1e-8 * max(scale, 1.0), float(enc.radius.max()) * 10 if enc is not None else 0.0)

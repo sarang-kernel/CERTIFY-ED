@@ -207,11 +207,10 @@ def test_sector_audits_pass_nothing_on_a_non_finite_defect(J, certified):
     assert (s1["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
     assert s2["status"] == ("CERTIFIED" if certified else "INCONCLUSIVE")
     assert (s2["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
-    # cuts between levels (w[3] - w[2] is 0 here, the levels are -2|J|, -|J| (3), 0 (7), |J| (5)): half a gap above
-    # the singlet and half a gap above the triplet, not on the triplet itself
-    cuts = ([float((w[2] + w[3]) / 2)] if w[3] - w[2] > 1e-9 * abs(J) else
-            [float(w[0] + abs(J) / 2), float(w[0] + 1.5 * abs(J))])
-    for E_cut, K in zip(cuts, (1, 4)):
+    # cuts between levels (the levels of the 4-site ring are -2|J|, -|J| (3), 0 (7), |J| (5)): half a gap above the
+    # singlet (K = 1) and half a gap above the triplet (K = 4), not on the triplet itself
+    assert w[3] - w[1] <= 1e-9 * abs(J) < w[1] - w[0]
+    for E_cut, K in ((float(w[0] + abs(J) / 2), 1), (float(w[0] + 1.5 * abs(J)), 4)):
         _, secs = _sz_sectors(spec, E_cut)
         res = certify_low_energy(spec, secs, E_cut)
         if certified:
