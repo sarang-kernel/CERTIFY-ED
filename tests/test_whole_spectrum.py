@@ -148,29 +148,38 @@ def test_enclosure_radii_bit_identical_complex_operator():
 
 def test_recorded_pre_change_radii_dim_252():
     """The radii dev/3.2 f080586 produced for a fixed claim (vectors stored as float32, hence exactly the same
-    binary64 inputs everywhere; eigenvalues dyadic). Exact equality holds on the machine that recorded them
-    (OpenBLAS 0.3.31 Haswell kernels, numpy 2.4.4); another BLAS may round the 2-norms differently in the
-    last bit, so the hard assertion is at 1e-12 and exact equality is reported as a warning when it fails."""
+    binary64 inputs everywhere; eigenvalues dyadic). Two pins: on every stack the package equals the frozen pre-change
+    module bit for bit (both run here, on the same BLAS); and both stay within 1e-12 relative plus 1e-16 absolute of the
+    recording, which another BLAS may round differently in the last bit. Exact equality with the recording, which holds
+    on the machine that recorded it (OpenBLAS 0.3.31 Haswell kernels, numpy 2.4.4), is reported as a warning."""
     spec, st, H, w, V = _block(10)
+    # recorded values: single radii, existence radii and residual bounds between 8.8e-15 and 8.9e-8. Another BLAS or
+    # sparse kernel (numpy 1.22; numpy 2.5 with another OpenBLAS) rounds an entry of H x differently, and the computed
+    # residual norms then differ from the recording by up to 2.9e-17 on the stacks tried; the absolute term 1e-16 is
+    # about three times that, and only the comparison with the recording carries it
+    atol = 1e-16
     z = np.load(os.path.join(FIXTURES, "whole_spectrum_252_claim.npz"))
     mu, X = z["eigenvalues"], z["eigenvectors32"].astype(np.float64)
     for storage, A in (("sparse", H), ("dense", H.toarray())):
         exp = np.load(os.path.join(FIXTURES, f"whole_spectrum_252_{storage}.npz"))
         e = enclose(OperatorAdapter(A), mu, X)
+        e_ref = ref.enclose(ref.OperatorAdapter(A), mu, X)
         assert np.array_equal(e.group_of, exp["group_of"]) and bool(exp["all_distinct"]) == e.all_distinct
         single = np.array([e.groups[gi].size for gi in e.group_of]) == 1
-        for key, got in (("radius", e.radius[single]), ("existence_radius", e.existence_radius),
-                         ("residual_bound", e.residual.upper), ("residual_computed", e.residual.computed)):
+        for key, got, frozen in (("radius", e.radius[single], e_ref.radius[single]),
+                                 ("existence_radius", e.existence_radius, e_ref.existence_radius),
+                                 ("residual_bound", e.residual.upper, e_ref.residual.upper),
+                                 ("residual_computed", e.residual.computed, e_ref.residual.computed)):
+            assert np.array_equal(got, frozen), (storage, key)          # same stack: bit for bit
             want = exp[key][single] if key == "radius" else exp[key]
-            np.testing.assert_allclose(got, want, rtol=1e-12, atol=0)
+            np.testing.assert_allclose(got, want, rtol=1e-12, atol=atol)
             if not np.array_equal(got, want):
                 warnings.warn(f"{storage} {key}: not bit-identical to the recorded radii (different BLAS kernels?)")
         # cluster radii: the recorded eps against the package's min(rho, eps*) (see _radius_bracket)
-        assert np.all(e.radius[~single] <= exp["radius"][~single] * (1 + 1e-12))
-        assert np.all(e.radius[~single] >= exp["radius"][~single] / _PHI * (1 - 1e-12))
-        # the frozen module reproduces the recording exactly on this machine's BLAS, or the recording is stale
-        e_ref = ref.enclose(ref.OperatorAdapter(A), mu, X)
-        np.testing.assert_allclose(e_ref.radius, exp["radius"], rtol=1e-12, atol=0)
+        assert np.all(e.radius[~single] <= exp["radius"][~single] * (1 + 1e-12) + atol)
+        assert np.all(e.radius[~single] >= exp["radius"][~single] / _PHI * (1 - 1e-12) - atol)
+        # the frozen module reproduces the recording on this machine's BLAS, or the recording is stale
+        np.testing.assert_allclose(e_ref.radius, exp["radius"], rtol=1e-12, atol=atol)
 
 
 def test_exact_sum_equals_fsum():

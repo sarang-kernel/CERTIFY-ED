@@ -19,6 +19,7 @@ from certify_ed.eigenspace import EigenspaceCertificate, certify_observable
 from certify_ed.inertia import inertia_dense, inertia_sparse
 from certify_ed.moments import certified_moments
 from certify_ed.variational import certify_variational
+from conftest import eigh_dense
 
 BIG = 1.7e308
 NMAX = float(np.nextafter(np.finfo(float).max, 0))
@@ -170,8 +171,6 @@ def test_inertia_sparse_gives_no_count_on_a_non_finite_backward_error(monkeypatc
 
 
 def _sz_sectors(spec, E_cut):
-    import scipy.linalg as la
-
     from certify_ed.compose import SectorResult
     from certify_ed.construct import full_state_set
     H = ce.build_bitwise(spec)
@@ -182,7 +181,7 @@ def _sz_sectors(spec, E_cut):
         idx, _found = full.index_of(st.states_in_order())
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
     return H, secs
@@ -208,10 +207,13 @@ def test_sector_audits_pass_nothing_on_a_non_finite_defect(J, certified):
     assert (s1["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
     assert s2["status"] == ("CERTIFIED" if certified else "INCONCLUSIVE")
     assert (s2["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
-    E_cut = float((w[2] + w[3]) / 2) if w[3] - w[2] > 1e-9 * abs(J) else float(w[0] + abs(J))
-    _, secs = _sz_sectors(spec, E_cut)
-    res = certify_low_energy(spec, secs, E_cut)
-    if certified:
-        assert res["status"] == "CERTIFIED", res["summary"]
-    else:
-        assert res["status"] == "INCONCLUSIVE" and "not finite" in res["summary"]
+    # cuts between levels (the levels of the 4-site ring are -2|J|, -|J| (3), 0 (7), |J| (5)): half a gap above the
+    # singlet (K = 1) and half a gap above the triplet (K = 4), not on the triplet itself
+    assert w[3] - w[1] <= 1e-9 * abs(J) < w[1] - w[0]
+    for E_cut, K in ((float(w[0] + abs(J) / 2), 1), (float(w[0] + 1.5 * abs(J)), 4)):
+        _, secs = _sz_sectors(spec, E_cut)
+        res = certify_low_energy(spec, secs, E_cut)
+        if certified:
+            assert res["status"] == "CERTIFIED" and res["K"] == K, res["summary"]
+        else:
+            assert res["status"] == "INCONCLUSIVE" and "not finite" in res["summary"]

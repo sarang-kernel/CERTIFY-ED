@@ -747,8 +747,8 @@ def _estimate_next(A, k, seed=12345):
             return None
         if not sp.issparse(A) or n <= 1500:
             M = A.toarray() if sp.issparse(A) else np.asarray(A)
-            import scipy.linalg as _la
-            return float(_la.eigvalsh(M, subset_by_index=[k, k])[0])
+            from ._linalg import eigh        # the 1 x 1 case from its entry (scipy 1.8 to 1.10 refuse it)
+            return float(eigh(M, eigvals_only=True, subset_by_index=[k, k])[0])
         import scipy.sparse.linalg as _spla
         v0 = np.random.default_rng(seed).standard_normal(n)
         w = _spla.eigsh(A, k=min(k + 6, n - 2), which="SA", return_eigenvectors=False, tol=1e-10, v0=v0)

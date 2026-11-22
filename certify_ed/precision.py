@@ -352,6 +352,15 @@ _GROUP_VEC_CAP = 4096           # groups of more values always take math.fsum
 _FSUM_ROWS = 1 << 16            # groups per slice of the math.fsum path
 
 
+def _is_sparse_array(a) -> bool:
+    """A scipy sparse array rather than a sparse matrix: an instance of scipy.sparse.sparray (scipy >= 1.11); before,
+    the array classes derive from the matrix classes through the private mixin scipy.sparse._arrays._sparray."""
+    cls = getattr(sp, "sparray", None)
+    if cls is not None:
+        return isinstance(a, cls)
+    return any(c.__name__ == "_sparray" for c in type(a).__mro__)
+
+
 def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> np.ndarray:
     """The correctly rounded exact sum of each group v[starts[k] : starts[k] + counts[k]] of real binary64 values.
     Groups of one or two values: one addition (exact or correctly rounded, and commutative). Groups of three to
@@ -413,6 +422,13 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
         rej = grp[~ok]
         if rej.size:
             s[rej] = _fsum_groups(v, starts[rej], kmax)
+    zero = np.flatnonzero(s == 0.0)
+    if zero.size:
+        # the sign of a zero sum as IEEE addition gives it in every order: -0.0 when every part is -0.0, else +0.0.
+        # np.add.reduceat (whose result here differs between numpy versions), the TwoSum passes and math.fsum
+        # disagree on it, and a complex entry keeps the sign of a zero real part in matrix_sha256
+        allneg = np.logical_and.reduceat((v == 0.0) & np.signbit(v), starts)     # one byte per value
+        s[zero] = np.where(allneg[zero], -0.0, 0.0)
     return s
 
 
@@ -496,7 +512,7 @@ def summed(a, what: str = "matrix"):
         sums = _group_sums(v, starts, counts, what, v.dtype)
         if sums.dtype.kind in "iu":
             _exact_ints(sums, what)
-        cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
+        cls = sp.coo_array if _is_sparse_array(a) else sp.coo_matrix
         out = cls((sums, (ks[starts].astype(a.coords[0].dtype),)), shape=a.shape)
         out.sum_duplicates()
         return out
@@ -515,7 +531,7 @@ def summed(a, what: str = "matrix"):
     sums = _group_sums(v, starts, counts, what, v.dtype)
     if sums.dtype.kind in "iu":
         _exact_ints(sums, what)
-    cls = sp.coo_array if isinstance(a, getattr(sp, "sparray", ())) else sp.coo_matrix
+    cls = sp.coo_array if _is_sparse_array(a) else sp.coo_matrix
     out = cls((sums, (rs[starts], cs_[starts])), shape=a.shape)
     out.has_canonical_format = True                     # sorted row-major, no repeated position
     if fmt == "bsr":

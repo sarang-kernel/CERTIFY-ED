@@ -221,6 +221,7 @@ def test_builder_shift_positive_for_nonempty_spec():
 
 
 # ------------------------------------------------ run 3 (e6_mutation_20261017_112726) survivors
+@needs_flint
 def test_check_semidefinite_lower_bound_reports_lambda_min_only_when_definite():
     from certify_ed.checker import check_semidefinite_lower_bound
     rng = np.random.default_rng(9)

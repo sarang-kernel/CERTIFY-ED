@@ -264,6 +264,64 @@ of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_V
 `NONFINITE_BOUND` for an overflowing squared norm. Tests: `tests/test_nonfinite_followups.py` (each case fails at the
 base). The computational source hash changes.
 
+### Declared version floors
+
+- **Scope.** The suite had only been run on Python 3.11 with numpy 2.4 and scipy 1.17. Run at the declared floors
+  (Python 3.9.23, numpy 1.22.4, scipy 1.8.1 with OpenBLAS), it showed three defects of the package, fixed here. Statuses
+  and bounds do not change; the computational source hash changes.
+- **1 x 1 standard problems.** scipy 1.8.1 and 1.10.1 refuse a 1 x 1 matrix in `scipy.linalg.eigh` and `eigvalsh` with
+  the drivers evr (the default) and evd, real and complex (the drivers ev and evx run); the dense corroboration oracles,
+  the enclosure of a one-dimensional block in `spectrum`, the default solver of `certified_sweep` (a sector of dimension
+  1), the next-eigenvalue estimate of `certify` and the lower bound of `apps.aklt.graph.lambda_min_lower` met it. These
+  calls now go through `certify_ed._linalg.eigh`, which takes the eigenvalue of a 1 x 1 Hermitian matrix from its entry,
+  in the dtype scipy's LAPACK wrappers would compute in (scipy's own rule, `scipy.linalg.blas.find_best_blas_type`:
+  single precision for boolean, 8- and 16-bit integer, float16 and float32 data) and with scipy's refusal of a
+  non-finite entry; an oracle record of a 1 x 1 matrix says so (`note`, listed in `docs/schema.md`). Generalized
+  problems are left to scipy: it solves a 1 x 1 pencil with every driver at scipy 1.8.1 and 1.10.1.
+- **Corroboration of a nan matrix.** `corroborate` no longer drops a nan difference: `max()` kept the previous worst
+  value, so a matrix with a nan entry came out CORROBORATED with the Jacobi oracle alone (before this branch) or,
+  through the 1 x 1 shortcut, with the default oracles; such a matrix is now INCONCLUSIVE, and the worst difference it
+  reports is a nan-sticky maximum (a later finite difference does not replace a nan).
+- **Sparse arrays before scipy 1.11.** `scipy.sparse.sparray` exists from scipy 1.11 only, so `precision.summed`
+  returned a `coo_matrix` for a `coo_array` before it (and `fp.abs_up` with it); the sparse arrays of scipy 1.8 to 1.10
+  are now recognised by their mixin (`precision._is_sparse_array`; the class layout checked on 1.8.1 and 1.10.1).
+- **Signs of zero sums.** The sign of a zero sum of repeated entries depended on the route and on the numpy version
+  (`np.add.reduceat` gives +0.0 for two negative zeros under numpy 1.22 and -0.0 under numpy 2; the vectorized passes
+  and `math.fsum` gave +0.0 for longer groups everywhere); it is now -0.0 exactly when every part is -0.0, as IEEE
+  addition gives in any order. A complex entry keeps the sign of its real part in `matrix_sha256`, so the hash of such a
+  matrix no longer depends on the numpy version or the route; real zero entries are dropped before hashing, as before.
+  This changes the hash at the current versions too: `matrix_sha256`, and the operator hashes of certificates, of a
+  complex matrix with a position whose three or more repeated entries all have the real (or imaginary) part -0.0 differ
+  from main's (two repeats already gave -0.0 under numpy 2).
+- **Tests of the floors.** `tests/test_version_floors.py` (41 cases). Of the 14 of its first version, 11 fail at main
+  under the floor versions (the three that pass there are the two cases of the driver ev and the sum of one negative
+  zero), and the 4 on signed zeros also under the current ones; the hash test fails at main for three and more repeats;
+  an audit requires every standard `eigh` or `eigvalsh` call of the package, through any import alias, to go through
+  `_linalg`, and a tripwire runs the callers with scipy refusing every 1 x 1 matrix.
+- **Portability of the suite.** The tests that need python-flint are marked `needs_flint` (they failed with
+  ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the precision registry is used only with h5py,
+  the five 40-digit reference tests of `tests/test_entanglement.py` are marked `needs_mpmath` (the module did not import
+  without mpmath, which no extra lists), the figure scripts' tests and one test of `make_numbers.py` are skipped without
+  matplotlib (the `plots` extra), and `tests/conftest.py` gains `eigh_dense` (`_linalg.eigh`, for the sector tests).
+  Three tests put their energy cut between two levels instead of on a degenerate one (where the rounding of the computed
+  levels decided the verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut):
+  above the triplet in the 4-site tests (`tests/test_nonfinite_bounds.py` also above the singlet) and above the six-fold
+  level of the 8-site chain in `tests/test_parallel.py`. The recorded radii of `tests/test_whole_spectrum.py` are pinned
+  twice: the package equals the frozen pre-change module bit for bit on every stack, and both lie within 1e-12 relative
+  plus 1e-16 absolute of the recording (other BLAS and sparse kernels differ from it by up to 2.9e-17; exact equality is
+  still reported). The separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed
+  intervals are apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B
+  of `tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
+  `certify_generalized` refuses under some BLAS), the same file passes int32 exponents to `np.ldexp` (numpy < 2 on
+  Windows takes C long exponents), and its tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10
+  (`co_qualname` exists from 3.11; the named scope is still required from 3.11).
+- **Runs.** With these, every test that runs here passes at the floors and with Python 3.10.22, numpy 1.24.4 and scipy
+  1.10.1 (OpenBLAS), except the ones that create a temporary directory: those are not assessed under Python 3.9 and 3.10
+  in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`; open until they are
+  run elsewhere). The suite was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at main no defect
+  of the package, and the test failures were the ones above (the matplotlib skips, the cuts, the recorded radii, the
+  separation test, the test matrix B).
+
 ### Result documents moved under docs/
 
 No code, bound or status changes, and the computational source hash stays the same. The result documents that were at

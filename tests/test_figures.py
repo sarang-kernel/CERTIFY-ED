@@ -6,6 +6,7 @@ script exits with _figcommon.DATA_ABSENT the test is skipped, not failed. A tree
 source distribution) skips the module.
 """
 import glob
+import importlib.util
 import json
 import os
 import subprocess
@@ -19,6 +20,8 @@ FIG_DIR = os.path.join(ROOT, "experiments", "figures")
 pytestmark = pytest.mark.skipif(not os.path.isdir(FIG_DIR), reason="experiments/figures is not in this tree (sdist)")
 SCRIPTS = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(FIG_DIR, "fig_*.py")))
 DATA_ABSENT = 3
+# the scripts draw with matplotlib (the 'plots' extra, not the 'test' one): without it they are skipped, not failed
+needs_matplotlib = pytest.mark.skipif(importlib.util.find_spec("matplotlib") is None, reason="matplotlib not installed")
 
 
 def _run(name, out_dir):
@@ -36,6 +39,7 @@ def test_every_figure_has_a_script_and_index_entry():
         assert f"experiments/figures/{name}.py" in index
 
 
+@needs_matplotlib
 @pytest.mark.parametrize("name", SCRIPTS)
 def test_figure_script_runs(name, tmp_path):
     out = str(tmp_path / "figs")
@@ -74,6 +78,7 @@ def test_index_is_in_sync_with_numbers_files():
     assert r.returncode == 0, r.stderr
 
 
+@needs_matplotlib
 def test_concept_figures_need_no_data(tmp_path):
     env = dict(os.environ)
     env.pop("PYTHONSAFEPATH", None)

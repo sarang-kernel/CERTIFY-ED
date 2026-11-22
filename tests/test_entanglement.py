@@ -6,7 +6,6 @@ interval still contains the entropy of the exact eigenvector; negative controls 
 import math
 from fractions import Fraction
 
-import mpmath as mp
 import numpy as np
 import pytest
 import scipy.linalg as la
@@ -17,7 +16,14 @@ from certify_ed.eigenspace import EigenspaceCertificate
 from certify_ed.localops import LocalSpace
 from certify_ed.spec import ModelSpec
 
-mp.mp.dps = 40
+try:
+    import mpmath as mp
+except ImportError:  # optional: the 40-digit references need mpmath (test extra)
+    mp = None
+else:
+    mp.mp.dps = 40
+
+needs_mpmath = pytest.mark.skipif(mp is None, reason="mpmath not installed")
 
 
 def _s4(cert):
@@ -61,6 +67,7 @@ def heis6():
     return spec, H, w, V
 
 
+@needs_mpmath
 def test_ground_state_entropy_contains_high_precision_reference(heis6):
     spec, H, w, V = heis6
     cert = ce.certify(ce.Claim(w[:1], V[:, :1], operator=H, kind="lowest"), spec,
@@ -94,6 +101,7 @@ def test_single_site_entropy_of_a_singlet_is_one_bit(heis6):
     assert lo <= 1.0 <= hi and hi - lo < 1e-9
 
 
+@needs_mpmath
 def test_cluster_uses_the_normalised_projector(heis6):
     """The first excited level of the 6-site ring is a triplet (g = 3): the record is about tr_B(P)/3."""
     spec, H, w, V = heis6
@@ -120,6 +128,7 @@ def test_cluster_uses_the_normalised_projector(heis6):
     assert lo2 <= float(S_ref) <= hi2
 
 
+@needs_mpmath
 def test_u1_block_claim_and_complex_phase_give_the_same_entropy(heis6):
     spec, H, w, V = heis6
     st = ce.magnetization_state_set(spec, 0)
@@ -187,6 +196,7 @@ def test_planted_rotation_inside_the_range_keeps_the_exact_entropy_inside_the_in
     assert hi >= float(ent.ivl.to_float_down(ent.binary_entropy_upper(Fraction(0.15)))) * 0.99
 
 
+@needs_mpmath
 def test_heisenberg_perturbed_vector_interval_contains_exact_entropy(heis6):
     """Random rotations of the ground state towards an excited state, with S2/S3/S4 certified through a window
     claim; the exact entropy of the eigenvector lies in every interval and the trace-distance bound covers sin(phi)."""
@@ -258,6 +268,7 @@ def test_interval_functions_are_outward_and_monotone():
     assert abs(h - (-(0.25 * math.log(0.25) + 0.75 * math.log(0.75)))) < 1e-15 and h >= -(0.25 * math.log(0.25) + 0.75 * math.log(0.75))
 
 
+@needs_mpmath
 def test_exact_eigenvalue_enclosure_contains_mpmath_eigenvalues():
     rng = np.random.default_rng(11)
     for cplx in (False, True):
