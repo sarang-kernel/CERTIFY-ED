@@ -1,5 +1,5 @@
 {
- "description": "N-11: exact re-check of all 8 symmetry blocks of the S^z = 0 nine-coupling crown at the printed couplings (reading 'appended') and the fixed shift nine_coupling.SHIFT_APPENDED, one process per block, joined by --combine; pre-registered in n11_crown_nine_exact_8_blocks_preregistration.md (outcome (a)).",
+ "description": "N-11: exact re-check of all 8 symmetry blocks of the S^z = 0 nine-coupling crown at the printed couplings (reading 'appended') and the fixed shift nine_coupling.SHIFT_APPENDED, one process per block, joined by --combine; pre-registered in n11_crown_nine_exact_8_blocks_preregistration.md (outcome (a)). The exact lower bound uses no floating-point assumption; it rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, which are marked UNVERIFIED (D-12).",
  "commands": [
   "python experiments/n11_crown_nine.py appended --blocks i --cap-gib 16   (i = 0, ..., 7, one process each)",
   "python experiments/n11_crown_nine.py --combine DIR_0 ... DIR_7"
@@ -306,6 +306,7 @@
   "exact_lower_minus_float_lower": 6.216592800851269e-11,
   "upper_minus_exact_lower": 5.88974535333178e-11,
   "shift_minus_exact_lower": 3.9117724697049e-12,
-  "earlier_partial_run_blocks_agree": "the 3 blocks of n11_crown_nine_exact_partial.json (dimensions 6194, 6066, 6031): same counts (0) and the same slack to the 6 decimals logged there (0.000313, 0.000259, 0.000188 in units of K H_0)"
+  "earlier_partial_run_blocks_agree": "the 3 blocks of n11_crown_nine_exact_partial.json (dimensions 6194, 6066, 6031): same counts (0) and the same slack to the 6 decimals logged there (0.000313, 0.000259, 0.000188 in units of K H_0)",
+  "rests_on": "Lemmas 11 and 12 and Proposition 13 of the exact layer (UNVERIFIED, D-12) for the exact lower bound; the binary64 rounding model for the floating-point lower bound"
  }
 }
