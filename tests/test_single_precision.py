@@ -903,19 +903,30 @@ def test_file_readers_keep_single_precision_coo_files_as_read(tmp_path, dtype):
         assert ce.Certificate.load(out + ".json").arrays["radius"].tobytes() == ref.arrays["radius"].tobytes()
 
 
+_H5 = pytest.param(".h5", marks=pytest.mark.skipif(importlib.util.find_spec("h5py") is None,
+                                                  reason="h5py not installed"))
+
+
+@pytest.mark.parametrize("ext", [".npz", ".mtx", _H5, ".json", ".txt"])
 @pytest.mark.parametrize("dtype", ["float32", "complex64"])
-def test_writers_store_the_binary64_copy_of_a_single_precision_sparse_matrix(tmp_path, dtype):
-    """write_operator, write_bundle and export_npz would sum a single-precision COO matrix's repeated entries in single
-    precision when they convert it to CSR; they write its exact binary64 copy instead, summed in binary64."""
-    from certify_ed.importers import claim_from_bundle, claim_from_npz, export_npz
-    from certify_ed.io.bundle import write_bundle
+def test_write_operator_stores_the_binary64_copy_of_a_single_precision_sparse_matrix(tmp_path, dtype, ext):
+    """write_operator would sum a single-precision COO matrix's repeated entries in single precision when it converts
+    it to CSR; it writes its exact binary64 copy instead, summed in binary64 (HDF5 needs the optional h5py)."""
     from certify_ed.io.formats import read_operator, write_operator
     M = _repeated("coo", dtype)
     want = sp.csr_matrix(_wide(M)).toarray()                   # (0, 0) = 1 + 2^-25
-    have_h5py = importlib.util.find_spec("h5py") is not None       # HDF5 is the optional extra 'hdf5'
-    for ext in [e for e in (".npz", ".mtx", ".h5", ".json", ".txt") if e != ".h5" or have_h5py]:
-        write_operator(str(tmp_path / f"op{ext}"), M)
-        assert np.array_equal(read_operator(str(tmp_path / f"op{ext}")).toarray(), want), ext
+    write_operator(str(tmp_path / f"op{ext}"), M)
+    assert np.array_equal(read_operator(str(tmp_path / f"op{ext}")).toarray(), want), ext
+
+
+@pytest.mark.parametrize("dtype", ["float32", "complex64"])
+def test_writers_store_the_binary64_copy_of_a_single_precision_sparse_matrix(tmp_path, dtype):
+    """write_bundle and export_npz would sum a single-precision COO matrix's repeated entries in single precision when
+    they convert it to CSR; they write its exact binary64 copy instead, summed in binary64 (write_operator: above)."""
+    from certify_ed.importers import claim_from_bundle, claim_from_npz, export_npz
+    from certify_ed.io.bundle import write_bundle
+    M = _repeated("coo", dtype)
+    want = sp.csr_matrix(_wide(M)).toarray()                   # (0, 0) = 1 + 2^-25
     write_bundle(str(tmp_path / "b"), [1.0, 3.0], np.eye(2), operator=M, basis=sp.identity(2, dtype=dtype, format="coo"))
     claim = claim_from_bundle(str(tmp_path / "b"))[0]
     assert np.array_equal(claim.operator.toarray(), want)
