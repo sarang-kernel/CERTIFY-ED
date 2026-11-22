@@ -8,6 +8,7 @@ import scipy.sparse.linalg as spla
 from certify_ed import gpu
 from certify_ed.enclosure import OperatorAdapter, enclose, residuals
 from certify_ed.fp import abs_up, modulus_up
+from certify_ed.precision import summed
 
 
 def _device_or_skip():
@@ -35,6 +36,25 @@ def test_probe_holds():
     assert rec["holds"], rec
 
 
+@pytest.mark.parametrize("cplx", [False, True])
+def test_probe_moduli_are_in_the_stored_order(cplx):
+    """The probe's check of the kernels runs on matrices with unsorted indices; abs_up returns the summed matrix,
+    whose indices are sorted, so the moduli the kernels read must be taken in the stored order (runs without a
+    device: the ordered kernels refuse moduli on another pattern before any device call)."""
+    rng = np.random.default_rng(5)
+    A = gpu._with_empty_rows(gpu._random_csr(rng, 300, 280, 0.05, cplx, False, extreme=True), (0, 10, 11, 299))
+    keep = (A.indptr.copy(), A.indices.copy(), A.data.copy())
+    m = gpu._moduli_in_stored_order(A)
+    assert np.array_equal(m.indptr, A.indptr) and np.array_equal(m.indices, A.indices)
+    assert m.dtype == np.float64 and gpu.same_bits(m.data, modulus_up(A.data))
+    s = abs_up(A)
+    assert not np.array_equal(s.indices, A.indices)
+    assert gpu.same_bits(m.sorted_indices().data, s.data)
+    assert all(np.array_equal(a, b) for a, b in zip(keep, (A.indptr, A.indices, A.data)))
+    with pytest.raises(gpu.GPUUnavailable, match="stored pattern"):
+        gpu._Ordered(None, A, s)
+
+
 @pytest.mark.parametrize("cplx_a", [False, True])
 @pytest.mark.parametrize("sorted_idx", [True, False])
 def test_products_equal_scipy_bit_for_bit(cplx_a, sorted_idx):
@@ -42,10 +62,12 @@ def test_products_equal_scipy_bit_for_bit(cplx_a, sorted_idx):
     rng = np.random.default_rng(7)
     A = gpu._with_empty_rows(gpu._random_csr(rng, 1500, 1400, 0.01, cplx_a, sorted_idx, extreme=True), (3, 4, 1499))
     D = gpu.DeviceCSR(A, spot_rows=1500)
+    Ac = sp.csr_matrix(summed(A, "test"))          # the device holds the summed matrix (indices sorted), as the CPU does
+    assert sorted_idx or not np.array_equal(Ac.indices, A.indices)
     X = rng.standard_normal((1400, 7))
     Xc = X + 1j * rng.standard_normal((1400, 7))
     for Xv in (X, Xc, X[:, 2], Xc[:, 1], np.asfortranarray(X)):
-        assert gpu.same_bits(D.matmul(Xv), np.asarray(A @ Xv))
+        assert gpu.same_bits(D.matmul(Xv), np.asarray(Ac @ Xv))
         aX = modulus_up(Xv)
         assert gpu.same_bits(D.matmul(aX, absolute=True), np.asarray(abs_up(A) @ aX))
     assert D.record["spot_checked_rows"] > 0
