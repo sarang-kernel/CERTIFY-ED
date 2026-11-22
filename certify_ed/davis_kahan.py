@@ -233,15 +233,28 @@ def fidelity_from_certificates(cert_a, cert_b, members_a: Sequence[int] = (0,), 
     return rec
 
 
+def _entry_parts(name, ent):
+    """(S, lattice, allowed_values) of an Options.approximate_symmetries entry, read by index (S = ent[0], then ent[1]
+    and ent[2] as its length allows). An entry that cannot be read so (empty, a string, a bare matrix, None, a number,
+    a mapping without the keys its length asks for) is refused with one message where it is read; certify passes such
+    an entry on as given, so a run whose statements do not read it is not affected."""
+    try:
+        if isinstance(ent, (str, bytes)) or sp.issparse(ent):
+            raise TypeError
+        n = len(ent)
+        S = ent[0]
+        return S, (ent[1] if n > 1 else None), (ent[2] if n > 2 else None)
+    except (TypeError, IndexError, KeyError):
+        raise ValueError(f"options.approximate_symmetries[{name}] must be (S, lattice[, allowed_values])") from None
+
+
 def labels_hook(ec: EigenspaceCertificate, X, requests: Dict[str, object], H_ref, J: Sequence[float]) -> List[str]:
     """S4 hook for Options.approximate_symmetries = {name: (S, lattice_or_None) | (S, lattice, allowed_values)}:
     computes the commutator bound against the reference operator H_ref and writes ec.quantum_numbers[name]. Returns
     the names processed. Without a stored reference matrix the records are NOT-CHECKED."""
     done = []
     for name, spec_ in requests.items():
-        S = spec_[0]
-        lattice = spec_[1] if len(spec_) > 1 else None
-        allowed = spec_[2] if len(spec_) > 2 else None
+        S, lattice, allowed = _entry_parts(name, spec_)
         if H_ref is None or not (sp.issparse(H_ref) or isinstance(H_ref, np.ndarray)):
             ec.quantum_numbers[name] = {"status": "NOT-CHECKED", "reason_code": "NEEDS_MATRIX",
                                         "reason": "the commutator bound ||[H, S]|| needs a stored reference matrix"}

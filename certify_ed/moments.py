@@ -32,7 +32,7 @@ from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .eigenspace import EigenspaceCertificate, certify_observable
 from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, exact_sum, fro_upper, gamma, gamma_dot, inf_norm_upper,
                  max_nnz_per_row, modulus_up, norm2_upper, sub_down, sub_up, underflow_scan, up)
-from .precision import binary64, summed, widening_record
+from .precision import _stored_values, binary64, summed, widening_record
 from .spec import canonical_json
 
 MOMENTS_SCHEMA = "certify-ed/moments/1.0"
@@ -56,7 +56,7 @@ def _as_matrix(M, name, widened: Optional[list] = None):
     # entries that are not finite are named before the Hermiticity test, whose difference would be nan
     if sp.issparse(M):
         M = M.tocsr()
-        if not np.all(np.isfinite(M.data)):
+        if not np.all(np.isfinite(_stored_values(M))):     # the values held, not spare capacity past nnz
             raise ValueError(f"{name} has non-finite entries")
         with np.errstate(over="ignore", invalid="ignore"):
             D = (M - M.conj().T)
@@ -68,8 +68,6 @@ def _as_matrix(M, name, widened: Optional[list] = None):
         if not np.all(np.isfinite(M)):
             raise ValueError(f"{name} has non-finite entries")
         herm = float(np.max(np.abs(M - M.conj().T))) if M.size else 0.0
-    if herm != herm:                       # finite stored values whose repeated entries sum beyond the range
-        raise ValueError(f"{name} has non-finite entries")
     if herm != 0.0:
         raise ValueError(f"{name} is not Hermitian (max |{name} - {name}^H| = {herm:.3e})")
     return M

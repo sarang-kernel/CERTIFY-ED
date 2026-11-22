@@ -576,7 +576,7 @@
               "$ref": "#/$defs/number_or_special"
             }
           },
-          "description": "present when the claimed values were complex with finite nonzero imaginary parts: the statements concern the real parts (as in 3.x); how many were dropped and the largest modulus"
+          "description": "present when the claimed values were complex with finite nonzero imaginary parts: the statements concern the real parts (as in 3.x); how many were dropped and the largest magnitude of one"
         }
       },
       "if": {
@@ -937,6 +937,13 @@
                   },
                   "note": {
                     "type": "string"
+                  },
+                  "non_finite_values": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "indices of non-finite claimed values (then nothing is compared)"
                   }
                 }
               }

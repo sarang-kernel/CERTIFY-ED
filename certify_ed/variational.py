@@ -40,7 +40,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .enclosure import OperatorAdapter, rayleigh_interval
 from .fp import U, ULP_MIN, UNDERFLOW_THRESHOLD, add_up, gamma, modulus_up, norm2_upper, sub_down, underflow_scan, up
-from .precision import binary64, summed, widening_record
+from .precision import _stored_values, binary64, summed, widening_record
 from .spec import ModelSpec, canonical_json
 
 VARIATIONAL_SCHEMA = "certify-ed/variational/1.0"
@@ -288,7 +288,7 @@ def certify_variational(operator=None, psi=None, spec: Optional[ModelSpec] = Non
             A = _private_copies()(A)       # the adapter sums duplicates in place: the caller's matrix stays as given
         if A.ndim != 2 or A.shape[0] != A.shape[1]:
             raise ValueError(f"the operator must be square, got shape {A.shape}")
-        if not np.all(np.isfinite(A.data if sp.issparse(A) else A)):    # named here: the test below would give nan
+        if not np.all(np.isfinite(_stored_values(A) if sp.issparse(A) else A)):   # held values; the test below: nan
             raise ValueError("operator has non-finite entries")
         D = (A - A.conj().T)
         if sp.issparse(D):

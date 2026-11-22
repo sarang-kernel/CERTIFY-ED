@@ -109,7 +109,9 @@ def _statement_evidence_defs() -> Dict[str, dict]:
         "S5.corroboration": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
             "oracles": {"type": "object"}, "independence": {"type": "object"},
-            "tolerance": num, "note": {"type": "string"}}},
+            "tolerance": num, "note": {"type": "string"},
+            "non_finite_values": {"type": "array", "items": {"type": "integer"},
+                                  "description": "indices of non-finite claimed values (then nothing is compared)"}}},
         "S6.exact_recheck": {"type": "object", "properties": {"reason_code": {"$ref": "#/$defs/reason_code"}}},
         "S7.thermodynamics": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
@@ -254,7 +256,7 @@ def _certificate_schema() -> dict:
                         "properties": {"count": {"type": "integer", "minimum": 1}, "max_abs": num},
                         "description": "present when the claimed values were complex with finite nonzero imaginary "
                                        "parts: the statements concern the real parts (as in 3.x); how many were "
-                                       "dropped and the largest modulus"}},
+                                       "dropped and the largest magnitude of one"}},
                 "if": {"properties": {"kind": {"const": "window"}}},
                 "then": {"required": ["window"], "properties": {"window": {"$ref": "#/$defs/interval"}}}},
             "statement": {

@@ -161,3 +161,8 @@ enclosure of method `existence-only` (claimed vectors scaled by about 1e-170 or 
 method enumeration lacks that value. Both were so before the branch, and both are schema decisions
 (`docs/SCHEMA_RFC_PROCESS.md`). Until they are made, such certificates are read with
 `Certificate.load(path, validate_schema=False)`.
+
+The record of dropped finite imaginary parts (`dropped_imaginary_parts`) is made by `certify`, its two wrappers and
+the sector composition. `certify_generalized`, `write_bundle` (a bundle holds the real parts only), the ALPS reader and
+the exact re-checks drop such parts without a record, as in 3.x; a generalized claim record and a bundle manifest field
+would close it.

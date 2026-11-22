@@ -27,7 +27,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from .fp import gamma, modulus_up, up
-from .precision import binary64, summed
+from .precision import binary64, claimed_reals, summed
 from .spec import ModelSpec
 
 
@@ -105,7 +105,9 @@ def matrix_invariants(H) -> Dict[str, float]:
 
 
 def spectrum_invariants(evals) -> Dict[str, float]:
-    e = np.asarray(evals, dtype=float)
+    # claimed values as certify reads them (precision.claimed_reals): a non-finite imaginary part gives nan, so that
+    # compare_invariants decides nothing, instead of the real part alone
+    e = claimed_reals(evals)
     return {"trace": float(e.sum()), "fro2": float(np.sum(e * e)), "err_rel": gamma(e.size + 2)}
 
 

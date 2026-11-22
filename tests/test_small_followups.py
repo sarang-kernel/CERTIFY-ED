@@ -228,12 +228,10 @@ def test_moments_name_entries_that_are_not_finite(sparse):
             certified_moments(D, O, x, 1e-12, 1e-12, K=2, sum_rules=False)
 
 
-def test_other_entry_points_see_a_non_finite_imaginary_part():
+def test_other_entry_points_see_a_non_finite_imaginary_part(tmp_path):
     """certified_sweep with a solver that returns w0 + inf j certifies no S2 at that point; exact_eigenpair_radii gives
     an infinite radius and lists the index; enclose and write_bundle refuse the value and corroborate is INCONCLUSIVE
     (before: all of them used w0)."""
-    import tempfile
-
     from certify_ed.checker import exact_eigenpair_radii
     from certify_ed.corroborate import corroborate
     from certify_ed.enclosure import OperatorAdapter, enclose
@@ -255,7 +253,7 @@ def test_other_entry_points_see_a_non_finite_imaginary_part():
         enclose(OperatorAdapter(H), bad, V[:, :1])
     assert corroborate(H, np.array([complex(w[0], np.inf), w[1]]))["status"] == "INCONCLUSIVE"
     with pytest.raises(ValueError, match="finite"):
-        write_bundle(tempfile.mkdtemp(), bad, V[:, :1], H)
+        write_bundle(str(tmp_path), bad, V[:, :1], H)
 
 
 def test_certify_hamiltonian_sees_a_non_finite_imaginary_part():
@@ -332,6 +330,16 @@ def test_plan_counts_a_mapping_entry_as_a_tuple_entry():
     a = narrow_input_mb(claim, ce.Options(symmetries={"d": (Sd, None)}))
     b = narrow_input_mb(claim, ce.Options(symmetries={"d": {0: Sd, 1: None}}))
     assert a > 0 and a == b
+
+    class OnlyIter:
+        def __iter__(self):
+            return iter((Sd, None))
+    # entries read as their items (a values view, a class with __iter__ only) count too; an iterator is not read
+    for ent in ({"s": Sd, "l": None}.values(), OnlyIter()):
+        assert narrow_input_mb(claim, ce.Options(symmetries={"d": ent})) == a
+        assert narrow_input_mb(claim, ce.Options(approximate_symmetries={"d": ent})) == a
+    it = iter((Sd, None))
+    assert narrow_input_mb(claim, ce.Options(symmetries={"d": it})) == 0.0 and next(it) is Sd
 
 
 def test_dropped_imaginary_parts_are_listed_under_not_verified():
@@ -441,27 +449,26 @@ def test_symmetry_entry_without_its_pair_is_refused_with_the_reason(entry):
                    ce.Options(seed=1, symmetries={"d": ent}))
 
 
-def test_real_nan_at_exact_eigenpair_radii_and_write_bundle():
+def test_real_nan_at_exact_eigenpair_radii_and_write_bundle(tmp_path):
     """A real nan claimed value: exact_eigenpair_radii gives an infinite radius and lists the index (before: a ValueError
     from the rational conversion), write_bundle refuses it (before: the bundle was written and its readers refused it)."""
-    import tempfile
-
     from certify_ed.checker import exact_eigenpair_radii
     from certify_ed.io.bundle import write_bundle
     spec, H, w, V = _chain6()
     bad = np.array([np.nan])
     r = exact_eigenpair_radii(spec, bad, V[:, :1])
     assert r["radii"] == [np.inf] and r["non_finite_values"] == [0]
+    # finite claimed values: the record has the keys of main (no empty non_finite_values in S6's evidence)
+    ok = exact_eigenpair_radii(spec, w[:1], V[:, :1])
+    assert set(ok) == {"radii", "hermitian", "den", "nnz", "zero_test_vectors"} and np.isfinite(ok["radii"][0])
     with pytest.raises(ValueError, match="finite"):
-        write_bundle(tempfile.mkdtemp(), bad, V[:, :1], H)
+        write_bundle(str(tmp_path), bad, V[:, :1], H)
 
 
 def test_remaining_conversion_sites_see_a_non_finite_imaginary_part():
     """The conversion sites the other tests do not reach: enclosure.residuals (no finite upper bound), the Ozaki
-    residuals (not applicable), the interval-arithmetic radii (not finite), the ALPS reader (refused); and
+    residuals (not applicable), and (the two tests below) the interval-arithmetic radii and the ALPS reader; and
     corroborate is INCONCLUSIVE for an infinite real claimed value (before: CORROBORATED with an infinite tolerance)."""
-    import tempfile
-
     from certify_ed.corroborate import corroborate
     from certify_ed.enclosure import OperatorAdapter, residuals
     from certify_ed.ozaki import NotApplicable, ozaki_residual, residual_report
@@ -477,20 +484,23 @@ def test_remaining_conversion_sites_see_a_non_finite_imaginary_part():
         cor = corroborate(H, np.array([v, w[1]]))
         assert cor["status"] == "INCONCLUSIVE" and cor["non_finite_values"] == [0], cor
     assert corroborate(H, w[:2])["status"] == "CORROBORATED"
-    try:
-        import flint  # noqa: F401
-    except ImportError:
-        pass
-    else:
-        from certify_ed.rigorous import arb_residual_radii
-        assert not np.isfinite(arb_residual_radii(H, bad, V[:, :1])[0])
-    try:
-        import h5py
-    except ImportError:
-        return
+
+
+def test_interval_radii_see_a_non_finite_imaginary_part():
+    """The interval-arithmetic residual radii (python-flint) of a value with an infinite imaginary part: not finite."""
+    pytest.importorskip("flint")
+    from certify_ed.rigorous import arb_residual_radii
+    spec, H, w, V = _chain6()
+    assert not np.isfinite(arb_residual_radii(H, np.array([complex(w[0], np.inf)]), V[:, :1])[0])
+
+
+def test_alps_reader_refuses_a_non_finite_imaginary_part(tmp_path):
+    """The ALPS reader (h5py) refuses energies with an infinite imaginary part."""
+    h5py = pytest.importorskip("h5py")
     from certify_ed.io.alps import read_alps_spectrum
     from certify_ed.io.formats import FormatError
-    path = tempfile.mktemp(suffix=".h5")
+    spec, H, w, V = _chain6()
+    path = str(tmp_path / "spectrum.h5")
     with h5py.File(path, "w") as f:
         f.create_dataset("spectrum/sectors/0/energies", data=np.array([complex(w[0], np.inf), w[1]]))
     with pytest.raises(FormatError, match="non-finite"):
@@ -580,15 +590,112 @@ def test_corroborate_tolerance_of_a_non_finite_claim_is_schema_valid():
         jsonschema.validate(None, sub)
 
 
-@pytest.mark.parametrize("form", ["tuple", "iterable-only"])
-def test_empty_approximate_symmetry_entry_is_refused_at_start(form):
-    """An empty entry of Options.approximate_symmetries (an empty tuple, or an iterable with no items that cannot be
-    indexed) is refused when certify starts, with the form of an entry (before: an IndexError where S4 read it)."""
+@pytest.mark.parametrize("form", ["tuple", "iterable-only", "no key 0", "no key 1", "None", "number", "bare matrix"])
+def test_malformed_approximate_symmetry_entry_is_refused_where_it_is_read(form):
+    """A malformed entry of Options.approximate_symmetries (empty, a mapping without the keys it is read by, None, a
+    number, a bare matrix) is refused with the form of an entry where S4 reads it (before: an IndexError, KeyError or
+    TypeError there); certify passes such an entry on as given, so a run whose statements do not read it certifies as
+    before (tests/test_input_unchanged.py)."""
     class _Empty:
         def __iter__(self):
             return iter(())
     spec, H, w, V = _chain6()
-    entry = () if form == "tuple" else _Empty()
+    full = ce.full_state_set(spec)
+    Sd = digit_sum(full.states_in_order().astype(np.int64), spec.q, spec.n_sites).astype(float)
+    entry = {"tuple": (), "iterable-only": _Empty(), "no key 0": {1: None}, "no key 1": {0: Sd, 2: None},
+             "None": None, "number": 3, "bare matrix": sp.diags(Sd).tocsr()}[form]
+    claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
     with pytest.raises(ValueError, match=r"approximate_symmetries\[m\] must be \(S, lattice"):
-        ce.certify(ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest"), spec,
-                   ce.Options(seed=1, approximate_symmetries={"m": entry}))
+        ce.certify(claim, spec, ce.Options(seed=1, approximate_symmetries={"m": entry}))
+    only_s2 = ce.certify(claim, spec, ce.Options(seed=1, only=["S2.eigenpairs"], approximate_symmetries={"m": entry}))
+    assert only_s2.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    # the forms that are read: a one-item tuple, a values view, a mapping with a further key
+    for ok in ((Sd,), {"s": Sd, "l": None}.values(), {0: Sd, 1: None, 2: None, "note": 1}):
+        s4 = ce.certify(claim, spec, ce.Options(seed=1, approximate_symmetries={"m": ok})).statement("S4.eigenspaces")
+        assert s4["status"] == "CERTIFIED"
+
+
+def test_claim_from_file_and_spectrum_invariants_read_claimed_values_as_certify_does(tmp_path):
+    """claim_from_file keeps complex claimed values, so certify records a dropped imaginary part (before: converted to
+    real with no record); spectrum_invariants of a value with a non-finite imaginary part compares nothing (before: the
+    real part alone was compared)."""
+    import warnings
+
+    from certify_ed.importers import claim_from_file
+    from certify_ed.invariants import compare_invariants, spec_invariants, spectrum_invariants
+    spec, H, w, V = _chain6()
+    ev = w[:1].astype(complex)
+    ev[0] = complex(w[0], 0.25)
+    np.save(str(tmp_path / "ev.npy"), ev)
+    np.save(str(tmp_path / "vec.npy"), V[:, :1])
+    claim = claim_from_file(str(tmp_path / "ev.npy"), str(tmp_path / "vec.npy"), kind="subset")
+    claim.operator = H
+    cert = ce.certify(claim, spec, ce.Options(seed=1))
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.25}
+    np.save(str(tmp_path / "real.npy"), w[:1])
+    assert claim_from_file(str(tmp_path / "real.npy")).eigenvalues.dtype == np.float64
+    full = np.linalg.eigvalsh(H.toarray())
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        bad = full.astype(complex)
+        bad[0] = complex(full[0], np.inf)
+        cmp_bad = compare_invariants(spec_invariants(spec), spectrum_invariants(bad))
+    assert cmp_bad["consistent"] is None
+    assert compare_invariants(spec_invariants(spec), spectrum_invariants(full))["consistent"] is True
+    assert spectrum_invariants(full) == spectrum_invariants(list(full))
+
+
+@pytest.mark.parametrize("fn", ["variational", "moments"])
+def test_spare_capacity_of_a_csr_operator_is_not_read(fn):
+    """A canonical CSR operator with spare capacity past nnz holding nan (preallocated buffers): the finiteness check
+    reads the values held, as precision does, so it is accepted with the record of the pruned matrix (before this
+    round: refused as non-finite; at main: accepted)."""
+    from certify_ed.moments import certified_moments
+    from certify_ed.variational import certify_variational
+    A = sp.csr_matrix(np.diag([1.0, 2.0]))
+    A.data, A.indices = np.r_[A.data, np.nan], np.r_[A.indices, 0]
+    assert A.nnz == 2 and A.data.size == 3
+    B = sp.csr_matrix(np.diag([1.0, 2.0]))
+    if fn == "variational":
+        psi = np.array([1.0, 0.1])
+        ra, rb = certify_variational(A, psi), certify_variational(B, psi)
+        assert [s["summary"] for s in ra["statements"]] == [s["summary"] for s in rb["statements"]]
+    else:
+        x = np.eye(2)[:, :1]
+        ra = certified_moments(A, B, x, 1e-12, 1e-12, K=1, sum_rules=False)
+        rb = certified_moments(B, B, x, 1e-12, 1e-12, K=1, sum_rules=False)
+        assert ra["moments"] == rb["moments"]
+    with pytest.raises(ValueError, match="non-finite entries"):        # a held nan is still refused
+        C = sp.csr_matrix(np.diag([1.0, 2.0]))
+        C.data[1] = np.nan
+        (certify_variational(C, np.array([1.0, 0.1])) if fn == "variational" else
+         certified_moments(C, B, np.eye(2)[:, :1], 1e-12, 1e-12, K=1, sum_rules=False))
+
+
+def test_wrappers_pass_a_real_object_array_as_floats(monkeypatch):
+    """A real-valued object array (Python floats) carries no imaginary part: the sweep passes its float form to the
+    claim, as main did; an object array of complex scalars with a nonzero imaginary part is passed as given."""
+    from certify_ed.precision import carries_imaginary_parts
+    from certify_ed.sweep import certified_sweep
+    assert not carries_imaginary_parts(np.array([1.0, 2.0], dtype=object))
+    assert carries_imaginary_parts(np.array([np.complex128(1 + 0.5j), 2.0], dtype=object))
+    assert carries_imaginary_parts(np.array([1.0 + 0j]))           # a complex dtype, as before
+    assert not carries_imaginary_parts(np.array([1.0, 2.0]))
+
+    def solver(Hc, k):
+        ww, VV = np.linalg.eigh(Hc.toarray())
+        return np.array([float(v) for v in ww[:k]], dtype=object), VV[:, :k]
+    import sys
+    cmod = sys.modules["certify_ed.certify"]                    # the module (the package exports the function)
+    seen, Claim0 = [], cmod.Claim
+
+    def spy(eigenvalues, *a, **kw):
+        seen.append(np.asarray(eigenvalues).dtype.kind)
+        return Claim0(eigenvalues, *a, **kw)
+    monkeypatch.setattr(cmod, "Claim", spy)
+    sweep = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)
+    assert seen and set(seen) == {"f"}, seen                   # the float form reached the claim
+    cert = sweep["_certificates"][0]
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
+    assert "dropped_imaginary_parts" not in cert.body["claim"]

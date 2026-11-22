@@ -152,7 +152,9 @@ def claim_from_file(eigenvalues: str, eigenvectors: str = None, operator: str = 
     keys = keys or {}
     ev = read_array(eigenvalues, keys.get("eigenvalues"), "eigenvalues")
     check_values(ev, "eigenvalues")       # before the conversion, which would round an inexact value (precision.py)
-    ev = np.asarray(ev, dtype=float)
+    ev = np.asarray(ev)
+    if ev.dtype.kind not in "cO":         # complex values go to the claim as read: certify records a dropped imaginary
+        ev = ev.astype(float)              # part (precision.claimed_reals), as for the QuSpin and sweep wrappers
     X = None if eigenvectors is None else np.asarray(read_array(eigenvectors, keys.get("eigenvectors"), "eigenvectors"))
     op = None if operator is None else read_operator(operator, keys.get("operator"), allow_code=allow_code)
     states, iso = None, None

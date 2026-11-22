@@ -1068,13 +1068,6 @@ def _options_as_given(opts: Options, own) -> Options:
     syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in syms_given.items()}
     for k, v in syms.items():                          # refused here, whether or not S4 later reads the entry
         _symmetry_pair(k, v)
-    for k, v in asym.items():                          # an empty entry has no S (labels_hook reads v[0])
-        try:
-            empty = not sp.issparse(v) and len(v) == 0
-        except TypeError:                              # no length: read (or refused) where it is used, as before
-            empty = False
-        if empty:
-            raise ValueError(f"options.approximate_symmetries[{k}] must be (S, lattice[, allowed_values])")
     if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym) and \
             all(syms[k] is syms_given[k] for k in syms):
         return opts

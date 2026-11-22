@@ -294,7 +294,7 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
         mx = max(d["max_abs"] for _, d in dropped)
         out["dropped_imaginary_parts"] = {"count": cnt, "max_abs": mx, "sectors": [lab for lab, _ in dropped]}
         summary += (f"; the imaginary parts of {cnt} claimed value(s) in {len(dropped)} sector(s), largest in "
-                    f"magnitude {mx:.3g}, were dropped: the statements concern the real parts")
+                    f"magnitude {mx:.6g}, were dropped: the statements concern the real parts")
     out.update(status=status, summary=summary, seconds=time.time() - t0)
     if sched is not None:
         out["parallel"] = sched

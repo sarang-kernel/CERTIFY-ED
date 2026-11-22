@@ -37,7 +37,7 @@ import numpy as np
 
 from ..certify import Claim, Options, certify
 from ..importers import QUSPIN_HINT, _looks_like_quspin, claim_from_quspin
-from ..precision import check_values, claimed_reals
+from ..precision import carries_imaginary_parts, check_values, claimed_reals
 from ..spec import ModelSpec
 
 __all__ = ["certify_hamiltonian", "static_list_of"]
@@ -118,7 +118,7 @@ def certify_hamiltonian(H, w, V=None, basis=None, static=None, spec: Optional[An
             w, w_given = w[order], w_given[order]
             X = None if X is None else X[:, order]
             reordered = True
-    claim, built_spec = claim_from_quspin(H, basis, static, w_given if w_given.dtype.kind in "cO" else w, X, kind=kind,
+    claim, built_spec = claim_from_quspin(H, basis, static, w_given if carries_imaginary_parts(w_given) else w, X, kind=kind,
                                           window=window, **claim_kw)
     claim.producer["entry_point"] = "certify_ed.integrations.quspin.certify_hamiltonian"
     claim.producer["eigenvalues_sorted_by_wrapper"] = bool(reordered)

@@ -713,6 +713,19 @@ def _complex_view(values) -> np.ndarray:
     return arr
 
 
+def carries_imaginary_parts(values) -> bool:
+    """True when the values are complex (complex dtype), or an object array holding a value with an imaginary part that
+    is not zero (finite or not): the values a wrapper passes to the claim as given, so that certify sees and records
+    the parts it drops. A real-valued object array is passed in its float form, as before."""
+    arr = np.asarray(values)
+    if arr.dtype.kind == "c":
+        return True
+    if arr.dtype.kind != "O":
+        return False
+    cv = _complex_view(arr)
+    return cv.dtype.kind == "c" and bool(np.any(cv.imag != 0))
+
+
 def dropped_imaginary_parts(values) -> Optional[Dict[str, Any]]:
     """What claimed_reals drops from complex claimed values: the number and the largest magnitude of the finite nonzero
     imaginary parts, or None (real values, or no such part). The largest magnitude is max(im.max(), -im.min()), exact."""

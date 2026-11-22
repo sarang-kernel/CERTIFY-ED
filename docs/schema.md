@@ -142,7 +142,8 @@ so that a reader knows what to expect; it does not forbid additional ones. The i
   `pairing`, `edges` (per edge: `nu`, `beta`, `delta`, `shifts`, `nu_below`, `nu_above`, `beta_below`, `beta_above`,
   `exact`, `eigenvalue_free`), and `missing_at_least` or `spurious_at_least` when FAILED.
 * S4: `clusters` (projector error, observables, correlations, quantum numbers per cluster).
-* S5: `oracles` (per solver: `max_abs_diff_vs_claim`, `n_compared`, `seconds`), `independence`, `tolerance`, `note`.
+* S5: `oracles` (per solver: `max_abs_diff_vs_claim`, `n_compared`, `seconds`), `independence`, `tolerance`, `note`;
+  for a claim with non-finite values, `non_finite_values` (their first indices) and `tolerance` nan: nothing is compared.
 * S7: `temperatures`, `rows` (interval bounds for Z, F, U, C), `n_intervals`, `energy_offset`, `hypothesis`.
 * S8: `clusters` (bracketing inertia counts per cluster).
 * any statement: `budget` (the events that stopped it) and `narrowed` (`by`, `reason`) when the scope did.
