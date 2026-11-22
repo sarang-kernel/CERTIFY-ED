@@ -1,0 +1,720 @@
+{
+ "d04_speedup": {
+  "N": 16,
+  "sectors": [
+   {
+    "nup": 3,
+    "dim": 560,
+    "k": 3,
+    "producer_seconds": 0.012
+   },
+   {
+    "nup": 4,
+    "dim": 1820,
+    "k": 3,
+    "producer_seconds": 0.027
+   },
+   {
+    "nup": 5,
+    "dim": 4368,
+    "k": 3,
+    "producer_seconds": 0.081
+   },
+   {
+    "nup": 6,
+    "dim": 8008,
+    "k": 3,
+    "producer_seconds": 0.114
+   },
+   {
+    "nup": 7,
+    "dim": 11440,
+    "k": 3,
+    "producer_seconds": 0.136
+   },
+   {
+    "nup": 8,
+    "dim": 12870,
+    "k": 3,
+    "producer_seconds": 0.128
+   },
+   {
+    "nup": 9,
+    "dim": 11440,
+    "k": 3,
+    "producer_seconds": 0.14
+   },
+   {
+    "nup": 10,
+    "dim": 8008,
+    "k": 3,
+    "producer_seconds": 0.106
+   },
+   {
+    "nup": 11,
+    "dim": 4368,
+    "k": 3,
+    "producer_seconds": 0.044
+   },
+   {
+    "nup": 12,
+    "dim": 1820,
+    "k": 3,
+    "producer_seconds": 0.017
+   },
+   {
+    "nup": 13,
+    "dim": 560,
+    "k": 3,
+    "producer_seconds": 0.007
+   }
+  ],
+  "cap_gib": 32.0,
+  "cap_mechanism": "RLIMIT_AS",
+  "cores_available": 16,
+  "cpu_count": 208,
+  "runs": [
+   {
+    "workers": 1,
+    "wall_seconds": 324.828,
+    "speedup": 1.0,
+    "identical_to_one_worker": true,
+    "load_before": [
+     112.72,
+     113.71,
+     113.39
+    ],
+    "load_after": [
+     113.75,
+     113.79,
+     113.52
+    ],
+    "tasks": [
+     {
+      "where": "serial",
+      "seconds": 0.216,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 3.09,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 6.659,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 26.226,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 104.093,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 36.924,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 111.296,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 27.42,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 5.437,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 3.28,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 0.188,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "NOT_CHECKED",
+      "NOT_CHECKED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ]
+    ]
+   },
+   {
+    "workers": 2,
+    "wall_seconds": 183.025,
+    "speedup": 1.775,
+    "identical_to_one_worker": true,
+    "load_before": [
+     113.75,
+     113.79,
+     113.52
+    ],
+    "load_after": [
+     114.39,
+     114.14,
+     113.7
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.271,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.166,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 6.725,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 28.937,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 104.897,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 37.821,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 112.498,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 27.412,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 8.686,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.427,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.192,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "NOT_CHECKED",
+      "NOT_CHECKED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ]
+    ]
+   },
+   {
+    "workers": 4,
+    "wall_seconds": 125.916,
+    "speedup": 2.58,
+    "identical_to_one_worker": true,
+    "load_before": [
+     114.39,
+     114.14,
+     113.7
+    ],
+    "load_after": [
+     114.75,
+     114.44,
+     113.88
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.439,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.217,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 6.789,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 28.566,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 113.46,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 42.452,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 118.602,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 30.169,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 7.026,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.521,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.198,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "NOT_CHECKED",
+      "NOT_CHECKED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ]
+    ]
+   },
+   {
+    "workers": 8,
+    "wall_seconds": 117.974,
+    "speedup": 2.753,
+    "identical_to_one_worker": true,
+    "load_before": [
+     114.75,
+     114.44,
+     113.88
+    ],
+    "load_after": [
+     114.8,
+     114.72,
+     114.07
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.387,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 6.097,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 8.157,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 28.506,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 105.371,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 41.021,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 117.36,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 31.982,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 7.18,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.238,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.191,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "NOT_CHECKED",
+      "NOT_CHECKED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ],
+     [
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED",
+      "CERTIFIED"
+     ]
+    ]
+   }
+  ],
+  "peak_rss_mb": 1077.1953125
+ },
+ "environment": {
+  "git_commit": "57607a70c0b62e6b9b9d816eab93e209f3397474",
+  "source_hash": "337392e110cebd3d",
+  "source_dirty": false,
+  "tests_hash": "4be45b9c853b8342",
+  "tests_dirty": false,
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "started": "2026-11-22T18:01:55",
+  "threads_env": {
+   "OMP_NUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1",
+   "MKL_NUM_THREADS": "1"
+  },
+  "float_environment": {
+   "standard_model_hypotheses_hold": true,
+   "checks": {
+    "gradual_underflow": true,
+    "subnormal_operands": true,
+    "round_to_nearest_up": true,
+    "round_to_nearest_down": true,
+    "round_to_nearest_not_toward_zero_pos": true,
+    "round_to_nearest_not_toward_zero_neg": true,
+    "ties_to_even": true,
+    "blas_full_precision": true,
+    "gemm_full_precision": true
+   },
+   "failed": []
+  },
+  "python": "3.12.3",
+  "platform": "Linux x86_64"
+ }
+}

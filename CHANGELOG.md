@@ -101,6 +101,20 @@ a certificate of `device="gpu"` now records the device as used in the S2 evidenc
 device's product count and spot-checked rows) where it recorded `used: false` with the probe's reason; statements,
 bounds and the CPU products do not change. The computational source hash changes.
 
+### D-04: the worker pool measured on free cores
+
+A new experiment and its record; no code of the package changes. The computational source hash changes (it includes
+`experiments/`).
+
+- `experiments/d04_speedup.py` times `parallel.certify_many` with 1, 2, 4 and 8 workers on the U(1) sectors of a
+  Heisenberg chain and compares every certificate with the one-worker run (timings excluded). It records the cores the
+  process may use and the load average.
+- First measurement on free cores (16 pinned cores of a shared Linux host, eleven sector claims of the chain of 16
+  sites, dimensions 560 to 12870): speed-up 1.77 with 2 workers, 2.58 with 4 and 2.75 with 8, bounded by the longest
+  claim (111 s of 325 s; bound 2.92). Every certificate equals the one-worker one. `docs/results/RESULT_d04_speedup.md`,
+  record `docs/results/d04_speedup_n16_20261122.json`; `docs/project/failures/05_open_items.md` and the D-04 row of the
+  roadmap (`tools/make_development_roadmap.py`) say so.
+
 ### Peak memory of the planner measurements on Linux
 
 The planner tests measure the peak memory of a factorization in a child process (`experiments/portable.py`,
