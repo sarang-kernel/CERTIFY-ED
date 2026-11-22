@@ -7,6 +7,7 @@ import scipy.linalg as la
 import certify_ed as ce
 from certify_ed.checker import exact_matrix, exact_eigenpair_radii
 from certify_ed.spec import ModelSpec
+from conftest import needs_flint, eigh_dense
 
 
 def _dense(ex, n):
@@ -49,7 +50,7 @@ def test_exact_radii_below_floating_point_radii():
     spec = ce.heisenberg_chain(10, J2=0.3)
     st = ce.u1_state_set(spec, 5)
     Hs = ce.build_bitwise(spec, st)
-    w, V = la.eigh(Hs.toarray())
+    w, V = eigh_dense(Hs.toarray())
     r = exact_eigenpair_radii(spec, w[:4], V[:, :4], st)
     c = ce.certify(ce.Claim(w[:4], V[:, :4], operator=Hs, kind="lowest", states=st), spec)
     s2 = [s for s in c.statements if s["id"] == "S2.eigenpairs"][0]
@@ -86,6 +87,7 @@ def test_non_hermitian_spec_detected():
                                        ["-+", [[0.5, i, (i + 1) % 4] for i in range(4)]],
                                        ["zz", [[1.0, i, (i + 1) % 4] for i in range(4)]],
                                        ["x", [[0.3, i] for i in range(4)]]])])
+@needs_flint
 def test_higher_spin_and_bosons_exact(make):
     """Spin >= 1 and bosons have irrational matrix elements; in the scaled basis D^-1 H D they are
     rational, and the exact layer certifies their spectra."""
@@ -114,6 +116,7 @@ def _gap_k(w, kmin):
 
 @pytest.mark.parametrize("make,sector", [(lambda: ce.heisenberg_chain(10, J2=0.3), 5),
                                          (lambda: ce.spinless_fermion_chain(9, t=1.0, V=0.37), None)])
+@needs_flint
 def test_exact_recheck_lowest_certifies_complete_claim(make, sector):
     spec = make()
     st = ce.u1_state_set(spec, sector) if sector is not None else None
@@ -127,6 +130,7 @@ def test_exact_recheck_lowest_certifies_complete_claim(make, sector):
     assert sum(m for _, _, m in r["components"]) == k
 
 
+@needs_flint
 def test_exact_recheck_lowest_detects_missing_level():
     spec = ce.heisenberg_chain(10, J2=0.3)
     st = ce.u1_state_set(spec, 5)
@@ -137,6 +141,7 @@ def test_exact_recheck_lowest_detects_missing_level():
     assert r["status"] == "FAILED", r
 
 
+@needs_flint
 def test_exact_recheck_lowest_detects_truncated_multiplet():
     spec = ce.heisenberg_chain(10, J2=0.3)
     st = ce.u1_state_set(spec, 5)
@@ -147,6 +152,7 @@ def test_exact_recheck_lowest_detects_truncated_multiplet():
     assert r["status"] != "CERTIFIED", r
 
 
+@needs_flint
 def test_certify_with_s6_exact_recheck():
     spec = ce.spin1_heisenberg_chain(6)
     st = ce.u1_state_set(spec, 6)
@@ -168,6 +174,7 @@ def test_certify_with_s6_exact_recheck():
     assert s6b["status"] in ("FAILED", "INCONCLUSIVE")
 
 
+@needs_flint
 def test_exact_recheck_duplicated_vector_does_not_hide_a_missing_ground_state():
     """Two copies of the first-excited vector claimed as 'the two lowest': both residual intervals hold
     the same eigenvalue, and a count above them alone (two eigenvalues below) would agree with the claim.
@@ -187,6 +194,7 @@ def test_exact_recheck_duplicated_vector_does_not_hide_a_missing_ground_state():
         assert above and above[0]["count"] == 2
 
 
+@needs_flint
 def test_exact_recheck_multiplet_gets_a_level_enclosure():
     spec = ce.heisenberg_chain(10, J2=0.3)
     st = ce.u1_state_set(spec, 5)

@@ -13,6 +13,7 @@ import certify_ed as ce
 from certify_ed import parallel as par
 from certify_ed.compose import SectorResult, certify_low_energy
 from certify_ed.construct import full_state_set
+from conftest import eigh_dense
 
 TIMING_KEYS = ("second", "time", "elapsed", "parallel")
 
@@ -47,7 +48,7 @@ def sz_sectors(spec, E_cut, merge=None):
     out = []
     for label, Vs in secs:
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         out.append(SectorResult(f"nup={label}", Vs, Hs, ws[sel], Ys[:, sel]))
     return out
@@ -58,7 +59,7 @@ def test_low_energy_identical_for_1_2_4_workers(merge):
     # sectors 0..2 take their U(1) restriction, the merged sector and every later one the full matrix: both paths
     spec = ce.heisenberg_chain(8)
     wf = la.eigvalsh(ce.build_bitwise(spec).toarray())
-    E_cut = float((wf[5] + wf[6]) / 2)
+    E_cut = float((wf[4] + wf[5]) / 2)          # between levels (wf[5] to wf[9] are one five-fold level)
     secs = sz_sectors(spec, E_cut, merge)
     ref = certify_low_energy(spec, secs, E_cut)
     assert ref["status"] == "CERTIFIED"
@@ -75,7 +76,7 @@ def u1_claims(N=10, nups=(4, 5, 6), k=3):
     for nup in nups:
         st = ce.u1_state_set(spec, nup)
         Hs = ce.build_bitwise(spec, st)
-        w, V = la.eigh(Hs.toarray())
+        w, V = eigh_dense(Hs.toarray())
         claim = ce.Claim(w[:k], V[:, :k], operator=Hs, kind="lowest", states=st)
         jobs.append((claim, spec, ce.Options()))
     return jobs

@@ -273,7 +273,12 @@ def _r_claim_from_file(D):
 def _r_bundle(D):
     from certify_ed.io.bundle import read_bundle, write_bundle
     out = []
-    for fmt in ("npz", "h5"):
+    try:
+        import h5py  # noqa: F401
+        fmts = ("npz", "h5")
+    except ImportError:                     # certify-ed[hdf5] not installed: the npz operator alone
+        fmts = ("npz",)
+    for fmt in fmts:
         path = os.path.join(D.tmp, f"bundle_{fmt}")
         write_bundle(path, np.asarray(D.mu), D.X, operator=D.S, fmt="npz", operator_fmt=fmt, kind="subset")
         out.append(certify(read_bundle(path).claim))

@@ -139,6 +139,7 @@ def test_rayleigh_upper_is_an_upper_bound():
         assert nc.rayleigh_upper(spec, st, rng.standard_normal(st.size)) / K >= Fraction(float(w[0])) - Fraction(1, 10 ** 12)
 
 
+@needs_flint
 def test_aklt_plan_reproduces_recorded_block_sizes():
     from certify_ed.apps.aklt import lattices
     from certify_ed.apps.aklt.estimate import plan_eta
@@ -147,6 +148,7 @@ def test_aklt_plan_reproduces_recorded_block_sizes():
         assert plan_eta(g, L, C, R)["largest_block_rows"] == largest
 
 
+@needs_flint
 def test_honeycomb_method3_geometry():
     from certify_ed.apps.aklt import lattices
     from certify_ed.apps.aklt.estimate import _lite

@@ -12,6 +12,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 import certify_ed as ce
+from conftest import needs_flint
 
 
 def test_two_by_two_pivot_with_positive_determinant_is_counted_exactly():
@@ -31,6 +32,7 @@ def test_two_by_two_pivot_with_positive_determinant_is_counted_exactly():
         assert expected == int(np.sum(np.linalg.eigvalsh(D) < 0))
 
 
+@needs_flint
 def test_exact_residual_with_huge_entries_uses_the_negative_exponent_branch():
     """checker.residual_inf_norm_exact: when 2 pL + pD < 0 (|D| above about 2^156) the scale is a
     fraction. Mutants of that branch (checker.py:112) survived because no test reached it."""

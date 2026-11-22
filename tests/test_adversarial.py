@@ -23,6 +23,7 @@ from certify_ed.compose import SectorResult, certify_low_energy
 from certify_ed.construct import full_state_set
 from certify_ed.localops import LocalSpace
 from certify_ed.spec import ModelSpec
+from conftest import needs_flint, eigh_dense
 
 
 def _st(cert):
@@ -122,6 +123,7 @@ def test_A4_duplicated_pair_replacing_missing_level_fp(rand_nondeg):
     assert s["S2.eigenpairs"] != "CERTIFIED" and s["S3.completeness"] != "CERTIFIED", s
 
 
+@needs_flint
 def test_A4b_duplicated_pair_exact_layer(rand_nondeg):
     spec, H, w, V = rand_nondeg
     mu = np.array([w[0], w[1], w[1]])
@@ -205,7 +207,7 @@ def _sz_sectors(spec, E_cut, drop=None, dup=None):
         assert np.all(found)
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
     return H, secs
@@ -236,6 +238,7 @@ def test_A9b_cut_exactly_at_an_eigenvalue():
 
 
 # ------------------------------------------------------------------ A10: complex (Gaussian) sector, omitted member
+@needs_flint
 def test_A10_complex_sector_omitted_degenerate_member_not_certified():
     """k = pi/2 sector of an 8-site ring (character i): drop one member of a degenerate level."""
     spec = ce.heisenberg_chain(8)

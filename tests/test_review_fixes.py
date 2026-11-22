@@ -13,6 +13,7 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 import certify_ed as ce
+from conftest import needs_flint, eigh_dense
 
 
 def _st(cert):
@@ -56,6 +57,7 @@ def test_imp18_exact_recheck_lowest_inconclusive_for_zero_vector(heis6):
     assert r["status"] == "INCONCLUSIVE" and "x != 0" in r["reason"]
 
 
+@needs_flint
 def test_imp18_certify_S6_inconclusive_for_zero_vector(heis6):
     spec, H, w, V = heis6
     c = ce.certify(ce.Claim(np.array([w[0] + 0.05]), np.zeros((H.shape[0], 1)), operator=H, kind="lowest"),
@@ -239,7 +241,7 @@ def test_imp12_compose_uses_rho_for_square_W():
         idx, found = full.index_of(st.states_in_order())
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
     res = certify_low_energy(spec, secs, E_cut)
@@ -307,7 +309,7 @@ def test_imp20_compose_records_symmetrised_blocks():
     spec = ce.heisenberg_chain(4)
     H = ce.build_bitwise(spec)
     wf = la.eigvalsh(H.toarray())
-    E_cut = float((wf[2] + wf[3]) / 2)
+    E_cut = float((wf[0] + wf[1]) / 2)          # between levels ((wf[2] + wf[3]) / 2 is the triplet level itself)
     full = full_state_set(spec)
     secs = []
     for nup in range(spec.n_sites + 1):
@@ -319,7 +321,7 @@ def test_imp20_compose_records_symmetrised_blocks():
             Hs[0, 1] = Hs[0, 1] + 1e-13        # a producer block that is not exactly Hermitian
         Hs = Hs.tocsr()
         Hh = ((Hs + Hs.conj().T) / 2).toarray()
-        ws, Ys = la.eigh(Hh)
+        ws, Ys = eigh_dense(Hh)
         sel = np.where(ws < E_cut)[0]
         secs.append(SectorResult(f"nup={nup}", Vs, Hs, ws[sel], Ys[:, sel]))
     res = certify_low_energy(spec, secs, E_cut)

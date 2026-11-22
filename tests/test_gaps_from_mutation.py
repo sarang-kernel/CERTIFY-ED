@@ -48,6 +48,7 @@ def test_residual_norms_match_rational_arithmetic():
     assert ue >= 0 and ue < 1e-9 * np.abs(A).max()
 
 
+@needs_flint
 def test_check_semidefinite_exact_definite_and_indefinite():
     rng = np.random.default_rng(4)
     n = 30

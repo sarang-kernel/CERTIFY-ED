@@ -18,6 +18,7 @@ from certify_ed.enclosure import OperatorAdapter, _cluster_bound, enclose, resid
 from certify_ed.fp import (U, ULP_MIN, TINY_BOUND, _GUARD, exact_dot, fro_upper, gamma, gamma_dot, inf_norm_upper,
                            norm2_lower, norm2_upper, norm_underflow_term, residual_additive_term, sub_up, up)
 from certify_ed.sectors import audit_label, decomposition_shift
+from conftest import eigh_dense
 
 getcontext().prec = 120
 u = Fraction(U)
@@ -203,7 +204,7 @@ def test_compose_eps_is_rho_plus_builder_shift_and_the_statement_holds(heis6):
         idx, found = full.index_of(st.states_in_order())
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).toarray()
-        ws, Vw = la.eigh(Hs)
+        ws, Vw = eigh_dense(Hs)
         secs.append(SectorResult(f"nup={nup}", Vs, sp.csr_matrix(Hs), ws, Vw))
     E_cut = float((w[4] + w[5]) / 2)
     out = certify_low_energy(spec, secs, E_cut, H_full=H)

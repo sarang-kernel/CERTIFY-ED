@@ -31,6 +31,7 @@ from certify_ed.fp import U, fro_upper, gamma_dot, inf_norm_upper, up
 from certify_ed.localops import LocalSpace
 from certify_ed.sectors import audit_sector
 from certify_ed.spectrum import SpectrumInterval, merge_intervals
+from conftest import needs_flint
 
 
 # ---------------------------------------------------------------- sectors.py:57
@@ -152,6 +153,7 @@ def _obj(a):
     return out
 
 
+@needs_flint
 @pytest.mark.parametrize("g,count", [(Fraction(-2), 0), (Fraction(0), 1), (Fraction(1, 2), 1), (Fraction(2), 2)])
 def test_complex_sector_block_count_through_real_embedding(g, count):
     """M = [[0, i], [-i, 0]] (eigenvalues -1, 1) as a Gaussian-integer block: its real embedding has every eigenvalue
@@ -164,6 +166,7 @@ def test_complex_sector_block_count_through_real_embedding(g, count):
     assert beta is not None and beta >= 0
 
 
+@needs_flint
 def test_real_sector_block_count():
     """Control: a real block [[2, 1], [1, 2]] (eigenvalues 1, 3) takes the factor-1 path."""
     Are = _obj([[2, 1], [1, 2]])

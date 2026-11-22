@@ -5,6 +5,7 @@ import scipy.linalg as la
 import certify_ed as ce
 from certify_ed.basis import translation, reflection, spin_flip, cyclic_isometry
 from certify_ed.exact_sectors import exact_recheck_sector_lowest, site_permutation
+from conftest import needs_flint
 
 
 def _k0(N, J2):
@@ -17,6 +18,7 @@ def _k0(N, J2):
     return spec, st, T, V0, w, Y
 
 
+@needs_flint
 def test_chain_k0_lowest_certified_and_dimensions_add_up():
     spec, st, T, V0, w, Y = _k0(12, 0.3)
     r = exact_recheck_sector_lowest(spec, st, [T, reflection(spec), spin_flip(spec)], {0: 0}, w[:2],
@@ -26,6 +28,7 @@ def test_chain_k0_lowest_certified_and_dimensions_add_up():
     assert r["group_order"] == 48
 
 
+@needs_flint
 def test_chain_k0_missing_level_fails():
     spec, st, T, V0, w, Y = _k0(12, 0.3)
     r = exact_recheck_sector_lowest(spec, st, [T, reflection(spec), spin_flip(spec)], {0: 0}, w[[0, 2]],
@@ -51,6 +54,7 @@ def test_wrong_sector_vector_is_not_certified():
             pass
 
 
+@needs_flint
 def test_complex_momenta_square_lattice_full_block():
     spec = ce.heisenberg_square(4, 2)              # 8 sites; translations of order 4 and 2
     n = spec.n_sites
@@ -79,6 +83,7 @@ def test_non_symmetry_rejected():
     assert r["status"] == "FAILED" and "not a symmetry" in r["reason"]
 
 
+@needs_flint
 def test_spin1_chain_k0_sector_with_flip_and_reflection():
     """Scaled-basis weights binom(2, k) are flip-symmetric, so the spin flip stays an exact symmetry."""
     spec = ce.spin1_heisenberg_chain(6)

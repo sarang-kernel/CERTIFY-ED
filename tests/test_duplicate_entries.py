@@ -291,6 +291,8 @@ def test_single_precision_and_coo_index_dtypes():
                       shape=(2, 2))
     if hasattr(R, "coords"):
         R.coords = (R.row.astype(np.int64), R.col.astype(np.int64))
+    else:                                         # scipy < 1.13: the constructor chose the smallest index dtype
+        R.row, R.col = R.row.astype(np.int64), R.col.astype(np.int64)
     assert R.row.dtype == R.col.dtype == np.int64
     S = summed(R)
     assert S.row.dtype == S.col.dtype == np.int64 and S.toarray()[0, 1] == 2.0

@@ -127,6 +127,31 @@ of a fixed text. `docs/SCOPE_MATRIX.md` states which families give `UNRESOLVED_V
 `NONFINITE_BOUND` for an overflowing squared norm. Tests: `tests/test_nonfinite_followups.py` (each case fails at the
 base). The computational source hash changes.
 
+### Declared version floors
+
+The suite had only been run on Python 3.11 with numpy 2.4 and scipy 1.17. Run at the declared floors (Python 3.9.23,
+numpy 1.22.4, scipy 1.8.1 with OpenBLAS), it showed three defects of the package. scipy 1.8 cannot size the LAPACK
+workspace of a 1 x 1 `eigh` (every driver, real and complex), which the dense corroboration oracles, the enclosure of a
+one-dimensional block in `spectrum` and the default solver of `certified_sweep` met (a sector of dimension 1): the
+eigenvalue of a 1 x 1 Hermitian matrix is now taken from its entry there. `scipy.sparse.sparray` exists from scipy 1.11
+only, so `precision.summed` returned a `coo_matrix` for a `coo_array` before it (and `fp.abs_up` with it); the sparse
+arrays of scipy 1.8 to 1.10 are now recognised by their mixin (`precision._is_sparse_array`). The sign of a zero sum of
+repeated entries depended on the route and on the numpy version (`np.add.reduceat` gives +0.0 for two negative zeros
+under numpy 1.22 and -0.0 under numpy 2; the vectorized passes and `math.fsum` gave +0.0 for longer groups everywhere);
+it is now -0.0 exactly when every part is -0.0, as IEEE addition gives in any order. A complex entry keeps the sign of
+its real part in `matrix_sha256`, so the hash of such a matrix no longer depends on the numpy version or the route; real
+zero entries are dropped before hashing, as before. Tests: `tests/test_version_floors.py` (14; 11 fail at main under the
+floor versions, the 4 on signed zeros also under the current ones). The suite itself: the tests that need python-flint
+are marked `needs_flint` (they failed with ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the
+precision registry is used only with h5py, `tests/conftest.py` gains `eigh_dense` (1 x 1 blocks of the sector tests),
+three tests put their energy cut between two levels instead of on a degenerate one (where the rounding of the computed
+levels decided the verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut), the
+recorded radii of `tests/test_whole_spectrum.py` allow a few roundings of the residual entries under numpy < 2 (other
+BLAS and sparse kernels; exact as before under numpy 2), and the tripwire's positive control accepts the unnamed scope
+of Python 3.9 and 3.10. With these, every test that runs here passes at the floors except the ones that create a
+temporary directory: those are not assessed under Python 3.9 in this environment (a file-system hook of the test
+sandbox is incompatible with Python 3.9's `pathlib`).
+
 ### Result documents moved under docs/
 
 No code, bound or status changes, and the computational source hash stays the same. The result documents that were at

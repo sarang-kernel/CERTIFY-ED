@@ -249,7 +249,7 @@ def test_fp_m_hypotheses_on_this_host():
     f, e = np.frexp(v)
     assert np.all((f >= 0.5) & (f < 1.0))
     assert all(Fraction(float(f[i])) * Fraction(2) ** int(e[i]) == Fraction(float(v[i])) for i in range(v.size))
-    k = rng.integers(-1200, 1100, v.size)
+    k = rng.integers(-1200, 1100, v.size).astype(np.int32)   # numpy < 2 on Windows: ldexp takes C long exponents
     with np.errstate(over="ignore", under="ignore"):
         L = np.ldexp(v, k)
     big = Fraction(float(np.finfo(float).max))
@@ -754,6 +754,7 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     certify_nonhermitian(A, lam, R)
     Bm = rng.standard_normal((12, 12)) + 1j * rng.standard_normal((12, 12))
     Bm = Bm @ Bm.conj().T + 12 * np.eye(12)
+    Bm = (Bm + Bm.conj().T) / 2                       # exactly Hermitian under every BLAS (unchanged where it was)
     Ah = (A + A.conj().T) / 2
     import scipy.linalg as sla
     lg, Xg = sla.eigh(Ah, Bm)
@@ -789,4 +790,5 @@ def test_no_complex_modulus_bypasses_fp_in_the_entry_points(monkeypatch):
     # positive control: a modulus of fp.inf_norm_upper reverted to the builtin abs is recorded
     monkeypatch.setattr(fp, "abs_up", lambda M: abs(M))
     fp.inf_norm_upper(H)
-    assert found and {k[:2] for k in found} == {("certify_ed/fp.py", "inf_norm_upper")}
+    scope = "inf_norm_upper" if hasattr(fp.inf_norm_upper.__code__, "co_qualname") else None   # None on 3.9, 3.10
+    assert found and {k[:2] for k in found} == {("certify_ed/fp.py", scope)}

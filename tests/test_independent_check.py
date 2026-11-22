@@ -4,6 +4,7 @@ import numpy as np
 
 from certify_ed.enclosure import OperatorAdapter, enclose, residuals
 from certify_ed.fp import norm2_lower, norm2_upper
+from conftest import needs_flint
 
 
 def test_norm2_lower_is_zero_when_the_squared_norm_overflows():
@@ -30,6 +31,7 @@ def test_huge_claimed_vector_gives_no_finite_enclosure():
     assert enc.radius[0] == float("inf") and not enc.all_distinct
 
 
+@needs_flint
 def test_exact_bracket_statement_names_the_exact_bracket():
     """C16_exact_bracket: the certified sentence used to print the outward-rounded binary64 bracket; an eigenvalue
     within one ulp below the counted bracket's end lies in the printed interval but not in the count, so the

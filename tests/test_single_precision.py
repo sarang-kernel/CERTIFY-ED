@@ -16,6 +16,7 @@ import scipy.sparse as sp
 
 import certify_ed as ce
 from certify_ed.certify import Claim, Options, certify
+from conftest import eigh_dense
 
 E = 2.0 ** -30                              # the off-diagonal entry; eigenvalues 1 - E and 1 + E
 SINGLE = {"float32": "float64", "complex64": "complex128"}
@@ -652,7 +653,7 @@ def test_certify_low_energy_single_precision_blocks(dtype):
         assert np.all(found)
         V = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (V.T @ H @ V).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         V32, H32, Y32 = V.astype(dtype), Hs.astype(dtype), Ys[:, sel].astype(dtype)   # entries exact in float32
         secs.append(SectorResult(f"nup={nup}", V32, H32, ws[sel], Y32))
