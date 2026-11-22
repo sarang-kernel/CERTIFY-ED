@@ -7,6 +7,16 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Peak memory of the planner measurements on Linux
+
+The planner tests measure the peak memory of a factorization in a child process (`experiments/portable.py`,
+`peak_rss_mb`). On Linux it read `ru_maxrss`, which after fork (or vfork) and exec starts at the peak resident size of
+the parent: inside a full test run the child reported the peak of the pytest process, and three tests of
+`tests/test_planner.py` failed on Linux in the full suite only (measured peaks 129 MiB, 0 MiB and 268 MiB against
+predictions of 854, 132 and 1373 MiB; they pass alone). It now reads VmHWM of `/proc/self/status`, the peak of the
+process's own address space (`ru_maxrss` where `/proc` is absent). A new Linux test runs the reader in a child of a
+process holding 300 MiB. No change to the package; the planner's constants are as calibrated.
+
 ### Repeated entries summed at the start (soundness fix)
 
 A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now
