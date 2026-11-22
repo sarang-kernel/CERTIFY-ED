@@ -105,7 +105,9 @@ midpoint BIG + 2^970 that the cascade accepted as +-BIG is now nan. Statements c
 the one quantity that overflowed: for a trial vector whose squared norm lies within about 2^-25 of BIG (x = sqrt(BIG)
 (1 - 2^-30) e_1 with H = diag(1, 2, 3), for example), V1 and V2 of `certify_variational` and G2 and G3 of
 `certify_generalized` are now CERTIFIED, with bounds that contain the exact eigenvalue; they were INCONCLUSIVE with
-NONFINITE_BOUND. No statement changes from CERTIFIED. Above about 2^512 the norm bounds of S2, S3 and the variational
+NONFINITE_BOUND. M1 of `certified_moments` changes the same way for such a vector, but there only for input outside its
+hypotheses: its interval rests on the caller's S4 record (s, eta), and a record with eta < 1 excludes a vector whose
+Gram defect is near BIG. No statement changes from CERTIFIED. Above about 2^512 the norm bounds of S2, S3 and the variational
 statements overflow first, so those inputs stay INCONCLUSIVE as before. Function results change at the top of the
 range: `enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan.
 `docs/proofs/int05_underflow.md`: Lemma U2 stated its bound "for all inputs"; the statement is narrowed, and Lemma U2b
