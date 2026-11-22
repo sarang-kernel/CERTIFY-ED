@@ -84,6 +84,17 @@ No constant changes; statuses change only on the inputs named here. The computat
   value, S3, S4 and S8 give `NEEDS_EIGENVECTORS` ('the claim has eigenvalues only'); certificates with a non-finite
   claimed value, or with an `existence-only` enclosure, do not load under the default schema validation (as at main).
 
+### GPU products: the device probe reads the moduli in the stored order
+
+With the summing above, `fp.abs_up` returns the summed matrix (indices sorted) and no longer sorts the caller's matrix
+in place. The device probe (`gpu.probe`) checks the ordered kernels on matrices with unsorted indices and took their
+moduli from `abs_up`, so the kernels read the moduli in another order than the values: on the H100 of the GPU re-test of
+main (`bf567f9f`) the check `kernels_match_scipy` failed and every call with `device="gpu"` used the CPU products (the
+device record says `used: false` with that reason; the certificates are those of the CPU, and 13 tests of
+`tests/test_gpu.py` failed). The probe now takes the moduli on the stored pattern (`gpu._moduli_in_stored_order`), and
+the ordered kernels refuse moduli on another pattern. The device test of the products compares with the summed matrix
+that `DeviceCSR` holds, as the CPU products do. No bound, status or CPU product changes.
+
 ### Repeated entries summed at the start (soundness fix)
 
 A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now

@@ -213,6 +213,9 @@ class _Ordered:
     """The ordered kernels on one CSR matrix held on the device (no probe, no spot check, no memory policy)."""
 
     def __init__(self, cp, A, absA):
+        if not (absA.shape == A.shape and np.array_equal(absA.indptr, A.indptr)
+                and np.array_equal(absA.indices, A.indices)):
+            raise GPUUnavailable("|A| does not share the stored pattern of A")
         self.cp = cp
         self.shape = A.shape
         self.nnz = int(A.nnz)
@@ -471,6 +474,13 @@ def _with_empty_rows(A, rows):
     return A
 
 
+def _moduli_in_stored_order(A):
+    """The entrywise moduli (modulus_up) of the CSR matrix A without repeated entries, on A's own stored pattern and
+    order. abs_up returns the summed matrix, whose indices are sorted; the ordered kernels read |A| in A's stored
+    order, so the probe's unsorted matrices need the moduli in that order."""
+    return sp.csr_matrix((modulus_up(A.data), A.indices.copy(), A.indptr.copy()), shape=A.shape)
+
+
 def probe(force: bool = False) -> Dict[str, Any]:
     """The floating-point checks of the current device that the ordered kernels rely on (cached per device).
     Returns {'holds': bool, 'checks': {...}, 'failed': [...], 'device': {...}} (or 'error' when a check could
@@ -514,7 +524,7 @@ def probe(force: bool = False) -> Dict[str, Any]:
         for cplx in (False, True):
             for sorted_idx in (True, False):
                 A = _with_empty_rows(_random_csr(rng, 300, 280, 0.05, cplx, sorted_idx, extreme=True), (0, 10, 11, 299))
-                aA = abs_up(A)
+                aA = _moduli_in_stored_order(A)
                 core = _Ordered(cp, A, aA)
                 X = rng.standard_normal((280, 11)) * rng.choice(np.array([1.0, 2.0 ** -540, 2.0 ** 300]), (280, 11))
                 Xc = X + 1j * rng.standard_normal((280, 11))
