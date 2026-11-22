@@ -21,6 +21,7 @@ regardless passes a number or None.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Dict, Optional, Tuple  # noqa: F401
 
 # (dimension, seconds) of the 3.1.0 evidence run (E2), per model family
@@ -546,7 +547,20 @@ def narrow_input_mb(claim, options) -> float:
         except (PrecisionError, TypeError, ValueError):
             return 0.0
         return 0.0
-    first = lambda v: v[0] if isinstance(v, (tuple, list)) and len(v) else None     # noqa: E731
+    def first(v):
+        # S of an entry (S, lattice[, allowed]) as certify reads it: a sequence, a mapping {0: S, ...}, or a collection
+        # that can be iterated again but not indexed (a dict.values() view, a class with __iter__ only); an iterator is
+        # not read here (it would be spent before certify reads it)
+        if v is None or sp.issparse(v) or isinstance(v, (str, bytes, Iterator)):
+            return None
+        if isinstance(v, Mapping):
+            return v.get(0)
+        if hasattr(v, "__getitem__"):
+            try:
+                return v[0] if len(v) else None
+            except (TypeError, IndexError, KeyError):
+                return None
+        return next(iter(v), None) if isinstance(v, Iterable) else None
     parts = [claim.operator, claim.sector_isometry, claim.eigenvectors]
     parts += list(options.observables.values())
     parts += [first(v) for v in options.approximate_symmetries.values()] + [first(v) for v in options.symmetries.values()]

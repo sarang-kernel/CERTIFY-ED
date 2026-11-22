@@ -7,6 +7,83 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Small follow-ups
+
+No constant changes; statuses change only on the inputs named here. The computational source hash changes.
+
+- **Non-finite imaginary parts.** A claimed value whose imaginary part is not finite is now a non-finite value: the
+  conversion of claimed eigenvalues (`precision.claimed_reals`) makes it nan at every entry point that converts them,
+  which are `certify`, `certify_hamiltonian` (QuSpin), `certified_sweep`, `exact_recheck_lowest`,
+  `exact_recheck_sector_lowest`, `exact_eigenpair_radii`, `certify_generalized`, `certify_low_energy`, `enclose`,
+  `residuals`, the Ozaki residuals, the interval-arithmetic residuals, `corroborate`, the ALPS reader and
+  `write_bundle`. The rule for non-finite claimed values then applies: S2 and the exact re-checks are INCONCLUSIVE
+  ("claim contains non-finite values"), `exact_eigenpair_radii` gives an infinite radius and lists the index under
+  `non_finite_values`, `corroborate` is INCONCLUSIVE, and `enclose`, `certify_generalized`, the ALPS reader and
+  `write_bundle` refuse it. Before, the imaginary part was dropped, and w + ∞i was certified as w by `certify`,
+  `certify_hamiltonian`, `certified_sweep` and both exact re-checks. An object array of numpy complex scalars is now
+  seen as complex: a non-finite imaginary part makes the value nan, and a finite one is recorded (the float conversion
+  read the real parts). `invariants.spectrum_invariants` reads claimed values as certify does, so a non-finite imaginary
+  part makes `compare_invariants` decide nothing (it compared the real part).
+- **Real non-finite claimed values.** `exact_eigenpair_radii` raised a ValueError from the rational conversion for a
+  real nan, and `write_bundle` wrote a real nan or infinity (whose readers then refused the file). `corroborate` is
+  INCONCLUSIVE for a non-finite claimed value before any recomputation runs (`non_finite_values`; the tolerance is nan);
+  for a real infinity it said CORROBORATED, since its tolerance was infinite. `exact_eigenpair_radii` has the key
+  `non_finite_values` only when there is such a value, so the S6 evidence of finite claims is as before.
+  `docs/schema.md` and the certificate schema name the S5 evidence key `non_finite_values` (a new optional evidence key:
+  no version change, `docs/SCHEMA_RFC_PROCESS.md`).
+- **Dropped finite imaginary parts.** The conversion is otherwise that of 3.x: a finite nonzero imaginary part is
+  dropped (with numpy's ComplexWarning) and the statements concern the real parts, and a list of Python complex numbers
+  is refused with numpy's TypeError. New: the claim record of `certify` then holds `dropped_imaginary_parts` (`count`,
+  `max_abs`), an optional field (`certify_ed/schema.py`, `docs/schema.md`, the rendered schema), and `not_verified`
+  names those parts, so that the report shows them; claims without such parts are recorded as before.
+  `certify_hamiltonian`, `certified_sweep` and `claim_from_file` pass values that hold a nonzero imaginary part (a
+  complex array, or an object array of numbers) to the claim as given, and other values in their float form, as at main
+  (`precision.carries_imaginary_parts`; the QuSpin wrapper sorts them by their real parts, as before; `claim_from_file`
+  converted every value to real, with no record), so the record is made there as well. The sector composition writes it
+  into the sector's record (`precision.dropped_imaginary_parts`) and, summed over the sectors, into its own record
+  (`count`, `max_abs`, `sectors`) and its summary. Where the record is not made: `certify_generalized`, `write_bundle`
+  (which holds the real parts only), the ALPS reader and the exact re-checks drop finite imaginary parts as in 3.x,
+  without a record (an open item, `docs/project/failures/05_open_items.md`).
+- **Sector composition.** A sector with a non-finite claimed value is INCONCLUSIVE before anything is counted, with the
+  first indices and their number in its record (`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of
+  the count, so the sector was reported MISSING and the composition FAILED, and w + ∞i was certified.
+- **Symmetry entries.** An (approximate) symmetry entry given as an iterator, or as a mapping with keys besides 0, 1 and
+  2, now gets the private copy and the widening record of a tuple entry; an iterator entry of `Options.symmetries` was
+  read without either, one of `Options.approximate_symmetries` raised a TypeError, and a mapping with further keys was
+  passed on as given. An entry of `Options.symmetries` is read by index, so a mapping {0: S, 1: lattice} is accepted in
+  binary64 as well (it raised a TypeError; in float32 it was accepted through its converted copy); an iterator is read
+  once, when `certify` starts, and an empty one is refused with that reason. A mapping entry without the key 0 or 1, and
+  an entry without a length, are refused with the message of a sequence of the wrong length (a KeyError or a TypeError
+  before); a malformed entry of `Options.symmetries` is refused when `certify` starts, whether or not S4 reads it
+  (before, only when S4 reached the entry), so an entry that main accepted while S4 did not read it is now refused. An
+  entry of `Options.approximate_symmetries` that cannot be read as (S, lattice[, allowed_values]) (empty, a mapping
+  without the keys its length asks for, None, a number, a string, a bare sparse matrix) is refused with that message
+  where S4 reads it (an IndexError, KeyError or TypeError there before); a dense 2-D array entry is read by its rows, as
+  in 3.x. certify still passes such an entry on as given, so a run whose statements do not read it certifies as before
+  (`tests/test_input_unchanged.py`). An entry that can be iterated but not indexed (a `dict.values()` view, a class with
+  `__iter__` only) is read as its items, as 3.x unpacked it. The planner (`cost.narrow_input_mb`) counts a mapping
+  entry, a values view and an iterable-only entry as a tuple entry (an iterator is not read there).
+- **Operators of the moments and variational checks.** `certified_moments` and `certify_variational` refuse an operator
+  or observable with non-finite entries, or with repeated entries that sum beyond the range, with that reason (they
+  reported 'not Hermitian' with a nan difference); the check reads the values a sparse matrix holds, in every format,
+  not spare capacity past nnz or DIA padding (`precision._stored_values`).
+- **Other fixes.** `sectors.restrict_to_u1` drops stored zeros of the isometry before the row look-up (a stored zero in
+  a row after the last row of the support raised an IndexError). S8 gives S2's reason code for a cluster whose pairs S2
+  did not certify distinct because a radius is not finite: `NONFINITE_BOUND` for couplings of 1e200,
+  `UNRESOLVED_VECTOR_NORM` for vectors scaled by 1e-170 or 1e155 (it had no code; its record marks such a cluster
+  `radius_not_finite`); a radius that is infinite for another reason (a zero claimed vector) gives no code, as in S2;
+  `docs/SCOPE_MATRIX.md` lists S8 under both codes. The figure helper `experiments/figures/_common.py` is renamed
+  `_figcommon.py`: `docs/proofs` has its own `_common`, and in one test session the module imported first was used for
+  both (an ImportError in `tests/test_nonhermitian.py`, depending on the test order); `tests/test_figures.py` is skipped
+  when `experiments/figures` is absent (the source distribution).
+- **Tests.** `tests/test_small_followups.py` (each case fails at the base bf567f9f, run with the new helper's import
+  replaced by the 3.x conversion, except three that guard behaviour the base already has: no S8 code for a zero claimed
+  vector, and two entry forms read as their items; the conversion control fails only on its assertions about the
+  helper).
+- **Open** (listed in `docs/project/failures/05_open_items.md`): for a claim with eigenvectors and a non-finite claimed
+  value, S3, S4 and S8 give `NEEDS_EIGENVECTORS` ('the claim has eigenvalues only'); certificates with a non-finite
+  claimed value, or with an `existence-only` enclosure, do not load under the default schema validation (as at main).
+
 ### Repeated entries summed at the start (soundness fix)
 
 A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now

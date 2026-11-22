@@ -33,7 +33,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .fp import U, abs_up, add_up, exact_dot, gamma, gamma_dot, inf_norm_upper, modulus_up, norm2_upper, sub_down, up
 from .inertia import inertia_dense
-from .precision import binary64, check_values, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, summed, widening_record
 from .spec import canonical_json
 
 GENERALIZED_SCHEMA = "certify-ed/generalized/1.0"
@@ -211,7 +211,7 @@ def certify_generalized(A, B, eigenvalues, eigenvectors, kind: str = "lowest", *
         raise ValueError(f"A and B must have the same shape, got {A.shape} and {B.shape}")
     n = A.shape[0]
     check_values(eigenvalues, "eigenvalues")   # the conversion below must be exact (precision.py)
-    mu = np.asarray(eigenvalues, dtype=float).ravel()
+    mu = claimed_reals(eigenvalues).ravel()
     X = binary64(np.asarray(eigenvectors), "eigenvectors", widened)
     if X.ndim == 1:
         X = X[:, None]

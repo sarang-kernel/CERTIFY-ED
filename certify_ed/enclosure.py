@@ -68,7 +68,7 @@ from .fp import (U, ULP_MIN, gamma, gamma_dot, up, norm2_upper, norm2_lower, fro
                  inf_norm_upper, max_nnz_per_row, exact_dot, exact_gram, residual_additive_term, gram_additive_term,
                  sub_down, add_up, sub_up, check_guard_range, modulus_up, abs_up)
 from .gpu import GPUUnavailable
-from .precision import binary64, require_binary64, summed
+from .precision import binary64, claimed_reals, require_binary64, summed
 
 EXACT_GRAM_BUDGET = 20_000_000   # n*g*(g+1)/2 above which the gamma_n Gram bound is used
 
@@ -438,7 +438,7 @@ def residuals(adapter: OperatorAdapter, mu: np.ndarray, X, block_mb: Optional[fl
     residual matrix (default: yes for in-memory vectors, no for streamed ones). products: (H X, |H| |X|)
     already formed for in-memory X (one block; the |H| |X| array is consumed in place). Vectors in a narrower format
     are converted exactly to binary64 first (precision.binary64)."""
-    mu = np.asarray(mu, dtype=float)
+    mu = claimed_reals(mu)              # a non-finite imaginary part: nan (precision.py)
     X = require_binary64(binary64(X, "eigenvectors", stream=True), "residuals")    # fail closed (precision.py)
     streamed = is_streamed(X)
     if not streamed:
@@ -685,7 +685,7 @@ def enclose(adapter: OperatorAdapter, mu: Sequence[float], X, block_mb: Optional
     `residuals`); with a dense operator the vectors are read whole. `residual_report`: a ResidualReport for
     (adapter, mu, X) computed elsewhere (3.3.0.dev0, roadmap D-03: `ozaki.residual_report`, UNVERIFIED and not the
     default); when None (every caller in the package) the report is `residuals(adapter, mu, X, block_mb)`."""
-    mu = np.asarray(mu, dtype=float)
+    mu = claimed_reals(mu)              # a non-finite imaginary part: nan, refused below
     k = mu.size
     if X is None:
         raise ValueError("eigenvectors are required for enclosures (eigenvalue-only claims "

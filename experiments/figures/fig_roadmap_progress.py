@@ -10,7 +10,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common as C  # noqa: E402
+import _figcommon as C  # noqa: E402
 
 NAME = "fig_roadmap_progress"
 DATA = os.path.join(C.HERE, "data", "ROADMAP_expansion_items_2026-11-03.csv")

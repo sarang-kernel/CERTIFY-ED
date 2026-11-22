@@ -34,7 +34,7 @@ import scipy.sparse as sp
 from .certificate_v2 import Certificate, _jsonable, canonical_json
 from .construct import build_bitwise
 from .fp import U, abs_up, add_up, inf_norm_upper, modulus_up, sub_down, up
-from .precision import binary64, check_values, summed
+from .precision import binary64, carries_imaginary_parts, check_values, claimed_reals, summed
 from .spec import ModelSpec, Term
 
 __all__ = ["derivative_spec", "affinity_defect", "matrix_affinity_defect", "term_norm_bound", "h1_norm_bound", "certified_sweep",
@@ -234,9 +234,11 @@ def certified_sweep(spec_fn: Callable[[float], ModelSpec], couplings: Sequence[f
             blocks.append(H)
         w, Y = solver(H, k)
         check_values(w, "solver eigenvalues")          # before the conversion (precision.py)
-        w = np.asarray(w, dtype=float)
+        w_given = np.asarray(w)                        # complex values as given: certify records what it drops
+        w = claimed_reals(w)
         Y = np.asarray(Y)
-        claim = Claim(w[:k], Y[:, :k], operator=H, kind=kind, states=states if V0 is None else None,
+        claim = Claim((w_given if carries_imaginary_parts(w_given) else w)[:k], Y[:, :k], operator=H, kind=kind,
+                      states=states if V0 is None else None,
                       sector_isometry=V_full, accuracy_target=accuracy_target,
                       description=f"{spec.name or 'model'} at {parameter_name} = {c!r}")
         cert = certify(claim, spec, opts)

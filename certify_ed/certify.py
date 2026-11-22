@@ -36,6 +36,7 @@ import math
 import sys
 import time
 from dataclasses import dataclass, field, replace
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
@@ -54,7 +55,7 @@ from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, GuardRangeError, add_up, float
                  guard_range_findings, inf_norm_upper, probe_float_environment, sub_down, underflow_scan, up)
 from .inertia import inertia as inertia_count
 from .invariants import compare_invariants, matrix_invariants, spec_invariants
-from .precision import binary64, check_values, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, dropped_imaginary_parts, summed, widening_record
 from .presets import STATEMENTS, preset_options, resolve_selection
 from .scope import Budget, build_scope_block
 from .sectors import audit_sector, restrict_to_u1
@@ -142,7 +143,8 @@ class Options:
     cluster_tol: float = 0.0                 # claimed values closer than this form one cluster (S4)
     observables: Dict[str, Any] = field(default_factory=dict)       # name -> operator in claim space
     symmetries: Dict[str, Tuple[np.ndarray, Optional[float]]] = field(default_factory=dict)
-    #   name -> (diagonal of S in the claim space, lattice spacing of its eigenvalues or None)
+    #   name -> (diagonal of S in the claim space, lattice spacing of its eigenvalues or None), as a tuple, a list or a
+    #   mapping {0: ..., 1: ...}; an iterator is read once, when certify() starts (pass a tuple to reuse the Options)
     corroborate: Sequence[str] = ()
     store_eigenvectors: bool = False
     probe_vectors: int = 3
@@ -1000,14 +1002,28 @@ def _as_given(claim: Claim, own, widened=None) -> Claim:
 
     Every bound counts binary64 arithmetic (fp.U = 2^-53); numpy would form the products of single-precision data in
     single precision, so such data are widened here, before anything runs (precision.py). The widening is exact: the
-    statements concern the values as stored. Claimed eigenvalues are converted with dtype=float as before; a type for
-    which that conversion would round is refused."""
+    statements concern the values as stored. Claimed eigenvalues are converted with dtype=float as before (a value with a
+    non-finite imaginary part becomes nan: precision.claimed_reals); a type for which that conversion would round is
+    refused."""
     check_values(claim.eigenvalues, "claim.eigenvalues")
     op, iso = own(claim.operator, "claim.operator"), own(claim.sector_isometry, "claim.sector_isometry")
     X = binary64(claim.eigenvectors, "claim.eigenvectors", widened, stream=True, keep_integers=True)
     if op is claim.operator and iso is claim.sector_isometry and X is claim.eigenvectors:
         return claim
     return replace(claim, operator=op, sector_isometry=iso, eigenvectors=X)
+
+
+def _symmetry_pair(name, ent):
+    """(S_diagonal, lattice) of an Options.symmetries entry, read by index: a mapping needs the keys 0 and 1, a sequence
+    the length 2; anything else (a string, an entry without a length, a wrong length) is refused with one message."""
+    try:
+        pair = not isinstance(ent, (str, bytes)) and (
+            (0 in ent and 1 in ent) if isinstance(ent, Mapping) else len(ent) == 2)
+    except TypeError:                      # an entry without a length (None, a number)
+        pair = False
+    if not pair:
+        raise ValueError(f"options.symmetries[{name}] must be (S_diagonal, lattice)")
+    return ent[0], ent[1]
 
 
 def _options_as_given(opts: Options, own) -> Options:
@@ -1019,6 +1035,22 @@ def _options_as_given(opts: Options, own) -> Options:
     def entry(v, what):                    # (approximate) symmetry: (S, lattice[, allowed]) as a sequence
         if sp.issparse(v) or isinstance(v, (str, bytes)):
             return v
+        if isinstance(v, Mapping):             # read by index where it is used: the copy keeps every key
+            if 0 not in v:
+                return v
+            S_own = own(v[0], what)
+            return v if S_own is v[0] else {**v, 0: S_own}
+        if isinstance(v, Iterator):            # read once, here (a generator): its items, so that S is owned and recorded
+            items = tuple(v)
+            if not items:
+                raise ValueError(f"{what}: an empty iterator (an entry is (S, lattice[, allowed]); an iterator is read "
+                                 "once, so pass a tuple to reuse the Options)")
+            return (own(items[0], what), *items[1:])
+        if isinstance(v, Iterable) and not hasattr(v, "__getitem__"):
+            # an iterable that cannot be indexed (a dict.values() view, a class with __iter__ only): its items, as
+            # 3.x unpacked it; an empty one is refused where the entry is read (not a pair)
+            items = tuple(v)
+            return (own(items[0], what), *items[1:]) if items else items
         try:
             S = v[0]
             rest = tuple(v[i] for i in range(1, len(v)))       # read by index, as labels_hook reads it
@@ -1034,6 +1066,8 @@ def _options_as_given(opts: Options, own) -> Options:
     obs = {k: own(v, f"options.observables[{k}]") for k, v in obs_given.items()}
     asym = {k: entry(v, f"options.approximate_symmetries[{k}]") for k, v in asym_given.items()}
     syms = {k: entry(v, f"options.symmetries[{k}]") for k, v in syms_given.items()}
+    for k, v in syms.items():                          # refused here, whether or not S4 later reads the entry
+        _symmetry_pair(k, v)
     if all(obs[k] is obs_given[k] for k in obs) and all(asym[k] is asym_given[k] for k in asym) and \
             all(syms[k] is syms_given[k] for k in syms):
         return opts
@@ -1081,7 +1115,7 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     the plan (cost.narrow_input_mb)."""
     t_start = time.time()
     statements = _StatementLog(opts.progress, t_start)
-    mu = np.asarray(claim.eigenvalues, dtype=float)
+    mu = claimed_reals(claim.eigenvalues)          # a non-finite imaginary part: nan (INCONCLUSIVE, precision.py)
     X = claim.eigenvectors
     streamed = X is not None and is_streamed(X)
     if streamed and not isinstance(X, (np.memmap, StreamedColumns)):
@@ -1643,7 +1677,10 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                     O_spread = O if r_obs.get("hermitian", True) else (sp.csr_matrix(O) + sp.csr_matrix(O).conj().T) / 2
                     ec.observables[name]["per_vector_spread_under_rotation"] = rotation_spread(X, C, O_spread)
                 corr_recs = _correlations(ec, X, spec, claim, correlations, rec, audit=audit)
-                for name, (sdiag, lattice) in opts.symmetries.items():
+                for name, ent in opts.symmetries.items():
+                    # (S_diagonal, lattice), read by index as labels_hook reads the approximate symmetries, so that
+                    # a mapping {0: S, 1: lattice} (the private copy keeps its keys) is read as the pair it holds
+                    sdiag, lattice = _symmetry_pair(name, ent)
                     if isinstance(sdiag, str) and sdiag == "su2":
                         _total_spin(ec, X, name, spec, claim, rec)
                         continue
@@ -1878,11 +1915,19 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                 ev8 = {"clusters": recs}
                 if exact_note is not None:
                     ev8["exact_bracket"] = exact_note
-                # a bracketing count refused because a bound overflowed names the cause, as S3 does
-                code8 = ("NONFINITE_BOUND" if st8 == "INCONCLUSIVE" and any(
-                    r.get("nonfinite_bound") or any(isinstance(c, dict) and c.get("nonfinite_bound")
-                                                    for c in (r.get("counts") or []))
-                    for r in recs if r.get("status") == "INCONCLUSIVE") else None)
+                # a bracketing count refused because a bound overflowed names the cause, as S3 does; a cluster that S2
+                # did not certify distinct because a radius is not finite takes S2's reason code (an overflow, or a
+                # vector norm binary64 does not resolve)
+                incon8 = [r for r in recs if r.get("status") == "INCONCLUSIVE"]
+                s2_code = next((s["evidence"].get("reason_code") for s in statements
+                                if s["id"] == "S2.eigenpairs" and isinstance(s.get("evidence"), dict)), None)
+                code8 = None
+                if st8 == "INCONCLUSIVE" and any(
+                        r.get("nonfinite_bound") or any(isinstance(c, dict) and c.get("nonfinite_bound")
+                                                        for c in (r.get("counts") or [])) for r in incon8):
+                    code8 = "NONFINITE_BOUND"
+                elif st8 == "INCONCLUSIVE" and any(r.get("radius_not_finite") for r in incon8):
+                    code8 = s2_code if s2_code in ("NONFINITE_BOUND", "UNRESOLVED_VECTOR_NORM") else None
                 statements.append(_stmt("S8.degeneracy", st8, summ8, ev8, assumptions8, time.time() - t0,
                                         reason_code=code8))
 
@@ -1904,10 +1949,16 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
                  "accuracy_target": claim.accuracy_target,
                  "eigenvalues": mu.tolist(),
                  "eigenvectors_sha256": array_sha256(X) if X is not None else None}
+    dropped = dropped_imaginary_parts(claim.eigenvalues)
+    if dropped is not None:                      # the statements concern the real parts (as in 3.x): say what was dropped
+        claim_rec["dropped_imaginary_parts"] = dropped
     not_verified = [
         "that the model specification is the Hamiltonian the authors intend (only producer operator == spec is checked)",
         "correctness of the producer's code in general (only this result is checked)",
     ]
+    if dropped is not None:
+        not_verified.append(f"the imaginary parts of {dropped['count']} claimed value(s), largest in magnitude "
+                            f"{dropped['max_abs']:.6g}: the statements concern the real parts")
     s6_ok = any(s["id"] == "S6.exact_recheck" and s["status"] == "CERTIFIED" for s in statements)
     if enc is not None and enc.rigorous and not s6_ok:
         not_verified.append("interval-arithmetic proof: bounds rely on the standard floating-point model (see 'arithmetic')")

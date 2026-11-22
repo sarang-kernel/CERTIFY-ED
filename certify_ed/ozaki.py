@@ -38,7 +38,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .fp import U, ULP_MIN, _GUARD, abs_up, gamma, norm2_upper, norm2_lower, up
-from .precision import binary64, require_binary64, summed
+from .precision import binary64, claimed_reals, require_binary64, summed
 
 DEFAULT_MAX_SLICES = 8
 MAX_EXPONENT = 480          # |entries| < 2^480: products of two slices and their sums stay far below 2^1024
@@ -459,7 +459,7 @@ def ozaki_residual(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES, block_cols: O
     the diagonal term mu_c x_ic is one exact product per slice pair. The terms of entry (i, c) are summed with
     Sum2; the remainders of H, X and mu are bounded by |H| |R_X| + |R_H| |Xs| + |Xs| |r_mu| + |R_X| |mu|."""
     t0 = time.time()
-    mu = np.asarray(mu, dtype=float).ravel()
+    mu = claimed_reals(mu).ravel()
     X = binary64(np.asarray(X), "eigenvectors")    # the slices are error-free for binary64 data only (precision.py)
     H = summed(binary64(H, "operator"), "operator")
     if X.ndim == 1:
@@ -569,7 +569,7 @@ def residual_report(H, mu, X, max_slices: int = DEFAULT_MAX_SLICES):
     H = summed(binary64(H, "operator"), "operator")
     if X.ndim == 1:
         X = X[:, None]
-    mu = np.asarray(mu, dtype=float).ravel()
+    mu = claimed_reals(mu).ravel()
     r = ozaki_residual(H, mu, X, max_slices)
     with np.errstate(divide="ignore", invalid="ignore"):
         est = r.computed / np.linalg.norm(X, axis=0)

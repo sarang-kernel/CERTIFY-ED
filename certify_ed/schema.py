@@ -109,7 +109,9 @@ def _statement_evidence_defs() -> Dict[str, dict]:
         "S5.corroboration": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
             "oracles": {"type": "object"}, "independence": {"type": "object"},
-            "tolerance": num, "note": {"type": "string"}}},
+            "tolerance": num, "note": {"type": "string"},
+            "non_finite_values": {"type": "array", "items": {"type": "integer"},
+                                  "description": "indices of non-finite claimed values (then nothing is compared)"}}},
         "S6.exact_recheck": {"type": "object", "properties": {"reason_code": {"$ref": "#/$defs/reason_code"}}},
         "S7.thermodynamics": {"type": "object", "properties": {
             "reason_code": {"$ref": "#/$defs/reason_code"},
@@ -248,7 +250,13 @@ def _certificate_schema() -> dict:
                     "accuracy_target": {"type": ["number", "null"]},
                     "eigenvalues": {"type": "array", "items": {"type": "number"},
                                     "description": "the claimed eigenvalues in the claim's order (finite)"},
-                    "eigenvectors_sha256": NULLABLE_SHA256},
+                    "eigenvectors_sha256": NULLABLE_SHA256,
+                    "dropped_imaginary_parts": {
+                        "type": "object", "required": ["count", "max_abs"],
+                        "properties": {"count": {"type": "integer", "minimum": 1}, "max_abs": num},
+                        "description": "present when the claimed values were complex with finite nonzero imaginary "
+                                       "parts: the statements concern the real parts (as in 3.x); how many were "
+                                       "dropped and the largest magnitude of one"}},
                 "if": {"properties": {"kind": {"const": "window"}}},
                 "then": {"required": ["window"], "properties": {"window": {"$ref": "#/$defs/interval"}}}},
             "statement": {

@@ -22,7 +22,7 @@ import numpy as np
 
 from .basis import CyclicSymmetry
 from .checker import exact_matrix, inertia_exact
-from .precision import check_values
+from .precision import check_values, claimed_reals
 
 
 def site_permutation(spec, perm, name="site_permutation") -> CyclicSymmetry:
@@ -308,7 +308,7 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     okc, bad = check_commutes(ex, group)
     if not okc:
         return {"status": "FAILED", "reason": f"{bad} is not a symmetry of the declared model"}
-    lam = np.atleast_1d(np.asarray(lam, dtype=float))
+    lam = np.atleast_1d(claimed_reals(lam))
     X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, None]

@@ -11,7 +11,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common as C  # noqa: E402
+import _figcommon as C  # noqa: E402
 
 NAME = "fig_certificate_anatomy"
 

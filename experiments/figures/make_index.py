@@ -9,7 +9,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common as C  # noqa: E402
+import _figcommon as C  # noqa: E402
 
 FIG = os.path.join(C.ROOT, "docs", "figures")   # --dir <path> selects another figure directory (docs/figures_run_3.2.1)
 RUN_A = "run_full_20261022 (Windows, certify-ed 3.1.0 evidence run)"   # replaced from fig_cost_memory.numbers.json

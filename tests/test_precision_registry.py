@@ -801,6 +801,9 @@ EXEMPT = {
                                    "for narrower formats (test_duplicate_entries)",
     "certify_ed.precision.needs_summing": "a predicate on the sparse format and flags, no output data",
     "certify_ed.precision.check_values": "a check, no output",
+    "certify_ed.precision.claimed_reals": "the conversion of claimed values (test_small_followups)",
+    "certify_ed.precision.dropped_imaginary_parts": "the record of what that conversion drops (test_small_followups)",
+    "certify_ed.precision.carries_imaginary_parts": "a predicate on claimed values, no output data (test_small_followups)",
     "certify_ed.precision.widening_record": "builds the record",
     # sectors
     "certify_ed.sectors.SectorAudit": "result container",

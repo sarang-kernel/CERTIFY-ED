@@ -95,9 +95,10 @@ gap bounds, model shifts, backward errors, timings) depends on the operating sys
 versions, and may differ in its last digits between runs; each such value is a valid bound for the run that produced it
 (`what_certified_means.md`, section "Run-stack values").
 
-Two rules apply to every statement. Non-finite inputs (NaN or an infinity in the claimed values, the vectors or the
-operator entries) are rejected at entry and every statement is INCONCLUSIVE, and the comparisons are written so that a
-NaN cannot pass them (findings IMP-21 and IMP-22; `enclosure.enclose`, `certify.certify`, `spectrum.enclose_spectrum`).
+Two rules apply to every statement. Non-finite inputs (NaN or an infinity in the claimed values, also in the imaginary
+part of a claimed value, the vectors or the operator entries) are rejected at entry and every statement is INCONCLUSIVE,
+and the comparisons are written so that a NaN cannot pass them (findings IMP-21 and IMP-22; `enclosure.enclose`,
+`certify.certify`, `spectrum.enclose_spectrum`).
 And if the run-time probe `fp.probe_float_environment` finds a non-standard floating-point environment, every CERTIFIED
 statement except S6 is downgraded to INCONCLUSIVE, because S6 uses no floating point (`tests/test_fp_environment.py`;
 [exact_layer.md](exact_layer.md)).

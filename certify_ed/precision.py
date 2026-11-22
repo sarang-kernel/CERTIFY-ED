@@ -36,8 +36,9 @@ operators.py) are returned as given. The low-level kernels call `require_binary6
 than binary64, so an entry point that misses its conversion fails instead of certifying.
 
 Claimed eigenvalues are converted with dtype=float by the callers, as in 3.x (a complex array: the real part, with
-numpy's ComplexWarning); `check_values` refuses, under the same rule, the values for which that conversion would
-round.
+numpy's ComplexWarning; `claimed_reals` makes a value with a non-finite imaginary part nan, so that the rule for
+non-finite claimed values applies to it); `check_values` refuses, under the same rule, the values for which that
+conversion would round.
 
 Records: `widened` collects one entry per input converted from a narrower floating format (the caller's dtype, the
 target dtype and source_sha256, the hash of the input as given); certify() writes them to the certificate's
@@ -685,6 +686,57 @@ def check_values(values, what: str = "eigenvalues") -> None:
     target_dtype(arr.dtype, what)
     if arr.dtype.kind in "iu":
         _exact_ints(arr, what)
+
+def claimed_reals(values) -> np.ndarray:
+    """The claimed eigenvalues of a Hermitian claim as binary64 reals, converted as in 3.x (dtype=float; a complex array:
+    the real part, with numpy's ComplexWarning), except that a value whose imaginary part is not finite becomes nan.
+    Such a value is not finite, and the callers' rule for non-finite claimed values applies to it (INCONCLUSIVE, or
+    refused where non-finite values are refused); its real part alone would otherwise be certified. Call after
+    check_values. The conversion is that of 3.x on the values as given, so a list of Python complex numbers is refused
+    with numpy's TypeError, as before."""
+    out = np.array(values, dtype=float)
+    arr = _complex_view(values)
+    if arr.dtype.kind == "c":
+        out[~np.isfinite(arr.imag)] = np.nan
+    return out
+
+
+def _complex_view(values) -> np.ndarray:
+    """np.asarray(values), and for an object array (numpy complex scalars in an object array, which the float
+    conversion reads through their real parts) its complex form, so that the imaginary parts are seen."""
+    arr = np.asarray(values)
+    if arr.dtype.kind == "O":
+        try:
+            return np.array(values, dtype=complex)
+        except (TypeError, ValueError):
+            return arr
+    return arr
+
+
+def carries_imaginary_parts(values) -> bool:
+    """True when the values (a complex array, or an object array of numbers) hold an imaginary part that is not zero
+    (finite or not): the values a wrapper passes to the claim as given, so that certify sees and records the parts it
+    drops. Values without one (real arrays, real-valued object arrays, complex arrays whose imaginary parts are all
+    zero) are passed in their float form, as before."""
+    arr = np.asarray(values)
+    if arr.dtype.kind not in "cO":
+        return False
+    cv = arr if arr.dtype.kind == "c" else _complex_view(arr)
+    return cv.dtype.kind == "c" and bool(np.any(cv.imag != 0))
+
+
+def dropped_imaginary_parts(values) -> Optional[Dict[str, Any]]:
+    """What claimed_reals drops from complex claimed values: the number and the largest magnitude of the finite nonzero
+    imaginary parts, or None (real values, or no such part). The largest magnitude is max(im.max(), -im.min()), exact."""
+    arr = _complex_view(values)
+    if arr.dtype.kind != "c":
+        return None
+    im = arr.imag.ravel()
+    im = im[np.isfinite(im) & (im != 0)]
+    if not im.size:
+        return None
+    return {"count": int(im.size), "max_abs": float(max(im.max(), -im.min()))}
+
 
 def widening_record(widened: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """The record of the conversions (each input once), or None when there were none."""

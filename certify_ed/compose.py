@@ -34,7 +34,7 @@ from .construct import build_bitwise, hermitian_part
 from .enclosure import OperatorAdapter, enclose
 from .fp import U, ULP_MIN, add_up, fro_upper, gamma_dot, inf_norm_upper, norm2_upper, sub_down, up
 from .inertia import inertia as inertia_count
-from .precision import binary64, check_values, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, dropped_imaginary_parts, summed, widening_record
 from .sectors import audit_sector, restrict_to_u1
 from .certify import _builder_shift
 from .spec import ModelSpec
@@ -108,7 +108,17 @@ def _sector_record(spec: ModelSpec, s: SectorResult, E_cut: float, H, inertia_me
         rec["label_audit"] = {g: audit_label(spec, s.V, g, cache) for g in label_symmetries}
     contrib = {"Bn": Bn, "Hn": Hn, "m_build": m_build, "symmetrised": symmetrised, "complete": False,
                "pooled": [], "rad": 0.0, "beta": 0.0}
-    mu = np.asarray(s.eigenvalues, dtype=float)
+    mu = claimed_reals(s.eigenvalues)
+    dropped = dropped_imaginary_parts(s.eigenvalues)
+    if dropped is not None:                # the record concerns the real parts, as certify's claim record says
+        rec["dropped_imaginary_parts"] = dropped
+    bad = np.flatnonzero(~np.isfinite(mu))
+    if bad.size:
+        # a non-finite claimed value (NaN, an infinity, or a non-finite imaginary part) is rejected as in certify():
+        # nothing is counted or enclosed (before, it was left out of the count and the sector reported as MISSING)
+        rec.update(status="INCONCLUSIVE", reason="claim contains non-finite values",
+                   non_finite_eigenvalues=bad[:8].tolist(), n_non_finite=int(bad.size))
+        return rec, contrib, H
     mu_below = mu[mu < E_cut]
     r = inertia_count(Hs, E_cut, method=inertia_method)
     rec["inertia"] = r.to_dict()
@@ -276,6 +286,15 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
                    next_lower_bound=float(sub_down(sub_down(E_cut, beta_max), eps)))
         summary = (f"the {K} lowest eigenvalues of H equal the pooled sector values within "
                    f"{rmax + eps:.2e}; the next eigenvalue is >= {E_cut - beta_max - eps:.10g}")
+    dropped = [(p["label"], p["dropped_imaginary_parts"]) for p in per if "dropped_imaginary_parts" in p]
+    if dropped:
+        # the sector records concern the real parts of the claimed values (as certify's claim record says): said once
+        # here too, so that a reader of the summary sees it
+        cnt = sum(d["count"] for _, d in dropped)
+        mx = max(d["max_abs"] for _, d in dropped)
+        out["dropped_imaginary_parts"] = {"count": cnt, "max_abs": mx, "sectors": [lab for lab, _ in dropped]}
+        summary += (f"; the imaginary parts of {cnt} claimed value(s) in {len(dropped)} sector(s), largest in "
+                    f"magnitude {mx:.6g}, were dropped: the statements concern the real parts")
     out.update(status=status, summary=summary, seconds=time.time() - t0)
     if sched is not None:
         out["parallel"] = sched

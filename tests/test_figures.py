@@ -2,7 +2,8 @@
 
 Concept figures and the figures drawn from documents in the repository always run. Figures drawn from
 evidence-run records need $CERTIFY_RESULTS (and $CERTIFY_RESULTS_B for the two-stack cost figure); when a
-script exits with _common.DATA_ABSENT the test is skipped, not failed.
+script exits with _figcommon.DATA_ABSENT the test is skipped, not failed. A tree without experiments/figures (the
+source distribution) skips the module.
 """
 import glob
 import json
@@ -14,8 +15,8 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_DIR = os.path.join(ROOT, "experiments", "figures")
-# the figure scripts run in child processes only: their helper module _common has the name of the helper of the
-# verification scripts in docs/proofs/, and an import here would shadow that one for later tests
+# the figure scripts run in child processes only (their helper is experiments/figures/_figcommon.py)
+pytestmark = pytest.mark.skipif(not os.path.isdir(FIG_DIR), reason="experiments/figures is not in this tree (sdist)")
 SCRIPTS = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(FIG_DIR, "fig_*.py")))
 DATA_ABSENT = 3
 
@@ -88,8 +89,7 @@ def test_concept_figures_need_no_data(tmp_path):
 def test_mutation_figure_reads_the_integration_sample_from_docs_results():
     """fig_mutation.py reads the 3.2 mutation sample from docs/results/ (moved from the root on 20 November 2026);
     the record-driven smoke test above skips without run records, so the path and the parse are checked here. The
-    script is imported in a separate process: its helper module `_common` would otherwise shadow the module of the
-    same name that the verification scripts of docs/proofs/ import."""
+    script is imported in a separate process, so that no figure module enters the test session."""
     path = os.path.join(ROOT, "docs", "results", "RESULT_integration_3.2.md")
     assert os.path.exists(path) and not os.path.exists(os.path.join(ROOT, "RESULT_integration_3.2.md"))
     code = ("import json, sys; sys.path.insert(0, sys.argv[1]); import fig_mutation; "

@@ -12,7 +12,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common as C  # noqa: E402
+import _figcommon as C  # noqa: E402
 
 NAME = "fig_corpus_detection"
 SIDS = ["S1.model_fidelity", "S2.eigenpairs", "S3.completeness", "S4.eigenspaces", "S8.degeneracy"]
