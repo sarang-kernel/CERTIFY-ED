@@ -84,6 +84,20 @@ No constant changes; statuses change only on the inputs named here. The computat
   value, S3, S4 and S8 give `NEEDS_EIGENVECTORS` ('the claim has eigenvalues only'); certificates with a non-finite
   claimed value, or with an `existence-only` enclosure, do not load under the default schema validation (as at main).
 
+### N-11: the exact re-check of all 8 blocks
+
+Records and documents only; no code of the package changes. The computational source hash does not change.
+
+- The exact re-check of the nine-coupling crown (roadmap N-11), stopped after 3 of 8 blocks in the run of 11 and 12
+  November, was run to the end: 8 processes, one per block, at the fixed shift `nine_coupling.SHIFT_APPENDED`, joined by
+  `--combine` (code at 71f155df, pre-registered). Every count is 0, and the exact lower bound is lambda_min(H_0) >=
+  -0.5498329145062226 (rounded down -0.549832915), 6.2e-11 above the lower end of the floating-point layer; it rests on
+  the lemmas of the exact layer, which are marked UNVERIFIED. Records
+  `lean/results/apps_next/n11_crown_nine_exact_8_blocks.json` and its pre-registration.
+- `docs/lean/APPS_NEXT.md` (sections 0, 1, 3 and 8), `docs/applications.md` and `docs/lean/VERIFICATION_REPORT.md` state
+  the result; `tools/make_verification_report.py` reads the new record when it is present and otherwise writes the
+  report as before.
+
 ### GPU products: the device probe reads the moduli in the stored order
 
 With the summing of repeated entries (the section below), `fp.abs_up` returns the summed matrix (indices sorted) and no

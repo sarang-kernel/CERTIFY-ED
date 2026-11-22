@@ -37,9 +37,9 @@ states of S^z = 0.
 | Layer | Result | Code |
 |---|---|---|
 | floating point (inertia_dense, binary64 model) | −0.5498329145683885 ≤ λ_min ≤ −0.5498329144473251 (upper side: integer Rayleigh quotient); 3018 s, peak 2637 MiB | `nine_coupling.certify_nine(layer="float")` |
-| exact (inertia_exact, no FP assumption) | same shift; on the shared development machine 3 of the 8 blocks were counted (dimensions 6194, 6066, 6031; count 0 in each; 5568 s, 7424 s, 12240 s) before the run was stopped, so the exact lower bound is open | `nine_coupling.certify_nine()`; per block `certify_blocks`, joined by `combine_blocks` |
+| exact (inertia_exact, no FP assumption) | same shift; all 8 blocks counted on 22 November 2026, one process per block (count 0 in each; 1038 to 1158 s per block, peaks of at most 3198 MiB): −0.5498329145062226 ≤ λ_min, 6.2e-11 above the floating-point lower end (`lean/results/apps_next/n11_crown_nine_exact_8_blocks.json`); a first run on the shared development machine was stopped after 3 blocks (dimensions 6194, 6066, 6031; 5568 s, 7424 s, 12240 s) | `nine_coupling.certify_nine()`; per block `certify_blocks`, joined by `combine_blocks` |
 
-So e_GS ≥ −0.549832915 at the printed couplings, 3.25e-4 above the reduced-model bound. The printed
+So e_GS ≥ −0.549832915 at the printed couplings (exact layer), 3.25e-4 above the reduced-model bound. The printed
 −0.549832(8) (and the abstract's six decimals −0.549832) lie slightly above λ_min: the paper cuts the
 eigenvalue toward zero instead of rounding it down (overstatement below 1e-6). Floating-point values for
 the other readings: −0.5498335636261985 (digits dropped) and −0.5498328933843968 (c4 = 0.0000415, the

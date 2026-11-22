@@ -1,0 +1,292 @@
+{
+ "description": "N-11: exact re-check of all 8 symmetry blocks of the S^z = 0 nine-coupling crown at the printed couplings (reading 'appended') and the fixed shift nine_coupling.SHIFT_APPENDED, one process per block, joined by --combine; pre-registered in n11_crown_nine_exact_8_blocks_preregistration.md (outcome (a)).",
+ "commands": [
+  "python experiments/n11_crown_nine.py appended --blocks i --cap-gib 16   (i = 0, ..., 7, one process each)",
+  "python experiments/n11_crown_nine.py --combine DIR_0 ... DIR_7"
+ ],
+ "nine_coupling_exact_combined": {
+  "layer": "exact",
+  "reading": "appended",
+  "K": 80000000,
+  "shift": "-23061663926287/41943040000000",
+  "n_blocks": 8,
+  "sectors": [
+   {
+    "index": 0,
+    "quantum_numbers": {
+     "C2prime": 0,
+     "inversion": 0,
+     "spin_flip": 0
+    },
+    "dim": 6194,
+    "count": 0,
+    "delta": 0.0003126271488841758,
+    "delta_exact": "13297688273256495919714364127652805/42535295865117307932921825928971026432",
+    "seconds": 1157.8093619346619
+   },
+   {
+    "index": 1,
+    "quantum_numbers": {
+     "C2prime": 0,
+     "inversion": 0,
+     "spin_flip": 1
+    },
+    "dim": 6066,
+    "count": 0,
+    "delta": 0.00025918277068629587,
+    "delta_exact": "5512207917141224041206977044219131/21267647932558653966460912964485513216",
+    "seconds": 1078.2639291286469
+   },
+   {
+    "index": 2,
+    "quantum_numbers": {
+     "C2prime": 0,
+     "inversion": 1,
+     "spin_flip": 0
+    },
+    "dim": 6031,
+    "count": 0,
+    "delta": 0.00018759920787974165,
+    "delta_exact": "62340529775206698635710327367301/332306998946228968225951765070086144",
+    "seconds": 1064.6462564468384
+   },
+   {
+    "index": 3,
+    "quantum_numbers": {
+     "C2prime": 0,
+     "inversion": 1,
+     "spin_flip": 1
+    },
+    "dim": 6159,
+    "count": 0,
+    "delta": 0.000312941797576392,
+    "delta_exact": "13311071948473483792317712111946899/42535295865117307932921825928971026432",
+    "seconds": 1142.3732759952545
+   },
+   {
+    "index": 4,
+    "quantum_numbers": {
+     "C2prime": 1,
+     "inversion": 0,
+     "spin_flip": 0
+    },
+    "dim": 6089,
+    "count": 0,
+    "delta": 0.00030782110510454535,
+    "delta_exact": "13093261779149208917960298934535305/42535295865117307932921825928971026432",
+    "seconds": 1130.390928030014
+   },
+   {
+    "index": 5,
+    "quantum_numbers": {
+     "C2prime": 1,
+     "inversion": 0,
+     "spin_flip": 1
+    },
+    "dim": 5961,
+    "count": 0,
+    "delta": 0.000155589957251602,
+    "delta_exact": "1654516216334461289312060853533523/10633823966279326983230456482242756608",
+    "seconds": 1038.2163615226746
+   },
+   {
+    "index": 6,
+    "quantum_numbers": {
+     "C2prime": 1,
+     "inversion": 1,
+     "spin_flip": 0
+    },
+    "dim": 5996,
+    "count": 0,
+    "delta": 0.0002585634950350291,
+    "delta_exact": "687379672577109605786427280118423/2658455991569831745807614120560689152",
+    "seconds": 1044.3833150863647
+   },
+   {
+    "index": 7,
+    "quantum_numbers": {
+     "C2prime": 1,
+     "inversion": 1,
+     "spin_flip": 1
+    },
+    "dim": 6124,
+    "count": 0,
+    "delta": 0.0003068712320514977,
+    "delta_exact": "3263214661950881081220496416838699/10633823966279326983230456482242756608",
+    "seconds": 1144.0834066867828
+   }
+  ],
+  "delta": 3.9117724697049e-12,
+  "lower_bound": -0.5498329145062226,
+  "lower_bound_rounded_down": -0.549832915,
+  "lower_bound_exact": "-1870984455592154020915807407477298338423557267/3402823669209384634633746074317682114560000000",
+  "no_floating_point_assumption": true,
+  "seconds_blocks": 8800.166834831238,
+  "inputs": [
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246",
+   "n11_crown_nine_blocks_20261122_144246"
+  ],
+  "published_bound": "-0.549832(8)",
+  "published_appended": -0.5498328,
+  "review_float": -0.54983289,
+  "lower_minus_published": -1.1450622252533836e-07,
+  "reduced_model_bound": -0.5501582988212038,
+  "gain_over_reduced_model": 0.0003253843149812919
+ },
+ "blocks": [
+  {
+   "index": 0,
+   "quantum_numbers": {
+    "C2prime": 0,
+    "inversion": 0,
+    "spin_flip": 0
+   },
+   "dim": 6194,
+   "count": 0,
+   "delta": 0.0003126271488841758,
+   "delta_exact": "13297688273256495919714364127652805/42535295865117307932921825928971026432",
+   "seconds_count": 1157.8093619346619,
+   "seconds_process": 1188.142478942871,
+   "peak_rss_mb": 3159.09765625
+  },
+  {
+   "index": 1,
+   "quantum_numbers": {
+    "C2prime": 0,
+    "inversion": 0,
+    "spin_flip": 1
+   },
+   "dim": 6066,
+   "count": 0,
+   "delta": 0.00025918277068629587,
+   "delta_exact": "5512207917141224041206977044219131/21267647932558653966460912964485513216",
+   "seconds_count": 1078.2639291286469,
+   "seconds_process": 1107.108951330185,
+   "peak_rss_mb": 3197.53125
+  },
+  {
+   "index": 2,
+   "quantum_numbers": {
+    "C2prime": 0,
+    "inversion": 1,
+    "spin_flip": 0
+   },
+   "dim": 6031,
+   "count": 0,
+   "delta": 0.00018759920787974165,
+   "delta_exact": "62340529775206698635710327367301/332306998946228968225951765070086144",
+   "seconds_count": 1064.6462564468384,
+   "seconds_process": 1094.5253217220306,
+   "peak_rss_mb": 3040.390625
+  },
+  {
+   "index": 3,
+   "quantum_numbers": {
+    "C2prime": 0,
+    "inversion": 1,
+    "spin_flip": 1
+   },
+   "dim": 6159,
+   "count": 0,
+   "delta": 0.000312941797576392,
+   "delta_exact": "13311071948473483792317712111946899/42535295865117307932921825928971026432",
+   "seconds_count": 1142.3732759952545,
+   "seconds_process": 1178.1331503391266,
+   "peak_rss_mb": 3137.95703125
+  },
+  {
+   "index": 4,
+   "quantum_numbers": {
+    "C2prime": 1,
+    "inversion": 0,
+    "spin_flip": 0
+   },
+   "dim": 6089,
+   "count": 0,
+   "delta": 0.00030782110510454535,
+   "delta_exact": "13093261779149208917960298934535305/42535295865117307932921825928971026432",
+   "seconds_count": 1130.390928030014,
+   "seconds_process": 1164.783685684204,
+   "peak_rss_mb": 3092.78125
+  },
+  {
+   "index": 5,
+   "quantum_numbers": {
+    "C2prime": 1,
+    "inversion": 0,
+    "spin_flip": 1
+   },
+   "dim": 5961,
+   "count": 0,
+   "delta": 0.000155589957251602,
+   "delta_exact": "1654516216334461289312060853533523/10633823966279326983230456482242756608",
+   "seconds_count": 1038.2163615226746,
+   "seconds_process": 1067.5451862812042,
+   "peak_rss_mb": 2980.8125
+  },
+  {
+   "index": 6,
+   "quantum_numbers": {
+    "C2prime": 1,
+    "inversion": 1,
+    "spin_flip": 0
+   },
+   "dim": 5996,
+   "count": 0,
+   "delta": 0.0002585634950350291,
+   "delta_exact": "687379672577109605786427280118423/2658455991569831745807614120560689152",
+   "seconds_count": 1044.3833150863647,
+   "seconds_process": 1074.40522813797,
+   "peak_rss_mb": 3013.6015625
+  },
+  {
+   "index": 7,
+   "quantum_numbers": {
+    "C2prime": 1,
+    "inversion": 1,
+    "spin_flip": 1
+   },
+   "dim": 6124,
+   "count": 0,
+   "delta": 0.0003068712320514977,
+   "delta_exact": "3263214661950881081220496416838699/10633823966279326983230456482242756608",
+   "seconds_count": 1144.0834066867828,
+   "seconds_process": 1175.9114482402802,
+   "peak_rss_mb": 3111.375
+  }
+ ],
+ "run": {
+  "date": "2026-11-22",
+  "git_commit": "71f155df329b11478c097fa783e93464c61a5337",
+  "source_hash": "47dc665a8a7ea32e",
+  "tests_hash": "4be45b9c853b8342",
+  "source_dirty": false,
+  "tests_dirty": false,
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "flint": "0.9.0",
+  "flint_c_library": "3.6.0",
+  "mpmath": "1.3.0",
+  "platform": "Linux x86_64",
+  "processes": "8 (one per block) under one pin of 16 cores, nice 10, BLAS threads 1, memory cap 16 GiB each (RLIMIT_AS)",
+  "standard_model_hypotheses_hold": true,
+  "longest_block_process_seconds": 1188.142478942871,
+  "sum_of_block_count_seconds": 8800.166834831238,
+  "largest_peak_rss_mb": 3197.53125
+ },
+ "comparison": {
+  "float_layer_lower_bound": -0.5498329145683885,
+  "integer_rayleigh_upper_bound": -0.5498329144473251,
+  "exact_lower_minus_float_lower": 6.216592800851269e-11,
+  "upper_minus_exact_lower": 5.88974535333178e-11,
+  "shift_minus_exact_lower": 3.9117724697049e-12,
+  "earlier_partial_run_blocks_agree": "the 3 blocks of n11_crown_nine_exact_partial.json (dimensions 6194, 6066, 6031): same counts (0) and the same slack to the 6 decimals logged there (0.000313, 0.000259, 0.000188 in units of K H_0)"
+ }
+}
