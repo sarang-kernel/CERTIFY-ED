@@ -341,16 +341,17 @@ base). The computational source hash changes.
   ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the precision registry is used only with h5py,
   the five 40-digit reference tests of `tests/test_entanglement.py` are marked `needs_mpmath` (the module did not import
   without mpmath, which no extra lists), the figure scripts' tests and one test of `make_numbers.py` are skipped without
-  matplotlib (the `plots` extra), and `tests/conftest.py` gains `eigh_dense` (`_linalg.eigh`, for the sector tests).
-  Three tests put their energy cut between two levels instead of on a degenerate one (where the rounding of the computed
-  levels decided the verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut):
-  above the triplet in the 4-site tests (`tests/test_nonfinite_bounds.py` also above the singlet) and above the six-fold
-  level of the 8-site chain in `tests/test_parallel.py`. The recorded radii of `tests/test_whole_spectrum.py` are pinned
-  twice: the package equals the frozen pre-change module bit for bit on every stack, and both lie within 1e-12 relative
-  plus 1e-16 absolute of the recording (other BLAS and sparse kernels differ from it by up to 2.9e-17; exact equality is
-  still reported). The separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed
-  intervals are apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B
-  of `tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
+  matplotlib (the `plots` extra), and `tests/conftest.py` gains `eigh_dense` (`_linalg.eigh`, for the sector tests;
+  `tests/test_small_followups.py` uses it too, and marks its exact re-check test `needs_flint`). Three tests put their
+  energy cut between two levels instead of on a degenerate one (where the rounding of the computed levels decided the
+  verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut): above the triplet in
+  the 4-site tests (`tests/test_nonfinite_bounds.py` also above the singlet) and above the six-fold level of the 8-site
+  chain in `tests/test_parallel.py`. The recorded radii of `tests/test_whole_spectrum.py` are pinned twice: the package
+  equals the frozen pre-change module bit for bit on every stack, and both lie within 1e-12 relative plus 1e-16 absolute
+  of the recording (other BLAS and sparse kernels differ from it by up to 2.9e-17; exact equality is still reported).
+  The separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed intervals are
+  apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B of
+  `tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
   `certify_generalized` refuses under some BLAS), the same file, `tests/test_exact_dot_range.py` and
   `tests/test_verifier.py` pass int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents), and its
   tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10 (`co_qualname` exists from 3.11; the
