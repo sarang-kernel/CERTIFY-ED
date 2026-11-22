@@ -167,13 +167,19 @@ p′ + e′ = 2⁻⁶⁴ab. Rounding commutes with multiplication by 2⁶⁴ on 
 (the binades map onto each other with their grids), so fl(ab) = 2⁶⁴ fl(2⁻⁶⁴ab) = 2⁶⁴p′, exactly, and finite by
 hypothesis. e′ is a multiple of G′ = ulp(2⁻⁶⁴a)ulp(b) with fewer than 2⁵³ multiples and |e′| ≤ ulp(p′)/2, so 2⁶⁴e′ is a
 multiple of 2⁶⁴G′ with the same count and |2⁶⁴e′| ≤ ulp(fl(ab))/2 ≤ 2⁹⁷⁰: it is in F, and 2⁶⁴p′ + 2⁶⁴e′ = 2⁶⁴(p′ + e′) = ab.
-*(iii)* Every finite x ∈ F is num/2^k with an odd or zero num and 0 ≤ k ≤ 1074 (`float.as_integer_ratio`), so
-x·2¹⁰⁷⁴ = num·2^{1074−k} is an integer and the integer sum N = Σ t_j·2¹⁰⁷⁴ is exact. Python's division of two integers
-is correctly rounded (round to nearest, ties to even) and raises OverflowError when the rounded quotient is not finite,
-so N/2¹⁰⁷⁴ is the nearest binary64 number to Σ t_j, or nan is returned. `math.fsum` is exact-then-rounded where it
-does not raise; it raises OverflowError whenever a partial sum or the result overflows, and those inputs take the
-integer route. In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions;
-the robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
+*(iii)* Every nonzero finite x ∈ F is m·2^{k−1074} with integers 0 < |m| < 2⁵³ and 0 ≤ k ≤ 2045: `np.frexp` gives
+x = μ·2^ε exactly with ½ ≤ |μ| < 1, then m = μ·2⁵³ (exact, an integer) and k = ε + 1021; for a subnormal x, where
+k < 0, m is a multiple of 2^{−k} and is replaced by m·2^k with k = 0, exactly. So x·2¹⁰⁷⁴ = m·2^k is an integer.
+`fp._wide_sum` adds the m of equal k in int64 runs of at most 1024 terms, whose sums are below 1024·(2⁵³ − 1) < 2⁶³ in
+magnitude and therefore exact, and adds the run sums times 2^k as Python integers, so the integer sum
+N = Σ t_j·2¹⁰⁷⁴ is exact (corrected 2026-11-22: the terms were summed one at a time through `float.as_integer_ratio`,
+and the text gave every x as num/2^k with "an odd or zero num", which an even integer x is not). Python's division of
+two integers is correctly rounded (round to nearest, ties to even) and raises OverflowError when the rounded quotient
+is not finite, so N/2¹⁰⁷⁴ is the nearest binary64 number to Σ t_j, or nan is returned. `math.fsum` is
+exact-then-rounded where it returns a finite value (H2); where a partial sum or the result overflows it raises
+OverflowError or returns a value that is not finite, and both take the integer route (corrected 2026-11-22: it read
+that `math.fsum` raises whenever a partial sum or the result overflows).
+In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions; the robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
 step whose sum is finite (terms −3·2⁹⁷⁰ and BIG: s = BIG − 2⁹⁷¹, but s + 3·2⁹⁷⁰ = BIG + 2⁹⁷⁰ rounds to infinity),
 makes the sum or the error term of that step inf or nan, so h is not finite, and then the value is `_fsum`'s
 (corrected 2026-11-22: it read "exact wherever their float sums are finite"). With finite h, Σ t_j = h + e + r with
@@ -275,7 +281,7 @@ longer need the hypothesis. ∎
 | upper, rel | `enclosure.residuals`: `upper = (R_up + E_up) + residual_additive_term(...)`; `rel = ... * (1 + 4 * U) + 2 * ULP_MIN` | U5 |
 | exact_dot | `TINY_PRODUCT = 2^-967`, `TINY_BOUND = 2^-966`, `_MIN_NORMAL = 2^-1022`; `_two_product_split`: mask `abs(a b) >= TINY_PRODUCT`, rescaling by 2^±60 of a subnormal factor; `err = 2u|s| + n_tiny TINY_BOUND` (complex: `2u(|Re s| + |Im s|) + ...`) | U2 |
 | exact_dot, top of the range | `HUGE_FACTOR = 2^995`, `HUGE_PRODUCT = 2^996`, `_HUGE_SCALE = 2^64`; `_two_product_split`: mask `hi`, swap so the larger factor comes first, `a /= 2^64`, `b *= 2^64` for products below `HUGE_PRODUCT`, else `p, e *= 2^64` after the split; complex `err`: `2u(|re| + |im|)`, or `2u|re| + 2u|im|` where the sum overflows | U2b (i), (ii), (iv) |
-| exact_sum | `_fsum`: `math.fsum`, on OverflowError `_wide_sum` (integers on the 2^-1074 grid, one correctly rounded division, nan beyond the range); `_inside_rounding_interval(h, e, slack)` with the half-gap 2^970 at ±BIG | U2b (iii) |
+| exact_sum | `_fsum`: `math.fsum`, on OverflowError or a non-finite value `_wide_sum` (integers on the 2^-1074 grid from `np.frexp`, int64 run sums of at most 1024 terms of one exponent, one correctly rounded division, nan beyond the range); `_inside_rounding_interval(h, e, slack)` with the half-gap 2^970 at ±BIG | U2b (iii) |
 | Gram, BLAS products | `gram_additive_term(g, n, cplx) = ldexp(g (3 if cplx else 1) n (1 + gamma(n)) _GUARD^2, -1075) + ULP_MIN`, used in `_cluster_bound` for the BLAS Gram path and `XR_bound` | U1, U7 |
 | products that may be subnormal | `_cluster_bound`: `rho ... + ULP_MIN`, `XR_bound ... + 3 ULP_MIN`, `eps_star ... + 4 ULP_MIN`, BLAS-Gram `eta ... + 2 ULP_MIN`; `compose.py`: `rho = up(...) + ULP_MIN`; `sectors.decomposition_shift`, `certify._subspace_shift`: `+ ULP_MIN`; `enclosure.kato_temple`: `r2 = nextafter(r r, inf) + ULP_MIN` | U7 |
 | sums of squares | `_cluster_bound`: `Rg_fro = norm2_upper(res.upper[idx])`, `Rerr = norm2_upper(res.E_norm[idx])`; `compose`: `D = norm2_upper([inv_s])`; `decomposition_shift`: `eta`, `D` via `norm2_upper` | U3 |
@@ -336,6 +342,12 @@ Run of 2026-11-22, after the correction of the consequence of Lemma U2b (same op
 sum, and three adversarial inputs are added (the two retained-sum cases at the midpoint above BIG, which the oracle of
 the first run counts as violations, and the sum −3·2⁹⁷⁰ + BIG with an overflowing TwoSum intermediate, on both
 summation paths): U2b 7 500 random + 99 adversarial, the other counts as in the run of 2026-11-21; 0 violations.
+
+Run of 2026-11-22 after `fp._wide_sum` was vectorized (same options; output in
+`docs/proofs/runs/int05_underflow_2026-11-22_vectorized.txt`; step (iii) of the proof restated for it): the same counts
+as the run before; 0 violations. `tests/test_exact_dot_range.py` compares the vectorized sum with the term-by-term
+integer sum on 600 random term sets and 12 special ones (runs of one exponent across the 1024-term boundary, a
+sum beyond the range, an exact zero).
 
 ## 5 Analytic cross-check
 

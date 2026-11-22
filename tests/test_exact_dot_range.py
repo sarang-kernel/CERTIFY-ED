@@ -235,6 +235,11 @@ def test_statements_decided_at_the_top_of_the_range():
     from certify_ed.moments import certified_moments
     ms = {s["id"]: s for s in certified_moments(H, H, x[:, None], 1e-12, 1e-12, K=2)["statements"]}
     assert ms["M3.sum_rule_first"]["status"] == "NOT_CHECKED", ms["M3.sum_rule_first"]
+    # M1 is decided on the exact inner products (INCONCLUSIVE, NONFINITE_BOUND at main; input outside its hypotheses,
+    # see the changelog); M2 stays INCONCLUSIVE as at main: its second route, tr(P O^2)/g, overflows
+    assert ms["M1.moments"]["status"] == "CERTIFIED", ms["M1.moments"]
+    m2 = ms["M2.sum_rule_zeroth"]
+    assert m2["status"] == "INCONCLUSIVE" and m2["evidence"].get("reason_code") == "NONFINITE_BOUND", m2
     import certify_ed as ce
     cert = ce.certify(ce.Claim(np.array([1.0]), x[:, None], operator=H, kind="lowest"), None, ce.Options(seed=1))
     assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
@@ -287,3 +292,75 @@ def test_two_sum_intermediate_overflow_with_a_finite_sum(pad):
     c = [-3.0 * 2.0 ** 970, BIG]
     t = np.array(c + [1.0, -1.0] * (pad // 2))
     assert _is_nearest(exact_sum(t), sum((Fraction(v) for v in c), Fraction(0)))
+
+
+def _wide_sum_loop(t):
+    """The integer sum of the previous _wide_sum, one term at a time (float.as_integer_ratio): the reference."""
+    total = 0
+    for x in np.asarray(t, dtype=float).ravel().tolist():
+        num, den = x.as_integer_ratio()
+        total += num << (1075 - den.bit_length())
+    try:
+        return total / (1 << 1074)
+    except OverflowError:
+        return math.nan
+
+
+def _same_float(a, b):
+    return (math.isnan(a) and math.isnan(b)) or (a == b and math.copysign(1.0, a) == math.copysign(1.0, b))
+
+
+def test_wide_sum_equals_the_integer_loop():
+    """fp._wide_sum (frexp, int64 run sums, one division) equals the term-by-term integer sum bit for bit: random
+    exponents over the whole range, subnormals of both signs (m shifted out exactly), runs of one exponent across the
+    1024-term run boundary, exact cancellation, even integers, and sums at and beyond the top of the range."""
+    rng = np.random.default_rng(29)
+    cases = []
+    for trial in range(600):
+        n = int(rng.integers(1, 2500))
+        kind = trial % 6
+        if kind == 0:
+            t = rng.standard_normal(n) * np.ldexp(1.0, rng.integers(-1074, 1000, n))
+        elif kind == 1:
+            t = rng.integers(-2 ** 52, 2 ** 52, n).astype(float) * 2.0 ** -1074
+        elif kind == 2:
+            t = rng.choice([-1.0, 1.0], n) * 2.0 ** 1023 * (1 + rng.integers(0, 2 ** 52, n) * 2.0 ** -52)
+        elif kind == 3:
+            h = rng.standard_normal(n // 2 + 1) * 2.0 ** float(rng.integers(-1000, 1000))
+            t = np.r_[h, -h, rng.standard_normal(1) * 2.0 ** -1060]
+        elif kind == 4:
+            t = np.r_[BIG, BIG, -BIG, rng.standard_normal(n) * 2.0 ** 969]
+        else:
+            t = np.r_[rng.integers(-2 ** 60, 2 ** 60, n).astype(float), [4.0, -8.0, 2.0 ** 1000]]
+        cases.append(t[np.isfinite(t)])
+    for n in (1023, 1024, 1025, 2048, 2049):
+        cases.append(np.full(n, 2.0 ** 1012) * (1 + 2.0 ** -52))
+        cases.append(np.full(n, -(2.0 ** -1074) * (2 ** 52 - 1)))
+    cases.append(np.full(3000, 2.0 ** 1023))                       # beyond the range: nan
+    cases.append(np.array([BIG, -BIG]))                             # exactly zero
+    for t in cases:
+        got, want = fp._wide_sum(t), _wide_sum_loop(t)
+        assert _same_float(got, want), (t[:4], got, want)
+    assert math.isnan(fp._wide_sum(np.full(3000, 2.0 ** 1023)))
+
+
+def test_zero_subnormal_and_non_finite_companions_of_top_of_range_pairs():
+    """Pairs at the top of the range next to zeros (both signs), subnormal and tiny partners and ordinary terms: the
+    value is the nearest binary64 number to the sum of the kept products and the bound holds (main gave nan for the
+    first and third). An infinite or nan companion gives the IEEE result, as at main."""
+    tiny = 2.0 ** -1074
+    finite = [([BIG, 0.0, -0.0, tiny], [1.0, 5.0, 3.0, 1.0]),
+              ([BIG, 1.0], [-0.0, 2.0]),
+              ([BIG, 2.0 ** -1060, ROOT, -0.0], [1.0, 2.0 ** -20, -ROOT * 0.5, BIG]),
+              ([0.0, BIG, tiny, -tiny], [BIG, 1.0, BIG, 2.0 ** 52])]
+    for x, y in finite:
+        x, y = np.array(x), np.array(y)
+        s, err = exact_dot(x, y)
+        q = sum((Fraction(a) * Fraction(b) for a, b in zip(x.tolist(), y.tolist())), Fraction(0))
+        assert _is_nearest(s, _retained(x, y)), (x, y, s)
+        assert math.isfinite(err) and abs(Fraction(s) - q) <= Fraction(err), (x, y, s, err)
+    with np.errstate(all="ignore"):
+        assert exact_dot(np.array([BIG, np.inf]), np.array([1.0, 1.0]))[0] == math.inf
+        assert exact_dot(np.array([BIG, -np.inf]), np.array([1.0, 1.0]))[0] == -math.inf
+        assert math.isnan(exact_dot(np.array([BIG, np.nan]), np.array([1.0, 1.0]))[0])
+        assert math.isnan(exact_dot(np.array([BIG, 0.0]), np.array([1.0, np.inf]))[0])
