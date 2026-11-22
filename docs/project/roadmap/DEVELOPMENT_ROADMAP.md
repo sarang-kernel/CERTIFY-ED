@@ -144,7 +144,7 @@ to the writing rules of `docs/project/STYLE.md`.
 | C-13 | Fidelity and overlaps between certified eigenvectors at two couplings (Davis-Kahan sin-theta bounds) (partial) | 7 | 3.3 | M | 5 | yes |  |  |
 | D-06 | Exact layer at larger n: multimodular (nmod + CRT) rational arithmetic through FLINT for S6, lifting the ~4000 dense limit | 7 | 3.4 | L | 7 | no |  |  |
 | E-02 | Non-Hermitian problems: left/right residuals, Bauer-Fike for diagonalizable matrices, pseudospectral radii; Lindbladians and non-Hermitian spin chains | 7 | 3.3 | L | 7 | yes | now | on `dev/3.3`, UNVERIFIED, Sarang's check pending |
-| N-11 | Certify the nine-coupling headline of the spin-1/2 crown if the printed couplings determine the problem | 7 | application | M |  | no | now | floating-point layer certified; exact re-check 3 of 8 blocks |
+| N-11 | Certify the nine-coupling headline of the spin-1/2 crown if the printed couplings determine the problem | 7 | application | M |  | no | now | floating-point layer certified; exact re-check of all 8 blocks, count 0 in each (22 Nov 2026) |
 | N-12 | AKLT honeycomb lattice: size and memory estimate, and a run if it fits this machine | 7 | application | M |  | no | now | estimate only (largest block 1293292 rows), not run |
 | N-13 | Bauer-Fike and the residual form of E-02 on Mathlib | 7 | 3.3 | M |  | no | now | done for Theorem 2, its residual form and Theorem 4 (b) (K2); the count is not formalized |
 | B-08 | Mutation testing in CI on a rotating sample with a survivor ledger and a verdict workflow (e6_classify/e6_recheck stamped) (partial) | 8 | 3.3 | M | 5 | no |  |  |
