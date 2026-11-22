@@ -235,9 +235,10 @@ def fidelity_from_certificates(cert_a, cert_b, members_a: Sequence[int] = (0,), 
 
 def _entry_parts(name, ent):
     """(S, lattice, allowed_values) of an Options.approximate_symmetries entry, read by index (S = ent[0], then ent[1]
-    and ent[2] as its length allows). An entry that cannot be read so (empty, a string, a bare matrix, None, a number,
-    a mapping without the keys its length asks for) is refused with one message where it is read; certify passes such
-    an entry on as given, so a run whose statements do not read it is not affected."""
+    and ent[2] as its length allows). An entry that cannot be read so (empty, a string, a bare sparse matrix, None, a
+    number, a mapping without the keys its length asks for) is refused with one message where it is read; certify
+    passes such an entry on as given, so a run whose statements do not read it is not affected. A dense 2-D array is
+    read by its rows (S = its first row), as in 3.x."""
     try:
         if isinstance(ent, (str, bytes)) or sp.issparse(ent):
             raise TypeError

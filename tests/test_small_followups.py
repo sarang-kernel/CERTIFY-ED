@@ -590,10 +590,11 @@ def test_corroborate_tolerance_of_a_non_finite_claim_is_schema_valid():
         jsonschema.validate(None, sub)
 
 
-@pytest.mark.parametrize("form", ["tuple", "iterable-only", "no key 0", "no key 1", "None", "number", "bare matrix"])
+@pytest.mark.parametrize("form", ["tuple", "iterable-only", "no key 0", "no key 1", "None", "number", "string",
+                                  "bare sparse matrix"])
 def test_malformed_approximate_symmetry_entry_is_refused_where_it_is_read(form):
     """A malformed entry of Options.approximate_symmetries (empty, a mapping without the keys it is read by, None, a
-    number, a bare matrix) is refused with the form of an entry where S4 reads it (before: an IndexError, KeyError or
+    number, a string, a bare sparse matrix) is refused with the form of an entry where S4 reads it (before: an IndexError, KeyError or
     TypeError there); certify passes such an entry on as given, so a run whose statements do not read it certifies as
     before (tests/test_input_unchanged.py)."""
     class _Empty:
@@ -603,7 +604,7 @@ def test_malformed_approximate_symmetry_entry_is_refused_where_it_is_read(form):
     full = ce.full_state_set(spec)
     Sd = digit_sum(full.states_in_order().astype(np.int64), spec.q, spec.n_sites).astype(float)
     entry = {"tuple": (), "iterable-only": _Empty(), "no key 0": {1: None}, "no key 1": {0: Sd, 2: None},
-             "None": None, "number": 3, "bare matrix": sp.diags(Sd).tocsr()}[form]
+             "None": None, "number": 3, "string": "Sz", "bare sparse matrix": sp.diags(Sd).tocsr()}[form]
     claim = ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest")
     with pytest.raises(ValueError, match=r"approximate_symmetries\[m\] must be \(S, lattice"):
         ce.certify(claim, spec, ce.Options(seed=1, approximate_symmetries={"m": entry}))
@@ -635,6 +636,11 @@ def test_claim_from_file_and_spectrum_invariants_read_claimed_values_as_certify_
     assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.25}
     np.save(str(tmp_path / "real.npy"), w[:1])
     assert claim_from_file(str(tmp_path / "real.npy")).eigenvalues.dtype == np.float64
+    np.save(str(tmp_path / "zero_imag.npy"), w[:2].astype(complex))     # no imaginary part to record: float, as at 3.x
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", getattr(np, "exceptions", np).ComplexWarning)
+        zc = claim_from_file(str(tmp_path / "zero_imag.npy"))
+    assert zc.eigenvalues.dtype == np.float64 and np.array_equal(zc.eigenvalues, w[:2])
     full = np.linalg.eigvalsh(H.toarray())
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -673,19 +679,66 @@ def test_spare_capacity_of_a_csr_operator_is_not_read(fn):
          certified_moments(C, B, np.eye(2)[:, :1], 1e-12, 1e-12, K=1, sum_rules=False))
 
 
-def test_wrappers_pass_a_real_object_array_as_floats(monkeypatch):
-    """A real-valued object array (Python floats) carries no imaginary part: the sweep passes its float form to the
-    claim, as main did; an object array of complex scalars with a nonzero imaginary part is passed as given."""
+@pytest.mark.parametrize("cls", ["matrix", "array"])
+@pytest.mark.parametrize("fmt", ["csr", "csc", "bsr", "coo", "dia", "lil", "dok"])
+def test_stored_values_in_every_format(fmt, cls):
+    """precision._stored_values reads the values a sparse matrix holds, in every format and class: a held nan is seen,
+    and values a format keeps without holding them (spare capacity past nnz in CSR, CSC and BSR; DIA padding) are not.
+    certify_variational refuses an operator with a held nan in every format and accepts the one with a nan kept but
+    not held (the round-1 probe of these formats read A.data)."""
+    from certify_ed.precision import _stored_values
+    from certify_ed.variational import certify_variational
+    if not hasattr(sp, f"{fmt}_{cls}"):
+        pytest.skip(f"scipy has no {fmt}_{cls}")
+    cons = getattr(sp, f"{fmt}_{cls}")
+
+    def make(M, **kw):                            # BSR in 1 x 1 blocks, so that it holds the entries of the others
+        return cons(M, blocksize=(1, 1), **kw) if fmt == "bsr" and not isinstance(M, tuple) else cons(M, **kw)
+    D = np.diag([1.0, 2.0, 3.0]) + np.diag([0.5, 0.5], 1) + np.diag([0.5, 0.5], -1)
+    psi = np.array([1.0, 0.1, 0.0])
+    A = make(D)
+    assert sorted(_stored_values(A).ravel().tolist()) == sorted(D[D != 0].tolist())
+    Dn = D.copy()
+    Dn[1, 1] = np.nan
+    An = make(Dn)
+    assert int(np.isnan(_stored_values(An)).sum()) == 1
+    with pytest.raises(ValueError, match="non-finite entries"):
+        certify_variational(An, psi)
+    if fmt in ("csr", "csc", "bsr", "dia"):
+        K = make(D)
+        if fmt == "dia":                          # offset 1 stores its entries in columns 1.., column 0 is padding
+            d = K.data.copy()
+            d[list(K.offsets).index(1), 0] = np.nan
+            K = make((d, K.offsets.copy()), shape=K.shape)
+        else:                                     # one more entry (block) past indptr[-1]
+            K.data = np.concatenate([K.data, np.full((1,) + K.data.shape[1:], np.nan)])
+            K.indices = np.r_[K.indices, 0].astype(K.indices.dtype)
+        assert int(np.isnan(_stored_values(K)).sum()) == 0
+        ref = certify_variational(make(D), psi)
+        got = certify_variational(K, psi)
+        assert [s["summary"] for s in got["statements"]] == [s["summary"] for s in ref["statements"]]
+
+
+@pytest.mark.parametrize("form", ["real object array", "complex, zero imaginary parts"])
+def test_wrappers_pass_a_real_object_array_as_floats(monkeypatch, form):
+    """Values without an imaginary part (a real-valued object array of Python floats, a complex array whose imaginary
+    parts are all zero) carry nothing to record: the sweep passes their float form to the claim, as main did; values
+    with a nonzero imaginary part, finite or not, are passed as given."""
+    import warnings
+
     from certify_ed.precision import carries_imaginary_parts
     from certify_ed.sweep import certified_sweep
     assert not carries_imaginary_parts(np.array([1.0, 2.0], dtype=object))
     assert carries_imaginary_parts(np.array([np.complex128(1 + 0.5j), 2.0], dtype=object))
-    assert carries_imaginary_parts(np.array([1.0 + 0j]))           # a complex dtype, as before
+    assert not carries_imaginary_parts(np.array([1.0 + 0j, 2.0]))
+    assert carries_imaginary_parts(np.array([1.0 + 0.5j])) and carries_imaginary_parts(np.array([complex(1.0, np.nan)]))
     assert not carries_imaginary_parts(np.array([1.0, 2.0]))
 
     def solver(Hc, k):
         ww, VV = np.linalg.eigh(Hc.toarray())
-        return np.array([float(v) for v in ww[:k]], dtype=object), VV[:, :k]
+        if form == "real object array":
+            return np.array([float(v) for v in ww[:k]], dtype=object), VV[:, :k]
+        return ww[:k].astype(complex), VV[:, :k]
     import sys
     cmod = sys.modules["certify_ed.certify"]                    # the module (the package exports the function)
     seen, Claim0 = [], cmod.Claim
@@ -694,7 +747,9 @@ def test_wrappers_pass_a_real_object_array_as_floats(monkeypatch):
         seen.append(np.asarray(eigenvalues).dtype.kind)
         return Claim0(eigenvalues, *a, **kw)
     monkeypatch.setattr(cmod, "Claim", spy)
-    sweep = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", getattr(np, "exceptions", np).ComplexWarning)   # the 3.x conversion warns
+        sweep = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)
     assert seen and set(seen) == {"f"}, seen                   # the float form reached the claim
     cert = sweep["_certificates"][0]
     assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"

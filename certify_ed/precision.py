@@ -714,15 +714,14 @@ def _complex_view(values) -> np.ndarray:
 
 
 def carries_imaginary_parts(values) -> bool:
-    """True when the values are complex (complex dtype), or an object array holding a value with an imaginary part that
-    is not zero (finite or not): the values a wrapper passes to the claim as given, so that certify sees and records
-    the parts it drops. A real-valued object array is passed in its float form, as before."""
+    """True when the values (a complex array, or an object array of numbers) hold an imaginary part that is not zero
+    (finite or not): the values a wrapper passes to the claim as given, so that certify sees and records the parts it
+    drops. Values without one (real arrays, real-valued object arrays, complex arrays whose imaginary parts are all
+    zero) are passed in their float form, as before."""
     arr = np.asarray(values)
-    if arr.dtype.kind == "c":
-        return True
-    if arr.dtype.kind != "O":
+    if arr.dtype.kind not in "cO":
         return False
-    cv = _complex_view(arr)
+    cv = arr if arr.dtype.kind == "c" else _complex_view(arr)
     return cv.dtype.kind == "c" and bool(np.any(cv.imag != 0))
 
 

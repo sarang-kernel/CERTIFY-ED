@@ -24,7 +24,7 @@ import scipy.sparse as sp
 
 from .certify import Claim
 from .construct import StateSet
-from .precision import check_values, is_narrow_float
+from .precision import carries_imaginary_parts, check_values, is_narrow_float
 from .spec import spec_from_quspin
 
 
@@ -153,8 +153,8 @@ def claim_from_file(eigenvalues: str, eigenvectors: str = None, operator: str = 
     ev = read_array(eigenvalues, keys.get("eigenvalues"), "eigenvalues")
     check_values(ev, "eigenvalues")       # before the conversion, which would round an inexact value (precision.py)
     ev = np.asarray(ev)
-    if ev.dtype.kind not in "cO":         # complex values go to the claim as read: certify records a dropped imaginary
-        ev = ev.astype(float)              # part (precision.claimed_reals), as for the QuSpin and sweep wrappers
+    if not carries_imaginary_parts(ev):   # values with a nonzero imaginary part go to the claim as read (certify records
+        ev = np.asarray(ev, dtype=float)   # what it drops), as in the QuSpin and sweep wrappers; the others as at 3.x
     X = None if eigenvectors is None else np.asarray(read_array(eigenvectors, keys.get("eigenvectors"), "eigenvectors"))
     op = None if operator is None else read_operator(operator, keys.get("operator"), allow_code=allow_code)
     states, iso = None, None
