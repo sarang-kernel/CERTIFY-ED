@@ -133,7 +133,8 @@ def _scipy_eigh_calls(tree):
     (import scipy [as X], import scipy.<anything>), and through the names it binds to the functions (from scipy.linalg
     import eigh [as Y], Y = <scipy.linalg>.eigh). Imports anywhere in the module count, also those inside functions;
     assignments are followed one level. A star import from scipy.linalg is refused (its names cannot be told apart).
-    The audit is a guard for these binding forms; it does not follow values through calls or containers."""
+    The audit is a guard for these binding forms; it does not follow values through calls or containers, getattr with
+    a computed name, importlib, or a module alias passed to another module."""
     import ast
     mods, pkgs, funcs = set(), set(), set()
     for node in ast.walk(tree):
@@ -230,7 +231,7 @@ def test_every_standard_eigh_call_goes_through_linalg():
 
     import certify_ed
     root = os.path.dirname(certify_ed.__file__)
-    allowed = {("apps/pyrochlore/spin_one.py", "la.eigh"): "the spin-1 ring of 6 sites, dimension 729"}
+    allowed = {("apps/pyrochlore/spin_one.py", "la.eigh", "standard"): "the spin-1 ring of 6 sites, dimension 729"}
     found = {}
     for dirpath, _, files in os.walk(root):
         for f in files:
@@ -239,8 +240,8 @@ def test_every_standard_eigh_call_goes_through_linalg():
             path = os.path.join(dirpath, f)
             rel = os.path.relpath(path, root).replace(os.sep, "/")
             for name, line, kind in _scipy_eigh_calls(ast.parse(open(path, encoding="utf-8").read())):
-                if kind != "generalized":
-                    found.setdefault((rel, name), []).append((line, kind))
+                if kind != "generalized":                # calls and references are allowed separately
+                    found.setdefault((rel, name, kind), []).append(line)
     stray = {k: v for k, v in found.items() if k[0] != "_linalg.py" and k not in allowed}
     assert not stray, stray
     assert set(allowed) <= set(found), "an allowlisted call is gone: remove it from the list"

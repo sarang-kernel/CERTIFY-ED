@@ -112,17 +112,14 @@ def test_claimed_values_with_finite_or_zero_imaginary_parts_convert_as_before():
 
 
 @needs_flint
-def test_exact_recheck_and_generalized_see_a_non_finite_imaginary_part():
-    """The exact re-checks (full space and symmetry sector) give INCONCLUSIVE and certify_generalized refuses, as for a
-    nan value (before: all three used the real part)."""
+def test_exact_recheck_sees_a_non_finite_imaginary_part():
+    """The exact re-checks (full space and symmetry sector) give INCONCLUSIVE for a claimed value with an infinite
+    imaginary part, as for a nan value (before: both used the real part)."""
     from certify_ed.checker import exact_recheck_lowest
-    from certify_ed.generalized import certify_generalized
     spec, H, w, V = _chain6()
     assert exact_recheck_lowest(spec, w[:1], V[:, :1], next_hint=w[1])["status"] == "CERTIFIED"
     lam = np.array([complex(w[0], np.inf)])
     assert exact_recheck_lowest(spec, lam, V[:, :1], next_hint=w[1])["status"] == "INCONCLUSIVE"
-    with pytest.raises(ValueError):
-        certify_generalized(H, sp.identity(H.shape[0], format="csr"), lam, V[:, :1], lambda_min_B=1.0)
 
     from certify_ed.basis import cyclic_isometry, translation
     from certify_ed.exact_sectors import exact_recheck_sector_lowest
@@ -134,6 +131,16 @@ def test_exact_recheck_and_generalized_see_a_non_finite_imaginary_part():
     assert exact_recheck_sector_lowest(spec, st, [T], {0: 0}, ws[:1], x, next_hint=ws[1])["status"] == "CERTIFIED"
     lam_s = np.array([complex(ws[0], np.inf)])
     assert exact_recheck_sector_lowest(spec, st, [T], {0: 0}, lam_s, x, next_hint=ws[1])["status"] == "INCONCLUSIVE"
+
+
+def test_generalized_refuses_a_non_finite_imaginary_part():
+    """certify_generalized refuses a claimed value with an infinite imaginary part, as a nan value (before: it used the
+    real part); no python-flint needed."""
+    from certify_ed.generalized import certify_generalized
+    spec, H, w, V = _chain6()
+    lam = np.array([complex(w[0], np.inf)])
+    with pytest.raises(ValueError):
+        certify_generalized(H, sp.identity(H.shape[0], format="csr"), lam, V[:, :1], lambda_min_B=1.0)
 
 
 def _widened(cert):
