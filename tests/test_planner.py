@@ -49,6 +49,26 @@ def _measure(N, mode):
     return json.loads(line[0][6:])
 
 
+PARENT = r'''
+import subprocess, sys
+import numpy as np
+big = np.ones(300 * 2 ** 20 // 8)        # 300 MiB resident in the parent
+child = "import sys; sys.path.insert(0, ROOT + '/experiments'); import portable; print(portable.peak_rss_mb())"
+print(subprocess.run([sys.executable, "-c", child], capture_output=True, text=True).stdout.strip(), float(big[-1]))
+'''.replace("ROOT", repr(ROOT.replace("\\", "/")))
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the inherited ru_maxrss is a Linux behaviour")
+def test_peak_of_a_child_does_not_include_the_parents_peak():
+    """After fork (or vfork) and exec, ru_maxrss of the child starts at the parent's peak resident size; the planner
+    measurements read VmHWM instead, so a child of a large process (as inside a long pytest run) measures its own."""
+    env = dict(os.environ)
+    env.pop("PYTHONSAFEPATH", None)
+    p = subprocess.run([sys.executable, "-c", PARENT], capture_output=True, text=True, env=env)
+    peak = float(p.stdout.split()[0])
+    assert peak < 200, (peak, p.stderr[-500:])
+
+
 @pytest.mark.parametrize("N,mode", [(14, "dense"), (14, "sparse"), (16, "sparse")])
 def test_predicted_inertia_memory_within_factor_two_of_measured_peak(N, mode):
     """Dense Bunch-Kaufman at n = 3432 and SuperLU at n = 3432 and 12870, measured in a fresh process (the

@@ -95,6 +95,18 @@ device record says `used: false` with that reason; the certificates are those of
 the ordered kernels refuse moduli on another pattern. The device test of the products compares with the summed matrix
 that `DeviceCSR` holds, as the CPU products do. No bound, status or CPU product changes.
 
+### Peak memory of the planner measurements on Linux
+
+The planner tests measure the peak memory of a factorization in a child process (`experiments/portable.py`,
+`peak_rss_mb`). On Linux it read `ru_maxrss`, which after fork (or vfork) and exec starts at the peak resident size of
+the parent: inside a full test run the child reported the peak of the pytest process, and three tests of
+`tests/test_planner.py` failed on Linux in the full suite only (measured peaks 129 MiB, 0 MiB and 268 MiB against
+predictions of 854, 132 and 1373 MiB; they pass alone). On the Linux host of the GPU runs a child of a process holding
+300 MiB reported `ru_maxrss` 324 MiB and VmHWM 12 MiB. The reader now takes VmHWM of `/proc/self/status`, the peak of
+the process's own address space (`ru_maxrss` where `/proc` is absent); the three tests pass in the full suite there. A
+new Linux test runs the reader in a child of a process holding 300 MiB (it fails with the previous reader). No change to
+the package; the planner's constants are as calibrated.
+
 ### Repeated entries summed at the start (soundness fix)
 
 A sparse matrix with repeated entries (CSR, CSC or BSR with repeated indices, COO with repeated coordinates) is now
