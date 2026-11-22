@@ -338,10 +338,25 @@ def test_wide_sum_equals_the_integer_loop():
         cases.append(np.full(n, -(2.0 ** -1074) * (2 ** 52 - 1)))
     cases.append(np.full(3000, 2.0 ** 1023))                       # beyond the range: nan
     cases.append(np.array([BIG, -BIG]))                             # exactly zero
+    for n in (1024, 1025):                                          # runs of m = 2^53 - 1 at the top exponent: the
+        cases.append(np.r_[np.full(n, BIG), np.full(n, -BIG), [1.0]])   # int64 run sums at their largest
+        cases.append(np.r_[np.full(n, -BIG), np.full(n - 1, BIG), [2.0 ** 969]])
     for t in cases:
         got, want = fp._wide_sum(t), _wide_sum_loop(t)
         assert _same_float(got, want), (t[:4], got, want)
     assert math.isnan(fp._wide_sum(np.full(3000, 2.0 ** 1023)))
+    assert all(math.isnan(fp._wide_sum(np.array([1.0, v]))) for v in (np.inf, -np.inf, np.nan))   # not an input
+
+
+def test_wide_sum_does_not_depend_on_its_chunks(monkeypatch):
+    """The terms are summed in chunks (bounded temporaries); the integer sum is the same for any chunk size."""
+    rng = np.random.default_rng(31)
+    sets = [rng.standard_normal(5000) * np.ldexp(1.0, rng.integers(-1074, 1000, 5000)),
+            np.r_[BIG, BIG, -BIG, rng.standard_normal(3000) * 2.0 ** 969]]
+    ref = [fp._wide_sum(t) for t in sets]
+    for chunk in (1, 7, 1024, 4999):
+        monkeypatch.setattr(fp, "_WIDE_CHUNK", chunk)
+        assert all(_same_float(fp._wide_sum(t), r) for t, r in zip(sets, ref)), chunk
 
 
 def test_zero_subnormal_and_non_finite_companions_of_top_of_range_pairs():

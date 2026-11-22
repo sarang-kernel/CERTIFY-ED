@@ -179,7 +179,8 @@ is not finite, so N/2¹⁰⁷⁴ is the nearest binary64 number to Σ t_j, or na
 exact-then-rounded where it returns a finite value (H2); where a partial sum or the result overflows it raises
 OverflowError or returns a value that is not finite, and both take the integer route (corrected 2026-11-22: it read
 that `math.fsum` raises whenever a partial sum or the result overflows).
-In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions; the robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
+In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions; the
+robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
 step whose sum is finite (terms −3·2⁹⁷⁰ and BIG: s = BIG − 2⁹⁷¹, but s + 3·2⁹⁷⁰ = BIG + 2⁹⁷⁰ rounds to infinity),
 makes the sum or the error term of that step inf or nan, so h is not finite, and then the value is `_fsum`'s
 (corrected 2026-11-22: it read "exact wherever their float sums are finite"). With finite h, Σ t_j = h + e + r with
@@ -348,6 +349,11 @@ Run of 2026-11-22 after `fp._wide_sum` was vectorized (same options; output in
 as the run before; 0 violations. `tests/test_exact_dot_range.py` compares the vectorized sum with the term-by-term
 integer sum on 600 random term sets and 12 special ones (runs of one exponent across the 1024-term boundary, a
 sum beyond the range, an exact zero).
+
+Run of 2026-11-22 after `fp._wide_sum` takes its terms in chunks of 2²⁰ (bounded temporaries; the integer sum
+does not depend on the chunks) and gives nan for a term that is not finite (same options; output in
+`docs/proofs/runs/int05_underflow_2026-11-22_chunked.txt`, with the head and the command at its top): the same counts;
+0 violations.
 
 ## 5 Analytic cross-check
 

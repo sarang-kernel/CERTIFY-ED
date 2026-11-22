@@ -86,14 +86,18 @@ No constant changes; statuses change only on the inputs named here. The computat
 
 ### GPU products: the device probe reads the moduli in the stored order
 
-With the summing above, `fp.abs_up` returns the summed matrix (indices sorted) and no longer sorts the caller's matrix
-in place. The device probe (`gpu.probe`) checks the ordered kernels on matrices with unsorted indices and took their
-moduli from `abs_up`, so the kernels read the moduli in another order than the values: on the H100 of the GPU re-test of
-main (`bf567f9f`) the check `kernels_match_scipy` failed and every call with `device="gpu"` used the CPU products (the
-device record says `used: false` with that reason; the certificates are those of the CPU, and 13 tests of
-`tests/test_gpu.py` failed). The probe now takes the moduli on the stored pattern (`gpu._moduli_in_stored_order`), and
-the ordered kernels refuse moduli on another pattern. The device test of the products compares with the summed matrix
-that `DeviceCSR` holds, as the CPU products do. No bound, status or CPU product changes.
+With the summing of repeated entries (the section below), `fp.abs_up` returns the summed matrix (indices sorted) and no
+longer sorts the caller's matrix in place. The device probe (`gpu.probe`) checks the ordered kernels on matrices with
+unsorted indices and took their moduli from `abs_up`, so the kernels read the moduli in another order than the values:
+on the H100 of the GPU re-test of main (`bf567f9f`) the check `kernels_match_scipy` failed and every call with
+`device="gpu"` used the CPU products (the device record says `used: false` with that reason; the certificates are those
+of the CPU, and 13 tests of `tests/test_gpu.py` failed). The probe now takes the moduli on the stored pattern
+(`gpu._moduli_in_stored_order`), and the ordered kernels refuse moduli on another stored pattern (indptr and the first
+nnz indices; arrays that are the same objects are not compared). The device test of the products compares with the
+summed matrix that `DeviceCSR` holds, as the CPU products do. On a host whose device passes the probe, a certificate of
+`device="gpu"` now records the device as used in the S2 evidence (`device`: `used: true`, with the device's product
+count and spot-checked rows) where it recorded `used: false` with the probe's reason; statements, bounds and the CPU
+products do not change. The computational source hash changes.
 
 ### Peak memory of the planner measurements on Linux
 
@@ -102,10 +106,14 @@ The planner tests measure the peak memory of a factorization in a child process 
 the parent: inside a full test run the child reported the peak of the pytest process, and three tests of
 `tests/test_planner.py` failed on Linux in the full suite only (measured peaks 129 MiB, 0 MiB and 268 MiB against
 predictions of 854, 132 and 1373 MiB; they pass alone). On the Linux host of the GPU runs a child of a process holding
-300 MiB reported `ru_maxrss` 324 MiB and VmHWM 12 MiB. The reader now takes VmHWM of `/proc/self/status`, the peak of
-the process's own address space (`ru_maxrss` where `/proc` is absent); the three tests pass in the full suite there. A
-new Linux test runs the reader in a child of a process holding 300 MiB (it fails with the previous reader). No change to
-the package; the planner's constants are as calibrated.
+300 MiB reported `ru_maxrss` 324 MiB and VmHWM 12 MiB. The reader now takes VmHWM of `/proc/self/status`, the peak
+resident set of the process itself (`ru_maxrss` where `/proc` or the VmHWM line is absent, as on macOS; there a child of
+a large process would again report the parent's peak); the three tests pass in the full suite there. A new Linux test
+runs the reader in a child of a process holding 300 MiB (it fails with the previous reader). The reader also serves the
+peak-memory fields of the experiments' run records: on Linux, a record of a process started by a larger one may now read
+lower than with the previous reader, which reported the larger of the two peaks; records of processes started by a small
+driver and every Windows record are unchanged. The planner's constants were calibrated from Windows records and are
+unchanged; no recorded Linux figure was re-measured. No change to the package.
 
 ### Repeated entries summed at the start (soundness fix)
 
@@ -199,14 +207,15 @@ The computational source hash changes.
   other factor or p and e by 2^64). The complex error term keeps the form 2u(|Re s| + |Im s|) where that sum is finite,
   and is 2u|Re s| + 2u|Im s| where it overflows (both parts near BIG). The moduli of the factors and products are formed
   once per call. An infinite or nan entry gives the IEEE result, as before.
-- **Sums whose partial sums overflow.** `fp.exact_sum` gave nan when only the partial sums of `math.fsum` overflow
-  (BIG + BIG - BIG, for example); it now forms the exact sum in integers on the 2^-1074 grid and rounds it once
+- **Sums whose partial sums overflow.** `fp.exact_sum` gave nan when only the partial sums of `math.fsum` overflow (for
+  example the terms BIG, BIG and -BIG); it now forms the exact sum in integers on the 2^-1074 grid and rounds it once
   (`fp._wide_sum`: `np.frexp`, int64 run sums of at most 1024 terms of one exponent, Python integers, one correctly
-  rounded division), and gives nan only when the exact sum rounds beyond the range. `math.fsum` returning a value that
-  is not finite for finite terms also takes the integer route, so the result does not rest on CPython raising there.
-  Cost of that route: `exact_sum` of 10^6 terms, three of them BIG, BIG and -BIG, takes 0.79 s and of 10^7 terms 9.5 s
-  (main returns nan after 0.51 s and 6.1 s; a term-by-term integer sum took 2.8 s and 30 s; loaded machine); sums
-  whose partial sums stay in the range do not take it.
+  rounded division; the terms are taken in chunks of 2^20, so its temporaries stay bounded, and a term that is not
+  finite, which is no input of this route, gives nan), and gives nan only when the exact sum rounds beyond the range.
+  `math.fsum` returning a value that is not finite for finite terms also takes the integer route, so the result does not
+  rest on CPython raising there. Cost of that route: `exact_sum` of 10^6 terms, three of them BIG, BIG and -BIG, takes
+  0.8 s and of 10^7 terms about 10 s (main returns nan after 0.51 s and 6.1 s; a term-by-term integer sum took 2.8 s and
+  30 s; loaded machine); sums whose partial sums stay in the range do not take it.
 - **The overflow side of the cascade.** Its cascade accepted its float result h = +-BIG with an infinite gap on the
   overflow side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). Wherever the previous
   code gave finite values the results are bit-identical (the rescaled splits are exact as the unscaled ones were, and
@@ -240,12 +249,14 @@ The computational source hash changes.
   narrowed, and Lemma U2b covers the top of the range (UNVERIFIED, D-12; counter U2b of
   `docs/proofs/verify_int05_underflow.py`, runs in `docs/proofs/runs/int05_underflow_2026-11-21.txt`,
   `int05_underflow_2026-11-22.txt`, the second after the consequence was corrected to the retained sum and the TwoSum
-  step to overflowing intermediates, and `int05_underflow_2026-11-22_vectorized.txt`, after `_wide_sum` was vectorized
-  and step (iii) restated for it).
+  step to overflowing intermediates, `int05_underflow_2026-11-22_vectorized.txt`, after `_wide_sum` was vectorized and
+  step (iii) restated for it, and `int05_underflow_2026-11-22_chunked.txt`, after it took its terms in chunks; the last
+  two name the head and the command at their top).
 - **Tests.** `tests/test_exact_dot_range.py` (its oracle of the nearest value is decided in exact rationals, not through
   `float(Fraction)`, which rests on the same integer division as the code; `_wide_sum` is compared with the term-by-term
-  integer sum; zero, subnormal and non-finite companions of top-of-range pairs; the statuses of V1 to V3, G2, G3, M1 to
-  M3 and of certify's S2 for the vector above).
+  integer sum, also on runs of 1024 and 1025 terms equal to BIG and -BIG, where the int64 run sums are largest, and for
+  chunk sizes 1, 7, 1024 and 4999; zero, subnormal and non-finite companions of top-of-range pairs; the statuses of V1
+  to V3, G2, G3, M1 to M3 and of certify's S2 for the vector above).
 
 ### Non-finite follow-ups
 
@@ -291,7 +302,8 @@ base). The computational source hash changes.
 
 - **Scope.** The suite had only been run on Python 3.11 with numpy 2.4 and scipy 1.17. Run at the declared floors
   (Python 3.9.23, numpy 1.22.4, scipy 1.8.1 with OpenBLAS), it showed three defects of the package, fixed here. Statuses
-  and bounds do not change; the computational source hash changes.
+  and bounds do not change, except S5 for a matrix with a nan entry (INCONCLUSIVE, see below); the computational source
+  hash changes.
 - **1 x 1 standard problems.** scipy 1.8.1 and 1.10.1 refuse a 1 x 1 matrix in `scipy.linalg.eigh` and `eigvalsh` with
   the drivers evr (the default) and evd, real and complex (the drivers ev and evx run); the dense corroboration oracles,
   the enclosure of a one-dimensional block in `spectrum`, the default solver of `certified_sweep` (a sector of dimension

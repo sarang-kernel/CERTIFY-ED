@@ -127,36 +127,43 @@ def test_no_1x1_standard_eigh_reaches_scipy(monkeypatch):
 
 def _scipy_eigh_calls(tree):
     """(name, lineno, generalized) of every call of scipy.linalg.eigh or eigvalsh in a module: through any name the
-    module binds to scipy.linalg (import scipy.linalg as X, from scipy import linalg [as X], or the dotted
-    scipy.linalg after import scipy...), and through the names it binds to the functions themselves (from scipy.linalg
-    import eigh [as Y]). Imports anywhere in the module count, also those inside functions."""
+    module binds to scipy.linalg (import scipy.linalg as X, from scipy import linalg [as X], X = <scipy.linalg>), through
+    the dotted <scipy>.linalg of any name bound to scipy (import scipy [as X], import scipy.linalg), and through the
+    names it binds to the functions themselves (from scipy.linalg import eigh [as Y]). Imports anywhere in the module
+    count, also those inside functions. A star import from scipy.linalg is refused (its names cannot be told apart)."""
     import ast
-    mods, funcs, dotted = set(), {}, False
+    mods, pkgs, funcs = set(), set(), {}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
                 if a.name == "scipy.linalg" and a.asname:
                     mods.add(a.asname)
-                elif a.name in ("scipy", "scipy.linalg") and not a.asname:
-                    dotted = True
+                elif a.name in ("scipy", "scipy.linalg"):
+                    pkgs.add(a.asname or "scipy")
         elif isinstance(node, ast.ImportFrom) and node.level == 0:
             for a in node.names:
+                if node.module == "scipy.linalg" and a.name == "*":
+                    raise AssertionError(f"star import from scipy.linalg at line {node.lineno}")
                 if node.module == "scipy" and a.name == "linalg":
                     mods.add(a.asname or "linalg")
                 elif node.module == "scipy.linalg" and a.name in ("eigh", "eigvalsh"):
                     funcs[a.asname or a.name] = a.name
+
+    def is_linalg(v):
+        return ((isinstance(v, ast.Name) and v.id in mods) or
+                (isinstance(v, ast.Attribute) and v.attr == "linalg" and isinstance(v.value, ast.Name)
+                 and v.value.id in pkgs))
+    for node in ast.walk(tree):                      # X = scipy.linalg, X = L2 (one level of aliasing)
+        if isinstance(node, ast.Assign) and is_linalg(node.value):
+            mods.update(t.id for t in node.targets if isinstance(t, ast.Name))
     out = []
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
         f, name = node.func, None
-        if isinstance(f, ast.Attribute) and f.attr in ("eigh", "eigvalsh"):
-            v = f.value
-            if isinstance(v, ast.Name) and v.id in mods:
-                name = f"{v.id}.{f.attr}"
-            elif (dotted and isinstance(v, ast.Attribute) and v.attr == "linalg" and isinstance(v.value, ast.Name)
-                  and v.value.id == "scipy"):
-                name = f"scipy.linalg.{f.attr}"
+        if isinstance(f, ast.Attribute) and f.attr in ("eigh", "eigvalsh") and is_linalg(f.value):
+            name = (f"{f.value.id}.{f.attr}" if isinstance(f.value, ast.Name)
+                    else f"{f.value.value.id}.linalg.{f.attr}")
         elif isinstance(f, ast.Name) and f.id in funcs:
             name = f.id
         if name:
@@ -167,23 +174,29 @@ def _scipy_eigh_calls(tree):
 
 def test_the_audit_resolves_import_aliases():
     """The audit below sees a call through every binding form of scipy.linalg and of its functions, and not a call of
-    numpy.linalg.eigh (which handles a 1 x 1 matrix at every supported version)."""
+    numpy.linalg.eigh (which handles a 1 x 1 matrix at every supported version); a star import is refused."""
     import ast
     src = """
 import scipy.linalg as sla
 import scipy
+import scipy as sp_
 import numpy as np
 from scipy import linalg as L2
 from scipy.linalg import eigh as E, eigvalsh
 from numpy import linalg
+L3 = sp_.linalg
 def f(a, b):
     import scipy.linalg as inner
     sla.eigh(a); scipy.linalg.eigvalsh(a); L2.eigh(a); E(a); eigvalsh(a); inner.eigh(a, b)
+    sp_.linalg.eigh(a); L3.eigvalsh(a)
     np.linalg.eigh(a); linalg.eigh(a)
 """
     got = sorted((n, g) for n, _, g in _scipy_eigh_calls(ast.parse(src)))
     assert got == sorted([("sla.eigh", False), ("scipy.linalg.eigvalsh", False), ("L2.eigh", False), ("E", False),
-                          ("eigvalsh", False), ("inner.eigh", True)]), got
+                          ("eigvalsh", False), ("inner.eigh", True), ("sp_.linalg.eigh", False),
+                          ("L3.eigvalsh", False)]), got
+    with pytest.raises(AssertionError, match="star import"):
+        _scipy_eigh_calls(ast.parse("from scipy.linalg import *\neigh(a)\n"))
 
 
 def test_every_standard_eigh_call_goes_through_linalg():
