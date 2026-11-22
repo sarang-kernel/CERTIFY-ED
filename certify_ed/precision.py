@@ -425,8 +425,8 @@ def _exact_real_sums(v: np.ndarray, starts: np.ndarray, counts: np.ndarray) -> n
         # the sign of a zero sum as IEEE addition gives it in every order: -0.0 when every part is -0.0, else +0.0.
         # np.add.reduceat (whose result here differs between numpy versions), the TwoSum passes and math.fsum
         # disagree on it, and a complex entry keeps the sign of a zero real part in matrix_sha256
-        negz = np.add.reduceat(((v == 0.0) & np.signbit(v)).astype(np.int64), starts)
-        s[zero] = np.where(negz[zero] == counts[zero], -0.0, 0.0)
+        allneg = np.logical_and.reduceat((v == 0.0) & np.signbit(v), starts)     # one byte per value
+        s[zero] = np.where(allneg[zero], -0.0, 0.0)
     return s
 
 

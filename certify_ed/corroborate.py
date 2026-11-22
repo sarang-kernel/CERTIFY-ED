@@ -18,9 +18,10 @@ import time
 from typing import List, Optional
 
 import numpy as np
-import scipy.linalg as la
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
+
+from ._compat import eigh
 
 ORACLES = {
     "lapack_evd": {"algorithm": "Householder tridiagonalisation (?SYTRD/?HETRD) + divide and conquer",
@@ -96,9 +97,8 @@ def jacobi_eigvalsh(A: np.ndarray, tol: float = 1e-15, max_sweeps: int = 40) -> 
 def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.ndarray:
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if name in ("lapack_evd", "lapack_evr", "lapack_ev"):
-        # scipy 1.8 cannot size the LAPACK workspace for n = 1: the eigenvalue of a 1 x 1 Hermitian matrix is its entry
-        w = (np.real(dense).reshape(1).astype(float) if dense.shape == (1, 1) else
-             la.eigh(dense, eigvals_only=True, driver=name.split("_")[1]))
+        # the 1 x 1 case from its entry (_compat.py: scipy 1.8 to 1.10 refuse it); the record says so (n = 1)
+        w = eigh(dense, eigvals_only=True, driver=name.split("_")[1])
     elif name == "jacobi":
         w = jacobi_eigvalsh(dense)
     elif name == "arpack":
@@ -130,6 +130,8 @@ def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_
             d = float(np.max(np.abs(w - claimed[: w.size])))
             out["oracles"][o] = {"max_abs_diff_vs_claim": d, "seconds": time.time() - t0,
                                  "n_compared": int(w.size)}
+            if o.startswith("lapack_") and A.shape == (1, 1):
+                out["oracles"][o]["note"] = "1 x 1: the eigenvalue is the entry, no LAPACK call (_compat.eigh)"
             worst = max(worst, d)
         except Exception as e:  # pragma: no cover - reported, not raised
             out["oracles"][o] = {"error": f"{type(e).__name__}: {e}"}

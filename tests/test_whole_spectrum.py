@@ -150,11 +150,15 @@ def test_recorded_pre_change_radii_dim_252():
     """The radii dev/3.2 f080586 produced for a fixed claim (vectors stored as float32, hence exactly the same
     binary64 inputs everywhere; eigenvalues dyadic). Exact equality holds on the machine that recorded them
     (OpenBLAS 0.3.31 Haswell kernels, numpy 2.4.4); another BLAS may round the 2-norms differently in the
-    last bit, so the hard assertion is at 1e-12 and exact equality is reported as a warning when it fails."""
+    last bit, so the hard assertion is at 1e-12 (plus one rounding of an entry of H x) and exact equality is reported as
+    a warning when it fails."""
     spec, st, H, w, V = _block(10)
-    # numpy < 2 (its own BLAS and sparse kernels): the computed residuals differ by a few roundings of their entries,
-    # up to 2.9e-17 here; bounds stay bounds. Where the recording was made (numpy 2) the tolerance is as before.
-    atol = 0.0 if np.lib.NumpyVersion(np.__version__) >= "2.0.0" else 8 * 2.0 ** -53 * float(abs(H).sum(axis=1).max())
+    # another BLAS or sparse kernel (numpy 1.22, or numpy 2.5 with another OpenBLAS) rounds an entry of H x differently:
+    # the computed residual norms then differ by up to 2.9e-17 (numpy 1.22) and 6.7e-18 (numpy 2.5) here, where their
+    # relative difference is far above 1e-12 for the smallest. The absolute tolerance is one rounding of an entry of
+    # H x, u ||H||_inf (about 30 times the largest difference seen); bounds stay bounds, and exact equality is still
+    # reported below
+    atol = 2.0 ** -53 * float(abs(H).sum(axis=1).max())
     z = np.load(os.path.join(FIXTURES, "whole_spectrum_252_claim.npz"))
     mu, X = z["eigenvalues"], z["eigenvectors32"].astype(np.float64)
     for storage, A in (("sparse", H), ("dense", H.toarray())):

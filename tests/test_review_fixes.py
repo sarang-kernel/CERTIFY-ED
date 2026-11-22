@@ -505,6 +505,7 @@ def test_imp28_range_rounded_outward():
 
 def test_imp07_test_counts_come_from_the_run_manifest(tmp_path, monkeypatch):
     import json
+    pytest.importorskip("matplotlib")     # make_numbers.py imports it at top level (the 'plots' extra)
     ns = _script_functions("make_numbers.py", "run_test_counts")
     (tmp_path / "manifest.json").write_text(json.dumps(
         {"steps": {"tests": {"summary": "363 passed, 2 skipped, 1 warning in 79.43s (0:01:19)"}}}))

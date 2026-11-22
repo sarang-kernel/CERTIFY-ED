@@ -15,11 +15,11 @@ import math
 from fractions import Fraction
 
 import numpy as np
-import scipy.linalg as la
 
 import flint
 import itertools
 
+from ..._compat import eigh
 from ...checker import inertia_exact
 
 PRIME = 2147483647      # 2^31 - 1; a rank modulo p never exceeds the rational rank
@@ -283,7 +283,7 @@ def lambda_min_lower(G):
     """Certified rational lower bound on lambda_min of a positive definite fmpz_mat."""
     n = G.nrows()
     Gn = np.array([[float(int(x)) for x in row] for row in G.tolist()])
-    lo = Fraction(float(np.min(la.eigvalsh(Gn))) * 0.5).limit_denominator(10 ** 9)
+    lo = Fraction(float(np.min(eigh(Gn, eigvals_only=True))) * 0.5).limit_denominator(10 ** 9)   # a hint; 1 x 1 too
     assert lo > 0
     A = G * lo.denominator - flint.fmpz_mat(n, n, [lo.numerator if i == j else 0 for i in range(n) for j in range(n)])
     neg, pos, bE = inertia_exact(A)

@@ -100,12 +100,20 @@ def test_exact_sector_count_requires_separation_from_the_next_component():
     H = ce.build_bitwise(spec, st).toarray()
     w, V = la.eigh(H)
     i = next(k for k in range(1, len(w)) if w[k] - w[k - 1] > 1e-3)     # a gap above level 0
-    d = 0.5 * (w[i] - w[0]) - 1e-15                  # claimed value w[i] - d, radius ~ d: interval [w0+, w_i]
-    lam = np.array([w[0], w[i] - d])
     X = V[:, [0, i]]
-    r = exact_recheck_sector_lowest(spec, st, [spin_flip(spec)], {}, lam, X, next_hint=w[i + 1])
+    # claimed value w[i] - d, radius ~ d: interval [w0 + 2 off, w_i]. The first radius depends on the LAPACK that
+    # computed V (about 1.4e-15 with one build, 2.4e-15 with another): the offset grows until the two intervals are
+    # apart, so that the case below is constructed on any build
+    for k in range(10):
+        off = 1e-15 * 2 ** k
+        d = 0.5 * (w[i] - w[0]) - off
+        lam = np.array([w[0], w[i] - d])
+        r = exact_recheck_sector_lowest(spec, st, [spin_flip(spec)], {}, lam, X, next_hint=w[i + 1])
+        comps = r["components"]
+        if len(comps) == 2:
+            break
     first = r["counts"][0]
-    comps = r["components"]
+    assert len(comps) == 2, r
     margin = comps[1][0] - first["point"]
     assert len(comps) == 2 and margin <= first["delta"], r          # the case this test is about
     assert not first["separated"] and r["status"] != "CERTIFIED", r

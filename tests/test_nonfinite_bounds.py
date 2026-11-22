@@ -207,11 +207,14 @@ def test_sector_audits_pass_nothing_on_a_non_finite_defect(J, certified):
     assert (s1["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
     assert s2["status"] == ("CERTIFIED" if certified else "INCONCLUSIVE")
     assert (s2["evidence"].get("reason_code") == "NONFINITE_BOUND") == (not certified)
-    # between levels (w[3] - w[2] is 0 here: the cut is half a gap above the ground state, not on the triplet at -|J|)
-    E_cut = float((w[2] + w[3]) / 2) if w[3] - w[2] > 1e-9 * abs(J) else float(w[0] + abs(J) / 2)
-    _, secs = _sz_sectors(spec, E_cut)
-    res = certify_low_energy(spec, secs, E_cut)
-    if certified:
-        assert res["status"] == "CERTIFIED", res["summary"]
-    else:
-        assert res["status"] == "INCONCLUSIVE" and "not finite" in res["summary"]
+    # cuts between levels (w[3] - w[2] is 0 here, the levels are -2|J|, -|J| (3), 0 (7), |J| (5)): half a gap above
+    # the singlet and half a gap above the triplet, not on the triplet itself
+    cuts = ([float((w[2] + w[3]) / 2)] if w[3] - w[2] > 1e-9 * abs(J) else
+            [float(w[0] + abs(J) / 2), float(w[0] + 1.5 * abs(J))])
+    for E_cut, K in zip(cuts, (1, 4)):
+        _, secs = _sz_sectors(spec, E_cut)
+        res = certify_low_energy(spec, secs, E_cut)
+        if certified:
+            assert res["status"] == "CERTIFIED" and res["K"] == K, res["summary"]
+        else:
+            assert res["status"] == "INCONCLUSIVE" and "not finite" in res["summary"]
