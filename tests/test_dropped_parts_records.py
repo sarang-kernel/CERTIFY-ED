@@ -172,6 +172,44 @@ def test_alps_reader_without_nonzero_imaginary_parts_is_as_before(tmp_path, stor
     assert "dropped_imaginary_parts" not in cert.body["claim"]
 
 
+def _alps_file_with_dataset(tmp_path, data, attrs=None):
+    import h5py
+    p, spec, H, w, V = _alps_file(tmp_path, w_placeholder(3))
+    with h5py.File(p, "a") as f:
+        del f["spectrum/sectors/0/energies"]
+        ds = f.create_dataset("spectrum/sectors/0/energies", data=data)
+        for key, val in (attrs or {}).items():
+            ds.attrs[key] = val
+    return p, spec, H, w, V
+
+
+def w_placeholder(k):
+    spec = ce.heisenberg_chain(6, boundary="open")
+    return np.linalg.eigvalsh(ce.build_bitwise(spec).toarray())[:k]
+
+
+def test_alps_reader_reads_the_complex_layout_of_the_alps_archive(tmp_path):
+    """The ALPS HDF5 archive stores complex numbers with a trailing dimension of 2 and the attribute '__complex__':
+    read as complex (before: flattened into twice as many energies)."""
+    pytest.importorskip("h5py")
+    w = w_placeholder(3)
+    pairs = np.stack([w, np.array([0.0, 0.25, 0.0])], axis=-1)
+    p, spec, H, *_ = _alps_file_with_dataset(tmp_path, pairs, {"__complex__": 1})
+    s = read_alps_spectrum(p)[0]
+    np.testing.assert_array_equal(s["energies"], w)
+    assert s["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.25}
+    claim = claim_from_alps(p, sector=0, operator=H, kind="lowest")
+    assert ce.certify(claim, spec, ce.Options(seed=1)).body["claim"]["dropped_imaginary_parts"]["count"] == 1
+
+
+def test_alps_reader_refuses_energies_of_more_than_one_dimension(tmp_path):
+    pytest.importorskip("h5py")
+    pairs = np.stack([w_placeholder(3), np.zeros(3)], axis=-1)      # no '__complex__' attribute: not a known layout
+    p, *_ = _alps_file_with_dataset(tmp_path, pairs)
+    with pytest.raises(FormatError, match="expected one dimension"):
+        read_alps_spectrum(p)
+
+
 def test_alps_reader_refuses_a_non_finite_imaginary_part(tmp_path):
     pytest.importorskip("h5py")
     spec = ce.heisenberg_chain(6, boundary="open")

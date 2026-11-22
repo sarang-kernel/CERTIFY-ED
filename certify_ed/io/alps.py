@@ -37,6 +37,21 @@ def _dataset(f, path: str):
     return f[path][...]
 
 
+def _energies(ds, path: str, sector: str) -> np.ndarray:
+    """The energies of one sector as a 1-D array. Complex numbers are read as h5py gives them (a compound of r and i,
+    numpy complex) or in the layout of the ALPS HDF5 archive, a trailing dimension of 2 (real, imaginary) with the
+    attribute '__complex__'; any other array of more than one dimension is refused, since flattening it would make
+    its components count as energies."""
+    a = np.asarray(ds[...])
+    if a.dtype.names and set(a.dtype.names) >= {"r", "i"}:
+        a = a["r"] + 1j * a["i"]
+    if "__complex__" in ds.attrs and a.ndim >= 1 and a.shape[-1] == 2 and a.dtype.kind in "fiu":
+        a = a[..., 0] + 1j * a[..., 1]
+    if sum(1 for s in a.shape if s != 1) > 1:
+        raise FormatError(f"{path}: sector {sector}: energies of shape {a.shape} (expected one dimension)")
+    return a.reshape(-1)
+
+
 def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, object]]:
     """All sectors of an ALPS out.h5: [{'index': n, 'energies': array, 'quantumnumbers': {name: value},
     'eigenvectors': (dim x n) array or None, 'basis': (dim x n_sites) int array or None,
@@ -62,7 +77,7 @@ def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, o
             g = sectors[k]
             if "energies" not in g:
                 raise FormatError(f"{path}: /spectrum/sectors/{k} has no 'energies' dataset")
-            raw = np.asarray(g["energies"][...]).reshape(-1)
+            raw = _energies(g["energies"], path, k)
             w = claimed_reals(raw)
             if not np.all(np.isfinite(w)):
                 raise FormatError(f"{path}: sector {k}: non-finite energies")

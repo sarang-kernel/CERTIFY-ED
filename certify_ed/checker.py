@@ -592,7 +592,7 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
     A claim of complex values whose finite nonzero imaginary parts are dropped (the statement concerns the real
     parts, as in 3.x) gets the record 'dropped_imaginary_parts' (count, max_abs)."""
     check_values(lam, "lam")          # as in certify() (precision.py)
-    out = _exact_recheck_lowest(spec, lam, X, states, next_hint, max_dim)
+    out = dict(_exact_recheck_lowest(spec, lam, X, states, next_hint, max_dim))
     dropped = dropped_imaginary_parts(lam)
     if dropped is not None:
         out["dropped_imaginary_parts"] = dropped

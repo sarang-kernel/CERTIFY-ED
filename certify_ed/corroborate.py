@@ -118,7 +118,7 @@ def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.n
 
 
 def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_evr", "jacobi")) -> dict:
-    out = _corroborate(A, claimed, enc, oracles)
+    out = dict(_corroborate(A, claimed, enc, oracles))
     dropped = dropped_imaginary_parts(claimed)
     if dropped is not None:    # complex values of a direct call: the comparison concerns the real parts, as in 3.x
         out["dropped_imaginary_parts"] = dropped     # (certify passes real values, so S5 evidence is unchanged)
