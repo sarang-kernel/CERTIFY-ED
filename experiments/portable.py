@@ -85,8 +85,8 @@ def peak_rss_mb():
     """Peak resident memory of the calling process in MiB. Linux: VmHWM of /proc/self/status, the peak resident set of
     the process itself. ru_maxrss is not read there: after fork (or vfork) and exec it starts at the peak resident size
     of the parent, so a child of a large process (a test inside a long pytest run) reported the parent's peak and missed
-    its own below it. ru_maxrss where /proc or the VmHWM line is absent (KiB; bytes on macOS); there a child of a large
-    process reports the parent's peak again."""
+    its own below it. ru_maxrss where /proc or the VmHWM line is absent (KiB; bytes on macOS), as before; such systems
+    (macOS and other POSIX systems) were not assessed for the inherited peak."""
     if not WINDOWS:
         if sys.platform.startswith("linux"):
             try:

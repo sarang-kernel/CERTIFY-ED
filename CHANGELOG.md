@@ -92,12 +92,14 @@ unsorted indices and took their moduli from `abs_up`, so the kernels read the mo
 on the H100 of the GPU re-test of main (`bf567f9f`) the check `kernels_match_scipy` failed and every call with
 `device="gpu"` used the CPU products (the device record says `used: false` with that reason; the certificates are those
 of the CPU, and 13 tests of `tests/test_gpu.py` failed). The probe now takes the moduli on the stored pattern
-(`gpu._moduli_in_stored_order`), and the ordered kernels refuse moduli on another stored pattern (indptr and the first
-nnz indices; arrays that are the same objects are not compared). The device test of the products compares with the
-summed matrix that `DeviceCSR` holds, as the CPU products do. On a host whose device passes the probe, a certificate of
-`device="gpu"` now records the device as used in the S2 evidence (`device`: `used: true`, with the device's product
-count and spot-checked rows) where it recorded `used: false` with the probe's reason; statements, bounds and the CPU
-products do not change. The computational source hash changes.
+(`gpu._moduli_in_stored_order`), and the ordered kernels and `DeviceCSR` refuse moduli on another stored pattern
+(`gpu._same_stored_pattern`: shape, indptr and the first nnz indices, O(nnz) on the host when the arrays are distinct
+objects, next to a transfer of the same size). Moduli whose index buffer only carries spare capacity past nnz are now
+accepted, where the previous check refused them and the call used the CPU products. The device test of the products
+compares with the summed matrix that `DeviceCSR` holds, as the CPU products do. On a host whose device passes the probe,
+a certificate of `device="gpu"` now records the device as used in the S2 evidence (`device`: `used: true`, with the
+device's product count and spot-checked rows) where it recorded `used: false` with the probe's reason; statements,
+bounds and the CPU products do not change. The computational source hash changes.
 
 ### Peak memory of the planner measurements on Linux
 
@@ -107,13 +109,15 @@ the parent: inside a full test run the child reported the peak of the pytest pro
 `tests/test_planner.py` failed on Linux in the full suite only (measured peaks 129 MiB, 0 MiB and 268 MiB against
 predictions of 854, 132 and 1373 MiB; they pass alone). On the Linux host of the GPU runs a child of a process holding
 300 MiB reported `ru_maxrss` 324 MiB and VmHWM 12 MiB. The reader now takes VmHWM of `/proc/self/status`, the peak
-resident set of the process itself (`ru_maxrss` where `/proc` or the VmHWM line is absent, as on macOS; there a child of
-a large process would again report the parent's peak); the three tests pass in the full suite there. A new Linux test
+resident set of the process itself (`ru_maxrss` where `/proc` or the VmHWM line is absent, as before; macOS and other
+POSIX systems were not assessed for the inherited peak); the three tests pass in the full suite there. A new Linux test
 runs the reader in a child of a process holding 300 MiB (it fails with the previous reader). The reader also serves the
 peak-memory fields of the experiments' run records: on Linux, a record of a process started by a larger one may now read
 lower than with the previous reader, which reported the larger of the two peaks; records of processes started by a small
-driver and every Windows record are unchanged. The planner's constants were calibrated from Windows records and are
-unchanged; no recorded Linux figure was re-measured. No change to the package.
+driver and every Windows record are unchanged. The planner's constants are unchanged: they were calibrated on the
+Windows development machine (`RECORDED_PEAKS` of `tests/test_planner.py`, from the C-17 runs of
+`experiments/bench_whole.py`, and the factorization peaks measured there for D-08); no recorded Linux figure was
+re-measured. No change to the package.
 
 ### Repeated entries summed at the start (soundness fix)
 
@@ -347,9 +351,10 @@ base). The computational source hash changes.
   still reported). The separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed
   intervals are apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B
   of `tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
-  `certify_generalized` refuses under some BLAS), the same file passes int32 exponents to `np.ldexp` (numpy < 2 on
-  Windows takes C long exponents), and its tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10
-  (`co_qualname` exists from 3.11; the named scope is still required from 3.11).
+  `certify_generalized` refuses under some BLAS), the same file, `tests/test_exact_dot_range.py` and
+  `tests/test_verifier.py` pass int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents), and its
+  tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10 (`co_qualname` exists from 3.11; the
+  named scope is still required from 3.11).
 - **Runs.** With these, every test that runs here passes at the floors and with Python 3.10.22, numpy 1.24.4 and scipy
   1.10.1 (OpenBLAS), except the ones that create a temporary directory: those are not assessed under Python 3.9 and 3.10
   in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`; open until they are

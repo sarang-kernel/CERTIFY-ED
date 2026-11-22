@@ -475,7 +475,8 @@ def _with_empty_rows(A, rows):
 
 def _same_stored_pattern(A, B) -> bool:
     """A and B (CSR) store their entries at the same positions in the same order: equal shapes and indptr, and equal
-    indices up to nnz (spare capacity past nnz is not stored); arrays that are the same objects are not compared."""
+    indices up to nnz (spare capacity past nnz is not stored); arrays that are the same objects are not compared (the
+    comparison is O(nnz) on the host, next to a transfer of the same size)."""
     if A.shape != B.shape:
         return False
     if A.indptr is not B.indptr and not np.array_equal(A.indptr, B.indptr):

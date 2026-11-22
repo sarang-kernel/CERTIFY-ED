@@ -623,11 +623,12 @@ def _wide_sum(t: np.ndarray) -> float:
     a sum beyond the range is no value; precision._exact_float_sum, which sums repeated matrix entries, gives the
     infinity instead (an entry that sums beyond the range is an infinite entry, refused as such)."""
     t = np.asarray(t, dtype=np.float64).ravel()
-    if not np.all(np.isfinite(t)):
-        return math.nan
     total = 0
     for c in range(0, t.size, _WIDE_CHUNK):
-        total += _wide_integer_sum(t[c:c + _WIDE_CHUNK])
+        part = t[c:c + _WIDE_CHUNK]
+        if not np.all(np.isfinite(part)):
+            return math.nan
+        total += _wide_integer_sum(part)
     try:
         return total / (1 << 1074)
     except OverflowError:

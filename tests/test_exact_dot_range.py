@@ -84,13 +84,13 @@ def test_random_vectors_at_the_top_of_the_range():
     """Random real and complex vectors with entries over the whole upper exponent range, mixed with ordinary and tiny
     ones: |s - x^H y| <= err whenever every product is finite and the retained sum (the products not left out as tiny,
     Lemma U2) rounds into the range, a value that is not finite otherwise."""
-    rng = np.random.default_rng(11)
+    rng = np.random.default_rng(11)          # exponents as int32: numpy < 2 on Windows takes C long exponents
     checked = 0
     for trial in range(400):
         n = int(rng.integers(1, 12))
         ex = rng.integers(-1000, 1024, size=(2, n)) if trial % 3 == 0 else rng.integers(450, 1024, size=(2, n))
-        x = rng.uniform(1, 2, n) * np.ldexp(1.0, ex[0] - 1) * rng.choice([-1, 1], n)
-        y = rng.uniform(0, 1, n) * np.ldexp(1.0, np.minimum(ex[1], 1023 - np.maximum(ex[0], 0) + rng.integers(-3, 2, n)))
+        x = rng.uniform(1, 2, n) * np.ldexp(1.0, (ex[0] - 1).astype(np.int32)) * rng.choice([-1, 1], n)
+        y = rng.uniform(0, 1, n) * np.ldexp(1.0, np.minimum(ex[1], 1023 - np.maximum(ex[0], 0) + rng.integers(-3, 2, n)).astype(np.int32))
         if trial % 2:
             xc = x + 1j * rng.permutation(x)
             yc = y + 1j * rng.permutation(y)[::-1]
@@ -192,7 +192,7 @@ def test_wide_sum_is_the_rounded_exact_sum():
     rng = np.random.default_rng(5)
     for _ in range(300):
         n = int(rng.integers(2, 40))
-        t = rng.uniform(1, 2, n) * np.ldexp(1.0, rng.integers(-1074, 1024, n)) * rng.choice([-1, 1], n)
+        t = rng.uniform(1, 2, n) * np.ldexp(1.0, rng.integers(-1074, 1024, n).astype(np.int32)) * rng.choice([-1, 1], n)
         t = t[np.isfinite(t)]
         q = sum((Fraction(v) for v in t.tolist()), Fraction(0))
         got = fp._wide_sum(t)
@@ -320,7 +320,7 @@ def test_wide_sum_equals_the_integer_loop():
         n = int(rng.integers(1, 2500))
         kind = trial % 6
         if kind == 0:
-            t = rng.standard_normal(n) * np.ldexp(1.0, rng.integers(-1074, 1000, n))
+            t = rng.standard_normal(n) * np.ldexp(1.0, rng.integers(-1074, 1000, n).astype(np.int32))
         elif kind == 1:
             t = rng.integers(-2 ** 52, 2 ** 52, n).astype(float) * 2.0 ** -1074
         elif kind == 2:
@@ -351,12 +351,17 @@ def test_wide_sum_equals_the_integer_loop():
 def test_wide_sum_does_not_depend_on_its_chunks(monkeypatch):
     """The terms are summed in chunks (bounded temporaries); the integer sum is the same for any chunk size."""
     rng = np.random.default_rng(31)
-    sets = [rng.standard_normal(5000) * np.ldexp(1.0, rng.integers(-1074, 1000, 5000)),
+    sets = [rng.standard_normal(5000) * np.ldexp(1.0, rng.integers(-1074, 1000, 5000).astype(np.int32)),
             np.r_[BIG, BIG, -BIG, rng.standard_normal(3000) * 2.0 ** 969]]
     ref = [fp._wide_sum(t) for t in sets]
     for chunk in (1, 7, 1024, 4999):
         monkeypatch.setattr(fp, "_WIDE_CHUNK", chunk)
         assert all(_same_float(fp._wide_sum(t), r) for t, r in zip(sets, ref)), chunk
+    monkeypatch.undo()
+    # at the default chunk size, a set that crosses one chunk boundary (2^20 + 2 terms, BIG on both sides)
+    big = np.r_[BIG, rng.standard_normal(fp._WIDE_CHUNK - 1) * 2.0 ** 969, BIG, -BIG]
+    assert big.size == fp._WIDE_CHUNK + 2
+    assert _same_float(fp._wide_sum(big), _wide_sum_loop(big))
 
 
 def test_zero_subnormal_and_non_finite_companions_of_top_of_range_pairs():

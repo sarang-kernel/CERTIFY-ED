@@ -1,6 +1,7 @@
-# head: fix/round3-nits on d3dfabce (_wide_sum in chunks of 2^20 terms, nan for a non-finite term); command:
-# python docs/proofs/verify_int05_underflow.py (defaults --cases 20000 --seed 7); Python 3.11.17, numpy 2.4.4,
-# scipy 1.17.1, Windows. Output equal to that of int05_underflow_2026-11-22.txt (same seed).
+# head: fix/round3-nits on d3dfabce (_wide_sum in chunks of 2^20 terms, nan for a term that is not finite);
+# command: python docs/proofs/verify_int05_underflow.py (defaults --cases 20000 --seed 7); Python 3.11.17, numpy
+# 2.4.4, scipy 1.17.1, Windows. A regression check: no case here reaches a second chunk, and the output equals that
+# of int05_underflow_2026-11-22.txt (same seed). The chunk boundary is tested in tests/test_exact_dot_range.py.
   ... 0 cases
   ... 5000 cases
   ... 10000 cases
