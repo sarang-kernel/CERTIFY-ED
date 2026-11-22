@@ -21,7 +21,7 @@ under `non_finite_values`, `corroborate` is INCONCLUSIVE, and `enclose`, `certif
 `certify_hamiltonian`, `certified_sweep` and both exact re-checks. Two of these also change for real non-finite
 claimed values: `exact_eigenpair_radii` raised a ValueError from the rational conversion for a real nan, and
 `write_bundle` wrote a real nan or infinity (whose readers then refused the file). `corroborate` is INCONCLUSIVE for a
-non-finite claimed value before any recomputation runs (`non_finite_values`); for a real infinity it said CORROBORATED,
+non-finite claimed value before any recomputation runs (`non_finite_values`; the tolerance is nan); for a real infinity it said CORROBORATED,
 since its tolerance was infinite. An object array of numpy complex scalars is now seen as complex: a non-finite
 imaginary part makes the value nan, and a finite one is recorded (the float conversion read the real parts). The conversion is otherwise that of 3.x: a
 finite nonzero imaginary part is dropped (with numpy's ComplexWarning) and the statements concern the real parts, and a
@@ -30,7 +30,8 @@ list of Python complex numbers is refused with numpy's TypeError. New: the claim
 rendered schema), and `not_verified` names those parts, so that the report shows them; claims without such parts are
 recorded as before. `certify_hamiltonian` and `certified_sweep` pass complex values and object arrays to the claim as
 given (sorted by their real parts), so the record is made there as well, and the sector composition writes it into the sector's
-record (`precision.dropped_imaginary_parts`). In the sector composition a sector with a non-finite
+record (`precision.dropped_imaginary_parts`) and, summed over the sectors, into its own record (`count`, `max_abs`,
+`sectors`) and its summary. In the sector composition a sector with a non-finite
 claimed value is INCONCLUSIVE before anything is counted, with the first indices and their number in its record
 (`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of the count, so the sector was reported MISSING
 and the composition FAILED, and w + ∞i was certified. An (approximate) symmetry entry given as an iterator, or as a
@@ -41,7 +42,8 @@ mapping with further keys was passed on as given. An entry of `Options.symmetrie
 copy); an iterator is read once, when `certify` starts, and an empty one is refused with that reason. A mapping entry
 without the key 0 or 1, and an entry without a length, are refused with the message of a sequence of the wrong length
 (a KeyError or a TypeError before); a malformed entry is refused when `certify` starts, whether or not S4 reads it
-(before, only when S4 reached the entry). An entry that can be iterated but not indexed (a `dict.values()` view, a class
+(before, only when S4 reached the entry); an empty entry of `Options.approximate_symmetries` is refused there too (an
+IndexError when S4 read it). An entry that can be iterated but not indexed (a `dict.values()` view, a class
 with `__iter__` only) is read as its items, as 3.x unpacked it. The planner
 (`cost.narrow_input_mb`) counts a mapping entry as a tuple entry. `sectors.restrict_to_u1` drops stored zeros of the
 isometry before the row look-up (a stored zero in a row after the last row of the support raised an IndexError). S8
@@ -55,7 +57,11 @@ test order); `tests/test_figures.py` is skipped when `experiments/figures` is ab
 `certified_moments` and `certify_variational` refuse an operator or observable with non-finite entries, or with repeated
 entries that sum beyond the range, with that reason (they reported 'not Hermitian' with a nan difference). Tests:
 `tests/test_small_followups.py` (each case fails at the base bf567f9f, run with the new helper's import replaced by the
-3.x conversion; the conversion control fails only on its assertions about the helper). The computational source hash
+3.x conversion, except three that guard behaviour the base already has: no S8 code for a zero claimed vector, and two
+entry forms read as their items; the conversion control fails only on its assertions about the helper). Open, and
+listed in `docs/project/failures/05_open_items.md`: for a claim with eigenvectors and a non-finite claimed value, S3,
+S4 and S8 give `NEEDS_EIGENVECTORS` ('the claim has eigenvalues only'); certificates with a non-finite claimed value,
+or with an `existence-only` enclosure, do not load under the default schema validation (as at main). The computational source hash
 changes.
 
 ### Repeated entries summed at the start (soundness fix)

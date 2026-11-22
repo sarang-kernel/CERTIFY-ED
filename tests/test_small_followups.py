@@ -205,6 +205,7 @@ def test_sector_composition_with_a_non_finite_claimed_value_is_inconclusive(bad)
     assert res["status"] == "INCONCLUSIVE", res["summary"]
     rec = next(p for p in res["sectors"] if p["label"] == hit)
     assert rec["status"] == "INCONCLUSIVE" and rec["non_finite_eigenvalues"] == [0] and rec["n_non_finite"] == 1
+    assert "dropped_imaginary_parts" not in res        # a non-finite part is not a dropped one
 
 
 @pytest.mark.parametrize("sparse", [False, True])
@@ -388,6 +389,9 @@ def test_sweep_and_composition_record_dropped_imaginary_parts():
     rec = next(p for p in res["sectors"] if p["label"] == hit)
     assert rec["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.125}
     assert all("dropped_imaginary_parts" not in p for p in res["sectors"] if p["label"] != hit)
+    # and once for the composition, in its record and its summary
+    assert res["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.125, "sectors": [hit]}
+    assert "the imaginary parts of 1 claimed value(s) in 1 sector(s), largest in magnitude 0.125" in res["summary"]
 
 
 def test_certify_hamiltonian_records_dropped_imaginary_parts():
@@ -555,3 +559,36 @@ def test_wrappers_record_dropped_parts_of_an_object_array():
     cert = certified_sweep(lambda c: ce.heisenberg_chain(4, J=c), [1.0, 1.1], k=1, solver=solver)["_certificates"][0]
     assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
     assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.375}
+
+
+def test_corroborate_tolerance_of_a_non_finite_claim_is_schema_valid():
+    """corroborate's record for a non-finite claimed value has tolerance nan (none applies), which the certificate
+    schema's number_or_special form accepts; None, written before, is not valid under it."""
+    import math
+
+    jsonschema = pytest.importorskip("jsonschema")
+    from certify_ed.certificate_v2 import _jsonable
+    from certify_ed.corroborate import corroborate
+    from certify_ed.schema import CERTIFICATE_SCHEMA
+    spec, H, w, V = _chain6()
+    sub = {"$defs": CERTIFICATE_SCHEMA["$defs"], "$ref": "#/$defs/number_or_special"}
+    for v in (np.nan, np.inf, complex(w[0], np.inf)):
+        cor = corroborate(H, np.array([v, w[1]]))
+        assert cor["status"] == "INCONCLUSIVE" and math.isnan(cor["tolerance"]), cor
+        jsonschema.validate(_jsonable(cor["tolerance"]), sub)
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(None, sub)
+
+
+@pytest.mark.parametrize("form", ["tuple", "iterable-only"])
+def test_empty_approximate_symmetry_entry_is_refused_at_start(form):
+    """An empty entry of Options.approximate_symmetries (an empty tuple, or an iterable with no items that cannot be
+    indexed) is refused when certify starts, with the form of an entry (before: an IndexError where S4 read it)."""
+    class _Empty:
+        def __iter__(self):
+            return iter(())
+    spec, H, w, V = _chain6()
+    entry = () if form == "tuple" else _Empty()
+    with pytest.raises(ValueError, match=r"approximate_symmetries\[m\] must be \(S, lattice"):
+        ce.certify(ce.Claim(eigenvalues=w[:4], eigenvectors=V[:, :4], operator=H, kind="lowest"), spec,
+                   ce.Options(seed=1, approximate_symmetries={"m": entry}))

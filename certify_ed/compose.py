@@ -286,6 +286,15 @@ def certify_low_energy(spec: ModelSpec, sectors: Sequence[SectorResult], E_cut: 
                    next_lower_bound=float(sub_down(sub_down(E_cut, beta_max), eps)))
         summary = (f"the {K} lowest eigenvalues of H equal the pooled sector values within "
                    f"{rmax + eps:.2e}; the next eigenvalue is >= {E_cut - beta_max - eps:.10g}")
+    dropped = [(p["label"], p["dropped_imaginary_parts"]) for p in per if "dropped_imaginary_parts" in p]
+    if dropped:
+        # the sector records concern the real parts of the claimed values (as certify's claim record says): said once
+        # here too, so that a reader of the summary sees it
+        cnt = sum(d["count"] for _, d in dropped)
+        mx = max(d["max_abs"] for _, d in dropped)
+        out["dropped_imaginary_parts"] = {"count": cnt, "max_abs": mx, "sectors": [lab for lab, _ in dropped]}
+        summary += (f"; the imaginary parts of {cnt} claimed value(s) in {len(dropped)} sector(s), largest in "
+                    f"magnitude {mx:.3g}, were dropped: the statements concern the real parts")
     out.update(status=status, summary=summary, seconds=time.time() - t0)
     if sched is not None:
         out["parallel"] = sched

@@ -148,3 +148,16 @@ the measurement, and the thresholds of the performance tests (`pytest --perf`) w
 baseline is to be recorded again on an idle machine, since the 3.2.2 and 3.2.3 runs shared the machine with other work. One comparison at a relative tolerance of 1e-12 in
 `tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run again, which marks it as a test that
 can fail by chance.
+
+## Non-finite claimed values in certificates
+
+Since `fix/small-followups` (November 2026) a claimed value with a non-finite real or imaginary part is a non-finite
+value at every entry point: S2 and the exact re-checks are INCONCLUSIVE ("claim contains non-finite values"). Three
+things remain open. For a claim with eigenvectors, S3, S4 and S8 give `NEEDS_EIGENVECTORS` with the reason "the claim
+has eigenvalues only", which is not true of such a claim; closing it needs a reason code (`scope.REASON_CODES`,
+`docs/SCOPE_MATRIX.md`). A certificate whose claim holds a non-finite value does not load under the default schema
+validation, because the items of `claim.eigenvalues` are plain numbers in schema 2.1; and a certificate with an
+enclosure of method `existence-only` (claimed vectors scaled by about 1e-170 or 1e155) does not either, because the
+method enumeration lacks that value. Both were so before the branch, and both are schema decisions
+(`docs/SCHEMA_RFC_PROCESS.md`). Until they are made, such certificates are read with
+`Certificate.load(path, validate_schema=False)`.

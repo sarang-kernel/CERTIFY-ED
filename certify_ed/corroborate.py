@@ -121,8 +121,9 @@ def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_
     bad = np.flatnonzero(~np.isfinite(vals))
     if bad.size:
         # a non-finite claimed value agrees with nothing: with an infinity the tolerance was infinite and every
-        # recomputation 'agreed' (CORROBORATED), with a nan every comparison failed silently
-        return {"oracles": {}, "independence": {o: ORACLES[o] for o in oracles}, "tolerance": None,
+        # recomputation 'agreed' (CORROBORATED), with a nan every comparison failed silently; the tolerance is nan
+        # (none applies), the value a nan claim gave before, which the schema's number_or_special form accepts
+        return {"oracles": {}, "independence": {o: ORACLES[o] for o in oracles}, "tolerance": float("nan"),
                 "non_finite_values": bad[:8].tolist(), "status": "INCONCLUSIVE",
                 "summary": f"claim contains non-finite values (indices {bad[:8].tolist()}): nothing is compared",
                 "note": "corroboration only: agreement is evidence, not a certified statement"}
