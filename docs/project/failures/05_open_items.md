@@ -162,8 +162,12 @@ method enumeration lacks that value. Both were so before the branch, and both ar
 (`docs/SCHEMA_RFC_PROCESS.md`). Until they are made, such certificates are read with
 `Certificate.load(path, validate_schema=False)`.
 
-The record of dropped finite imaginary parts (`dropped_imaginary_parts`) is made by `certify`, its two wrappers, the
-sector composition and, since `feat/dropped-parts-records`, by `certify_generalized` (in the claim of its record), both
-exact re-checks (in their result) and the ALPS reader (`read_alps_spectrum`, `claim_from_alps`). `write_bundle` (a
-bundle holds the real parts only) still drops such parts without a record, as in 3.x; a bundle manifest field would
-close it, which is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`).
+The record of dropped finite imaginary parts (`dropped_imaginary_parts`) is made by `certify`, its two wrappers and the
+sector composition and, since the changelog section "Dropped imaginary parts: records at the remaining entry points", by
+`certify_generalized` (in the claim of its record), `exact_recheck_lowest`, `exact_recheck_sector_lowest`,
+`exact_eigenpair_radii` and `corroborate` (in their result) and the ALPS reader (`read_alps_spectrum`,
+`claim_from_alps`). The functions that return numbers only (`enclose`, `residuals`, the Ozaki residuals,
+`arb_residual_radii`, `spectrum_invariants`) make no record; a direct call with complex values gets numpy's
+ComplexWarning, as in 3.x. `write_bundle` (a bundle holds the real parts only) still drops such parts without a record;
+a bundle manifest field would close that, which is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`).
+`tests/test_dropped_parts_records.py` keeps this list complete.
