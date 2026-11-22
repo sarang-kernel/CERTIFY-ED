@@ -362,13 +362,23 @@ base). The computational source hash changes.
   the tripwire of `tests/test_modulus_up.py` has a positive control that accepts the unnamed scope of Python 3.9 and
   3.10 (`co_qualname` exists from 3.11; the named scope is still required from 3.11).
 - **Runs.** With these, every test that runs here passes at the floors and with Python 3.10.22, numpy 1.24.4 and scipy
-  1.10.1 (OpenBLAS), except the ones that create a temporary directory: those are not assessed under Python 3.9 and 3.10
-  in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`), and a pattern that
-  fails at the floors could hide in them; open until they are run elsewhere. Full suites at 13ebe18b: 1747 passed at
-  Python 3.10.22, numpy 1.24.4, scipy 1.10.1 and 1739 at Python 3.9.23, numpy 1.22.4, scipy 1.8.1, 0 failed, 229 errors
-  on each, all from that hook. The suite was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at
-  main no defect of the package, and the test failures were the ones above (the matplotlib skips, the cuts, the recorded
-  radii, the separation test, the test matrix B).
+  1.10.1 (OpenBLAS), except the ones that create a temporary directory, which a file-system hook of the Windows test
+  sandbox stops under Python 3.9 and 3.10 (it is incompatible with their `pathlib`). Full suites at 13ebe18b: 1747
+  passed at Python 3.10.22, numpy 1.24.4, scipy 1.10.1 and 1739 at Python 3.9.23, numpy 1.22.4, scipy 1.8.1, 0 failed,
+  229 errors on each, all from that hook. Those tests were then run on Linux at the same numpy and scipy (Python 3.9.25
+  and 3.10.21, no hook). At 0770a6b2 they found test defects only: seven tests that write HDF5 files and one schema test
+  needed the optional h5py and jsonschema without a skip (eight failures at 3.9, which has neither; the schema test at
+  3.10), and `tests/test_sparse_residual.py` required a count where SuperLU (scipy 1.10.1) met an exact zero pivot at a
+  shift equal to an eigenvalue (the median of an odd number of eigenvalues), which `inertia_sparse` refuses (note "zero
+  pivot", no count). The tests now skip the HDF5 cases without h5py (`tests/test_io_formats.py`,
+  `tests/test_single_precision.py`), check the schema layer only with jsonschema (`tests/test_schema_conformance.py`;
+  the structural layer always), and accept that refusal at exactly that shift. At a7b1cf8f on Linux: 1957 passed at
+  Python 3.9.25, numpy 1.22.4, scipy 1.8.1 and 1982 at Python 3.10.21, numpy 1.24.4, scipy 1.10.1, 0 failed, 0 errors;
+  2112 passed at Python 3.12.3, numpy 2.5.4, scipy 1.18.1. The Windows-specific pattern (numpy < 2 on Windows takes C
+  long exponents) in the tests that the hook stops is covered by the search of every `np.ldexp` call above. The suite
+  was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at main no defect of the package, and the
+  test failures were the ones above (the matplotlib skips, the cuts, the recorded radii, the separation test, the test
+  matrix B).
 
 ### Result documents moved under docs/
 
