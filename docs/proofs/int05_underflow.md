@@ -35,7 +35,35 @@ modulus; for non-negative real terms (|A||x|) the relative part has no cancellat
 (`fp._two_product`) returns p, e with p + e = ab exactly. If |fl(ab)| < 2⁻⁹⁶⁷ then |ab| < 2⁻⁹⁶⁶. If |fl(ab)| ≥ 2⁻⁹⁶⁷ and
 one factor is subnormal, the other has magnitude ≥ 2⁵⁴, and (2⁶⁰a, 2⁻⁶⁰b) (or the mirror pair) are normal
 numbers with the same exact product. Consequently `fp.exact_dot(x, y)` returns (s, err) with |s − xᴴy| ≤ err for
-all inputs.
+all inputs whose intermediates stay below the overflow threshold; Lemma U2b extends this to every input whose products
+round to finite values and whose retained sum (the products with |fl(a_j b_j)| ≥ 2⁻⁹⁶⁷, each real component) rounds
+into the range. (Corrected
+2026-11-21: the statement read "for all inputs"; at the top of the range `exact_dot` returned nan or inf, see Lemma U2b.)
+
+**Lemma U2b (the top of the range; added 2026-11-21, UNVERIFIED, D-12).** Let H_F := 2⁹⁹⁵ (`HUGE_FACTOR`) and
+H_P := 2⁹⁹⁶ (`HUGE_PRODUCT`), and let a, b be normal binary64 numbers with fl(ab) finite and |fl(ab)| ≥ 2⁻⁹⁶⁷.
+(i) If |a|, |b| < H_F and |fl(ab)| < H_P, every intermediate of TwoProduct is below 2¹⁰²⁴ in magnitude, and p + e = ab.
+(ii) Otherwise order the pair so that |a| ≥ |b|. If |fl(ab)| < H_P, then (2⁻⁶⁴a, 2⁶⁴b) are normal numbers with the
+same product that satisfy (i). If |fl(ab)| ≥ H_P, then (2⁻⁶⁴a, b) satisfy (i); for its split (p′, e′),
+2⁶⁴p′ = fl(ab) and 2⁶⁴p′ + 2⁶⁴e′ = ab, both products by 2⁶⁴ exact.
+(iii) For finite terms t_j, `fp.exact_sum` returns the binary64 number nearest to Σ t_j (ties to even) when that
+number is finite, and nan otherwise: `math.fsum` where its partial sums do not overflow, else the integer sum of the
+t_j·2¹⁰⁷⁴ divided once by 2¹⁰⁷⁴ (`fp._wide_sum`); the cascade accepts its float result h only when the remainder lies
+strictly inside the rounding interval of h, whose boundary on the overflow side at h = ±BIG is ±(BIG + 2⁹⁷⁰).
+(iv) The complex error term is fl(2u·fl(|Re s| + |Im s|)) as before, and fl(fl(2u|Re s|) + fl(2u|Im s|)) where
+|Re s| + |Im s| overflows (no intermediate then exceeds 2u·BIG).
+Implementation hypotheses of (iii), properties of CPython rather than of IEEE 754: (H1) the true division of two Python
+integers is correctly rounded (to nearest, ties to even) and raises OverflowError when the rounded quotient is not
+finite; (H2) `math.fsum` of finite floats, when it returns a finite value, returns the correctly rounded exact sum (it raises
+OverflowError when a partial sum overflows; a value that is not finite takes the integer route as well, corrected
+2026-11-22). The verify script checks the result of (iii) against both neighbours in exact
+rational arithmetic, which does not use (H1).
+Consequently the pair (s, err) of `fp.exact_dot(x, y)` is finite exactly when every product rounds to a finite value
+and each real component of the retained sum Σ' a_j b_j (the pairs with |fl(a_j b_j)| ≥ 2⁻⁹⁶⁷, Lemma U2) rounds into
+the range, and then |s − xᴴy| ≤ err (real) or |Re s − Re xᴴy| + |Im s − Im xᴴy| ≤ err (complex). The exact inner
+product differs from the retained sum by less than n_tiny·2⁻⁹⁶⁶, so at the midpoint BIG + 2⁹⁷⁰ one can round into the
+range and the other not (corrected 2026-11-22: the statement named the exact components; x = (BIG, 2⁹⁷⁰, 2⁻⁵⁰⁰),
+y = (1, 1, −2⁻⁵⁰⁰) gives nan although xᴴy rounds to BIG, and the mirror case a finite pair whose bound holds).
 
 **Lemma U3 (norms).** For a stored vector v with N real components (N = n real entries or 2n for n complex
 entries), s := `np.linalg.norm(v)` satisfies
@@ -116,9 +144,56 @@ the result ≥ 2⁻⁶ normal); both factors are then normal and the product is 
 applies. Two subnormal factors give |ab| < 2⁻²⁰⁴⁴, a tiny product. *exact_dot.* The pairs with |fl(a_j b_j)| ≥
 2⁻⁹⁶⁷ are rescaled where needed and split exactly into (p_j, e_j); `exact_sum` returns the correctly rounded sum
 of all p_j, e_j (its TwoSum steps are exact in every range by (M-U) for additions; `math.fsum` is exact-then-
-rounded), so |s − Σ_big a_j b_j| ≤ u|Σ_big| ≤ u|s|(1 + u) ≤ 2u|s| for a real result (and the 2u|Re s| + 2u|Im s| of the
-code for a complex one); the left-out pairs contribute at most n_tiny·2⁻⁹⁶⁶ = n_tiny·`TINY_BOUND` in modulus,
+rounded), so |s − Σ_big a_j b_j| ≤ u|Σ_big| ≤ u|s|(1 + u) ≤ 2u|s| for a real result (and for a complex one the
+code's 2u(|Re s| + |Im s|), whose rounding costs at most a factor 1 − u; wording corrected 2026-11-21, it read
+2u|Re s| + 2u|Im s|); the left-out pairs contribute at most n_tiny·2⁻⁹⁶⁶ = n_tiny·`TINY_BOUND` in modulus,
 which is added to err. ∎
+
+**Lemma U2b.** *(i)* With S = 2²⁷ + 1 and |a| < 2⁹⁹⁵, |Sa| < 2¹⁰²³, so c = fl(Sa) and c − a are finite and the
+roundings are relative, as in the proof of Lemma U2. The split gives |a_h| ≤ |a|(1 + 2⁻²⁶) and |a_l| ≤ 2⁻²⁶|a|
+(likewise for b), hence every product of the parts is at most |ab|(1 + 2⁻²⁶)² < 2⁹⁹⁶(1 + 2⁻²⁴) < 2¹⁰²⁴ in magnitude,
+and the differences formed from them are bounded by the same quantity plus |p| ≤ |fl(ab)| < 2⁹⁹⁶ (Dekker's proof
+bounds each by the larger of its operands). Together with the lower end of Lemma U2 (|ab| ≥ 2⁻⁹⁶⁸), every intermediate
+is an integer multiple k·G of G = ulp(a)ulp(b) ≥ 2⁻¹⁰⁷⁴ with |k| < 2⁵³ and |kG| < 2¹⁰²⁴, hence in F, and p + e = ab.
+*(ii)* The swap changes neither the product nor p + e. A pair with a subnormal factor is rescaled first (Lemma U2);
+afterwards both factors are normal and the larger is at most 2⁹⁶⁴ in magnitude, so such a pair reaches (ii) only
+through |fl(ab)| ≥ H_P, which a subnormal factor excludes (|ab| < 2⁻¹⁰²²·2¹⁰²⁴ = 4); hence both factors are normal in
+(ii). *Large factor, product below H_P:* |a| ≥ H_F gives |b| ≤ |ab|/|a| < 2⁹⁹⁶(1 + u)/2⁹⁹⁵ < 4, so 2⁶⁴|b| < 2⁶⁶;
+2⁻⁶⁴a ≥ 2⁹³¹ is normal, so both multiplications by powers of two are exact (no result leaves the normal range or
+exceeds 2¹⁰²⁴), the product is unchanged, and both new factors are below H_F: (i) applies. *Product at least H_P:*
+|ab| ≥ 2⁹⁹⁶(1 − u) and |ab| < 2¹⁰²⁴ (fl(ab) is finite), so |a| ≥ √|ab| > 2⁴⁹⁷ and |b| ≤ √|ab| < 2⁵¹². Then 2⁻⁶⁴a is normal
+(≥ 2⁴³³) and exact, below 2⁹⁶⁰ < H_F; the scaled product 2⁻⁶⁴ab lies in [2⁹³¹, 2⁹⁶⁰), so fl(2⁻⁶⁴ab) < H_P and (i) gives
+p′ + e′ = 2⁻⁶⁴ab. Rounding commutes with multiplication by 2⁶⁴ on the normal range as long as the result is finite
+(the binades map onto each other with their grids), so fl(ab) = 2⁶⁴ fl(2⁻⁶⁴ab) = 2⁶⁴p′, exactly, and finite by
+hypothesis. e′ is a multiple of G′ = ulp(2⁻⁶⁴a)ulp(b) with fewer than 2⁵³ multiples and |e′| ≤ ulp(p′)/2, so 2⁶⁴e′ is a
+multiple of 2⁶⁴G′ with the same count and |2⁶⁴e′| ≤ ulp(fl(ab))/2 ≤ 2⁹⁷⁰: it is in F, and 2⁶⁴p′ + 2⁶⁴e′ = 2⁶⁴(p′ + e′) = ab.
+*(iii)* Every nonzero finite x ∈ F is m·2^{k−1074} with integers 0 < |m| < 2⁵³ and 0 ≤ k ≤ 2045: `np.frexp` gives
+x = μ·2^ε exactly with ½ ≤ |μ| < 1, then m = μ·2⁵³ (exact, an integer) and k = ε + 1021; for a subnormal x, where
+k < 0, m is a multiple of 2^{−k} and is replaced by m·2^k with k = 0, exactly. So x·2¹⁰⁷⁴ = m·2^k is an integer.
+`fp._wide_sum` adds the m of equal k in int64 runs of at most 1024 terms, whose sums are below 1024·(2⁵³ − 1) < 2⁶³ in
+magnitude and therefore exact, and adds the run sums times 2^k as Python integers, so the integer sum
+N = Σ t_j·2¹⁰⁷⁴ is exact (corrected 2026-11-22: the terms were summed one at a time through `float.as_integer_ratio`,
+and the text gave every x as num/2^k with "an odd or zero num", which an even integer x is not). Python's division of
+two integers is correctly rounded (round to nearest, ties to even) and raises OverflowError when the rounded quotient
+is not finite, so N/2¹⁰⁷⁴ is the nearest binary64 number to Σ t_j, or nan is returned. `math.fsum` is
+exact-then-rounded where it returns a finite value (H2); where a partial sum or the result overflows it raises
+OverflowError or returns a value that is not finite, and both take the integer route (corrected 2026-11-22: it read
+that `math.fsum` raises whenever a partial sum or the result overflows).
+In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions; the robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
+step whose sum is finite (terms −3·2⁹⁷⁰ and BIG: s = BIG − 2⁹⁷¹, but s + 3·2⁹⁷⁰ = BIG + 2⁹⁷⁰ rounds to infinity),
+makes the sum or the error term of that step inf or nan, so h is not finite, and then the value is `_fsum`'s
+(corrected 2026-11-22: it read "exact wherever their float sums are finite"). With finite h, Σ t_j = h + e + r with
+|r| ≤ slack, and h is returned only if e ± slack lies strictly between −dn_gap and up_gap, the half-distances to the
+neighbours of h. At h = BIG the neighbour above is the overflow: values at or above BIG + 2⁹⁷⁰ round to infinity
+(the midpoint ties away from the odd significand of BIG), so up_gap = 2⁹⁷⁰ there (np.nextafter would give an infinite
+gap); symmetrically at −BIG. *(iv)* Where |Re s| + |Im s| is finite the term is that of Lemma U2. Otherwise
+fl(2u|z|) is exact for normal results and in error by at most u_min otherwise,
+covered by the factor 2 of 2u (u|Re s| suffices for a correctly rounded component); 2u|Re s| ≤ 2u·BIG < 2⁹⁷², so the sum of
+the two terms is finite, and rounding it costs at most a factor (1 − u), again within the factor 2. *Consequence.* The
+pairs left out are those of Lemma U2. A product that does not round to a finite value makes `_two_product_split`
+return the products themselves, so the sum is not finite; a component of the retained sum beyond the range makes
+`exact_sum` return nan by (iii); in both cases err is not finite. Otherwise every split is exact by (i)–(ii), and the bound follows
+as in Lemma U2. ∎
 
 **Lemma U3.** S = fl(Σ v_j²) is a dot product of N non-negative terms: by Lemma U1 (real components; a complex
 vector's norm is the real norm of its 2n components), S ∈ [‖v‖²(1 − γ_N) − N u_min(1 + γ_N), ‖v‖²(1 + γ_N) + N u_min(1 + γ_N)].
@@ -204,7 +279,9 @@ longer need the hypothesis. ∎
 | c_w | `residual_entry_count(w, cplx) = P (1 + gamma(w + 1)) + 2 g w (1 + gamma(w)) (1 + 4u) + 3 g (1 + 4u)^2 + 2 (1 + 4u)`, P = w + 1 or 4w + 2 | U4 |
 | A_{n,w} | `residual_additive_term(n, w, cplx) = ldexp(sqrt(n) c_w _GUARD^2, -1075) + ULP_MIN` | U5 |
 | upper, rel | `enclosure.residuals`: `upper = (R_up + E_up) + residual_additive_term(...)`; `rel = ... * (1 + 4 * U) + 2 * ULP_MIN` | U5 |
-| exact_dot | `TINY_PRODUCT = 2^-967`, `TINY_BOUND = 2^-966`, `_MIN_NORMAL = 2^-1022`; `_two_product_split`: mask `abs(a b) >= TINY_PRODUCT`, rescaling by 2^±60 of a subnormal factor; `err = 2u|s| + n_tiny TINY_BOUND` | U2 |
+| exact_dot | `TINY_PRODUCT = 2^-967`, `TINY_BOUND = 2^-966`, `_MIN_NORMAL = 2^-1022`; `_two_product_split`: mask `abs(a b) >= TINY_PRODUCT`, rescaling by 2^±60 of a subnormal factor; `err = 2u|s| + n_tiny TINY_BOUND` (complex: `2u(|Re s| + |Im s|) + ...`) | U2 |
+| exact_dot, top of the range | `HUGE_FACTOR = 2^995`, `HUGE_PRODUCT = 2^996`, `_HUGE_SCALE = 2^64`; `_two_product_split`: mask `hi`, swap so the larger factor comes first, `a /= 2^64`, `b *= 2^64` for products below `HUGE_PRODUCT`, else `p, e *= 2^64` after the split; complex `err`: `2u(|re| + |im|)`, or `2u|re| + 2u|im|` where the sum overflows | U2b (i), (ii), (iv) |
+| exact_sum | `_fsum`: `math.fsum`, on OverflowError or a non-finite value `_wide_sum` (integers on the 2^-1074 grid from `np.frexp`, int64 run sums of at most 1024 terms of one exponent, one correctly rounded division, nan beyond the range); `_inside_rounding_interval(h, e, slack)` with the half-gap 2^970 at ±BIG | U2b (iii) |
 | Gram, BLAS products | `gram_additive_term(g, n, cplx) = ldexp(g (3 if cplx else 1) n (1 + gamma(n)) _GUARD^2, -1075) + ULP_MIN`, used in `_cluster_bound` for the BLAS Gram path and `XR_bound` | U1, U7 |
 | products that may be subnormal | `_cluster_bound`: `rho ... + ULP_MIN`, `XR_bound ... + 3 ULP_MIN`, `eps_star ... + 4 ULP_MIN`, BLAS-Gram `eta ... + 2 ULP_MIN`; `compose.py`: `rho = up(...) + ULP_MIN`; `sectors.decomposition_shift`, `certify._subspace_shift`: `+ ULP_MIN`; `enclosure.kato_temple`: `r2 = nextafter(r r, inf) + ULP_MIN` | U7 |
 | sums of squares | `_cluster_bound`: `Rg_fro = norm2_upper(res.upper[idx])`, `Rerr = norm2_upper(res.E_norm[idx])`; `compose`: `D = norm2_upper([inv_s])`; `decomposition_shift`: `eta`, `D` via `norm2_upper` | U3 |
@@ -229,6 +306,14 @@ subnormals included, exactly; square roots bracketed with `decimal` at 120 digit
 - U1: dot products of vectors with entries 10⁻¹⁶⁰ … 10⁻³²⁰ (products subnormal or flushed) against the exact sum;
 - U2: `exact_dot` on vectors with tiny, subnormal and mixed-scale entries against the exact rational inner
   product (|s − exact| ≤ err), including pairs that trigger the rescaling (a subnormal factor, the other ≥ 2⁵⁴);
+- U2b: `exact_dot` on vectors whose products have exponents 990 … 1023, with one factor at or above 2⁹⁹⁵, and on
+  mixed vectors over the whole range (real and complex): |s − exact| ≤ err when every product and the exact components
+  round into the range (for a single real pair also s = the nearest value, checked against both neighbours in exact
+  arithmetic), a pair that is not finite otherwise; `exact_sum` with ±BIG and ±2¹⁰²³ among random terms, on the
+  `math.fsum` path and padded beyond `EXACT_SUM_MIN_TERMS` (the cascade): the nearest value, or nan when the exact sum
+  is at least BIG + 2⁹⁷⁰ in magnitude; adversarial: the split threshold 2¹⁰²⁴/(2²⁷ + 1), `HUGE_FACTOR` and `HUGE_PRODUCT`
+  from both sides, √BIG squared, products at the overflow threshold, factors at the top with subnormal partners, a
+  complex case with both parts near BIG, and sums at the midpoint BIG + 2⁹⁷⁰ from both sides;
 - U3: `norm2_upper` ≥ exact ‖v‖ ≥ `norm2_lower` for vectors whose squares underflow (entries ≈ 10⁻¹⁶⁵ … 10⁻³²⁰, real and
   complex), and the scalar inequality (1 + 2γ_{N+2})² ≥ (1 + γ_N)/(1 − γ_N) on the grid N ≤ 10⁵ ∪ {2^j, j ≤ 27};
 - U5: `residuals` on operators scaled to 10⁻¹⁵⁰ … 10⁻³⁰⁰ and on LAPACK-like vectors with entries 10⁻²⁶⁵ (the INT-05
@@ -245,6 +330,24 @@ operations; U1 5 000 dot products; U2 5 000 random + 200 adversarial `exact_dot`
 2^{−967}, 2^{−966} and the rescaling branch); U3 5 000 random vectors + the scalar inequality and the computed T_N on
 200 000 grid points, + 23 adversarial; U5 2 500 random + 150 adversarial residual cases (zero residual with tiny x,
 one subnormal entry, subnormal A and μ); U6 2 500 monotonicity cases; 0 violations.
+
+Run of 2026-11-21 with Lemma U2b (same options; output in `docs/proofs/runs/int05_underflow_2026-11-21.txt`; the
+added checks draw from the same generator, so the other counts differ slightly from the first run): M 19 040
+operations; U1 5 000; U2 5 000 random + 200 adversarial; U2b 7 500 random (2 500 `exact_dot` cases at the top of the
+range; 2 500 sums with ±BIG or ±2¹⁰²³ among random terms, each on both summation paths: 5 000 checks) + 95 adversarial; U3 205 000 +
+23 adversarial; U5 2 500 + 150 adversarial; U6 2 500; 0 violations.
+
+Run of 2026-11-22, after the correction of the consequence of Lemma U2b (same options; output in
+`docs/proofs/runs/int05_underflow_2026-11-22.txt`): the oracle of the U2b counter decides finiteness on the retained
+sum, and three adversarial inputs are added (the two retained-sum cases at the midpoint above BIG, which the oracle of
+the first run counts as violations, and the sum −3·2⁹⁷⁰ + BIG with an overflowing TwoSum intermediate, on both
+summation paths): U2b 7 500 random + 99 adversarial, the other counts as in the run of 2026-11-21; 0 violations.
+
+Run of 2026-11-22 after `fp._wide_sum` was vectorized (same options; output in
+`docs/proofs/runs/int05_underflow_2026-11-22_vectorized.txt`; step (iii) of the proof restated for it): the same counts
+as the run before; 0 violations. `tests/test_exact_dot_range.py` compares the vectorized sum with the term-by-term
+integer sum on 600 random term sets and 12 special ones (runs of one exponent across the 1024-term boundary, a
+sum beyond the range, an exact zero).
 
 ## 5 Analytic cross-check
 
@@ -272,3 +375,6 @@ eigenvalues lie inside the tiny intervals.
 
 Derived on 2026-10-30; machine-checked (2 500 residual + 2 500 monotonicity + 5 000 dot + 5 000 exact_dot + 5 000 norm + 18 992 model operations random + 373 adversarial cases, 0 violations); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict ERROR, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).
+Lemma U2b (the top of the range) and the narrowed statement of Lemma U2 added on 2026-11-21 (UNVERIFIED, D-12):
+machine-checked by U2b of the verify script (counts in section 4); no independent re-derivation yet; Sarang's check
+(D-12): pending.

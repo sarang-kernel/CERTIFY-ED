@@ -5,6 +5,8 @@ M   the model fl(z) = z(1 + delta) + eta on random operands over the whole expon
     exactness of sums below 2^-1022
 U1  dot products with tiny entries against the exact sum and the bound gamma_k sum|a b| + k (1 + gamma_{k-1}) u_min
 U2  exact_dot on tiny, subnormal and mixed-scale vectors (|s - exact| <= err), including the rescaling branch
+U2b exact_dot at the top of the range (factors >= 2^995, products >= 2^996, real and complex) and exact_sum with
+    overflowing partial sums: |s - exact| <= err and the nearest value, or not finite when the exact value is beyond
 U3  norm2_upper >= ||v|| >= norm2_lower for vectors whose squares underflow (incl. 10^4 entries of 2^-540); the scalar inequality of T_N on a grid
 U5  residuals on scaled operators and LAPACK-like vectors: rel^2 ||x||^2 >= ||r||^2, upper >= ||r||, E_i + c_w u_min >= |Rc_i - r_i|
 U6  radii never shrink against the pre-branch formula, difference <= D, bit identity for normal radii
@@ -15,6 +17,7 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import struct
 import sys
 from decimal import Decimal, getcontext, ROUND_CEILING, ROUND_FLOOR
 from fractions import Fraction
@@ -26,8 +29,9 @@ sys.path.insert(0, os.getcwd())
 from _common import Counter  # noqa: E402
 
 from certify_ed.enclosure import OperatorAdapter, residuals  # noqa: E402
-from certify_ed.fp import (U, ULP_MIN, _GUARD, exact_dot, gamma, norm2_lower, norm2_upper,  # noqa: E402
-                           norm_underflow_term, residual_additive_term, residual_entry_count)
+from certify_ed.fp import (HUGE_FACTOR, HUGE_PRODUCT, U, ULP_MIN, _GUARD, exact_dot, exact_sum, gamma,  # noqa: E402
+                           norm2_lower, norm2_upper, norm_underflow_term, residual_additive_term,
+                           residual_entry_count)
 
 getcontext().prec = 150
 u = Fraction(U)
@@ -140,6 +144,121 @@ def check_exact_dot(rng, counters, adversarial=False, kind=None):
     counters["U2"].add(adversarial, ok, f"exact_dot {kind} k={k}")
 
 
+# Lemma U2b: the top of the range. An exact value rounds beyond the range iff its magnitude is at least
+# 2^1024 - 2^970 (the midpoint above the largest binary64 number, a tie that rounds away from its odd significand).
+BEYOND = Fraction(2 ** 1024 - 2 ** 970)
+BIG = float(np.finfo(float).max)
+
+
+def is_nearest(f, q):
+    """f is the binary64 number nearest to the rational q (ties to even), checked against both neighbours in exact
+    arithmetic (independent of Python's correctly rounded int / int division used by fp._wide_sum)."""
+    if not math.isfinite(f) or abs(q) >= BEYOND:
+        return False
+    d = abs(F(f) - q)
+    with np.errstate(over="ignore"):
+        nb = (np.nextafter(f, math.inf), np.nextafter(f, -math.inf))
+    for g in nb:
+        G = F(g) if math.isfinite(g) else Fraction(2 ** 1024) * (1 if g > 0 else -1)
+        dg = abs(G - q)
+        if dg < d:
+            return False
+        if dg == d and math.isfinite(g) and (struct.unpack("<q", struct.pack("<d", f))[0] & 1):
+            return False                                       # a tie rounds to the even significand
+    return True
+
+
+def top_vector(rng, k, kind):
+    if kind == "product":                 # products with exponents 990 ... 1023 (both factors normal)
+        ea = rng.integers(400, 1023, k)
+        eb = rng.integers(990, 1024, k) - ea
+    elif kind == "factor":                # one factor at or above 2^995, the product anywhere
+        ea = rng.integers(995, 1024, k)
+        eb = rng.integers(-1060, 1024 - ea + 1)
+    else:                                 # mixed: top pairs among tiny, subnormal and ordinary ones
+        ea = rng.integers(-1074, 1024, k)
+        eb = np.array([int(rng.integers(max(-1074, -1074 - e), 1024 - max(e, 0) + 2)) for e in ea])
+    eb = np.minimum(eb, 1024)            # finite entries only (the lemma concerns finite inputs)
+    a = rng.uniform(1, 2, k) * np.ldexp(1.0, ea - 1) * rng.choice([-1.0, 1.0], k)
+    b = rng.uniform(1, 2, k) * np.ldexp(1.0, eb - 1) * rng.choice([-1.0, 1.0], k)
+    a[~np.isfinite(a)] = BIG
+    b[~np.isfinite(b)] = -BIG
+    sw = rng.random(k) < 0.5
+    a[sw], b[sw] = b[sw], a[sw]
+    return a, b
+
+
+def check_top_pair(a, b, counters, adversarial, tag):
+    """The pair is finite exactly when every product rounds to a finite value and the retained sum (the products not
+    left out as tiny, |fl(ab)| >= 2^-967: Lemma U2; each real component) rounds into the range; then |s - x^H y| <= err
+    with the exact inner product (real: also nearest for one pair). Not finite otherwise."""
+    a, b = np.asarray(a), np.asarray(b)
+    cplx = np.iscomplexobj(a) or np.iscomplexobj(b)
+
+    def kept(u, v):              # exact sum of the products exact_dot keeps, and of all products
+        with np.errstate(over="ignore", under="ignore"):
+            k = [abs(float(x) * float(y)) >= 2.0 ** -967 for x, y in zip(u, v)]
+        return (sum((F(x) * F(y) for x, y, kk in zip(u, v, k) if kk), Fraction(0)),
+                sum((F(x) * F(y) for x, y in zip(u, v)), Fraction(0)))
+    with np.errstate(over="ignore", invalid="ignore"):
+        s, err = exact_dot(a, b)
+        if cplx:
+            ac, bc = a.astype(complex), b.astype(complex)
+            prods = np.concatenate([ac.real * bc.real, ac.imag * bc.imag, ac.real * bc.imag, ac.imag * bc.real])
+        else:
+            prods = a * b
+    if cplx:
+        (k1, e1), (k2, e2) = kept(ac.real, bc.real), kept(ac.imag, bc.imag)
+        (k3, e3), (k4, e4) = kept(ac.real, bc.imag), kept(ac.imag, bc.real)
+        re_k, im_k, re, im = k1 + k2, k3 - k4, e1 + e2, e3 - e4
+        if np.isfinite(prods).all() and abs(re_k) < BEYOND and abs(im_k) < BEYOND:
+            ok = (math.isfinite(s.real) and math.isfinite(s.imag) and math.isfinite(err)
+                  and abs(F(s.real) - re) + abs(F(s.imag) - im) <= F(err))
+        else:
+            ok = not (math.isfinite(s.real) and math.isfinite(s.imag) and math.isfinite(err))
+    else:
+        q_k, q = kept(a, b)
+        if np.isfinite(prods).all() and abs(q_k) < BEYOND:
+            ok = math.isfinite(s) and math.isfinite(err) and abs(F(s) - q) <= F(err)
+            if a.size == 1 and abs(prods[0]) >= 2.0 ** -967:      # a pair below TINY_PRODUCT is left out (Lemma U2)
+                ok = ok and is_nearest(s, q)
+        else:
+            ok = not (math.isfinite(s) and math.isfinite(err))
+    counters["U2b"].add(adversarial, ok, f"exact_dot top {tag}: {a.tolist()} {b.tolist()} -> {s} {err}")
+
+
+def check_exact_dot_top(rng, counters):
+    k = int(rng.integers(1, 9))
+    kind = str(rng.choice(["product", "factor", "mixed"]))
+    a, b = top_vector(rng, k, kind)
+    if rng.random() < 0.3:
+        a2, b2 = top_vector(rng, k, kind)
+        ac, bc = np.empty(k, complex), np.empty(k, complex)    # set the parts directly: 1j * BIG would give a nan part
+        ac.real, ac.imag, bc.real, bc.imag = a, a2, b, b2[::-1]
+        a, b = ac, bc
+    check_top_pair(a, b, counters, False, kind)
+
+
+def check_sum_top(t, counters, adversarial, tag):
+    """exact_sum (math.fsum path and, padded beyond EXACT_SUM_MIN_TERMS, the cascade) of finite terms: the nearest
+    binary64 number to the exact sum, nan when the exact sum rounds beyond the range."""
+    t = np.asarray(t, dtype=float)
+    q = sum((F(x) for x in t.tolist()), Fraction(0))
+    for pad in (0, 5000):
+        tt = np.concatenate([t, np.tile([1.0, -1.0], pad // 2)]) if pad else t
+        got = exact_sum(tt)
+        ok = math.isnan(got) if abs(q) >= BEYOND else is_nearest(got, q)
+        counters["U2b"].add(adversarial, ok, f"exact_sum top {tag} pad={pad}: {t.tolist()[:6]} -> {got}")
+
+
+def check_wide_sum(rng, counters):
+    n = int(rng.integers(2, 12))
+    t = rng.uniform(1, 2, n) * np.ldexp(1.0, rng.integers(-1074, 1024, n) - 1) * rng.choice([-1.0, 1.0], n)
+    big = rng.choice([BIG, -BIG, 2.0 ** 1023, -2.0 ** 1023], int(rng.integers(1, 4)))
+    t = rng.permutation(np.concatenate([t[np.isfinite(t)], big]))
+    check_sum_top(t, counters, False, "random")
+
+
 def check_norm(rng, counters, adversarial=False, v=None):
     if v is None:
         n = int(rng.integers(1, 40))
@@ -243,13 +362,17 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
     rng = np.random.default_rng(args.seed)
-    counters = {k: Counter() for k in ("M", "U1", "U2", "U3", "U5", "U6")}
+    counters = {k: Counter() for k in ("M", "U1", "U2", "U2b", "U3", "U5", "U6")}
     for i in range(args.cases):
         check_model(rng, counters)
         if i % 4 == 0:
             check_dot(rng, counters)
         if i % 4 == 1:
             check_exact_dot(rng, counters)
+            if i % 8 == 1:
+                check_exact_dot_top(rng, counters)
+            else:
+                check_wide_sum(rng, counters)
         if i % 4 == 2:
             check_norm(rng, counters)
         if i % 8 == 3:
@@ -275,8 +398,38 @@ def main():
             exact = sum(F(x) * F(y) for x, y in zip(a, b))
             counters["U2"].add(True, abs(F(s) - exact) <= F(err), f"threshold 2^{e}")
         check_exact_dot(rng, counters, True, "subnormal")
+    # adversarial, Lemma U2b: the split threshold 2^1024 / (2^27 + 1), HUGE_FACTOR and HUGE_PRODUCT from both sides,
+    # products at the overflow threshold, factors at the top with subnormal partners, overflowing partial sums
+    # the retained sum decides finiteness at the midpoint above BIG (a left-out tiny product on either side), and a TwoSum
+    # step whose sum is finite while an intermediate overflows (-3 * 2^970 then BIG)
+    check_top_pair([BIG, 2.0 ** 970, 2.0 ** -500], [1.0, 1.0, -2.0 ** -500], counters, True, "retained sum at midpoint")
+    check_top_pair([BIG, 2.0 ** 970, -2.0 ** -966] + [0.9 * 2.0 ** -467] * 3, [1.0, 1.0, 1.0] + [2.0 ** -500] * 3,
+                   counters, True, "retained sum below midpoint")
+    check_sum_top([-3.0 * 2.0 ** 970, BIG], counters, True, "TwoSum intermediate overflow")
+    s0 = math.ldexp(1.0 / (2 ** 27 + 1), 1024)
+    for f in (s0, np.nextafter(s0, 0), np.nextafter(s0, math.inf), HUGE_FACTOR, np.nextafter(HUGE_FACTOR, 0), BIG):
+        for g in (2.0 ** -30, 1.0, 5e-324, 2.0 ** -1060, 0.75):
+            check_top_pair([f], [g], counters, True, "factor edge")
+            check_top_pair([g], [-f], counters, True, "factor edge, mirrored")
+    root = math.sqrt(BIG)
+    for p_ in (HUGE_PRODUCT, np.nextafter(HUGE_PRODUCT, 0), np.nextafter(HUGE_PRODUCT, math.inf)):
+        check_top_pair([p_], [1.0], counters, True, "product edge")
+        check_top_pair([math.sqrt(p_)], [math.sqrt(p_)], counters, True, "product edge, square")
+    for a_, b_ in ((root, root), (np.nextafter(root, math.inf), root), (np.nextafter(root, math.inf),) * 2,
+                   (BIG, 1.0 - 2.0 ** -53), (BIG, np.nextafter(1.0, 2.0)), (2.0 ** 1023, 1.9999999999999998),
+                   (2.0 ** 512, 2.0 ** 511 * 1.9999999999999998)):
+        check_top_pair([a_], [b_], counters, True, "overflow threshold")
+    check_top_pair(np.array([BIG + 0j, complex(0.0, root)]), np.array([1.0 - 1e-3j, -root + 0j]), counters, True,
+                   "complex, both parts at the top")
+    check_top_pair(np.array([BIG + 0j, complex(0.0, root)]), np.array([1.0 - 1e-3j, root + 0j]), counters, True,
+                   "complex, Im beyond the range")
+    for t in ([BIG, BIG, -BIG], [-BIG, -BIG, BIG, 1.0], [BIG, BIG, -BIG, 5e-324], [BIG, 2.0 ** 970],
+              [BIG, 2.0 ** 970, -5e-324], [BIG, 2.0 ** 970 - 2.0 ** 918], [BIG, BIG], [2.0 ** 1023, 2.0 ** 1023],
+              [2.0 ** 1023, 2.0 ** 1023, -5e-324], [BIG, 2.0 ** 1023, -2.0 ** 1023, -BIG, 2.0 ** -1074]):
+        check_sum_top(t, counters, True, "edge")
     ok = True
     for key, name in (("M", "model (M-U)"), ("U1", "dot products (Lemma U1)"), ("U2", "exact_dot (Lemma U2)"),
+                      ("U2b", "exact_dot and exact_sum at the top of the range (Lemma U2b)"),
                       ("U3", "norms and T_N (Lemma U3)"), ("U5", "Theorem 1 radius under (M-U) (Theorem U5)"),
                       ("U6", "radii never shrink (Theorem U6)")):
         ok &= counters[key].report(name)

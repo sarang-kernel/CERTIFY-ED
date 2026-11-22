@@ -599,12 +599,57 @@ def _two_sum_seq(T: np.ndarray):
 
 
 def _fsum(t: np.ndarray) -> float:
-    """math.fsum of finite terms, or nan when the summation overflows (math.fsum raises OverflowError then, although
-    the exact sum may be representable; nan is no value, so the callers state nothing on it)."""
+    """math.fsum of finite terms. Where its partial sums overflow (math.fsum raises OverflowError then, although the
+    exact sum may be representable; or returns a value that is not finite), the exact sum is formed in integers on the
+    2^-1074 grid and rounded once; nan when that sum is beyond the range (nan is no value, so the callers state nothing
+    on it)."""
     try:
-        return math.fsum(t.tolist())
+        r = math.fsum(t.tolist())
+    except OverflowError:
+        return _wide_sum(t)
+    # finite terms: a sum that is not finite can only be an overflow, which CPython raises (hypothesis H2); an
+    # interpreter that returned it instead takes the integer route too, so the result does not rest on H2
+    return r if math.isfinite(r) else _wide_sum(t)
+
+
+def _wide_sum(t: np.ndarray) -> float:
+    """The correctly rounded exact sum of finite binary64 terms, nan when it rounds beyond the range. Every nonzero
+    binary64 number is m 2^(k - 1074) with integers |m| < 2^53 and 0 <= k <= 2045 (np.frexp, exact); the m of equal k
+    are summed in int64 in runs of at most 1024 terms (each sum below 2^63 in magnitude, exact), the run sums are
+    shifted by their k and summed as Python integers, and the integer sum of the multiples of 2^-1074 is divided once
+    (Python's integer true division is correctly rounded and raises OverflowError for a quotient beyond the range).
+    nan, not inf, beyond the range: in fp a sum beyond the range is no value; precision._exact_float_sum, which sums
+    repeated matrix entries, gives the infinity instead (an entry that sums beyond the range is an infinite entry,
+    refused as such)."""
+    t = np.asarray(t, dtype=np.float64).ravel()
+    t = t[t != 0.0]
+    if not t.size:
+        return 0.0
+    mant, ex = np.frexp(t)                          # t = mant 2^ex, 0.5 <= |mant| < 1, exact (also for subnormals)
+    m = np.ldexp(mant, 53).astype(np.int64)         # an integer below 2^53 in magnitude, exact
+    k = ex.astype(np.int64) + (1074 - 53)           # t = m 2^(k - 1074)
+    low = k < 0                                     # subnormal t: m is a multiple of 2^-k, shifted out exactly
+    if low.any():
+        m[low] = m[low] >> (-k[low])
+        k[low] = 0
+    order = np.argsort(k, kind="stable")
+    m, k = m[order], k[order]
+    new_k = np.empty(k.size, dtype=bool)
+    new_k[0] = True
+    np.not_equal(k[1:], k[:-1], out=new_k[1:])
+    first = np.flatnonzero(new_k)                   # first index of each k
+    pos = np.arange(k.size) - first[np.cumsum(new_k) - 1]
+    starts = np.flatnonzero(new_k | (pos % _WIDE_RUN == 0))
+    total = 0
+    for s, kk in zip(np.add.reduceat(m, starts).tolist(), k[starts].tolist()):
+        total += s << kk
+    try:
+        return total / (1 << 1074)
     except OverflowError:
         return math.nan
+
+
+_WIDE_RUN = 1024        # terms per int64 run sum in _wide_sum: 1024 (2^53 - 1) < 2^63
 
 
 def exact_sum(terms, max_rounds: int = 6) -> float:
@@ -617,8 +662,9 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     inside the rounding interval of h, the correctly rounded sum is h. Otherwise (a sum within the slack of
     a rounding boundary, a zero result, or fewer than EXACT_SUM_MIN_TERMS terms) the value is math.fsum's, so the
     result never depends on the path taken. Non-finite terms give the IEEE sum: inf or -inf when the infinities have
-    one sign, nan for a nan term or for both signs (math.fsum raises a ValueError there); finite terms whose summation
-    overflows give nan (math.fsum raises an OverflowError there).
+    one sign, nan for a nan term or for both signs (math.fsum raises a ValueError there); finite terms whose exact sum
+    is beyond the range give nan (math.fsum raises an OverflowError there, and also where only its partial sums
+    overflow: the exact sum is taken then, see _fsum).
     """
     t = np.asarray(terms, dtype=float).ravel()
     t = t[t != 0.0]
@@ -631,11 +677,12 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
         return _fsum(t)
     S = []
     T = t
-    for _ in range(max_rounds):
-        s, T = _two_sum_seq(T)
-        S.append(s)
-        if T.size == 0:
-            break
+    with np.errstate(over="ignore", invalid="ignore"):   # an overflowing cascade is caught below (h not finite)
+        for _ in range(max_rounds):
+            s, T = _two_sum_seq(T)
+            S.append(s)
+            if T.size == 0:
+                break
     B = float(np.sum(np.abs(T))) * (1.0 + U * (T.size + 2)) * _GUARD if T.size else 0.0
     h = S[0]
     e1 = 0.0
@@ -654,11 +701,20 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
     h = hs
     if h == 0.0 or not math.isfinite(h):
         return _fsum(t)
-    up_gap = (np.nextafter(h, np.inf) - h) / 2.0
-    dn_gap = (h - np.nextafter(h, -np.inf)) / 2.0
-    if np.nextafter(e + slack, np.inf) < up_gap and np.nextafter(e - slack, -np.inf) > -dn_gap:
+    if _inside_rounding_interval(h, e, slack):
         return h
     return _fsum(t)
+
+
+def _inside_rounding_interval(h: float, e: float, slack: float) -> bool:
+    """True when every value h + e + r with |r| <= slack rounds to the finite binary64 number h: e +- slack strictly
+    inside the half-gaps to the neighbours of h. At h = +-BIG the boundary on the overflow side is the midpoint
+    BIG + 2^970 (values at or beyond it round to infinity), not the infinite gap np.nextafter gives."""
+    with np.errstate(over="ignore"):
+        up, dn = float(np.nextafter(h, np.inf)), float(np.nextafter(h, -np.inf))
+    up_gap = (up - h) / 2.0 if math.isfinite(up) else 2.0 ** 970
+    dn_gap = (h - dn) / 2.0 if math.isfinite(dn) else 2.0 ** 970
+    return bool(np.nextafter(e + slack, np.inf) < up_gap and np.nextafter(e - slack, -np.inf) > -dn_gap)
 
 
 # Dekker's TwoProduct (Veltkamp split of two normal numbers, then the partial products) is exact when every
@@ -670,30 +726,53 @@ def exact_sum(terms, max_rounds: int = 6) -> float:
 TINY_PRODUCT = 2.0 ** -967
 TINY_BOUND = 2.0 ** -966          # >= 2^-967 + u_min, the largest exact product a left-out pair can have
 _MIN_NORMAL = 2.0 ** -1022
+# At the top of the range the split overflows for a factor above 2^1024 / (2^27 + 1), and the partial products a_h b_h
+# can exceed 2^1024 for a product within 2^-25 of the overflow threshold (docs/proofs/int05_underflow.md, Lemma U2b).
+# A pair with a factor of at least HUGE_FACTOR, or a finite product of at least HUGE_PRODUCT, is split after exact
+# rescaling by powers of two: the larger factor by 2^-64, and the other by 2^64 when the product is below HUGE_PRODUCT
+# (the product is unchanged), else p and e by 2^64 after the split.
+HUGE_FACTOR = 2.0 ** 995
+HUGE_PRODUCT = 2.0 ** 996
+_HUGE_SCALE = 2.0 ** 64
 
 
 def _two_product_split(a: np.ndarray, b: np.ndarray):
     """(p, e, n_tiny): TwoProduct of the pairs whose product is at least TINY_PRODUCT in magnitude (exact),
     and the number of pairs left out (their products are below TINY_BOUND in magnitude). When a product is not
-    finite, the products themselves with zero errors and no pair left out."""
+    finite, the products themselves with zero errors and no pair left out. Pairs with a subnormal factor, or with a
+    factor or a product at the top of the range, are split after exact rescaling (Lemmas U2 and U2b)."""
     prod = a * b
     if not np.all(np.isfinite(prod)):
         # an infinite or nan product (inf * 0 included) has no error-free split, and a nan one must not be counted as
         # tiny: the products are returned as they are, so that the sum is not finite and no bound rests on it
         return prod, np.zeros_like(prod), 0
-    big = np.abs(prod) >= TINY_PRODUCT
+    ap = np.abs(prod)                     # the moduli once (real data); those of a and b again only after a rescaling
+    big = ap >= TINY_PRODUCT
     n_tiny = int(a.size - np.count_nonzero(big))
     if n_tiny:
-        a, b = a[big], b[big]
-    sa = np.abs(a) < _MIN_NORMAL          # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
-    sb = np.abs(b) < _MIN_NORMAL
+        a, b, prod, ap = a[big], b[big], prod[big], ap[big]
+    aa, ab = np.abs(a), np.abs(b)
+    sa = aa < _MIN_NORMAL                 # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
+    sb = ab < _MIN_NORMAL
     if np.any(sa) or np.any(sb):
         a, b = a.astype(float, copy=True), b.astype(float, copy=True)
         a[sa] *= 2.0 ** 60
         b[sa] *= 2.0 ** -60
         a[sb] *= 2.0 ** -60
         b[sb] *= 2.0 ** 60
+        aa, ab = np.abs(a), np.abs(b)
+    hp = ap >= HUGE_PRODUCT               # a product at the top of the range (both factors normal, the larger >= 2^498)
+    hi = hp | (aa >= HUGE_FACTOR) | (ab >= HUGE_FACTOR)
+    if np.any(hi):
+        a, b = a.astype(float, copy=True), b.astype(float, copy=True)
+        sw = hi & (ab > aa)               # the larger factor first (the product is symmetric)
+        a[sw], b[sw] = b[sw], a[sw]
+        a[hi] /= _HUGE_SCALE
+        b[hi & ~hp] *= _HUGE_SCALE
     p, e = _two_product(a, b)
+    if np.any(hi) and np.any(hp):
+        p[hp] *= _HUGE_SCALE
+        e[hp] *= _HUGE_SCALE
     return p, e, n_tiny
 
 
@@ -701,6 +780,9 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
     """Return (s, err) with |s - x^H y| <= err, where s is the correctly rounded
     value of the exact inner product of the terms whose products do not underflow (computed with
     TwoProduct and a correctly rounded summation: exact_sum, which is math.fsum's value by construction).
+    The pair is finite exactly when every product rounds to a finite value and the sum of the products that are kept
+    (per real component; the left-out products below are below 2^-967) rounds into the range, and then the bound holds;
+    otherwise s and err are not finite (inf or nan) and no bound rests on them (Lemma U2b).
 
     err = 2u|s| per real component (the summation is correctly rounded; the factor 2
     covers the conversion of the complex result) plus the total magnitude the left-out products can
@@ -719,7 +801,9 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
         re = exact_sum(np.concatenate([p1, e1, p2, e2]))
         im = exact_sum(np.concatenate([p3, e3, -p4, -e4]))
         s = complex(re, im)
-        err = 2 * U * (abs(re) + abs(im)) + (t1 + t2 + t3 + t4) * TINY_BOUND
+        t_ri = abs(re) + abs(im)
+        # 2u(|re| + |im|) as before; 2u|re| + 2u|im| only where that sum overflows (both parts near BIG; Lemma U2b (iv))
+        err = (2 * U * t_ri if math.isfinite(t_ri) else 2 * U * abs(re) + 2 * U * abs(im)) + (t1 + t2 + t3 + t4) * TINY_BOUND
         return s, err
     p, e, t = _two_product_split(x.astype(float), y.astype(float))
     s = exact_sum(np.concatenate([p, e]))
