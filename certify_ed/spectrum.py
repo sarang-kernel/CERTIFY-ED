@@ -113,7 +113,10 @@ def merge_intervals(ivs: List[SpectrumInterval], n: int) -> SpectrumEnclosure:
 def _enclose_block(A, eig=None):
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if eig is None:
-        mu, X = la.eigh(dense)
+        if dense.shape == (1, 1):            # scipy 1.8 cannot size the LAPACK workspace for n = 1
+            mu, X = np.real(dense).reshape(1).astype(float), np.ones((1, 1), dtype=dense.dtype)
+        else:
+            mu, X = la.eigh(dense)
     else:
         mu, X = eig
     enc = enclose(OperatorAdapter(A if sp.issparse(A) else dense), mu, X)

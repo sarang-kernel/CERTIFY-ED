@@ -96,7 +96,9 @@ def jacobi_eigvalsh(A: np.ndarray, tol: float = 1e-15, max_sweeps: int = 40) -> 
 def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.ndarray:
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if name in ("lapack_evd", "lapack_evr", "lapack_ev"):
-        w = la.eigh(dense, eigvals_only=True, driver=name.split("_")[1])
+        # scipy 1.8 cannot size the LAPACK workspace for n = 1: the eigenvalue of a 1 x 1 Hermitian matrix is its entry
+        w = (np.real(dense).reshape(1).astype(float) if dense.shape == (1, 1) else
+             la.eigh(dense, eigvals_only=True, driver=name.split("_")[1]))
     elif name == "jacobi":
         w = jacobi_eigvalsh(dense)
     elif name == "arpack":

@@ -142,7 +142,10 @@ def _default_solver(H, k: int):
     n = H.shape[0]
     if n <= 3000:
         import scipy.linalg as la
-        w, Y = la.eigh(H.toarray() if sp.issparse(H) else np.asarray(H))
+        D = H.toarray() if sp.issparse(H) else np.asarray(H)
+        if D.shape == (1, 1):                # scipy 1.8 cannot size the LAPACK workspace for n = 1
+            return np.real(D).reshape(1).astype(float)[:k], np.ones((1, 1), dtype=D.dtype)[:, :k]
+        w, Y = la.eigh(D)
         return w[:k], Y[:, :k]
     import scipy.sparse.linalg as spla
     w, Y = spla.eigsh(H, k=k, which="SA", tol=1e-13)
