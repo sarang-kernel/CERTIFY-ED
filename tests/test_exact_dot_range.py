@@ -27,11 +27,37 @@ def _exact(x, y):
     return sum((Fraction(a) * Fraction(b) for a, b in zip(x, y)), Fraction(0))
 
 
+def _retained(x, y):
+    """The exact sum of the products exact_dot keeps: those with |fl(ab)| >= TINY_PRODUCT (Lemma U2)."""
+    with np.errstate(over="ignore", under="ignore"):
+        keep = [abs(float(a) * float(b)) >= fp.TINY_PRODUCT for a, b in zip(x, y)]
+    return sum((Fraction(a) * Fraction(b) for a, b, k in zip(x, y, keep) if k), Fraction(0))
+
+
+_BEYOND = Fraction(BIG) + Fraction(2) ** 970      # an exact value of this magnitude or more rounds beyond the range
+
+
 def _rounds_in_range(q):
-    try:
-        return math.isfinite(float(q))
-    except OverflowError:
+    """q rounds to a finite binary64 number, decided in exact rationals: |q| < BIG + 2^970 (the midpoint above BIG rounds
+    to the even neighbour, which is beyond the range)."""
+    return abs(q) < _BEYOND
+
+
+def _is_nearest(got, q):
+    """got is the binary64 number nearest to q, ties to the even significand, decided in exact rationals against both
+    neighbours of got (not through float(q): Fraction.__float__ rests on the correctly rounded integer division that the
+    code under test also uses, hypothesis H1 of Lemma U2b)."""
+    if not (isinstance(got, float) and math.isfinite(got)) or not _rounds_in_range(q):
         return False
+    d = abs(Fraction(got) - q)
+    with np.errstate(over="ignore"):
+        nbs = (float(np.nextafter(got, math.inf)), float(np.nextafter(got, -math.inf)))
+    for nb in nbs:
+        if math.isfinite(nb):
+            dn = abs(Fraction(nb) - q)
+            if dn < d or (dn == d and int(np.array(got).view(np.int64)) & 1):
+                return False
+    return True
 
 
 PAIRS = [
@@ -50,13 +76,14 @@ def test_one_pair_at_the_top_of_the_range_is_exact(a, b):
         s, err = exact_dot(np.array([x]), np.array([y]))
         q = Fraction(x) * Fraction(y)
         assert math.isfinite(s) and math.isfinite(err)
-        assert s == float(q)
+        assert _is_nearest(float(s), q)
         assert abs(Fraction(s) - q) <= Fraction(err)
 
 
 def test_random_vectors_at_the_top_of_the_range():
     """Random real and complex vectors with entries over the whole upper exponent range, mixed with ordinary and tiny
-    ones: |s - x^H y| <= err whenever the exact value rounds into the range, a value that is not finite otherwise."""
+    ones: |s - x^H y| <= err whenever every product is finite and the retained sum (the products not left out as tiny,
+    Lemma U2) rounds into the range, a value that is not finite otherwise."""
     rng = np.random.default_rng(11)
     checked = 0
     for trial in range(400):
@@ -72,9 +99,11 @@ def test_random_vectors_at_the_top_of_the_range():
             s, err = exact_dot(xc, yc)
             re = _exact(xc.real, yc.real) + _exact(xc.imag, yc.imag)
             im = _exact(xc.real, yc.imag) - _exact(xc.imag, yc.real)
+            re_k = _retained(xc.real, yc.real) + _retained(xc.imag, yc.imag)
+            im_k = _retained(xc.real, yc.imag) - _retained(xc.imag, yc.real)
             with np.errstate(over="ignore"):
                 prods = np.concatenate([xc.real * yc.real, xc.imag * yc.imag, xc.real * yc.imag, xc.imag * yc.real])
-            if np.isfinite(prods).all() and _rounds_in_range(re) and _rounds_in_range(im):
+            if np.isfinite(prods).all() and _rounds_in_range(re_k) and _rounds_in_range(im_k):
                 assert math.isfinite(s.real) and math.isfinite(s.imag) and math.isfinite(err)
                 assert abs(Fraction(s.real) - re) + abs(Fraction(s.imag) - im) <= Fraction(err)
                 checked += 1
@@ -83,7 +112,7 @@ def test_random_vectors_at_the_top_of_the_range():
         q = _exact(x, y)
         with np.errstate(over="ignore"):
             fin = np.isfinite(x * y).all()
-        if fin and _rounds_in_range(q):
+        if fin and _rounds_in_range(_retained(x, y)):
             assert math.isfinite(s) and math.isfinite(err)
             assert abs(Fraction(s) - q) <= Fraction(err)
             checked += 1
@@ -124,7 +153,7 @@ def test_exact_sum_with_overflowing_partial_sums(pad):
     for c in cases:
         t = np.array(c + [1.0, -1.0] * (pad // 2))
         q = sum((Fraction(v) for v in c), Fraction(0))
-        assert exact_sum(t) == float(q)
+        assert _is_nearest(exact_sum(t), q)
     for c in ([BIG, BIG], [BIG, half_ulp], [-BIG, -BIG, 1.0]):   # exact sums that round beyond the range
         assert math.isnan(exact_sum(np.array(c + [1.0, -1.0] * (pad // 2))))
 
@@ -168,7 +197,7 @@ def test_wide_sum_is_the_rounded_exact_sum():
         q = sum((Fraction(v) for v in t.tolist()), Fraction(0))
         got = fp._wide_sum(t)
         if _rounds_in_range(q):
-            assert got == float(q)
+            assert _is_nearest(got, q)
         else:
             assert math.isnan(got)
 
@@ -187,7 +216,7 @@ def test_statements_decided_at_the_top_of_the_range():
     """A trial vector of norm just below sqrt(BIG): x^H x lies within 2^-25 of the overflow threshold, where exact_dot
     gave inf before, so V1 and V2 of certify_variational and G2 and G3 of certify_generalized were INCONCLUSIVE
     (NONFINITE_BOUND). They are now decided, on exact inner products, and their bounds contain the exact eigenvalue
-    lambda_1 = 1 of H = diag(1, 2, 3)."""
+    lambda_1 = 1 of H = diag(1, 2, 3); V3 and M3 give the NOT_CHECKED of an ordinary vector."""
     H = sp.diags([1.0, 2.0, 3.0]).tocsr()
     x = np.array([ROOT * (1 - 2.0 ** -30), 0.0, 0.0])
     st = {s["id"]: s for s in certify_variational(H, x)["statements"]}
@@ -199,6 +228,16 @@ def test_statements_decided_at_the_top_of_the_range():
     assert gs["G2.eigenpairs"]["status"] == "CERTIFIED", gs["G2.eigenpairs"]
     assert gs["G3.completeness"]["status"] == "CERTIFIED" and gs["G3.completeness"]["evidence"]["count_from_inertia"] == 1
     assert 1.0 < gs["G3.completeness"]["evidence"]["next_eigenvalue_lower_bound"] <= 2.0
+    # V3 and M3 need a gap or a level that is not given: NOT_CHECKED as for an ordinary vector (they were INCONCLUSIVE,
+    # NONFINITE_BOUND); the certificate of certify (S2 CERTIFIED) does not depend on the inner products here
+    v3 = st["V3.temple_lower"]
+    assert v3["status"] == "NOT_CHECKED" and v3["evidence"].get("reason_code") == "NEEDS_DEPENDENCY", v3
+    from certify_ed.moments import certified_moments
+    ms = {s["id"]: s for s in certified_moments(H, H, x[:, None], 1e-12, 1e-12, K=2)["statements"]}
+    assert ms["M3.sum_rule_first"]["status"] == "NOT_CHECKED", ms["M3.sum_rule_first"]
+    import certify_ed as ce
+    cert = ce.certify(ce.Claim(np.array([1.0]), x[:, None], operator=H, kind="lowest"), None, ce.Options(seed=1))
+    assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"
 
 
 def test_complex_error_term_unchanged_where_finite():
@@ -223,3 +262,28 @@ def test_complex_error_term_unchanged_where_finite():
         y = rng.standard_normal(5) + 1j * rng.standard_normal(5)
         s, err = exact_dot(x, y)
         assert err == 2 * fp.U * (abs(s.real) + abs(s.imag))
+
+
+def test_finiteness_is_decided_by_the_retained_sum():
+    """The products below TINY_PRODUCT are left out (their total magnitude goes into err), so at the midpoint above BIG
+    the retained sum decides whether the pair is finite: the exact inner product can round into the range while the
+    retained sum does not (nan), or the reverse (a finite pair, whose bound holds). Both inputs of a review."""
+    x, y = np.array([BIG, 2.0 ** 970, 2.0 ** -500]), np.array([1.0, 1.0, -2.0 ** -500])
+    s, err = exact_dot(x, y)
+    assert _rounds_in_range(_exact(x, y)) and not _rounds_in_range(_retained(x, y))
+    assert math.isnan(s) and math.isnan(err)
+    x = np.array([BIG, 2.0 ** 970, -2.0 ** -966] + [0.9 * 2.0 ** -467] * 3)
+    y = np.array([1.0, 1.0, 1.0] + [2.0 ** -500] * 3)
+    s, err = exact_dot(x, y)
+    q = _exact(x, y)
+    assert not _rounds_in_range(q) and _rounds_in_range(_retained(x, y))
+    assert s == BIG and math.isfinite(err) and abs(Fraction(s) - q) <= Fraction(err)
+
+
+@pytest.mark.parametrize("pad", [0, 5000], ids=["fsum-path", "cascade-path"])
+def test_two_sum_intermediate_overflow_with_a_finite_sum(pad):
+    """-3 * 2^970 then BIG: the TwoSum step's sum BIG - 2^971 is finite but its intermediate s + 3 * 2^970 = BIG + 2^970
+    rounds to infinity, so the error term is nan; the cascade then falls back to the exact route (nearest value)."""
+    c = [-3.0 * 2.0 ** 970, BIG]
+    t = np.array(c + [1.0, -1.0] * (pad // 2))
+    assert _is_nearest(exact_sum(t), sum((Fraction(v) for v in c), Fraction(0)))

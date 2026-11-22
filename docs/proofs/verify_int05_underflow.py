@@ -189,10 +189,17 @@ def top_vector(rng, k, kind):
 
 
 def check_top_pair(a, b, counters, adversarial, tag):
-    """|s - x^H y| <= err (real: also nearest for one pair) when every product rounds to a finite value and the exact
-    components round into the range; not finite otherwise."""
+    """The pair is finite exactly when every product rounds to a finite value and the retained sum (the products not
+    left out as tiny, |fl(ab)| >= 2^-967: Lemma U2; each real component) rounds into the range; then |s - x^H y| <= err
+    with the exact inner product (real: also nearest for one pair). Not finite otherwise."""
     a, b = np.asarray(a), np.asarray(b)
     cplx = np.iscomplexobj(a) or np.iscomplexobj(b)
+
+    def kept(u, v):              # exact sum of the products exact_dot keeps, and of all products
+        with np.errstate(over="ignore", under="ignore"):
+            k = [abs(float(x) * float(y)) >= 2.0 ** -967 for x, y in zip(u, v)]
+        return (sum((F(x) * F(y) for x, y, kk in zip(u, v, k) if kk), Fraction(0)),
+                sum((F(x) * F(y) for x, y in zip(u, v)), Fraction(0)))
     with np.errstate(over="ignore", invalid="ignore"):
         s, err = exact_dot(a, b)
         if cplx:
@@ -201,16 +208,17 @@ def check_top_pair(a, b, counters, adversarial, tag):
         else:
             prods = a * b
     if cplx:
-        re = sum((F(x.real) * F(y.real) + F(x.imag) * F(y.imag) for x, y in zip(ac, bc)), Fraction(0))
-        im = sum((F(x.real) * F(y.imag) - F(x.imag) * F(y.real) for x, y in zip(ac, bc)), Fraction(0))
-        if np.isfinite(prods).all() and abs(re) < BEYOND and abs(im) < BEYOND:
+        (k1, e1), (k2, e2) = kept(ac.real, bc.real), kept(ac.imag, bc.imag)
+        (k3, e3), (k4, e4) = kept(ac.real, bc.imag), kept(ac.imag, bc.real)
+        re_k, im_k, re, im = k1 + k2, k3 - k4, e1 + e2, e3 - e4
+        if np.isfinite(prods).all() and abs(re_k) < BEYOND and abs(im_k) < BEYOND:
             ok = (math.isfinite(s.real) and math.isfinite(s.imag) and math.isfinite(err)
                   and abs(F(s.real) - re) + abs(F(s.imag) - im) <= F(err))
         else:
             ok = not (math.isfinite(s.real) and math.isfinite(s.imag) and math.isfinite(err))
     else:
-        q = sum((F(x) * F(y) for x, y in zip(a, b)), Fraction(0))
-        if np.isfinite(prods).all() and abs(q) < BEYOND:
+        q_k, q = kept(a, b)
+        if np.isfinite(prods).all() and abs(q_k) < BEYOND:
             ok = math.isfinite(s) and math.isfinite(err) and abs(F(s) - q) <= F(err)
             if a.size == 1 and abs(prods[0]) >= 2.0 ** -967:      # a pair below TINY_PRODUCT is left out (Lemma U2)
                 ok = ok and is_nearest(s, q)
@@ -392,6 +400,12 @@ def main():
         check_exact_dot(rng, counters, True, "subnormal")
     # adversarial, Lemma U2b: the split threshold 2^1024 / (2^27 + 1), HUGE_FACTOR and HUGE_PRODUCT from both sides,
     # products at the overflow threshold, factors at the top with subnormal partners, overflowing partial sums
+    # the retained sum decides finiteness at the midpoint above BIG (a left-out tiny product on either side), and a TwoSum
+    # step whose sum is finite while an intermediate overflows (-3 * 2^970 then BIG)
+    check_top_pair([BIG, 2.0 ** 970, 2.0 ** -500], [1.0, 1.0, -2.0 ** -500], counters, True, "retained sum at midpoint")
+    check_top_pair([BIG, 2.0 ** 970, -2.0 ** -966] + [0.9 * 2.0 ** -467] * 3, [1.0, 1.0, 1.0] + [2.0 ** -500] * 3,
+                   counters, True, "retained sum below midpoint")
+    check_sum_top([-3.0 * 2.0 ** 970, BIG], counters, True, "TwoSum intermediate overflow")
     s0 = math.ldexp(1.0 / (2 ** 27 + 1), 1024)
     for f in (s0, np.nextafter(s0, 0), np.nextafter(s0, math.inf), HUGE_FACTOR, np.nextafter(HUGE_FACTOR, 0), BIG):
         for g in (2.0 ** -30, 1.0, 5e-324, 2.0 ** -1060, 0.75):

@@ -36,7 +36,8 @@ modulus; for non-negative real terms (|A||x|) the relative part has no cancellat
 one factor is subnormal, the other has magnitude ≥ 2⁵⁴, and (2⁶⁰a, 2⁻⁶⁰b) (or the mirror pair) are normal
 numbers with the same exact product. Consequently `fp.exact_dot(x, y)` returns (s, err) with |s − xᴴy| ≤ err for
 all inputs whose intermediates stay below the overflow threshold; Lemma U2b extends this to every input whose products
-round to finite values and whose exact inner product (each real component) rounds into the range. (Corrected
+round to finite values and whose retained sum (the products with |fl(a_j b_j)| ≥ 2⁻⁹⁶⁷, each real component) rounds
+into the range. (Corrected
 2026-11-21: the statement read "for all inputs"; at the top of the range `exact_dot` returned nan or inf, see Lemma U2b.)
 
 **Lemma U2b (the top of the range; added 2026-11-21, UNVERIFIED, D-12).** Let H_F := 2⁹⁹⁵ (`HUGE_FACTOR`) and
@@ -53,12 +54,16 @@ strictly inside the rounding interval of h, whose boundary on the overflow side 
 |Re s| + |Im s| overflows (no intermediate then exceeds 2u·BIG).
 Implementation hypotheses of (iii), properties of CPython rather than of IEEE 754: (H1) the true division of two Python
 integers is correctly rounded (to nearest, ties to even) and raises OverflowError when the rounded quotient is not
-finite; (H2) `math.fsum` of finite floats returns the correctly rounded exact sum or raises OverflowError, and it
-raises whenever a partial sum overflows. The verify script checks the result of (iii) against both neighbours in exact
+finite; (H2) `math.fsum` of finite floats, when it returns a finite value, returns the correctly rounded exact sum (it raises
+OverflowError when a partial sum overflows; a value that is not finite takes the integer route as well, corrected
+2026-11-22). The verify script checks the result of (iii) against both neighbours in exact
 rational arithmetic, which does not use (H1).
-Consequently `fp.exact_dot(x, y)` returns (s, err) with |s − xᴴy| ≤ err (real) or |Re s − Re xᴴy| + |Im s − Im xᴴy| ≤ err
-(complex) for every input whose products round to finite values and whose exact components round into the range,
-and a pair (s, err) that is not finite otherwise.
+Consequently the pair (s, err) of `fp.exact_dot(x, y)` is finite exactly when every product rounds to a finite value
+and each real component of the retained sum Σ' a_j b_j (the pairs with |fl(a_j b_j)| ≥ 2⁻⁹⁶⁷, Lemma U2) rounds into
+the range, and then |s − xᴴy| ≤ err (real) or |Re s − Re xᴴy| + |Im s − Im xᴴy| ≤ err (complex). The exact inner
+product differs from the retained sum by less than n_tiny·2⁻⁹⁶⁶, so at the midpoint BIG + 2⁹⁷⁰ one can round into the
+range and the other not (corrected 2026-11-22: the statement named the exact components; x = (BIG, 2⁹⁷⁰, 2⁻⁵⁰⁰),
+y = (1, 1, −2⁻⁵⁰⁰) gives nan although xᴴy rounds to BIG, and the mirror case a finite pair whose bound holds).
 
 **Lemma U3 (norms).** For a stored vector v with N real components (N = n real entries or 2n for n complex
 entries), s := `np.linalg.norm(v)` satisfies
@@ -167,8 +172,11 @@ x·2¹⁰⁷⁴ = num·2^{1074−k} is an integer and the integer sum N = Σ t_j
 is correctly rounded (round to nearest, ties to even) and raises OverflowError when the rounded quotient is not finite,
 so N/2¹⁰⁷⁴ is the nearest binary64 number to Σ t_j, or nan is returned. `math.fsum` is exact-then-rounded where it
 does not raise; it raises OverflowError whenever a partial sum or the result overflows, and those inputs take the
-integer route. In the cascade, the TwoSum steps are exact wherever their float sums are finite (M-U for additions);
-an overflowing step leaves h not finite, and then the value is `_fsum`'s. With finite h, Σ t_j = h + e + r with
+integer route. In the cascade, the TwoSum steps are exact wherever none of their operations overflows (M-U for additions;
+the robustness of TwoSum under overflow is not used); an operation that overflows, the sum or an intermediate of a
+step whose sum is finite (terms −3·2⁹⁷⁰ and BIG: s = BIG − 2⁹⁷¹, but s + 3·2⁹⁷⁰ = BIG + 2⁹⁷⁰ rounds to infinity),
+makes the sum or the error term of that step inf or nan, so h is not finite, and then the value is `_fsum`'s
+(corrected 2026-11-22: it read "exact wherever their float sums are finite"). With finite h, Σ t_j = h + e + r with
 |r| ≤ slack, and h is returned only if e ± slack lies strictly between −dn_gap and up_gap, the half-distances to the
 neighbours of h. At h = BIG the neighbour above is the overflow: values at or above BIG + 2⁹⁷⁰ round to infinity
 (the midpoint ties away from the odd significand of BIG), so up_gap = 2⁹⁷⁰ there (np.nextafter would give an infinite
@@ -177,8 +185,8 @@ fl(2u|z|) is exact for normal results and in error by at most u_min otherwise,
 covered by the factor 2 of 2u (u|Re s| suffices for a correctly rounded component); 2u|Re s| ≤ 2u·BIG < 2⁹⁷², so the sum of
 the two terms is finite, and rounding it costs at most a factor (1 − u), again within the factor 2. *Consequence.* The
 pairs left out are those of Lemma U2. A product that does not round to a finite value makes `_two_product_split`
-return the products themselves, so the sum is not finite; an exact component beyond the range makes `exact_sum`
-return nan by (iii); in both cases err is not finite. Otherwise every split is exact by (i)–(ii), and the bound follows
+return the products themselves, so the sum is not finite; a component of the retained sum beyond the range makes
+`exact_sum` return nan by (iii); in both cases err is not finite. Otherwise every split is exact by (i)–(ii), and the bound follows
 as in Lemma U2. ∎
 
 **Lemma U3.** S = fl(Σ v_j²) is a dot product of N non-negative terms: by Lemma U1 (real components; a complex
@@ -320,8 +328,14 @@ one subnormal entry, subnormal A and μ); U6 2 500 monotonicity cases; 0 violati
 Run of 2026-11-21 with Lemma U2b (same options; output in `docs/proofs/runs/int05_underflow_2026-11-21.txt`; the
 added checks draw from the same generator, so the other counts differ slightly from the first run): M 19 040
 operations; U1 5 000; U2 5 000 random + 200 adversarial; U2b 7 500 random (2 500 `exact_dot` cases at the top of the
-range, 5 000 sums with ±BIG or ±2¹⁰²³ among random terms, each on both summation paths) + 95 adversarial; U3 205 000 +
+range; 2 500 sums with ±BIG or ±2¹⁰²³ among random terms, each on both summation paths: 5 000 checks) + 95 adversarial; U3 205 000 +
 23 adversarial; U5 2 500 + 150 adversarial; U6 2 500; 0 violations.
+
+Run of 2026-11-22, after the correction of the consequence of Lemma U2b (same options; output in
+`docs/proofs/runs/int05_underflow_2026-11-22.txt`): the oracle of the U2b counter decides finiteness on the retained
+sum, and three adversarial inputs are added (the two retained-sum cases at the midpoint above BIG, which the oracle of
+the first run counts as violations, and the sum −3·2⁹⁷⁰ + BIG with an overflowing TwoSum intermediate, on both
+summation paths): U2b 7 500 random + 99 adversarial, the other counts as in the run of 2026-11-21; 0 violations.
 
 ## 5 Analytic cross-check
 

@@ -600,12 +600,16 @@ def _two_sum_seq(T: np.ndarray):
 
 def _fsum(t: np.ndarray) -> float:
     """math.fsum of finite terms. Where its partial sums overflow (math.fsum raises OverflowError then, although the
-    exact sum may be representable), the exact sum is formed in integers on the 2^-1074 grid and rounded once; nan
-    when that sum is beyond the range (nan is no value, so the callers state nothing on it)."""
+    exact sum may be representable; or returns a value that is not finite), the exact sum is formed in integers on the
+    2^-1074 grid and rounded once; nan when that sum is beyond the range (nan is no value, so the callers state nothing
+    on it)."""
     try:
-        return math.fsum(t.tolist())
+        r = math.fsum(t.tolist())
     except OverflowError:
         return _wide_sum(t)
+    # finite terms: a sum that is not finite can only be an overflow, which CPython raises (hypothesis H2); an
+    # interpreter that returned it instead takes the integer route too, so the result does not rest on H2
+    return r if math.isfinite(r) else _wide_sum(t)
 
 
 def _wide_sum(t: np.ndarray) -> float:
@@ -718,23 +722,26 @@ def _two_product_split(a: np.ndarray, b: np.ndarray):
         # an infinite or nan product (inf * 0 included) has no error-free split, and a nan one must not be counted as
         # tiny: the products are returned as they are, so that the sum is not finite and no bound rests on it
         return prod, np.zeros_like(prod), 0
-    big = np.abs(prod) >= TINY_PRODUCT
+    ap = np.abs(prod)                     # the moduli once (real data); those of a and b again only after a rescaling
+    big = ap >= TINY_PRODUCT
     n_tiny = int(a.size - np.count_nonzero(big))
     if n_tiny:
-        a, b, prod = a[big], b[big], prod[big]
-    sa = np.abs(a) < _MIN_NORMAL          # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
-    sb = np.abs(b) < _MIN_NORMAL
+        a, b, prod, ap = a[big], b[big], prod[big], ap[big]
+    aa, ab = np.abs(a), np.abs(b)
+    sa = aa < _MIN_NORMAL                 # a subnormal factor (then |b| >= 2^54, and the product is unchanged)
+    sb = ab < _MIN_NORMAL
     if np.any(sa) or np.any(sb):
         a, b = a.astype(float, copy=True), b.astype(float, copy=True)
         a[sa] *= 2.0 ** 60
         b[sa] *= 2.0 ** -60
         a[sb] *= 2.0 ** -60
         b[sb] *= 2.0 ** 60
-    hp = np.abs(prod) >= HUGE_PRODUCT     # a product at the top of the range (both factors normal, the larger >= 2^498)
-    hi = hp | (np.abs(a) >= HUGE_FACTOR) | (np.abs(b) >= HUGE_FACTOR)
+        aa, ab = np.abs(a), np.abs(b)
+    hp = ap >= HUGE_PRODUCT               # a product at the top of the range (both factors normal, the larger >= 2^498)
+    hi = hp | (aa >= HUGE_FACTOR) | (ab >= HUGE_FACTOR)
     if np.any(hi):
         a, b = a.astype(float, copy=True), b.astype(float, copy=True)
-        sw = hi & (np.abs(b) > np.abs(a))  # the larger factor first (the product is symmetric)
+        sw = hi & (ab > aa)               # the larger factor first (the product is symmetric)
         a[sw], b[sw] = b[sw], a[sw]
         a[hi] /= _HUGE_SCALE
         b[hi & ~hp] *= _HUGE_SCALE
@@ -749,8 +756,9 @@ def exact_dot(x: np.ndarray, y: np.ndarray):
     """Return (s, err) with |s - x^H y| <= err, where s is the correctly rounded
     value of the exact inner product of the terms whose products do not underflow (computed with
     TwoProduct and a correctly rounded summation: exact_sum, which is math.fsum's value by construction).
-    This holds for every input whose products round to finite values and whose exact inner product (per real
-    component) is within the range; otherwise s and err are not finite (inf or nan) and no bound rests on them.
+    The pair is finite exactly when every product rounds to a finite value and the sum of the products that are kept
+    (per real component; the left-out products below are below 2^-967) rounds into the range, and then the bound holds;
+    otherwise s and err are not finite (inf or nan) and no bound rests on them (Lemma U2b).
 
     err = 2u|s| per real component (the summation is correctly rounded; the factor 2
     covers the conversion of the complex result) plus the total magnitude the left-out products can

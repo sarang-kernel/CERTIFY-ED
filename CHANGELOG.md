@@ -90,29 +90,46 @@ hash changes.
 ### Inner products and sums at the top of the range
 
 `fp.exact_dot` gave nan or inf for a pair whose factor exceeds about 2^997 (the Veltkamp split overflows) or whose
-product lies within about 2^-25 of the overflow threshold (the partial products overflow), although the exact product
-is a binary64 number: with BIG the largest binary64 number, `exact_dot([BIG], [1.0])` returned (nan, nan) and
+product lies within about 2^-25 of the overflow threshold (the partial products overflow), although the exact product is
+a binary64 number: with BIG the largest binary64 number, `exact_dot([BIG], [1.0])` returned (nan, nan) and
 `exact_dot([sqrt(BIG)], [sqrt(BIG)])` (inf, inf). Such pairs are now split after exact rescaling by powers of two
 (`fp.HUGE_FACTOR = 2^995`, `fp.HUGE_PRODUCT = 2^996`: the larger factor by 2^-64, then the other factor or p and e by
 2^64), and the complex error term is formed as 2u|Re s| + 2u|Im s|, which does not overflow when both parts are near
 BIG. `fp.exact_sum` gave nan when only the partial sums of `math.fsum` overflow (BIG + BIG - BIG, for example); it now
 forms the exact sum in integers on the 2^-1074 grid and rounds it once (`fp._wide_sum`), and gives nan only when the
 exact sum rounds beyond the range. Its cascade accepted its float result h = +-BIG with an infinite gap on the overflow
-side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). Wherever the previous code
-gave finite values the results are bit-identical (the rescaled splits are exact as the unscaled ones were, and the
-complex error term keeps the form 2u(|Re s| + |Im s|) where that sum is finite), except that a sum at or beyond the
-midpoint BIG + 2^970 that the cascade accepted as +-BIG is now nan. Statements change only where an inner product was
-the one quantity that overflowed: for a trial vector whose squared norm lies within about 2^-25 of BIG (x = sqrt(BIG)
-(1 - 2^-30) e_1 with H = diag(1, 2, 3), for example), V1 and V2 of `certify_variational` and G2 and G3 of
+side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). Wherever the previous code gave
+finite values the results are bit-identical (the rescaled splits are exact as the unscaled ones were, and the complex
+error term keeps the form 2u(|Re s| + |Im s|) where that sum is finite), except that a sum at or beyond the midpoint BIG
++ 2^970 that the cascade accepted as +-BIG is now nan. That needs a fold of the cascade that rounds down below 2^970
+while its slack reaches the midpoint; no such input was found (3 000 adversarial sums with BIG among terms near 2^969
+and spread exponents: every sum beyond the range gave nan at main as well, and a constructed input of a review, BIG with
+two terms 2^969, gives nan at main because the last fold overflows). Statements change only where an inner product was
+the one quantity that overflowed: for a trial vector whose squared norm lies within about 2^-25 of BIG (x = sqrt(BIG) (1
+- 2^-30) e_1 with H = diag(1, 2, 3), for example), V1 and V2 of `certify_variational` and G2 and G3 of
 `certify_generalized` are now CERTIFIED, with bounds that contain the exact eigenvalue; they were INCONCLUSIVE with
-NONFINITE_BOUND. M1 of `certified_moments` changes the same way for such a vector, but there only for input outside its
-hypotheses: its interval rests on the caller's S4 record (s, eta), and a record with eta < 1 excludes a vector whose
-Gram defect is near BIG. No statement changes from CERTIFIED. Above about 2^512 the norm bounds of S2, S3 and the variational
-statements overflow first, so those inputs stay INCONCLUSIVE as before. Function results change at the top of the
-range: `enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan.
-`docs/proofs/int05_underflow.md`: Lemma U2 stated its bound "for all inputs"; the statement is narrowed, and Lemma U2b
-covers the top of the range (UNVERIFIED, D-12; counter U2b of `docs/proofs/verify_int05_underflow.py`, run in
-`docs/proofs/runs/int05_underflow_2026-11-21.txt`). Tests: `tests/test_exact_dot_range.py`.
+NONFINITE_BOUND. V3 of `certify_variational` and M3 of `certified_moments` change for such a vector from INCONCLUSIVE
+(NONFINITE_BOUND) to the NOT_CHECKED (NEEDS_DEPENDENCY) they give for a vector of ordinary norm without the gap or level
+they need. M1 of `certified_moments` changes like V1, but there only for input outside its hypotheses: its interval
+rests on the caller's S4 record (s, eta), and a record with eta < 1 excludes a vector whose Gram defect is near BIG. No
+statement was found to change from CERTIFIED; one could in principle where main accepted a sum within the cascade's
+slack above BIG + 2^970 (now nan, INCONCLUSIVE). The certificates of `certify` for such a vector (claims of kind lowest,
+all and window, the last with the Kato-Temple step) are unchanged apart from timing: the norm and residual bounds of S2
+decide there before an inner product does. Above about 2^512 the norm bounds of S2, S3 and the variational statements
+overflow first, so those inputs stay INCONCLUSIVE as before. Function results change at the top of the range:
+`enclosure.rayleigh_interval` for a quotient near 2^1000 returns a finite interval where it returned nan. Whether the
+pair is finite is decided by the sum of the products that are kept (those below 2^-967 are left out and counted in err,
+Lemma U2), not by the exact inner product: at the midpoint above BIG one can round into the range and the other not
+(then nan, or a finite pair whose bound holds). `math.fsum` returning a value that is not finite for finite terms also
+takes the integer route, so the result does not rest on CPython raising there. The moduli of the factors and products
+are formed once per call (`exact_dot` of 10^6 ordinary entries: 0.60 s against 0.51 s at main, minimum of five, on a
+loaded machine; of 10^7: 6.2 s against 6.2 s). `docs/proofs/int05_underflow.md`: Lemma U2 stated its bound "for all
+inputs"; the statement is narrowed, and Lemma U2b covers the top of the range (UNVERIFIED, D-12; counter U2b of
+`docs/proofs/verify_int05_underflow.py`, runs in `docs/proofs/runs/int05_underflow_2026-11-21.txt` and
+`int05_underflow_2026-11-22.txt`, the second after the consequence was corrected to the retained sum and the TwoSum step
+to overflowing intermediates). Tests: `tests/test_exact_dot_range.py` (its oracle of the nearest value is decided in
+exact rationals, not through `float(Fraction)`, which rests on the same integer division as the code). The computational
+source hash changes.
 
 ### Non-finite follow-ups
 
