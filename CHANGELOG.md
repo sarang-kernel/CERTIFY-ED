@@ -143,7 +143,8 @@ its real part in `matrix_sha256`, so the hash of such a matrix no longer depends
 zero entries are dropped before hashing, as before. Tests: `tests/test_version_floors.py` (14; 11 fail at main under the
 floor versions, the 4 on signed zeros also under the current ones). The suite itself: the tests that need python-flint
 are marked `needs_flint` (they failed with ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the
-precision registry is used only with h5py, `tests/conftest.py` gains `eigh_dense` (1 x 1 blocks of the sector tests),
+precision registry is used only with h5py, the five 40-digit reference tests of `tests/test_entanglement.py` are
+marked `needs_mpmath` (the module did not import without mpmath, which no extra lists), `tests/conftest.py` gains `eigh_dense` (1 x 1 blocks of the sector tests),
 three tests put their energy cut between two levels instead of on a degenerate one (where the rounding of the computed
 levels decided the verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut), the
 recorded radii of `tests/test_whole_spectrum.py` allow a few roundings of the residual entries under numpy < 2 (other
