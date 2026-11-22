@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from ..precision import claimed_reals
+from ..precision import carries_imaginary_parts, claimed_reals, dropped_imaginary_parts
 from .formats import FormatError
 
 __all__ = ["read_alps_spectrum", "states_from_alps_basis", "claim_from_alps"]
@@ -39,7 +39,13 @@ def _dataset(f, path: str):
 
 def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, object]]:
     """All sectors of an ALPS out.h5: [{'index': n, 'energies': array, 'quantumnumbers': {name: value},
-    'eigenvectors': (dim x n) array or None, 'basis': (dim x n_sites) int array or None}] in sector order."""
+    'eigenvectors': (dim x n) array or None, 'basis': (dim x n_sites) int array or None,
+    'energies_as_given': array, 'dropped_imaginary_parts': record or None}] in sector order.
+
+    'energies' are binary64 reals (precision.claimed_reals). Energies stored as complex numbers with a nonzero
+    imaginary part are also kept as stored ('energies_as_given'; otherwise it is 'energies'), and
+    'dropped_imaginary_parts' records the count and largest magnitude of the finite nonzero imaginary parts that
+    'energies' drops; claim_from_alps passes the stored values, so that certify records the same."""
     try:
         import h5py
     except ImportError as e:
@@ -56,9 +62,11 @@ def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, o
             g = sectors[k]
             if "energies" not in g:
                 raise FormatError(f"{path}: /spectrum/sectors/{k} has no 'energies' dataset")
-            w = claimed_reals(g["energies"][...]).reshape(-1)
+            raw = np.asarray(g["energies"][...]).reshape(-1)
+            w = claimed_reals(raw)
             if not np.all(np.isfinite(w)):
                 raise FormatError(f"{path}: sector {k}: non-finite energies")
+            given = raw if carries_imaginary_parts(raw) else w
             qn: Dict[str, float] = {}
             if "quantumnumbers" in g:
                 for name in g["quantumnumbers"]:
@@ -91,7 +99,8 @@ def read_alps_spectrum(path: str, with_vectors: bool = True) -> List[Dict[str, o
                         raise FormatError(f"{path}: sector {k}: basis has {bshape[0]} states, vectors have "
                                           f"dimension {shape[1]}")
                     basis = bvals.reshape(bshape).astype(np.int64)
-            out.append({"index": k, "energies": w, "quantumnumbers": qn, "eigenvectors": X, "basis": basis})
+            out.append({"index": k, "energies": w, "quantumnumbers": qn, "eigenvectors": X, "basis": basis,
+                        "energies_as_given": given, "dropped_imaginary_parts": dropped_imaginary_parts(raw)})
     return out
 
 
@@ -131,7 +140,8 @@ def claim_from_alps(path: str, sector: int = 0, spec=None, operator=None, states
     if not (0 <= sector < len(secs)):
         raise FormatError(f"{path}: sector {sector} out of range (file has {len(secs)} sectors)")
     s = secs[sector]
-    w, X = s["energies"], s["eigenvectors"]
+    w, X = s["energies_as_given"], s["eigenvectors"]     # values with a nonzero imaginary part as stored (certify
+    #                                                     records the parts it drops), real values as before
     if n_states is not None:
         w = w[:n_states]
         X = None if X is None else X[:, :n_states]

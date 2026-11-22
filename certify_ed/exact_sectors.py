@@ -22,7 +22,7 @@ import numpy as np
 
 from .basis import CyclicSymmetry
 from .checker import exact_matrix, inertia_exact
-from .precision import check_values, claimed_reals
+from .precision import check_values, claimed_reals, dropped_imaginary_parts
 
 
 def site_permutation(spec, perm, name="site_permutation") -> CyclicSymmetry:
@@ -298,7 +298,21 @@ def exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, 
     add up to the dimension of the fixed subspace), so non-abelian groups are allowed as long as every
     irrep met is one-dimensional with Gaussian character values (e.g. translations at k = 0 or pi with
     reflection and spin flip). X: claimed vectors in the coordinates of `states`; each must have a nonzero
-    exact projection onto the fixed sector (Theorem 1 hypothesis), otherwise the result is INCONCLUSIVE."""
+    exact projection onto the fixed sector (Theorem 1 hypothesis), otherwise the result is INCONCLUSIVE.
+
+    A claim of complex values whose finite nonzero imaginary parts are dropped (the statement concerns the real
+    parts, as in 3.x) gets the record 'dropped_imaginary_parts' (count, max_abs)."""
+    check_values(lam, "lam")          # as in certify() (precision.py)
+    out = _exact_recheck_sector_lowest(spec, states, gens, fixed, lam, X, next_hint=next_hint, log=log)
+    dropped = dropped_imaginary_parts(lam)
+    if dropped is not None:
+        out["dropped_imaginary_parts"] = dropped
+    return out
+
+
+def _exact_recheck_sector_lowest(spec, states, gens, fixed: Dict[int, int], lam, X, next_hint=None,
+                                 log=None):
+    """The body of exact_recheck_sector_lowest."""
     check_values(lam, "lam")          # as in certify() (precision.py)
     from .checker import (_float_vector_to_int, scaled_test_vector, radius_exact, _components, certify_by_counts,
                           _float_out, _round_up_float)

@@ -33,7 +33,7 @@ import scipy.sparse as sp
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .fp import U, abs_up, add_up, exact_dot, gamma, gamma_dot, inf_norm_upper, modulus_up, norm2_upper, sub_down, up
 from .inertia import inertia_dense
-from .precision import binary64, check_values, claimed_reals, summed, widening_record
+from .precision import binary64, check_values, claimed_reals, dropped_imaginary_parts, summed, widening_record
 from .spec import canonical_json
 
 GENERALIZED_SCHEMA = "certify-ed/generalized/1.0"
@@ -229,6 +229,9 @@ def certify_generalized(A, B, eigenvalues, eigenvectors, kind: str = "lowest", *
                            "claim": {"kind": kind, "n_pairs": k, "eigenvalues": [float(m) for m in mu],
                                      "eigenvectors_sha256": array_sha256(X)},
                            "state": {"form": "pencil"}}
+    dropped = dropped_imaginary_parts(eigenvalues)
+    if dropped is not None:                  # the statements concern the real parts (as in 3.x): say what was dropped
+        rec["claim"]["dropped_imaginary_parts"] = dropped
     widening = widening_record(widened)
     if widening is not None:                 # only when an input was converted: binary64 inputs keep their record
         rec["input_widening"] = widening

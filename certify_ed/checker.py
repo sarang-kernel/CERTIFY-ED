@@ -17,7 +17,7 @@ from fractions import Fraction
 
 import numpy as np
 
-from .precision import check_values, claimed_reals
+from .precision import check_values, claimed_reals, dropped_imaginary_parts
 
 
 def _arb():
@@ -582,7 +582,20 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
        holds lambda_K within the claimed radius, and the eigenvalues of a component with m >= 2 claimed
        values lie in its 'level enclosure' between the bracketing points: per-vector residuals do not
        show m *distinct* eigenvalues, so the counts locate them. 'enclosures' lists both kinds; the
-       next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere."""
+       next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere.
+
+    A claim of complex values whose finite nonzero imaginary parts are dropped (the statement concerns the real
+    parts, as in 3.x) gets the record 'dropped_imaginary_parts' (count, max_abs)."""
+    check_values(lam, "lam")          # as in certify() (precision.py)
+    out = _exact_recheck_lowest(spec, lam, X, states, next_hint, max_dim)
+    dropped = dropped_imaginary_parts(lam)
+    if dropped is not None:
+        out["dropped_imaginary_parts"] = dropped
+    return out
+
+
+def _exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000):
+    """The body of exact_recheck_lowest."""
     check_values(lam, "lam")          # as in certify() (precision.py)
     lam = np.atleast_1d(claimed_reals(lam))
     X = np.asarray(X)

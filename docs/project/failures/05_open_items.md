@@ -162,7 +162,8 @@ method enumeration lacks that value. Both were so before the branch, and both ar
 (`docs/SCHEMA_RFC_PROCESS.md`). Until they are made, such certificates are read with
 `Certificate.load(path, validate_schema=False)`.
 
-The record of dropped finite imaginary parts (`dropped_imaginary_parts`) is made by `certify`, its two wrappers and
-the sector composition. `certify_generalized`, `write_bundle` (a bundle holds the real parts only), the ALPS reader and
-the exact re-checks drop such parts without a record, as in 3.x; a generalized claim record and a bundle manifest field
-would close it.
+The record of dropped finite imaginary parts (`dropped_imaginary_parts`) is made by `certify`, its two wrappers, the
+sector composition and, since `feat/dropped-parts-records`, by `certify_generalized` (in the claim of its record), both
+exact re-checks (in their result) and the ALPS reader (`read_alps_spectrum`, `claim_from_alps`). `write_bundle` (a
+bundle holds the real parts only) still drops such parts without a record, as in 3.x; a bundle manifest field would
+close it, which is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`).

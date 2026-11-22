@@ -43,7 +43,8 @@ No constant changes; statuses change only on the inputs named here. The computat
   into the sector's record (`precision.dropped_imaginary_parts`) and, summed over the sectors, into its own record
   (`count`, `max_abs`, `sectors`) and its summary. Where the record is not made: `certify_generalized`, `write_bundle`
   (which holds the real parts only), the ALPS reader and the exact re-checks drop finite imaginary parts as in 3.x,
-  without a record (an open item, `docs/project/failures/05_open_items.md`).
+  without a record (an open item, `docs/project/failures/05_open_items.md`); all but `write_bundle` make it since
+  `feat/dropped-parts-records` (above).
 - **Sector composition.** A sector with a non-finite claimed value is INCONCLUSIVE before anything is counted, with the
   first indices and their number in its record (`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of
   the count, so the sector was reported MISSING and the composition FAILED, and w + ∞i was certified.
@@ -118,6 +119,23 @@ driver and every Windows record are unchanged. The planner's constants are uncha
 Windows development machine (`RECORDED_PEAKS` of `tests/test_planner.py`, from the C-17 runs of
 `experiments/bench_whole.py`, and the factorization peaks measured there for D-08); no recorded Linux figure was
 re-measured. No change to the package.
+
+### Dropped imaginary parts: records at the remaining entry points
+
+No constant or status changes; records gain an optional field. The computational source hash changes.
+
+- `certify_generalized` writes `dropped_imaginary_parts` (`count`, `max_abs`) into the claim of its record when the
+  claimed eigenvalues are complex with finite nonzero imaginary parts; the statement-record schema leaves `claim` open,
+  so the schema is unchanged. The statements and enclosures are those of the real parts, as before.
+- `exact_recheck_lowest` and `exact_recheck_sector_lowest` add the same record to their result. `certify` passes real
+  values to them (S6), so certificates are unchanged.
+- The ALPS reader (`read_alps_spectrum`) gives each sector the keys `energies_as_given` (the stored values when they
+  hold a nonzero imaginary part, otherwise `energies`) and `dropped_imaginary_parts` (the record, or None).
+  `claim_from_alps` passes the stored values to the claim, so that `certify` records the dropped parts and lists them
+  under `not_verified`. Real energies, and complex energies whose imaginary parts are all zero, are read as before.
+- Open: `write_bundle` still holds the real parts only, without a record; a manifest field is a schema decision
+  (`docs/SCHEMA_RFC_PROCESS.md`, `docs/project/failures/05_open_items.md`).
+- Tests: `tests/test_dropped_parts_records.py` (9 tests; two need python-flint, four need h5py).
 
 ### Repeated entries summed at the start (soundness fix)
 
