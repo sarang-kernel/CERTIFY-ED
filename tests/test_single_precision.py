@@ -8,6 +8,7 @@ exactly to binary64 first, so the statements concern the values as stored and ag
 float64 and complex128 inputs pass through unchanged. Integers are widened when every value is a binary64 number;
 wider formats and non-numeric data are refused.
 """
+import importlib.util
 import json
 
 import numpy as np
@@ -911,7 +912,8 @@ def test_writers_store_the_binary64_copy_of_a_single_precision_sparse_matrix(tmp
     from certify_ed.io.formats import read_operator, write_operator
     M = _repeated("coo", dtype)
     want = sp.csr_matrix(_wide(M)).toarray()                   # (0, 0) = 1 + 2^-25
-    for ext in (".npz", ".mtx", ".h5", ".json", ".txt"):
+    have_h5py = importlib.util.find_spec("h5py") is not None       # HDF5 is the optional extra 'hdf5'
+    for ext in [e for e in (".npz", ".mtx", ".h5", ".json", ".txt") if e != ".h5" or have_h5py]:
         write_operator(str(tmp_path / f"op{ext}"), M)
         assert np.array_equal(read_operator(str(tmp_path / f"op{ext}")).toarray(), want), ext
     write_bundle(str(tmp_path / "b"), [1.0, 3.0], np.eye(2), operator=M, basis=sp.identity(2, dtype=dtype, format="coo"))

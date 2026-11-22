@@ -47,6 +47,11 @@ def test_sandwich_random_sparse(seed):
     w = np.linalg.eigvalsh(A.toarray())
     for sigma in (float(np.median(w)), float(w[n // 4] + 1e-3), float(w.min() - 0.5), float(w.max() + 0.5)):
         res = inertia_sparse(A, sigma)
+        if not res.conclusive and res.note == "zero pivot":
+            # for odd n the median is the eigenvalue w[n // 2] itself, so A - sigma I is singular to working precision,
+            # and an exact zero pivot is refused (no count); seen with scipy 1.10.1 on Linux at seed 23
+            assert n % 2 == 1 and sigma == w[n // 2], (seed, sigma, res)
+            continue
         assert res.method == "sparse-superlu-residual"
         if res.conclusive:
             assert _sandwich_holds(A, sigma, res), (seed, sigma, res)

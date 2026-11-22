@@ -143,7 +143,6 @@ def test_generalized_refuses_a_non_finite_imaginary_part():
         certify_generalized(H, sp.identity(H.shape[0], format="csr"), lam, V[:, :1], lambda_min_B=1.0)
 
 
-
 def _widened(cert):
     rec = (cert.body.get("arithmetic") or {}).get("input_widening") or {}
     return [(c["input"], c["dtype"], c["source_sha256"]) for c in rec.get("converted", [])]

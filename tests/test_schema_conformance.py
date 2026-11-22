@@ -157,8 +157,9 @@ def test_negative_controls_are_rejected(fixture_certificates):
         body = json.load(f)
     validate_certificate_body(body)
     for label, mutant in _mutants(body).items():
-        with pytest.raises(SchemaValidationError):
-            validate_certificate_body(mutant)
+        if have_jsonschema():                 # without the optional jsonschema the validator runs no schema check
+            with pytest.raises(SchemaValidationError):
+                validate_certificate_body(mutant)
         # the structural layer alone (what runs without jsonschema) catches the scope-level ones
         if "scope" in label or "reason code" in label or "mismatch" in label:
             assert structural_check(mutant) != [], label

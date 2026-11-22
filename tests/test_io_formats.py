@@ -1,4 +1,5 @@
 """Universal producer import: round trips for every format, the bundle convention, and rejection of bad input."""
+import importlib.util
 import json
 import os
 
@@ -13,8 +14,10 @@ from certify_ed.importers import claim_from_bundle, claim_from_file
 from certify_ed.io import (FormatError, read_array, read_basis, read_bundle, read_operator, write_array,
                            write_basis, write_bundle, write_operator)
 
-ARRAY_FMTS = ["npy", "npz", "h5", "csv", "tsv", "txt", "dat", "json", "mtx"]
-SPARSE_FMTS = ["npz", "mtx", "h5", "json", "csv", "txt"]
+# HDF5 needs the optional h5py (extra 'hdf5'): its cases skip without it, as the other HDF5 tests do
+H5 = pytest.param("h5", marks=pytest.mark.skipif(importlib.util.find_spec("h5py") is None, reason="h5py not installed"))
+ARRAY_FMTS = ["npy", "npz", H5, "csv", "tsv", "txt", "dat", "json", "mtx"]
+SPARSE_FMTS = ["npz", "mtx", H5, "json", "csv", "txt"]
 
 
 @pytest.fixture(scope="module")
@@ -38,7 +41,7 @@ def test_real_array_round_trip(tmp_path, fmt):
     assert np.array_equal(read_array(q, role="eigenvectors"), M)
 
 
-@pytest.mark.parametrize("fmt", ["npy", "npz", "h5", "csv", "txt", "json", "mtx"])
+@pytest.mark.parametrize("fmt", ["npy", "npz", H5, "csv", "txt", "json", "mtx"])
 def test_complex_array_round_trip(tmp_path, fmt):
     rng = np.random.default_rng(2)
     M = rng.standard_normal((4, 2)) + 1j * rng.standard_normal((4, 2))
@@ -83,7 +86,7 @@ def test_sparse_operator_round_trip(tmp_path, fmt, heis6):
     assert D.nnz == 0
 
 
-@pytest.mark.parametrize("fmt", ["npy", "npz", "h5", "csv", "json", "mtx", "txt"])
+@pytest.mark.parametrize("fmt", ["npy", "npz", H5, "csv", "json", "mtx", "txt"])
 def test_dense_operator_round_trip(tmp_path, fmt):
     rng = np.random.default_rng(3)
     A = rng.standard_normal((5, 5))
