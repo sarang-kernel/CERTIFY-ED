@@ -83,7 +83,8 @@ def random_cases(rng, n):
     y = random_components(rng, n)
     # half of them with exponents within 4 of each other (both components matter)
     k = n // 2
-    shift = rng.integers(-4, 5, k)                            # exponents within 5 of each other
+    shift = rng.integers(-4, 5, k).astype(np.int32)          # exponents within 5 of each other (int32:
+    # numpy < 2 on Windows takes C long exponents in np.ldexp)
     with np.errstate(over="ignore", under="ignore", invalid="ignore"):
         y[:k] = np.ldexp(np.abs(x[:k]) * rng.uniform(0.5, 1.0, k), shift) * np.sign(rng.standard_normal(k))
         z = x + 1j * y

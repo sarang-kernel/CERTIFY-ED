@@ -218,8 +218,9 @@ The computational source hash changes.
   finite, which is no input of this route, gives nan), and gives nan only when the exact sum rounds beyond the range.
   `math.fsum` returning a value that is not finite for finite terms also takes the integer route, so the result does not
   rest on CPython raising there. Cost of that route: `exact_sum` of 10^6 terms, three of them BIG, BIG and -BIG, takes
-  0.8 s and of 10^7 terms about 10 s (main returns nan after 0.51 s and 6.1 s; a term-by-term integer sum took 2.8 s and
-  30 s; loaded machine); sums whose partial sums stay in the range do not take it.
+  0.61 s and of 10^7 terms 6.8 s, where bf567f9f returns nan after 0.38 s and 3.9 s (minimum of three and of two runs on
+  an otherwise idle machine; the term-by-term integer sum of the first version took 2.8 s and 30 s on a loaded machine);
+  sums whose partial sums stay in the range do not take it.
 - **The overflow side of the cascade.** Its cascade accepted its float result h = +-BIG with an infinite gap on the
   overflow side; the boundary there is the midpoint BIG + 2^970 (`fp._inside_rounding_interval`). Wherever the previous
   code gave finite values the results are bit-identical (the rescaled splits are exact as the unscaled ones were, and
@@ -258,9 +259,10 @@ The computational source hash changes.
   two name the head and the command at their top).
 - **Tests.** `tests/test_exact_dot_range.py` (its oracle of the nearest value is decided in exact rationals, not through
   `float(Fraction)`, which rests on the same integer division as the code; `_wide_sum` is compared with the term-by-term
-  integer sum, also on runs of 1024 and 1025 terms equal to BIG and -BIG, where the int64 run sums are largest, and for
-  chunk sizes 1, 7, 1024 and 4999; zero, subnormal and non-finite companions of top-of-range pairs; the statuses of V1
-  to V3, G2, G3, M1 to M3 and of certify's S2 for the vector above).
+  integer sum, also on runs of 1024 and 1025 terms equal to BIG and -BIG, where the int64 run sums are largest, for
+  chunk sizes 1, 7, 1024 and 4999, and at the default chunk size across one chunk boundary (2^20 + 2 terms, a finite sum
+  and one beyond the range); zero, subnormal and non-finite companions of top-of-range pairs; the statuses of V1 to V3,
+  G2, G3, M1 to M3 and of certify's S2 for the vector above).
 
 ### Non-finite follow-ups
 
@@ -352,16 +354,21 @@ base). The computational source hash changes.
   The separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed intervals are
   apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B of
   `tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
-  `certify_generalized` refuses under some BLAS), the same file, `tests/test_exact_dot_range.py` and
-  `tests/test_verifier.py` pass int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents), and its
-  tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10 (`co_qualname` exists from 3.11; the
-  named scope is still required from 3.11).
+  `certify_generalized` refuses under some BLAS), the same file, `tests/test_exact_dot_range.py`,
+  `tests/test_verifier.py` and the verify scripts `docs/proofs/verify_int05_underflow.py` and `verify_modulus-up.py`
+  pass int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents; both scripts stopped with a TypeError
+  at numpy 1.24.4 and now report 0 violations there; every `np.ldexp` call in `tests/`, `experiments/` and
+  `docs/proofs/` was read, and their exponents are literals, Python integers, `np.frexp` exponents or int32 arrays), and
+  the tripwire of `tests/test_modulus_up.py` has a positive control that accepts the unnamed scope of Python 3.9 and
+  3.10 (`co_qualname` exists from 3.11; the named scope is still required from 3.11).
 - **Runs.** With these, every test that runs here passes at the floors and with Python 3.10.22, numpy 1.24.4 and scipy
   1.10.1 (OpenBLAS), except the ones that create a temporary directory: those are not assessed under Python 3.9 and 3.10
-  in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`; open until they are
-  run elsewhere). The suite was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at main no defect
-  of the package, and the test failures were the ones above (the matplotlib skips, the cuts, the recorded radii, the
-  separation test, the test matrix B).
+  in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`), and a pattern that
+  fails at the floors could hide in them; open until they are run elsewhere. Full suites at 13ebe18b: 1747 passed at
+  Python 3.10.22, numpy 1.24.4, scipy 1.10.1 and 1739 at Python 3.9.23, numpy 1.22.4, scipy 1.8.1, 0 failed, 229 errors
+  on each, all from that hook. The suite was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at
+  main no defect of the package, and the test failures were the ones above (the matplotlib skips, the cuts, the recorded
+  radii, the separation test, the test matrix B).
 
 ### Result documents moved under docs/
 

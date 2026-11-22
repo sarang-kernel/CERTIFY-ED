@@ -179,8 +179,8 @@ def top_vector(rng, k, kind):
         ea = rng.integers(-1074, 1024, k)
         eb = np.array([int(rng.integers(max(-1074, -1074 - e), 1024 - max(e, 0) + 2)) for e in ea])
     eb = np.minimum(eb, 1024)            # finite entries only (the lemma concerns finite inputs)
-    a = rng.uniform(1, 2, k) * np.ldexp(1.0, ea - 1) * rng.choice([-1.0, 1.0], k)
-    b = rng.uniform(1, 2, k) * np.ldexp(1.0, eb - 1) * rng.choice([-1.0, 1.0], k)
+    a = rng.uniform(1, 2, k) * np.ldexp(1.0, (ea - 1).astype(np.int32)) * rng.choice([-1.0, 1.0], k)
+    b = rng.uniform(1, 2, k) * np.ldexp(1.0, (eb - 1).astype(np.int32)) * rng.choice([-1.0, 1.0], k)
     a[~np.isfinite(a)] = BIG
     b[~np.isfinite(b)] = -BIG
     sw = rng.random(k) < 0.5
@@ -253,7 +253,7 @@ def check_sum_top(t, counters, adversarial, tag):
 
 def check_wide_sum(rng, counters):
     n = int(rng.integers(2, 12))
-    t = rng.uniform(1, 2, n) * np.ldexp(1.0, rng.integers(-1074, 1024, n) - 1) * rng.choice([-1.0, 1.0], n)
+    t = rng.uniform(1, 2, n) * np.ldexp(1.0, (rng.integers(-1074, 1024, n) - 1).astype(np.int32)) * rng.choice([-1.0, 1.0], n)
     big = rng.choice([BIG, -BIG, 2.0 ** 1023, -2.0 ** 1023], int(rng.integers(1, 4)))
     t = rng.permutation(np.concatenate([t[np.isfinite(t)], big]))
     check_sum_top(t, counters, False, "random")
