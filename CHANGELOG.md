@@ -94,10 +94,12 @@ Records and documents only; no code of the package changes. The computational so
   -0.5498329145062226 (rounded down -0.549832915), 6.2e-11 above the lower end of the floating-point layer; it rests on
   the lemmas of the exact layer, which are marked UNVERIFIED. Records
   `lean/results/apps_next/n11_crown_nine_exact_8_blocks.json` and its pre-registration.
-- `docs/lean/APPS_NEXT.md` (sections 0, 1, 3 and 8), `docs/applications.md`, `docs/lean/VERIFICATION_REPORT.md`,
-  `docs/project/failures/05_open_items.md`, the N-11 row of `docs/project/roadmap/DEVELOPMENT_ROADMAP.md` and
-  `docs/project/CHANGELOG_PROJECT.md` state the result; `tools/make_verification_report.py` reads the new record when it
-  is present and otherwise writes the report as before.
+- `docs/lean/APPS_NEXT.md` (sections 0, 1, 3 and 8), `docs/applications.md`, `docs/project/failures/05_open_items.md`
+  and the generated `docs/lean/VERIFICATION_REPORT.md`, `docs/project/roadmap/DEVELOPMENT_ROADMAP.md` (the N-11 row, in
+  `tools/make_development_roadmap.py`) and `docs/project/CHANGELOG_PROJECT.md` (a row of `tools/changelog/after.tsv`,
+  built by `tools/changelog/build.py`) state the result; each generator reproduced its file byte for byte before the
+  change. `tools/make_verification_report.py` reads the new record when it is present and otherwise writes the report as
+  before.
 
 ### GPU products: the device probe reads the moduli in the stored order
 
