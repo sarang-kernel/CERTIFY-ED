@@ -4,6 +4,14 @@
   "python experiments/n11_crown_nine.py appended --blocks i --cap-gib 16   (i = 0, ..., 7, one process each)",
   "python experiments/n11_crown_nine.py --combine DIR_0 ... DIR_7"
  ],
+ "preregistration": {
+  "file": "n11_crown_nine_exact_8_blocks_preregistration.md",
+  "sha256": "518e8664d5c58e065466a9635152ab9d7b617d655d92032f1a3771b09285dc43",
+  "saved_utc": "2026-11-22T14:34:19Z",
+  "copied_into_the_run_folder_utc": "2026-11-22T14:42:44Z",
+  "first_block_started_utc": "2026-11-22T14:42:46Z",
+  "note": "saved_utc: the time the file was stored in the project's artifact store before the job was submitted; the run folder holds the same bytes (PREREGISTRATION.md, same SHA-256); the block folders are named by their start time (UTC)"
+ },
  "nine_coupling_exact_combined": {
   "layer": "exact",
   "reading": "appended",
@@ -139,6 +147,17 @@
   "reduced_model_bound": -0.5501582988212038,
   "gain_over_reduced_model": 0.0003253843149812919
  },
+ "block_folders": [
+  "results/block_0/n11_crown_nine_blocks_20261122_144246",
+  "results/block_1/n11_crown_nine_blocks_20261122_144246",
+  "results/block_2/n11_crown_nine_blocks_20261122_144246",
+  "results/block_3/n11_crown_nine_blocks_20261122_144246",
+  "results/block_4/n11_crown_nine_blocks_20261122_144246",
+  "results/block_5/n11_crown_nine_blocks_20261122_144246",
+  "results/block_6/n11_crown_nine_blocks_20261122_144246",
+  "results/block_7/n11_crown_nine_blocks_20261122_144246"
+ ],
+ "block_folders_note": "the eight folders joined by --combine (its 'inputs' lists their common base name); the run archive n11_crown_exact_8_blocks.tgz holds them",
  "blocks": [
   {
    "index": 0,

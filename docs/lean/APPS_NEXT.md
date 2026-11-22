@@ -16,9 +16,9 @@ The outcome in two sentences. The printed couplings determine the problem once t
 parentheses is read as one more decimal, and at those couplings the lowest eigenvalue of the crown lies in
 [-0.5498329145683885, -0.5498329144473251], certified by the floating-point layer of certify-ed under the binary64
 model; the exact re-check of all 8 blocks, which needs no such model, raises the lower end to -0.5498329145062226
-(section 3). The honeycomb criterion of Pomata and Wei does not fit this machine, or any
-single machine, with the present eta machinery: its largest bordered block has 1293292 rows, which needs 12462 GiB for
-one binary64 copy alone.
+(section 3; it rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, which are marked UNVERIFIED). The
+honeycomb criterion of Pomata and Wei does not fit this machine, or any single machine, with the present eta machinery:
+its largest bordered block has 1293292 rows, which needs 12462 GiB for one binary64 copy alone.
 
 ## 1 How to run
 
@@ -166,7 +166,7 @@ blocks counted in the first run agree in count and in the six logged decimals of
 | floating-point layer: lower bound | -0.5498329145683885 (rounded down -0.549832915) |
 | integer Rayleigh quotient: upper bound | -0.5498329144473251 (rounded up -0.549832914) |
 | exact re-check | 8 of 8 blocks counted, count 0 in each (22 November 2026; the first run was stopped after 3) |
-| exact lower bound (no floating-point assumption) | -0.5498329145062226 (rounded down -0.549832915; the exact rational is in the record) |
+| exact lower bound (no floating-point assumption; Lemmas 11, 12 and Proposition 13 marked UNVERIFIED) | -0.5498329145062226 (rounded down -0.549832915; the exact rational is in the record) |
 | published `e_LB` | -0.549832(8) |
 | floating-point value of the review | -0.54983289 (at `c4 = 0.0000415`) |
 | lower bound minus the reduced-model certificate -0.5501582988212038 | 0.000325384 |

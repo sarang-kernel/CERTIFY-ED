@@ -37,19 +37,20 @@ states of S^z = 0.
 | Layer | Result | Code |
 |---|---|---|
 | floating point (inertia_dense, binary64 model) | −0.5498329145683885 ≤ λ_min ≤ −0.5498329144473251 (upper side: integer Rayleigh quotient); 3018 s, peak 2637 MiB | `nine_coupling.certify_nine(layer="float")` |
-| exact (inertia_exact, no FP assumption) | same shift; all 8 blocks counted on 22 November 2026, one process per block (count 0 in each; 1038 to 1158 s per block, peaks of at most 3198 MiB): −0.5498329145062226 ≤ λ_min, 6.2e-11 above the floating-point lower end (`lean/results/apps_next/n11_crown_nine_exact_8_blocks.json`); a first run on the shared development machine was stopped after 3 blocks (dimensions 6194, 6066, 6031; 5568 s, 7424 s, 12240 s) | `nine_coupling.certify_nine()`; per block `certify_blocks`, joined by `combine_blocks` |
+| exact (inertia_exact, no FP assumption) | same shift; all 8 blocks counted on 22 November 2026, one process per block (count 0 in each; 1038 to 1158 s per block, peaks of at most 3198 MiB): −0.5498329145062226 ≤ λ_min, 6.2e-11 above the floating-point lower end (`lean/results/apps_next/n11_crown_nine_exact_8_blocks.json`); it rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, marked UNVERIFIED (D-12); a first run on the shared development machine was stopped after 3 blocks (dimensions 6194, 6066, 6031; 5568 s, 7424 s, 12240 s) | `nine_coupling.certify_nine()`; per block `certify_blocks`, joined by `combine_blocks` |
 
-So e_GS ≥ −0.549832915 at the printed couplings (exact layer), 3.25e-4 above the reduced-model bound. The printed
-−0.549832(8) (and the abstract's six decimals −0.549832) lie slightly above λ_min: the paper cuts the
-eigenvalue toward zero instead of rounding it down (overstatement below 1e-6). Floating-point values for
-the other readings: −0.5498335636261985 (digits dropped) and −0.5498328933843968 (c4 = 0.0000415, the
-review's reading, which reproduces its −0.54983289). Run `python experiments/n11_crown_nine.py appended
+So e_GS ≥ −0.549832915 at the printed couplings, 3.25e-4 above the reduced-model bound (exact layer, whose
+lemmas are marked UNVERIFIED; the floating-point layer gives the same rounded bound under the binary64 model).
+The printed −0.549832(8) (and the abstract's six decimals −0.549832) lie slightly above λ_min: the paper cuts
+the eigenvalue toward zero instead of rounding it down (overstatement below 1e-6). Floating-point values for
+the other readings: −0.5498335636261985 (digits dropped) and −0.5498328933843968 (c4 = 0.0000415, the review's
+reading, which reproduces its −0.54983289). Run `python experiments/n11_crown_nine.py appended
 [--float-layer]`. The exact re-check can be split: `python experiments/n11_crown_nine.py appended --blocks
 0,1,2,3` counts the named blocks at the shift of the floating-point enclosure (`nine_coupling.SHIFT_APPENDED`)
 and rewrites its record after every block; `python experiments/n11_crown_nine.py --combine DIR1 DIR2` joins
 records whose blocks together are 0 to 7, each once, into the exact lower bound. Each block holds one dense
-object matrix (peak commit 3.4 GiB in the run above, under the 5 GiB cap), so disjoint block sets can run
-in parallel where memory allows.
+object matrix (peak commit 3.4 GiB in the first run, under its 5 GiB cap; at most 3198 MiB in the run of 22
+November), so disjoint block sets can run in parallel where memory allows.
 
 ## 2. AKLT spectral gaps on 2D lattices (Pomata & Wei, arXiv:1911.01410)
 
