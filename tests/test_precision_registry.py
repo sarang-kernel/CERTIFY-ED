@@ -36,6 +36,8 @@ EXEMPT_MODULES = {
     "certify_ed.api": "quick() wraps certify() (registered), which converts its inputs",
     "certify_ed.cli": "command-line front end: reads files with io.formats and importers and calls certify() and the "
                       "record functions (registered); one PrecisionError handler (tests/test_single_precision.py)",
+    "certify_ed._linalg": "scipy.linalg.eigh with the 1 x 1 case taken from its entry (scipy 1.8 to 1.10 refuse it); "
+                          "called on matrices its callers have converted to binary64",
     "certify_ed.compat": "package namespace (compat.symveig is listed)",
     "certify_ed.conformance": "checks producer bundles through io.bundle and certify() (registered)",
     "certify_ed.corroborate": "S5 corroboration: independent eigensolvers as evidence, no rigorous bound; certify() "

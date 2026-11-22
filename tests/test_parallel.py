@@ -59,7 +59,7 @@ def test_low_energy_identical_for_1_2_4_workers(merge):
     # sectors 0..2 take their U(1) restriction, the merged sector and every later one the full matrix: both paths
     spec = ce.heisenberg_chain(8)
     wf = la.eigvalsh(ce.build_bitwise(spec).toarray())
-    E_cut = float((wf[4] + wf[5]) / 2)          # between levels (wf[5] to wf[9] are one five-fold level)
+    E_cut = float((wf[10] + wf[11]) / 2)        # between levels, above the six-fold level wf[5] to wf[10]
     secs = sz_sectors(spec, E_cut, merge)
     ref = certify_low_energy(spec, secs, E_cut)
     assert ref["status"] == "CERTIFIED"

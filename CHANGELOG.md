@@ -134,43 +134,47 @@ numpy 1.22.4, scipy 1.8.1 with OpenBLAS), it showed three defects of the package
 matrix in `scipy.linalg.eigh` and `eigvalsh` with the drivers evr (the default) and evd, real and complex (the drivers
 ev and evx run); the dense corroboration oracles, the enclosure of a one-dimensional block in `spectrum`, the default
 solver of `certified_sweep` (a sector of dimension 1), the next-eigenvalue estimate of `certify` and the lower bound of
-`apps.aklt.graph.lambda_min_lower` met it. These calls now go through `certify_ed._compat.eigh`, which takes the
+`apps.aklt.graph.lambda_min_lower` met it. These calls now go through `certify_ed._linalg.eigh`, which takes the
 eigenvalue of a 1 x 1 Hermitian matrix from its entry, with scipy's dtypes and its refusal of a non-finite entry; an
-oracle record of a 1 x 1 matrix says so (`note`). `scipy.sparse.sparray` exists from scipy 1.11 only, so
-`precision.summed` returned a `coo_matrix` for a `coo_array` before it (and `fp.abs_up` with it); the sparse arrays of
-scipy 1.8 to 1.10 are now recognised by their mixin (`precision._is_sparse_array`; the class layout checked on 1.8.1 and
-1.10.1). The sign of a zero sum of repeated entries depended on the route and on the numpy version (`np.add.reduceat`
-gives +0.0 for two negative zeros under numpy 1.22 and -0.0 under numpy 2; the vectorized passes and `math.fsum` gave
-+0.0 for longer groups everywhere); it is now -0.0 exactly when every part is -0.0, as IEEE addition gives in any order.
-A complex entry keeps the sign of its real part in `matrix_sha256`, so the hash of such a matrix no longer depends on
-the numpy version or the route; real zero entries are dropped before hashing, as before. This changes the hash at the
-current versions too: `matrix_sha256`, and the operator hashes of certificates, of a complex matrix with a position
-whose three or more repeated entries all have the real (or imaginary) part -0.0 differ from main's (two repeats already
-gave -0.0 under numpy 2). Statuses and bounds do not change. Tests: `tests/test_version_floors.py` (24; of the 14 of the
-first version, 11 fail at main under the floor versions, the three of the driver ev passing, and the 4 on signed zeros
-also under the current ones; the added hash test fails at main for three and more repeats; an audit test requires every
-standard `eigh` call of the package to go through `_compat`, and a tripwire runs the callers with scipy refusing every 1
-x 1 matrix). The suite itself: the tests that need python-flint are marked `needs_flint` (they failed with
-ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the precision registry is used only with h5py,
-the five 40-digit reference tests of `tests/test_entanglement.py` are marked `needs_mpmath` (the module did not import
-without mpmath, which no extra lists), the figure scripts' tests and one test of `make_numbers.py` are skipped without
-matplotlib (the `plots` extra), `tests/conftest.py` gains `eigh_dense` (`_compat.eigh`, for the sector tests), three
-tests put their energy cut between two levels instead of on a degenerate one (where the rounding of the computed levels
-decided the verdict: FAILED is then the correct answer for a claim that leaves out a level below the cut;
-`tests/test_nonfinite_bounds.py` now cuts above the singlet and above the triplet), the recorded radii of
-`tests/test_whole_spectrum.py` allow one rounding of an entry of H x (u ||H||_inf) on every stack (other BLAS and sparse
-kernels: differences of 2.9e-17 under numpy 1.22 and 6.7e-18 under numpy 2.5 with another OpenBLAS; exact equality is
-still reported), the separation test of `tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed
-intervals are apart (the first radius depends on the LAPACK that computed the vectors), the generalized test matrix B of
-`tests/test_modulus_up.py` is made exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which
-`certify_generalized` refuses under some BLAS), the same file passes int32 exponents to `np.ldexp` (numpy < 2 on Windows
-takes C long exponents), and its tripwire's positive control accepts the unnamed scope of Python 3.9 and 3.10
-(`co_qualname` exists from 3.11; the named scope is still required from 3.11). With these, every test that runs here
-passes at the floors except the ones that create a temporary directory: those are not assessed under Python 3.9 in this
-environment (a file-system hook of the test sandbox is incompatible with Python 3.9's `pathlib`). The suite was also run
-at main with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1: no defect of the package, and the test failures were the ones
-above (the matplotlib skips, the cuts, the recorded radii, the separation test, the test matrix B). The computational
-source hash changes.
+oracle record of a 1 x 1 matrix says so (`note`). `corroborate` no longer drops a nan difference: `max()` kept the
+previous worst value, so a matrix with a nan entry came out CORROBORATED with the Jacobi oracle alone (before this
+branch) or, through the 1 x 1 shortcut, with the default oracles; such a matrix is now INCONCLUSIVE.
+`scipy.sparse.sparray` exists from scipy 1.11 only, so `precision.summed` returned a `coo_matrix` for a `coo_array`
+before it (and `fp.abs_up` with it); the sparse arrays of scipy 1.8 to 1.10 are now recognised by their mixin
+(`precision._is_sparse_array`; the class layout checked on 1.8.1 and 1.10.1). The sign of a zero sum of repeated entries
+depended on the route and on the numpy version (`np.add.reduceat` gives +0.0 for two negative zeros under numpy 1.22 and
+-0.0 under numpy 2; the vectorized passes and `math.fsum` gave +0.0 for longer groups everywhere); it is now -0.0
+exactly when every part is -0.0, as IEEE addition gives in any order. A complex entry keeps the sign of its real part in
+`matrix_sha256`, so the hash of such a matrix no longer depends on the numpy version or the route; real zero entries are
+dropped before hashing, as before. This changes the hash at the current versions too: `matrix_sha256`, and the operator
+hashes of certificates, of a complex matrix with a position whose three or more repeated entries all have the real (or
+imaginary) part -0.0 differ from main's (two repeats already gave -0.0 under numpy 2). Statuses and bounds do not
+change. Tests: `tests/test_version_floors.py` (24; of the 14 of the first version, 11 fail at main under the floor
+versions, the three of the driver ev passing, and the 4 on signed zeros also under the current ones; the added hash test
+fails at main for three and more repeats; an audit test requires every standard `eigh` call of the package to go through
+`_linalg`, and a tripwire runs the callers with scipy refusing every 1 x 1 matrix). The suite itself: the tests that
+need python-flint are marked `needs_flint` (they failed with ModuleNotFoundError without `certify-ed[exact]`), the HDF5
+operator of the precision registry is used only with h5py, the five 40-digit reference tests of
+`tests/test_entanglement.py` are marked `needs_mpmath` (the module did not import without mpmath, which no extra lists),
+the figure scripts' tests and one test of `make_numbers.py` are skipped without matplotlib (the `plots` extra),
+`tests/conftest.py` gains `eigh_dense` (`_linalg.eigh`, for the sector tests), three tests put their energy cut between
+two levels instead of on a degenerate one (where the rounding of the computed levels decided the verdict: FAILED is then
+the correct answer for a claim that leaves out a level below the cut): above the triplet in the 4-site tests
+(`tests/test_nonfinite_bounds.py` also above the singlet) and above the six-fold level of the 8-site chain in
+`tests/test_parallel.py`, the recorded radii of `tests/test_whole_spectrum.py` allow one rounding of an entry of H x (u
+||H||_inf) on every stack (other BLAS and sparse kernels: differences of 2.9e-17 under numpy 1.22 and 6.7e-18 under
+numpy 2.5 with another OpenBLAS; exact equality is still reported), the separation test of
+`tests/test_gaps_from_mutation_3.py` widens its offset until its two claimed intervals are apart (the first radius
+depends on the LAPACK that computed the vectors), the generalized test matrix B of `tests/test_modulus_up.py` is made
+exactly Hermitian (B B^H + 12 I is Hermitian only up to rounding, which `certify_generalized` refuses under some BLAS),
+the same file passes int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents), and its tripwire's
+positive control accepts the unnamed scope of Python 3.9 and 3.10 (`co_qualname` exists from 3.11; the named scope is
+still required from 3.11). With these, every test that runs here passes at the floors and with Python 3.10.22, numpy
+1.24.4 and scipy 1.10.1 (OpenBLAS), except the ones that create a temporary directory: those are not assessed under
+Python 3.9 and 3.10 in this environment (a file-system hook of the test sandbox is incompatible with their `pathlib`).
+The suite was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at main no defect of the package,
+and the test failures were the ones above (the matplotlib skips, the cuts, the recorded radii, the separation test, the
+test matrix B). The computational source hash changes.
 
 
 ### Result documents moved under docs/

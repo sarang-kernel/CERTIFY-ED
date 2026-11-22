@@ -26,8 +26,8 @@ needs_flint = pytest.mark.skipif(not HAVE_FLINT, reason="python-flint not instal
 
 def eigh_dense(a):
     """scipy.linalg.eigh of a dense Hermitian matrix, the 1 x 1 case (a sector of dimension 1) from its entry:
-    certify_ed._compat.eigh (scipy 1.8 to 1.10 refuse it). The same result as scipy.linalg.eigh otherwise."""
-    from certify_ed._compat import eigh
+    certify_ed._linalg.eigh (scipy 1.8 to 1.10 refuse it). The same result as scipy.linalg.eigh otherwise."""
+    from certify_ed._linalg import eigh
     return eigh(a)
 
 

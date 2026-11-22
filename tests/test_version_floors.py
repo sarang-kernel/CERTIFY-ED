@@ -2,7 +2,7 @@
 
 Run on Python 3.9.23, numpy 1.22.4, scipy 1.8.1 (OpenBLAS), the suite of main bf567f9f showed three defects of the package:
 scipy 1.8 (and 1.10) refuse a 1 x 1 eigh with the drivers evr (the default) and evd, which the dense corroboration
-oracles, the enclosure of a one-dimensional block in spectrum and the default sweep solver met (now _compat.eigh); scipy.sparse.sparray does not exist
+oracles, the enclosure of a one-dimensional block in spectrum and the default sweep solver met (now _linalg.eigh); scipy.sparse.sparray does not exist
 before scipy 1.11, so precision.summed returned a coo_matrix for a coo_array; and np.add.reduceat gives +0.0 for two
 negative zeros there, where numpy 2 gives -0.0 (and the vectorized passes and math.fsum gave +0.0 for longer groups on
 any version). Each test here holds on both builds.
@@ -77,12 +77,12 @@ def test_sparse_array_class_kept():
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32, np.complex128, np.complex64, np.int64])
-def test_compat_eigh_matches_scipy_on_a_1x1_matrix(dtype):
-    """_compat.eigh of a 1 x 1 matrix: scipy's values, vectors and dtypes where scipy runs (the drivers ev and evx run
+def test_linalg_eigh_matches_scipy_on_a_1x1_matrix(dtype):
+    """_linalg.eigh of a 1 x 1 matrix: scipy's values, vectors and dtypes where scipy runs (the drivers ev and evx run
     on every scipy), and scipy's refusal of a non-finite entry."""
     import scipy.linalg as la
 
-    from certify_ed._compat import eigh
+    from certify_ed._linalg import eigh
     a = np.array([[3]], dtype=dtype) if dtype is np.int64 else np.array([[-2.5]], dtype=dtype)
     w, X = eigh(a)
     w_ref, X_ref = la.eigh(a, driver="ev")
@@ -122,8 +122,8 @@ def test_no_1x1_standard_eigh_reaches_scipy(monkeypatch):
         la.eigh(np.array([[1.0]]))
 
 
-def test_every_standard_eigh_call_goes_through_compat():
-    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem) appears only in _compat.py,
+def test_every_standard_eigh_call_goes_through_linalg():
+    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem) appears only in _linalg.py,
     or in an application whose matrix has a fixed dimension above 1 (listed here with that dimension)."""
     import ast
     import os
@@ -147,7 +147,7 @@ def test_every_standard_eigh_call_goes_through_compat():
                 generalized = len(node.args) > 1 or any(k.arg == "b" for k in node.keywords)
                 if not generalized:
                     found.setdefault((rel, f"{node.func.value.id}.{node.func.attr}"), []).append(node.lineno)
-    stray = {k: v for k, v in found.items() if k[0] != "_compat.py" and k not in allowed}
+    stray = {k: v for k, v in found.items() if k[0] != "_linalg.py" and k not in allowed}
     assert not stray, stray
     assert set(allowed) <= set(found), "an allowlisted call is gone: remove it from the list"
 
@@ -164,3 +164,14 @@ def test_hash_of_repeated_negative_zero_parts_equals_the_summed_form(reps):
     once = sp.coo_matrix((np.full(n, complex(-0.0, float(reps))), (np.arange(n), np.arange(n))), shape=(n, n))
     assert matrix_sha256(dup) == matrix_sha256(once)
     assert matrix_sha256(dup.tocsr()) == matrix_sha256(once.tocsr())
+
+
+@pytest.mark.parametrize("oracles", [("lapack_evr", "jacobi"), ("lapack_evd",), ("jacobi",)])
+def test_corroborate_does_not_agree_on_a_nan_matrix(oracles):
+    """A matrix with a nan entry: the dense oracles refuse it (scipy's check_finite, kept by the 1 x 1 helper) and the
+    Jacobi oracle returns nan, so corroborate is INCONCLUSIVE; a nan difference was dropped by max() before, so a 1 x 1
+    nan matrix with the shortcut, or any nan matrix with the Jacobi oracle alone, came out CORROBORATED."""
+    from certify_ed.corroborate import corroborate
+    for A in (np.array([[np.nan]]), np.array([[1.0, np.nan], [np.nan, 2.0]])):
+        cor = corroborate(A, np.array([1.0]), oracles=list(oracles))
+        assert cor["status"] == "INCONCLUSIVE", cor

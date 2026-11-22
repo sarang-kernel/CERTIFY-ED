@@ -19,7 +19,7 @@ import numpy as np
 import flint
 import itertools
 
-from ..._compat import eigh
+from ..._linalg import eigh
 from ...checker import inertia_exact
 
 PRIME = 2147483647      # 2^31 - 1; a rank modulo p never exceeds the rational rank

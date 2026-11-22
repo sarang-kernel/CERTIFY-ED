@@ -141,7 +141,7 @@ def affinity_defect(spec_a: ModelSpec, spec_b: ModelSpec, dc: float, h1: ModelSp
 def _default_solver(H, k: int):
     n = H.shape[0]
     if n <= 3000:
-        from ._compat import eigh            # the 1 x 1 case from its entry (scipy 1.8 to 1.10 refuse it)
+        from ._linalg import eigh            # the 1 x 1 case from its entry (scipy 1.8 to 1.10 refuse it)
         w, Y = eigh(H.toarray() if sp.issparse(H) else np.asarray(H))
         return w[:k], Y[:, :k]
     import scipy.sparse.linalg as spla

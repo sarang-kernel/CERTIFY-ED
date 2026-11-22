@@ -27,7 +27,7 @@ from typing import List
 import numpy as np
 import scipy.sparse as sp
 
-from ._compat import eigh
+from ._linalg import eigh
 from .enclosure import OperatorAdapter, enclose
 from .fp import add_up, sub_down
 from .precision import binary64, summed
@@ -113,7 +113,7 @@ def merge_intervals(ivs: List[SpectrumInterval], n: int) -> SpectrumEnclosure:
 def _enclose_block(A, eig=None):
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if eig is None:
-        mu, X = eigh(dense)                  # the 1 x 1 case from its entry (_compat.py)
+        mu, X = eigh(dense)                  # the 1 x 1 case from its entry (_linalg.py)
     else:
         mu, X = eig
     enc = enclose(OperatorAdapter(A if sp.issparse(A) else dense), mu, X)

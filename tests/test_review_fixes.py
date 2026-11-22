@@ -309,7 +309,7 @@ def test_imp20_compose_records_symmetrised_blocks():
     spec = ce.heisenberg_chain(4)
     H = ce.build_bitwise(spec)
     wf = la.eigvalsh(H.toarray())
-    E_cut = float((wf[0] + wf[1]) / 2)          # between levels ((wf[2] + wf[3]) / 2 is the triplet level itself)
+    E_cut = float((wf[3] + wf[4]) / 2)          # between levels, above the triplet ((wf[2] + wf[3]) / 2 is on it)
     full = full_state_set(spec)
     secs = []
     for nup in range(spec.n_sites + 1):

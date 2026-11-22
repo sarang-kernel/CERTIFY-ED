@@ -21,7 +21,7 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from ._compat import eigh
+from ._linalg import eigh
 
 ORACLES = {
     "lapack_evd": {"algorithm": "Householder tridiagonalisation (?SYTRD/?HETRD) + divide and conquer",
@@ -97,7 +97,7 @@ def jacobi_eigvalsh(A: np.ndarray, tol: float = 1e-15, max_sweeps: int = 40) -> 
 def run_oracle(name: str, A, k: Optional[int] = None, which: str = "SA") -> np.ndarray:
     dense = A.toarray() if sp.issparse(A) else np.asarray(A)
     if name in ("lapack_evd", "lapack_evr", "lapack_ev"):
-        # the 1 x 1 case from its entry (_compat.py: scipy 1.8 to 1.10 refuse it); the record says so (n = 1)
+        # the 1 x 1 case from its entry (_linalg.py: scipy 1.8 to 1.10 refuse it); the record says so (n = 1)
         w = eigh(dense, eigvals_only=True, driver=name.split("_")[1])
     elif name == "jacobi":
         w = jacobi_eigvalsh(dense)
@@ -131,12 +131,12 @@ def corroborate(A, claimed: np.ndarray, enc=None, oracles: List[str] = ("lapack_
             out["oracles"][o] = {"max_abs_diff_vs_claim": d, "seconds": time.time() - t0,
                                  "n_compared": int(w.size)}
             if o.startswith("lapack_") and A.shape == (1, 1):
-                out["oracles"][o]["note"] = "1 x 1: the eigenvalue is the entry, no LAPACK call (_compat.eigh)"
-            worst = max(worst, d)
+                out["oracles"][o]["note"] = "1 x 1: the eigenvalue is the entry, no LAPACK call (_linalg.eigh)"
+            worst = d if not d <= worst else worst      # a nan difference is kept (max() would drop it)
         except Exception as e:  # pragma: no cover - reported, not raised
             out["oracles"][o] = {"error": f"{type(e).__name__}: {e}"}
     tol = max(1e-8 * max(scale, 1.0), float(enc.radius.max()) * 10 if enc is not None else 0.0)
-    ok = all("error" not in v for v in out["oracles"].values()) and worst <= tol
+    ok = all("error" not in v and v["max_abs_diff_vs_claim"] <= tol for v in out["oracles"].values()) and worst <= tol
     out["tolerance"] = tol
     # agreement is corroboration, not a certified statement: it gets its own status value
     out["status"] = "CORROBORATED" if ok else "INCONCLUSIVE"
