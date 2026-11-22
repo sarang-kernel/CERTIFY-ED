@@ -129,7 +129,7 @@ No constant or status changes; records gain an optional field. The computational
   so the schema is unchanged. The statements and enclosures are those of the real parts, as before.
 - `exact_recheck_lowest`, `exact_recheck_sector_lowest`, `exact_eigenpair_radii` and `corroborate` add the same record
   to their result (a key present only then). `certify` passes real values to them (S6, S5), so certificates are
-  unchanged; a test pins the S6 evidence of a claim with a dropped part.
+  unchanged; a test pins the S5 and S6 evidence of a claim with a dropped part.
 - The ALPS reader (`read_alps_spectrum`) gives each sector the keys `energies_as_given` (the stored values when they
   hold a nonzero imaginary part, otherwise `energies`) and `dropped_imaginary_parts` (the record, or None).
   `claim_from_alps` passes the stored values to the claim, so that `certify` records the dropped parts and lists them

@@ -248,22 +248,23 @@ def test_corroborate_records_dropped_parts_on_both_paths():
 
 
 @needs_flint
-def test_s6_evidence_is_unchanged_by_a_dropped_part():
-    """certify passes the real parts to the exact re-check (S6), so its evidence has no record of its own and equals
-    that of the real claim; the claim record holds the dropped part."""
+def test_s5_and_s6_evidence_are_unchanged_by_a_dropped_part():
+    """certify passes the real parts to the exact re-check (S6) and to corroborate (S5), so their evidence has no
+    record of its own and equals that of the real claim; the claim record holds the dropped part."""
     spec = ce.heisenberg_chain(6)
     H = ce.build_bitwise(spec)
     w, V = eigh_dense(H.toarray())
     k = next(i for i in range(1, 12) if w[i] - w[i - 1] > 1e-3)
     lam = w[:k].astype(complex)
     lam[0] = complex(w[0], 0.5)
-    opts = ce.Options(seed=1, exact_recheck=True)
+    opts = ce.Options(seed=1, exact_recheck=True, corroborate=("lapack_evr", "jacobi"))
     cert = ce.certify(ce.Claim(eigenvalues=lam, eigenvectors=V[:, :k], operator=H, kind="lowest"), spec, opts)
     ref = ce.certify(ce.Claim(eigenvalues=w[:k], eigenvectors=V[:, :k], operator=H, kind="lowest"), spec, opts)
-    s6, s6_ref = (next(s for s in c.statements if s["id"] == "S6.exact_recheck") for c in (cert, ref))
-    assert s6["status"] == s6_ref["status"] == "CERTIFIED"
-    assert "dropped_imaginary_parts" not in s6["evidence"]
-    assert _untimed(s6) == _untimed(s6_ref)
+    for sid, status in (("S6.exact_recheck", "CERTIFIED"), ("S5.corroboration", "CORROBORATED")):
+        got, want = (next(s for s in c.statements if s["id"] == sid) for c in (cert, ref))
+        assert got["status"] == want["status"] == status, sid
+        assert "dropped_imaginary_parts" not in got["evidence"], sid
+        assert _untimed(got) == _untimed(want), sid
     assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.5}
 
 
