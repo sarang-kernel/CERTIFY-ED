@@ -213,8 +213,7 @@ class _Ordered:
     """The ordered kernels on one CSR matrix held on the device (no probe, no spot check, no memory policy)."""
 
     def __init__(self, cp, A, absA):
-        if not (absA.shape == A.shape and np.array_equal(absA.indptr, A.indptr)
-                and np.array_equal(absA.indices, A.indices)):
+        if not _same_stored_pattern(A, absA):
             raise GPUUnavailable("|A| does not share the stored pattern of A")
         self.cp = cp
         self.shape = A.shape
@@ -324,7 +323,7 @@ class DeviceCSR:
             raise GPUUnavailable(f"dtype {A.dtype} is not float64 or complex128")
         A = sp.csr_matrix(summed(A, "gpu.DeviceCSR"))   # repeated entries summed (precision.summed), then CSR
         absA = abs_up(A) if absA is None else absA.tocsr()
-        if not (np.array_equal(absA.indptr, A.indptr) and np.array_equal(absA.indices, A.indices)):
+        if not _same_stored_pattern(A, absA):
             raise GPUUnavailable("|A| does not share the pattern of A")
         rec = probe()
         if not rec.get("holds"):
@@ -472,6 +471,18 @@ def _with_empty_rows(A, rows):
         A.data[A.indptr[r]:A.indptr[r + 1]] = 0
     A.eliminate_zeros()
     return A
+
+
+def _same_stored_pattern(A, B) -> bool:
+    """A and B (CSR) store their entries at the same positions in the same order: equal shapes and indptr, and equal
+    indices up to nnz (spare capacity past nnz is not stored); arrays that are the same objects are not compared (the
+    comparison is O(nnz) on the host, next to a transfer of the same size)."""
+    if A.shape != B.shape:
+        return False
+    if A.indptr is not B.indptr and not np.array_equal(A.indptr, B.indptr):
+        return False
+    nnz = int(A.indptr[-1])
+    return A.indices is B.indices or np.array_equal(A.indices[:nnz], B.indices[:nnz])
 
 
 def _moduli_in_stored_order(A):

@@ -613,18 +613,33 @@ def _fsum(t: np.ndarray) -> float:
 
 
 def _wide_sum(t: np.ndarray) -> float:
-    """The correctly rounded exact sum of finite binary64 terms, nan when it rounds beyond the range. Every nonzero
-    binary64 number is m 2^(k - 1074) with integers |m| < 2^53 and 0 <= k <= 2045 (np.frexp, exact); the m of equal k
-    are summed in int64 in runs of at most 1024 terms (each sum below 2^63 in magnitude, exact), the run sums are
-    shifted by their k and summed as Python integers, and the integer sum of the multiples of 2^-1074 is divided once
-    (Python's integer true division is correctly rounded and raises OverflowError for a quotient beyond the range).
-    nan, not inf, beyond the range: in fp a sum beyond the range is no value; precision._exact_float_sum, which sums
-    repeated matrix entries, gives the infinity instead (an entry that sums beyond the range is an infinite entry,
-    refused as such)."""
+    """The correctly rounded exact sum of finite binary64 terms, nan when it rounds beyond the range (and for a term
+    that is not finite, which is no input of this route). Every nonzero binary64 number is m 2^(k - 1074) with integers
+    |m| < 2^53 and 0 <= k <= 2045 (np.frexp, exact); the m of equal k are summed in int64 in runs of at most 1024 terms
+    (each sum below 2^63 in magnitude, exact), the run sums are shifted by their k and summed as Python integers, and the
+    integer sum of the multiples of 2^-1074 is divided once (Python's integer true division is correctly rounded and
+    raises OverflowError for a quotient beyond the range). The terms are taken in chunks of _WIDE_CHUNK, so the
+    temporaries stay of that size; the integer sum does not depend on the chunks. nan, not inf, beyond the range: in fp
+    a sum beyond the range is no value; precision._exact_float_sum, which sums repeated matrix entries, gives the
+    infinity instead (an entry that sums beyond the range is an infinite entry, refused as such)."""
     t = np.asarray(t, dtype=np.float64).ravel()
+    total = 0
+    for c in range(0, t.size, _WIDE_CHUNK):
+        part = t[c:c + _WIDE_CHUNK]
+        if not np.all(np.isfinite(part)):
+            return math.nan
+        total += _wide_integer_sum(part)
+    try:
+        return total / (1 << 1074)
+    except OverflowError:
+        return math.nan
+
+
+def _wide_integer_sum(t: np.ndarray) -> int:
+    """sum(t) * 2^1074 as a Python integer, exact, for finite binary64 terms (see _wide_sum)."""
     t = t[t != 0.0]
     if not t.size:
-        return 0.0
+        return 0
     mant, ex = np.frexp(t)                          # t = mant 2^ex, 0.5 <= |mant| < 1, exact (also for subnormals)
     m = np.ldexp(mant, 53).astype(np.int64)         # an integer below 2^53 in magnitude, exact
     k = ex.astype(np.int64) + (1074 - 53)           # t = m 2^(k - 1074)
@@ -643,13 +658,11 @@ def _wide_sum(t: np.ndarray) -> float:
     total = 0
     for s, kk in zip(np.add.reduceat(m, starts).tolist(), k[starts].tolist()):
         total += s << kk
-    try:
-        return total / (1 << 1074)
-    except OverflowError:
-        return math.nan
+    return total
 
 
 _WIDE_RUN = 1024        # terms per int64 run sum in _wide_sum: 1024 (2^53 - 1) < 2^63
+_WIDE_CHUNK = 1 << 20   # terms per chunk of _wide_sum (bounds its temporaries)
 
 
 def exact_sum(terms, max_rounds: int = 6) -> float:

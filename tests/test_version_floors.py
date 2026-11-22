@@ -126,71 +126,105 @@ def test_no_1x1_standard_eigh_reaches_scipy(monkeypatch):
 
 
 def _scipy_eigh_calls(tree):
-    """(name, lineno, generalized) of every call of scipy.linalg.eigh or eigvalsh in a module: through any name the
-    module binds to scipy.linalg (import scipy.linalg as X, from scipy import linalg [as X], or the dotted
-    scipy.linalg after import scipy...), and through the names it binds to the functions themselves (from scipy.linalg
-    import eigh [as Y]). Imports anywhere in the module count, also those inside functions."""
+    """(name, lineno, kind) of every use of scipy.linalg.eigh or eigvalsh in a module, kind 'standard' or
+    'generalized' for a call (one matrix or two) and 'reference' for any other use (an argument, a table entry,
+    an assignment, functools.partial): through any name the module binds to scipy.linalg (import scipy.linalg as X,
+    from scipy import linalg [as X], X = <scipy.linalg>), through the dotted <scipy>.linalg of any name bound to scipy
+    (import scipy [as X], import scipy.<anything>), and through the names it binds to the functions (from scipy.linalg
+    import eigh [as Y], Y = <scipy.linalg>.eigh). Imports anywhere in the module count, also those inside functions;
+    assignments are followed one level. A star import from scipy.linalg is refused (its names cannot be told apart).
+    The audit is a guard for these binding forms; it does not follow values through calls or containers."""
     import ast
-    mods, funcs, dotted = set(), {}, False
+    mods, pkgs, funcs = set(), set(), set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
                 if a.name == "scipy.linalg" and a.asname:
                     mods.add(a.asname)
-                elif a.name in ("scipy", "scipy.linalg") and not a.asname:
-                    dotted = True
+                elif a.name == "scipy" or (a.name.startswith("scipy.") and not a.asname):
+                    pkgs.add(a.asname or "scipy")
         elif isinstance(node, ast.ImportFrom) and node.level == 0:
             for a in node.names:
+                if node.module == "scipy.linalg" and a.name == "*":
+                    raise AssertionError(f"star import from scipy.linalg at line {node.lineno}")
                 if node.module == "scipy" and a.name == "linalg":
                     mods.add(a.asname or "linalg")
                 elif node.module == "scipy.linalg" and a.name in ("eigh", "eigvalsh"):
-                    funcs[a.asname or a.name] = a.name
-    out = []
+                    funcs.add(a.asname or a.name)
+
+    def is_linalg(v):
+        return ((isinstance(v, ast.Name) and v.id in mods) or
+                (isinstance(v, ast.Attribute) and v.attr == "linalg" and isinstance(v.value, ast.Name)
+                 and v.value.id in pkgs))
+
+    def is_func(v):
+        return ((isinstance(v, ast.Attribute) and v.attr in ("eigh", "eigvalsh") and is_linalg(v.value)) or
+                (isinstance(v, ast.Name) and v.id in funcs))
+
+    def label(v):
+        if isinstance(v, ast.Name):
+            return v.id
+        base = v.value.id if isinstance(v.value, ast.Name) else f"{v.value.value.id}.linalg"
+        return f"{base}.{v.attr}"
+    for node in ast.walk(tree):                      # one level of assignment: X = scipy.linalg, Y = X.eigh
+        if isinstance(node, ast.Assign):
+            names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+            if is_linalg(node.value):
+                mods.update(names)
+            elif is_func(node.value):
+                funcs.update(names)
+    called, out = set(), []
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
-            continue
-        f, name = node.func, None
-        if isinstance(f, ast.Attribute) and f.attr in ("eigh", "eigvalsh"):
-            v = f.value
-            if isinstance(v, ast.Name) and v.id in mods:
-                name = f"{v.id}.{f.attr}"
-            elif (dotted and isinstance(v, ast.Attribute) and v.attr == "linalg" and isinstance(v.value, ast.Name)
-                  and v.value.id == "scipy"):
-                name = f"scipy.linalg.{f.attr}"
-        elif isinstance(f, ast.Name) and f.id in funcs:
-            name = f.id
-        if name:
-            generalized = len(node.args) > 1 or any(k.arg == "b" for k in node.keywords)
-            out.append((name, node.lineno, generalized))
+        if isinstance(node, ast.Call) and is_func(node.func):
+            called.add(id(node.func))
+            two = len(node.args) > 1 or any(k.arg == "b" for k in node.keywords)
+            out.append((label(node.func), node.lineno, "generalized" if two else "standard"))
+    for node in ast.walk(tree):
+        if (isinstance(node, (ast.Attribute, ast.Name)) and isinstance(node.ctx, ast.Load) and is_func(node)
+                and id(node) not in called):
+            out.append((label(node), node.lineno, "reference"))
     return out
 
 
 def test_the_audit_resolves_import_aliases():
-    """The audit below sees a call through every binding form of scipy.linalg and of its functions, and not a call of
-    numpy.linalg.eigh (which handles a 1 x 1 matrix at every supported version)."""
+    """The audit below sees a use of scipy.linalg.eigh or eigvalsh through every binding form it follows, in a call
+    and as a reference, and not numpy.linalg.eigh (which handles a 1 x 1 matrix at every supported version); a star
+    import is refused."""
     import ast
     src = """
 import scipy.linalg as sla
 import scipy
+import scipy as sp_
+import scipy.sparse
 import numpy as np
 from scipy import linalg as L2
 from scipy.linalg import eigh as E, eigvalsh
 from numpy import linalg
+import functools
+L3 = sp_.linalg
+F = L2.eigh
 def f(a, b):
     import scipy.linalg as inner
     sla.eigh(a); scipy.linalg.eigvalsh(a); L2.eigh(a); E(a); eigvalsh(a); inner.eigh(a, b)
+    sp_.linalg.eigh(a); L3.eigvalsh(a); F(a)
+    g = functools.partial(sla.eigh, check_finite=False); table = {"o": L3.eigh}
     np.linalg.eigh(a); linalg.eigh(a)
 """
-    got = sorted((n, g) for n, _, g in _scipy_eigh_calls(ast.parse(src)))
-    assert got == sorted([("sla.eigh", False), ("scipy.linalg.eigvalsh", False), ("L2.eigh", False), ("E", False),
-                          ("eigvalsh", False), ("inner.eigh", True)]), got
+    got = sorted((n, k) for n, _, k in _scipy_eigh_calls(ast.parse(src)))
+    assert got == sorted([("sla.eigh", "standard"), ("scipy.linalg.eigvalsh", "standard"), ("L2.eigh", "standard"),
+                          ("E", "standard"), ("eigvalsh", "standard"), ("inner.eigh", "generalized"),
+                          ("sp_.linalg.eigh", "standard"), ("L3.eigvalsh", "standard"), ("F", "standard"),
+                          ("L2.eigh", "reference"), ("sla.eigh", "reference"), ("L3.eigh", "reference")]), got
+    with pytest.raises(AssertionError, match="star import"):
+        _scipy_eigh_calls(ast.parse("from scipy.linalg import *\neigh(a)\n"))
 
 
 def test_every_standard_eigh_call_goes_through_linalg():
-    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem), through any import alias,
-    appears only in _linalg.py, or in an application whose matrix has a fixed dimension above 1 (listed here with that
-    dimension). Generalized problems (a second matrix: generalized.py and apps/aklt) are left to scipy, which solves a
-    1 x 1 pencil at the floors (test_a_1x1_generalized_problem_runs)."""
+    """Audit: a call of scipy.linalg.eigh or eigvalsh with one matrix (a standard problem), or a reference to either
+    function that could be called later, through the binding forms _scipy_eigh_calls follows, appears only in
+    _linalg.py, or in an application whose matrix has a fixed dimension above 1 (listed here with that dimension).
+    Generalized problems (a second matrix: generalized.py and apps/aklt) are left to scipy, which solves a 1 x 1 pencil
+    at the floors (test_a_1x1_generalized_problem_runs)."""
     import ast
     import os
 
@@ -204,9 +238,9 @@ def test_every_standard_eigh_call_goes_through_linalg():
                 continue
             path = os.path.join(dirpath, f)
             rel = os.path.relpath(path, root).replace(os.sep, "/")
-            for name, line, gen in _scipy_eigh_calls(ast.parse(open(path, encoding="utf-8").read())):
-                if not gen:
-                    found.setdefault((rel, name), []).append(line)
+            for name, line, kind in _scipy_eigh_calls(ast.parse(open(path, encoding="utf-8").read())):
+                if kind != "generalized":
+                    found.setdefault((rel, name), []).append((line, kind))
     stray = {k: v for k, v in found.items() if k[0] != "_linalg.py" and k not in allowed}
     assert not stray, stray
     assert set(allowed) <= set(found), "an allowlisted call is gone: remove it from the list"

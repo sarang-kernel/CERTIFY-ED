@@ -13,6 +13,7 @@ import certify_ed as ce
 from certify_ed.basis import digit_sum
 from certify_ed.precision import claimed_reals
 from certify_ed.sectors import restrict_to_u1
+from conftest import eigh_dense, needs_flint
 
 
 @pytest.fixture(autouse=True)
@@ -110,6 +111,7 @@ def test_claimed_values_with_finite_or_zero_imaginary_parts_convert_as_before():
     assert out[0] == 1.0 and np.isnan(out[1]) and np.isnan(out[2])
 
 
+@needs_flint
 def test_exact_recheck_and_generalized_see_a_non_finite_imaginary_part():
     """The exact re-checks (full space and symmetry sector) give INCONCLUSIVE and certify_generalized refuses, as for a
     nan value (before: all three used the real part)."""
@@ -121,14 +123,13 @@ def test_exact_recheck_and_generalized_see_a_non_finite_imaginary_part():
     assert exact_recheck_lowest(spec, lam, V[:, :1], next_hint=w[1])["status"] == "INCONCLUSIVE"
     with pytest.raises(ValueError):
         certify_generalized(H, sp.identity(H.shape[0], format="csr"), lam, V[:, :1], lambda_min_B=1.0)
-    import scipy.linalg as la
 
     from certify_ed.basis import cyclic_isometry, translation
     from certify_ed.exact_sectors import exact_recheck_sector_lowest
     st = ce.u1_state_set(spec, 3)
     T = translation(spec)
     V0 = cyclic_isometry(st, T, 0)
-    ws, Ys = la.eigh((V0.conj().T @ ce.build_bitwise(spec, st) @ V0).toarray())
+    ws, Ys = eigh_dense((V0.conj().T @ ce.build_bitwise(spec, st) @ V0).toarray())
     x = np.real_if_close(V0 @ Ys[:, :1])
     assert exact_recheck_sector_lowest(spec, st, [T], {0: 0}, ws[:1], x, next_hint=ws[1])["status"] == "CERTIFIED"
     lam_s = np.array([complex(ws[0], np.inf)])
@@ -181,7 +182,6 @@ def test_approximate_symmetry_given_as_a_mapping_with_a_further_key():
 def test_sector_composition_with_a_non_finite_claimed_value_is_inconclusive(bad):
     """A sector value w + inf j or nan: the sector is INCONCLUSIVE with the indices recorded, and so is the
     composition (before: w + inf j was certified as w, and nan made the sector MISSING and the composition FAILED)."""
-    import scipy.linalg as la
 
     from certify_ed.compose import SectorResult, certify_low_energy
     spec = ce.heisenberg_chain(6)
@@ -194,7 +194,7 @@ def test_sector_composition_with_a_non_finite_claimed_value_is_inconclusive(bad)
         idx = full.index_of(ce.u1_state_set(spec, nup).states_in_order())[0]
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         ev = ws[sel].astype(complex)
         if sel.size and hit is None:
@@ -362,7 +362,6 @@ def test_dropped_imaginary_parts_are_listed_under_not_verified():
 def test_sweep_and_composition_record_dropped_imaginary_parts():
     """certified_sweep passes complex solver values to the claim as given, so the certificate records the dropped part;
     the sector composition records it in the sector's record (before: dropped with no record at both)."""
-    import scipy.linalg as la
 
     from certify_ed.compose import SectorResult, certify_low_energy
     from certify_ed.sweep import certified_sweep
@@ -386,7 +385,7 @@ def test_sweep_and_composition_record_dropped_imaginary_parts():
         idx = full.index_of(ce.u1_state_set(spec, nup).states_in_order())[0]
         Vs = sp.csr_matrix((np.ones(idx.size), (idx, np.arange(idx.size))), shape=(H.shape[0], idx.size))
         Hs = (Vs.T @ H @ Vs).tocsr()
-        ws, Ys = la.eigh(Hs.toarray())
+        ws, Ys = eigh_dense(Hs.toarray())
         sel = np.where(ws < E_cut)[0]
         ev = ws[sel].astype(complex)
         if sel.size and hit is None:

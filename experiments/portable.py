@@ -1,7 +1,8 @@
 """Platform layer of the experiments: memory cap, peak resident memory, CPU model and RAM.
 
 POSIX keeps the behaviour the experiments had before this module existed (RLIMIT_AS through `resource`,
-`ru_maxrss`, /proc), except that the peak resident memory on Linux is VmHWM of /proc/self/status (peak_rss_mb). Windows has no `resource` module and no preexec_fn; there the cap is a Job Object
+`ru_maxrss`, /proc), except that the peak resident memory on Linux is VmHWM of /proc/self/status (peak_rss_mb).
+Windows has no `resource` module and no preexec_fn; there the cap is a Job Object
 with a per-process memory limit (JOB_OBJECT_LIMIT_PROCESS_MEMORY: committed private memory, the closest
 analogue of RLIMIT_AS; an allocation beyond it fails and numpy raises MemoryError), peak memory is the
 peak working set (GetProcessMemoryInfo), the CPU model comes from the registry and RAM from
@@ -81,10 +82,11 @@ def _windows_job_cap(nbytes):
 
 
 def peak_rss_mb():
-    """Peak resident memory of the calling process in MiB. Linux: VmHWM of /proc/self/status, the peak of the process's
-    own address space. ru_maxrss is not read there: after fork (or vfork) and exec it starts at the peak resident size
+    """Peak resident memory of the calling process in MiB. Linux: VmHWM of /proc/self/status, the peak resident set of
+    the process itself. ru_maxrss is not read there: after fork (or vfork) and exec it starts at the peak resident size
     of the parent, so a child of a large process (a test inside a long pytest run) reported the parent's peak and missed
-    its own below it. ru_maxrss where /proc is absent (KiB; bytes on macOS)."""
+    its own below it. ru_maxrss where /proc or the VmHWM line is absent (KiB; bytes on macOS), as before; such systems
+    (macOS and other POSIX systems) were not assessed for the inherited peak."""
     if not WINDOWS:
         if sys.platform.startswith("linux"):
             try:

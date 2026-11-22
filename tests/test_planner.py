@@ -50,11 +50,12 @@ def _measure(N, mode):
 
 
 PARENT = r'''
-import subprocess, sys
+import json, subprocess, sys
 import numpy as np
 big = np.ones(300 * 2 ** 20 // 8)        # 300 MiB resident in the parent
 child = "import sys; sys.path.insert(0, ROOT + '/experiments'); import portable; print(portable.peak_rss_mb())"
-print(subprocess.run([sys.executable, "-c", child], capture_output=True, text=True).stdout.strip(), float(big[-1]))
+r = subprocess.run([sys.executable, "-c", child], capture_output=True, text=True)
+print(json.dumps({"rc": r.returncode, "out": r.stdout.strip(), "err": r.stderr[-500:], "held": float(big[-1])}))
 '''.replace("ROOT", repr(ROOT.replace("\\", "/")))
 
 
@@ -65,7 +66,10 @@ def test_peak_of_a_child_does_not_include_the_parents_peak():
     env = dict(os.environ)
     env.pop("PYTHONSAFEPATH", None)
     p = subprocess.run([sys.executable, "-c", PARENT], capture_output=True, text=True, env=env)
-    peak = float(p.stdout.split()[0])
+    assert p.returncode == 0 and p.stdout.strip(), (p.stdout, p.stderr[-800:])
+    child = json.loads(p.stdout.strip().splitlines()[-1])
+    assert child["rc"] == 0 and child["out"], child                 # the child ran and printed its peak
+    peak = float(child["out"])
     assert peak < 200, (peak, p.stderr[-500:])
 
 

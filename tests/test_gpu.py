@@ -53,6 +53,11 @@ def test_probe_moduli_are_in_the_stored_order(cplx):
     assert all(np.array_equal(a, b) for a, b in zip(keep, (A.indptr, A.indices, A.data)))
     with pytest.raises(gpu.GPUUnavailable, match="stored pattern"):
         gpu._Ordered(None, A, s)
+    # spare capacity past nnz is not part of the stored pattern: moduli with a longer indices buffer are accepted
+    spare = m.copy()
+    spare.data, spare.indices = np.r_[m.data, 7.0], np.r_[m.indices, 0].astype(m.indices.dtype)
+    assert spare.indices.size == A.nnz + 1 and gpu._same_stored_pattern(A, spare)
+    assert not gpu._same_stored_pattern(A, s) and gpu._same_stored_pattern(A, A)
 
 
 @pytest.mark.parametrize("cplx_a", [False, True])

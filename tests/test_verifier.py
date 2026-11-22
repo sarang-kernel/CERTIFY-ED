@@ -143,7 +143,7 @@ def test_catches_unsound_radius(cev_binary, certificate, tmp_path):
 def test_canonical_json_matches_python(cev_binary, tmp_path):
     """The verifier's canonical JSON (shortest round-trip floats, sorted keys, escapes) equals json.dumps."""
     rng = np.random.default_rng(7)
-    vals = list(rng.uniform(-10, 10, 200)) + list(np.ldexp(rng.integers(1, 2**53, 200), rng.integers(-1100, 900, 200)))
+    vals = list(rng.uniform(-10, 10, 200)) + list(np.ldexp(rng.integers(1, 2**53, 200), rng.integers(-1100, 900, 200).astype(np.int32)))
     vals += [1e16, 1e15, 0.0001, 0.00001, 5e-324, 2.2250738585072014e-308, 1.7976931348623157e308, 0.078769683837890625, -0.0, 1e22, 1e23]
     obj = {"v": [float(v) for v in vals if np.isfinite(v)], "i": [0, -1, 2**70], "s": ["a\"b\\c\n\t\u0001\u00e9\u4e2d\U0001f600 \x7f"]}
     src = str(tmp_path / "f.json")
