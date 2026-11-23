@@ -49,8 +49,10 @@ reading, which reproduces its −0.54983289). Run `python experiments/n11_crown_
 0,1,2,3` counts the named blocks at the shift of the floating-point enclosure (`nine_coupling.SHIFT_APPENDED`)
 and rewrites its record after every block; `python experiments/n11_crown_nine.py --combine DIR1 DIR2` joins
 records whose blocks together are 0 to 7, each once, into the exact lower bound. Each block holds one dense
-object matrix (peak commit 3.4 GiB in the first run, under its 5 GiB cap; at most 3198 MiB in the run of 22
-November), so disjoint block sets can run in parallel where memory allows.
+object matrix, so disjoint block sets can run in parallel where memory allows. The two runs measured memory
+differently: the first, on Windows, recorded the peak committed memory of its process (3.4 GiB, under a 5 GiB job-object
+cap); the run of 22 November, on Linux, recorded the peak resident set of each block's process (at most 3198 MiB, under
+an address-space cap of 16 GiB). The two numbers are not a comparison of the same quantity.
 
 ## 2. AKLT spectral gaps on 2D lattices (Pomata & Wei, arXiv:1911.01410)
 

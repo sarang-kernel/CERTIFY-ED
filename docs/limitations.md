@@ -71,11 +71,12 @@ From the CHANGELOG (ids INT-xx; D-57):
 - **INT-04 — documentation.** The manuscript's Appendix A described the floating-point accounting of the
   Theorem 1 radius differently from the code; [theory.md](theory.md) §2 now has the code-facing list and
   the appendix is to be rewritten from it. The code's bound was sound throughout.
-- **INT-05 — open.** The intermediate quantities of the Theorem 1 bound (the residual vectors and the
+- **INT-05 — closed in 3.2.0.** The intermediate quantities of the Theorem 1 bound (the residual vectors and the
   entrywise rounding bound) fall below 2⁻⁹⁰⁰ for routine LAPACK output, where eigenvectors carry entries of
-  order 10⁻²⁶⁵ that are numerical zeros of a symmetry sector. Covering this needs either a stronger
-  hypothesis or the underflow-tolerant error model (Higham 2002, eq. 2.6) carried through the norm bounds —
-  a design decision, not made in this version. The bounds are unaffected in every case examined; the
-  statement is about what the hypothesis covers.
+  order 10⁻²⁶⁵ that are numerical zeros of a symmetry sector. Since 3.2.0 the Theorem 1 radius and the cluster bound
+  are evaluated under the underflow-tolerant error model (Higham 2002, eq. 2.6; `docs/proofs/int05_underflow.md`):
+  the norm bounds and the residual bound carry additive terms of order 10⁻¹⁶⁰, so these quantities no longer need the
+  2⁻⁹⁰⁰ hypothesis and are no longer scanned. The other standard-model bounds keep it, and the inputs are scanned
+  for it (INT-01).
 - Certificates made with 3.2.0.dev0 are not comparable by `source_hash` with the 3.1.0 evidence run (the
   computational source changed); a version the paper cites needs its own full run (D-44).

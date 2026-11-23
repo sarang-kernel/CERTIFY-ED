@@ -48,14 +48,16 @@ summation order, no Strassen-type products, no reduced-precision modes, and **no
   rounding mode (including round-toward-zero) and BLAS precision in the running process; a failed probe
   downgrades every CERTIFIED floating-point statement to INCONCLUSIVE and the certificate records which
   probe failed (`arithmetic.runtime_probe`).
-- *Checked on the input (since 3.2.0.dev0)*: the no-underflow hypothesis requires every nonzero operand, radius
-  and residual bound to have magnitude at least 2⁻⁹⁰⁰. `certify()` scans the claimed eigenvalues, the
-  eigenvector entries, the operator's stored entries (or, matrix-free, its norm bound and a probe matvec),
-  the model shift and, after the enclosure, the radii and residual bounds. A finding makes S2 and the
-  statements that rest on it INCONCLUSIVE with reason code `UNDERFLOW_RISK`. `Options(underflow_check=False)`
+- *Checked on the input (since 3.2.0.dev0)*: the standard-model bounds other than the Theorem 1 radius (inertia
+  backward errors, Rayleigh quotients, Kato–Temple arithmetic) require every nonzero operand to have magnitude at
+  least 2⁻⁹⁰⁰. `certify()` scans the claimed eigenvalues, the eigenvector entries, the operator's stored entries
+  (or, matrix-free, its norm bound and a probe matvec) and the model shift. A finding makes S2 and the statements
+  that rest on it INCONCLUSIVE with reason code `UNDERFLOW_RISK`. `Options(underflow_check=False)`
   (`--assume-no-underflow`) assumes the hypothesis instead; the choice is recorded in
-  `scope.options.underflow_check` and `arithmetic.underflow_check`. The intermediate quantities of the
-  bounds are not scanned (known issue INT-05 in the CHANGELOG).
+  `scope.options.underflow_check` and `arithmetic.underflow_check`.
+- *Not needed for the Theorem 1 radius (since 3.2.0)*: the radius and the cluster bound are evaluated under the
+  underflow-tolerant model (additive terms of order 10⁻¹⁶⁰; `docs/proofs/int05_underflow.md`), so the radii,
+  residual bounds and the intermediate quantities of that bound are no longer scanned (INT-05, closed).
 - *Not checked*: that the BLAS in use satisfies the γ_n bounds. It is the standard assumption for
   reference and vendor BLAS; the certificate names it under `arithmetic.assumptions`.
 
