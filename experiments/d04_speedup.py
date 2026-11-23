@@ -1,15 +1,18 @@
 """D-04: wall time of parallel.certify_many with 1, 2, 4 and 8 workers on the U(1) sectors of a Heisenberg chain.
 
-The jobs are the sectors with nup up spins of the periodic chain of N sites, for nup in NUPS (default N = 18 and
-nup = 5 to 13, dimensions 8568 to 48620). Each sector claims its lowest eigenpairs from scipy's eigsh (the producer),
+The jobs are the sectors with nup up spins of the periodic chain of N sites, for nup in NUPS (default N = 16 and
+nup = 3 to 13, dimensions 560 to 12870: the configuration of the first measurement, 22 November 2026; the chain of 18
+sites did not finish within a job's clock). Each sector claims its lowest eigenpairs from scipy's eigsh (the producer),
 cut at a gap so that the claim does not split a level, and certify() runs with the default Options. For every worker
 count the record holds the wall time of certify_many, where each task ran (a worker or this process) and its seconds,
 and whether every status and every recorded number, timings excluded, equals that of the one-worker run (rules 1 to 4
 of certify_ed/parallel.py make them independent of the worker count). The speed-up is the one-worker wall time over the
 W-worker wall time. It depends on the free cores of the machine, so the record also holds the cores this process may
-use (os.sched_getaffinity where it exists) and the load average before and after each run (POSIX).
+use (os.sched_getaffinity where it exists), the load average before and after each run (POSIX), and the CPU seconds
+of each run: this process (time.process_time) and its finished child processes, the workers (os.times; POSIX only,
+None elsewhere).
 
-usage: python experiments/d04_speedup.py [--N 18] [--nups 5,6,...,13] [--k 4] [--workers 1,2,4,8] [--cap-gib 32]
+usage: python experiments/d04_speedup.py [--N 16] [--nups 3,4,...,13] [--k 4] [--workers 1,2,4,8] [--cap-gib 32]
 """
 import os
 import sys
@@ -49,6 +52,14 @@ def _load():
         return None
 
 
+def _child_cpu():
+    """CPU seconds of the finished child processes (user + system); None where the OS does not report them."""
+    if os.name != "posix":
+        return None
+    t = os.times()
+    return t.children_user + t.children_system
+
+
 def _cores():
     try:
         return len(os.sched_getaffinity(0))
@@ -76,8 +87,8 @@ def sector_claim(spec, nup, k_max):
 
 
 def main(argv):
-    N = int(_arg(argv, "--N", "18"))
-    nups = [int(x) for x in _arg(argv, "--nups", ",".join(str(i) for i in range(5, 14))).split(",") if x.strip()]
+    N = int(_arg(argv, "--N", "16"))
+    nups = [int(x) for x in _arg(argv, "--nups", ",".join(str(i) for i in range(3, 14))).split(",") if x.strip()]
     k_max = int(_arg(argv, "--k", "4"))
     workers = [int(x) for x in _arg(argv, "--workers", "1,2,4,8").split(",") if x.strip()]
     if workers[0] != 1:
@@ -99,9 +110,11 @@ def main(argv):
         ref = None
         for W in workers:
             before = _load()
+            c0, k0 = time.process_time(), _child_cpu()
             t0 = time.perf_counter()
             certs, rep = par.certify_many(jobs, workers=W, cap_mb=cap_gib * 1024, report=True)
             wall = time.perf_counter() - t0
+            c1, k1 = time.process_time(), _child_cpu()
             after = _load()
             body = [(strip(c.statements), strip(dict(c.arrays))) for c in certs]
             if ref is None:
@@ -110,6 +123,8 @@ def main(argv):
             same = body == ref
             statuses = [[s["status"] for s in c.statements] for c in certs]
             r = {"workers": W, "wall_seconds": round(wall, 3), "speedup": round(ref_wall / wall, 3),
+                 "cpu_seconds_parent": round(c1 - c0, 3),
+                 "cpu_seconds_workers": None if k0 is None else round(k1 - k0, 3),
                  "identical_to_one_worker": bool(same), "load_before": before, "load_after": after,
                  "tasks": [{"where": t.where, "seconds": round(float(t.seconds), 3), "reason": t.reason}
                            for t in rep.tasks],
