@@ -358,13 +358,15 @@ def test_wide_sum_does_not_depend_on_its_chunks(monkeypatch):
         monkeypatch.setattr(fp, "_WIDE_CHUNK", chunk)
         assert all(_same_float(fp._wide_sum(t), r) for t, r in zip(sets, ref)), chunk
     monkeypatch.undo()
-    # at the default chunk size, sets that cross one chunk boundary (2^20 + 2 terms, BIG on both sides): the noise
-    # (below 2^950 in sum) keeps the first sum in the range, so a finite value is compared; the second is beyond it
+    # at the default chunk size, sets that cross one chunk boundary (2^20 + 2 terms): in the first, BIG in the first
+    # chunk cancels against -BIG in the second, so the result is the correctly rounded sum of the noise (below 2^950)
+    # plus one, which needs the carry across the boundary; the second set is beyond the range
     noise = rng.standard_normal(fp._WIDE_CHUNK - 1) * 2.0 ** 930
-    inside, beyond = np.r_[BIG, noise, BIG, -BIG], np.r_[BIG, noise, BIG, -(2.0 ** 1000)]
+    inside, beyond = np.r_[BIG, noise, 1.0, -BIG], np.r_[BIG, noise, BIG, -(2.0 ** 1000)]
     assert inside.size == fp._WIDE_CHUNK + 2
     got = fp._wide_sum(inside)
-    assert math.isfinite(got) and _same_float(got, _wide_sum_loop(inside))
+    assert math.isfinite(got) and abs(got) < 2.0 ** 960 and _same_float(got, _wide_sum_loop(inside))
+    assert _is_nearest(got, sum(Fraction(x) for x in inside))              # the exact sum, rounded once
     assert math.isnan(fp._wide_sum(beyond)) and math.isnan(_wide_sum_loop(beyond))
 
 

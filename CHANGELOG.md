@@ -260,9 +260,10 @@ The computational source hash changes.
 - **Tests.** `tests/test_exact_dot_range.py` (its oracle of the nearest value is decided in exact rationals, not through
   `float(Fraction)`, which rests on the same integer division as the code; `_wide_sum` is compared with the term-by-term
   integer sum, also on runs of 1024 and 1025 terms equal to BIG and -BIG, where the int64 run sums are largest, for
-  chunk sizes 1, 7, 1024 and 4999, and at the default chunk size across one chunk boundary (2^20 + 2 terms, a finite sum
-  and one beyond the range); zero, subnormal and non-finite companions of top-of-range pairs; the statuses of V1 to V3,
-  G2, G3, M1 to M3 and of certify's S2 for the vector above).
+  chunk sizes 1, 7, 1024 and 4999, and at the default chunk size across one chunk boundary (2^20 + 2 terms: BIG in the
+  first chunk cancels against -BIG in the second, which leaves the correctly rounded sum of the noise plus one, decided
+  in exact rationals; and a sum beyond the range); zero, subnormal and non-finite companions of top-of-range pairs; the
+  statuses of V1 to V3, G2, G3, M1 to M3 and of certify's S2 for the vector above).
 
 ### Non-finite follow-ups
 
@@ -337,8 +338,9 @@ base). The computational source hash changes.
 - **Tests of the floors.** `tests/test_version_floors.py` (41 cases). Of the 14 of its first version, 11 fail at main
   under the floor versions (the three that pass there are the two cases of the driver ev and the sum of one negative
   zero), and the 4 on signed zeros also under the current ones; the hash test fails at main for three and more repeats;
-  an audit requires every standard `eigh` or `eigvalsh` call of the package, through any import alias, to go through
-  `_linalg`, and a tripwire runs the callers with scipy refusing every 1 x 1 matrix.
+  an audit requires every standard `eigh` or `eigvalsh` call of the package, through any import alias and plain or
+  annotated assignment (a star import from `scipy` or `scipy.linalg` is refused), to go through `_linalg`, and a
+  tripwire runs the callers with scipy refusing every 1 x 1 matrix.
 - **Portability of the suite.** The tests that need python-flint are marked `needs_flint` (they failed with
   ModuleNotFoundError without `certify-ed[exact]`), the HDF5 operator of the precision registry is used only with h5py,
   the five 40-digit reference tests of `tests/test_entanglement.py` are marked `needs_mpmath` (the module did not import
@@ -357,10 +359,11 @@ base). The computational source hash changes.
   `certify_generalized` refuses under some BLAS), the same file, `tests/test_exact_dot_range.py`,
   `tests/test_verifier.py` and the verify scripts `docs/proofs/verify_int05_underflow.py` and `verify_modulus-up.py`
   pass int32 exponents to `np.ldexp` (numpy < 2 on Windows takes C long exponents; both scripts stopped with a TypeError
-  at numpy 1.24.4 and now report 0 violations there; every `np.ldexp` call in `tests/`, `experiments/` and
-  `docs/proofs/` was read, and their exponents are literals, Python integers, `np.frexp` exponents or int32 arrays), and
-  the tripwire of `tests/test_modulus_up.py` has a positive control that accepts the unnamed scope of Python 3.9 and
-  3.10 (`co_qualname` exists from 3.11; the named scope is still required from 3.11).
+  at numpy 1.24.4 and now report 0 violations there; every `np.ldexp` call in `tests/`, `experiments/`, `docs/proofs/`,
+  `certify_ed/` and `tools/` was read, and their exponents are literals, Python integers, `np.frexp` exponents or int32
+  arrays; the two runs at numpy 1.24.4 are recorded in `docs/proofs/runs/`), and the tripwire of
+  `tests/test_modulus_up.py` has a positive control that accepts the unnamed scope of Python 3.9 and 3.10 (`co_qualname`
+  exists from 3.11; the named scope is still required from 3.11).
 - **Runs.** With these, every test that runs here passes at the floors and with Python 3.10.22, numpy 1.24.4 and scipy
   1.10.1 (OpenBLAS), except the ones that create a temporary directory, which a file-system hook of the Windows test
   sandbox stops under Python 3.9 and 3.10 (it is incompatible with their `pathlib`). Full suites at 13ebe18b: 1747
@@ -370,15 +373,15 @@ base). The computational source hash changes.
   needed the optional h5py and jsonschema without a skip (eight failures at 3.9, which has neither; the schema test at
   3.10), and `tests/test_sparse_residual.py` required a count where SuperLU (scipy 1.10.1) met an exact zero pivot at a
   shift equal to an eigenvalue (the median of an odd number of eigenvalues), which `inertia_sparse` refuses (note "zero
-  pivot", no count). The tests now skip the HDF5 cases without h5py (`tests/test_io_formats.py`,
-  `tests/test_single_precision.py`), check the schema layer only with jsonschema (`tests/test_schema_conformance.py`;
-  the structural layer always), and accept that refusal at exactly that shift. At a7b1cf8f on Linux: 1957 passed at
-  Python 3.9.25, numpy 1.22.4, scipy 1.8.1 and 1982 at Python 3.10.21, numpy 1.24.4, scipy 1.10.1, 0 failed, 0 errors;
-  2112 passed at Python 3.12.3, numpy 2.5.4, scipy 1.18.1. The Windows-specific pattern (numpy < 2 on Windows takes C
-  long exponents) in the tests that the hook stops is covered by the search of every `np.ldexp` call above. The suite
-  was also run with Python 3.13.18, numpy 2.5.5 and scipy 1.18.1 (OpenBLAS): at main no defect of the package, and the
-  test failures were the ones above (the matplotlib skips, the cuts, the recorded radii, the separation test, the test
-  matrix B).
+  pivot", no count). The HDF5 cases and the schema layer are now parameters or tests of their own that skip without h5py
+  or jsonschema, so that the report shows the skip (`tests/test_io_formats.py`, `tests/test_single_precision.py`,
+  `tests/test_schema_conformance.py`; the structural layer runs always), and the sparse-residual test accepts that
+  refusal at exactly that shift. At a7b1cf8f on Linux: 1957 passed at Python 3.9.25, numpy 1.22.4, scipy 1.8.1 and 1982
+  at Python 3.10.21, numpy 1.24.4, scipy 1.10.1, 0 failed, 0 errors; 2112 passed at Python 3.12.3, numpy 2.5.4, scipy
+  1.18.1. The Windows-specific pattern (numpy < 2 on Windows takes C long exponents) in the tests that the hook stops is
+  covered by the search of every `np.ldexp` call above. The suite was also run with Python 3.13.18, numpy 2.5.5 and
+  scipy 1.18.1 (OpenBLAS): at main no defect of the package, and the test failures were the ones above (the matplotlib
+  skips, the cuts, the recorded radii, the separation test, the test matrix B).
 
 ### Result documents moved under docs/
 

@@ -1,0 +1,21 @@
+# run at 7893e0a5 (main after fix/round5-nits; the script passes int32 exponents to np.ldexp since 0770a6b2);
+# command: python docs/proofs/verify_modulus-up.py (defaults); Python 3.10.22, numpy 1.24.4, scipy 1.10.1 (OpenBLAS),
+# Windows. Before 0770a6b2 the script stopped here with a TypeError (numpy < 2 on Windows takes C long exponents in
+# np.ldexp).
+# Equal to fp_modulus-up.txt except the line negative_control_np_abs, which measures numpy's own complex absolute
+# value: here its three control points err by 1.521u, -0.462u and 0.389u (one below |z|, none outside 2u), where numpy
+# 2.4.4 on this host errs by up to 2.466u. The modulus_up results are the same.
+random_cases: 199953
+adversarial_cases: 26815
+failures_i_ii_iip_iii_random: [0, 0, 0, 0]
+failures_i_ii_iip_iii_adversarial: [0, 0, 0, 0]
+inf_results_random_adversarial: [6, 1287]
+zero_component_cases_and_iv_failures: [461, 0]
+largest_relative_excess_over_u: 10.441
+inf_nan_real_input_ok: True
+negative_control_np_abs: {'below_|z|': '1/3', 'outside_2u': '0/3', 'relative_error_over_u': [1.521, -0.462, 0.389]}
+negative_control_broken_variants_detected: {'no_guard': '14862/19996', 'no_subnormal_step': '1166/26815', 'step_only_below_2^-1030': '87/26815'}
+p15_modulus_upper_on_adversarial: {'cases': 26815, 'below_|z|': 0, 'inf': 4163, 'inf_by_cause': {'square': 3466, 'sum_of_squares': 133, 'guard_of_root': 0, 'abs_sum_branch': 564}, 'largest_ratio': 1.414214}
+p15_bitwise_agreement_common_range: 7307/7307
+violations: 0
+RESULT: 0 violations

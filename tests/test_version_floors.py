@@ -132,9 +132,10 @@ def _scipy_eigh_calls(tree):
     from scipy import linalg [as X], X = <scipy.linalg>), through the dotted <scipy>.linalg of any name bound to scipy
     (import scipy [as X], import scipy.<anything>), and through the names it binds to the functions (from scipy.linalg
     import eigh [as Y], Y = <scipy.linalg>.eigh). Imports anywhere in the module count, also those inside functions;
-    assignments are followed one level. A star import from scipy.linalg is refused (its names cannot be told apart).
-    The audit is a guard for these binding forms; it does not follow values through calls or containers, getattr with
-    a computed name, importlib, or a module alias passed to another module."""
+    assignments (plain and annotated, Y: T = <scipy.linalg>.eigh) are followed one level. A star import from scipy or
+    from scipy.linalg is refused (its names cannot be told apart). The audit is a guard for these binding forms; it
+    does not follow values through calls or containers, tuple or starred assignment targets (a, b = L, L.eigh),
+    getattr with a computed name, importlib, or a module alias passed to another module."""
     import ast
     mods, pkgs, funcs = set(), set(), set()
     for node in ast.walk(tree):
@@ -146,8 +147,8 @@ def _scipy_eigh_calls(tree):
                     pkgs.add(a.asname or "scipy")
         elif isinstance(node, ast.ImportFrom) and node.level == 0:
             for a in node.names:
-                if node.module == "scipy.linalg" and a.name == "*":
-                    raise AssertionError(f"star import from scipy.linalg at line {node.lineno}")
+                if node.module in ("scipy", "scipy.linalg") and a.name == "*":
+                    raise AssertionError(f"star import from {node.module} at line {node.lineno}")
                 if node.module == "scipy" and a.name == "linalg":
                     mods.add(a.asname or "linalg")
                 elif node.module == "scipy.linalg" and a.name in ("eigh", "eigvalsh"):
@@ -168,8 +169,9 @@ def _scipy_eigh_calls(tree):
         base = v.value.id if isinstance(v.value, ast.Name) else f"{v.value.value.id}.linalg"
         return f"{base}.{v.attr}"
     for node in ast.walk(tree):                      # one level of assignment: X = scipy.linalg, Y = X.eigh
-        if isinstance(node, ast.Assign):
-            names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            names = [t.id for t in targets if isinstance(t, ast.Name)]
             if is_linalg(node.value):
                 mods.update(names)
             elif is_func(node.value):
@@ -204,10 +206,11 @@ from numpy import linalg
 import functools
 L3 = sp_.linalg
 F = L2.eigh
+G: object = sla.eigvalsh
 def f(a, b):
     import scipy.linalg as inner
     sla.eigh(a); scipy.linalg.eigvalsh(a); L2.eigh(a); E(a); eigvalsh(a); inner.eigh(a, b)
-    sp_.linalg.eigh(a); L3.eigvalsh(a); F(a)
+    sp_.linalg.eigh(a); L3.eigvalsh(a); F(a); G(a)
     g = functools.partial(sla.eigh, check_finite=False); table = {"o": L3.eigh}
     np.linalg.eigh(a); linalg.eigh(a)
 """
@@ -215,9 +218,11 @@ def f(a, b):
     assert got == sorted([("sla.eigh", "standard"), ("scipy.linalg.eigvalsh", "standard"), ("L2.eigh", "standard"),
                           ("E", "standard"), ("eigvalsh", "standard"), ("inner.eigh", "generalized"),
                           ("sp_.linalg.eigh", "standard"), ("L3.eigvalsh", "standard"), ("F", "standard"),
-                          ("L2.eigh", "reference"), ("sla.eigh", "reference"), ("L3.eigh", "reference")]), got
-    with pytest.raises(AssertionError, match="star import"):
-        _scipy_eigh_calls(ast.parse("from scipy.linalg import *\neigh(a)\n"))
+                          ("G", "standard"), ("L2.eigh", "reference"), ("sla.eigh", "reference"),
+                          ("L3.eigh", "reference"), ("sla.eigvalsh", "reference")]), got
+    for star in ("from scipy.linalg import *\neigh(a)\n", "from scipy import *\nlinalg.eigh(a)\n"):
+        with pytest.raises(AssertionError, match="star import"):
+            _scipy_eigh_calls(ast.parse(star))
 
 
 def test_every_standard_eigh_call_goes_through_linalg():

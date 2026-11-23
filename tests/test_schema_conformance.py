@@ -152,15 +152,21 @@ def _mutants(body):
     }
 
 
+@needs_jsonschema
 def test_negative_controls_are_rejected(fixture_certificates):
     with open(fixture_certificates["lowest_spec"]) as f:
         body = json.load(f)
     validate_certificate_body(body)
+    for mutant in _mutants(body).values():
+        with pytest.raises(SchemaValidationError):
+            validate_certificate_body(mutant)
+
+
+def test_structural_layer_rejects_the_scope_level_negative_controls(fixture_certificates):
+    """The structural layer alone (what runs without the optional jsonschema) catches the scope-level mutants."""
+    with open(fixture_certificates["lowest_spec"]) as f:
+        body = json.load(f)
     for label, mutant in _mutants(body).items():
-        if have_jsonschema():                 # without the optional jsonschema the validator runs no schema check
-            with pytest.raises(SchemaValidationError):
-                validate_certificate_body(mutant)
-        # the structural layer alone (what runs without jsonschema) catches the scope-level ones
         if "scope" in label or "reason code" in label or "mismatch" in label:
             assert structural_check(mutant) != [], label
 
