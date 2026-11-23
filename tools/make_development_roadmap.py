@@ -198,7 +198,7 @@ OUTCOME = {
     "H-04": "on `dev/3.3`, behind `pytest --perf`", "G-10": "script on `dev/3.3`, table of 4 small points",
     "N-04": "done: driver in `lean/Verify/`, `verify --external` on `dev/3.3`",
     "N-05": "partial: the radius check is refined (K2 and K+); for the count only the general theorem",
-    "N-06": "not reached", "N-11": "floating-point layer certified; exact re-check 3 of 8 blocks",
+    "N-06": "not reached", "N-11": "floating-point layer certified; exact re-check of all 8 blocks, count 0 in each (22 Nov 2026)",
     "N-12": "estimate only (largest block 1293292 rows), not run",
     "N-13": "done for Theorem 2, its residual form and Theorem 4 (b) (K2); the count is not formalized",
 }

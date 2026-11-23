@@ -11,6 +11,7 @@ results/apps/final_rerun.json, results/findings_documents.json, results/integrat
 11 November 2026 results/mathlib_nonhermitian.json, results/lean_product.json and results/apps_next/*.json.
 """
 import json
+from fractions import Fraction
 import os
 import re
 
@@ -77,6 +78,8 @@ def main():
     lp = load("lean_product.json")
     n11 = load("apps_next", "n11_crown_nine_float.json")["nine_coupling_float"]
     n11x = load("apps_next", "n11_crown_nine_exact_partial.json")
+    n11e = (load("apps_next", "n11_crown_nine_exact_8_blocks.json")["nine_coupling_exact_combined"]
+            if os.path.exists(os.path.join(RES, "apps_next", "n11_crown_nine_exact_8_blocks.json")) else None)
     n12 = load("apps_next", "n12_honeycomb_estimate.json")
 
     nh_st = nh["statements"]
@@ -360,10 +363,20 @@ def main():
       f"those couplings the floating-point layer of certify-ed gives {n11['lower_bound']} <= lambda_min <= "
       f"{n11['upper_bound']} for the S^z = 0 crown (dimension {n11['dim_Sz0']}, {n11['n_sectors']} blocks, the "
       f"largest of dimension {n11['largest_sector']}, {round(n11['seconds'])} s). This layer rests on the binary64 "
-      "rounding model; the exact re-check without that model counted "
-      f"{len(n11x['blocks_logged'])} of {n11['n_sectors']} blocks (count "
-      + ", ".join(str(b["count"]) for b in n11x["blocks_logged"]) + ") before it was stopped, so the exact layer is "
-      f"not complete. The printed value {n11['published_bound']}, read as {n11['published_appended']}, lies "
+      "rounding model; "
+      + (("the exact re-check without that model counted "
+          f"{len(n11x['blocks_logged'])} of {n11['n_sectors']} blocks (count "
+          + ", ".join(str(b["count"]) for b in n11x["blocks_logged"]) + ") before it was stopped, so the exact layer is "
+          "not complete. ") if n11e is None else
+         ("a first exact re-check without that model counted "
+          f"{len(n11x['blocks_logged'])} of {n11['n_sectors']} blocks before it was stopped, and a second one, one "
+          f"process per block, counted all {n11e['n_blocks']} (count "
+          + ", ".join(str(s["count"]) for s in n11e["sectors"]) + f"; {round(n11e['seconds_blocks'])} s of block counts) "
+          f"and gives lambda_min >= {n11e['lower_bound']} with no floating-point assumption, "
+          f"{float(Fraction(n11e['lower_bound_exact']) - Fraction(n11['lower_bound'])):.3g} above the floating-point "
+          "lower end (`n11_crown_nine_exact_8_blocks.json`); it rests on the lemmas of the exact layer, which are "
+          "marked UNVERIFIED. "))
+      + f"The printed value {n11['published_bound']}, read as {n11['published_appended']}, lies "
       + ("above the whole interval, " if n11["published_appended"] > n11["upper_bound"] else "")
       + f"{-n11['lower_minus_published']:.3g} above its lower end, and the floating-point value "
       f"{n11['review_float']} of the earlier review lies outside it. What this means for the paper's statement depends "

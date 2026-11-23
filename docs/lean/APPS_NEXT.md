@@ -15,9 +15,10 @@ on the code branch `track/applications` (based on `dev/3.2` at `fa86456`):
 The outcome in two sentences. The printed couplings determine the problem once the digit that the paper writes in
 parentheses is read as one more decimal, and at those couplings the lowest eigenvalue of the crown lies in
 [-0.5498329145683885, -0.5498329144473251], certified by the floating-point layer of certify-ed under the binary64
-model; the exact re-check is incomplete. The honeycomb criterion of Pomata and Wei does not fit this machine, or any
-single machine, with the present eta machinery: its largest bordered block has 1293292 rows, which needs 12462 GiB for
-one binary64 copy alone.
+model; the exact re-check of all 8 blocks, which needs no such model, raises the lower end to -0.5498329145062226
+(section 3; it rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, which are marked UNVERIFIED). The
+honeycomb criterion of Pomata and Wei does not fit this machine, or any single machine, with the present eta machinery:
+its largest bordered block has 1293292 rows, which needs 12462 GiB for one binary64 copy alone.
 
 ## 1 How to run
 
@@ -36,7 +37,9 @@ python -m pytest -q tests/test_apps_applications_next.py --basetemp <scratch fol
 
 The crown runs cap their own memory at 5 GiB (a job object on Windows); the first counts with the floating-point layer
 and is the record `results/apps_next/n11_crown_nine_float.json`, the second is the exact re-check in one process, and
-the next three are the same re-check split into two block sets and joined (section 3). The last writes
+the next three are the same re-check split into two block sets and joined (section 3). On 22 November 2026 the
+exact re-check was run as 8 processes, `python experiments/n11_crown_nine.py appended --blocks i --cap-gib 16` for
+i = 0 to 7, joined by `--combine` (record `results/apps_next/n11_crown_nine_exact_8_blocks.json`). The last writes
 `results/apps_next/n12_honeycomb_estimate.json`. The values read from the arXiv sources of the three papers, with the
 SHA-256 of each source file as downloaded on 11 November 2026, are in `results/apps_next/sources_extract.json`, and
 the floating-point values of the other readings of the printed digits in `results/apps_next/float_readings.json`.
@@ -140,6 +143,18 @@ The test `test_block_runs_combine_to_the_full_count` checks on 153 states that s
 give the count and bound of the full count, and that a missing block, a repeated block, a changed shift and a nonzero
 count are refused.
 
+The complete exact re-check (22 November 2026). The run was pre-registered
+(`results/apps_next/n11_crown_nine_exact_8_blocks_preregistration.md`: the fixed shift `g`, a clock of 6 hours, no
+change of the shift within the run). The 8 blocks were counted in 8 processes, one per block, on a Linux host with free
+cores (code at main 71f155df, source hash 47dc665a8a7ea32e; Python 3.12.3, numpy 2.5.4, scipy 1.18.1, python-flint
+0.9.0; 16 cores, BLAS threads 1, a cap of 16 GiB per process). Every count is 0. The counts took 1038 to 1158 s per
+block (8800 s in all; the longest process 1188 s), with peaks of 2981 to 3198 MiB. `--combine` checked that the blocks
+are 0 to 7 once each, with dimensions summing to 48620, and gave the exact lower bound `g - max(delta)/K`, that is
+lambda_min(H_0) >= -0.5498329145062226 (rounded down -0.549832915), 3.91e-12 below the shift and 6.217e-11 above the
+lower end of the floating-point layer; with the integer Rayleigh quotient the enclosure has width 5.890e-11. The three
+blocks counted in the first run agree in count and in the six logged decimals of their slack. The record is
+`results/apps_next/n11_crown_nine_exact_8_blocks.json`.
+
 | quantity | value |
 |---|---|
 | couplings `c1` to `c19` (exact) | c1 = 374167/10000000, c2 = 11513/10000000, c3 = 837299/10000000, c4 = 831/20000000, c5 = -5469/10000000, c6 = -2109/10000000, c7 = -5393/10000000, c11 = 8821/5000000, c12 = 401217/5000000, c13 = 2109/20000000, c15 = 5393/10000000, c17 = 1346367/10000000, c18 = -2973/1000000, c19 = -831/10000000; the others 0 |
@@ -150,25 +165,26 @@ count are refused.
 | floating-point layer: largest slack | 6.607763286486234e-11 |
 | floating-point layer: lower bound | -0.5498329145683885 (rounded down -0.549832915) |
 | integer Rayleigh quotient: upper bound | -0.5498329144473251 (rounded up -0.549832914) |
-| exact re-check | 3 of 8 blocks counted, count 0 in each (run stopped) |
+| exact re-check | 8 of 8 blocks counted, count 0 in each (22 November 2026; the first run was stopped after 3) |
+| exact lower bound (no floating-point assumption; Lemmas 11, 12 and Proposition 13 marked UNVERIFIED) | -0.5498329145062226 (rounded down -0.549832915; the exact rational is in the record) |
 | published `e_LB` | -0.549832(8) |
 | floating-point value of the review | -0.54983289 (at `c4 = 0.0000415`) |
 | lower bound minus the reduced-model certificate -0.5501582988212038 | 0.000325384 |
 
 What it shows and does not show. At the printed couplings the nine-coupling crown has no eigenvalue below
--0.5498329145683885 under the binary64 model, while the exact re-check, which needs no floating-point assumption,
-reached 3 of the 8 blocks (count 0 in each) and was stopped; by the argument of the paper the ground-state energy per
-site of the spin-1/2 pyrochlore Heisenberg antiferromagnet is then at least -0.549832915, which is 0.0003254 above the
+-0.5498329145062226, by the exact re-check of all 8 blocks, which needs no floating-point assumption (the floating-point
+layer gives -0.5498329145683885 under the binary64 model); by the argument of the paper the ground-state energy per site
+of the spin-1/2 pyrochlore Heisenberg antiferromagnet is then at least -0.549832915, which is 0.0003254 above the
 reduced-model certificate. The printed headline lies above the enclosure: read with its digit, -0.5498328 exceeds the
-lower bound by 1.146e-07, and the six decimals -0.549832 of the abstract (`e_GS >= -0.549832`) exceed it by 9.146e-07.
+lower bound by 1.145e-07, and the six decimals -0.549832 of the abstract (`e_GS >= -0.549832`) exceed it by 9.145e-07.
 The printed values are the first digits of the eigenvalue, cut toward zero rather than rounded down, which for a lower
 bound overstates it by less than 1e-6; the same holds for the reduced-model value -0.550158(2) against the certified
 -0.5501582988212038. A safe six-decimal statement at the printed couplings is `e_GS >= -0.549833`. The value of the
-review, -0.54983289, belongs to a Hamiltonian with `c4` cut to 0.0000415 and lies outside this enclosure, as it
-should. The floating-point layer rests on the binary64 model of certify-ed and on Sylvester's law and Weyl's
-inequality; the exact re-check rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, which are marked
-UNVERIFIED, as for the reduced-model certificate (finding RA-20 of `report/07_applications.md`). The number is not
-recomputed in Lean (section 7).
+review, -0.54983289, belongs to a Hamiltonian with `c4` cut to 0.0000415 and lies outside this enclosure, as it should.
+The floating-point layer rests on the binary64 model of certify-ed and on Sylvester's law and Weyl's inequality; the
+exact re-check rests on Lemmas 11 and 12 and Proposition 13 of the exact layer, which are marked UNVERIFIED, as for the
+reduced-model certificate (finding RA-20 of `report/07_applications.md`). The number is not recomputed in Lean (section
+7).
 
 ## 4 N-12: which paper states a criterion for the honeycomb lattice, and which cluster
 
@@ -283,6 +299,8 @@ sections 5 and 7), so the 8 blocks of about 6000 rows here are within its reach 
 | `APPS_NEXT.md` | this document |
 | `results/apps_next/n11_crown_nine_float.json` | the record of `experiments/n11_crown_nine.py appended --float-layer` |
 | `results/apps_next/n11_crown_nine_exact_partial.json` | the blocks of the exact re-check counted before the run was stopped |
+| `results/apps_next/n11_crown_nine_exact_8_blocks.json` | the exact re-check of all 8 blocks, one process per block, and the joined lower bound |
+| `results/apps_next/n11_crown_nine_exact_8_blocks_preregistration.md` | the pre-registration of that run (question, method, stop rules, outcomes) |
 | `results/apps_next/float_readings.json` | floating-point lowest eigenvalues for the other readings of the printed digits |
 | `results/apps_next/n12_honeycomb_estimate.json` | the record of `experiments/n12_honeycomb_estimate.py` |
 | `results/apps_next/sources_extract.json` | the values read from the arXiv sources, with their SHA-256 |

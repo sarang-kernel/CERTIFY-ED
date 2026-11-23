@@ -128,13 +128,14 @@ claim kind stays UNVERIFIED until then. `docs/proofs/D-03_ozaki_draft.md` (error
 draft without an independent re-derivation, and no default path uses it.
 
 The applications left open questions for Sarang. At the nine couplings that Kránitz and Penc print, the floating-point
-layer gives -0.5498329145683885 <= lambda_min <= -0.5498329144473251 for the crown, but the exact re-check counted only 3
-of 8 blocks before it was stopped (`results/apps_next/n11_crown_nine_exact_partial.json`); the remaining blocks can be
-run separately with `experiments/n11_crown_nine.py --blocks`. The printed -0.549832(8), with its digit in parentheses
-appended, lies above that interval; whether this concerns the note to Kránitz and Penc (decisions D-34 and D-51) depends
-on how the digit is meant. The honeycomb criterion of Pomata and Wei needs a block of 1293292 rows and was not run, and
-the manuscript sentence that names only the companion paper for the honeycomb criterion is incomplete (prose under
-decision D-16).
+layer gives -0.5498329145683885 <= lambda_min <= -0.5498329144473251 for the crown. The exact re-check, stopped after 3
+of 8 blocks in its first run, was completed on 22 November 2026 with one process per block
+(`lean/results/apps_next/n11_crown_nine_exact_8_blocks.json`): every count is 0, and lambda_min >= -0.5498329145062226
+without a floating-point assumption, resting on the lemmas of the exact layer, which are marked UNVERIFIED. The printed
+-0.549832(8), with its digit in parentheses appended, lies above that interval; whether this concerns the note to
+Kránitz and Penc (decisions D-34 and D-51) depends on how the digit is meant. The honeycomb criterion of Pomata and Wei
+needs a block of 1293292 rows and was not run, and the manuscript sentence that names only the companion paper for the
+honeycomb criterion is incomplete (prose under decision D-16).
 
 The Lean work left four mechanical gaps (Theorem U5 and D-01 part (c) for complex data, C-12 part (a), E-07 Lemma 5),
 the count theorems of the three kernel certificates and the refinement of `CertifyCore.K.bareiss`
