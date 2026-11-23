@@ -43,7 +43,8 @@ No constant changes; statuses change only on the inputs named here. The computat
   into the sector's record (`precision.dropped_imaginary_parts`) and, summed over the sectors, into its own record
   (`count`, `max_abs`, `sectors`) and its summary. Where the record is not made: `certify_generalized`, `write_bundle`
   (which holds the real parts only), the ALPS reader and the exact re-checks drop finite imaginary parts as in 3.x,
-  without a record (an open item, `docs/project/failures/05_open_items.md`).
+  without a record (an open item, `docs/project/failures/05_open_items.md`); the section "Dropped imaginary parts:
+  records at the remaining entry points" below says which make it now.
 - **Sector composition.** A sector with a non-finite claimed value is INCONCLUSIVE before anything is counted, with the
   first indices and their number in its record (`non_finite_eigenvalues`, `n_non_finite`); a nan value was left out of
   the count, so the sector was reported MISSING and the composition FAILED, and w + ∞i was certified.
@@ -118,6 +119,32 @@ driver and every Windows record are unchanged. The planner's constants are uncha
 Windows development machine (`RECORDED_PEAKS` of `tests/test_planner.py`, from the C-17 runs of
 `experiments/bench_whole.py`, and the factorization peaks measured there for D-08); no recorded Linux figure was
 re-measured. No change to the package.
+
+### Dropped imaginary parts: records at the remaining entry points
+
+No constant or status changes; records gain an optional field. The computational source hash changes.
+
+- `certify_generalized` writes `dropped_imaginary_parts` (`count`, `max_abs`) into the claim of its record when the
+  claimed eigenvalues are complex with finite nonzero imaginary parts; the statement-record schema leaves `claim` open,
+  so the schema is unchanged. The statements and enclosures are those of the real parts, as before.
+- `exact_recheck_lowest`, `exact_recheck_sector_lowest`, `exact_eigenpair_radii` and `corroborate` add the same record
+  to their result (a key present only then). `certify` passes real values to them (S6, S5), so certificates are
+  unchanged; a test pins the S6 evidence of a claim with a dropped part.
+- The ALPS reader (`read_alps_spectrum`) gives each sector the keys `energies_as_given` (the stored values when they
+  hold a nonzero imaginary part, otherwise `energies`) and `dropped_imaginary_parts` (the record, or None).
+  `claim_from_alps` passes the stored values to the claim, so that `certify` records the dropped parts and lists them
+  under `not_verified`. Real energies, and complex energies whose imaginary parts are all zero, are read as before.
+  Complex energies are read as h5py gives them or in the layout of the ALPS HDF5 archive (a trailing dimension of 2
+  with the attribute `__complex__`); an energies dataset of more than one dimension in any other layout is refused
+  (FormatError), where the reader flattened it before.
+- Not recorded: the functions that return numbers only (`enclose`, `residuals`, the Ozaki residuals,
+  `arb_residual_radii`, `spectrum_invariants`); `certify` passes them real values, and a direct call with complex values
+  gets numpy's ComplexWarning, as in 3.x. `write_bundle` still holds the real parts only, without a record; a manifest
+  field is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`, `docs/project/failures/05_open_items.md`).
+- Tests: `tests/test_dropped_parts_records.py` (15 tests; three need python-flint, six need h5py). One of them lists
+  every caller of `precision.claimed_reals` with the place where its dropped parts are recorded, or why it returns
+  numbers only, and fails on a caller that is not listed. `tests/abs_audit_allowlist.txt` names the body `_corroborate`,
+  where the two moduli of `corroborate` now are.
 
 ### Repeated entries summed at the start (soundness fix)
 

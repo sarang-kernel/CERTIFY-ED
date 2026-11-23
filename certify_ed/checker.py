@@ -17,7 +17,7 @@ from fractions import Fraction
 
 import numpy as np
 
-from .precision import check_values, claimed_reals
+from .precision import check_values, claimed_reals, dropped_imaginary_parts
 
 
 def _arb():
@@ -323,8 +323,11 @@ def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
     has no interval: its radius is reported as inf and its index is listed under 'zero_test_vectors'. A claimed
     value that is not finite (NaN, an infinity, or a non-finite imaginary part: precision.claimed_reals) has no
     interval either: radius inf, index under 'non_finite_values' (a key present only then). Hermiticity of the declared model is checked exactly.
-    No floating-point assumption is involved."""
+    No floating-point assumption is involved. Complex claimed values whose finite nonzero imaginary parts are dropped
+    (the radii concern the real parts, as in 3.x) give the record 'dropped_imaginary_parts' (count, max_abs; a key
+    present only then)."""
     check_values(lam, "lam")          # a value binary64 cannot hold is refused, as in certify() (precision.py)
+    dropped = dropped_imaginary_parts(lam)
     lam = np.atleast_1d(claimed_reals(lam))
     ex = exact if exact is not None else exact_matrix(spec, states)
     X = np.asarray(X)
@@ -345,6 +348,8 @@ def exact_eigenpair_radii(spec, lam, X, states=None, exact=None):
            "zero_test_vectors": zero}
     if bad:                                # only then: a record of finite claimed values is as before
         out["non_finite_values"] = bad
+    if dropped is not None:                # only then, as above
+        out["dropped_imaginary_parts"] = dropped
     return out
 
 
@@ -582,7 +587,20 @@ def exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000
        holds lambda_K within the claimed radius, and the eigenvalues of a component with m >= 2 claimed
        values lie in its 'level enclosure' between the bracketing points: per-vector residuals do not
        show m *distinct* eigenvalues, so the counts locate them. 'enclosures' lists both kinds; the
-       next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere."""
+       next eigenvalue is >= 'next_lower_bound'. No floating-point assumption is used anywhere.
+
+    A claim of complex values whose finite nonzero imaginary parts are dropped (the statement concerns the real
+    parts, as in 3.x) gets the record 'dropped_imaginary_parts' (count, max_abs)."""
+    check_values(lam, "lam")          # as in certify() (precision.py)
+    out = dict(_exact_recheck_lowest(spec, lam, X, states, next_hint, max_dim))
+    dropped = dropped_imaginary_parts(lam)
+    if dropped is not None:
+        out["dropped_imaginary_parts"] = dropped
+    return out
+
+
+def _exact_recheck_lowest(spec, lam, X, states=None, next_hint=None, max_dim=4000):
+    """The body of exact_recheck_lowest."""
     check_values(lam, "lam")          # as in certify() (precision.py)
     lam = np.atleast_1d(claimed_reals(lam))
     X = np.asarray(X)

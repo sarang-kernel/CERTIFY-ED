@@ -65,8 +65,8 @@ certify_ed/correlations.py	modulus_upper	abs(y)	real data only
 certify_ed/correlations.py	certify_observable_lifted	abs(Oc - Oc.conj().T)	not part of a bound
 certify_ed/corroborate.py	jacobi_eigvalsh	np.abs(A)	real data only
 certify_ed/corroborate.py	jacobi_eigvalsh	np.abs(tau)	real data only
-certify_ed/corroborate.py	corroborate	np.abs(claimed)	real data only
-certify_ed/corroborate.py	corroborate	np.abs(w - claimed[:w.size])	real data only
+certify_ed/corroborate.py	_corroborate	np.abs(claimed)	real data only
+certify_ed/corroborate.py	_corroborate	np.abs(w - claimed[:w.size])	real data only
 certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(est[:, None] - av[None, :])	real data only
 certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(snapped - est)	real data only
 certify_ed/davis_kahan.py	approximate_symmetry_label	np.abs(snapped - est)	real data only
