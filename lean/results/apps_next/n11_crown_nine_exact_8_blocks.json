@@ -308,5 +308,6 @@
   "shift_minus_exact_lower": 3.9117724697049e-12,
   "earlier_partial_run_blocks_agree": "the 3 blocks of n11_crown_nine_exact_partial.json (dimensions 6194, 6066, 6031): same counts (0) and the same slack to the 6 decimals logged there (0.000313, 0.000259, 0.000188 in units of K H_0)",
   "rests_on": "Lemmas 11 and 12 and Proposition 13 of the exact layer (UNVERIFIED, D-12) for the exact lower bound; the binary64 rounding model for the floating-point lower bound"
- }
+ },
+ "edited_after_first_commit": "written by hand after the record was first committed (c3f93b53): the keys preregistration, block_folders and block_folders_note (6d1158b3), the last sentence of description and comparison.rests_on (8f90ae4f), and this key; no number of the run was changed"
 }
