@@ -7,28 +7,6 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
-### Moments: the Gram defect checked against the stored vectors; the code index
-
-The computational source hash changes; no certificate of `certify()` changes.
-
-- `moments.certified_moments` used the eta given with the cluster record (`||X^H X - I||_2`) as it was given; an
-  understated eta made the projector term of every moment too small. It now computes an upper bound on the Gram defect
-  from the stored vectors, by the bound that the cluster radius uses (`enclosure._cluster_bound`; accurately rounded
-  Gram entries up to `EXACT_GRAM_BUDGET`, the gamma_n bound of the BLAS Gram matrix above), and uses the larger of the
-  given and the computed value. The record keeps the given value (`state.eta`) and adds `state.eta_of_vectors` and
-  `state.eta_used`; vectors whose computed defect is not below 1 are refused (ValueError), as an eta of 1 or more
-  already was. A record from `moments_from_certificate` is unchanged in its statuses, since the certificate's eta was
-  computed by the same bound; its moment bounds change only where the two values differ.
-  `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
-  along the ground state given eta = 0 is enclosed with the computed defect (about 2e-3).
-- `tools/codeindex/make_code_index.py` stopped with "files outside every group" for the Python files under `lean/` and
-  `tools/`; it has two groups for them. The hand-written sentence for `certify_ed/precision.py` in
-  `tools/codeindex/purposes.py` now names the duties added since it was written (the summing of repeated sparse
-  entries, the reading of claimed values). `docs/project/CODE_INDEX.md` is regenerated.
-- Not done: `pyproject.toml` should list mpmath in the `test` and `dev` extras (four test files take their
-  high-precision references from it and skip without it); it is listed as open in
-  `docs/project/failures/05_open_items.md`.
-
 ### Small follow-ups
 
 No constant changes; statuses change only on the inputs named here. The computational source hash changes.
@@ -264,6 +242,28 @@ over the functions of the precision registry with every matrix stored as three p
 against the summed matrices, which fails when an entry point skips `summed` or sums after a conversion);
 `tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
 hash changes.
+
+### Moments: the Gram defect checked against the stored vectors; the code index
+
+The computational source hash changes; no certificate of `certify()` changes.
+
+- `moments.certified_moments` used the eta given with the cluster record (`||X^H X - I||_2`) as it was given; an
+  understated eta made the projector term of every moment too small. It now computes an upper bound on the Gram defect
+  from the stored vectors, by the bound that the cluster radius uses (`enclosure._cluster_bound`; accurately rounded
+  Gram entries up to `EXACT_GRAM_BUDGET`, the gamma_n bound of the BLAS Gram matrix above), and uses the larger of the
+  given and the computed value. The record keeps the given value (`state.eta`) and adds `state.eta_of_vectors` and
+  `state.eta_used`; vectors whose computed defect is not below 1 are refused (ValueError), as an eta of 1 or more
+  already was. A record from `moments_from_certificate` is unchanged in its statuses, since the certificate's eta was
+  computed by the same bound; its moment bounds change only where the two values differ.
+  `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
+  along the ground state given eta = 0 is enclosed with the computed defect (about 2e-3).
+- `tools/codeindex/make_code_index.py` stopped with "files outside every group" for the Python files under `lean/` and
+  `tools/`; it has two groups for them. The hand-written sentence for `certify_ed/precision.py` in
+  `tools/codeindex/purposes.py` now names the duties added since it was written (the summing of repeated sparse
+  entries, the reading of claimed values). `docs/project/CODE_INDEX.md` is regenerated.
+- Not done: `pyproject.toml` should list mpmath in the `test` and `dev` extras (four test files take their
+  high-precision references from it and skip without it); it is listed as open in
+  `docs/project/failures/05_open_items.md`.
 
 ### Inner products and sums at the top of the range
 
