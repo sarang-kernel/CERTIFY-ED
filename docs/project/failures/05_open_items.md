@@ -172,3 +172,10 @@ sector composition and, since the changelog section "Dropped imaginary parts: re
 ComplexWarning, as in 3.x. `write_bundle` (a bundle holds the real parts only) still drops such parts without a record;
 a bundle manifest field would close that, which is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`).
 `tests/test_dropped_parts_records.py` keeps this list complete.
+
+## Packaging
+
+The `test` and `dev` extras of `pyproject.toml` do not list mpmath, although four test files use it for
+high-precision references (`tests/test_entanglement.py`, `test_nonhermitian.py`, `test_proofs_props.py`,
+`test_thermo.py`) and skip those tests without it, so an install with `pip install .[test]` runs fewer tests. The
+container recipes install it. Adding `"mpmath>=1.2"` to both extras is open.

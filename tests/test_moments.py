@@ -164,3 +164,26 @@ def test_underflow_and_input_checks(heis):
         certified_moments(H, sp.csr_matrix(np.triu(np.ones((256, 256)))), V[:, 0], 1e-12, 1e-14)
     with pytest.raises(ValueError, match="CERTIFIED S4 cluster"):
         moments_from_certificate(cert, H, O, members=[7])
+    with pytest.raises(ValueError, match="not close to orthonormal"):
+        certified_moments(H, O, V[:, 0] * 2.0, 1e-12, 1e-14, K=1)
+
+
+def test_understated_eta_is_replaced_by_the_bound_from_the_vectors(heis):
+    """eta is checked against the stored vectors: a vector of norm 1 + 1e-3 along the ground state has s = 0 and a
+    Gram defect of about 2e-3. Given eta = 0, the bounds use the defect computed from the vector, so the enclosures
+    hold; the bound with eta = 0 would be too small for the zeroth moment (its error is about 2e-3 m_0)."""
+    spec, H, w, V, cert, O = heis
+    x = V[:, 0] * (1 + 1e-3)
+    ex = exact_moments(H, O, np.outer(V[:, 0], V[:, 0]), 1, 2)
+    rec = certified_moments(H, O, x, 0.0, 0.0, K=2, sum_rules=False)
+    st = rec["state"]
+    assert st["eta"] == 0.0 and st["eta_used"] == st["eta_of_vectors"]
+    assert abs(x @ x - 1) <= st["eta_of_vectors"] < 2.1e-3
+    for m, e in zip(rec["moments"], ex):
+        assert m["interval"][0] <= e <= m["interval"][1]
+    assert validate_record(rec) in (True, None)
+    m0 = rec["moments"][0]
+    assert abs(m0["value"] - ex[0]) > 1e-3 * abs(ex[0])          # the error the projector term has to cover
+    # a correct eta (above the computed one) is kept as given
+    rec2 = certified_moments(H, O, V[:, 0], 1e-12, 1e-10, K=0, sum_rules=False)
+    assert rec2["state"]["eta_used"] == 1e-10 and rec2["state"]["eta_of_vectors"] < 1e-10
