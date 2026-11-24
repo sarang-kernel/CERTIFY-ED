@@ -248,15 +248,20 @@ hash changes.
 The computational source hash changes; no certificate of `certify()` changes.
 
 - `moments.certified_moments` used the eta given with the cluster record (`||X^H X - I||_2`) as it was given; an
-  understated eta made the projector term of every moment too small. It now computes an upper bound on the Gram defect
-  from the stored vectors, by the bound that the cluster radius uses (`enclosure._cluster_bound`; accurately rounded
-  Gram entries up to `EXACT_GRAM_BUDGET`, the gamma_n bound of the BLAS Gram matrix above), and uses the larger of the
-  given and the computed value. The record keeps the given value (`state.eta`) and adds `state.eta_of_vectors` and
-  `state.eta_used`; vectors whose computed defect is not below 1 are refused (ValueError), as an eta of 1 or more
-  already was. A record from `moments_from_certificate` is unchanged in its statuses, since the certificate's eta was
-  computed by the same bound; its moment bounds change only where the two values differ.
-  `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
-  along the ground state given eta = 0 is enclosed with the computed defect (about 2e-3).
+  understated eta made the projector term of every moment too small. It now computes two bounds on the Gram defect
+  from the stored vectors: a lower bound, the largest `|x_i^H x_i - 1|` from the accurately rounded squared norms (a
+  diagonal entry is at most the 2-norm), and an upper bound, the one the cluster radius uses (`enclosure._cluster_bound`).
+  An eta below the lower bound is contradicted by the vectors, and the bounds then use the upper bound instead; when
+  that is not below 1 either, the call is refused (ValueError), as an eta of 1 or more already was. An eta that the
+  vectors do not contradict is used as given, so `moments_from_certificate` (whose eta is the upper bound of the same
+  vectors) and every consistent call give the same statements and bounds as before; the record adds
+  `state.eta_check` (both bounds and whether eta is consistent) and `state.eta_used`, so its hash changes. The lower bound is a new derivation of one line
+  (docstring of `moments._gram_defect_bounds`), UNVERIFIED (D-12) like the rest of C-07.
+- `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
+  along the ground state, given eta = 0, is enclosed with the upper bound (about 2e-3); eta = 0 for a vector of norm
+  exactly 1 is kept. `tests/test_exact_dot_range.py::test_statements_decided_at_the_top_of_the_range` passed a vector
+  of norm 1.3e154 with eta = 1e-12, outside the hypotheses of the moments, and expected M1 CERTIFIED; it now expects
+  the refusal.
 - `tools/codeindex/make_code_index.py` stopped with "files outside every group" for the Python files under `lean/` and
   `tools/`; it has two groups for them. The hand-written sentence for `certify_ed/precision.py` in
   `tools/codeindex/purposes.py` now names the duties added since it was written (the summing of repeated sparse
