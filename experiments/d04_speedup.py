@@ -5,12 +5,15 @@ nup = 3 to 13, dimensions 560 to 12870: the configuration of the first measureme
 sites did not finish within a job's clock). Each sector claims its lowest eigenpairs from scipy's eigsh (the producer),
 cut at a gap so that the claim does not split a level, and certify() runs with the default Options. For every worker
 count the record holds the wall time of certify_many, where each task ran (a worker or this process) and its seconds,
-and whether every status and every recorded number, timings excluded, equals that of the one-worker run (rules 1 to 4
-of certify_ed/parallel.py make them independent of the worker count). The speed-up is the one-worker wall time over the
-W-worker wall time. It depends on the free cores of the machine, so the record also holds the cores this process may
-use (os.sched_getaffinity where it exists), the load average before and after each run (POSIX), and the CPU seconds
-of each run: this process (time.process_time) and its finished child processes, the workers (os.times; POSIX only,
-None elsewhere).
+the id, status and reason code of every statement, and whether the body and the arrays of every certificate equal
+those of the one-worker run apart from the fields that record time (_dropped: matched by exact path, and listed in the
+record as fields_not_compared); rules 1 to 4 of certify_ed/parallel.py make them independent of the worker count.
+The record of 22 November 2026 (docs/results/d04_speedup_n16_20261122.json) was made by the version of 57607a70,
+which compared the statements and arrays only, with keys dropped by substring. The speed-up is the one-worker wall
+time over the W-worker wall time. It depends on the free cores of the machine, so the record also holds the cores
+this process may use (os.sched_getaffinity where it exists), the load average before and after each run (POSIX), and
+the CPU seconds of each run: this process (time.process_time) and its finished child processes, the workers (os.times;
+POSIX only, None elsewhere).
 
 usage: python experiments/d04_speedup.py [--N 16] [--nups 3,4,...,13] [--k 4] [--workers 1,2,4,8] [--cap-gib 32]
 """
@@ -25,24 +28,43 @@ from portable import cap_memory, peak_rss_mb
 import certify_ed as ce
 from certify_ed import parallel as par
 
-TIMING_KEYS = ("second", "time", "elapsed", "parallel")     # as tests/test_parallel.py compares the runs
-
-
 def _arg(argv, name, default):
     return argv[argv.index(name) + 1] if name in argv else default
 
 
-def strip(x):
-    """Drop timing fields recursively; everything else is compared exactly (floats by their bits)."""
+def _dropped(path):
+    """The fields of a certificate body that record time and so differ between runs by construction: the block
+    'timing', 'environment/created_utc', and every key 'seconds' below 'statements' (of a statement, or of a count in
+    its evidence). They are matched by their exact path; a list index is written '[]'."""
+    return (path == ("timing",) or path == ("environment", "created_utc")
+            or (len(path) > 1 and path[0] == "statements" and path[-1] == "seconds"))
+
+
+def strip(x, path=(), dropped=None):
+    """x without the fields of _dropped (their paths are added to the set dropped); everything else is kept for an
+    exact comparison (floats by their bits, arrays by dtype, shape and bytes)."""
     if isinstance(x, dict):
-        return {k: strip(v) for k, v in x.items() if not any(t in str(k).lower() for t in TIMING_KEYS)}
+        out = {}
+        for k, v in x.items():
+            p = path + (str(k),)
+            if _dropped(p):
+                if dropped is not None:
+                    dropped.add("/".join(p))
+                continue
+            out[k] = strip(v, p, dropped)
+        return out
     if isinstance(x, (list, tuple)):
-        return [strip(v) for v in x]
+        return [strip(v, path + ("[]",), dropped) for v in x]
     if isinstance(x, np.ndarray):
         return ("ndarray", x.dtype.str, x.shape, x.tobytes())
     if isinstance(x, float):
         return ("float", x.hex()) if x == x else ("float", "nan")
     return x
+
+
+def _status(s):
+    """(id, status, reason code or None) of a statement record."""
+    return [s["id"], s["status"], s.get("reason_code") or (s.get("evidence") or {}).get("reason_code")]
 
 
 def _load():
@@ -116,16 +138,18 @@ def main(argv):
             wall = time.perf_counter() - t0
             c1, k1 = time.process_time(), _child_cpu()
             after = _load()
-            body = [(strip(c.statements), strip(dict(c.arrays))) for c in certs]
+            dropped = set()
+            body = [(strip(c.body, (), dropped), strip(dict(c.arrays), ("arrays",), dropped)) for c in certs]
             if ref is None:
                 ref = body
                 ref_wall = wall
             same = body == ref
-            statuses = [[s["status"] for s in c.statements] for c in certs]
+            statuses = [[_status(s) for s in c.statements] for c in certs]
             r = {"workers": W, "wall_seconds": round(wall, 3), "speedup": round(ref_wall / wall, 3),
                  "cpu_seconds_parent": round(c1 - c0, 3),
                  "cpu_seconds_workers": None if k0 is None else round(k1 - k0, 3),
-                 "identical_to_one_worker": bool(same), "load_before": before, "load_after": after,
+                 "identical_to_one_worker": bool(same), "fields_not_compared": sorted(dropped),
+                 "load_before": before, "load_after": after,
                  "tasks": [{"where": t.where, "seconds": round(float(t.seconds), 3), "reason": t.reason}
                            for t in rep.tasks],
                  "statuses": statuses}

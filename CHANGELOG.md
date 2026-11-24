@@ -107,10 +107,14 @@ A new experiment and its record; no code of the package changes. The computation
 `experiments/`).
 
 - `experiments/d04_speedup.py` times `parallel.certify_many` with 1, 2, 4 and 8 workers on the U(1) sectors of a
-  Heisenberg chain and compares the statement records (timing keys removed) and the arrays of every certificate with
-  those of the one-worker run. It records the cores the process may use, the load average and (since round 8 of the
-  review) the CPU seconds of each run; its defaults are the configuration of the first measurement (N = 16, nup = 3 to
-  13).
+  Heisenberg chain and compares the body and the arrays of every certificate with those of the one-worker run, apart
+  from the fields that record time (`timing`, `environment/created_utc`, the keys `seconds` below `statements`; matched
+  by exact path and listed in the record). It records the cores the process may use, the load average, the CPU seconds
+  of each run, and the id, status and reason code of every statement; its defaults are the configuration of the first
+  measurement (N = 16, nup = 3 to 13). The record of 22 November was made by the first version of the script, which
+  compared the statement records and arrays only, with keys dropped by substring, and recorded neither CPU seconds nor
+  statement ids. `tests/test_d04_experiment.py` pins the comparison: the exact paths, equality of one- and two-worker
+  certificates, and inequality after one ulp of a radius or a changed summary.
 - First measurement, on 16 pinned cores of a shared Linux host (eleven sector claims of the chain of 16 sites,
   dimensions 560 to 12870; single runs): speed-up 1.77 with 2 workers, 2.58 with 4 and 2.75 with 8, bounded by the
   longest claim (111 s of 325 s; bound 2.92). The statement records and arrays equal the one-worker ones. In the sector

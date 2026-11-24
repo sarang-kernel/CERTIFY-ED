@@ -18,10 +18,13 @@ or "parallel" (the comparison of `tests/test_parallel.py`; floats are compared b
 cap of 32 GiB (RLIMIT_AS). The host is shared: its load average was about 113 on 208 cores during the run, so other
 work may also have run on the 16 pinned cores.
 
-The experiment file of this record is the one of commit 57607a70. Since then (round 8 of the review) the defaults of the
-script are this configuration, and the script also records the CPU seconds of each run (this process and its finished
-worker processes); neither change alters what the command above measures, and the record of 22 November has no CPU
-seconds.
+The experiment file of this record is the one of commit 57607a70. Since then (rounds 7 and 8 of the review) the
+defaults of the script are this configuration, and the script records more: the CPU seconds of each run (this process
+and its finished worker processes), the id and reason code next to each status, and the comparison covers the whole
+certificate body and the arrays, with only the fields that record time left out (`timing`, `environment/created_utc`
+and the keys `seconds` below `statements`, matched by exact path and listed in the record as `fields_not_compared`).
+None of these changes alters what the command above measures. The record of 22 November has none of the additions; its
+equality column covers the statement records and arrays only.
 
 ## What happened
 
