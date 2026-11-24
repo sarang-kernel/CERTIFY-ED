@@ -256,7 +256,8 @@ The computational source hash changes; no certificate of `certify()` changes.
   vectors do not contradict is used as given, so `moments_from_certificate` (whose eta is the upper bound of the same
   vectors) and every consistent call give the same statements and bounds as before; the record adds
   `state.eta_check` (both bounds and whether eta is consistent) and `state.eta_used`, so its hash changes. The lower bound is a new derivation of one line
-  (docstring of `moments._gram_defect_bounds`), UNVERIFIED (D-12) like the rest of C-07.
+  (docstring of `moments._gram_defect_bounds`), UNVERIFIED (D-12) like the rest of C-07. Its modulus `abs(v - 1.0)`
+  is of a real number and is listed in `tests/abs_audit_allowlist.txt`.
 - `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
   along the ground state, given eta = 0, is enclosed with the upper bound (about 2e-3); eta = 0 for a vector of norm
   exactly 1 is kept. `tests/test_exact_dot_range.py::test_statements_decided_at_the_top_of_the_range` passed a vector
