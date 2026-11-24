@@ -471,7 +471,7 @@ values they are.
 positive intervals are monotone. ∎ (Bit lengths stay bounded because every intermediate is rounded to
 P bits; the enclosures are therefore not the tightest possible, only correct.)
 
-### 9.4 Open: continued-fraction bounds from certified moments (C-07, second part; not implemented)
+### 9.4 Spectral weight from certified moments (C-07, second part; continued fraction open, M5/M6 since 3.3.0.dev0)
 
 The first part of C-07 (`moments.py`, §10.7) certifies the moments m_k = tr(P O Hᵏ O)/g of a local operator on a
 certified level for k ≤ K. What remains open is turning K + 1 certified moment intervals into certified bounds on the
@@ -482,8 +482,21 @@ positive definite; the Chebyshev–Markov–Stieltjes inequalities then bound th
 consecutive Gauss nodes, and a Gauss quadrature of the truncated continued fraction gives a two-sided bound on
 ∫ f dA for functions f with a sign-definite (2K+2)-th derivative. Each step has a floating-point accounting of its own
 (the recurrence is numerically unstable from moments; a stable route works from the Krylov vectors H^k Oφ themselves
-with certified orthogonalisation defects). None of this is implemented; the record's statement M4 says so
-(NOT_IMPLEMENTED), and `docs/SCOPE_MATRIX.md` lists it as the open slot.
+with certified orthogonalisation defects). The continued fraction itself is not implemented; the record's statement
+M4 says so (NOT_IMPLEMENTED).
+
+Since 3.3.0.dev0 the integrated weight is bounded by a route that avoids the unstable recurrence (statements M5 and M6,
+`spectral_bounds.py`, `docs/proofs/C-07b_spectral_bounds.md`, UNVERIFIED until Sarang's check). The spectrum of H lies
+in an interval [lo, hi] (Gershgorin discs, the lower end narrowed by the lowest eigenvalue of a certificate whose S2
+and S3 are CERTIFIED), and binary64 numbers c, s with (lo − c)s ≥ −1 and (hi − c)s ≤ 1 (checked exactly) give
+A = (H − cI)s with ‖A‖₂ ≤ 1. M5 encloses the Chebyshev moments τ_j = tr(P O T_j(A) O)/g by the three-term recurrence on
+the vectors O x_i, with the rounding of every step propagated by the Chebyshev polynomials of the second kind
+(‖U_m(A)‖ ≤ m + 1) and the projector term (2gs + gη)‖O‖² (‖T_j(A)‖ ≤ 1). M6 bounds F(E) = μ((−∞, E]) from above by
+∫ p dμ = Σ_j d_j τ_j for a polynomial p ≥ 1_{(−∞, ξ]} on [−1, 1], ξ = (E − c)s, and from below with q ≤ 1_{(−∞, ξ]}:
+the sign conditions are proved in exact integer arithmetic (Bernstein coefficients, de Casteljau subdivision rounded
+downwards), the sums over the moment intervals are exact and rounded outward. The polynomials are chosen by a
+heuristic that is not part of the proof: the Hermite interpolant of the step at the Gauss–Radau nodes of the moments
+(the Chebyshev–Markov–Stieltjes polynomial; several orders ranked by an estimate), else a linear program.
 
 ## 10. Statements added in 3.2 (derived under D-59; documents in `docs/proofs/`)
 
