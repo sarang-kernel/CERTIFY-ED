@@ -166,9 +166,13 @@ def test_structural_layer_rejects_the_scope_level_negative_controls(fixture_cert
     """The structural layer alone (what runs without the optional jsonschema) catches the scope-level mutants."""
     with open(fixture_certificates["lowest_spec"]) as f:
         body = json.load(f)
+    assert structural_check(body) == []                 # positive control: the unmutated body passes
+    checked = []
     for label, mutant in _mutants(body).items():
         if "scope" in label or "reason code" in label or "mismatch" in label:
             assert structural_check(mutant) != [], label
+            checked.append(label)
+    assert len(checked) >= 7, checked
 
 
 @needs_jsonschema

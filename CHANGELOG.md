@@ -7,9 +7,13 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
-### Documentation corrections (round 7)
+### Documentation and test corrections (round 7)
 
 No code of the package changes; the computational source hash does not change.
+
+- `tests/test_schema_conformance.py::test_structural_layer_rejects_the_scope_level_negative_controls` had no positive
+  control, so a structural check that rejected every body would have passed it; it now requires the unmutated body to
+  pass and at least seven scope-level mutants to be checked.
 
 - `docs/limitations.md` and `docs/what_certified_means.md` still described INT-05 as open and the radii as scanned for
   underflow; since 3.2.0 the Theorem 1 radius and the cluster bound use the underflow-tolerant model and are not scanned,
