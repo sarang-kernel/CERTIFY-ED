@@ -374,10 +374,13 @@ def _r_chebyshev_moments(D):
 
 
 def _r_spectral_from_certificate(D):
+    # the claim is computed from the correctly summed matrix (precision.summed), not from toarray(), which adds
+    # repeated entries in stored order: tests/test_duplicate_entries.py then compares the library's own summation
+    from certify_ed.precision import summed
     from certify_ed.spectral_bounds import spectral_bounds_from_certificate
-    w, V = np.linalg.eigh(_wide(D.S).toarray())
-    cw = certify(Claim(w[:2], V[:, :2], _wide(D.S), kind="lowest"),
-                 options=Options(store_eigenvectors=True, eigenspaces="all"))
+    Sw = _wide(D.S)
+    w, V = np.linalg.eigh(summed(Sw).toarray())
+    cw = certify(Claim(w[:2], V[:, :2], Sw, kind="lowest"), options=Options(store_eigenvectors=True, eigenspaces="all"))
     return spectral_bounds_from_certificate(cw, D.S, D.O, K=4, energies=[float(w[0]), float(w[0]) + 1.0])
 
 
