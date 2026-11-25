@@ -88,6 +88,11 @@ or 10⁻⁹ (Lanczos). Workstation (Windows, Python 3.11.17, NumPy 2.4.4, SciPy 
 
 ![Certified bounds on the integrated structure factor](../../results/m6_spectral_20261125/m6_spectral_bounds.png)
 
+The data were made at 521c9384. The two later code commits (2bc8f2d9: `chebyshev_interval` converts narrower formats
+and sums repeated entries first; ab6c3d4a: a test call) change nothing for the binary64 input of the experiment: a
+rerun of N = 8 and 10 at K = 32 from ab6c3d4a gives the same 728 recorded values (every value of the record for
+those runs except timings and the metadata block), bit for bit.
+
 ## Reading
 
 * **No violation.** 1660 (sizes × K × energies) certified bounds against the reference, none violated.
