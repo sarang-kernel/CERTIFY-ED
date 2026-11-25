@@ -189,19 +189,23 @@ def figure(results, path):
     colors = {32: "#c6dbef", 64: "#6baed6", 128: "#2171b5", 256: "#08306b"}
     for ax, res in zip(axes[0], show):
         E0, S = res["E0_reference"], res["S_pi_reference"]
-        for run_ in sorted(res["runs"], key=lambda r: -r["K"]):
+        for run_ in sorted(res["runs"], key=lambda r: r["K"]):          # widest band first, narrower ones on top
             c = run_["curve"]
             om = np.array(c["energy"]) - E0
             ax.fill_between(om, np.array(c["lower"]) / S, np.array(c["upper"]) / S, step="post",
-                            color=colors.get(run_["K"], "#999999"), alpha=0.85, lw=0, label=f"certified, K = {run_['K']}")
+                            color=colors.get(run_["K"], "#999999"), lw=0, label=f"certified bounds, K = {run_['K']}")
         c = res["runs"][0]["curve"]
-        ax.step(np.array(c["energy"]) - E0, np.array(c["reference"]) / S, where="post", color="black", lw=0.9,
+        ax.step(np.array(c["energy"]) - E0, np.array(c["reference"]) / S, where="post", color="black", lw=0.8,
                 label="exact" if res["reference"].startswith("exact") else "Lanczos reference")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        h, lab = ax.get_legend_handles_labels()
+        order = list(range(len(h) - 2, -1, -1)) + [len(h) - 1]
+        ax.legend([h[i] for i in order], [lab[i] for i in order], fontsize=8, loc="lower right", frameon=False)
         ax.set_xlabel(r"$\omega = E - E_0$  (units of $J$)")
         ax.set_ylabel(r"$\int_0^{\omega} S^{zz}(\pi, \omega')\, d\omega' \,/\, S(\pi)$")
         ax.set_title(f"Heisenberg ring, N = {res['N']} (S$^z$ = 0 block, dim {res['dimension']})", fontsize=10)
         ax.set_ylim(-0.02, 1.02)
-        ax.legend(fontsize=8, loc="lower right", frameon=False)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -214,10 +218,25 @@ def main():
     ap.add_argument("--K", type=int, nargs="+", default=[32, 64, 128])
     ap.add_argument("--energies", type=int, default=81)
     ap.add_argument("--omega-max", type=float, default=5.0)
+    ap.add_argument("--replot", action="store_true", help="redraw the figure from OUTDIR/m6_spectral_bounds.json only")
     args = ap.parse_args()
     os.makedirs(args.outdir, exist_ok=True)
+    if args.replot:
+        with open(os.path.join(args.outdir, "m6_spectral_bounds.json")) as fh:
+            figure(json.load(fh)["results"], os.path.join(args.outdir, "m6_spectral_bounds.png"))
+        print("done")
+        return
     results = []
-    meta = {"python": platform.python_version(), "numpy": np.__version__, "scipy": scipy.__version__,
+    try:
+        import subprocess
+        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+                              cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
+                                    text=True, cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip())
+    except OSError:
+        head, dirty = None, None
+    meta = {"git_head": head, "tracked_changes": dirty,
+            "python": platform.python_version(), "numpy": np.__version__, "scipy": scipy.__version__,
             "machine": platform.machine(), "system": platform.system(), "args": vars(args),
             "threads": {k: os.environ.get(k) for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")}}
     for N in args.N:
