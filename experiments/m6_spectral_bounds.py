@@ -211,6 +211,33 @@ def figure(results, path):
     plt.close(fig)
 
 
+def tables(data):
+    """Markdown tables of a result file: per size, and per size and K."""
+    out = ["| N | dim | reference | S2 / S3 / S4 | certify (s) | spectral interval | S(pi) certified (K = max) |"
+           " S(pi) reference |", "|---|---|---|---|---|---|---|---|"]
+    for r in data["results"]:
+        st = r["certificate_statuses"]
+        last = max(r["runs"], key=lambda x: x["K"])
+        iv = last["spectrum_interval"]
+        sp_ = last["S_pi_interval"]
+        out.append(f"| {r['N']} | {r['dimension']} | {r['reference'].split(' (')[0]} | "
+                   f"{st.get('S2.eigenpairs')} / {st.get('S3.completeness')} / {st.get('S4.eigenspaces')} | "
+                   f"{r['seconds']['certify']} | [{iv[0]:.10f}, {iv[1]:.10f}] | [{sp_[0]:.12f}, {sp_[1]:.12f}] | "
+                   f"{r['S_pi_reference']:.12f} |")
+    out += ["", "| N | K | M6 (s) | energies | violations | mean width | median width | max width | "
+            "lowest window, certified | reference | polynomials (radau / chebyshev / LP) |",
+            "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in data["results"]:
+        for x in sorted(r["runs"], key=lambda y: y["K"]):
+            lw = x["lowest_window"]["certified"]
+            m = x["methods"]
+            out.append(f"| {r['N']} | {x['K']} | {x['seconds']['M6']} | {x['n_energies']} | {len(x['violations'])} | "
+                       f"{x['mean_width']:.2e} | {x['median_width']:.2e} | {x['max_width']:.2e} | "
+                       f"[{lw[0]:.6f}, {lw[1]:.6f}] | {r['window']['weight_reference']:.6f} | "
+                       f"{m.get('radau-hermite', 0)} / {m.get('chebyshev-hermite', 0)} / {m.get('linear program', 0)} |")
+    return "\n".join(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("outdir")
@@ -219,8 +246,13 @@ def main():
     ap.add_argument("--energies", type=int, default=81)
     ap.add_argument("--omega-max", type=float, default=5.0)
     ap.add_argument("--replot", action="store_true", help="redraw the figure from OUTDIR/m6_spectral_bounds.json only")
+    ap.add_argument("--table", action="store_true", help="print the Markdown tables of OUTDIR/m6_spectral_bounds.json")
     args = ap.parse_args()
     os.makedirs(args.outdir, exist_ok=True)
+    if args.table:
+        with open(os.path.join(args.outdir, "m6_spectral_bounds.json")) as fh:
+            print(tables(json.load(fh)))
+        return
     if args.replot:
         with open(os.path.join(args.outdir, "m6_spectral_bounds.json")) as fh:
             figure(json.load(fh)["results"], os.path.join(args.outdir, "m6_spectral_bounds.png"))

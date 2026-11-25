@@ -7,34 +7,6 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
-### Spectral weight on a certified level (C-07, second part; UNVERIFIED)
-
-New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments record family (schema
-`certify-ed/moments/1.0`, unchanged); derivation `docs/proofs/C-07b_spectral_bounds.md`, machine check
-`docs/proofs/verify_C-07b.py`, both UNVERIFIED until Sarang's check (D-12).
-
-- **M5 `M5.chebyshev_moments`.** Enclosures of τ_j = tr(P O T_j(A) O)/g, j = 0..K, on a CERTIFIED S4 cluster, with
-  A = (H − cI)s. The spectral interval comes from the Gershgorin discs, its lower end narrowed by the lowest eigenvalue
-  of a certificate whose S2 and S3 are CERTIFIED for a 'lowest' claim; (lo − c)s ≥ −1 and (hi − c)s ≤ 1 are checked in
-  exact rationals. The three-term recurrence runs on the vectors O x_i, every rounding propagated through the
-  Chebyshev polynomials of the second kind; the projector term is (2gs + gη)‖O‖².
-- **M6 `M6.distribution_bounds`.** Bounds L(E) ≤ F(E) = tr(P O 1_{H ≤ E} O)/g ≤ U(E) at given energies from
-  polynomials on either side of the step whose sign conditions are proved in exact integer arithmetic (Bernstein
-  coefficients, de Casteljau subdivision rounded downwards), the sums over the moment intervals exact and rounded
-  outward, and a monotone envelope. The polynomials are chosen by a heuristic that the bound does not rest on: Hermite
-  step polynomials at the Gauss–Radau nodes of the moments or at Chebyshev points, a linear program as the fallback.
-  A polynomial that is not proved gives the trivial bound.
-- `spectral_bounds_from_certificate(cert, H, O, K, energies)` refuses a matrix whose hash differs from the
-  certificate's operator.
-- M4 (the continued fraction) stays NOT_IMPLEMENTED; its summary names M5 and M6.
-- Experiment `experiments/m6_spectral_bounds.py` (Heisenberg ring, S^zz(π, ω) from the certified ground state,
-  N = 8–16 in the S^z = 0 block): `results/m6_spectral_20261125/`, `RESULT_m6_spectral_bounds.md`.
-- Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
-  one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
-  fails).
-
-No existing statement or status changes. The computational source hash changes.
-
 ### Small follow-ups
 
 No constant changes; statuses change only on the inputs named here. The computational source hash changes.
@@ -298,6 +270,34 @@ The computational source hash changes; no certificate of `certify()` changes.
 - Not done: `pyproject.toml` should list mpmath in the `test` and `dev` extras (four test files take their
   high-precision references from it and skip without it); it is listed as open in
   `docs/project/failures/05_open_items.md`.
+
+### Spectral weight on a certified level (C-07, second part; UNVERIFIED)
+
+New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments record family (schema
+`certify-ed/moments/1.0`, unchanged); derivation `docs/proofs/C-07b_spectral_bounds.md`, machine check
+`docs/proofs/verify_C-07b.py`, both UNVERIFIED until Sarang's check (D-12).
+
+- **M5 `M5.chebyshev_moments`.** Enclosures of τ_j = tr(P O T_j(A) O)/g, j = 0..K, on a CERTIFIED S4 cluster, with
+  A = (H − cI)s. The spectral interval comes from the Gershgorin discs, its lower end narrowed by the lowest eigenvalue
+  of a certificate whose S2 and S3 are CERTIFIED for a 'lowest' claim; (lo − c)s ≥ −1 and (hi − c)s ≤ 1 are checked in
+  exact rationals. The three-term recurrence runs on the vectors O x_i, every rounding propagated through the
+  Chebyshev polynomials of the second kind; the projector term is (2gs + gη)‖O‖².
+- **M6 `M6.distribution_bounds`.** Bounds L(E) ≤ F(E) = tr(P O 1_{H ≤ E} O)/g ≤ U(E) at given energies from
+  polynomials on either side of the step whose sign conditions are proved in exact integer arithmetic (Bernstein
+  coefficients, de Casteljau subdivision rounded downwards), the sums over the moment intervals exact and rounded
+  outward, and a monotone envelope. The polynomials are chosen by a heuristic that the bound does not rest on: Hermite
+  step polynomials at the Gauss–Radau nodes of the moments or at Chebyshev points, a linear program as the fallback.
+  A polynomial that is not proved gives the trivial bound.
+- `spectral_bounds_from_certificate(cert, H, O, K, energies)` refuses a matrix whose hash differs from the
+  certificate's operator.
+- M4 (the continued fraction) stays NOT_IMPLEMENTED; its summary names M5 and M6.
+- Experiment `experiments/m6_spectral_bounds.py` (Heisenberg ring, S^zz(π, ω) from the certified ground state,
+  N = 8–16 in the S^z = 0 block): `results/m6_spectral_20261125/`, `RESULT_m6_spectral_bounds.md`.
+- Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
+  one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
+  fails).
+
+No existing statement or status changes. The computational source hash changes.
 
 ### Inner products and sums at the top of the range
 
