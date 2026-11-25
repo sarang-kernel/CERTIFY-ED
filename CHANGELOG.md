@@ -290,6 +290,10 @@ New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments rec
   A polynomial that is not proved gives the trivial bound.
 - `spectral_bounds_from_certificate(cert, H, O, K, energies)` refuses a matrix whose hash differs from the
   certificate's operator.
+- Inputs in a narrower format are converted exactly to binary64 and repeated entries summed, in
+  `chebyshev_interval` as well (its Gershgorin bounds had summed a repeated float32 entry in single precision). The
+  three entry points that take stored matrices are in the precision registry (`tests/test_precision_registry.py`),
+  and the module's moduli are classified in `tests/abs_audit_allowlist.txt`.
 - M4 (the continued fraction) stays NOT_IMPLEMENTED; its summary names M5 and M6.
 - Experiment `experiments/m6_spectral_bounds.py` (Heisenberg ring, S^zz(π, ω) from the certified ground state,
   N = 8–16 in the S^z = 0 block): `results/m6_spectral_20261125/`, `RESULT_m6_spectral_bounds.md`.

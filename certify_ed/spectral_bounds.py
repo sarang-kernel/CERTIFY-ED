@@ -79,8 +79,9 @@ def chebyshev_interval(H, lower: Optional[float] = None, upper: Optional[float] 
     lo is the larger of the Gershgorin bound and `lower`, hi the smaller of the Gershgorin bound and `upper`; `lower`
     and `upper` must be proved bounds on the extreme eigenvalues (the caller's responsibility; from a certificate in
     spectral_bounds_from_certificate). c and s are binary64 numbers with (lo - c) s >= -1 and (hi - c) s <= 1, checked
-    in exact rational arithmetic, so the spectrum of the exact A lies in [-1, 1]."""
-    glo, ghi = _gershgorin(H)
+    in exact rational arithmetic, so the spectrum of the exact A lies in [-1, 1]. A matrix in a narrower format is
+    converted exactly to binary64 and its repeated entries are summed first, as certified_chebyshev_moments does."""
+    glo, ghi = _gershgorin(_as_matrix(H, "H"))
     lo = glo if lower is None else max(glo, float(lower))
     hi = ghi if upper is None else min(ghi, float(upper))
     if not (math.isfinite(lo) and math.isfinite(hi)):
