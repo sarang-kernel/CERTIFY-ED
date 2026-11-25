@@ -76,7 +76,9 @@ s ∈ [0, 1]: the coefficients of each part are lowered, and the polynomials the
 
 The code takes b_i = ⌊2⁶⁴ N_i / C(m, i)⌋ (so b_i ≤ 2⁶⁴ β_i), splits at the dyadic t* = (ξ + 1)/2 with integer
 arithmetic and floor shifts, keeps the part [0, t*] for
-the condition on [−1, ξ] and [t*, 1] for the one on [ξ, 1], and bisects each part (t* = 1/2, again rounding down) until
+the condition on [−1, ξ] and [t*, 1] for the one on [ξ, 1], cuts each part first near the free nodes of the polynomial
+(where it touches its bound; the cut points are multiples of 2⁻³⁰ of the remaining part, and any cut is admissible by
+(c)), and bisects each piece (t* = 1/2, again rounding down) until
 every piece has all its coefficients ≥ 0, an end coefficient is negative, or the depth 40 is reached (then the
 polynomial is not used and the trivial bound is reported). By (c) applied along the chain of splits, every piece's
 coefficients represent a polynomial below 2⁶⁴ A on that piece, and by (b) all of them ≥ 0 proves A ≥ 0 there.
@@ -155,7 +157,14 @@ is why a margin is still needed.
 ## 3 What is and is not claimed
 
 The choice of p and q is a heuristic: the bound reported rests only on the exact proof of Lemma 8 and on the moment
-intervals of M5. The code tries the Hermite polynomial of the Remark first and, when its proof fails, a linear program
+intervals of M5. The candidates are Hermite polynomials of the Remark with two kinds of free nodes: the Gauss–Radau
+nodes of the moments (orders n, 3n/4, n/2, n/4, n/8 of the n the moment recursion allows; the moments of a measure
+that fills only part of [−1, 1] determine few recurrence coefficients, about 20 for the experiment's structure factors,
+and the full order grows by orders of magnitude where the measure has no mass), and the Chebyshev points of the first
+kind, n = K/2 and K/4 (the one nearest to ξ dropped when closer than a quarter of the local spacing). For the second
+kind the Hermite interpolant is of Hermite–Fejér type, bounded on [−1, 1], with a resolution of one node spacing
+around ξ. The candidates are ranked by a floating-point estimate of their bound (Σ d_j τ̂_j ± (Σ|d_j|ρ_j + margin τ₀))
+and the best three are proved in that order; when none is proved, a linear program
 solved on max(512, 16(K + 1)) Chebyshev points plus points near ξ, which keeps the polynomial between −1 and 2 on its
 points (without this, directions of the coefficients on which the moments are nearly zero are free and the polynomial
 oscillates between the points) and adds the most violated local minima of a fine scan in up to eight exchange rounds.

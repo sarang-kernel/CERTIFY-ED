@@ -83,6 +83,12 @@ def test_interval_holds_the_spectrum_and_maps_it_into_the_unit_interval():
     assert iv2["interval"][0] == float(w[0]) - 1e-9 and iv2["interval"][1] == hi
     with pytest.raises(ValueError, match="contradict"):
         sb.chebyshev_interval(H, lower=hi + 1.0)
+    # a spectrum far from 0 (the rounded midpoint is off-centre by many ulps of the scale; found by verify_C-07b.py)
+    Hf = (H + sp.identity(40) * 1.0e5).tocsr()
+    ivf = sb.chebyshev_interval(Hf)
+    cf, sf = Fraction(ivf["center"]), Fraction(ivf["scale"])
+    assert (Fraction(ivf["interval"][0]) - cf) * sf >= -1 and (Fraction(ivf["interval"][1]) - cf) * sf <= 1
+    assert (Fraction(ivf["interval"][1]) - cf) * sf > Fraction(999, 1000)
     # the Gershgorin bound of the Heisenberg chain is the ferromagnetic energy N/4 exactly
     spec = ce.heisenberg_chain(6)
     assert sb.chebyshev_interval(ce.build_bitwise(spec).tocsr())["gershgorin"][1] >= 1.5
@@ -125,6 +131,38 @@ def test_distribution_bounds_contain_the_exact_distribution(chain6):
     assert validate_record(rec) in (True, None)
     json.dumps(rec)
     assert ": F in [" in sb.format_spectral(rec)
+
+
+def test_hermite_step_polynomials_lie_on_the_side_of_the_step():
+    # the Remark of C-07b, in floating point: any distinct nodes give a majorant (p(xi) = 1) and a minorant (p(xi) = 0)
+    rng = np.random.default_rng(5)
+    u = np.linspace(-1.0, 1.0, 4001)
+    checked = 0
+    for _ in range(40):
+        n = int(rng.integers(1, 10))
+        x = np.sort(rng.uniform(-1, 1, n))
+        xi = float(rng.uniform(-1, 1))
+        if np.min(np.abs(x - xi)) < 0.05 or (n > 1 and np.min(np.diff(x)) < 0.05):
+            continue
+        for upper in (True, False):
+            d = sb._hermite_step(x, xi, upper, 2 * n + 1)
+            step = (u <= xi).astype(float)
+            p = np.polynomial.chebyshev.chebval(u, d)
+            gap = (p - step) if upper else (step - p)
+            assert gap.min() > -1e-8 * (1.0 + np.abs(d).sum())
+            checked += 1
+    assert checked >= 20
+
+
+def test_chebyshev_hermite_bounds_alone_contain_the_exact_distribution(chain6, monkeypatch):
+    H, O, cert, w, weights = chain6
+    monkeypatch.setattr(sb, "_HEURISTICS", ("chebyshev-hermite",))
+    energies = [w[0] + 0.05, -1.5, -0.5]
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=24, energies=energies)
+    for row in rec["distribution"]["rows"]:
+        F = float(weights[w <= row["energy"]].sum())
+        assert row["lower_monotone"] <= F + 1e-15 and F - 1e-15 <= row["upper_monotone"]
+        assert (row.get("upper_proof") or {}).get("method") in ("chebyshev-hermite", None)
 
 
 def test_unproved_polynomial_gives_the_trivial_bound(chain6, monkeypatch):

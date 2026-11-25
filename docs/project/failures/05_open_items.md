@@ -18,6 +18,12 @@ check. If the check of `docs/proofs/D-01_sparse-residual.md` finds a gap, the tw
 revert to the a-priori bound and a 3.2.2 needs its own run (decision D-61). The five GAP rows need proof text that
 only Sarang writes (decision D-59).
 
+Added in 3.3.0.dev0 and open in the same sense: `docs/proofs/C-07b_spectral_bounds.md` (statements M5 and M6, the
+Chebyshev moments and the bounds on the spectral distribution; machine check `docs/proofs/verify_C-07b.py`). It has no
+independent re-derivation yet. The points to check first are Lemma 7 (the error of the shifted and scaled product
+fl(s(fl(Hz) − fl(cz))), the constant γ̇_{w+2}), Lemma 5 (b) (the lowest eigenvalue read from a certificate whose S2 and
+S3 are CERTIFIED) and Lemma 8 (c) (de Casteljau with rounding down).
+
 ## The E6 survivors
 
 No person has yet given verdicts on the mutation survivors that need inspection: 15 of the 26 survivors of the 3.1.0

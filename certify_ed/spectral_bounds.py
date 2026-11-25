@@ -91,14 +91,14 @@ def chebyshev_interval(H, lower: Optional[float] = None, upper: Optional[float] 
         pad = max(abs(lo), abs(hi), 1.0) * 2.0 ** -40
         lo, hi = float(lo - pad), float(hi + pad)
     c = 0.5 * lo + 0.5 * hi
-    sc = 2.0 / (hi - lo)
     flo, fhi, fc = Fraction(lo), Fraction(hi), Fraction(c)
-    for _ in range(64):
-        fs = Fraction(sc)
-        if (flo - fc) * fs >= -1 and (fhi - fc) * fs <= 1:
-            break
+    R = max(fc - flo, fhi - fc)                         # > 0: the rounded midpoint lies in [lo, hi]
+    S = 1 / R
+    sc = float(S)
+    if Fraction(sc) > S:                                # rounded up: one step down gives s <= 1/R
         sc = float(np.nextafter(sc, 0.0))
-    else:
+    fs = Fraction(sc)
+    if not (sc > 0 and (flo - fc) * fs >= -1 and (fhi - fc) * fs <= 1):
         raise ValueError("no binary64 scale maps the spectral interval into [-1, 1]")
     return {"center": c, "scale": sc, "interval": [lo, hi], "gershgorin": [glo, ghi]}
 
@@ -338,7 +338,7 @@ def _nonneg_bernstein(b: Sequence[int], max_depth: int = _MAX_DEPTH) -> bool:
     return True
 
 
-def _prove_majorant(D: Sequence[int], T: List[List[int]], xi: Fraction, upper: bool) -> bool:
+def _prove_majorant(D: Sequence[int], T: List[List[int]], xi: Fraction, upper: bool, hints=None) -> bool:
     """For p(u) = 2^-B sum_j D_j T_j(u) and a dyadic xi in [-1, 1): upper -> p >= 1 on [-1, xi] and p >= 0 on [xi, 1];
     lower -> p <= 1 on [-1, xi] and p <= 0 on [xi, 1]. Exact integer arithmetic (rounding only downwards)."""
     K = len(D) - 1
@@ -357,8 +357,32 @@ def _prove_majorant(D: Sequence[int], T: List[List[int]], xi: Fraction, upper: b
     if not (Fraction(-1) <= xi < 1) or t.denominator != 1 << q:
         raise ValueError(f"the energy maps to u = {xi} outside [-1, 1) or not dyadic")
     p = t.numerator
-    ok_left = _nonneg_bernstein(_split(_bernstein_int(left), p, q)[0])
-    return ok_left and _nonneg_bernstein(_split(_bernstein_int(right), p, q)[1])
+    xf = float(xi)
+    h = np.sort(np.asarray(hints if hints is not None else [], dtype=float))
+    # the touching points as positions within each part (s in (0, 1)); they only choose where to cut first
+    cuts_l = [(v + 1.0) / (xf + 1.0) for v in h if -1.0 < v < xf] if xf > -1.0 else []
+    cuts_r = [(v - xf) / (1.0 - xf) for v in h if xf < v < 1.0]
+    ok_left = _nonneg_pieces(_split(_bernstein_int(left), p, q)[0], cuts_l)
+    return ok_left and _nonneg_pieces(_split(_bernstein_int(right), p, q)[1], cuts_r)
+
+
+def _nonneg_pieces(b: Sequence[int], cuts: Sequence[float], bits: int = 30) -> bool:
+    """_nonneg_bernstein after cutting [0, 1] first near the given points (each cut rounded to a multiple of 2^-bits of
+    the remaining part; any cut is valid, Lemma 8 (c)): a polynomial that touches its bound at the cuts then needs few
+    bisections."""
+    cur, done = list(b), 0.0
+    for s in sorted(cuts):
+        if not done < s < 1.0:
+            continue
+        loc = (s - done) / (1.0 - done)
+        pk = int(round(loc * (1 << bits)))
+        if pk <= 0 or pk >= (1 << bits):
+            continue
+        lo, cur = _split(cur, pk, bits)
+        if not _nonneg_bernstein(lo):
+            return False
+        done = done + (pk / (1 << bits)) * (1.0 - done)
+    return _nonneg_bernstein(cur)
 
 
 # ------------------------------------------------------------------------------------------------ M6
@@ -494,7 +518,8 @@ def _jacobi_from_moments(tau_hat: np.ndarray, tol: float = 1e-11):
     return alpha, beta
 
 
-def _radau_hermite(tau_hat: np.ndarray, xi: float, upper: bool, n: Optional[int] = None, jacobi=None):
+def _radau_hermite(tau_hat: np.ndarray, xi: float, upper: bool, n: Optional[int] = None, jacobi=None,
+                   return_nodes: bool = False):
     """Chebyshev coefficients of the Hermite interpolant of the step at the Gauss-Radau nodes through xi (a heuristic):
     p(x_k) = 1 left of xi, 0 right of it, p'(x_k) = 0 at the n free nodes, and p(xi) = 1 (upper) or 0 (lower).
     For any distinct nodes such a p of degree 2n lies above (below) the step on the whole line (C-07b, Remark); the
@@ -524,30 +549,57 @@ def _radau_hermite(tau_hat: np.ndarray, xi: float, upper: bool, n: Optional[int]
     if abs(nodes[j] - xi) > 1e-8 * max(1.0, abs(xi)):
         return None
     x = np.sort(np.delete(nodes, j))
-    if len(x) > 1 and np.min(np.diff(x)) < 1e-12 or np.min(np.abs(x - xi)) < 1e-12:
-        return None
+    d = _hermite_step(x, xi, upper, len(tau_hat))
+    return (d, x) if return_nodes else d
+
+
+def _hermite_step(x: np.ndarray, xi: float, upper: bool, ncoef: int):
+    """Chebyshev coefficients (length ncoef) of the polynomial p of degree 2n with p(x_k) = 1 for x_k < xi, 0 for
+    x_k > xi, p'(x_k) = 0 at the n distinct free nodes x, and p(xi) = 1 (upper) or 0 (lower); a heuristic in floating
+    point (rows equilibrated). By the Remark of C-07b it lies above (below) the step for any such nodes. None when the
+    nodes are not distinct from each other and from xi, the degree exceeds ncoef - 1, or the solve fails."""
+    x = np.sort(np.asarray(x, dtype=float))
+    n = len(x)
     deg = 2 * n
+    if n < 1 or deg + 1 > ncoef:
+        return None
+    if (n > 1 and np.min(np.diff(x)) < 1e-12) or np.min(np.abs(x - xi)) < 1e-12:
+        return None
     pts = np.concatenate([x, [xi]])
     V = np.polynomial.chebyshev.chebvander(pts, deg)
-    Ux = np.zeros((len(x), deg + 1))                    # U_{j-1}(x), T_j' = j U_{j-1}
-    Um, Uc = np.zeros(len(x)), np.ones(len(x))
+    Ux = np.zeros((n, deg + 1))                         # T_j' = j U_{j-1}
+    Um, Uc = np.zeros(n), np.ones(n)
     for jj in range(1, deg + 1):
         Ux[:, jj] = jj * Uc
         Um, Uc = Uc, 2.0 * x * Uc - Um
-    M = np.vstack([V[:len(x)], Ux, V[len(x):]])
-    rhs = np.concatenate([(x < xi).astype(float), np.zeros(len(x)), [1.0 if upper else 0.0]])
+    M = np.vstack([V[:n], Ux, V[n:]])
+    rhs = np.concatenate([(x < xi).astype(float), np.zeros(n), [1.0 if upper else 0.0]])
+    scale = np.max(np.abs(M), axis=1)
+    scale[scale == 0] = 1.0
     try:
-        dcoef = np.linalg.solve(M, rhs)
+        dcoef = np.linalg.solve(M / scale[:, None], rhs / scale)
     except np.linalg.LinAlgError:
         return None
     if not np.all(np.isfinite(dcoef)):
         return None
-    out = np.zeros(len(tau_hat))
+    out = np.zeros(ncoef)
     out[:deg + 1] = dcoef
     return out
 
 
-def _prove_and_bound(d, intervals, T, xi_f: Fraction, upper: bool):
+def _chebyshev_free_nodes(n: int, xi: float) -> np.ndarray:
+    """The n Chebyshev points of the first kind, cos((2k - 1) pi / (2n)), without the one nearest to xi when it lies
+    within a quarter of the local spacing (the free nodes of the Hermite-Fejer type step polynomial)."""
+    k = np.arange(1, n + 1)
+    x = np.cos((2 * k - 1) * np.pi / (2 * n))
+    j = int(np.argmin(np.abs(x - xi)))
+    spacing = np.pi / n * max(np.sqrt(max(1.0 - xi * xi, 0.0)), 1.0 / n)
+    if abs(x[j] - xi) < 0.25 * spacing:
+        x = np.delete(x, j)
+    return np.sort(x)
+
+
+def _prove_and_bound(d, intervals, T, xi_f: Fraction, upper: bool, hints=None):
     xi = float(xi_f)
     D = _dyadic(d)
     margin = 1.01 * _float_violation(D, xi, upper) + 1e-9 * (1.0 + float(np.sum(np.abs(d))))
@@ -555,7 +607,7 @@ def _prove_and_bound(d, intervals, T, xi_f: Fraction, upper: bool):
         Dm = list(D)
         shift = int(math.ceil(margin * 2.0 ** _DYADIC_BITS))
         Dm[0] += shift if upper else -shift
-        if _prove_majorant(Dm, T, xi_f, upper):
+        if _prove_majorant(Dm, T, xi_f, upper, hints):
             return _bound_from(Dm, intervals, upper), {"margin": shift / 2.0 ** _DYADIC_BITS, "attempts": attempt + 1}
         margin *= 2.0
     return None, {"reason": "the sign conditions could not be proved (margin up to %.1e)" % (margin / 2.0)}
@@ -570,30 +622,45 @@ def _estimate(d, tau_hat, rho, xi, upper, tau0_hi):
     return centre + spread if upper else centre - spread
 
 
+_HEURISTICS = ("radau-hermite", "chebyshev-hermite", "linear program")
+
+
 def _one_side(tau_hat, intervals, T, xi_f: Fraction, upper: bool, grid: Optional[int], jacobi=None):
-    """The bound on one side at xi: Radau-Hermite polynomials of several orders (the full one can grow by orders of
-    magnitude across a gap of the spectrum, where its coefficients and its rounding swamp the bound), ranked by an
-    estimate and proved best first; the linear program when none is proved."""
+    """The bound on one side at xi. Candidates: Hermite step polynomials at the Gauss-Radau nodes of the moments, of
+    several orders (the full one can grow by orders of magnitude across a gap of the spectrum, where its coefficients
+    and its rounding swamp the bound), and at Chebyshev points of the first kind (bounded, a resolution of one node
+    spacing; useful when the moments determine few recurrence coefficients); ranked by an estimate and proved best
+    first, with the free nodes as the first cuts of the proof; the linear program when none is proved."""
     xi = float(xi_f)
     tried = []
-    jac = jacobi if jacobi is not None else _jacobi_from_moments(tau_hat)
-    n_all = len(jac[0]) - 1
+    K = len(tau_hat) - 1
     rho = np.array([(hi - lo) / 2.0 for lo, hi in intervals])
     tau0_hi = intervals[0][1]
     cands = []
-    for n in sorted({n_all, (3 * n_all) // 4, n_all // 2, n_all // 4, n_all // 8} - {0}, reverse=True):
-        d = _radau_hermite(tau_hat, xi, upper, n=n, jacobi=jac)
-        if d is not None and np.all(np.isfinite(d)):
-            cands.append((_estimate(d, tau_hat, rho, xi, upper, tau0_hi), n, d))
+    if "radau-hermite" in _HEURISTICS:
+        jac = jacobi if jacobi is not None else _jacobi_from_moments(tau_hat)
+        n_all = len(jac[0]) - 1
+        for n in sorted({n_all, (3 * n_all) // 4, n_all // 2, n_all // 4, n_all // 8} - {0}, reverse=True):
+            res = _radau_hermite(tau_hat, xi, upper, n=n, jacobi=jac, return_nodes=True)
+            if res is not None and res[0] is not None and np.all(np.isfinite(res[0])):
+                cands.append((_estimate(res[0], tau_hat, rho, xi, upper, tau0_hi), "radau-hermite", n, res[0], res[1]))
+    if "chebyshev-hermite" in _HEURISTICS:
+        for n in sorted({K // 2, K // 4} - {0}, reverse=True):
+            x = _chebyshev_free_nodes(n, xi)
+            d = _hermite_step(x, xi, upper, K + 1)
+            if d is not None:
+                cands.append((_estimate(d, tau_hat, rho, xi, upper, tau0_hi), "chebyshev-hermite", len(x), d, x))
     cands.sort(key=lambda c: c[0] if upper else -c[0])
-    for _est, n, d in cands[:3]:
-        val, info = _prove_and_bound(d, intervals, T, xi_f, upper)
+    for _est, label, n, d, nodes in cands[:3]:
+        val, info = _prove_and_bound(d, intervals, T, xi_f, upper, hints=nodes)
         if val is not None:
-            info.update(method="radau-hermite", order=int(n), candidates=len(cands))
+            info.update(method=label, order=int(n), candidates=len(cands))
             return val, info
-        tried.append(f"radau-hermite n = {n}: " + info["reason"])
+        tried.append(f"{label} n = {n}: " + info["reason"])
     if not cands:
-        tried.append("radau-hermite: no polynomial")
+        tried.append("no Hermite polynomial")
+    if "linear program" not in _HEURISTICS:
+        return None, {"reason": "no candidate polynomial was proved", "tried": tried}
     d = _lp_polynomial(tau_hat, xi, upper, grid)
     if d is None:
         return None, {"reason": "the linear program did not return a polynomial", "tried": tried}

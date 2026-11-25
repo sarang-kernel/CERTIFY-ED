@@ -8,7 +8,8 @@ Parts:
      Heisenberg chains N = 4, 6 with the staggered S^z
   B  Proposition 3 and Lemma 8 (M6): atomic measures on [-1, 1] (random, clustered, atoms at +-1 and at the queried
      point) with exact moments widened to intervals; the exact F(xi) = sum of the weights of the atoms <= xi lies in
-     [lower, upper] for the Radau-Hermite polynomials and for the linear program (forced)
+     [lower, upper] for the default candidates, the Chebyshev-Hermite polynomials alone and the linear program alone
+     (both forced on a share of the cases)
   C  Lemma 8 alone: random integer polynomials and majorant candidates; whenever a proof succeeds, no sign violation at
      8193 exact rational points and at rational points next to the real critical points; polynomials with a dip of
      one unit below a touching point are never proved
@@ -197,10 +198,11 @@ def part_b(rng, cases, cB, neg):
         xis = [float(x) for x in rng.uniform(-1, 1, 3)]
         if adv:
             xis += [float(atoms[0]), float(np.nextafter(atoms[0], -np.inf)), -1.0, float(atoms[-1])]
-        force_lp = case % 5 == 4 and K <= 24
-        saved = sb._radau_hermite
-        if force_lp:
-            sb._radau_hermite = lambda *a, **k: None
+        saved = sb._HEURISTICS
+        if case % 5 == 4 and K <= 24:
+            sb._HEURISTICS = ("linear program",)
+        elif case % 5 == 3:
+            sb._HEURISTICS = ("chebyshev-hermite",)
         try:
             for xi in xis:
                 if not (-1 <= xi < 1):
@@ -229,7 +231,7 @@ def part_b(rng, cases, cB, neg):
                     neg["shift_excludes"] += int((u2 is not None and Fraction(u2) < F) or
                                                  (l2 is not None and Fraction(l2) > F))
         finally:
-            sb._radau_hermite = saved
+            sb._HEURISTICS = saved
 
 
 def eval_frac(A, x):
@@ -298,7 +300,8 @@ def main():
     part_c(rng, args.cases * 4, cC)
     ok = True
     ok &= cA.report("A exact tau_j = tr(P O T_j(A) O)/g inside the M5 intervals; spectral interval holds the spectrum")
-    ok &= cB.report("B exact F(xi) between the M6 bounds (Radau-Hermite and linear program; atoms at the query point)")
+    ok &= cB.report("B exact F(xi) between the M6 bounds (default candidates, Chebyshev-Hermite alone, linear program "
+                    "alone; atoms at the query point)")
     ok &= cC.report("C Bernstein proofs: no sign violation where proved; one-unit dips never proved")
     print(f"   negative control: s = eta = 0 claimed for tilted vectors breaks the M5 enclosure in "
           f"{neg['s0_broken']}/{neg['s0_total']} moments; a spectral lower bound 20% of the span too high breaks it in "
