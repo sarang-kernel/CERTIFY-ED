@@ -82,6 +82,7 @@ published bound -1.632985, which the paper reproduces in the two sectors it name
 evidently not included in the published search. The corrected max-min value, -1.6343596 from the floating-point scan,
 is an estimate: certifying it would need exact inertia in a class of 1,116,229 states, beyond reach here (decision
 D-40), and a cutting-plane bound shows that no value of c5 raises the max-min above about -1.6342 (decision D-51). The
-project's rule is that nothing about the S = 1 discrepancy is stated publicly before the authors reply; the note to
-them (version 0.3) waits for Sarang Vehale's check against the paper (decisions D-34 and D-51). The application
+project's rule was that nothing about the S = 1 discrepancy is stated publicly before the authors reply (decisions
+D-34 and D-51). On 26 November 2026 Sarang Vehale lifted it without waiting for the reply; the finding is stated in
+the combined paper (paper/), which also records that the arXiv source was unchanged on that date. The application
 documents of this repository describe the physics in more detail.
