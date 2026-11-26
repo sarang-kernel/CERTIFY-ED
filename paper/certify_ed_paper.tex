@@ -1,0 +1,1426 @@
+% CERTIFY-ED: combined paper, draft of 26 November 2026.
+%
+% Sources. Every number in this text is copied from a file of the repository, named where it is used
+% (paths relative to the repository root, branch int/round8-m4 at 0a37add2). Evidence numbers are those of the
+% 3.2.1 evidence run results/run_full_20261105, read from the experiment documents docs/project/experiments/E*.md;
+% the 3.2.3 run results/run_full_20261112b reproduces every status (docs/results/RESULT_evidence_run_3.2.3.md).
+% Which run the paper cites is the decision D-61 of Sarang Vehale; switching it means replacing the numbers of
+% Sections 7 to 9 from the experiment documents, which give the 3.0.0, 3.1.0 and 3.2.1 values side by side.
+% Results of the development version 3.3.0.dev0 (Section 5, the worker pool, the eight-block crown run) have their own
+% records and are not yet covered by an evidence run (D-44); the text says so where they appear.
+% The data figures of docs/figures/ were drawn from run_full_20261022 (3.1.0); their captions say so and state that
+% the quantities they show are the same in the cited run. They can be redrawn from any run with
+% experiments/figures/*.py (docs/figures/INDEX.md gives the commands).
+%
+% Embargo. Decisions D-34 and D-51: nothing about the S = 1 crown discrepancy is stated publicly before Kranitz and
+% Penc reply. The paragraphs on it are inside \ifshowSone ... \fi and are left out unless \showSonetrue is set below.
+%
+% Build: pdflatex certify_ed_paper && bibtex certify_ed_paper && pdflatex certify_ed_paper (twice). Place this file
+% and certify_ed_refs.bib in <repository>/paper/; the figures are then read from ../docs/figures/ (see
+% README_paper.md). A missing figure file prints a framed note instead of stopping the build.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{url}
+\emergencystretch=3em   % room for the long repository paths set in typewriter type
+
+\newif\ifshowSone
+\showSonetrue   % S = 1 crown finding; the hold of D-34/D-51 was lifted by S. Vehale on 26 November 2026
+\newif\ifshowCrownComparison
+\showCrownComparisontrue   % N-11 comparison with the printed digits of arXiv:2601.07800 (APPS_NEXT.md section 3)
+
+% Figures: this folder first (paper/ holds m6_spectral_bounds.png), then the figures of the repository.
+\newcommand{\figdirA}{../docs/figures/}
+\newcommand{\repofig}[2]{%
+  \IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}{%
+  \IfFileExists{\figdirA#1}{\includegraphics[width=#2\linewidth]{\figdirA#1}}{%
+  \fbox{\parbox{#2\linewidth}{\centering\small\vspace{2em}figure file \texttt{#1} not found\vspace{2em}}}}}}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\status}[1]{\textsf{#1}}
+\newcommand{\CERT}{\status{CERTIFIED}}
+\newcommand{\FAIL}{\status{FAILED}}
+\newcommand{\INC}{\status{INCONCLUSIVE}}
+\newcommand{\NC}{\status{NOT\_CHECKED}}
+\newcommand{\fl}{\mathrm{fl}}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
+
+% Results are numbered as in docs/theory.md so that every statement can be found there with its proof.
+\newenvironment{result}[1]{\par\medskip\noindent\textbf{#1.}\ \itshape}{\par\medskip}
+
+\title{CERTIFY-ED: certificates for exact-diagonalization results,\\
+with exact re-checks and applications to published proofs}
+\author{Sarang Vehale \and Ritu Goel}
+\date{26 November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Exact diagonalization (ED) of quantum lattice Hamiltonians produces eigenvalues that are quoted as benchmarks, used to
+calibrate other methods and entered as numerical lemmas into rigorous proofs. These numbers are usually accepted on the
+strength of a residual check made with the producer's own matrix. We describe CERTIFY-ED, a program that takes the
+output of any ED code together with an independently written specification of the intended model and returns a
+certificate: a machine-readable list of statements, each marked \CERT, \FAIL, \INC{} or \NC{} with its evidence. The
+statements cover model fidelity, eigenvalue enclosures with distinct matching, completeness of a claimed low-lying
+spectrum, eigenspaces and basis-independent observables of degenerate levels, an exact re-check in rational
+arithmetic, thermodynamic intervals and degeneracy counts. The floating-point bounds rest on the standard model of
+IEEE~754 binary64 arithmetic, which a probe checks on every run; the exact layer needs no floating-point hypothesis. We
+report eleven experiments run as one reproducible evidence run. Against references that share no code with it, no
+bound was violated in 6,391 enclosures and 2,400 inertia counts. Of thirteen realistic erroneous results the
+certificate refuses all thirteen, where a residual check flags two and recomputation from the model nine. It catches
+an error of ARPACK that nobody planted, and it re-derives four widely quoted benchmark energies with exact radii
+between $1.10\times10^{-14}$ and $3.72\times10^{-14}$. Two applications certify numerical lemmas of published proofs:
+a lower bound $-0.5501582988212038$ on the lowest eigenvalue of the reduced 18-site crown model of Kr\'anitz and
+Penc, and certified upper bounds on the quantity $\eta$ of the spectral-gap criteria of Pomata and Wei for five
+two-dimensional AKLT lattices, every criterion holding.\ifshowSone{} For spin~1 the same crown cluster has, at the
+published couplings, an eigenvalue certified at or below $-1.6380246$, which is $5.0\times10^{-3}$ below the published
+spin-1 bound, in an outer-pair configuration that the published search did not include.\fi A development version adds certified bounds on the integrated
+spectral weight of an operator on a certified level, such as the dynamical structure factor, from certified Chebyshev
+moments, with every sign condition decided in exact integer arithmetic. Many of the theorems on which the
+floating-point bounds rest have been restated in Lean~4 with Mathlib and accepted by two independent kernels. We state throughout which results are textbook material,
+which are new and await the check of a second person, and which numbers are certified bounds rather than
+floating-point estimates or published values.
+\end{abstract}
+
+\tableofcontents
+
+%======================================================================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Exact diagonalization is the reference method of quantum many-body physics on small lattices. Its eigenvalues are
+quoted to ten or more digits, used to benchmark variational, tensor-network and quantum Monte Carlo methods, and, in a
+growing number of papers, entered as a numerical lemma into a proof: an Anderson-type lower bound on the ground-state
+energy per site of an infinite lattice is only as valid as the lowest eigenvalue of the finite cluster on which it
+rests \cite{Anderson1951,KranitzPenc2026}, and a finite-size criterion for a spectral gap is only as valid as the
+number computed for the finite subgraph \cite{Knabe1988,PomataWei2019}. The numbers are rarely in doubt to the authors
+who computed them. What the usual practice does not establish is that they are what the text says: that the matrix is
+the matrix of the stated model, that the reported values are distinct eigenvalues of it, that no eigenvalue below the
+reported ones is missing, and that a quoted observable of a degenerate level is a property of the level and not of one
+vector in it.
+
+The usual check is a residual: the producer computes $\norm{Hx-\mu x}$ with its own matrix $H$ and finds it small. A
+small residual shows that $\mu$ lies near some eigenvalue of that matrix \cite{Parlett1998}. It does not show that the
+matrix is the intended one, that two reported values belong to two distinct eigenvalues, or that the reported values
+are the lowest ones. These are not hypothetical gaps. Section~\ref{sec:evidence} describes thirteen realistic ways in
+which an ED result can be wrong, eleven of which pass the residual check, and an error of a widely used Lanczos code,
+met in our own measurements, which returned three of the four members of a fourfold level; a comparison with a second
+run caught two of the three such runs at the price of three false alarms.
+
+Rigorous enclosures of eigenvalues by floating-point computation with error bounds are classical
+\cite{Kahan1967,Parlett1998,Higham2002,Rump2010}, and so is the verification of positive definiteness with
+floating-point factorizations, which certifies that no eigenvalue lies below a shift \cite{Rump2006}. What ED practice lacks is a tool that applies these results to the output of an
+arbitrary ED code, against an independently stated model, and that says exactly what it has established and under
+which hypotheses. CERTIFY-ED is such a tool. It never calls the producer's code. It takes the producer's eigenvalues,
+optionally eigenvectors, optionally the matrix or a symmetry block of it, and a specification of the model written
+independently, and it returns a certificate whose statements are each \CERT, \FAIL, \INC{} or \NC{} with the evidence
+and, for the last two, the reason and a suggested next action.
+
+This paper is the combined account of the program, of the mathematics on which its statements rest, and of the
+evidence that the statements hold. It supersedes the preprints on the first version \cite{CertifyEDv1} and on the
+whole-spectrum enclosure package symveig \cite{Symveig}, whose engine was rebuilt inside CERTIFY-ED after an audit
+found four problems in it (Section~\ref{sec:e8}). The contributions are these. First, a definition of what a
+certificate of an ED result states, with eight statements and their dependencies (Section~\ref{sec:certificate}).
+Second, the mathematical basis of each statement, including the floating-point accounting as the code implements it,
+an inertia count with a measured backward error, sharper cluster radii and an exact re-check layer
+(Sections~\ref{sec:fp} and~\ref{sec:math}). Third, certified bounds on integrated spectral weights from certified
+moments, new in the development version (Section~\ref{sec:spectral}). Fourth, eleven experiments, run as one evidence
+run from one computational source, that measure soundness, the value of the certificate against common practice,
+tightness, cost and reach (Sections~\ref{sec:evidence} and~\ref{sec:cost}). Fifth, applications to the numerical
+lemmas of two published proofs (Section~\ref{sec:apps}), and a restatement of the formal parts in Lean~4 with Mathlib
+whose theorems the Lean kernel and a second, independent kernel accept (Section~\ref{sec:lean}).
+
+\paragraph{How strongly each result has been checked.}
+We use the following words with fixed meanings, as the project record does (\code{docs/project/STYLE.md}). A result
+is \emph{textbook} when it is a published theorem that we cite. A new result is \emph{derived} when a derivation
+document with a proof exists in \code{docs/proofs/}, \emph{machine-checked} when a script has tested it on random and
+adversarial cases in exact or high-precision arithmetic, and \emph{kernel-checked in Lean} when a Lean theorem without
+\code{sorry} states it and the Lean kernel accepts it. The project's rule D-12 counts new mathematics as established
+only after Sarang Vehale has re-derived it by hand; that check is pending for every derivation document, and the code
+marks every statement that rests on such a result \code{UNVERIFIED}. Numbers are distinguished as \emph{certified
+bounds}, \emph{floating-point estimates} and \emph{published values}, and every number in this paper is copied from a
+record of the repository named where it is used.
+
+%======================================================================================================================
+\section{What a certificate states}
+\label{sec:certificate}
+
+\subsection{Claims, specifications and certificates}
+
+The output of the ED code, called the producer, is held in a \emph{claim}: the claimed eigenvalues, optionally the
+eigenvectors, optionally the operator (a dense or sparse matrix, or a matrix-free linear operator), optionally a basis
+(the states of a $U(1)$ block, or the isometry of a symmetry sector), and the \emph{kind} of the claim. The kind says
+which completeness the producer asserts: \code{subset} (some eigenpairs), \code{lowest} (the $k$ lowest eigenvalues),
+\code{window} (all eigenvalues in an interval) or \code{all} (the whole spectrum). A claim may state an accuracy target;
+without one, the enclosure statement presumes $10^{-8}\max(1,\norm{H})$
+(\code{docs/project/software/01\_architecture.md}).
+
+The \emph{specification} states what the producer was meant to compute: a local Hilbert space (spin $S$, spinless
+fermions with a Jordan--Wigner order, or bosons with an occupation cutoff), a list of operator strings with
+coefficients in the \code{static} format of QuSpin \cite{QuSpin1,QuSpin2}, a site order and a state order. It is
+serialised as canonical JSON and identified by its SHA-256 hash. It is written independently of the producer, and the
+certificate is about the declared model, not about the producer's matrix.
+
+The \emph{certificate} is a list of statements about the claim and the declared model, each with a status and its
+evidence. It also carries a scope block (what was attempted, what the user narrowed and what is out of scope, each
+with a reason code), the floating-point model that the bounds assume together with the result of a run-time probe of
+that model, the versions and the source fingerprint of the code that produced it, a list of what the certificate does
+not say, and an integrity hash over its canonical JSON. Large arrays go into a side file whose arrays are hashed into
+the body. The list of what a certificate does not say always contains two entries, that the specification is the
+Hamiltonian the user intended and that the producer's code is correct in general, and a third, that the bounds rely on
+the standard floating-point model, unless the exact re-check is certified. Figure~\ref{fig:anatomy} shows the parts.
+
+\begin{figure}[t]
+\centering
+\repofig{fig_certificate_anatomy.png}{0.95}
+\caption{What a certificate contains and how its statements depend on each other (concept figure, no data;
+\code{docs/figures/INDEX.md}, entry C1). (a) The JSON body: subject and claim, one record per statement, the scope
+block, integrity and environment, and the arrays side file; the statuses shown are an example. (b) The chain of
+statements: S1 fixes the matrix to which the enclosures refer, S2 encloses each claimed value, S3 counts the
+eigenvalues below a shift and orders the enclosures, S4 and S8 read clusters and counts off S2 and S3, S6 re-checks S2
+and S3 in exact arithmetic from the claim and the specification alone, S7 needs the whole-spectrum enclosure of a claim
+of kind \code{all}, and S5 is corroboration by a second solver.}
+\label{fig:anatomy}
+\end{figure}
+
+\subsection{The eight statements}
+
+Table~\ref{tab:statements} lists the statements. S1 to S4 form the core: a result whose S1 to S4 are \CERT{} has the
+matrix of the declared model, values that are distinct eigenvalues within stated radii, a list that is complete below
+its top value, and degenerate levels described by basis-independent quantities. S5 records corroboration by
+independent solvers; it is evidence and never a certified statement. S6 re-derives S2 and S3 of a \code{lowest} claim
+in exact arithmetic. The lemmas of the exact layer and its Proposition~13, on which S6 rests (\code{docs/theory.md}~\S7),
+and the results on which S7 and S8 rest are derived and machine-checked, await the check of rule D-12, and are marked
+\code{UNVERIFIED} in the code.
+
+\begin{table}[ht]
+\centering\small
+\caption{The statements of a certificate (\code{README.md};
+\code{docs/\allowbreak project/\allowbreak software/\allowbreak 01\_architecture.md}). S3, S6
+and S8 need S2; S4 and S7 need S2 and S3. A statement whose dependency did not run is not attempted and is recorded
+with its reason. Section numbers refer to \code{docs/theory.md}.}
+\label{tab:statements}
+\begin{tabular}{@{}p{0.7cm}p{2.7cm}p{7.4cm}p{3.6cm}@{}}
+\toprule
+& Identifier & What it says when \CERT & Basis \\
+\midrule
+S1 & \code{model\_fidelity} & the producer's matrix (or symmetry block) is the matrix of the declared model; on failure
+a least-squares fit names the terms whose coefficients differ & two independent reference builders \\
+S2 & \code{eigenpairs} & each claimed eigenvalue lies within a stated radius of a \emph{distinct} eigenvalue of the
+declared model & Theorems 1, 2, 2$'$ and 3 (\S2) \\
+S3 & \code{completeness} & no eigenvalue below the top claimed one (or inside the claimed window) is missing; the next
+eigenvalue is bounded below & Lemma 4, Corollary 5 (\S3) \\
+S4 & \code{eigenspaces} & distance of the claimed subspace to the eigenspace, basis-independent observables
+$\tr(PO)$, certified quantum numbers & Theorem 6, Proposition 7 (\S4) \\
+S5 & \code{corroboration} & independent solvers reproduce the values; the components they share are recorded &
+evidence only \\
+S6 & \code{exact\_recheck} & S2 and S3 of a \code{lowest} claim re-derived in exact arithmetic & \S7;
+\code{UNVERIFIED} parts \\
+S7 & \code{thermodynamics} & interval bounds on $Z$, $F$, $U$ and $C$ from a complete whole-spectrum enclosure & \S6,
+\S9; \code{UNVERIFIED} \\
+S8 & \code{degeneracy} & the number of eigenvalues in each certified cluster & \S9; \code{UNVERIFIED} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statuses}
+
+The four statuses were fixed early (decision D-18) and keep their meaning in every statement. \CERT{} means that the
+statement holds under its stated hypotheses. \FAIL{} means that the claim is contradicted, or that a certified bound
+exceeds a stated threshold such as the accuracy target. \INC{} means that the evidence was too weak to decide; the
+claim is not contradicted. \NC{} means that the statement was not attempted, because the user narrowed the scope, a
+budget ran out, an input was missing or a factorization did not fit in memory; the reason code says which. Every
+\INC{} or \NC{} statement also carries a concrete next action (``supply eigenvectors'', ``use a window claim''), which
+is advice and changes no status. Three further statuses serve records outside the eight statements:
+\status{CORROBORATED} for S5, \status{CERTIFIED\_UNDER\_HYPOTHESIS} for a bound that holds under a named hypothesis
+supplied by the user, such as a declared spectral gap or a declared lower bound on $\lambda_{\min}(B)$, and
+\status{DECLARED} for estimates that the producer declares, on which nothing rests.
+
+\subsection{Records beyond the eight statements}
+
+Since version 3.2 a certificate can be extended by separate records that build on a certified cluster or a certified
+spectrum (\code{docs/project/software/01\_architecture.md}): gap records and certified level crossings, interval level
+statistics, the entanglement entropy and spectrum of a certified eigenvector, correlation functions lifted through a
+sector isometry, certified eigenvalue tubes over a coupling interval, Davis--Kahan bounds \cite{DavisKahan1970} for
+labels and fidelities, truncated thermodynamics, exact degeneracy brackets, and four families with statements of their
+own: variational certificates for trial states that are not ED eigenvectors (V), certified moments and sum rules (M),
+non-Hermitian eigenpairs (N) and generalized eigenproblems $Ax=\lambda Bx$ with $B$ positive definite (G). Every such
+record that rests on new mathematics has a derivation document and is marked \code{UNVERIFIED}.
+
+%======================================================================================================================
+\section{The arithmetic model}
+\label{sec:fp}
+
+Throughout, $A$ is Hermitian, $n\times n$, with eigenvalues $\lambda_1\le\dots\le\lambda_n$; in a certificate, $A$ is
+the operator of the declared model on the producer's basis. Every quantity that enters a floating-point bound is
+computed in binary64 and then replaced by a bound on its exact value. The model is $\fl(a\circ b)=(a\circ b)(1+\delta)$
+with $\abs{\delta}\le u=2^{-53}$, which gives $\gamma_m=mu/(1-mu)$ for sums and products of length $m$
+\cite{Higham2002}. These bounds hold for any summation order and with fused multiply--add. They fail for Strassen-type
+products, reduced-precision BLAS kernels, flush-to-zero or denormals-are-zero modes and non-default rounding. A probe
+(\code{fp.probe\_float\_environment}) tests these properties in the certifying process on every run, and a failed
+property downgrades every certified floating-point statement to \INC.
+
+\paragraph{Underflow.}
+The relative model fails for results in the subnormal range, where the rounding error is absolute. Since version 3.2.0
+the residual radius of Theorem~1 and the cluster bounds are evaluated under the underflow-tolerant model
+$\fl(a\circ b)=(a\circ b)(1+\delta)+\eta$ with $\abs{\eta}\le 2^{-1075}$ and $\eta=0$ for additions and subtractions
+(\cite[eq.~(2.6)]{Higham2002}; \code{docs/proofs/int05\_underflow.md}). The norm and residual bounds then carry
+additive terms of order $10^{-160}$; they change no stored bound of a normal-sized quantity, and for inputs of tiny
+magnitude the radii grow instead of the run being refused. The remaining standard-model bounds (inertia backward
+errors, Rayleigh quotients, Kato--Temple arithmetic) assume that every nonzero operand has magnitude at least
+$2^{-900}$. The certifier scans the claimed eigenvalues, the eigenvector entries, the stored entries of the operator
+and the model shift; any finding makes S2, and every statement that rests on it, \INC{} with the reason
+\code{UNDERFLOW\_RISK}. S1 and the exact layer are not affected.
+
+\paragraph{Outward rounding.}
+The certified statement $\abs{\lambda-\mu}\le r$ is a statement about the stored numbers $\mu$ and $r$. An endpoint
+$\mu-r$ computed with rounding to nearest can land half a unit in the last place inside the exact interval: for
+example, $1-2^{-60}$ rounds to $1$. Since version 3.1 every endpoint, shift margin $\sigma\mp\beta$, separation and cut
+comparison is formed with directed steps of one unit in the last place outward. The exact layer does not need this.
+
+\paragraph{The residual radius as implemented.}
+The Theorem~1 radius is computed in six steps, each with an explicit factor (\code{docs/theory.md}~\S2;
+\code{docs/proofs/thm1\_fp-accounting.md}). With $w$ the largest number of stored nonzeros in a row of $A$ and
+$g=\gamma_{w+2}$ for real data ($2\gamma_{w+6}$ for complex data): the residual $R=\fl(Ax-\fl(\mu x))$ differs from
+$Ax-\mu x$ entrywise by at most $g\,((\abs{A}\abs{x})_i+\abs{\mu}\abs{x_i})$; the product $\abs{A}\abs{x}$ is bounded
+from above by dividing its computed value by $1-\gamma_{w+1}$ and multiplying by $1+4u$; the entrywise rounding bound
+$E$ carries another factor $1+4u$; the norms carry the guards $(1\pm\gamma_{n+2})$ and $(1+8u)^{\pm1}$; the radius
+$\fl(\text{upper}/\text{lower})$ carries a third factor $1+4u$; and the model shift $\sigma$ of S1, when there is one,
+is added with one step upward, never multiplied in. Where a line has more roundings than its factor covers, the slack
+of $\gamma_{w+1}$ over $\gamma_w$, of $\gamma_{w+2}$ over the entrywise error and of $\gamma_{n+2}$ over
+$\gamma_n/2+u$ absorbs the rest. A test recomputes a fixed $3\times3$ case in exact rational arithmetic and pins, stage
+by stage, that each computed quantity is at least what it bounds and at most that value times the listed factors
+(Figure~\ref{fig:accounting}).
+
+\begin{figure}[t]
+\centering
+\repofig{fig_rounding_accounting.png}{0.9}
+\caption{The floating-point accounting of the Theorem~1 radius as implemented (concept figure, no data;
+\code{docs/figures/INDEX.md}, entry C4): the residual vectors, the bound on $\abs{A}\abs{x}$ and the entrywise rounding
+bound $E$, each with one factor $1+4u$; the norms with the guards $1\pm\gamma_{n+2}$ and $1+8u$; the radius with a
+third factor $1+4u$; and the model shift $\sigma$ from S1, added with one step towards $+\infty$.}
+\label{fig:accounting}
+\end{figure}
+
+%======================================================================================================================
+\section{Mathematical basis of the statements}
+\label{sec:math}
+
+The results below are numbered as in \code{docs/theory.md}, where each is stated with its proof or with the
+derivation document that holds the proof. We mark each as textbook, or as derived and machine-checked with the check
+of rule D-12 pending.
+
+\subsection{Enclosures (S2)}
+
+\begin{result}{Theorem 1 (residual; textbook \cite{Parlett1998})}
+For $x\neq0$ and real $\mu$, some eigenvalue of $A$ satisfies $\abs{\lambda-\mu}\le\norm{Ax-\mu x}/\norm{x}$.
+\end{result}
+
+Theorem~1 gives existence only: two copies of one vector satisfy it with the same eigenvalue. Distinctness needs a
+statement about the claimed vectors together.
+
+\begin{result}{Theorem 2 (clusters with non-orthonormal vectors; derived,
+\code{docs/\allowbreak proofs/\allowbreak thm2\_polar-factor.md})}
+Let $X$ be $n\times g$, $\Lambda=\operatorname{diag}(\mu)$ real, $R=AX-X\Lambda$ and $\eta=\norm{X^HX-I}<1$. Set
+$\delta=1-\sqrt{1-\eta}$ and $\rho=\norm{R}+(\norm{A}+\norm{\Lambda})\delta$. Then there are $g$ distinct indices $i_j$
+with $\abs{\lambda_{i_j}-\mu_j}\le\rho$.
+\end{result}
+
+The proof uses the polar factor $\hat Q=X(X^HX)^{-1/2}$, an isometry with $\norm{X-\hat Q}\le\delta$, so that
+$\norm{A\hat Q-\hat Q\Lambda}\le\rho$, and Kahan's inclusion theorem \cite{Kahan1967}: for an orthonormal $Q$ and any
+Hermitian $g\times g$ matrix $H$, the eigenvalues of $H$ are matched to distinct eigenvalues of $A$ within
+$\norm{AQ-QH}$. For orthonormal Ritz pairs this is Kahan's theorem with $\rho=\norm{R}$. Before version 3.2 the code
+used the radius of a Weyl-perturbation argument, which is never smaller than $\rho$.
+
+\begin{result}{Theorem 2$'$ (sharper cluster radius; derived, \code{docs/proofs/thm2prime\_eps-star.md})}
+Under the hypotheses of Theorem~2, with $\operatorname{spread}(\Lambda)=\lambda_{\max}(\Lambda)-\lambda_{\min}(\Lambda)$,
+there are $g$ distinct indices $i_j$ with
+\begin{equation}
+\abs{\lambda_{i_j}-\mu_j}\le\varepsilon^*:=\frac{\norm{R}}{\sqrt{1-\eta}}+\frac{\norm{X^HR}}{1-\eta}
++\frac{\delta\,\operatorname{spread}(\Lambda)}{\sqrt{1-\eta}}.
+\label{eq:epsstar}
+\end{equation}
+\end{result}
+
+\noindent\emph{Proof sketch.} Write $X=\hat QM$ with $M=(X^HX)^{1/2}$, whose eigenvalues lie in
+$[\sqrt{1-\eta},\sqrt{1+\eta}]$, so $\norm{M-I}\le\delta$ and $\norm{M^{-1}}\le(1-\eta)^{-1/2}$. (i) With
+$H'=\hat Q^HA\hat Q$, $A\hat Q=RM^{-1}+\hat QM\Lambda M^{-1}$ gives $(I-\hat Q\hat Q^H)A\hat Q=(I-\hat Q\hat Q^H)RM^{-1}$,
+so $\norm{A\hat Q-\hat QH'}\le\norm{R}/\sqrt{1-\eta}$, and Kahan's theorem matches the eigenvalues of $H'$ to distinct
+eigenvalues of $A$ within this bound. (ii) $H'-\Lambda=M^{-1}X^HRM^{-1}+[M-I,\Lambda-cI]M^{-1}$ for any scalar $c$;
+with $c$ the midpoint of the spectrum of $\Lambda$, $\norm{H'-\Lambda}\le\norm{X^HR}/(1-\eta)+\delta\operatorname{spread}
+(\Lambda)/\sqrt{1-\eta}$, and Weyl's inequality pairs the sorted eigenvalues of $H'$ and $\Lambda$ within this bound.
+(iii) The two matchings compose. $\square$
+
+\smallskip
+The code computes both $\rho$ and $\varepsilon^*$, each term as an upper bound, and uses $\min(\rho,\varepsilon^*)$.
+For exact eigenvectors of one degenerate level $\varepsilon^*$ is of the order of the residual, whereas $\rho$ is
+dominated by $(\norm{A}+\norm{\Lambda})\delta$. Groups whose Theorem~1 intervals overlap get Theorem~2 or~2$'$; if
+$\eta\ge1$ the group keeps existence only and S2 is \INC.
+
+\paragraph{Two radii per value.}
+A cluster member carries an \emph{existence radius}, its Theorem~1 radius, and the \emph{cluster radius}
+$\varepsilon$ under which the members are matched to distinct eigenvalues. Every indexed statement (``$\lambda_K$ lies
+within $\varepsilon$ of $\mu_K$'') uses the cluster radius, because the matching of Theorem~2 need not put the
+eigenvalue of a member's own interval at the sorted position of that member. The accuracy target is applied in two
+steps accordingly: if $\varepsilon$ meets it, S2 is \CERT; if only the existence radii meet it, the claim is accurate
+but its vectors are too far from orthonormal to certify the count at that accuracy, and S2 is \INC{} with that
+diagnosis; if an existence radius misses it, S2 is \FAIL.
+
+\begin{result}{Theorem 3 (Kato--Temple; textbook \cite{Kato1949,Temple1928})}
+With $\norm{x}=1$, $\theta=x^HAx$, $r=\norm{Ax-\theta x}$ and an interval $(\alpha,\beta)$ containing exactly one
+eigenvalue $\lambda$: $\theta-r^2/(\beta-\theta)\le\lambda\le\theta+r^2/(\theta-\alpha)$.
+\end{result}
+
+The isolating interval comes from S3, which orders the enclosures, and its ends are the adjacent certified levels.
+Figure~\ref{fig:geometry} shows how the radii and the counts fit together on the real line.
+
+\paragraph{Matrix-free operators.}
+When the claim carries no operator, the specification can be applied term by term
+(\code{Options(matrix\_free=True)}). The rounding count of the Theorem~1 accounting is then derived from the
+specification, $W=w_{\mathrm{row}}+L+q+1$ for real data, with $w_{\mathrm{row}}$ a bound on the number of monomial
+contributions to one output entry, $L$ the longest operator string and $q$ the number of letters per string whose
+stored amplitudes are rounded. The radius then bounds $\norm{H_{\mathrm{spec}}x-\mu x}/\norm{x}$ for the exact
+operator of the specification, so no model shift is added. This is derived and machine-checked on 182 random
+specifications and 18 adversarial cases at 60 digits with no violation (\code{docs/proofs/D-02\_matrix-free.md}).
+Statements S3 and S8 still need a stored matrix.
+
+\begin{figure}[t]
+\centering
+\repofig{fig_enclosure_geometry.png}{0.95}
+\caption{The enclosures on the real line (positions illustrative; concept figure, \code{docs/figures/INDEX.md}, entry
+C2). Theorem~1 gives each claimed value an interval containing an eigenvalue; overlapping intervals form a cluster,
+and Theorem~2 or~2$'$ gives one cluster radius under which the members are matched to distinct eigenvalues.
+Theorem~3 sharpens an isolated value inside its isolating interval, whose ends are the neighbouring enclosures ordered
+by S3. Lemma~4 counts the inertia $\nu$ of $A-\sigma I$ with backward error $\beta$; with $\nu=k$ and $k$ distinct
+enclosures below $\sigma-\beta$ the enclosures hold $\lambda_1,\dots,\lambda_k$ and $\lambda_{k+1}\ge\sigma-\beta$.}
+\label{fig:geometry}
+\end{figure}
+
+\subsection{Counting (S3)}
+
+\begin{result}{Lemma 4 (inertia with backward error; textbook, from Sylvester's law of inertia and Weyl's inequality)}
+If $\norm{LDL^H-P(A-\sigma I)P^T}\le\beta$ for a unit lower-triangular $L$ and a block-diagonal $D$ with $\nu$
+negative eigenvalues, then $\#\{\lambda<\sigma-\beta\}\le\nu\le\#\{\lambda\le\sigma+\beta\}$.
+\end{result}
+
+The count $\nu$ is formed exactly: the sign of a $2\times2$ block is decided by the sign of a rational determinant.
+
+\begin{result}{Corollary 5 (completeness; derived, \code{docs/proofs/cor5\_pairing.md})}
+If $k$ claimed values have distinct enclosures inside $(-\infty,\sigma-\beta)$ and $\nu=k$, the enclosures hold
+$\lambda_1,\dots,\lambda_k$, the $j$-th sorted enclosure holding $\lambda_j$, and $\lambda_{k+1}\ge\sigma-\beta$.
+\end{result}
+
+The sorted pairing holds because the enclosure groups have disjoint union intervals and the members of a cluster
+share the cluster radius; it fails for non-uniform radii, which is why the indexed statements use the cluster radius.
+With a model shift $\Delta$ the radii and $\beta$ grow by $\Delta$ (Weyl).
+
+\paragraph{A measured backward error (D-01).}
+For the symmetric-mode sparse factorization of SuperLU \cite{SuperLU} the version 3.1 code bounded $\beta$ a priori
+\cite[Theorem~9.3]{Higham2002}, which assumes that the library forms every entry of its factors by a standard
+inner-product update, a property of its supernodal kernels that is not established. Since version 3.2 $\beta$ is
+measured: the residual $E=LDL^H-P(A-\sigma I)P^T$ of the stored factors is formed in floating point in blocks of rows,
+its rounding is bounded entrywise by $\abs{E_{ij}}\le\abs{(E_c)_{ij}}/(1-u)+\gamma_{t_{ij}+1}(\abs{L}\abs{D}
+\abs{L}^T)_{ij}$ with $t_{ij}$ at most the smaller number of stored nonzeros of rows $i$ and $j$, and
+$\norm{E}_2\le\norm{E}_\infty$ gives $\beta$. Lemma~4 then applies with no hypothesis on how the factors were
+computed; an unstable factorization shows as a large $\beta$. The derivation is machine-checked on 400 random and 17
+adversarial cases in exact rational arithmetic with no violation (\code{docs/proofs/D-01\_sparse-residual.md}). The
+factorization is not attempted when the predicted memory exceeds the budget; S3 is then \NC, never a count.
+
+\paragraph{Windows without eigenvectors.}
+For a claim of kind \code{window} without eigenvectors there are no enclosures, and the certifier certifies only the
+number of eigenvalues in $(a,b)$. At each edge $e$, Lemma~4 gives $\nu_e$, and two further counts at $e\pm\delta$
+with $\delta>\beta$ show, by the first inequality of Proposition~14 below, that the collar
+$[e-\beta_e,e+\beta_e]$ holds no eigenvalue, in which case $\nu_e=\#\{\lambda<e\}$ exactly. With both edges exact,
+$\nu_b-\nu_a=\#\{\lambda\in(a,b)\}$, and the statement is \CERT{} when this equals the number of claimed values and
+\FAIL{} otherwise; an eigenvalue near an edge makes it \INC. Figure~\ref{fig:inertia} shows the three cases.
+
+\begin{figure}[t]
+\centering
+\repofig{fig_inertia_completeness.png}{0.95}
+\caption{How inertia counts certify ``exactly $k$ eigenvalues below $\sigma$'' (illustrative spectra; concept figure,
+\code{docs/figures/INDEX.md}, entry C3). (a) A \code{lowest} claim. (b) A window claim without eigenvectors, with two
+further counts per edge. (c) What the count refuses: $\nu>k$ means an eigenvalue below $\sigma$ is missing from the
+claim (\FAIL); an eigenvalue inside the collar leaves the count undecided (\INC).}
+\label{fig:inertia}
+\end{figure}
+
+\subsection{Degenerate levels (S4)}
+
+\begin{result}{Theorem 6 (projector)}
+If an interval contains the enclosures of a cluster and exactly $g$ eigenvalues, with spectral projector $P$, at
+distance at least $\mathrm{sep}$ from the rest of the spectrum, and $s=\rho/\mathrm{sep}<1$, then
+$\norm{\hat Q\hat Q^H-P}\le s$, $\norm{XX^H-P}\le s+\eta$ and $\abs{\tr(X^HOX)-\tr(PO)}\le2g\norm{O}(s+\eta)$.
+\end{result}
+
+The quantity $\tr(PO)$ is a property of the level, independent of the basis chosen inside it (decision D-14); the
+expectation value in one vector of a degenerate level is not, and S4 certifies the former only. The sine-theta bound
+of Davis and Kahan \cite{DavisKahan1970} in Frobenius form, with the polar identities of Theorem~2$'$, gives a second
+bound $s_{\mathrm{DK}}=\norm{R}_F/(\sqrt{1-\eta}\,(\mathrm{dist}-w'))$, and S4 uses the smaller of the two (derived,
+\code{docs/proofs/E-07\_davis\_kahan.md}).
+
+\begin{result}{Proposition 7 (quantum numbers)}
+If $[A,S]=0$ and $S$ has eigenvalues $q_j$ on the range of $P$, the eigenvalues $m_j$ of $X^HSX$ satisfy
+$\abs{m_j-q_j}\le2s^2\norm{S}+(2\kappa+\kappa^2)(1+\eta)\norm{S}$ with $\kappa=(1-\eta)^{-1/2}-1$.
+\end{result}
+
+On a lattice of labels with spacing $h$, a bound below $h/2$ snaps to the exact label. Total spin is certified through
+the Casimir $S(S+1)$, and momentum labels are audited through $\norm{GV-\lambda V}$ with a leakage bound.
+
+\subsection{Symmetry sectors}
+
+\begin{result}{Theorem 8 (assembly; the radius $\varepsilon=\rho$ derived, \code{docs/proofs/thm8\_rho.md})}
+Let $V_1,\dots,V_m$ be sector isometries with $\sum_sd_s=n$, $W=[V_1\cdots V_m]$ and $B=\bigoplus_sH_s$, with
+$\eta=\norm{W^HW-I}<1$, and let the claims of every sector below a cut $E_{\mathrm{cut}}$ be certified and counted.
+Then the pooled claimed values match $\lambda_1,\dots,\lambda_K$ within $r+\varepsilon$, and
+$\lambda_{K+1}\ge E_{\mathrm{cut}}-\max_s\beta_s-\varepsilon$.
+\end{result}
+
+Because $\sum_sd_s=n$ is checked first, $W$ is square and its polar factor $\hat Q$ is unitary; with $\hat R=H\hat
+Q-\hat QB$ one has $\norm{\hat R}\le\norm{HW-WB}+(\norm{H}+\norm{B})\delta=\rho$, and since $\hat Q^HH\hat Q-B=\hat
+Q^H\hat R$ is Hermitian and $\hat Q^HH\hat Q$ has the spectrum of $H$, Weyl's inequality pairs the sorted eigenvalues
+of $H$ and $B$ within $\rho$. Before version 3.1 the code used $(1+\sqrt5)\rho/2$.
+
+\subsection{The whole spectrum}
+
+For a claim of kind \code{all}, \code{enclose\_spectrum} encloses every eigenvalue (\code{docs/theory.md}~\S6). If a
+conserved diagonal quantity is given, conservation is first checked exactly: no stored entry may join two different
+values of it, since otherwise the sector spectra are not the spectrum of $H$. Each block is diagonalised and enclosed
+as in S2 with $\abs{A}\abs{x}$ rounding bounds. A merged chain of intervals is \emph{counted} only if Theorem~2
+applies to it; the enclosure is \emph{complete} when every interval is counted and the counts add up to $n$, and then
+each interval holds exactly its count (Proposition~9 of \code{docs/theory.md}). Without Theorem~2 a merged interval
+holds at least one eigenvalue and nothing more is said. The predecessor package symveig reported such counts without
+proof and did not check conservation (Section~\ref{sec:e8}).
+
+\subsection{The exact layer (S6)}
+\label{sec:exact}
+
+The exact layer re-derives S2 and S3 of a \code{lowest} claim from the claim and the specification alone, in integer
+and rational arithmetic, so that its statements need no floating-point hypothesis. It is derived and machine-checked,
+and marked \code{UNVERIFIED} pending the check of rule D-12 (\code{docs/theory.md}~\S7). It has three parts.
+
+\paragraph{A scaled basis.}
+For each local space there are integer weights $w_k$ such that $D=\operatorname{diag}(\sqrt{w_k})$ makes every operator
+letter rational in $D^{-1}\cdot D$: for spin $S$, $w_k=\binom{2S}{k}$, so that $S^+\mapsto k+1$ and $S^-\mapsto2S-k+1$;
+for bosons $w_k=k!$; for fermions and spin~$1/2$, $w_k=1$. The many-body weights are products over sites and are at
+least~1. The declared model, with its binary64 couplings taken as the exact rationals they are, becomes
+$K=D^{-1}HD=(\mathrm{Re}+i\,\mathrm{Im})/\mathrm{den}$ with integer entries, and the Hermiticity of $WK=DHD$ is checked
+exactly.
+
+\paragraph{Exact radii.}
+For a claimed vector $x$, take $y=\fl(x/\sqrt{w})$ and the test vector $x'=Dy$, which equals $x$ up to one rounding.
+Then $\norm{Hx'-\lambda x'}^2=\sum_rw_r\abs{(Ky-\lambda y)_r}^2$ and $\norm{x'}^2=\sum_rw_r\abs{y_r}^2$ are rational,
+the radius is bounded from above with an integer square root, and Theorem~1 applies.
+
+\paragraph{Exact counts.}
+At a rational shift $g=a/b$, $M=\mathrm{den}\cdot D(bH-aI)D$ is an integer symmetric matrix congruent to
+$b\,\mathrm{den}\,(H-g)$. A floating-point $LDL^T$ factorization proposes factors, which are moved to dyadic grids; the
+residual of the rounded factors against $M$ is computed exactly with FLINT \cite{FLINT}, block by block of rows, and
+gives $\beta$. Because $D\succeq I$, Lemma~4 gives $\#\{\lambda<g-\delta\}\le\nu\le\#\{\lambda<g+\delta\}$ with
+$\delta=\beta/(b\,\mathrm{den})$.
+
+\paragraph{Exact ``$k$ lowest'' (Proposition 13).}
+The exact radii are merged into components $C_1<\dots<C_m$ with $m_j$ claimed values in $C_j$. The layer counts at
+one point in every gap and one above $C_m$, and brackets every component with $m_j\ge2$ by a point just below and a
+point just above it. If every count equals the number of claimed values below its point, and no component meets a
+window $[g-\delta,g+\delta]$, then each single-value component holds its indexed eigenvalue, each multi-value
+component's eigenvalues lie in its bracket widened by $\delta$, and $\lambda_{k+1}\ge g_{\mathrm{top}}-\delta$. A
+per-vector residual interval gives \emph{an} eigenvalue, not a distinct one; before version 3.1 a single count above a
+multi-value component was read as holding all its claimed eigenvalues, and two copies of the first excited vector
+claimed as ``the two lowest'' were certified although the ground state was missing. That case is now a test.
+
+\paragraph{Exact sectors.}
+Symmetry generators are site permutations and the spin flip with phases $\pm1$; commutation with $K$ and invariance
+of the weights are checked exactly. For a one-dimensional character with values in $\{\pm1,\pm i\}$ the orbit sums
+are Gaussian-integer vectors, mutually orthogonal, and the blocks they span are Gaussian-integer Hermitian matrices; a
+complex block is counted through its real embedding, in which every eigenvalue appears twice. Non-abelian groups are
+allowed when every irreducible representation met is one-dimensional, and completeness is checked by summing the
+sector dimensions. This is how the lower bound of Section~\ref{sec:crown} is obtained.
+
+\subsection{Thermodynamics and degeneracy counts (S7, S8)}
+
+The results of this subsection were written before their code (rule D-46), are derived with verification scripts in
+exact rational arithmetic or at 200 digits, and await the check of rule D-12 (\code{docs/theory.md}~\S9).
+
+\begin{result}{Proposition 14 (bracketing count; \code{docs/proofs/P14\_degeneracy\_bracketing.md})}
+Let a cluster of $g$ claimed pairs have enclosures certified distinct by Theorem~2 inside a level enclosure $J$, and
+let Lemma~4 at shifts $\sigma_{\mathrm{lo}}<J$ and $\sigma_{\mathrm{hi}}>J$ give $\nu_{\mathrm{lo}},\beta_{\mathrm{lo}}$
+and $\nu_{\mathrm{hi}},\beta_{\mathrm{hi}}$. Put $I_{\mathrm{in}}=(\sigma_{\mathrm{lo}}+\beta_{\mathrm{lo}},
+\sigma_{\mathrm{hi}}-\beta_{\mathrm{hi}})$ and $I_{\mathrm{out}}=[\sigma_{\mathrm{lo}}-\beta_{\mathrm{lo}},
+\sigma_{\mathrm{hi}}+\beta_{\mathrm{hi}}]$ and assume $I_{\mathrm{in}}\neq\emptyset$. Then
+$\#\{\lambda\in I_{\mathrm{in}}\}\le\nu_{\mathrm{hi}}-\nu_{\mathrm{lo}}\le\#\{\lambda\in I_{\mathrm{out}}\}$. If
+$J\subset I_{\mathrm{in}}$ and $\nu_{\mathrm{hi}}-\nu_{\mathrm{lo}}=g$, then $I_{\mathrm{in}}$ contains exactly $g$
+eigenvalues, the $g$ distinct eigenvalues matched to the cluster.
+\end{result}
+
+The hypothesis $I_{\mathrm{in}}\neq\emptyset$ was added on 10 November 2026, when the formalization in Lean exhibited a
+$1\times1$ counterexample to the first inequality without it; the code used the inequality only when $J\subset
+I_{\mathrm{in}}$, which implies the hypothesis, so no certificate changed. The certified statement is ``exactly $g$
+eigenvalues in an interval of stated width'', never ``$g$ equal eigenvalues'', which floating point cannot decide.
+
+\begin{result}{Proposition 15 (summed bounds; \code{docs/proofs/P15\_summed\_bounds.md})}
+If $v_k$ are certified values of $\tr(PO_k)$ with bounds $b_k$, then for complex coefficients $a_k$,
+$\abs{\sum_ka_k\tr(PO_k)-\sum_ka_kv_k}\le\sum_k\abs{a_k}b_k$.
+\end{result}
+
+Proposition~15 turns Theorem~6 into certified two-point functions $C_{ij}=\tr(PO_iO_j)$ and static structure factors
+$S(q)=N^{-1}\sum_{i,j}e^{iq\cdot(r_i-r_j)}C_{ij}$, and, through the decomposition of a non-Hermitian $O$ into Hermitian
+parts whose floating-point formation is checked to be exact, into correlations such as $\tr(PS^+_iS^-_j)$.
+
+\begin{result}{Proposition 16 (thermodynamic intervals; \code{docs/proofs/P16\_thermo\_intervals.md})}
+Let intervals $[l_k,h_k]$ with counts $c_k$, $\sum_kc_k=n$, contain every eigenvalue, interval $k$ exactly $c_k$ of
+them, as the complete whole-spectrum enclosure provides. With $E_0=\min_kl_k$, $a_k=l_k-E_0$, $b_k=h_k-E_0$ and the
+weight intervals $W_k=c_k[e^{-\beta b_k},e^{-\beta a_k}]$, interval arithmetic gives enclosures
+$Ze^{\beta E_0}\in\sum_kW_k$, $F=E_0-T\ln\tilde Z$, $U=E_0+\langle e\rangle$ with $\langle e\rangle\in\sum_kW_k[a_k,b_k]/
+\tilde Z$, and $C=\beta^2\operatorname{Var}(E)$ with $\operatorname{Var}(E)\in\sum_kW_k[a_k^2,b_k^2]/\tilde Z-\langle
+e\rangle^2$ intersected with $[0,\infty)$.
+\end{result}
+
+All arithmetic of Proposition~16 is done on intervals with dyadic ends at 192 bits, rounded outward, with enclosures of
+$\exp$ and $\ln$ from Taylor and $\operatorname{atanh}$ series with explicit remainders (Lemma~17,
+\code{docs/proofs/L17\_dyadic\_exp\_ln.md}). The derivation of Lemma~17 corrected a remainder constant of the code
+($8/7$ for arguments up to $0.35$ instead of $9/8$ up to $1/3$, because the rounded upper argument can exceed $1/3$ by
+one grid unit). The interval for $C$ can be wide at low temperature, since the quotient ignores the correlation of
+numerator and denominator; the certificate says so.
+
+\subsection{Extensions}
+\label{sec:extensions}
+
+Each extension below has a derivation document in \code{docs/proofs/} with sections Statement, Proof, Where the code
+implements it, Computational verification, Analytic cross-check and Status, a verification script, and an independent
+re-derivation that is not a human check (\code{docs/proofs/VERDICTS.md}); the check of rule D-12 is pending for all.
+
+\paragraph{Entanglement (C-03).}
+For a certified cluster and a cut $A|B$, with $\rho_A=\tr_B(P)/g$ and $\hat\rho_A=\tr_B(XX^H)/\tr(X^HX)$, the trace
+distance is at most $T^*=s+\eta/(1-\eta)$, the entropies differ by at most $T^*\ln(d_A-1)+h(T^*)$ when $T^*\le
+1-1/d_A$ \cite{Fannes1973,Audenaert2007}, and the entanglement spectra by at most $2T^*$ (Weyl).
+
+\paragraph{Correlations through a sector isometry (C-04).}
+For a symmetry-adapted claim audited by S1 and a cluster certified in the block, $\tr(P_sV^HOV)$ is a certified
+observable of the orthogonal projector $QP_sQ^H$, $Q$ the polar factor of $V$, within
+$2g\norm{O}_2\delta(1+\sqrt{1+\iota})$, $\delta=1-\sqrt{1-\iota}$ and $\iota\ge\norm{V^HV-I}$, plus the rounding of the
+compression.
+
+\paragraph{Parameter intervals (E-04).}
+For the affine interpolant $F_k(c)=H(c_k)+(c-c_k)H_1$ of certified grid Hamiltonians and $B\ge\norm{H_1}_2$, Weyl's
+inequality widens the S2 enclosures at $c_k$ into tubes over the segment with the ranks of S3 preserved; neighbouring
+tubes are intersected after a shift by the affinity defect, and a run of samples flanked by opposite certified
+orderings of two levels contains a crossing.
+
+\paragraph{Variational certificates (E-05).}
+For a trial vector $\psi$ that is not an ED eigenvector (a dense vector, a contracted matrix product state or a sparse
+configuration-interaction vector), $\lambda_1\le\theta=\langle\psi,H\psi\rangle/\langle\psi,\psi\rangle$ without
+hypothesis, an eigenvalue lies within the residual of $\theta$, and Temple's inequality
+$\lambda_1\ge\theta-r^2/(\rho-\theta)$ holds for $\theta<\rho\le\lambda_2$ \cite{Temple1928}. The Temple statement is
+\CERT{} only when $\rho$ comes from a certificate of a \code{lowest} claim on the same operator; a declared $\rho$ gives
+\status{CERTIFIED\_UNDER\_HYPOTHESIS}.
+
+\paragraph{Generalized problems (E-03).}
+For $Ax=\lambda Bx$ with $B=LL^H\succ0$, Theorem~1 for $L^{-1}AL^{-H}$ gives $\abs{\lambda-\mu}\le\norm{Ax-\mu
+Bx}_2/(\sqrt{\beta_c}\norm{x}_B)$ for a certified $\beta_c\le\lambda_{\min}(B)$, obtained from the inertia of
+$B-\beta I$; and $\nu(A-\sigma B)=\#\{\lambda<\sigma\}$ by Sylvester's law, so that a factorization with backward error
+$b$ counts within $b/\beta_c$.
+
+\paragraph{Moments and sum rules (C-07, first part).}
+For a certified cluster and Hermitian $M$, $\abs{\tr(PM)-\tr(XX^HM)}\le(2gs+g\eta)\norm{M}_2$. Applied to
+$M=OH^kO$, with $\tr(XX^HOH^kO)=\sum_i\langle Ox_i,H^kOx_i\rangle$ evaluated by repeated products with entrywise bounds
+propagated as $D_k=\norm{H}D_{k-1}+\varepsilon_k$, it certifies the moments $m_k=\tr(POH^kO)/g$ without forming $H^k$.
+The sum rules $m_0=\tr(PO^2)/g$ and $m_1-\tr(PHPO^2)/g=\tr(P[O,[H,O]])/(2g)$ are certified on explicitly formed
+matrices, and the record states whether the two certified intervals overlap.
+
+%======================================================================================================================
+\section{Certified spectral weights from certified moments}
+\label{sec:spectral}
+
+The moments of Section~\ref{sec:extensions} determine more than sum rules. For a certified cluster of the stored
+Hermitian $H$ (projector $P$, $g$ vectors, sine bound $s$, Gram defect $\eta$) and a stored Hermitian $O$, the
+measure $\mu(S)=\tr(POE(S)O)/g$, with $E(S)$ the spectral projector of $H$ on a Borel set $S$, is the spectral weight
+of $O$ on the level; it is a positive measure, because $OE(S)O$ is positive semidefinite. For a ground state and
+$O=O_q$ it is the dynamical structure factor, and $F(E)=\mu((-\infty,E])$ is its integrated weight. Turning
+interval moments into bounds through the Lanczos recurrence is numerically unstable, and the continued fraction
+(statement M4 of the moments family) is not implemented. The development version 3.3.0.dev0 bounds $F$ by a route that
+avoids the recurrence (statements M5 and M6, \code{certify\_ed/spectral\_bounds.py}). Its derivation is
+\code{docs/proofs/C-07b\_spectral\_bounds.md}; it is machine-checked, has not yet been re-derived independently, and is
+marked \code{UNVERIFIED} pending the check of rule D-12. The results of this section have their own record
+(\code{docs/results/RESULT\_m6\_spectral\_bounds.md}) and are not yet part of an evidence run.
+
+\paragraph{M5: Chebyshev moments.}
+The spectrum of $H$ lies in an interval $[\mathrm{lo},\mathrm{hi}]$ from Gershgorin's discs, whose lower end is
+narrowed by the lowest eigenvalue of a certificate whose S2 and S3 are \CERT. Binary64 numbers $c$ and $s$ with
+$(\mathrm{lo}-c)s\ge-1$ and $(\mathrm{hi}-c)s\le1$, checked in exact rationals, give $\mathcal A=(H-cI)s$ with
+$\norm{\mathcal A}_2\le1$. M5 encloses the Chebyshev moments $\tau_j=\tr(POT_j(\mathcal A)O)/g$, $j=0,\dots,K$, by the
+three-term recurrence on the vectors $Ox_i$, with the rounding of every step propagated through the Chebyshev
+polynomials of the second kind ($\norm{U_m(\mathcal A)}\le m+1$) and the projector term $(2gs+g\eta)\norm{O}^2$, since
+$\norm{T_j(\mathcal A)}\le1$.
+
+\paragraph{M6: integrated weight.}
+With $\xi=(E-c)s$, any polynomial $p$ with $p\ge\mathbf 1_{(-\infty,\xi]}$ on $[-1,1]$ gives
+$F(E)\le\int p\,d\mu=\sum_jd_j\tau_j$, where $d_j$ are the Chebyshev coefficients of $p$, and any $q\le\mathbf
+1_{(-\infty,\xi]}$ gives a lower bound in the same way, because $\mu$ is positive and supported in $[-1,1]$ after
+scaling. The sign conditions of every polynomial are decided in exact integer arithmetic (Bernstein coefficients, with
+de Casteljau subdivision rounded downward \cite{Farouki2012}); the sum over the moment intervals is exact and rounded
+outward; and a monotone envelope combines the energies. The weight of an interval $(a,b]$ then lies in
+$[L(b)-U(a),U(b)-L(a)]$ for the lower and upper bounds $L$ and $U$. Which polynomial is used is a heuristic on which
+the bound does not rest: Hermite interpolants of the step at the Gauss--Radau nodes of the moments, which are the
+Chebyshev--Markov--Stieltjes polynomials \cite{Akhiezer1965}, or at Chebyshev points of the first kind, ranked by an
+estimate, with a linear program as the fallback.
+
+\paragraph{Machine check.}
+The verification script \code{docs/proofs/verify\_C-07b.py} (seed 20261124) tested the M5 enclosures, the M6 bounds and
+the Bernstein proofs on 1288 random and 1009 adversarial cases in exact arithmetic with no violation. Its negative
+controls show that the checks can fail: claiming $s=\eta=0$ for tilted vectors breaks the M5 enclosure in 33 of 962
+moments, a spectral lower bound 20\% of the span too high breaks it in 442 of 962, and shifting one moment interval by
+more than its width moves the M6 bound in 221 of 260 queries and puts the exact $F$ outside it in 17. The first run
+found an edge case, a spectrum about $10^5$ away from zero for which the scale search gave up; the scale is now
+$1/\max(c-\mathrm{lo},\mathrm{hi}-c)$ rounded downward in exact rationals, and a test holds the case.
+
+\paragraph{The Heisenberg ring.}
+For $H=\sum_j\mathbf S_j\cdot\mathbf S_{j+1}$ on rings of $N$ sites and $O=\sqrt{2/N}\sum_j\cos(\pi j)S^z_j$, both
+restricted to the $S^z=0$ block, the ground state was certified with a \code{lowest} claim, and $F(E_0+\omega)$ was
+bounded at 81 energies $\omega\in[-0.25,5]$ plus the two edges of the window around the lowest excitation that carries
+weight (\code{experiments/m6\_spectral\_bounds.py}; data \code{results/m6\_spectral\_20261125/}). The reference $F$ is
+exact for $N\le14$ and, for $N=16$, a floating-point Lanczos run with full reorthogonalization, which measures the
+widths but on which the bounds do not rest. Table~\ref{tab:m6} gives the results. Over all sizes, moment orders
+$K=32$ to $256$ and energies, 1660 certified bounds were compared with the reference and none was violated. The total
+weight $\tau_0=S(\pi)$ is certified to an interval of width at most $4.6\times10^{-12}$ at every size. The fraction
+of the sum rule carried by the lowest level with weight, the lowest triplet at $q=\pi$, decreases with $N$ as the
+weight spreads over the two-spinon continuum. For $N\le10$ the moments determine the measure and $K=32$ already gives
+mean widths of $10^{-6}$ to $10^{-3}$; for $N=14$ and $16$ the mean width falls by a factor of about five to ten from
+$K=32$ to $256$. A rerun of $N=8$ and $10$ at $K=32$ from the final commit of the branch reproduced the 728 recorded
+values bit for bit. Figure~\ref{fig:m6} shows the bounds.
+
+\begin{table}[ht]
+\centering\small
+\caption{Certified bounds on the integrated $S^{zz}(\pi,\omega)$ of the Heisenberg ring
+(\code{docs/results/RESULT\_m6\_spectral\_bounds.md}; development version 3.3.0.dev0, Windows workstation, one thread).
+``Certify'' is the time to certify the ground state, S3 included. Widths are the mean widths of the 83 bounds at
+$K=32$ and $K=256$. The last column is the certified fraction $W_1/S(\pi)$ of the lowest window at $K=256$. S2, S3 and
+S4 are \CERT{} at every size; every bound holds.}
+\label{tab:m6}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}rrrlllll@{}}
+\toprule
+$N$ & dim & certify (s) & $S(\pi)$ certified & $S(\pi)$ reference & width $K{=}32$ & width $K{=}256$ & $W_1/S(\pi)$ \\
+\midrule
+8 & 70 & 0.88 & $[1.720905326285, 1.720905326285]$ & 1.720905326285 & 1.64e-06 & 1.64e-06 & $[0.9042, 0.9043]$ \\
+10 & 252 & 0.99 & $[1.854266634883, 1.854266634884]$ & 1.854266634883 & 7.23e-04 & 5.13e-04 & $[0.8699, 0.8700]$ \\
+12 & 924 & 2.03 & $[1.965817273499, 1.965817273501]$ & 1.965817273500 & 1.02e-02 & 5.96e-03 & $[0.8425, 0.8426]$ \\
+14 & 3432 & 11.54 & $[2.061814974297, 2.061814974300]$ & 2.061814974298 & 5.42e-02 & 5.09e-03 & $[0.8194, 0.8202]$ \\
+16 & 12870 & 225.44 & $[2.146151754138, 2.146151754142]$ & 2.146151754140 & 1.09e-01 & 2.33e-02 & $[0.7999, 0.8015]$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\repofig{m6_spectral_bounds.png}{0.95}
+\caption{Certified upper and lower bounds on the integrated weight $\int_0^\omega S^{zz}(\pi,\omega')\,d\omega'$,
+normalised by $S(\pi)$, for the Heisenberg ring of $N=12$ sites ($S^z=0$ block, dimension 924; exact reference) and
+$N=16$ sites (dimension 12,870; Lanczos reference), at moment orders $K=32$, 64, 128 and 256
+(\code{results/m6\_spectral\_20261125/}; development version 3.3.0.dev0).}
+\label{fig:m6}
+\end{figure}
+
+\paragraph{Limits.}
+The polynomials are not the optimal Chebyshev--Markov--Stieltjes polynomials for the given moment intervals, and
+nothing is claimed about the distance to them. From moments known to about $10^{-11}$ the modified Chebyshev algorithm
+recovers about 20 recurrence coefficients whatever $K$ is, which is where the Radau polynomials stop improving and the
+Chebyshev--Hermite polynomials take over. The window edges for the lowest excitation are taken from the reference
+spectrum, but they are query points only. The spectral density itself, a line shape, is not bounded; only integrated
+weights are. M6 takes 0.35 to 9.4~s per energy, dominated by the exact proofs on Python integers. A square-lattice
+version of the experiment is prepared (\code{experiments/m6\_square\_lattice.py}) and has been run only as a smoke
+test on a $4\times2$ torus.
+
+%======================================================================================================================
+\section{Software}
+\label{sec:software}
+
+CERTIFY-ED is a Python package (\code{certify\_ed}) with a command line, a one-call entry point and a library
+interface. According to the numbers generated for the 3.2.1 evidence run
+(\code{results/run\_full\_20261105/paper/numbers.tex}), the core package has 51 modules and about 14,100 lines of code.
+It never calls the producer's code, with one opt-in exception: a matrix-free operator given as a Python file runs
+only with \code{--allow-code}.
+
+\paragraph{Data flow.}
+A claim passes through five stages, which the architecture document of the software
+(\code{docs/\allowbreak project/\allowbreak software/\allowbreak 01\_architecture.md}) describes in full. An importer
+turns the producer's
+output into a claim and, where possible, a specification: from QuSpin objects \cite{QuSpin1,QuSpin2}, from a producer
+bundle directory (files in NPY, NPZ, HDF5, CSV, text, JSON or Matrix Market format), or from the native output of
+H$\Phi$ \cite{HPhi}, DiagHam, SPINPACK and ALPS \cite{ALPS2011}. Options select the statements, from a preset or by
+default every statement whose inputs exist, with budgets of time and memory. The certifier runs the statements in
+order. For S1 it builds the reference matrix from the specification with two independent builders and compares; the
+difference plus the builders' rounding becomes the model shift, which is added to every later radius so that all
+bounds refer to the declared model rather than to the producer's matrix (decision D-22). S3 uses a dense
+Bunch--Kaufman factorization \cite{BunchKaufman1977} or the sparse SuperLU factorization with the measured residual of
+Section~\ref{sec:math}. The results are assembled into a certificate with its scope block and sealed by a hash of its
+canonical JSON. A certificate can be loaded with an integrity check, validated against a JSON Schema, turned into a
+one-sentence summary, a full report or a methods paragraph, rendered as an offline HTML page, or re-checked by an
+independent verifier written in C.
+
+\paragraph{Three paths beyond single claims.}
+The assembly of symmetry sectors checks that every block is present, that the blocks are mutually orthogonal and that
+their dimensions add up, and returns the $K$ lowest eigenvalues of the whole Hamiltonian with a common radius and a
+lower bound on the next (Theorem~8). The whole-spectrum enclosure, which replaced the engine of symveig (decision
+D-42), encloses every eigenvalue, optionally sector by sector, certifies the counts by the cluster theorem and checks
+conservation and Hermiticity exactly. The exact sector re-check re-derives the lowest eigenvalues of a symmetry sector
+in integer arithmetic with orbit-sum bases.
+
+\paragraph{The trusted part.}
+The exact layer relies on no floating-point model: floating point only proposes a factorization, and integer
+arithmetic through FLINT \cite{FLINT} checks it. It is kept small on purpose, in the sense of de Bruijn's criterion
+that the part of a system one must trust should be small enough to read \cite{BarendregtWiedijk2005}: 713 lines of
+code without blank lines, comments and docstrings, 433 in \code{checker.py} and 280 in \code{exact\_sectors.py}.
+
+\paragraph{Rules for changes.}
+Two rules of the project govern the code
+(\code{docs/\allowbreak project/\allowbreak software/\allowbreak 08\_tests\_and\_mutation.md}). No change may make a
+statement \CERT{} where the previous release said less unless it implements a theorem already in \code{docs/theory.md},
+and every new code path that can affect a status needs a negative control, a test with a planted error that must not
+come out \CERT. A bound may become tighter only on the strength of a derivation document, while a looser correction may
+go in at once with a negative-control test (decision D-59).
+
+\paragraph{Tests.}
+The test suite of the 3.2.1 evidence run had 1180 tests, of which 1172 passed and 8 were skipped because an optional
+dependency or platform was absent; that of the 3.2.3 run had 1212 passed and 15 skipped. Besides unit tests the suite
+contains manufactured spectra with known eigenvalues, metamorphic relations between related inputs, adversarial
+inputs, a negative control of the floating-point probe that sets the processor's flush-to-zero flags, tests that pin
+the formulas of the derivation documents so that a change to a constant is caught even where value tests cannot see
+it, and tests written from the survivors of mutation analysis (Section~\ref{sec:e6}).
+
+\paragraph{The development version.}
+Version 3.3.0.dev0, not yet released, adds a pool of worker processes for independent certifications (roadmap item
+D-04), products on a GPU for S2 that equal the CPU products bit for bit (D-05; Section~\ref{sec:cost}), the statements
+M5 and M6 of Section~\ref{sec:spectral}, the nine-coupling crown model of Section~\ref{sec:crown}, and the corrections
+of two review rounds. Its full test suite passed with 2212 tests and 83 skipped on the integration branch.
+
+%======================================================================================================================
+\section{Evidence: soundness, value and tightness}
+\label{sec:evidence}
+
+\subsection{Evidence policy}
+
+The evidence for what CERTIFY-ED does comes from eleven experiments, E0 to E10, each a script that writes a record
+(\code{data.json}, \code{environment.json}, \code{run.log}) into a run directory (\code{docs/project/experiments/}).
+The reproduction driver (\code{certify-ed reproduce}) runs the test suite, the experiments and two number scripts into
+one directory; the number scripts turn the records into the macros, tables and figures of a manuscript and check every
+qualitative sentence the text makes about them. Every cited or released version gets one full evidence run from one
+computational source, identified by a hash over the source files that can affect a result (decisions D-24 and D-44).
+The numbers of Sections~\ref{sec:evidence} to~\ref{sec:apps} are those of the 3.2.1 run \code{run\_full\_20261105}
+unless another record is named. The later 3.2.3 run \code{run\_full\_20261112b} (tag \code{v3.2.3}, source hash
+\code{bfc115e824386443}) completed every step; its number scripts reproduced 44 of 44 and 61 of 61 checked sentences,
+and no status changed against 3.2.1 except one cost point that reached its time limit
+(\code{docs/results/RESULT\_evidence\_run\_3.2.3.md}). The memory caps are 4.5~GiB in E2 and 5~GiB in E4. Each
+experiment answers one question that an earlier result, a referee report or a cost argument made necessary, and each
+has a known truth against which its instrument is checked.
+
+\subsection{E0: do the bounds hold?}
+
+E0 tests the bounds against references that share no code with CERTIFY-ED: ball arithmetic in Arb
+\cite{Johansson2017}, exact counts, an independent builder and QuSpin. (a) On 273 matrices, 6,391 enclosed eigenpairs
+were compared with Arb balls, the largest of width $1.4\times10^{-14}$; no enclosure missed its eigenvalue. (b) On 300
+matrices, 2,400 inertia counts were compared with exact counts, with a median measured backward error
+$\beta=3.4\times10^{-12}$ and a largest $4.4\times10^{-7}$; no count was wrong. The largest $\beta$ was
+$7.5\times10^{-3}$ under the a-priori bound of 3.0.0 and $5.4\times10^{-3}$ in 3.1.0; the measured residual of D-01
+lowered it by four orders of magnitude. (c) On 280 models the largest difference between the builder and QuSpin was
+$3.2\times10^{-16}$. (d) As a negative control, under the Jordan--Wigner direction of an earlier version 40 of 80
+fermion models disagree with QuSpin, while the 40 number-conserving models, for which the direction does not matter,
+all agree. E0 recorded no violation.
+
+\subsection{E1: which practice catches which error?}
+
+The second referee report on the first version said that the gap between what practitioners already do and what
+certification adds had not been demonstrated. E1 answers that objection by applying three practices to the same set of
+results for the Heisenberg chain of 12 sites and its symmetry sectors: P1, the producer's own residual check with the
+producer's matrix (largest relative residual at most $10^{-8}$); P2, recomputation with QuSpin from the intended
+model; and P3, the certificate with an independently written specification. Of 15 results, F0 is correct (the positive
+control), F12 is correct but quotes a single-vector observable of a degenerate level, and 13 are wrong through
+ordinary mechanisms (Table~\ref{tab:e1}). The outcome per case is identical in the 3.0.0, 3.1.0 and 3.2.1 runs.
+
+\begin{table}[ht]
+\centering\small
+\caption{E1: thirteen erroneous results and what each practice does with them (\code{E1\_failure\_matrix.md}, record of
+the 3.2.1 run). ``Passes'' means the practice accepts the result. The last column says whether the certificate locates
+the error in a term, a bond or a factor.}
+\label{tab:e1}
+\begin{tabular}{@{}p{3.6cm}p{4.3cm}llll@{}}
+\toprule
+Case & Mechanism & P1 & P2 & P3 & located \\
+\midrule
+F1 coupling sign & $J\to-J$ on one $zz$ bond & passes & flags & \FAIL & yes \\
+F2 Pauli/spin convention & couplings for $S=\sigma/2$ used with Pauli matrices & passes & flags & \FAIL & yes \\
+F3 site order & sites numbered right to left; field on site 0 & passes & passes & \FAIL & yes \\
+F4 Jordan--Wigner sign & wrap-around hopping without the string & passes & flags & \FAIL & yes \\
+F5 sector as global & $S^z=0$ states reported as the model's lowest & passes & flags & \FAIL & yes \\
+F6 $k=0$ as $S^z=0$ & $k=0$ states reported as the $S^z=0$ lowest & passes & flags & \FAIL & yes \\
+F7 Lanczos ghosts & 400 steps without reorthogonalisation & passes & flags & \INC & yes \\
+F8 loose convergence & tolerance $10^{-4}$ reported to 10 digits & flags & flags & \FAIL & no \\
+F9 swapped vectors & vectors of levels 0 and 1 interchanged & flags & passes & \FAIL & no \\
+F10a phase, ground sector & sign error in one momentum-basis vector & passes & flags & \FAIL & yes \\
+F10b phase, high sector & same error in a block with no state below the cut & passes & passes & \FAIL & yes \\
+F11a missing ground sector & ground-state block omitted from the pooled list & passes & flags & \FAIL & yes \\
+F11b missing high sector & fully polarised block omitted & passes & passes & \FAIL & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+P1 flags only the two accuracy errors F8 and F9, because a residual check with the producer's own matrix cannot see a
+wrong matrix, a wrong scope or a missing sector. P2 flags 9 of the 13 and misses F3, F9, F10b and F11b: a site-order
+mismatch, swapped vectors whose values are right, and two errors in blocks that hold no state below the cut, none of which changes the recomputed eigenvalues below the cut. P3 refuses all 13, with 12 \FAIL{} and the Lanczos ghosts of F7 \INC, and locates the error in
+11 of them; for F2 the least-squares fit of S1 names a global factor of 4.000 between the producer's matrix and the
+declared model. For the control F12 the certificate reports the basis-independent $\tr(PO)$ of the level with a bound
+of $9.1\times10^{-13}$, while the single-vector values of the same observable spread by $0.059$ across bases of the
+level. Figure~\ref{fig:e1} shows the matrix.
+
+\begin{figure}[t]
+\centering
+\repofig{fig_failure_matrix.png}{0.95}
+\caption{The E1 failure matrix: the results checked by three practices (\code{docs/figures/INDEX.md}, entry E1),
+drawn from the E1 record of the 3.1.0 run \code{run\_full\_20261022}. The outcome of every case under every practice
+is identical in the 3.0.0, 3.1.0 and 3.2.1 runs (\code{E1\_failure\_matrix.md}), so the figure describes the 3.2.1
+run cited in the text as well.}
+\label{fig:e1}
+\end{figure}
+
+\subsection{The planted-error corpus}
+
+E1 tests the certifier on one model. The planted-error corpus (\code{corpus/}) tests it as a black box on 60 small ED
+results in the producer bundle layout, each with one known error or none, generated deterministically, in 14 error
+classes, so that any checker can be run on them; a runner scores the checker's output without trusting it
+(\code{docs/project/software/08\_tests\_and\_mutation.md}). A case is \emph{detected} when a statement that the error
+makes false is \FAIL{} or \INC, \emph{unsound} when such a statement is \CERT, and \emph{silent} when all of them are
+\NC; a \emph{false alarm} is a \FAIL{} statement on a case that a correct checker certifies. The run of 29 October
+2026 scored CERTIFY-ED at 53 of 53 planted cases detected, 8 of them by refusing the input, with none missed, unsound or
+silent, no false alarm, and 7 of 7 controls clean (Figure~\ref{fig:corpus}). One expectation of the corpus was revised
+before that score, and the scores before the revision are kept with it (decision D-58).
+
+\begin{figure}[t]
+\centering
+\repofig{fig_corpus_detection.png}{0.95}
+\caption{CERTIFY-ED on the planted-error corpus (\code{docs/figures/INDEX.md}, entry E5; corpus run of 29 October
+2026): 53 planted cases in 14 error classes and 7 controls. Each cell counts, for the cases of a class, the status of
+one statement; a hatched cell is a refused input; a thick frame marks the statements the corpus expects not to be
+certified for that class.}
+\label{fig:corpus}
+\end{figure}
+
+\subsection{E3: how tight are the bounds?}
+
+A bound can be true and useless. E3 compares each kind of bound with a known truth (\code{E3\_tightness.md}). Over 10
+decades of ARPACK tolerance the Kato--Temple intervals track the actual error of the claimed eigenvalue, at most 8
+times above it. The binary64 residual radii are 2.5 to 5.8 times the residuals computed in Arb without any model
+assumption, which is the price of the worst-case rounding terms of the standard model. The shift of S3, placed at 0.9
+of the floating-point gap estimate, sufficed at the first factorization in all 11 distinct cases. The weakest point is
+the assembly of sectors: over 134 sectors the radius is $1.3\times10^{-10}$ against an actual error of
+$5.2\times10^{-14}$, about three orders of magnitude loose. The single-pair radii and Kato--Temple intervals are within
+a factor of ten of the truth on these problems.
+
+\subsection{E5: an error that nobody planted}
+\label{sec:e5}
+
+The planted errors of E1 invite the objection that errors chosen by the authors of a method may be the ones the method
+catches. While measuring cost, ARPACK \cite{ARPACK}, asked through QuSpin for the eight lowest states of the $4\times4$
+Heisenberg $S^z=0$ block (dimension 12,870), sometimes returned only three of the four members of a fourfold level,
+followed by two members of the next level. Each returned pair is an accurate eigenpair; the list is not the eight
+lowest eigenvalues. Decision D-27 made this an experiment, reported at whatever frequency seeded runs give, and
+rejected both re-seeding until the run came out clean and dropping the point (\code{E5\_arpack\_multiplet.md}).
+
+In 3 of 12 seeded runs ARPACK returned the fourfold level at $-8.88644241$ with only 3 of its 4 members; the next
+level is at $-8.79437891$. The residual check P1 flags none of the three, since every returned pair is accurate. A
+second ARPACK run from another start (P2) flags 2 of the 3 but also 3 of the 9 correct runs: when two runs disagree,
+the disagreement does not say which is wrong. The certificate of the claim ``these are the eight lowest eigenvalues''
+gives S3 \FAIL{} for all 3 incomplete runs, after 4 factorizations, and \INC{} for the 9 correct runs, because their
+eighth value belongs to a degenerate level that continues beyond it, and a claim that cuts a multiplet is \INC, not
+\FAIL{} (decision D-46). For the claim a careful user would make, the lowest states up to the first gap, S3 certifies
+the correct runs with $k=7$ and diagnoses the cut multiplet in the incomplete ones ($k=6$). No incorrect result was
+certified.
+
+\subsection{E6: how many faults in the certifier do the tests detect?}
+\label{sec:e6}
+
+A certifier is itself code. Mutation analysis measures how many deliberate faults in its verification core the test
+suite detects: a mutant is a copy of the code with one changed arithmetic operator, comparison, boolean operator, sign
+or constant; 64 mutants are sampled with a fixed seed from the mutation sites of the core modules, and a mutant is
+killed if any test fails (\code{docs/project/experiments/E6\_mutation.md}). Table~\ref{tab:e6} gives the runs. In the
+3.2.1 run 36 of 64 mutants were killed. Of the 28 survivors, 18 need inspection, 5 change a rounding allowance in a
+worst-case bound, 2 exchange a strict and a non-strict comparison, 1 changes a heuristic parameter, and 2 have no
+effect on any statement; the inspection worksheet suggests 7 soundness-relevant gaps of the tests. Survivors of
+earlier runs were turned into the test files \code{test\_gaps\_from\_mutation} and its continuations. The 3.2.3 run
+killed 37 of 64 with no timeout (score 0.578125); its sample differs from that of 3.2.1 because the mutation sites
+grew in four modules, and of its 27 survivors, 19 await a verdict by a person
+(\code{docs/results/RESULT\_evidence\_run\_3.2.3.md}).
+
+\begin{table}[ht]
+\centering\small
+\caption{E6: mutation analysis of the verification core (\code{E6\_mutation.md}). The mutation sites grow with the
+code, so the scores of different versions describe different test suites against different code and are not a
+trend.}
+\label{tab:e6}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Run & Version & mutation sites & killed of 64 & score \\
+\midrule
+\code{run\_full\_final} (18 October 2026) & 3.0.0 & 2805 & 35 & 0.546875 \\
+\code{run\_full\_20261021} & 3.0.0 & 2834 & 30 & 0.46875 \\
+\code{run\_full\_20261022} & 3.1.0 & 3051 & 38 & 0.59375 \\
+\code{run\_full\_20261105} & 3.2.1 & 3639 & 36 & 0.5625 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Mutation analysis has a limit that the project records (decision D-35): a mutant that shrinks a worst-case rounding
+term cannot be detected by tests, because real rounding errors are far below the worst case; such terms are protected
+by the exact checker and by tests that pin the formulas. Decision D-46 records the converse lesson: two soundness gaps
+were found by writing proofs against the code, and mutation analysis could not have found them.
+
+%======================================================================================================================
+\section{Cost and reach}
+\label{sec:cost}
+
+\subsection{E2: what S1 to S3 cost and where they stop}
+
+A certificate that costs more than a user will pay is not used, and the points where the statements stop are part of
+the claim. E2 measures the certifier's time and memory on blocks of growing dimension under a 4.5~GiB cap and a 900~s
+limit per point (\code{E2\_cost.md}). S2 is cheap: its largest time was 0.14~s. S1 took at most 3.36~s, for an $S^z$
+block of dimension 48,620. S3 is the expensive statement, because it factorizes: it was certified up to dimension
+12,870, and the $4\times4$ Heisenberg block of that dimension took 758.7~s with a peak of 1651~MiB. The fill of the
+sparse factorization grew with exponent 2.0 in the dimension over three points; for the $4\times4$ block at $J_2=0.5$
+the predicted memory exceeded the cap, and S3 is \NC{} with that reason, never a count; for the largest block,
+dimension 112,720, the allocation failed after 728~s, and two points reached the 900~s limit. S3 therefore reaches
+dimensions of about $10^4$ on a workstation, where S2 reaches $2^{24}$ matrix-free.
+
+\subsection{E4: four research workflows}
+
+E0 to E3 test the statements one at a time; a user meets them inside a workflow (\code{E4\_workflows.md}, 5~GiB cap).
+W1 certifies the lowest states of each of the 242 $(S^z,k)$ blocks of the $J_1$--$J_2$ ring with $N=16$ and $J_2=0.3$
+and assembles them by Theorem~8: the 13 lowest eigenvalues of the whole Hamiltonian are certified with a common radius
+of $3.3\times10^{-9}$, and the next eigenvalue is bounded below by $-5.708271753$, in 53~s of certification. W2 takes
+the Haldane triplet of the spin-1 ring with $N=8$: its $S^z$ labels are certified as exactly $-1$, $0$ and $1$ within
+$1.8\times10^{-11}$, and $\tr(PS^z_0S^z_1)=-1.342925102940$ within $4.7\times10^{-12}$, while the expectation value in
+one vector of the triplet ranges from $-0.66$ to $-0.32$ depending on the basis chosen. W3 is a matrix-free producer
+at dimension 1,048,576, a transverse-field Ising chain: S2 is certified through the reference operator with radius
+$8.6\times10^{-12}$, S1 by random probes with a difference of $1.1\times10^{-16}$ and marked probabilistic, and S3 and
+S8 are \NC{} with the summary ``no stored matrix to factorize''. W4 certifies the ground-state energies of four
+commonly quoted benchmark systems (Table~\ref{tab:w4}); E7 re-derives them in exact arithmetic.
+
+\begin{table}[ht]
+\centering\small
+\caption{W4: certified ground-state energies, lower bounds on the gap to the next eigenvalue and S2 radii of four
+benchmark systems in floating point (\code{E4\_workflows.md}, 3.2.1 run). Their exact re-check is
+Table~\ref{tab:e7}.}
+\label{tab:w4}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llll@{}}
+\toprule
+System & $E_0$ & gap bound & radius \\
+\midrule
+Heisenberg chain, $N=20$ & $-8.904386529876408$ & 0.74868842096234 & $3.0335081829017624\times10^{-10}$ \\
+Majumdar--Ghosh chain, $N=20$ & $-7.499999999999985$ & 0.26822104708744726 & $2.742543589387109\times10^{-10}$ \\
+$4\times4$ Heisenberg & $-11.228483208428848$ & 0.5207381530311305 & $1.1451257016742383\times10^{-12}$ \\
+$4\times4$ $J_1$--$J_2$, $J_2=0.5$ & $-8.457923351394804$ & 0.28704072776169015 & $2.5616225434434264\times10^{-12}$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Parallel certification and GPU products (development version)}
+
+The two results of this subsection belong to the development version and have their own records; neither changes a
+bound.
+
+\paragraph{Worker processes (D-04).}
+Independent certifications, such as the sectors of a symmetry decomposition, can run in worker processes, each with a
+share of the process memory cap (\code{certify\_ed/parallel.py}). On 16 cores reserved on a shared Linux host, the
+eleven $U(1)$ sectors $n_\uparrow=3$ to $13$ of the periodic Heisenberg chain of 16 sites (dimensions 560 to 12,870),
+each claiming its three lowest eigenpairs, took 324.8~s with one worker, 183.0~s with two, 125.9~s with four and
+118.0~s with eight, speed-ups of 1.77, 2.58 and 2.75, bounded by the longest single task of about 111 to 119~s
+(\code{docs/results/RESULT\_d04\_speedup.md}). At every worker count the statement records and the arrays of every
+certificate equal those of the one-worker run bit for bit, apart from the fields that record time.
+
+\paragraph{GPU products for S2 (D-05).}
+For a stored sparse operator, the two products from which every S2 radius is built, $HX$ and $\abs{H}\abs{X}$, can be
+formed on a GPU (\code{certify\_ed/gpu.py}; \code{docs/results/RESULT\_D-05.md}). The kernels perform the operations of
+SciPy's CSR product in SciPy's order, each product and each sum rounded once to nearest, compiled with contraction to
+fused multiply--add disabled; under binary64 rounding to nearest with gradual underflow these are the same operations
+as on the CPU, so the products, and every bound built from them, equal the CPU's bit for bit, and no rounding analysis
+is added. A probe of the device's arithmetic found no mismatch against the CPU for $+$, $-$, $\times$, $/$, square root and
+the separately rounded $a\cdot b+c$ in four input families of 200,000 cases each, and showed that with the compiler's
+default flags $a\cdot b+c$ is contracted to a fused operation and then differs from the separately rounded value in
+1,115 to 25,716 cases per family; the kernels are therefore compiled without contraction. A spot check of 64 rows
+of every product against SciPy runs on each call, and any failure falls back to the CPU with the reason recorded. On an H100,
+for Heisenberg chains in the full space with eight vectors, the products at $N=24$ (dimension 16,777,216) took 3.031~s
+on one CPU thread and 0.675~s on the GPU, and the whole residual computation 17.797~s and 9.688~s; the rest of the
+residual computation stays on the CPU. The certificates of \code{device="gpu"} and \code{device="cpu"} were identical
+apart from timings and the device field.
+
+%======================================================================================================================
+\section{Exact benchmarks and applications to published proofs}
+\label{sec:apps}
+
+\subsection{E7: benchmark energies without a floating-point hypothesis}
+
+E7 re-derives the four benchmark energies of W4 with the exact layer, which needs no floating-point hypothesis
+(\code{E7\_exact\_benchmarks.md}). All four are \CERT{} by S6 (Table~\ref{tab:e7}). The exact radii, from
+$1.10\times10^{-14}$ to $3.72\times10^{-14}$, are about 65 to 8,200 times smaller than the floating-point S2 radii of
+Table~\ref{tab:w4}, mainly because the residual of the stored vector is computed exactly instead of being bounded with
+worst-case rounding terms; each exact check took 238 to 684~s. The exact radii, like the whole exact layer, rest on
+the lemmas of the exact layer and its Proposition~13, which await the check of rule D-12.
+
+\begin{table}[ht]
+\centering\small
+\caption{E7: the benchmark energies of Table~\ref{tab:w4} re-derived by the exact layer (\code{E7\_exact\_benchmarks.md},
+3.2.1 run). The energies are the claimed values; the radius is the exact one.}
+\label{tab:e7}
+\begin{tabular}{@{}lll@{}}
+\toprule
+System & $E_0$ & exact radius \\
+\midrule
+Heisenberg chain, $N=20$ & $-8.904386529876417$ & $3.719300427741141\times10^{-14}$ \\
+Majumdar--Ghosh chain, $N=20$ & $-7.499999999999966$ & $3.392663354321801\times10^{-14}$ \\
+$4\times4$ Heisenberg & $-11.228483208428859$ & $1.768521922198284\times10^{-14}$ \\
+$4\times4$ $J_1$--$J_2$, $J_2=0.5$ & $-8.45792335139484$ & $1.099862660492978\times10^{-14}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Majumdar--Ghosh point has the analytic ground-state energy $-3N/8=-7.5$ for $N=20$ \cite{MajumdarGhosh1969};
+the stored claimed value is $-7.5+38\cdot2^{-50}$ (printed to 17 digits as $-7.4999999999999662$ in
+\code{docs/lean/VERIFICATION\_REPORT.md}), which lies $3.375\times10^{-14}$ from $-7.5$ and so inside its exact radius
+of $3.393\times10^{-14}$. The analytic value thus lies in the certified interval, a check of the instrument against an
+exact result. The Lean recomputation of Section~\ref{sec:lean} encloses this eigenvalue far more tightly.
+
+\subsection{E8: the whole-spectrum enclosure against symveig}
+\label{sec:e8}
+
+The predecessor package symveig \cite{Symveig} enclosed whole spectra sector by sector. An audit found four problems:
+among them, it reported the number of eigenvalues in a merged interval without a theorem that justifies the count, and
+it did not check that the stored matrix conserves the quantum number by which it split the matrix into sectors; in an
+audited case with a staggered field, 58 of 64 eigenvalues lay outside its enclosures (\code{E8\_symveig\_comparison.md};
+\code{docs/symveig\_audit.md}). Its engine was replaced by the whole-spectrum enclosure of Section~\ref{sec:math}
+(decision D-42). On 17 configurations up to dimension $d=4096$, the enclosure of CERTIFY-ED was complete in every
+case, its median half-widths at $d=4096$ were 17 to 29 times smaller than symveig's, and the fitted growth of the
+half-widths with $d$ was $d^{0.95}$ against $d^{1.48}$ for the median and $d^{1.05}$ against $d^{1.47}$ for the
+largest, at 1.0 to 2.0 times symveig's time. The smaller growth comes from the $\abs{A}\abs{x}$ rounding bound with
+row-width factors, which, unlike a bound of the form $\gamma_{4n}\norm{A}_F\norm{x}$, does not grow with the
+dimension.
+
+\subsection{The pyrochlore crown cluster}
+\label{sec:crown}
+
+Kr\'anitz and Penc bound the ground-state energy per site of the pyrochlore Heisenberg antiferromagnet from below by
+the lowest eigenvalue of an 18-site ``crown'' cluster Hamiltonian whose couplings are optimised under the constraint
+that the cluster Hamiltonians sum to the lattice Hamiltonian \cite{KranitzPenc2026}. The argument, $e_{\mathrm{GS}}\ge
+\lambda_{\min}(H_{\mathrm{crown}})$, is taken from the paper; what CERTIFY-ED supplies is a certified value of
+$\lambda_{\min}$ at the published couplings (\code{docs/theory.md}~\S8; experiment E9).
+
+\paragraph{Spin 1/2, reduced model.}
+In the reduced model of the paper the two outer sites of each tetrahedron are equivalent ($c_3=c_{12}$) and the
+second-neighbour coupling $c_5$ is zero; the couplings are $c_1=381414/10^7$ and $c_3=c_{12}=817957/10^7$, with $c_{17}$
+fixed by the embedding constraint. The certifier works with $KH$ for $K=8\times10^7$, whose couplings are integers that
+satisfy the constraint exactly. By SU(2) symmetry every multiplet has a member with $S^z=0$, so the $S^z=0$ block
+suffices; it is split into 128 sectors by the characters of a group $\mathbb Z_2^7$ of symmetries, the largest of
+dimension 3890, and exact counts in every sector (Section~\ref{sec:exact}) give
+\begin{equation}
+\lambda_{\min}(H_{\mathrm{crown}})\ge-0.5501582988212038.
+\end{equation}
+The floating-point layer certifies $\lambda_{\min}\ge-0.550158299$, and the floating-point estimate is
+$-0.5501582979$. The bound agrees with the reduced-model value $-0.550158(2)$ of the paper in the six decimals printed
+before the digit in parentheses. It says nothing about the paper's headline bound $-0.549832(8)$, which is computed
+with more couplings.
+
+% N-11 is stated publicly here; decisions D-34 and D-51 cover the S = 1 discrepancy only. Sarang may prefer the authors
+% to see this paragraph before submission as well.
+\paragraph{Spin 1/2, the nine-coupling model (development version).}
+The headline bound is computed with nine free couplings, printed in the paper next to $e_{\mathrm{LB}}=-0.549832(8)$
+(\code{docs/lean/APPS\_NEXT.md}, item N-11). The orbit table of the 153 site pairs of the cluster, parsed from the arXiv
+source, equals the table typed into the code and partitions the pairs into 19 orbits; the explicit Hamiltonian of the
+paper agrees with it orbit by orbit; and the permutations that map every orbit onto itself form a group of order 12,
+the point group $D_{3d}$ of the cluster. These comparisons are equalities of integer pairs, so one misplaced site would
+fail them. The paper does not say what the digit in parentheses of a printed coupling means; read as one more decimal,
+the printed numbers determine the Hamiltonian, with exact rational couplings. At those couplings the 48,620 states
+with $S^z=0$ split into 8 blocks of dimensions 5961 to 6194 under a symmetry group of order 8, the largest whose
+characters take only the values $\pm1$ and $\pm i$ that the exact layer handles. The floating-point layer counts no
+eigenvalue below a dyadic shift in any block, and the Rayleigh quotient of the Lanczos vector rounded to integers,
+evaluated in integer arithmetic, bounds $\lambda_{\min}$ from above:
+\begin{equation}
+\lambda_{\min}\in[-0.5498329145683885,\,-0.5498329144473251].
+\end{equation}
+The lower end holds under the binary64 model; the upper end needs no floating-point hypothesis. The exact re-check of
+all 8 blocks, pre-registered with a fixed shift and run on 22 November 2026 as eight processes with a 16~GiB cap each,
+counted no eigenvalue below the shift in any block and raises the lower end to $-0.5498329145062226$ without any
+floating-point hypothesis; it rests on the lemmas of the exact layer and its Proposition~13, which await the check of
+rule D-12. By the argument of the paper, the ground-state energy per site of the spin-1/2 pyrochlore Heisenberg
+antiferromagnet is then at least $-0.549832915$, which is $0.0003254$ above the reduced-model bound. Under another
+reading of the printed digits this result does not apply.
+
+\ifshowCrownComparison
+The printed headline lies above this enclosure: read with its digit, $-0.5498328$ exceeds the lower bound by
+$1.145\times10^{-7}$, and the six decimals $-0.549832$ of the abstract of \cite{KranitzPenc2026} exceed it by
+$9.145\times10^{-7}$. The printed values are the first digits of the eigenvalue, cut toward zero rather than rounded
+down, which for a lower bound overstates it by less than $10^{-6}$; the same holds for the reduced-model value
+$-0.550158(2)$ against $-0.5501582988212038$. A six-decimal statement that holds at the printed couplings is
+$e_{\mathrm{GS}}\ge-0.549833$.
+\fi
+
+\ifshowSone
+\paragraph{Spin 1.}
+For $S=1$ the paper restricts the couplings so that the total spin $\tilde S_{ij}$ of each of the six outer pairs is
+conserved, keeps $c_1$ and $c_3=c_{12}$ and neglects $c_5$, and searches across the outer-pair configurations; it
+reports $e_{\mathrm{LB}}=-1.632985(8)$ at $c_1=0.053466(8)$ and $c_3=0.082726(1)$, attained in the configurations
+$[0,0,0,2,0,2]$ and $[0,2,2,0,2,2]$ \cite{KranitzPenc2026}. In the configuration in which every outer pair is a
+singlet, the pairs decouple from the inner hexagon, and the block equals $-12c_1+c_{17}H_{\mathrm{ring}}$, with
+$H_{\mathrm{ring}}$ the Heisenberg ring of six spins~1 and $c_{17}$ fixed by the embedding condition. The
+ground-state energy of the ring, $-8.617423181814$, is enclosed by S2 and S3 with a floating-point radius of
+$1.4\times10^{-13}$ and by the exact layer with a radius of $5.1\times10^{-15}$. At the printed couplings this gives an
+eigenvalue of the crown Hamiltonian certified to lie at or below $-1.6380246425131773$, which is
+$5.039643\times10^{-3}$ below the published lower bound $-1.632985$. The two configurations that the paper names have
+the floating-point lowest eigenvalues $-1.6329867$ and $-1.6329849$, which reproduce the published value and show that
+the couplings and the model were read correctly; the all-singlet configuration, which lies lower, is not among them.
+The lowest eigenvalue of the cluster at the printed couplings is therefore at most $-1.6380246$, and the published
+$S=1$ value is not a lower bound obtained from these couplings. An unprinted coupling cannot explain the difference: a
+cutting-plane bound shows that no value of $c_5$ raises the max-min above about $-1.6342$. With every configuration
+included, a floating-point scan of all 92 pair-spin classes at re-optimised couplings $c_1=0.05397514068$ and
+$c_3=0.08288267138$ gives the max-min $-1.6343596$, in the class with pair spins $[0,2,2,0,2,2]$; this value is an
+estimate, because certifying it would need an exact count in the class of 1,116,229 states in which every pair spin is
+2 (a direct count of the $S^z=0$ states of six spins~2 and six spins~1; the paper gives 1,116,220). The values of the
+paper used here were read from its arXiv e-print as downloaded on 11 November 2026. A new download on 26 November 2026
+listed only version~1 (12 January 2026), and its e-print had the same SHA-256 as the copy of 11 November; the journal
+version \cite{KranitzPenc2026} was not compared.
+\begin{figure}[t]
+\centering
+\repofig{fig_crown_sectors.png}{0.95}
+\caption{The pyrochlore-crown $S=1$ model (\code{docs/figures/INDEX.md}, entry A1; drawn from the E9 record of the
+3.1.0 run). (a) The lowest eigenvalue of each of the 92 pair-spin classes of the $S^z=0$ block at re-optimised
+couplings, sorted; marker area grows with the class dimension. (b) At the printed couplings, the all-singlet-sector
+eigenvalue certified at or below $-1.6380246$ by the exact re-check, against the published lower bound $-1.632985$ and
+the floating-point lowest eigenvalues $-1.6329867$ and $-1.6329849$ of the two sectors the paper names.}
+\label{fig:crown}
+\end{figure}
+\fi
+
+\subsection{The AKLT gap criteria of Pomata and Wei}
+
+Pomata and Wei show that the AKLT models \cite{AKLT1987,AKLT1988} on several two-dimensional lattices are gapped by
+a finite-size criterion: a quantity $\eta$, defined from the ground-space projectors of overlapping finite subgraphs,
+must satisfy $\eta<1/\tilde z$, and for the square-octagon lattice $4\eta_\perp+2\eta_\parallel<1$
+\cite{PomataWei2019}. The criterion is taken from the paper; the value of $\eta$ is a computed number. CERTIFY-ED
+certifies upper bounds on $\eta$ in exact arithmetic (experiment E10; \code{docs/theory.md}~\S8). The ground space of
+each subgraph is the range of its valence-bond-solid states, by a Schwinger-boson divisibility argument that is derived
+and marked \code{UNVERIFIED} (\code{docs/applications.md}) and confirmed by exact nullities modulo a prime for the star
+(kernel dimension 16), square-octagon (64) and decorated-honeycomb (36) subgraphs. $\eta$ is bounded through the inertia
+of a bordered pencil matrix by Haynsworth's formula \cite{Haynsworth1968}, the number of unit cosines is bounded below
+by a rank modulo a prime of the union of the valence-bond states, and symmetry blocking is an exact congruence.
+
+\begin{table}[ht]
+\centering\small
+\caption{E10: certified upper bounds on $\eta$ (\code{E10\_aklt.md}, 3.2.1 run) and the values published in
+\cite{PomataWei2019}, as read from the paper's source into the E10 record. The criterion values are $\tilde z\eta$ (4
+for the star, decorated honeycomb and decorated square, 3 for the cross) and $4\eta_\perp+2\eta_\parallel$ for the
+square-octagon lattice; every one is below 1.}
+\label{tab:e10}
+\begin{tabular}{@{}lllr@{}}
+\toprule
+Lattice & certified $\eta\le$ & published & criterion \\
+\midrule
+star & 0.11104302202338649 & 0.1110430220 & 0.44417 \\
+cross & 0.19973845072185567 & 0.1997384500 & 0.59922 \\
+decorated honeycomb & 0.15303290857599913 & 0.1530329085 & 0.61213 \\
+decorated square & 0.22035431930729685 & 0.2203543174 & 0.88142 \\
+square-octagon, $\eta_\parallel$ & 0.10614468587603454 & 0.1061446858 & \multirow{2}{*}{0.84815} \\
+square-octagon, $\eta_\perp$ & 0.15896633115208958 & 0.1589663310 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every criterion holds with the certified bounds (Table~\ref{tab:e10}); the certified bounds exceed the published values
+by at most $2.0\times10^{-9}$, and the joint square-octagon criterion is $0.8481546963604274$. The largest
+symmetry-adapted block has dimension 4034, for the decorated square lattice, and took 39 minutes. Figure~\ref{fig:aklt}
+shows the bounds against the thresholds.
+
+\begin{figure}[t]
+\centering
+\repofig{fig_aklt_eta.png}{0.95}
+\caption{The Pomata--Wei AKLT lattices (\code{docs/figures/INDEX.md}, entry A2; drawn from the E10 record of the
+3.1.0 run, whose bounds agree with those of Table~\ref{tab:e10} to the digits shown in the figure). (a) The certified
+upper bound on $\eta$ against the published value and the threshold $1/\tilde z$. (b) The certified criterion values, 0.44417, 0.59922, 0.61213, 0.88142 and 0.84815, which are also those of the
+3.2.1 run to the digits shown.}
+\label{fig:aklt}
+\end{figure}
+
+\paragraph{The honeycomb lattice.}
+The criterion of Pomata and Wei for the honeycomb lattice itself does not fit one machine with the present $\eta$
+machinery: its largest bordered block has 1,293,292 rows, which needs 12,462~GiB for one binary64 copy alone
+(\code{docs/lean/APPS\_NEXT.md}, item N-12). A spectral gap of the honeycomb AKLT model has been established by other
+means \cite{LemmSandvikWang2020}.
+
+%======================================================================================================================
+\section{Restatement in Lean}
+\label{sec:lean}
+
+Writing a statement in a proof assistant forces every hypothesis and every range to be stated. The formal parts of
+CERTIFY-ED were restated in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib2020} (Lean 4.35.0, Mathlib v4.35.0) in three
+libraries (\code{docs/lean/VERIFICATION\_REPORT.md}): \code{CertifyCore}, kernel-reducible definitions of the checks
+together with a compiled certificate checker \code{cecheck}; \code{CertifyMathlib}, the theorems on Mathlib, in parts
+for the enclosures, the counts, the applications, non-Hermitian eigenpairs and the refinement of the kernel checks;
+and \code{CertifyApps}, with a compiled program \code{ceapps} that recomputes the application numbers. The build
+completed 2888 jobs without error.
+
+\paragraph{What the kernels accept.}
+An audit asked Lean for the axioms of every theorem of the three libraries, auxiliary theorems included: 164 named
+and 265 auxiliary theorems in \code{CertifyCore}, 916 named and 558 auxiliary in \code{CertifyMathlib} and 87 named in
+\code{CertifyApps} use only the standard axioms \code{Classical.choice}, \code{Quot.sound} and \code{propext}; no
+\code{sorry} and no \code{native\_decide} appears. A replay of all 78 modules by Lean's own second checker,
+\code{leanchecker}, ended with exit code 0 after 5961.9~s. The independent kernel nanoda accepted 76 of 76 theorems of
+\code{CertifyCore}, 63 of 63 main theorems of the enclosure part, 71 of 71 of the counting part, 15 of 15 of the
+applications and 6 of 6 of the non-Hermitian part; of the 5 theorems of the refinement part it accepted 3, and the
+other 2 stopped at its memory limit. The enclosure part formalizes 22 statements, 18 of them completely; the counting
+part 27, of which 18 completely, 7 in part and 2 not at all.
+
+\paragraph{What the compiled checker confirms.}
+\code{cecheck} reads a certificate, its array file and the exported operator, decodes every binary64 value exactly,
+recomputes the hashes, and re-checks the S2 radii and the S3 counts in exact rational arithmetic. On the validation
+set of the C verifier, 63 bundles of which 8 were refused by CERTIFY-ED and have no certificate, it passed 55 of 55
+certificates, confirmed 31 \CERT{} S2 statements and 24 \CERT{} S3 statements exactly, recomputed 70 recorded inertia
+counts, all equal, and confirmed 42 S8 brackets. It reproduced all 18 \FAIL{} statuses; for 15 of them an exact inertia
+count contradicts the claim outright. It rejected all 80 forged certificates of four kinds. CERTIFY-ED's own integrity
+check rejects only 40 of them, because a lowered radius or a promoted status with resealed hashes is consistent as a
+record and is caught only by recomputation. Its verdicts agree with those of the C verifier on 135 of 135 rows. For
+the applications, \code{ceapps} rebuilds each model from its specification in exact integer arithmetic, checks it
+entry by entry against the Python builder, and recomputes the certified number from the recorded vectors and shifts;
+all 14 targets, among them the four energies of E7, the reduced crown bound and the $\eta$ bounds of E10, agree with
+the records of the 3.2.1 run, the Lean value being at least as strong as the recorded one. For the Majumdar--Ghosh
+chain, for example, \code{ceapps} reports the Rayleigh quotient $-7.5000000000000000$ (as printed in binary64) with radius
+$6.3\times10^{-23}$. Theorems of the refinement part prove, for decoded rational data, that acceptance by the
+kernel-reducible checks implies the conclusion of the residual enclosure theorem.
+
+\paragraph{What the formalization found.}
+Eleven places were found where a document and the Lean statement differ. None changes a stored certificate, a status
+or a published number. Examples: a guard of the Theorem~1 accounting holds for all row widths up to $2^{26}$ but fails
+at $w+2=\lfloor2^{53}/3\rfloor$, which the stated condition $(w+2)u\le1/3$ admits, and the code did not check the
+range; version 3.2.2 refuses to form a bound outside $n,w\le2^{26}$, and S2 and the statements that rest on it become
+\INC{} with the reason \code{FP\_GUARD\_RANGE}. Proposition~14 needs the hypothesis that the inner interval is not
+empty, as Section~\ref{sec:math} records. An inequality stated in the underflow document was false as written, while
+the weaker inequality its proof needs holds. Seven of the eleven were corrected in the documents, one by the range
+check, and three confirm a remark of the documents or record a difference of form.
+
+\paragraph{What is not formalized.}
+Four kinds of gap remain. The link between the Lean model of floating point and the machine, namely that binary64
+arithmetic, NumPy and SciPy round as the standard model assumes and that a sum in the code has the summation tree the
+theorem assumes, is a hypothesis of the Lean theorems, supported by the run-time probe and not by Lean. The compiled
+programs \code{cecheck} and \code{ceapps} are not themselves the subject of a theorem. Some statements need
+mathematics that this Mathlib version does not have, such as trace-norm H\"older inequalities, for which the Lean
+proofs use a rank bound with the documents' constants. Further parts were not attempted for lack of time; the report
+lists them. The lemmas of the exact layer and its Proposition~13 have no Lean theorem; \code{cecheck} recomputes the
+counts they justify. S1, that the operator is the declared physical model, is outside every check beyond the
+entrywise comparison of rebuilt models, and the nine-coupling crown, the honeycomb estimate and the statements M5 and
+M6 have no Lean counterpart yet.
+
+\paragraph{Relation to rule D-12.}
+A theorem accepted by two kernels removes the proof as a source of error but not the statement, and the findings above
+show that statements and documents can differ. The derivation documents therefore keep their status, ``derived,
+machine-checked, independently re-derived (not a human check), check by S.~Vehale pending'', with the Lean level
+reported next to it.
+
+%======================================================================================================================
+\section{Limitations}
+\label{sec:limits}
+
+\paragraph{What a certificate cannot say.}
+S1 compares the producer's matrix with the declared specification; whether the specification is the Hamiltonian that
+the user meant is outside every check, and every certificate says so. A certificate says nothing about the producer's
+code in general, only about the result it was given.
+
+\paragraph{Hypotheses.}
+The floating-point statements rest on the standard model of binary64 arithmetic and, for the bounds that do not use
+the underflow-tolerant model, on the absence of underflow; the probe tests the properties on which they rest in the
+certifying process, but a probe cannot establish them for every operation. The exact layer removes this hypothesis for
+S2 and S3 of \code{lowest} claims, at a cost of minutes per benchmark. Every derived result of
+Sections~\ref{sec:math} and~\ref{sec:spectral} awaits the check of rule D-12; the independent re-derivations made so far
+are not checks by a person, and the code marks the statements that rest on them.
+
+\paragraph{Reach.}
+S2 reaches dimension $2^{24}$ matrix-free, but S3 reaches about $10^4$ in floating point on a workstation and a few
+thousand per block in exact arithmetic, because both need a factorization. The exact sector decomposition needs
+one-dimensional characters with values in $\{\pm1,\pm i\}$, which excludes the elements of order 3 of the crown's
+point group, and the honeycomb criterion of Pomata and Wei needs 12,462~GiB for one copy of its largest block. The
+assembly of sectors is about three orders of magnitude loose. The interval for the heat capacity can be wide at low
+temperature.
+
+\paragraph{The certifier as code.}
+In the 3.2.3 run, 27 of 64 mutants survived the test suite, and 19 of them await a verdict by a person. Mutation
+analysis cannot detect a mutant that shrinks a worst-case rounding term; such terms are protected by the exact checker
+and by tests that pin the formulas.
+
+\paragraph{Applications.}
+The Anderson-type argument of Kr\'anitz and Penc, the matching conditions of the crown embedding and the gap criterion
+of Pomata and Wei are taken from the papers and were not re-derived; whether the embedding conditions hold on the real
+pyrochlore lattice was not checked. The nine-coupling crown bound depends on a reading of the printed digits that the
+paper does not state.
+
+\paragraph{The development version.}
+The results of Section~\ref{sec:spectral}, of the worker pool and of the nine-coupling crown belong to the development
+version 3.3.0.dev0 and are not yet covered by an evidence run; M5 and M6 bound integrated weights only, and the
+continued fraction (M4) is not implemented.
+
+%======================================================================================================================
+\section{Reproducibility and availability}
+\label{sec:repro}
+
+The code is archived on Zenodo under the concept DOI \href{https://doi.org/10.5281/zenodo.20066565}{10.5281/zenodo.20066565}.
+The evidence runs cited here are \code{results/run\_full\_20261105} (version 3.2.1) and
+\code{results/run\_full\_20261112b} (version 3.2.3, tag \code{v3.2.3}). A full evidence run is one command,
+\code{certify-ed reproduce} (equivalently \code{python run.py}), which runs the test suite, the experiments E0 to E10
+and the two number scripts into one directory with a manifest recording the source hash, the versions and the
+environment; in the 3.2.1 run on a Windows workstation, E6 alone took 24,917.5~s. A
+comparison script classifies every leaf of two runs' records as identical, within a stated tolerance, a recorded
+statistic, a random draw, a timing or a mismatch; between the 3.1.0 run on Windows and the 3.0.0 run on Linux it
+found no mismatch among 3,885 leaves. The planted-error corpus is generated deterministically by
+\code{corpus/make\_corpus.py}, and any checker can be scored on it with \code{corpus/run\_corpus.py}. The Lean libraries
+are rebuilt and re-checked with the commands of \code{docs/lean/VERIFICATION\_REPORT.md}. The records of the
+development-version results are named where they are used.
+
+%======================================================================================================================
+\section{Conclusions}
+\label{sec:conclusions}
+
+A certificate of an ED result states what has been established about the result, against an independently declared
+model, statement by statement, and what has not. The statements that matter in practice, that the matrix is the
+intended one, that the values are distinct eigenvalues, that none is missing below them and that a quoted observable
+of a degenerate level belongs to the level, are not established by the residual check that is the usual practice:
+of thirteen realistic errors it flags two, and of an unplanted error of ARPACK none. With the floating-point
+accounting written out as the code implements it, an inertia count with a measured backward error, and an exact layer
+that removes the floating-point hypothesis where the size allows, the certified statements held against every
+independent reference in our evidence runs, and the bounds are within a factor of ten of the truth except for the
+assembly of sectors. Numerical lemmas of two published proofs are now certified bounds: the reduced crown bound of
+Kr\'anitz and Penc and the $\eta$ bounds of Pomata and Wei for five lattices.\ifshowSone{} The same instrument found
+that the published spin-1 crown value is not a lower bound at its printed couplings, because a configuration outside
+the published search lies lower, an omission that no check of the reported sectors alone can reveal.\fi Certified moments extend the reach from
+eigenvalues to integrated spectral weights. The formal restatement in Lean found eleven places where a document and
+its precise statement differ, none of which changed a certificate, which is an argument for writing the statements of
+a numerical tool as precisely as its code. The main open items are the reach of the completeness statement beyond
+$10^4$, a tighter assembly of sectors, the continued fraction from certified moments, and the check by a second person
+that rule D-12 requires for every new result.
+
+\section*{Data and code availability}
+The source code of CERTIFY-ED, the records of every experiment cited, the planted-error corpus, the derivation
+documents with their verification scripts and the Lean libraries with their results are in the repository archived
+under \href{https://doi.org/10.5281/zenodo.20066565}{10.5281/zenodo.20066565}. Every number in this paper is copied
+from a record of that repository, named where the number is used.
+
+\bibliographystyle{unsrt}
+\bibliography{certify_ed_refs}
+
+\end{document}
