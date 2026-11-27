@@ -248,38 +248,54 @@ def test_corroborate_records_dropped_parts_on_both_paths():
 
 
 @needs_flint
-def test_s6_evidence_is_unchanged_by_a_dropped_part():
-    """certify passes the real parts to the exact re-check (S6), so its evidence has no record of its own and equals
-    that of the real claim; the claim record holds the dropped part."""
+def test_s5_and_s6_evidence_are_unchanged_by_a_dropped_part():
+    """certify passes the real parts to the exact re-check (S6) and to corroborate (S5), so their evidence has no
+    record of its own and equals that of the real claim; the claim record holds the dropped part."""
     spec = ce.heisenberg_chain(6)
     H = ce.build_bitwise(spec)
     w, V = eigh_dense(H.toarray())
     k = next(i for i in range(1, 12) if w[i] - w[i - 1] > 1e-3)
     lam = w[:k].astype(complex)
     lam[0] = complex(w[0], 0.5)
-    opts = ce.Options(seed=1, exact_recheck=True)
+    opts = ce.Options(seed=1, exact_recheck=True, corroborate=("lapack_evr", "jacobi"))
     cert = ce.certify(ce.Claim(eigenvalues=lam, eigenvectors=V[:, :k], operator=H, kind="lowest"), spec, opts)
     ref = ce.certify(ce.Claim(eigenvalues=w[:k], eigenvectors=V[:, :k], operator=H, kind="lowest"), spec, opts)
-    s6, s6_ref = (next(s for s in c.statements if s["id"] == "S6.exact_recheck") for c in (cert, ref))
-    assert s6["status"] == s6_ref["status"] == "CERTIFIED"
-    assert "dropped_imaginary_parts" not in s6["evidence"]
-    assert _untimed(s6) == _untimed(s6_ref)
+    for sid, status in (("S6.exact_recheck", "CERTIFIED"), ("S5.corroboration", "CORROBORATED")):
+        got, want = (next(s for s in c.statements if s["id"] == sid) for c in (cert, ref))
+        assert got["status"] == want["status"] == status, sid
+        assert "dropped_imaginary_parts" not in got["evidence"], sid
+        assert _untimed(got) == _untimed(want), sid
     assert cert.body["claim"]["dropped_imaginary_parts"] == {"count": 1, "max_abs": 0.5}
 
 
-# every place that converts claimed values with precision.claimed_reals, and where the dropped parts are recorded
+# Scope of the audit below. It covers every use of precision.claimed_reals in the package: a call or any other
+# reference (passing the function as an argument counts), under any name it is imported as (from-imports with an
+# alias), and any attribute named claimed_reals (as reached through a module alias of precision). precision.py, which
+# defines it, is not audited. Not followed: conversions that do not go through claimed_reals (np.real, .real,
+# astype(float), float(), np.asarray(..., dtype=float)), calls through a new name that claimed_reals is assigned
+# to (the assignment itself is counted where it occurs), and references by a string: getattr(precision,
+# "claimed_reals") or importlib (no such reference exists in the package today; the audit would not see one).
+#
+# Each use, with where its dropped parts are recorded and the function (the user itself or its public wrapper, in the
+# same module) whose code must name dropped_imaginary_parts or carries_imaginary_parts.
 RECORDED = {
-    ("certify.py", "_certify"): "the claim record of the certificate, and not_verified",
-    ("checker.py", "_exact_recheck_lowest"): "exact_recheck_lowest adds it to its result",
-    ("checker.py", "exact_eigenpair_radii"): "its result",
-    ("compose.py", "_sector_record"): "the sector's record, and the composition's record and summary",
-    ("corroborate.py", "_corroborate"): "corroborate adds it to its result",
-    ("exact_sectors.py", "_exact_recheck_sector_lowest"): "exact_recheck_sector_lowest adds it to its result",
-    ("generalized.py", "certify_generalized"): "the claim of the statement record",
-    ("io/alps.py", "read_alps_spectrum"): "the sector dict; claim_from_alps passes the stored values to the claim",
-    ("integrations/quspin.py", "certify_hamiltonian"): "passes values with a nonzero imaginary part to the claim as given",
-    ("sweep.py", "certified_sweep"): "passes values with a nonzero imaginary part to the claim as given",
+    ("certify.py", "_certify"): ("the claim record of the certificate, and not_verified", "_certify"),
+    ("checker.py", "_exact_recheck_lowest"): ("exact_recheck_lowest adds it to its result", "exact_recheck_lowest"),
+    ("checker.py", "exact_eigenpair_radii"): ("its result", "exact_eigenpair_radii"),
+    ("compose.py", "_sector_record"): ("the sector's record, and the composition's record and summary",
+                                       "_sector_record"),
+    ("corroborate.py", "_corroborate"): ("corroborate adds it to its result", "corroborate"),
+    ("exact_sectors.py", "_exact_recheck_sector_lowest"): ("exact_recheck_sector_lowest adds it to its result",
+                                                           "exact_recheck_sector_lowest"),
+    ("generalized.py", "certify_generalized"): ("the claim of the statement record", "certify_generalized"),
+    ("io/alps.py", "read_alps_spectrum"): ("the sector dict; claim_from_alps passes the stored values to the claim",
+                                          "read_alps_spectrum"),
+    ("integrations/quspin.py", "certify_hamiltonian"): ("passes values with a nonzero imaginary part to the claim as "
+                                                        "given", "certify_hamiltonian"),
+    ("sweep.py", "certified_sweep"): ("passes values with a nonzero imaginary part to the claim as given",
+                                      "certified_sweep"),
 }
+RECORD_NAMES = ("dropped_imaginary_parts", "carries_imaginary_parts")
 # numbers only, no record: certify passes real values; a direct call with complex values gets numpy's ComplexWarning,
 # as in 3.x
 NUMBERS = {
@@ -293,35 +309,88 @@ NUMBERS = {
 OPEN = {("io/bundle.py", "write_bundle"): "a bundle holds the real parts only; a manifest field is a schema decision"}
 
 
-def _calls_in(node, scope, rel, found):
+def _local_names(tree):
+    """The names claimed_reals is bound to by the imports of a module (from-imports, with or without an alias)."""
+    return {a.asname or a.name for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
+            for a in node.names if a.name == "claimed_reals"}
+
+
+def _uses_in(node, scope, rel, names, found):
     for ch in ast.iter_child_nodes(node):
         if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            _calls_in(ch, scope + [ch.name], rel, found)
+            _uses_in(ch, scope + [ch.name], rel, names, found)
             continue
-        if isinstance(ch, ast.Call):
-            fn = ch.func
-            name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", None)
-            if name == "claimed_reals":
-                found.add((rel, ".".join(scope) or "<module>"))
-        _calls_in(ch, scope, rel, found)
+        if (isinstance(ch, ast.Name) and ch.id in names) or (isinstance(ch, ast.Attribute)
+                                                            and ch.attr == "claimed_reals"):
+            found.add((rel, ".".join(scope) or "<module>"))
+        _uses_in(ch, scope, rel, names, found)
 
 
-def _claimed_reals_calls(root):
+def _claimed_reals_uses(root):
+    """(module, enclosing function) of every call of or other reference to claimed_reals below root."""
     found = set()
     for dirpath, _, files in os.walk(root):
         for f in files:
             if f.endswith(".py"):
                 path = os.path.join(dirpath, f)
+                rel = os.path.relpath(path, root).replace(os.sep, "/")
+                if rel == "precision.py":
+                    continue
                 with open(path, encoding="utf-8") as fh:
                     tree = ast.parse(fh.read())
-                _calls_in(tree, [], os.path.relpath(path, root).replace(os.sep, "/"), found)
+                _uses_in(tree, [], rel, _local_names(tree), found)
     return found
 
 
-def test_every_conversion_of_claimed_values_is_listed():
-    """The lists above are complete: a new caller of claimed_reals must say where its dropped parts are recorded,
-    or why it returns numbers only."""
+def _names_a_record(path, func):
+    """True if the code of the module-level function func (not its docstring) names one of RECORD_NAMES: as a name,
+    an attribute, or a string constant such as a dictionary key."""
+    with open(path, encoding="utf-8") as fh:
+        tree = ast.parse(fh.read())
+    fn = next(n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == func)
+    for x in ast.walk(fn):
+        if isinstance(x, ast.Name) and x.id in RECORD_NAMES:
+            return True
+        if isinstance(x, ast.Attribute) and x.attr in RECORD_NAMES:
+            return True
+        if isinstance(x, ast.Constant) and isinstance(x.value, str) and x.value in RECORD_NAMES:
+            return True
+    return False
+
+
+def test_every_use_of_claimed_reals_is_listed():
+    """The lists above are complete for their scope (stated above them): a new use of claimed_reals must say where
+    its dropped parts are recorded, or why it returns numbers only."""
     import certify_ed
-    found = _claimed_reals_calls(os.path.dirname(certify_ed.__file__)) - {("precision.py", "<module>")}
+    found = _claimed_reals_uses(os.path.dirname(certify_ed.__file__))
     listed = set(RECORDED) | set(NUMBERS) | set(OPEN)
     assert found == listed, {"not listed": sorted(found - listed), "gone": sorted(listed - found)}
+
+
+def test_every_recorded_use_names_its_record():
+    """Each RECORDED use, or its public wrapper, names dropped_imaginary_parts or carries_imaginary_parts in its
+    code, so that the listing is checked against the property it states."""
+    import certify_ed
+    root = os.path.dirname(certify_ed.__file__)
+    missing = [(rel, rec) for (rel, _), (_, rec) in RECORDED.items()
+               if not _names_a_record(os.path.join(root, rel), rec)]
+    assert missing == []
+
+
+def test_the_use_audit_resolves_aliases_and_references(tmp_path):
+    """Controls of the audit itself: aliased imports, a module alias and a reference that is not a call are found;
+    a docstring that mentions a record name does not count as naming it."""
+    (tmp_path / "a.py").write_text(
+        "from certify_ed.precision import claimed_reals as cr\n"
+        "def f(x):\n    return cr(x)\n"
+        "def g(xs):\n    return list(map(cr, xs))\n"
+        "def h(x):\n    return x\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text(
+        "import certify_ed.precision as P\n"
+        "def k(x):\n    return P.claimed_reals(x)\n", encoding="utf-8")
+    (tmp_path / "c.py").write_text(
+        "def only_docstring(x):\n    '''mentions dropped_imaginary_parts'''\n    return x\n"
+        "def as_key(x):\n    return {'dropped_imaginary_parts': None}\n", encoding="utf-8")
+    assert _claimed_reals_uses(str(tmp_path)) == {("a.py", "f"), ("a.py", "g"), ("b.py", "k")}
+    assert not _names_a_record(str(tmp_path / "c.py"), "only_docstring")
+    assert _names_a_record(str(tmp_path / "c.py"), "as_key")

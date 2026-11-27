@@ -165,7 +165,7 @@ No constant or status changes; records gain an optional field. The computational
   so the schema is unchanged. The statements and enclosures are those of the real parts, as before.
 - `exact_recheck_lowest`, `exact_recheck_sector_lowest`, `exact_eigenpair_radii` and `corroborate` add the same record
   to their result (a key present only then). `certify` passes real values to them (S6, S5), so certificates are
-  unchanged; a test pins the S6 evidence of a claim with a dropped part.
+  unchanged; a test pins the S5 and S6 evidence of a claim with a dropped part.
 - The ALPS reader (`read_alps_spectrum`) gives each sector the keys `energies_as_given` (the stored values when they
   hold a nonzero imaginary part, otherwise `energies`) and `dropped_imaginary_parts` (the record, or None).
   `claim_from_alps` passes the stored values to the claim, so that `certify` records the dropped parts and lists them
@@ -177,10 +177,13 @@ No constant or status changes; records gain an optional field. The computational
   `arb_residual_radii`, `spectrum_invariants`); `certify` passes them real values, and a direct call with complex values
   gets numpy's ComplexWarning, as in 3.x. `write_bundle` still holds the real parts only, without a record; a manifest
   field is a schema decision (`docs/SCHEMA_RFC_PROCESS.md`, `docs/project/failures/05_open_items.md`).
-- Tests: `tests/test_dropped_parts_records.py` (15 tests; three need python-flint, six need h5py). One of them lists
-  every caller of `precision.claimed_reals` with the place where its dropped parts are recorded, or why it returns
-  numbers only, and fails on a caller that is not listed. `tests/abs_audit_allowlist.txt` names the body `_corroborate`,
-  where the two moduli of `corroborate` now are.
+- Tests: `tests/test_dropped_parts_records.py` (17 tests; three need python-flint, six need h5py). One of them lists
+  every use of `precision.claimed_reals` (a call or other reference, under any import alias, or an attribute of that
+  name) with the place where its dropped parts are recorded, or why it returns numbers only, and fails on a use that
+  is not listed; a second checks that each function listed as recording, or its public wrapper, names the record in
+  its code; a third is a control of the audit on small modules. Conversions that do not go through `claimed_reals`
+  (`np.real`, `.real`, `astype(float)`) are outside the audit. `tests/abs_audit_allowlist.txt` names the body
+  `_corroborate`, where the two moduli of `corroborate` now are.
 
 ### Repeated entries summed at the start (soundness fix)
 
