@@ -9,7 +9,10 @@
 
 ### Round 8b of the review: accounting, records and small corrections
 
-The computational source hash changes. The M1 and M5 bounds grow by at most a few units in the last place.
+The computational source hash changes. In a rerun of the ring check (N = 8 and 10, K = 32, one thread) the two
+largest moment half-widths grow by 9 and 7 ulps and one fraction end by 1 ulp; the other values of the record are
+unchanged except the spectrum source, which names its end. `docs/results/RESULT_m6_spectral_bounds.md` had said
+one or two ulps after 6aeefe1; the moves then were 6, 4 and 1.
 
 - Accounting: in M5 and M1 the three rounding terms of each cluster member are added upward and summed over the
   members with `math.fsum` (inf when that sum overflows, where `math.fsum` raises), and the last addition of the

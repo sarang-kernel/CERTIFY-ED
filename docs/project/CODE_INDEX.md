@@ -1,6 +1,6 @@
 # Code index
 
-This index lists every program file of the certify-ed repository at commit `5bc59a0` (revision `HEAD` of
+This index lists every program file of the certify-ed repository at commit `35c0156` (revision `HEAD` of
 `archive_v5/code/certify-ed`): 408 files ending in `.py`, `.c` or `.sh`, with 90035 lines in all. It is written by
 `tools/codeindex/make_code_index.py` from the committed files, and `python tools/codeindex/make_code_index.py --check`
 reports whether it is up to date. Apart from the introductions of the sections, which are part of the generator, and
