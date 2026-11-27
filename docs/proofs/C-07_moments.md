@@ -134,15 +134,18 @@ No constant changes.
 ## 4 Computational verification
 
 `docs/proofs/verify_C-07.py` (seed 20261030, `--cases 40`; exact Fractions for the rounding part, mpmath at 60 digits
-for the exact P and moments). Run of 2026-10-31 (`docs/proofs/runs/verify_C-07.txt`):
+for the exact P and moments). Run of 2026-10-31; rerun on 2026-11-28 at a7c8e4c (`docs/proofs/runs/verify_C-07.txt`,
+whose first line names the commit), with Part A on orthonormalised columns (QR, since 5bc59a0) and on the same columns
+perturbed by 10⁻³ with η declared as an upper bound on their Gram defect (since a7c8e4c); parts B and C give the
+counts of the first run:
 
 | part | what is compared | cases | violations |
 |---|---|---:|---:|
-| A | Lemma 3 alone (s = η = 0 fed): \|m̂_k − exact rational tr(XᴴOHᵏOX)/g\| ≤ the recorded rounding term, random H, O (n = 2…5, g = 1…2, real and complex, scales 10⁻²…10², k = 0…4) | 200 | 0 |
+| A | Lemma 3 alone (s = 0; η = 0 for orthonormal columns, a declared upper bound for perturbed ones): \|m̂_k − exact rational tr(XᴴOHᵏOX)/g\| ≤ the recorded rounding term, random H, O (n = 2…5, g = 1…2, real and complex, scales 10⁻²…10², k = 0…4) | 400 | 0 |
 | B | full statement: random H with a planted cluster (n = 4…7, g = 1…3, real and complex), exact P and exact tr(POHᵏO)/g at 60 digits, X = rotated exact eigenvectors + perturbation 10⁻⁹…10⁻² with the exact s, η (rounded up) as inputs: every moment inside its interval and both sum rules CERTIFIED; adversarial: vectors tilted by 10⁻³ out of the eigenspace with the exact s; Heisenberg chains N = 4, 6 with O = S^z₀S^z₁ and the exact ground-state projector, k = 0…4 | 218 random + 152 adversarial | 0 |
 | C | **negative controls**: a wrong level interval (shifted beyond the combined widths of the two certified intervals divided by m₀) makes M3 FAILED in 40/40 cases; s understated by 10⁴ on the tilted vectors breaks the enclosure in 132/138 moments; a random orthonormal X with s = η = 0 claimed breaks it in 138/138 moments | 40 adversarial | 0 |
 
-Total: 418 random + 192 adversarial cases, 0 violations. Tests `tests/test_moments.py` (6): the 8-site Heisenberg ring from a certificate (ground state k = 0…3
+Total: 618 random + 192 adversarial cases, 0 violations (first run: 418 random, Part A 200). Tests `tests/test_moments.py` (6): the 8-site Heisenberg ring from a certificate (ground state k = 0…3
 and the triplet cluster against exact traces; a rotated triplet basis), the tilted-vector negative control (exact s
 holds, s/10⁴ breaks; a random unit vector with s = η = 0 breaks every moment), the wrong level interval (FAILED), K = 0
 and no level (NOT_CHECKED), a complex operator with the exact-rational rounding check, underflow and input checks, the
@@ -171,4 +174,5 @@ Derived on 2026-10-31; machine-checked (418 random + 192 adversarial cases, 0 vi
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).
 Accounting of Lemma 3 and of b_k changed on 2026-11-27 and 2026-11-28 (rounds 8b and 9 of the review: `up` on e_y and
 ε_k, five relative errors for e_y, per-member `add_up`, `math.fsum` over the members, `add_up` for the last addition,
-‖H‖ᵏ by upward products); UNVERIFIED (D-12). The re-derivation of 2026-10-30 predates these changes.
+‖H‖ᵏ by upward products); UNVERIFIED (D-12). The re-derivation of 2026-10-30 predates these changes. Machine check rerun
+at a7c8e4c: 618 random + 192 adversarial cases, 0 violations.
