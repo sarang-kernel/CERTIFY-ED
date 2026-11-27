@@ -1,7 +1,7 @@
 # Code index
 
-This index lists every program file of the certify-ed repository at commit `84b2291e` (revision `HEAD` of
-`archive_v5/code/certify-ed`): 399 files ending in `.py`, `.c` or `.sh`, with 87391 lines in all. It is written by
+This index lists every program file of the certify-ed repository at commit `617283b` (revision `HEAD` of
+`archive_v5/code/certify-ed`): 399 files ending in `.py`, `.c` or `.sh`, with 87435 lines in all. It is written by
 `tools/codeindex/make_code_index.py` from the committed files, and `python tools/codeindex/make_code_index.py --check`
 reports whether it is up to date. Apart from the introductions of the sections, which are part of the generator, and
 the sentences of `tools/codeindex/purposes.py`, every entry is taken from the files.
@@ -25,9 +25,9 @@ Of these program files, 92 count in the source fingerprint, 38 are excluded by t
 
 | Group | Files | Lines |
 |---|---|---|
-| The package `certify_ed/` | 82 | 25221 |
+| The package `certify_ed/` | 82 | 25241 |
 | Experiments `experiments/` | 48 | 8214 |
-| Tests `tests/` | 100 | 22718 |
+| Tests `tests/` | 100 | 22742 |
 | Verifier, corpus and conformance | 10 | 3010 |
 | Examples and the driver | 5 | 90 |
 | Scripts under `docs/` | 65 | 13606 |
@@ -57,7 +57,7 @@ The library itself: the statements, the arithmetic they rest on, the importers, 
 | `certify_ed/apps/pyrochlore/spin_one.py` | 156 | S = 1 crown, reduced model (c3 = c12, c5 = 0), decomposed by the conserved spin S~ of each outer pair. | defines `sz0_basis`, `heisenberg_mixed`, `config_hamiltonian`, `canonical`, `landscape`, `printed_coupling_check`; imports `certify`, `checker`, `construct`, `spec`; imported by 5 files | source |
 | `certify_ed/basis.py` | 174 | Reference symmetry sectors, built as explicit isometries. | defines `digit_sum`, `u1_state_set`, `magnetization_state_set`, `CyclicSymmetry`, `translation`, `spin_flip`, `reflection`, `cyclic_isometry` (+1); imports `construct`, `precision`, `spec`; imported by 34 files | source |
 | `certify_ed/certificate_v2.py` | 435 | Certificate format v2: a machine-readable record of what was checked. | defines `array_sha256`, `matrix_sha256`, `environment_record`, `Certificate`; reads files; writes files; imports `certify_ed`, `precision`, `provenance`, `report`, `schema`, `scope` (+1); imported by 36 files | source |
-| `certify_ed/certify.py` | 2105 | Orchestration: turn a claimed ED result into a certificate of explicit statements. | defines `Claim`, `parse_window`, `Options`, `check_model_fidelity`, `certify`; imports `_linalg`, `certificate_v2`, `checker`, `construct`, `correlations`, `corroborate` (+22); imported by 37 files; names S1, S2, S3, S4, S5, S6, S7, S8 | source |
+| `certify_ed/certify.py` | 2106 | Orchestration: turn a claimed ED result into a certificate of explicit statements. | defines `Claim`, `parse_window`, `Options`, `check_model_fidelity`, `certify`; imports `_linalg`, `certificate_v2`, `checker`, `construct`, `correlations`, `corroborate` (+22); imported by 37 files; names S1, S2, S3, S4, S5, S6, S7, S8 | source |
 | `certify_ed/checker.py` | 632 | Independent checks of stored factorizations in ball arithmetic (Arb via python-flint). | defines `negative_count_exact`, `residual_inf_norm_upper`, `check_semidefinite_lower_bound`, `residual_inf_norm_exact`, `check_semidefinite_exact`, `exact_matrix`, `exact_dense`, `is_hermitian_exact` (+7); imports `construct`, `precision`; imported by 33 files | source |
 | `certify_ed/cli.py` | 991 | certify-ed command line: one entry point for using the package and for reproducing the paper. | defines `environment`, `flint_c_version`, `cmd_env`, `cmd_certify`, `cmd_plan`, `cmd_statement`, `cmd_crossing`, `cmd_sweep` (+14); arguments `claim`, `--from`, `--eigenvectors`, `--operator`, `--basis`, `bundle`, `certificate`, `--style`, `--no-verify`, `-o` (+72); runs as a script; reads files; writes `{...}.log`, `SUMMARY.md`, `run.log`; imports `basis`, `certificate_v2`, `certify`, `certify_ed`, `conformance`, `cost` (+17); imported by 18 files; names S1, S2, S3 | excluded |
 | `certify_ed/compat/__init__.py` | 1 | Compatibility layers for code written against earlier packages of the project. | no top-level definitions | source |
@@ -101,7 +101,7 @@ The library itself: the statements, the arithmetic they rest on, the importers, 
 | `certify_ed/levelstats.py` | 235 | Level statistics from an enclosed, counted spectrum (roadmap C-09): interval r-ratios and spacing histogram. | defines `LevelStatisticsError`, `level_statistics`, `format_level_statistics`; imports `certificate_v2`, `crossings`, `gaps`, `ivl`; imported by 3 files; names S2, S3 | source |
 | `certify_ed/localops.py` | 299 | Local Hilbert spaces and single-site operators with QuSpin-compatible letters. | defines `LocalSpace`; imported by 22 files | source |
 | `certify_ed/matrixfree.py` | 197 | Matrix-free spec operator with an a-priori rounding count and a spec norm bound (D-02, docs/proofs/D-02_matrix-free.md). | defines `letter_counts`, `local_norm_bound`, `MatrixFreeOperator`, `matrix_free_operator`; imports `construct`, `fp`, `spec`; imported by 5 files | source |
-| `certify_ed/moments.py` | 443 | Certified moments and sum rules on a certified eigenspace (C-07, first part; 3.2). | defines `hermitian_matrix_with_bound`, `certified_moments`, `moments_from_certificate`, `format_moments`; imports `certificate_v2`, `certify`, `crossings`, `davis_kahan`, `diagnostics`, `eigenspace` (+5); imported by 11 files | source |
+| `certify_ed/moments.py` | 462 | Certified moments and sum rules on a certified eigenspace (C-07, first part; 3.2). | defines `hermitian_matrix_with_bound`, `certified_moments`, `moments_from_certificate`, `format_moments`; imports `certificate_v2`, `certify`, `crossings`, `davis_kahan`, `diagnostics`, `eigenspace` (+5); imported by 11 files | source |
 | `certify_ed/nonhermitian.py` | 471 | Non-Hermitian eigenproblems (E-02, 3.3.0.dev0; dense path). | defines `additive_term`, `residual_bounds`, `matrix_norm2_upper`, `inverse_bound`, `disc_groups`, `certify_nonhermitian`, `format_nonhermitian`; imports `certificate_v2`, `diagnostics`, `fp`, `precision`, `spec`; imported by 10 files | source |
 | `certify_ed/operators.py` | 248 | Operator ergonomics (roadmap C-15): observables and correlations written as text or operator lists. | defines `OperatorSyntaxError`, `parse_terms`, `operator_from_static`, `parse_operator`, `resolve_observables`, `resolve_correlation_request`; imports `construct`, `correlations`, `spec`; imported by 3 files; names S1, S4 | source |
 | `certify_ed/ozaki.py` | 582 | Error-free products by integer splitting (Ozaki scheme): roadmap D-03, prototype, NOT the default path. | defines `NotApplicable`, `split_beta`, `Split`, `split_columns`, `split_complex_columns`, `RowSplit`, `split_rows`, `sum2_coefficient` (+6); imports `enclosure`, `fp`, `precision`; imported by 8 files; names S1, S3 | source |
@@ -250,7 +250,7 @@ The test suite; its files form the test fingerprint.
 | `tests/test_memory_gate.py` | 143 | 3.2.2 (roadmap N-03): without a memory budget, the process memory cap decides whether a factorization is attempted. | 4 test functions; writes files; imports `certify_ed`, `cost`, `scope`; names S2, S3 | tests |
 | `tests/test_metamorphic.py` | 127 | Metamorphic relations: transformations of a specification with a known effect on the spectrum. | 5 test functions; imports `certify_ed`, `spec` | tests |
 | `tests/test_modulus_up.py` | 794 | fp.modulus_up and fp.abs_up: upper moduli from IEEE *, +, sqrt and exact power-of-two scaling (docs/proofs/fp_modulus-up.md, Lemma M; UNVERIFIED until Sarang's check, D-12). | 26 test functions; reads files; imports `basis`, `certify_ed`, `construct`, `correlations`, `davis_kahan`, `enclosure` (+13) | tests |
-| `tests/test_moments.py` | 194 | C-07 first part (certify_ed.moments): certified moments tr(P O H^k O)/g on a certified cluster, the two sum-rule consistency statements, negative controls (understated s, non-eigenvector, wrong level), record schema. | 7 test functions; imports `certify`, `construct`, `correlations`, `moments`, `schema`, `spec` | tests |
+| `tests/test_moments.py` | 218 | C-07 first part (certify_ed.moments): certified moments tr(P O H^k O)/g on a certified cluster, the two sum-rule consistency statements, negative controls (understated s, non-eigenvector, wrong level), record schema. | 8 test functions; imports `certify`, `construct`, `correlations`, `moments`, `schema`, `spec` | tests |
 | `tests/test_nonfinite_bounds.py` | 219 | Non-finite bounds of the floating-point accounting (3.3.0.dev0; UNVERIFIED, D-12). | 9 test functions; imports `certify_ed`, `compose`, `construct`, `diagnostics`, `eigenspace`, `inertia` (+3) | tests |
 | `tests/test_nonfinite_followups.py` | 410 | Follow-ups to 'Non-finite bounds give no statement': the S3 reason code when only the inertia backward error overflows, the N1, N3 and G2 records (inf and the reason codes of the non-finite branch instead of nan and NOT_APPLICABLE), the moments record (no nan; no ValueError for complex entries whose products overflow), and fp.exact_sum on infinite terms (IEEE semantics; math.fsum raises for inf - inf). | 29 test functions; imports `certify_ed`, `enclosure`, `fp`, `generalized`, `inertia`, `moments` (+2); names S3 | tests |
 | `tests/test_nonfinite_moduli.py` | 115 | Non-finite upper moduli (docs/proofs/fp_modulus-up.md, section 1, Risks and limits; UNVERIFIED, D-12). | 4 test functions; imports `certify_ed`, `davis_kahan`, `eigenspace`, `fp`, `generalized`, `inertia` (+4) | tests |
