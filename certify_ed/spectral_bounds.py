@@ -130,13 +130,13 @@ def _spectrum_labels(iv, lower, upper, text: str, proved_lower_source: str) -> s
         lo = proved_lower_source or declared
     else:
         lo = f"{_DISCS} (not below the " + (f"bound of the certificate: {proved_lower_source})" if proved_lower_source
-                                            else "declared bound)")
+                                            else "declared bound" + (f": {text})" if text else ")"))
     if upper is None:
         hi = _DISCS
     elif float(upper) < ghi:
         hi = declared
     else:
-        hi = f"{_DISCS} (not above the declared bound)"
+        hi = f"{_DISCS} (not above the declared bound" + (f": {text})" if text else ")")
     return f"lower: {lo}; upper: {hi}"
 
 
@@ -145,14 +145,23 @@ def _spectrum_labels(iv, lower, upper, text: str, proved_lower_source: str) -> s
 def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spectrum_lower: Optional[float] = None,
                                 spectrum_upper: Optional[float] = None, spectrum_source: str = "",
                                 cluster: Optional[dict] = None, underflow_check: bool = True,
-                                description: str = "", _proved_lower_source: str = "") -> Dict[str, Any]:
+                                description: str = "") -> Dict[str, Any]:
     """M5: enclosures of tau_j = tr(P O T_j((H - c I) s_c) O)/g, j = 0..K, for the certified cluster with stored
     vectors X (n x g), sin theta bound s and Gram defect eta. spectrum_lower/upper are optional proved bounds on the
     extreme eigenvalues of H (they narrow the Gershgorin interval; the record calls them declared by the caller, not
-    checked, and spectrum_source, which needs a declared bound, says where they come from). _proved_lower_source is
-    set by spectral_bounds_from_certificate only: spectrum_lower then comes from the certificate.
+    checked, and spectrum_source, which needs a declared bound, says where they come from).
     Returns a JSON-able record (schema certify-ed/moments/1.0) with the key 'chebyshev' (c, s_c, the interval and the
     moments) for distribution_bounds."""
+    return _chebyshev_moments(H, O, X, s, eta, K, spectrum_lower, spectrum_upper, spectrum_source, cluster,
+                              underflow_check, description, "")
+
+
+def _chebyshev_moments(H, O, X, s, eta, K, spectrum_lower, spectrum_upper, spectrum_source, cluster, underflow_check,
+                       description, proved_lower_source: str) -> Dict[str, Any]:
+    """certified_chebyshev_moments; proved_lower_source is set by spectral_bounds_from_certificate only, whose
+    spectrum_lower then comes from the certificate."""
+    if proved_lower_source and spectrum_lower is None:
+        raise ValueError("a proved lower bound needs its value")
     from .diagnostics import annotate_record
     widened: List[dict] = []
     H = _as_matrix(H, "H", widened)
@@ -173,7 +182,7 @@ def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spec
     c, sc = iv["center"], iv["scale"]
     O_sha = matrix_sha256(O)
     O = O.tocsr() if sp.issparse(O) else sp.csr_matrix(O)
-    labels = _spectrum_labels(iv, spectrum_lower, spectrum_upper, spectrum_source, _proved_lower_source)
+    labels = _spectrum_labels(iv, spectrum_lower, spectrum_upper, spectrum_source, proved_lower_source)
     assume = [STANDARD_MODEL, CLUSTER_RECORD, "the spectrum of H lies in the interval of the record (Gershgorin discs"
               + (f"; {labels}" if labels else "") + ")", DERIVATION]
     rec: Dict[str, Any] = {
@@ -187,11 +196,11 @@ def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spec
         "chebyshev": {"center": c, "scale": sc, "K": K, "spectrum_interval": iv["interval"],
                       "gershgorin_interval": iv["gershgorin"],
                       "spectrum_source": labels or _DISCS,
-                      "declared_bounds": {"lower": None if spectrum_lower is None or _proved_lower_source
+                      "declared_bounds": {"lower": None if spectrum_lower is None or proved_lower_source
                                           else float(spectrum_lower),
                                           "upper": None if spectrum_upper is None else float(spectrum_upper)}}}
-    if _proved_lower_source:                        # the lower end was proved, not declared
-        rec["chebyshev"]["proved_bounds"] = {"lower": float(spectrum_lower), "source": _proved_lower_source,
+    if proved_lower_source:                        # the lower end was proved, not declared
+        rec["chebyshev"]["proved_bounds"] = {"lower": float(spectrum_lower), "source": proved_lower_source,
                                              "use": "the interval's lower end is the larger of this bound and the "
                                                     "Gershgorin bound"}
     widening = widening_record(widened)
@@ -822,11 +831,19 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
         raise ValueError("H is not the matrix of the certificate (matrix_sha256 differs)")
     cl = _cluster_record(cert, members)
     lower, source = _lowest_lower_bound(cert)
-    if lower is not None and "spectrum_lower" not in kw:
-        kw = dict(kw, spectrum_lower=lower, _proved_lower_source=source)
-    rec = certified_chebyshev_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K,
-                                      cluster={"members": list(members), "claimed": cl.get("claimed"),
-                                               "status": cl.get("status")}, **kw)
+    args = {"spectrum_lower": None, "spectrum_upper": None, "spectrum_source": "", "underflow_check": True,
+            "description": ""}
+    unknown = set(kw) - set(args)
+    if unknown:
+        raise TypeError(f"unexpected arguments: {sorted(unknown)}")
+    args.update(kw)
+    proved = lower is not None and "spectrum_lower" not in kw
+    if proved:
+        args["spectrum_lower"] = lower
+    rec = _chebyshev_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K,
+                             args["spectrum_lower"], args["spectrum_upper"], args["spectrum_source"],
+                             {"members": list(members), "claimed": cl.get("claimed"), "status": cl.get("status")},
+                             args["underflow_check"], args["description"], source if proved else "")
     from .crossings import certificate_hash
     rec["certificate"] = {"hash": certificate_hash(cert), "members": list(members), "operator_hash_matches": True}
     rec["record_sha256"] = _record_hash(rec)

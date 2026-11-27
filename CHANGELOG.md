@@ -2,9 +2,12 @@
 
 ## [3.3.0] — 2026-11-28 (branch `release/3.3.0`; the tag `v3.3.0` and its evidence run follow the merge)
 
-3.3.0 releases the work of `dev/3.3` and of the review rounds 1 to 9 on main. New statements: the moments record family
-(M1 to M3 on a certified eigenspace, M5 Chebyshev moments, M6 bounds on the integrated spectral weight; M4 stays
-NOT_IMPLEMENTED), whose derivations C-07 and C-07b are UNVERIFIED until Sarang's check (D-12). New paths: GPU products
+3.3.0 releases the work of `dev/3.3` and of the review rounds 1 to 10 on main. New statements: M5 (Chebyshev moments)
+and M6 (bounds on the integrated spectral weight) join the moments record family of 3.2.0 (M1 to M3; M4 stays
+NOT_IMPLEMENTED); their derivation C-07b, and C-07 with the accounting of rounds 8b to 10, are UNVERIFIED until
+Sarang's check (D-12). The derivations with UNVERIFIED parts in `docs/proofs` are C-04, C-07, C-07b, D-01, D-02, D-03,
+E-02, E-03, E-04, E-05, E-07, appendix A, fp_modulus-up, int05_underflow and thm1_fp-accounting (`VERDICTS.md` gives
+the independent verdicts). New paths: GPU products
 with a device probe (D-05), the worker pool (D-04), external verifiers of the Lean product (N-04), the non-Hermitian
 statements (E-02, N-13) and the exact re-check of N-11. Soundness fixes: repeated entries summed at the start, inputs
 in a narrower format than binary64, upper bounds for complex moduli, non-finite bounds giving no statement, inner
@@ -23,12 +26,19 @@ The version is 3.3.0 in `pyproject.toml` and `certify_ed/__init__.py`. The compu
 - M5 records: `certified_chebyshev_moments` names each end of the spectral interval from the bound in use
   ("lower: …; upper: …" whenever a bound is given): a caller's text stays behind "declared by the caller, not checked",
   a declared bound that the Gershgorin discs beat is named as such, and a `spectrum_source` without a declared bound
-  is refused at both entry points. `spectral_bounds_from_certificate` passes the certificate's bound as proved; the
-  record keeps it under `chebyshev.proved_bounds`.
-- M1: the underflow check also scans the bounds h_1, …, h_K on ‖H‖ᵏ. Inputs above 2⁻⁹⁰⁰ do not keep them out of
-  the subnormal range when ‖H‖ is small and K large, and there the products of the bound that carry h_k lose their
-  relative error bound (found by the stage test at ‖H‖ near 1e-160); M1 to M3 are then INCONCLUSIVE with
-  UNDERFLOW_RISK. C-07 Lemma 3 says so.
+  is refused at both entry points. `spectral_bounds_from_certificate` passes the certificate's bound as proved
+  through an internal function, so that no caller can record a bound of its own as proved; the record keeps it under
+  `chebyshev.proved_bounds`.
+- M1: the underflow check also scans the bounds h_1, …, h_K on ‖H‖ᵏ (found by the stage test at ‖H‖ near 1e-160:
+  inputs above 2⁻⁹⁰⁰ do not keep them out of the subnormal range when ‖H‖ is small and K large); when one is below
+  2⁻⁹⁰⁰, M1 to M3 are INCONCLUSIVE with UNDERFLOW_RISK. The scan is a partial proxy: other products of the M1 and M5
+  bounds can still underflow on inputs that pass it, and the hypothesis stays assumed for them, as C-07 Lemma 3,
+  C-07b, `docs/limitations.md` and the open items say (round 10 of the review).
+- Release: `CITATION.cff` and `.zenodo.json` name 3.3.0 (2026-11-28), and the one-version test compares them with the
+  package in a release. `packaging/conda-forge/meta.yaml` keeps 3.1.0 and the sha256 of its sdist until 3.3.0 is on
+  PyPI (checklist section 6: the sha256 is that of the published sdist). Documents that say "since 3.3.0.dev0" name
+  the development version in which a change was made and are not changed. The test count and the computational source
+  hash of the release follow below, from the suites of the final commit.
 - `moments._gram_defect_bounds` forms the square of the Frobenius bound as a product, not with the library power.
   The same square in `enclosure._cluster_bound` touches certificates and is left to a branch of its own (open items).
 - `tools/lint_docs.py` stops with its usage and exit code 2 when no file or directory is given; before, it checked
@@ -39,7 +49,12 @@ The version is 3.3.0 in `pyproject.toml` and `certify_ed/__init__.py`. The compu
   keeps it above the exact power), and a negative control (plain additions in place of `add_up` fail).
 - C-07 Lemma 3 and C-07b Lemma 7: the summation term reaches the argument of the `up` through up to six roundings,
   also within its factor.
-- Tests: `test_each_end_is_named_from_the_bound_in_use`; the source tests use a declared upper bound below the discs.
+- C-07 section 3 names the functions and variables instead of line numbers.
+- Labels: where the Gershgorin discs beat a declared bound, the caller's text stays in the label.
+- `test_the_norm_power_scan_at_its_boundaries`: a norm near 1e-100 at K = 2 (no finding) and K = 3 (from k = 3),
+  and near 1e-140 at K = 2 (from k = 2, where h_2 lies between 1e-308 and 2⁻⁹⁰⁰).
+- Tests: `test_each_end_is_named_from_the_bound_in_use`; the source tests use a declared upper bound below the discs;
+  the private argument is refused at both entry points.
 
 ### Round 9 of the review: the norm power, records and checks
 

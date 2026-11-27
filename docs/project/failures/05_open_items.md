@@ -203,3 +203,9 @@ purpose, so a hash check needs a separate entry for unmodified records.
 (`fro_upper(Xg) ** 2`) under an `up`, which covers it as long as the power is within about one ulp; a product needs no
 such assumption, as in `moments._gram_defect_bounds` since 3.3.0. The change touches the certificates of `certify()`
 and is left to a branch of its own.
+
+The moments keep the no-underflow hypothesis for their intermediate quantities (`docs/limitations.md`). The scan of
+the bounds on ‖H‖ᵏ in M1 (3.3.0) is a partial proxy: in round 10 of the review, inputs that pass every scan (a small
+‖O‖, or a small ‖H‖ with a large k) made products of the M1 and M5 bounds subnormal, and every exact moment stayed in
+its interval. An upward step for every product of the two bounds (+ ULP_MIN, as for the norm power), or the
+underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived.

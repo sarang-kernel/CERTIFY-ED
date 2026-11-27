@@ -161,3 +161,17 @@ def test_plain_additions_in_place_of_the_upward_ones_are_seen(monkeypatch):
         test_m1_bound_stages_in_exact_rationals(0, False, 1.0)
     with pytest.raises(AssertionError):
         test_m5_bound_stages_in_exact_rationals(0, False)
+
+
+@pytest.mark.parametrize("hscale,K,first", [(1e-100, 2, None), (1e-100, 3, 3), (1e-140, 2, 2)])
+def test_the_norm_power_scan_at_its_boundaries(hscale, K, first):
+    """h_2 is about 1e-200 and h_3 about 1e-300 for a norm near 1e-100, h_2 about 1e-280 for 1e-140: the scan names the
+    first k with h_k below 2^-900 (about 1.1e-271), not a smaller threshold, and stops at K."""
+    H, O, X = _case(0, 7, 2, False, hscale)
+    rec = mo.certified_moments(H, O, X, 0.0, 0.0, K=K, sum_rules=False)
+    found = [f for f in rec["underflow_check"]["findings"] if "||H||^k" in f["where"]]
+    status = {s["id"]: s["status"] for s in rec["statements"]}["M1.moments"]
+    if first is None:
+        assert not found and status == "CERTIFIED"
+    else:
+        assert found and found[0]["where"].endswith(f"from k = {first}") and status == "INCONCLUSIVE"

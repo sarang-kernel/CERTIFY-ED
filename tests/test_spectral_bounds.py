@@ -298,9 +298,13 @@ def test_each_end_is_named_from_the_bound_in_use(chain6):
                                          spectrum_source="from a run")
     assert rec["chebyshev"]["spectrum_source"] == ("lower: declared by the caller, not checked (from a run); "
                                                    "upper: Gershgorin discs of the stored H")
-    rec = sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_upper=ghi + 5.0)
+    rec = sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_upper=ghi + 5.0, spectrum_source="loose")
     assert rec["chebyshev"]["spectrum_source"].endswith("upper: Gershgorin discs of the stored H (not above the "
-                                                        "declared bound)")
+                                                        "declared bound: loose)")
     assert rec["chebyshev"]["spectrum_interval"][1] == ghi
     with pytest.raises(ValueError, match="names the source of a declared bound"):
         sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_source="a text")
+    with pytest.raises(TypeError):
+        sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_lower=-10.0, _proved_lower_source="made up")
+    with pytest.raises(TypeError):
+        sb.spectral_bounds_from_certificate(cert, H, O, K=2, spectrum_lower=-10.0, proved_lower_source="made up")
