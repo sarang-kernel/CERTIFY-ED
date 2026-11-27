@@ -150,7 +150,7 @@ to the writing rules of `docs/project/STYLE.md`.
 | B-08 | Mutation testing in CI on a rotating sample with a survivor ledger and a verdict workflow (e6_classify/e6_recheck stamped) (partial) | 8 | 3.3 | M | 5 | no |  |  |
 | B-09 | Signed, reproducible releases (sigstore) and an SBOM; certificate records the package hash (partial) | 8 | 3.3 | S | 4 | no |  |  |
 | D-03 | Error-free dot products via the Ozaki scheme on BLAS (integer-split products) for compensated residual norms, 10-50x faster than fsum paths | 8 | 3.3 | M | 6 | no | now | prototype on `dev/3.3`, not the default, draft without independent re-derivation |
-| D-04 | Parallelism across pairs and sectors (multiprocessing; optional MPI via mpi4py) with memory caps per worker (portable.py job objects / RLIMIT_AS) | 8 | 3.3 | M | 4 | no | now | on `dev/3.3`, one worker by default; speed-up 1.77 (2 workers) to 2.75 (8) on 11 sector claims (22 Nov 2026) |
+| D-04 | Parallelism across pairs and sectors (multiprocessing; optional MPI via mpi4py) with memory caps per worker (portable.py job objects / RLIMIT_AS) | 8 | 3.3 | M | 4 | no | now | on `dev/3.3`, one worker by default; speed-up 1.77 (2 workers) to 2.75 (8) on 11 sector claims (22 Nov 2026; second run 2.80 with 8, 27 Nov) |
 | D-05 | GPU residuals (CuPy) with a GPU floating-point model probe (FMA, FTZ, rounding) and the same strict bounds | 8 | needs a GPU | L | 6 | yes |  |  |
 | D-07 | macOS support and testing of the memory-cap mechanism; documented cap semantics per OS (address space vs committed memory, as seen on E4 W4) | 8 | needs macOS | S | 3 | no |  |  |
 | F-02 | Importers for HPhi, DiagHam, SPINPACK and ALPS output files (eigenvalues, vectors, sector labels) (partial) | 8 | 3.3 | M | 6 | no |  |  |

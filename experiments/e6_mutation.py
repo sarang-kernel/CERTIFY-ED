@@ -122,11 +122,14 @@ def _force_writable(func, path, _exc):
     file, so after a failed removal (os.unlink, os.remove or os.rmdir) the owner's permission bits are set (read and
     write for a file, read, write and search for a directory) and the removal is tried once more. Other failed calls
     (os.scandir, os.lstat, os.open) are not retried, and nothing the retry raises propagates: whatever is left is
-    reported by _remove_tree."""
+    reported by _remove_tree. A symbolic link is not passed to chmod, which would change its target. For a directory
+    the bits matter on Windows only: on POSIX the removal of a directory depends on the mode of its parent, which is
+    not changed."""
     if func not in _REMOVALS:
         return
     try:
-        os.chmod(path, stat.S_IRWXU if os.path.isdir(path) else stat.S_IWRITE | stat.S_IREAD)
+        if not os.path.islink(path):
+            os.chmod(path, stat.S_IRWXU if os.path.isdir(path) else stat.S_IWRITE | stat.S_IREAD)
         func(path)
     except Exception:
         pass

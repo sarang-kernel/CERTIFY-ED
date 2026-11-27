@@ -7,6 +7,31 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Round 8b of the review: accounting, records and small corrections
+
+The computational source hash changes. The M1 and M5 bounds grow by at most a few units in the last place.
+
+- Accounting: in M5 and M1 the three rounding terms of each cluster member are added upward and summed over the
+  members with `math.fsum` (inf when that sum overflows, where `math.fsum` raises), and the last addition of the
+  bound is rounded upward. In M1 the two bound vectors (e_y and the matvec bounds) carry `up` after `norm2_upper`, as
+  in M5 since round 8. C-07 (Lemma 3) and C-07b (Lemma 7, the definitions of ε(z) and b_j) say so; for e_y the count
+  is five relative errors, not four.
+- Records: M5 and M6 list `moments.CLUSTER_RECORD` among their assumptions. With the certificate's lower bound and an
+  upper bound from the caller, `spectral_bounds_from_certificate` names one source per end, keeps a caller's
+  `spectrum_source` for the upper end, and records the proved lower end under `chebyshev.proved_bounds` instead of
+  `declared_bounds`. The docstring of `distribution_bounds` says that the moment intervals are taken as given.
+- `spectral_bounds._prove_and_bound` skips a candidate whose doubled margin overflows when scaled by 2^40.
+- `tests/test_moments.py`: the equal-columns case uses a basis vector, whose squared norm is exactly 1, so that it
+  separates the diagonal lower bound from the new one on every machine.
+- E6: the cleanup handler does not pass a symbolic link to chmod; its docstring says that for a directory the bits
+  matter on Windows only.
+- Scope table: a Greek letter or a superscript k between angle brackets is written inside their math span.
+- D-04: the results README, the open items and the roadmap name the second run.
+- Open items: the two items of round 8 left for later (a control of the rounding term in Part A of
+  verify_C-07b; the record hash in `distribution_bounds`) and the GPU run of the round-8b head.
+- Tests: `test_cluster_record_and_one_source_per_end`, `test_a_margin_that_overflows_skips_the_candidate`,
+  `test_handler_does_not_chmod_a_link_target`, `test_a_letter_between_angle_brackets_stays_in_their_math_span`.
+
 ### Documentation and test corrections (round 7)
 
 No code of the package changes; the computational source hash does not change.

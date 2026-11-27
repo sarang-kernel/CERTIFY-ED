@@ -96,3 +96,19 @@ def test_copies_are_removed_when_the_baseline_fails(tmp_path, monkeypatch):
     assert len(seen) == 1
     assert os.path.basename(seen[0]).startswith("mut0_")
     assert list(copy_dir.iterdir()) == []
+
+
+def test_handler_does_not_chmod_a_link_target(tmp_path):
+    target = tmp_path / "target"
+    target.write_bytes(b"x")
+    os.chmod(target, stat.S_IREAD)
+    link = tmp_path / "link"
+    try:
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        os.chmod(target, stat.S_IWRITE | stat.S_IREAD)
+        pytest.skip("symbolic links are not available here")
+    e6._force_writable(os.unlink, str(link), None)
+    assert not os.path.lexists(link)
+    assert not stat.S_IMODE(os.stat(target).st_mode) & stat.S_IWRITE      # the target keeps its mode
+    os.chmod(target, stat.S_IWRITE | stat.S_IREAD)

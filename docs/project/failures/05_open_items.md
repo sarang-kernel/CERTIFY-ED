@@ -150,10 +150,10 @@ the count theorems of the three kernel certificates and the refinement of `Certi
 certificate is affected, and adding the two tests to the kernel checks is open. nanoda could not finish
 `npz_S2` and `npz_theorem1` under the limit of 4096 MiB.
 
-On the side of scale, the worker pool of D-04 was measured on 22 November 2026 on 16 pinned cores of a shared Linux
-host (`docs/results/RESULT_d04_speedup.md`, single runs): on eleven sector claims of the chain of 16 sites it gives a
-speed-up of 1.77 with 2 workers and 2.75 with 8, bounded by the longest claim, and the statement records and arrays
-equal the one-worker ones. The
+On the side of scale, the worker pool of D-04 was measured on 22 and 27 November 2026 on 16 pinned cores of a shared
+Linux host (`docs/results/RESULT_d04_speedup.md`, two runs, each configuration once per run): on eleven sector claims
+of the chain of 16 sites it gives a speed-up of 1.77 with 2 workers and 2.75 with 8 (second run: 1.77 and 2.80),
+bounded by the longest claim, and the certificates equal the one-worker ones. The
 thresholds of the performance tests (`pytest --perf`) were not tried on an idle machine; the baseline is to be recorded
 again on an idle machine, since the 3.2.2 and 3.2.3 runs shared the machine with other work. One comparison at a
 relative tolerance of 1e-12 in `tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run
@@ -188,3 +188,15 @@ The `test` and `dev` extras of `pyproject.toml` do not list mpmath, although fou
 high-precision references (`tests/test_entanglement.py`, `test_nonhermitian.py`, `test_proofs_props.py`,
 `test_thermo.py`) and skip those tests without it, so an install with `pip install .[test]` runs fewer tests. The
 container recipes install it. Adding `"mpmath>=1.2"` to both extras is open.
+
+## Follow-ups of round 8 of the review (27 November 2026)
+
+- Part A of `docs/proofs/verify_C-07b.py` checks the M5 enclosure on tilted vectors. A control that isolates the
+  rounding term (exact eigenvectors, s = eta = 0, the rounding term removed) needs a separate oracle for the
+  floating-point products and is open.
+- `spectral_bounds.distribution_bounds` takes the moment intervals of an M5 record as given and does not compare its
+  `record_sha256`. The negative controls change intervals on purpose, so a hash check needs a separate entry for
+  unmodified records.
+- The GPU test files and the device probe have not run at the round-8b head (int/round8b 7bced6c, merged as main
+  70d56c9): no GPU of the Linux host had room on 27 November. No GPU code changed after c530f99c, where they
+  passed (957 passed, 52 skipped; the probe holds).

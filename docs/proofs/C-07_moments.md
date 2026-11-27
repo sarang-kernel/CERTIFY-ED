@@ -16,16 +16,17 @@ w_O the largest numbers of nonzeros per row of H and O. The moments are m_k := t
     | m_k − (1/g) Σ_i ⟨Ox_i, Hᵏ Ox_i⟩ | ≤ (2s + η) ‖O‖₂² ‖H‖₂ᵏ.
 
 **Lemma 3 (floating-point accounting of the repeated application; `moments.certified_moments`).** Let ŷ_i = fl(Ox_i),
-ẑ_i^{(0)} = ŷ_i and ẑ_i^{(k)} = fl(H ẑ_i^{(k−1)}). Put e_y,i := `norm2_upper`(γ̇_{w_O} fl(|O||x_i|)/(1 − γ_{w_O})) ≥ ‖ŷ_i − Ox_i‖,
-ε_k,i := `norm2_upper`(γ̇_{w_H} fl(|H||ẑ_i^{(k−1)}|)/(1 − γ_{w_H})) ≥ ‖ẑ_i^{(k)} − Hẑ_i^{(k−1)}‖, D_0,i = 0 and
+ẑ_i^{(0)} = ŷ_i and ẑ_i^{(k)} = fl(H ẑ_i^{(k−1)}). Put e_y,i := up(`norm2_upper`(γ̇_{w_O} fl(|O||x_i|)/(1 − γ_{w_O}))) ≥ ‖ŷ_i − Ox_i‖,
+ε_k,i := up(`norm2_upper`(γ̇_{w_H} fl(|H||ẑ_i^{(k−1)}|)/(1 − γ_{w_H}))) ≥ ‖ẑ_i^{(k)} − Hẑ_i^{(k−1)}‖, D_0,i = 0 and
 D_k,i := up(‖H‖·D_{k−1,i} + ε_k,i) ≥ ‖ẑ_i^{(k)} − Hᵏŷ_i‖. Let (v_i, d_i) = `exact_dot`(ŷ_i, ẑ_i^{(k)}) (|v_i − ⟨ŷ_i, ẑ_i^{(k)}⟩| ≤ d_i)
 and m̂_k = fl(Σ_i Re v_i)/g. Then
 
     | m̂_k − (1/g) Σ_i ⟨Ox_i, HᵏOx_i⟩ | ≤ (1/g) Σ_i [ ‖H‖ᵏ (2‖ŷ_i‖ + e_y,i) e_y,i + ‖ŷ_i‖ D_k,i + d_i ] + γ_{g+1} Σ_i |Re v_i|/g + u|m̂_k|,
 
 where ‖ŷ_i‖ is replaced by its upper bound `norm2_upper`(ŷ_i) and ‖H‖, ‖O‖ by the row-sum bounds of `inf_norm_upper`.
-The certified interval of M1 is m̂_k ± b_k with b_k = up(projector term + rounding terms)/g + 2u|m̂_k| (one more rounding
-than the division needs). Hᵏ is never formed.
+The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
+addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each
+member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`). Hᵏ is never formed.
 
 **Lemma 4 (explicitly formed products; `moments.hermitian_matrix_with_bound`).** For stored F₁, …, F_m (n × n) and the
 left-to-right floating-point product T̂ = fl(⋯fl(fl(F₁F₂)F₃)⋯F_m), with w₁ the largest number of nonzeros per row of F₁,
@@ -64,7 +65,9 @@ is Hermitian. ‖O Hᵏ O‖₂ ≤ ‖O‖₂‖H‖₂ᵏ‖O‖₂ (submultip
 
 **Lemma 3.** (i) *ŷ_i.* Each entry of fl(Ox_i) is an inner product of ≤ w_O terms: |ŷ_i − Ox_i| ≤ γ̇_{w_O}|O||x_i| entrywise
 (Higham 2002 eq. (3.5); `gamma_dot` for complex data); the computed fl(|O||x_i|) of non-negative terms is ≥ (1 − γ_{w_O})
-times the exact one; `norm2_upper` bounds the 2-norm of the entrywise bound: ‖ŷ_i − Ox_i‖ ≤ e_y,i. (ii) *ẑ_i^{(k)}.*
+times the exact one; `norm2_upper` bounds the 2-norm of the entrywise bound, and the
+product by γ̇, the two rounded γ, 1 − γ_{w_O} and the division add at most five relative errors u per component, which
+the `up` covers (a factor of at least 1 + 6u): ‖ŷ_i − Ox_i‖ ≤ e_y,i; the same holds for ε_k,i. (ii) *ẑ_i^{(k)}.*
 Likewise ‖ẑ_i^{(k)} − Hẑ_i^{(k−1)}‖ ≤ ε_k,i, and by induction ‖ẑ_i^{(k)} − Hᵏŷ_i‖ ≤ ‖H‖‖ẑ_i^{(k−1)} − Hᵏ⁻¹ŷ_i‖ + ε_k,i ≤
 ‖H‖D_{k−1,i} + ε_k,i, which `up` rounds up: D_k,i. (iii) *Exact quantity versus computed.* With M = Hᵏ (Hermitian),
 ⟨Ox_i, M Ox_i⟩ − ⟨ŷ_i, Mŷ_i⟩ = ⟨Ox_i − ŷ_i, M(Ox_i + ŷ_i)⟩ (polarisation for Hermitian M, the cross terms being conjugate),

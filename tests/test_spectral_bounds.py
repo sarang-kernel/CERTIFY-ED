@@ -239,3 +239,26 @@ def test_declared_spectrum_bounds_are_recorded_as_declared(chain6):
     assert rec["chebyshev"]["declared_bounds"]["lower"] == float(w[0]) - 1e-9
     st = {s["id"]: s for s in rec["statements"]}
     assert any("declared by the caller" in a for a in st["M5.chebyshev_moments"]["assumptions"])
+
+
+def test_cluster_record_and_one_source_per_end(chain6):
+    """M5 and M6 name the cluster record taken as given; with the certificate's lower bound and a caller's upper bound
+    the record names one source per end and keeps the proved end apart from the declared one."""
+    from certify_ed.moments import CLUSTER_RECORD
+    H, O, cert, w, weights = chain6
+    hi = sb.spectral_bounds_from_certificate(cert, H, O, K=4)["chebyshev"]["gershgorin_interval"][1]
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=4, energies=[-1.0], spectrum_upper=hi)
+    for s in rec["statements"]:
+        assert CLUSTER_RECORD in s["assumptions"], s["id"]
+    ch = rec["chebyshev"]
+    assert ch["spectrum_source"].startswith("lower: ")
+    assert "upper: declared by the caller, not checked" in ch["spectrum_source"]
+    assert ch["declared_bounds"] == {"lower": None, "upper": hi}
+    assert ch["proved_bounds"]["lower"] <= w[0] and "certificate" in ch["proved_bounds"]["source"]
+    assert validate_record(rec) in (True, None)
+
+
+def test_a_margin_that_overflows_skips_the_candidate(monkeypatch):
+    monkeypatch.setattr(sb, "_float_violation", lambda D, xi, upper: 1e300)
+    val, info = sb._prove_and_bound(np.array([1.0, 0.0]), None, None, Fraction(0), True)
+    assert val is None and "overflows" in info["reason"]

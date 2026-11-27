@@ -30,7 +30,7 @@ radius), the interval [lo, hi] is the intersection. (c) For binary64 numbers c a
 **Lemma 7 (floating-point accounting of the three-term recurrence).** For a stored vector z let
 â(z) := fl(s·fl(fl(Hz) − fl(cz))) (componentwise: a sum of the w products h_ik z_k, minus the rounded product c z_i, then
 one multiplication by s). Then |â(z)_i − (Az)_i| ≤ s γ̇_{w+2} (Σ_k |h_ik||z_k| + |c||z_i|), and
-ε(z) := `norm2_upper`(γ̇_{w+2} s (fl(|H|m) + |c|m)/(1 − γ_{w+4})), m = `modulus_up`(z), bounds ‖â(z) − Az‖₂.
+ε(z) := up(`norm2_upper`(γ̇_{w+2} s (fl(|H|m) + |c|m)/(1 − γ_{w+4}))), m = `modulus_up`(z), bounds ‖â(z) − Az‖₂.
 Let ŷ_i = fl(Ox_i), ẑ₀ = ŷ_i, ẑ₁ = â(ẑ₀) and ẑ_{j+1} = fl(2 â(ẑ_j) − ẑ_{j−1}) for j ≥ 1 (multiplication by 2 is
 exact); ε_j := ε(ẑ_{j−1}), δ₁ = ε₁ and, for j ≥ 2,
 
@@ -48,7 +48,8 @@ E_j is computed as S_j = up(S_{j−1} + δ_j), E_j = up(E_{j−1} + S_j) (E_j �
                                                + γ_{g+1} Σ_i |Re v_i| / g + u|τ̂_j|,
 
 with e_y,i the bound of Lemma 3 of C-07 on ‖ŷ_i − Ox_i‖. The certified interval of M5 is τ̂_j ± b_j with
-b_j = up(projector term + rounding terms)/g + 2u|τ̂_j|, its ends rounded outward.
+b_j = up((projector term + rounding terms)/g) + 2u|τ̂_j|, the last addition rounded upward and the ends rounded
+outward.
 
 **Proposition 3 (M6, bounds on the distribution function).** The set function μ(S) := tr(P O E_A(S) O)/g is a
 positive Borel measure, carried by σ(A) ⊂ [−1, 1], with ∫ T_j dμ = τ_j. For ξ ∈ [−1, 1) put F(ξ) := μ([−1, ξ]). If
@@ -110,7 +111,8 @@ most w + 4 roundings per component (the products and sums of fl(|H|m), the produ
 by s and by γ̇), so the exact vector is at most the computed one divided by 1 − γ_{w+4}. That quotient is itself
 evaluated in floating point: γ̇_{w+2} and γ_{w+4} are rounded, and so are 1 − γ_{w+4} and the division, at most four
 further relative errors u in each component. They are covered by `up` applied to the 2-norm (the factor 1 + 8u,
-itself rounded once, so at least 1 + 6u; ‖v(1 + θ)‖ ≤ (1 + max|θ_i|)‖v‖); the same holds for e_y,i. `norm2_upper`
+itself rounded once, so at least 1 + 6u; ‖v(1 + θ)‖ ≤ (1 + max|θ_i|)‖v‖); for e_y,i (Lemma 3 of C-07) the divisor
+1 − γ_{w_O} does not cover the product by γ̇, so there are at most five, which the same factor covers. `norm2_upper`
 bounds the 2-norm of the stored vector, and m ≥ |z| componentwise. The subtraction: componentwise fl(a − b) = (a − b)(1 + θ),
 |θ| ≤ u (for complex data on the real and the imaginary part separately, which gives the same modulus bound), so
 ‖fl(a − b) − (a − b)‖ ≤ u‖a − b‖ ≤ u/(1 − u)‖fl(a − b)‖; with a = 2 â(ẑ_{j−1}) the product error enters twice.
@@ -120,8 +122,9 @@ U_{m+1} = 2x U_m − U_{m−1} gives e_j = Σ_{l=1}^{j} U_{j−l}(A) f_l. For λ
 |U_m(λ)| = |sin((m + 1)θ)/sin θ| ≤ m + 1, so ‖U_m(A)‖₂ ≤ m + 1 and ‖e_j‖ ≤ Σ_l (j − l + 1) δ_l. The inner product:
 ⟨ŷ, ẑ_j⟩ − ⟨y, T_j(A) y⟩ = ⟨ŷ, e_j⟩ + ⟨ŷ − y, T_j(A) ŷ⟩ + ⟨y, T_j(A)(ŷ − y)⟩ with y = Ox_i; the three terms are
 at most ‖ŷ‖E_j, e_y‖ŷ‖ and (‖ŷ‖ + e_y) e_y. The exact_dot error, the sum and the division are those of Lemma 3 of
-C-07; the sum over the g members of the rounding terms is formed with `math.fsum` (correctly rounded, one relative
-error u), covered by the `up` of b_j. ∎
+C-07; the three rounding terms of each member are added upward (`add_up`), their sum over the g members is formed
+with `math.fsum` (correctly rounded, one relative error u, covered by the `up` of b_j), and the last addition of b_j
+is rounded upward. ∎
 
 **Proposition 3.** For a Borel set S, E(S) is an orthogonal projector commuting with H, and
 tr(P O E(S) O) = tr(P P O E(S) E(S) O) = tr((E(S) O P)ᴴ (E(S) O P)) = ‖E(S) O P‖_F² ≥ 0 (cyclicity, P = P² = Pᴴ,
