@@ -157,6 +157,9 @@ if __name__ == "__main__":
         k = args.index("--bundle")
         bundle = open(args[k + 1], encoding="utf-8").read()
         del args[k:k + 2]
+    if not args:                                    # no path would check nothing and report 0 problems
+        print(__doc__.split("\n\n")[1], file=sys.stderr)
+        sys.exit(2)
     total = 0
     for f in files(args):
         text = open(f, encoding="utf-8-sig").read()

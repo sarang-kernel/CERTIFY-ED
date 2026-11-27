@@ -235,7 +235,8 @@ def test_lowest_bound_is_taken_only_from_a_certified_lowest_claim(chain6):
 def test_declared_spectrum_bounds_are_recorded_as_declared(chain6):
     H, O, cert, w, weights = chain6
     rec = sb.spectral_bounds_from_certificate(cert, H, O, K=4, spectrum_lower=float(w[0]) - 1e-9)
-    assert rec["chebyshev"]["spectrum_source"] == "bounds declared by the caller, not checked"
+    assert rec["chebyshev"]["spectrum_source"] == ("lower: declared by the caller, not checked; "
+                                                  "upper: Gershgorin discs of the stored H")
     assert rec["chebyshev"]["declared_bounds"]["lower"] == float(w[0]) - 1e-9
     st = {s["id"]: s for s in rec["statements"]}
     assert any("declared by the caller" in a for a in st["M5.chebyshev_moments"]["assumptions"])
@@ -249,7 +250,8 @@ def test_cluster_record_and_one_source_per_end(chain6):
     alone = sb.spectral_bounds_from_certificate(cert, H, O, K=4)["chebyshev"]
     assert alone["spectrum_source"].startswith("lower: ")
     assert alone["spectrum_source"].endswith("; upper: Gershgorin discs of the stored H")
-    hi = alone["gershgorin_interval"][1]
+    hi = float(np.nextafter(alone["gershgorin_interval"][1], -np.inf))   # one step below the discs, still above
+    assert hi >= float(w[-1]) + 1e-15                                     # the largest eigenvalue here
     rec = sb.spectral_bounds_from_certificate(cert, H, O, K=4, energies=[-1.0], spectrum_upper=hi)
     for s in rec["statements"]:
         assert CLUSTER_RECORD in s["assumptions"], s["id"]
@@ -283,3 +285,22 @@ def test_a_margin_that_overflows_skips_the_candidate(monkeypatch):
     monkeypatch.setattr(sb, "_float_violation", lambda D, xi, upper: 1e300)
     val, info = sb._prove_and_bound(np.array([1.0, 0.0]), None, None, Fraction(0), True)
     assert val is None and "overflows" in info["reason"]
+
+
+def test_each_end_is_named_from_the_bound_in_use(chain6):
+    """certified_chebyshev_moments names each end from the bound that sets it: a caller's text stays behind "declared
+    by the caller, not checked", a declared bound that the discs beat is named as such, and a text without a declared
+    bound is refused."""
+    H, O, cert, w, weights = chain6
+    X = np.asarray(cert.arrays["eigenvectors"])[:, :1]
+    ghi = sb.chebyshev_interval(H)["gershgorin"][1]
+    rec = sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_lower=float(w[0]) - 1e-9,
+                                         spectrum_source="from a run")
+    assert rec["chebyshev"]["spectrum_source"] == ("lower: declared by the caller, not checked (from a run); "
+                                                   "upper: Gershgorin discs of the stored H")
+    rec = sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_upper=ghi + 5.0)
+    assert rec["chebyshev"]["spectrum_source"].endswith("upper: Gershgorin discs of the stored H (not above the "
+                                                        "declared bound)")
+    assert rec["chebyshev"]["spectrum_interval"][1] == ghi
+    with pytest.raises(ValueError, match="names the source of a declared bound"):
+        sb.certified_chebyshev_moments(H, O, X, 0.0, 0.0, K=2, spectrum_source="a text")

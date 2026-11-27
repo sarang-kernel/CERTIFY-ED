@@ -196,3 +196,10 @@ vectors; a control that isolates the rounding term (exact eigenvectors, s = eta 
 separate oracle for the floating-point products and is open. `spectral_bounds.distribution_bounds` takes the moment
 intervals of an M5 record as given and does not compare its `record_sha256`; the negative controls change intervals on
 purpose, so a hash check needs a separate entry for unmodified records.
+
+## Follow-ups of round 9 of the review (28 November 2026)
+
+`enclosure._cluster_bound` forms the square of the Frobenius bound of the stored vectors with the library power
+(`fro_upper(Xg) ** 2`) under an `up`, which covers it as long as the power is within about one ulp; a product needs no
+such assumption, as in `moments._gram_defect_bounds` since 3.3.0. The change touches the certificates of `certify()`
+and is left to a branch of its own.

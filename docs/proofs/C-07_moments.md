@@ -26,13 +26,17 @@ and m̂_k = fl(Σ_i Re v_i)/g. Then
 where ‖ŷ_i‖ is replaced by its upper bound `norm2_upper`(ŷ_i), ‖H‖, ‖O‖ by the row-sum bounds of `inf_norm_upper`,
 and ‖H‖ᵏ by h_k with h_0 = 1 and h_k = up(h_{k−1}‖H‖) + ULP_MIN (one rounding per product, which the `up` covers;
 ULP_MIN for a product in the subnormal range), so h_k ≥ ‖H‖ᵏ; a library power would not be covered by the standard
-model (round 9).
+model (round 9). The products that carry h_k keep their relative error bound only while h_k stays
+above the no-underflow threshold 2⁻⁹⁰⁰; the underflow check therefore also scans h_1, …, h_K and gives no statement
+(INCONCLUSIVE, UNDERFLOW_RISK) when one falls below it (3.3.0).
 The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
 addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each
 member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`).
 The argument of that `up` carries at most four relative errors u (the `math.fsum`, the two
 additions of the projector, rounding and summation terms, and the division by g), and `up` multiplies by 1 + 8u with
-one rounding of its own, which covers them. Hᵏ is never formed.
+one rounding of its own, which covers them; the summation term γ_{g+1} Σ|Re v_i| (spare while the sum is
+correctly rounded) reaches the argument through up to six roundings, also within that factor, since
+1 + 7u − 8u² ≥ (1 − u)⁻⁶. Hᵏ is never formed.
 
 **Lemma 4 (explicitly formed products; `moments.hermitian_matrix_with_bound`).** For stored F₁, …, F_m (n × n) and the
 left-to-right floating-point product T̂ = fl(⋯fl(fl(F₁F₂)F₃)⋯F_m), with w₁ the largest number of nonzeros per row of F₁,
