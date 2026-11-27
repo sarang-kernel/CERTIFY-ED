@@ -124,7 +124,9 @@ U_{m+1} = 2x U_m − U_{m−1} gives e_j = Σ_{l=1}^{j} U_{j−l}(A) f_l. For λ
 at most ‖ŷ‖E_j, e_y‖ŷ‖ and (‖ŷ‖ + e_y) e_y. The exact_dot error, the sum and the division are those of Lemma 3 of
 C-07; the three rounding terms of each member are added upward (`add_up`), their sum over the g members is formed
 with `math.fsum` (correctly rounded, one relative error u, covered by the `up` of b_j), and the last addition of b_j
-is rounded upward. ∎
+is rounded upward. The argument of that `up` carries at most four relative errors u (the `math.fsum`, the two
+additions of the projector, rounding and summation terms, and the division by g), and `up` multiplies by 1 + 8u with
+one rounding of its own, which covers them. ∎
 
 **Proposition 3.** For a Borel set S, E(S) is an orthogonal projector commuting with H, and
 tr(P O E(S) O) = tr(P P O E(S) E(S) O) = tr((E(S) O P)ᴴ (E(S) O P)) = ‖E(S) O P‖_F² ≥ 0 (cyclicity, P = P² = Pᴴ,

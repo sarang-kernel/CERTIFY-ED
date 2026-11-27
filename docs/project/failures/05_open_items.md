@@ -191,9 +191,8 @@ container recipes install it. Adding `"mpmath>=1.2"` to both extras is open.
 
 ## Follow-ups of round 8 of the review (27 November 2026)
 
-- Part A of `docs/proofs/verify_C-07b.py` checks the M5 enclosure on tilted vectors. A control that isolates the
-  rounding term (exact eigenvectors, s = eta = 0, the rounding term removed) needs a separate oracle for the
-  floating-point products and is open.
-- `spectral_bounds.distribution_bounds` takes the moment intervals of an M5 record as given and does not compare its
-  `record_sha256`. The negative controls change intervals on purpose, so a hash check needs a separate entry for
-  unmodified records.
+Two items of round 8 are left for later. Part A of `docs/proofs/verify_C-07b.py` checks the M5 enclosure on tilted
+vectors; a control that isolates the rounding term (exact eigenvectors, s = eta = 0, the rounding term removed) needs a
+separate oracle for the floating-point products and is open. `spectral_bounds.distribution_bounds` takes the moment
+intervals of an M5 record as given and does not compare its `record_sha256`; the negative controls change intervals on
+purpose, so a hash check needs a separate entry for unmodified records.

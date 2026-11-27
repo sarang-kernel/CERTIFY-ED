@@ -7,12 +7,38 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Round 9 of the review: the norm power, records and checks
+
+The computational source hash changes. M1 can grow in the terms that carry ‖H‖ᵏ, by a relative amount of at most about
+10ku; M5 and M6 values do not change, only the spectrum-source text of their records.
+
+- M1: ‖H‖ᵏ is formed by repeated multiplication, each product rounded upward (`up`, + ULP_MIN for a product in the
+  subnormal range), instead of the library power, whose error the standard model does not cover. C-07 Lemma 3 states
+  it (h_k) and counts the roundings inside the `up` of b_k (at most four relative errors against 1 + 8u); C-07b Lemma 7
+  does the same for M5. C-07 section 6 records that the accounting of Lemma 3 changed in rounds 8b and 9 and is
+  UNVERIFIED until Sarang's check (D-12).
+- M5 records: `spectral_bounds_from_certificate` names both ends in `spectrum_source`. The lower end names the
+  certificate, or the Gershgorin discs where they give the larger bound; the upper end names the discs, or "declared by
+  the caller, not checked" with the caller's text in brackets. A `spectrum_source` without `spectrum_upper` is refused
+  there, and `chebyshev.proved_bounds` says that the interval uses the larger of the two lower bounds.
+- `docs/proofs/verify_C-07.py` prints the same header as `verify_C-07b.py` (arguments, commit, tracked changes,
+  versions). Part A checks also the orthonormal columns perturbed by 1e-3 with eta declared as an upper bound on their
+  Gram defect (its own generator, so parts B and C draw the same numbers). Both scripts report a negative control that
+  did not fire apart from the violations.
+- Open items: the section of round 8 is a paragraph, as the style check of `docs/project` requires.
+- Tests: `tests/test_moment_bound_stages.py` forms the stages of the M1 and M5 bounds at K = 1 (two members, real and
+  complex), requires the recorded values and bounds bit for bit, and checks each upward stage and the bound against
+  exact rationals; `test_the_source_names_the_gershgorin_end_where_it_is_larger`; the source test covers a declared
+  upper end with a text and a refused source.
+
 ### Round 8b of the review: accounting, records and small corrections
 
 The computational source hash changes. In a rerun of the ring check (N = 8 and 10, K = 32, one thread) the two
 largest moment half-widths grow by 9 and 7 ulps and one fraction end by 1 ulp; the other values of the record are
 unchanged except the spectrum source, which names its end. `docs/results/RESULT_m6_spectral_bounds.md` had said
-one or two ulps after 6aeefe1; the moves then were 6, 4 and 1.
+one or two ulps after 6aeefe1; the moves then were 6, 4 and 1. M2, M3 and M6 take the M1 and M5 intervals and can move with
+them; no status of the ring rerun changes, and `certify()` uses neither module, so its certificates change only in
+the source hash.
 
 - Accounting: in M5 and M1 the three rounding terms of each cluster member are added upward and summed over the
   members with `math.fsum` (inf when that sum overflows, where `math.fsum` raises), and the last addition of the

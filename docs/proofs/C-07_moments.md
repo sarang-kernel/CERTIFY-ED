@@ -23,10 +23,16 @@ and m̂_k = fl(Σ_i Re v_i)/g. Then
 
     | m̂_k − (1/g) Σ_i ⟨Ox_i, HᵏOx_i⟩ | ≤ (1/g) Σ_i [ ‖H‖ᵏ (2‖ŷ_i‖ + e_y,i) e_y,i + ‖ŷ_i‖ D_k,i + d_i ] + γ_{g+1} Σ_i |Re v_i|/g + u|m̂_k|,
 
-where ‖ŷ_i‖ is replaced by its upper bound `norm2_upper`(ŷ_i) and ‖H‖, ‖O‖ by the row-sum bounds of `inf_norm_upper`.
+where ‖ŷ_i‖ is replaced by its upper bound `norm2_upper`(ŷ_i), ‖H‖, ‖O‖ by the row-sum bounds of `inf_norm_upper`,
+and ‖H‖ᵏ by h_k with h_0 = 1 and h_k = up(h_{k−1}‖H‖) + ULP_MIN (one rounding per product, which the `up` covers;
+ULP_MIN for a product in the subnormal range), so h_k ≥ ‖H‖ᵏ; a library power would not be covered by the standard
+model (round 9).
 The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
 addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each
-member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`). Hᵏ is never formed.
+member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`).
+The argument of that `up` carries at most four relative errors u (the `math.fsum`, the two
+additions of the projector, rounding and summation terms, and the division by g), and `up` multiplies by 1 + 8u with
+one rounding of its own, which covers them. Hᵏ is never formed.
 
 **Lemma 4 (explicitly formed products; `moments.hermitian_matrix_with_bound`).** For stored F₁, …, F_m (n × n) and the
 left-to-right floating-point product T̂ = fl(⋯fl(fl(F₁F₂)F₃)⋯F_m), with w₁ the largest number of nonzeros per row of F₁,
@@ -163,3 +169,6 @@ record schema.
 
 Derived on 2026-10-31; machine-checked (418 random + 192 adversarial cases, 0 violations; negative controls 132/138, 138/138 and 40/40); independent re-derivation: done 2026-10-30 (written before the original proof was read, not a human check; verdict AGREES, docs/proofs/VERDICTS.md); Sarang's check (D-12): pending.
 Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12).
+Accounting of Lemma 3 and of b_k changed on 2026-11-27 and 2026-11-28 (rounds 8b and 9 of the review: `up` on e_y and
+ε_k, five relative errors for e_y, per-member `add_up`, `math.fsum` over the members, `add_up` for the last addition,
+‖H‖ᵏ by upward products); UNVERIFIED (D-12). The re-derivation of 2026-10-30 predates these changes.

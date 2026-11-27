@@ -293,6 +293,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     D = np.zeros(g)                                       # ||z_k - H^k y_hat||_2 bounds
     moments = []
     proj_norm1 = up(2 * g * s + g * eta)                  # trace-norm bound on P - X X^H
+    Hk = 1.0                                              # upper bound on ||H||^k
     for k in range(K + 1):
         if k > 0:
             eps_k = np.array([float(up(norm2_upper(gH * (absH @ modulus_up(Z[:, i])) / (1 - gwH)))) for i in range(g)])
@@ -304,10 +305,10 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
             vals.append(float(np.real(v)))
             dots_err.append(float(e))
             abs_vals.append(abs(float(np.real(v))))
-        try:
-            Hk = float(Hn ** k)
-        except OverflowError:                             # a Python float power raises where numpy gives inf
-            Hk = math.inf
+        if k > 0:
+            # ||H||^k bounded by repeated multiplication, each product rounded up (+ ULP_MIN for a product in the
+            # subnormal range): a library power is not covered by the standard model; an overflow gives inf
+            Hk = float(up(Hk * Hn)) + ULP_MIN
         # Step 1 (O x rounding): ||M|| (2 ||y_hat|| + e_y) e_y with ||M|| = ||H||^k; step 2-3: ||y_hat|| D_k; step 4: exact_dot error
         # the three terms of each member are added upward; the sum over the members is correctly rounded (math.fsum,
         # covered by the up() of the bound)

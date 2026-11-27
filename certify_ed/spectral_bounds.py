@@ -787,12 +787,19 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
     lower, source = _lowest_lower_bound(cert)
     proved = lower is not None and "spectrum_lower" not in kw
     if proved:
-        # one source per end: the certificate's lower bound, and what the caller says of an upper bound
-        parts = [f"lower: {source}"]
+        # one source per end. chebyshev_interval takes the larger of the certificate's bound and the Gershgorin bound
+        # for the lower end, and the Gershgorin bound for the upper end unless the caller gives one
+        glo = _gershgorin(_as_matrix(H, "H"))[0]
+        parts = [f"lower: {source}" if lower > glo else
+                 f"lower: Gershgorin discs of the stored H (not below the bound of the certificate: {source})"]
+        text = kw.get("spectrum_source")
         if kw.get("spectrum_upper") is not None:
-            parts.append("upper: " + (kw.get("spectrum_source") or "declared by the caller, not checked"))
-        elif kw.get("spectrum_source"):
-            parts.append(kw["spectrum_source"])
+            parts.append("upper: declared by the caller, not checked" + (f" ({text})" if text else ""))
+        elif text:
+            raise ValueError("spectrum_source names the source of a declared bound; give it with spectrum_upper (the "
+                             "lower end comes from the certificate)")
+        else:
+            parts.append("upper: Gershgorin discs of the stored H")
         kw = dict(kw, spectrum_lower=lower, spectrum_source="; ".join(parts))
     rec = certified_chebyshev_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K,
                                       cluster={"members": list(members), "claimed": cl.get("claimed"),
@@ -801,7 +808,9 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
     rec["certificate"] = {"hash": certificate_hash(cert), "members": list(members), "operator_hash_matches": True}
     if proved:                                      # the lower end was proved, not declared
         rec["chebyshev"]["declared_bounds"]["lower"] = None
-        rec["chebyshev"]["proved_bounds"] = {"lower": float(lower), "source": source}
+        rec["chebyshev"]["proved_bounds"] = {"lower": float(lower), "source": source,
+                                             "use": "the interval's lower end is the larger of this bound and the "
+                                                    "Gershgorin bound"}
     rec["record_sha256"] = _record_hash(rec)
     return distribution_bounds(rec, energies) if len(energies) else rec
 
