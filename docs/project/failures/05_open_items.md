@@ -197,6 +197,3 @@ container recipes install it. Adding `"mpmath>=1.2"` to both extras is open.
 - `spectral_bounds.distribution_bounds` takes the moment intervals of an M5 record as given and does not compare its
   `record_sha256`. The negative controls change intervals on purpose, so a hash check needs a separate entry for
   unmodified records.
-- The GPU test files and the device probe have not run at the round-8b head (int/round8b 7bced6c, merged as main
-  70d56c9): no GPU of the Linux host had room on 27 November. No GPU code changed after c530f99c, where they
-  passed (957 passed, 52 skipped; the probe holds).

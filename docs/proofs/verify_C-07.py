@@ -144,6 +144,9 @@ def main():
         H = rand_herm(rng, n, cplx, sc)
         O = rand_herm(rng, n, cplx, 1.0 / sc)
         X = rng.standard_normal((n, g)) + (1j * rng.standard_normal((n, g)) if cplx else 0)
+        # orthonormal columns: since the moments check eta against the vectors, s = eta = 0 is refused for vectors far
+        # from orthonormal (the projector term would be understated); this part checks the rounding term only
+        X = np.linalg.qr(X)[0]
         K = 4
         rec = certified_moments(H, O, X, 0.0, 0.0, K=K, sum_rules=False)
         ex = exact_trace_moments(H, O, X, K)

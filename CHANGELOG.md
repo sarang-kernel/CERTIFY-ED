@@ -28,7 +28,10 @@ The computational source hash changes. The M1 and M5 bounds grow by at most a fe
 - Scope table: a Greek letter or a superscript k between angle brackets is written inside their math span.
 - D-04: the results README, the open items and the roadmap name the second run.
 - Open items: the two items of round 8 left for later (a control of the rounding term in Part A of
-  verify_C-07b; the record hash in `distribution_bounds`) and the GPU run of the round-8b head.
+  verify_C-07b; the record hash in `distribution_bounds`).
+- `docs/proofs/verify_C-07.py` stopped in Part A since the Gram defect check of the moments: it passed random,
+  far from orthonormal vectors with s = eta = 0, which `certified_moments` now refuses. Part A checks the rounding
+  term only and now orthonormalises its vectors (QR); its run file is redone at the head.
 - Tests: `test_cluster_record_and_one_source_per_end`, `test_a_margin_that_overflows_skips_the_candidate`,
   `test_handler_does_not_chmod_a_link_target`, `test_a_letter_between_angle_brackets_stays_in_their_math_span`.
 
