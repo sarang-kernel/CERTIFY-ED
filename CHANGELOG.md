@@ -138,6 +138,33 @@ a certificate of `device="gpu"` now records the device as used in the S2 evidenc
 device's product count and spot-checked rows) where it recorded `used: false` with the probe's reason; statements,
 bounds and the CPU products do not change. The computational source hash changes.
 
+### D-04: the worker pool measured on 16 pinned cores of a shared host
+
+A new experiment and its record; no code of the package changes. The computational source hash changes (it includes
+`experiments/`).
+
+- `experiments/d04_speedup.py` times `parallel.certify_many` with 1, 2, 4 and 8 workers on the U(1) sectors of a
+  Heisenberg chain and compares the body and the arrays of every certificate with those of the one-worker run, apart
+  from the fields that record time (`timing`, `environment/created_utc`, the keys `seconds` below `statements`; matched
+  by exact path and listed in the record). It records the cores the process may use, the load average, the CPU seconds
+  of each run, and the id, status and reason code of every statement; its defaults are the configuration of the first
+  measurement (N = 16, nup = 3 to 13). The record of 22 November was made by the first version of the script, which
+  compared the statement records and arrays only, with keys dropped by substring, and recorded neither CPU seconds nor
+  statement ids. `tests/test_d04_experiment.py` pins the comparison: the exact paths, equality of one- and two-worker
+  certificates, and inequality after one ulp of a radius or a changed summary.
+- First measurement, on 16 pinned cores of a shared Linux host (eleven sector claims of the chain of 16 sites,
+  dimensions 560 to 12870; single runs): speed-up 1.77 with 2 workers, 2.58 with 4 and 2.75 with 8, bounded by the
+  longest claim (111 s of 325 s; bound 2.92). The statement records and arrays equal the one-worker ones. In the sector
+  nup = 8 S4 and S8 are NOT_CHECKED (no degenerate level among the claimed pairs); the sectors nup = 7 and 9 run S8,
+  which is why they are the longest. `docs/results/RESULT_d04_speedup.md`,
+  record `docs/results/d04_speedup_n16_20261122.json`; `docs/project/failures/05_open_items.md` and the D-04 row of the
+  roadmap (`tools/make_development_roadmap.py`) say so.
+- Second run (27 November, f5864761, the script with all additions): speed-up 1.77, 2.66 and 2.80; certificate bodies
+  and arrays equal to the one-worker ones; the CPU seconds of the workers exceed the sum of their task times by 0.3 %
+  to 2.1 %, so every worker had been waited for. Record `docs/results/d04_speedup_n16_20261127.json`, section "Second
+  run" of the result document. The result document now says the Windows profile of nup = 7 is an unrecorded
+  observation.
+
 ### Peak memory of the planner measurements on Linux
 
 The planner tests measure the peak memory of a factorization in a child process (`experiments/portable.py`,

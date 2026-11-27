@@ -144,11 +144,14 @@ the count theorems of the three kernel certificates and the refinement of `Certi
 certificate is affected, and adding the two tests to the kernel checks is open. nanoda could not finish
 `npz_S2` and `npz_theorem1` under the limit of 4096 MiB.
 
-On the side of scale, the worker pool of D-04 has not shown a speed-up yet, because the machine had no free cores during
-the measurement, and the thresholds of the performance tests (`pytest --perf`) were not tried on an idle machine; the
-baseline is to be recorded again on an idle machine, since the 3.2.2 and 3.2.3 runs shared the machine with other work. One comparison at a relative tolerance of 1e-12 in
-`tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run again, which marks it as a test that
-can fail by chance.
+On the side of scale, the worker pool of D-04 was measured on 22 November 2026 on 16 pinned cores of a shared Linux
+host (`docs/results/RESULT_d04_speedup.md`, single runs): on eleven sector claims of the chain of 16 sites it gives a
+speed-up of 1.77 with 2 workers and 2.75 with 8, bounded by the longest claim, and the statement records and arrays
+equal the one-worker ones. The
+thresholds of the performance tests (`pytest --perf`) were not tried on an idle machine; the baseline is to be recorded
+again on an idle machine, since the 3.2.2 and 3.2.3 runs shared the machine with other work. One comparison at a
+relative tolerance of 1e-12 in `tests/test_whole_spectrum.py` failed once on the loaded machine and passed when run
+again, which marks it as a test that can fail by chance.
 
 ## Non-finite claimed values in certificates
 
