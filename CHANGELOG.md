@@ -735,10 +735,13 @@ the record says so, previous entry). The computational source hash changes.
 `CERTIFY_ED_E6_COPY_DIR`). Up to 3.2.3 the copies were removed only after a complete run, with
 `shutil.rmtree(ignore_errors=True)`: a run whose baseline failed kept them, and on Windows the read-only object files
 of the git repository that a test creates inside each copy were kept silently even after a complete run. The copies
-are now removed in a `finally` block whatever ends the run; read-only files are made writable and deleted; each copy is
-registered before it is filled; and the new record `cleanup` gives the number of copies and lists any that could not be
-removed (the log names them too). The mutation sites, the sample and the records of the mutants are unchanged.
-Tests: `tests/test_e6_cleanup.py` (four tests; the baseline-failure test fails with the script of 3.2.3).
+are now removed in a `finally` block, on any exception (SystemExit included) and on normal exit; after a failed
+removal of a file or directory the owner's permission bits are set and the removal is tried once more (other failed
+calls of `shutil.rmtree` are not retried, and an error of the retry does not propagate); each copy is registered
+before it is filled; and the new record `cleanup` gives the number of copies and lists any that could not be removed
+(the log names them too). The mutation sites, the sample and the records of the mutants are unchanged. The
+computational source hash changes: it includes `experiments/`. Tests: `tests/test_e6_cleanup.py` (five tests; the
+baseline-failure test fails with the script of 3.2.3).
 
 ### Housekeeping after joining the histories
 

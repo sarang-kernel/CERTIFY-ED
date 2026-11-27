@@ -114,13 +114,21 @@ def _tracked_files():
     return [p for p in out.stdout.decode("utf-8").split("\0") if p and os.path.isfile(os.path.join(ROOT, p))]
 
 
+_REMOVALS = (os.unlink, os.remove, os.rmdir)
+
+
 def _force_writable(func, path, _exc):
     """Error handler of shutil.rmtree: git marks its object files read-only, and Windows refuses to delete a read-only
-    file, so the bit is cleared and the failed call is tried once more. A second failure is left to _remove_tree."""
+    file, so after a failed removal (os.unlink, os.remove or os.rmdir) the owner's permission bits are set (read and
+    write for a file, read, write and search for a directory) and the removal is tried once more. Other failed calls
+    (os.scandir, os.lstat, os.open) are not retried, and nothing the retry raises propagates: whatever is left is
+    reported by _remove_tree."""
+    if func not in _REMOVALS:
+        return
     try:
-        os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+        os.chmod(path, stat.S_IRWXU if os.path.isdir(path) else stat.S_IWRITE | stat.S_IREAD)
         func(path)
-    except OSError:
+    except Exception:
         pass
 
 

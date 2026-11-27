@@ -36,6 +36,32 @@ def test_remove_tree_deletes_read_only_files(tmp_path):
     assert not d.exists()
 
 
+def test_handler_retries_removals_only(tmp_path, monkeypatch):
+    """The rmtree handler retries a failed removal after setting the permission bits; any other failed call is left
+    alone, and an error of the retry does not propagate."""
+    f = tmp_path / "f"
+    f.write_bytes(b"x")
+    os.chmod(f, stat.S_IREAD)
+    seen = []
+    e6._force_writable(lambda p: seen.append(p), str(f), None)        # e.g. os.scandir: not retried
+    assert seen == [] and f.exists() and not stat.S_IMODE(os.stat(f).st_mode) & stat.S_IWRITE
+    e6._force_writable(os.unlink, str(f), None)
+    assert not f.exists()
+    d = tmp_path / "d"
+    d.mkdir()
+    e6._force_writable(os.rmdir, str(d), None)
+    assert not d.exists()
+    g = tmp_path / "g"
+    g.write_bytes(b"x")
+
+    def refuse(*_args):
+        raise ValueError("refused")
+
+    monkeypatch.setattr(e6.os, "chmod", refuse)
+    e6._force_writable(os.unlink, str(g), None)                         # does not raise
+    assert g.exists()
+
+
 def test_remove_tree_of_a_missing_path_is_true(tmp_path):
     assert e6._remove_tree(str(tmp_path / "absent"))
 
