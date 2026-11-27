@@ -7,6 +7,25 @@
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
 
+### Documentation and test corrections (round 7)
+
+No code of the package changes; the computational source hash does not change.
+
+- `tests/test_schema_conformance.py::test_structural_layer_rejects_the_scope_level_negative_controls` had no positive
+  control, so a structural check that rejected every body would have passed it; it now requires the unmutated body to
+  pass and at least seven scope-level mutants to be checked.
+
+- `docs/limitations.md` and `docs/what_certified_means.md` still described INT-05 as open and the radii as scanned for
+  underflow; since 3.2.0 the Theorem 1 radius and the cluster bound use the underflow-tolerant model and are not scanned,
+  and the other standard-model bounds keep the 2⁻⁹⁰⁰ hypothesis with the input scan of INT-01.
+- `docs/applications.md` set the peak committed memory of the first N-11 run (Windows) beside the peak resident set of
+  the run of 22 November (Linux); it now names the two measures and says that they are not the same quantity.
+- `experiments/make_scope_table.py` dropped Greek letters from the quantity column (the generalized row read
+  "A x =  B x"); they are now written as LaTeX symbols. Round 8: it also dropped the superscript k of the moments row
+  ("tr(P O H O)/g"), which is now written as `$^{k}$`, and a character without a spelling now stops the generator
+  (ValueError naming its code point) instead of being dropped. `tests/test_make_scope_table.py` (three tests; the
+  generator is outside the computational source hash, so the hash still does not change).
+
 ### Small follow-ups
 
 No constant changes; statuses change only on the inputs named here. The computational source hash changes.

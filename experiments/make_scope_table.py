@@ -30,7 +30,14 @@ SURVEY_KEY = {  # scope-matrix row label (lower-cased start) -> survey quantity 
 def tex_escape(s):
     s = (s.replace("\u27e8", "$\\langle ").replace("\u27e9", "\\rangle$").replace("\u2212", "-")
          .replace("\u2192", "to").replace("\u00b7", " "))
-    s = "".join(ch for ch in s if ord(ch) < 128)
+    for ch, name in (("\u03bb", "lambda"), ("\u03b7", "eta"), ("\u03c1", "rho"), ("\u03b2", "beta"), ("\u03c3", "sigma"),
+                     ("\u03c9", "omega"), ("\u03b8", "theta"), ("\u03c8", "psi"), ("\u03c6", "phi")):
+        s = s.replace(ch, "$\\" + name + "$")
+    s = s.replace("\u1d4f", "$^{k}$")
+    rest = sorted({ch for ch in s if ord(ch) >= 128})
+    if rest:
+        raise ValueError("no LaTeX spelling for " + ", ".join(f"U+{ord(ch):04X} {ch!r}" for ch in rest)
+                         + " in a cell of docs/SCOPE_MATRIX.md; add one to tex_escape")
     return (s.replace("&", "\\&").replace("%", "\\%").replace("#", "\\#").replace("|", "").replace("**", "")
             .replace("\"", "''"))
 
