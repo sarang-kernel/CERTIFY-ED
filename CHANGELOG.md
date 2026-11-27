@@ -21,7 +21,10 @@ No code of the package changes; the computational source hash does not change.
 - `docs/applications.md` set the peak committed memory of the first N-11 run (Windows) beside the peak resident set of
   the run of 22 November (Linux); it now names the two measures and says that they are not the same quantity.
 - `experiments/make_scope_table.py` dropped Greek letters from the quantity column (the generalized row read
-  "A x =  B x"); they are now written as LaTeX symbols.
+  "A x =  B x"); they are now written as LaTeX symbols. Round 8: it also dropped the superscript k of the moments row
+  ("tr(P O H O)/g"), which is now written as `$^{k}$`, and a character without a spelling now stops the generator
+  (ValueError naming its code point) instead of being dropped. `tests/test_make_scope_table.py` (three tests; the
+  generator is outside the computational source hash, so the hash still does not change).
 
 ### Small follow-ups
 
