@@ -309,7 +309,10 @@ New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments rec
   (`math.fsum`); Lemma 7 says so. Both make the M5 bounds larger by a few units in the last place of their rounding
   terms.
 - Experiments (round 8): the `--table` writers round certified interval ends outward and compute the fraction of
-  S(q) in exact rationals; `git_head` and `tracked_changes` are null when git gives no answer.
+  S(q) in exact rationals; `git_head` and `tracked_changes` are null when git gives no answer. The four tables of the
+  result document are reprinted by them, and five numbers in its text are corrected to outward rounding (the width
+  of S(π) on the ring is at most 4.7e-12, not 4.6e-12). `docs/proofs/verify_C-07b.py` prints a header naming its
+  arguments, the commit and the versions, and its run file is redone at the head.
 - Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
   one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
   fails).

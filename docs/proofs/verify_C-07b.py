@@ -22,6 +22,8 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import platform
+import subprocess
 import sys
 from fractions import Fraction
 
@@ -286,11 +288,26 @@ def part_c(rng, cases, cC):
             cC.add(True, not proved, f"case {case}: a dip of one unit was proved nonnegative, A = {A}")
 
 
+def header(args):
+    """One line naming the run: arguments, commit, tracked changes and versions (None where git cannot tell)."""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True,
+                              check=True).stdout.strip()
+        changes = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root,
+                                 capture_output=True, text=True, check=True).stdout.strip() != ""
+    except (OSError, subprocess.CalledProcessError):
+        head, changes = None, None
+    return (f"# verify_C-07b.py --cases {args.cases} --seed {args.seed}; commit {head}; tracked changes {changes}; "
+            f"Python {platform.python_version()}, NumPy {np.__version__}, mpmath {mp.__version__}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", type=int, default=60)
     ap.add_argument("--seed", type=int, default=20261124)
     args = ap.parse_args()
+    print(header(args))
     rng = np.random.default_rng(args.seed)
     cA, cB, cC = Counter(), Counter(), Counter()
     neg = {"s0_broken": 0, "s0_total": 0, "low_broken": 0, "low_total": 0, "shift_total": 0, "shift_moved": 0,
