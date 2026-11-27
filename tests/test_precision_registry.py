@@ -25,8 +25,8 @@ MODULES = ["certify_ed.basis", "certify_ed.certificate_v2", "certify_ed.certify"
            "certify_ed.exact_sectors", "certify_ed.fp", "certify_ed.generalized", "certify_ed.importers",
            "certify_ed.inertia", "certify_ed.invariants", "certify_ed.io.bundle", "certify_ed.io.formats",
            "certify_ed.ldl_residual", "certify_ed.moments", "certify_ed.nonhermitian", "certify_ed.ozaki",
-           "certify_ed.precision", "certify_ed.rigorous", "certify_ed.sectors", "certify_ed.spectrum",
-           "certify_ed.sweep", "certify_ed.variational"]
+           "certify_ed.precision", "certify_ed.rigorous", "certify_ed.sectors", "certify_ed.spectral_bounds",
+           "certify_ed.spectrum", "certify_ed.sweep", "certify_ed.variational"]
 
 
 # every other module of the package, with the reason it is not in MODULES; test_every_module_is_listed fails for a
@@ -368,6 +368,22 @@ def _r_moments_from_certificate(D):
     return moments_from_certificate(cw, D.S, D.O, K=1, members=[0])
 
 
+def _r_chebyshev_moments(D):
+    from certify_ed.spectral_bounds import certified_chebyshev_moments
+    return certified_chebyshev_moments(D.S, D.O, D.X[:, :1], 1e-6, 1e-6, K=4)
+
+
+def _r_spectral_from_certificate(D):
+    # the claim is computed from the correctly summed matrix (precision.summed), not from toarray(), which adds
+    # repeated entries in stored order: tests/test_duplicate_entries.py then compares the library's own summation
+    from certify_ed.precision import summed
+    from certify_ed.spectral_bounds import spectral_bounds_from_certificate
+    Sw = _wide(D.S)
+    w, V = np.linalg.eigh(summed(Sw).toarray())
+    cw = certify(Claim(w[:2], V[:, :2], Sw, kind="lowest"), options=Options(store_eigenvectors=True, eigenspaces="all"))
+    return spectral_bounds_from_certificate(cw, D.S, D.O, K=4, energies=[float(w[0]), float(w[0]) + 1.0])
+
+
 def _adapter(D):
     from certify_ed.enclosure import OperatorAdapter
     return OperatorAdapter(D.S)
@@ -485,6 +501,11 @@ R.update({
     "certify_ed.sectors.trace_moments_check": lambda D: ce_sec().trace_moments_check(D.S, [sp.coo_matrix(D.Hs), D.O]),
     "certify_ed.sectors.restrict_to_u1": lambda D: ce_sec().restrict_to_u1(D.spec, D.Vu)[1],
     "certify_ed.sectors.audit_label": lambda D: ce_sec().audit_label(D.spec, D.Vu, "translation"),
+    "certify_ed.spectral_bounds.chebyshev_interval": lambda D: [
+        __import__("certify_ed.spectral_bounds", fromlist=["x"]).chebyshev_interval(D.S),
+        __import__("certify_ed.spectral_bounds", fromlist=["x"]).chebyshev_interval(D.A, lower=float(D.mu[0]) - 1e-3)],
+    "certify_ed.spectral_bounds.certified_chebyshev_moments": _r_chebyshev_moments,
+    "certify_ed.spectral_bounds.spectral_bounds_from_certificate": _r_spectral_from_certificate,
     "certify_ed.spectrum.enclose_spectrum": lambda D: [_spec_enc(ce_spm().enclose_spectrum(D.S)),
                                                        _spec_enc(ce_spm().enclose_spectrum(
                                                            D.A, eigh_result=_eigh_narrow(D)))],
@@ -818,6 +839,9 @@ EXEMPT = {
     "certify_ed.sectors.decomposition_shift": "takes an audit and two norms",
     "certify_ed.sectors.lift_radius": "scalars and an audit",
     "certify_ed.sectors.symmetry_matrix": "builder (signed permutation, exact)",
+    # spectral_bounds
+    "certify_ed.spectral_bounds.distribution_bounds": "takes a moments record (M5); exact rationals from there on",
+    "certify_ed.spectral_bounds.format_spectral": "formats a record",
     # spectrum
     "certify_ed.spectrum.SpectrumInterval": "result container",
     "certify_ed.spectrum.SpectrumEnclosure": "result container",

@@ -1,0 +1,10 @@
+Source: git archive --format=tar.gz of feat/m4-spectral-bounds at 0fc1408d5705418fd3b756f47800b7429965b4c9
+Archive SHA-256 (workstation and Linux host agree): 1582a7618b66edee539e9037309287b583977201e3b51639a1767505361b3a28
+Interpreter and libraries (Linux host): 3.12.13 Linux-6.17.0-1020-gcp-x86_64-with-glibc2.39 numpy 2.5.5 scipy 1.18.1 flint 0.9.0
+Threads: OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=8, nice 10
+Command per J2: python experiments/m6_square_lattice.py OUTDIR --L 4 4 --J2 <J2> --q pi,pi pi,0 --K 32 64 128 256 --energies 81
+Progress log (UTC):
+start J2=0 2026-11-26T16:58:44Z
+end J2=0 rc=0 2026-11-26T17:10:22Z
+start J2=0.5 2026-11-26T17:10:22Z
+end J2=0.5 rc=0 2026-11-26T17:34:45Z

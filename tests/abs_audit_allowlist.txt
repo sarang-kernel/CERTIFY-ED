@@ -161,6 +161,25 @@ certify_ed/rigorous.py	arb_residual_radii	abs(xb[i])	complex data entering a rig
 certify_ed/sectors.py	trace_moments_check	abs(tH - ts)	not part of a bound
 certify_ed/sectors.py	trace_moments_check	abs(fH - fs)	not part of a bound
 certify_ed/sectors.py	audit_label	abs(lam - roots[j])	complex data entering a rigorous bound (open question: needs a lower bound)
+certify_ed/spectral_bounds.py	chebyshev_interval	abs(lo)	real data only
+certify_ed/spectral_bounds.py	chebyshev_interval	abs(hi)	real data only
+certify_ed/spectral_bounds.py	chebyshev_interval	abs(lo)	real data only
+certify_ed/spectral_bounds.py	chebyshev_interval	abs(hi)	real data only
+certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(c)	real data only
+certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(float(np.real(v)))	real data only
+certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(total)	real data only
+certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(t_hat)	real data only
+certify_ed/spectral_bounds.py	_radau_hermite	abs(r)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_radau_hermite	np.abs(nodes - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_radau_hermite	abs(nodes[j] - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_radau_hermite	abs(xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_hermite_step	np.abs(x - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_hermite_step	np.abs(M)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_chebyshev_free_nodes	np.abs(x - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_chebyshev_free_nodes	abs(x[j] - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_prove_and_bound	np.abs(d)	real data only (margin of a candidate; the bound rests on the exact proof)
+certify_ed/spectral_bounds.py	_estimate	np.abs(d)	not part of a bound (ranking of candidates)
+certify_ed/spectral_bounds.py	_estimate	np.abs(d)	not part of a bound (ranking of candidates)
 certify_ed/spectrum.py	enclose_spectrum	abs(H - H.conj().T)	not part of a bound
 certify_ed/sweep.py	matrix_affinity_defect	abs(dc)	real data only
 certify_ed/sweep.py	tube_at	abs(c - pt[rec['parameter']])	real data only

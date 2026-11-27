@@ -414,7 +414,9 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
 def _m4(assume):
     return _vstmt("M4.continued_fraction", "NOT_CHECKED",
                   "continued-fraction (Lanczos) bounds on the spectral function from the certified moments are not implemented "
-                  "(open part of C-07; docs/theory.md section 9, docs/SCOPE_MATRIX.md)", {}, reason_code="NOT_IMPLEMENTED",
+                  "(open part of C-07; docs/theory.md section 9, docs/SCOPE_MATRIX.md); bounds on the spectral distribution "
+                  "from certified Chebyshev moments are statements M5 and M6 (certify_ed.spectral_bounds, "
+                  "docs/proofs/C-07b_spectral_bounds.md)", {}, reason_code="NOT_IMPLEMENTED",
                   assumptions=assume)
 
 

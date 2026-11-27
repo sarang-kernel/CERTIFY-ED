@@ -330,6 +330,54 @@ The computational source hash changes; no certificate of `certify()` changes.
   high-precision references from it and skip without it); it is listed as open in
   `docs/project/failures/05_open_items.md`.
 
+### Spectral weight on a certified level (C-07, second part; UNVERIFIED)
+
+New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments record family (schema
+`certify-ed/moments/1.0`, unchanged); derivation `docs/proofs/C-07b_spectral_bounds.md`, machine check
+`docs/proofs/verify_C-07b.py`, both UNVERIFIED until Sarang's check (D-12).
+
+- **M5 `M5.chebyshev_moments`.** Enclosures of τ_j = tr(P O T_j(A) O)/g, j = 0..K, on a CERTIFIED S4 cluster, with
+  A = (H − cI)s. The spectral interval comes from the Gershgorin discs, its lower end narrowed by the lowest eigenvalue
+  of a certificate whose S2 and S3 are CERTIFIED for a 'lowest' claim; (lo − c)s ≥ −1 and (hi − c)s ≤ 1 are checked in
+  exact rationals. The three-term recurrence runs on the vectors O x_i, every rounding propagated through the
+  Chebyshev polynomials of the second kind; the projector term is (2gs + gη)‖O‖².
+- **M6 `M6.distribution_bounds`.** Bounds L(E) ≤ F(E) = tr(P O 1_{H ≤ E} O)/g ≤ U(E) at given energies from
+  polynomials on either side of the step whose sign conditions are proved in exact integer arithmetic (Bernstein
+  coefficients, de Casteljau subdivision rounded downwards), the sums over the moment intervals exact and rounded
+  outward, and a monotone envelope. The polynomials are chosen by a heuristic that the bound does not rest on: Hermite
+  step polynomials at the Gauss–Radau nodes of the moments or at Chebyshev points, a linear program as the fallback.
+  A polynomial that is not proved gives the trivial bound.
+- `spectral_bounds_from_certificate(cert, H, O, K, energies)` refuses a matrix whose hash differs from the
+  certificate's operator.
+- Inputs in a narrower format are converted exactly to binary64 and repeated entries summed, in
+  `chebyshev_interval` as well (its Gershgorin bounds had summed a repeated float32 entry in single precision). The
+  three entry points that take stored matrices are in the precision registry (`tests/test_precision_registry.py`),
+  and the module's moduli are classified in `tests/abs_audit_allowlist.txt`.
+- M4 (the continued fraction) stays NOT_IMPLEMENTED; its summary names M5 and M6.
+- Experiment `experiments/m6_spectral_bounds.py` (Heisenberg ring, S^zz(π, ω) from the certified ground state,
+  N = 8–16 in the S^z = 0 block): `results/m6_spectral_20261125/`, `RESULT_m6_spectral_bounds.md`.
+- Experiment `experiments/m6_square_lattice.py` (J1–J2 model on the 4 × 4 torus, S^zz(q, ω) at q = (π, π) and
+  (π, 0), J2 = 0 and 0.5, run on the Linux host because S3 at J2 = 0.5 needs more than 4.5 GiB):
+  `results/m6_square_20261126/`, 1328 bounds and no violation, in the same result document.
+- Records (round 8 of the review): every M5 and M6 statement names the UNVERIFIED derivation (D-12) in its
+  assumptions, and `format_spectral` prints it; bounds on the spectrum declared by the caller are recorded as declared
+  and not checked; `spectral_bounds_from_certificate` refuses a certificate that records no matrix hash and records
+  the certificate's hash and members; a candidate polynomial whose floating-point check is not finite is skipped.
+- Accounting (round 8): the bound vectors of the matrix products are multiplied by `up` after `norm2_upper`, which
+  covers the roundings of their own evaluation, and the sum over the members of a cluster is correctly rounded
+  (`math.fsum`); Lemma 7 says so. Both make the M5 bounds larger by a few units in the last place of their rounding
+  terms.
+- Experiments (round 8): the `--table` writers round certified interval ends outward and compute the fraction of
+  S(q) in exact rationals; `git_head` and `tracked_changes` are null when git gives no answer. The four tables of the
+  result document are reprinted by them, and five numbers in its text are corrected to outward rounding (the width
+  of S(π) on the ring is at most 4.7e-12, not 4.6e-12). `docs/proofs/verify_C-07b.py` prints a header naming its
+  arguments, the commit and the versions, and its run file is redone at the head.
+- Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
+  one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
+  fails).
+
+No existing statement or status changes. The computational source hash changes.
+
 ### Inner products and sums at the top of the range
 
 The computational source hash changes.

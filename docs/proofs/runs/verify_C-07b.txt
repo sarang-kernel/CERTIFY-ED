@@ -1,0 +1,7 @@
+# verify_C-07b.py --cases 60 --seed 20261124; commit 403b2859aba92e2bb4da80e1b5b55a196bbef035; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
+A exact tau_j = tr(P O T_j(A) O)/g inside the M5 intervals; spectral interval holds the spectrum: 755 random + 393 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+B exact F(xi) between the M6 bounds (default candidates, Chebyshev-Hermite alone, linear program alone; atoms at the query point): 480 random + 520 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+C Bernstein proofs: no sign violation where proved; one-unit dips never proved: 53 random + 96 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+   negative control: s = eta = 0 claimed for tilted vectors breaks the M5 enclosure in 33/962 moments; a spectral lower bound 20% of the span too high breaks it in 442/962 moments
+   negative control: one moment interval shifted beyond its width moves the M6 bound in 221/260 queries and puts the exact F outside in 17
+TOTAL: 1288 random + 1009 adversarial cases; violations: 0
