@@ -729,6 +729,17 @@ every |H||x| application. The derivation is new and unverified: Sarang's check (
 symmetry divides by a floating-point root separation and its record's `certified` flag rests on it (an open D-12 item;
 the record says so, previous entry). The computational source hash changes.
 
+### E6 removes its repository copies
+
+`experiments/e6_mutation.py` makes one copy of the repository per worker (`mut<w>_*` next to the checkout, or in
+`CERTIFY_ED_E6_COPY_DIR`). Up to 3.2.3 the copies were removed only after a complete run, with
+`shutil.rmtree(ignore_errors=True)`: a run whose baseline failed kept them, and on Windows the read-only object files
+of the git repository that a test creates inside each copy were kept silently even after a complete run. The copies
+are now removed in a `finally` block whatever ends the run; read-only files are made writable and deleted; each copy is
+registered before it is filled; and the new record `cleanup` gives the number of copies and lists any that could not be
+removed (the log names them too). The mutation sites, the sample and the records of the mutants are unchanged.
+Tests: `tests/test_e6_cleanup.py` (four tests; the baseline-failure test fails with the script of 3.2.3).
+
 ### Housekeeping after joining the histories
 
 No bound, status rule or record field changes, and the computational source hash stays the same. CI installs ruff
