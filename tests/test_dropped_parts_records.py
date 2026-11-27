@@ -272,8 +272,9 @@ def test_s5_and_s6_evidence_are_unchanged_by_a_dropped_part():
 # reference (passing the function as an argument counts), under any name it is imported as (from-imports with an
 # alias), and any attribute named claimed_reals (as reached through a module alias of precision). precision.py, which
 # defines it, is not audited. Not followed: conversions that do not go through claimed_reals (np.real, .real,
-# astype(float), float(), np.asarray(..., dtype=float)), and calls through a new name that claimed_reals is assigned
-# to (the assignment itself is counted where it occurs).
+# astype(float), float(), np.asarray(..., dtype=float)), calls through a new name that claimed_reals is assigned
+# to (the assignment itself is counted where it occurs), and references by a string: getattr(precision,
+# "claimed_reals") or importlib (no such reference exists in the package today; the audit would not see one).
 #
 # Each use, with where its dropped parts are recorded and the function (the user itself or its public wrapper, in the
 # same module) whose code must name dropped_imaginary_parts or carries_imaginary_parts.
