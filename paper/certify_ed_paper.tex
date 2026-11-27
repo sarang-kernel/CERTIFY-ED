@@ -697,12 +697,13 @@ weight (\code{experiments/m6\_spectral\_bounds.py}; data \code{results/m6\_spect
 exact for $N\le14$ and, for $N=16$, a floating-point Lanczos run with full reorthogonalization, which measures the
 widths but on which the bounds do not rest. Table~\ref{tab:m6} gives the results. Over all sizes, moment orders
 $K=32$ to $256$ and energies, 1660 certified bounds were compared with the reference and none was violated. The total
-weight $\tau_0=S(\pi)$ is certified to an interval of width at most $4.6\times10^{-12}$ at every size. The fraction
+weight $\tau_0=S(\pi)$ is certified to an interval of width at most $4.7\times10^{-12}$ at every size. The fraction
 of the sum rule carried by the lowest level with weight, the lowest triplet at $q=\pi$, decreases with $N$ as the
 weight spreads over the two-spinon continuum. For $N\le10$ the moments determine the measure and $K=32$ already gives
 mean widths of $10^{-6}$ to $10^{-3}$; for $N=14$ and $16$ the mean width falls by a factor of about five to ten from
-$K=32$ to $256$. A rerun of $N=8$ and $10$ at $K=32$ from the final commit of the branch reproduced the 728 recorded
-values bit for bit. Figure~\ref{fig:m6} shows the bounds.
+$K=32$ to $256$. A rerun of $N=8$ and $10$ at $K=32$ after the last change to the rounding accounting (one thread, as the record)
+reproduced 725 of the 728 recorded values bit for bit; the other three moved outward by one or two units in the
+last place. Figure~\ref{fig:m6} shows the bounds.
 
 \begin{table}[ht]
 \centering\small
@@ -710,18 +711,19 @@ values bit for bit. Figure~\ref{fig:m6} shows the bounds.
 (\code{docs/results/RESULT\_m6\_spectral\_bounds.md}; development version 3.3.0.dev0, Windows workstation, one thread).
 ``Certify'' is the time to certify the ground state, S3 included. Widths are the mean widths of the 83 bounds at
 $K=32$ and $K=256$. The last column is the certified fraction $W_1/S(\pi)$ of the lowest window at $K=256$. S2, S3 and
-S4 are \CERT{} at every size; every bound holds.}
+S4 are \CERT{} at every size; every bound holds. Certified interval ends are rounded outward at the printed
+digit.}
 \label{tab:m6}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}rrrlllll@{}}
 \toprule
 $N$ & dim & certify (s) & $S(\pi)$ certified & $S(\pi)$ reference & width $K{=}32$ & width $K{=}256$ & $W_1/S(\pi)$ \\
 \midrule
-8 & 70 & 0.88 & $[1.720905326285, 1.720905326285]$ & 1.720905326285 & 1.64e-06 & 1.64e-06 & $[0.9042, 0.9043]$ \\
-10 & 252 & 0.99 & $[1.854266634883, 1.854266634884]$ & 1.854266634883 & 7.23e-04 & 5.13e-04 & $[0.8699, 0.8700]$ \\
+8 & 70 & 0.88 & $[1.720905326284, 1.720905326286]$ & 1.720905326285 & 1.64e-06 & 1.64e-06 & $[0.9042, 0.9043]$ \\
+10 & 252 & 0.99 & $[1.854266634882, 1.854266634884]$ & 1.854266634883 & 7.23e-04 & 5.13e-04 & $[0.8699, 0.8700]$ \\
 12 & 924 & 2.03 & $[1.965817273499, 1.965817273501]$ & 1.965817273500 & 1.02e-02 & 5.96e-03 & $[0.8425, 0.8426]$ \\
-14 & 3432 & 11.54 & $[2.061814974297, 2.061814974300]$ & 2.061814974298 & 5.42e-02 & 5.09e-03 & $[0.8194, 0.8202]$ \\
-16 & 12870 & 225.44 & $[2.146151754138, 2.146151754142]$ & 2.146151754140 & 1.09e-01 & 2.33e-02 & $[0.7999, 0.8015]$ \\
+14 & 3432 & 11.54 & $[2.061814974296, 2.061814974300]$ & 2.061814974298 & 5.42e-02 & 5.09e-03 & $[0.8194, 0.8202]$ \\
+16 & 12870 & 225.44 & $[2.146151754137, 2.146151754143]$ & 2.146151754140 & 1.09e-01 & 2.33e-02 & $[0.7999, 0.8015]$ \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -745,9 +747,9 @@ at $J_2=0$ and at the frustrated point $J_2=0.5$ (\code{experiments/m6\_square\_
 workstation, so both points were run on a Linux host with eight BLAS threads. S2, S3, S4 and S8 are \CERT{} for both
 ground states, which took 286~s and 965~s to certify, and none of the 1,328 bounds compared with a
 Lanczos reference was violated (Table~\ref{tab:m6sq}, Figure~\ref{fig:m6sq}). At $(\pi,\pi)$ the lowest excitation
-that carries weight holds $[0.9868, 0.9870]$ of the sum rule at $J_2=0$ and $[0.9618, 0.9647]$
+that carries weight holds $[0.9867, 0.9870]$ of the sum rule at $J_2=0$ and $[0.9617, 0.9647]$
 at $J_2=0.5$. At $(\pi,0)$ it holds $[0.9612, 0.9616]$ of $S(\pi,0)$ at $J_2=0$ but only
-$[0.6972, 0.7182]$ at $J_2=0.5$: at the frustrated point between 28.2 and
+$[0.6971, 0.7182]$ at $J_2=0.5$: at the frustrated point between 28.1 and
 30.3\,\% of the weight is certified to lie above the lowest excitation. These are statements about the
 $4\times4$ cluster only.
 
@@ -757,17 +759,18 @@ $4\times4$ cluster only.
 ($S^z=0$ block, dimension 12,870; \code{docs/results/RESULT\_m6\_spectral\_bounds.md}; development version 3.3.0.dev0
 at commit 0fc1408, Linux host, eight BLAS threads). ``Certify'' is the time to certify the ground state, S3 included.
 Widths are the mean widths of the 83 bounds at $K=32$ and $K=256$. The last column is the certified fraction $W_1/S(q)$
-of the lowest window at $K=256$. Every bound holds against the Lanczos reference.}
+of the lowest window at $K=256$. Every bound holds against the Lanczos reference. Certified interval ends are
+rounded outward at the printed digit.}
 \label{tab:m6sq}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}rlrlllll@{}}
 \toprule
 $J_2$ & $q$ & certify (s) & $S(q)$ certified & $S(q)$ reference & width $K{=}32$ & width $K{=}256$ & $W_1/S(q)$ \\
 \midrule
-0 & $(\pi,\pi)$ & 286.1 & $[2.949622785204, 2.949622785212]$ & 2.949622785208 & 6.70e-03 & 2.63e-03 & $[0.9868, 0.9870]$ \\
-0 & $(\pi,0)$ & 286.1 & $[0.334729870470, 0.334729870477]$ & 0.334729870474 & 9.20e-03 & 2.86e-03 & $[0.9612, 0.9616]$ \\
-0.5 & $(\pi,\pi)$ & 965.43 & $[1.708292201631, 1.708292201646]$ & 1.708292201638 & 8.63e-02 & 2.69e-02 & $[0.9618, 0.9647]$ \\
-0.5 & $(\pi,0)$ & 965.43 & $[0.445089775615, 0.445089775630]$ & 0.445089775622 & 5.27e-02 & 1.01e-02 & $[0.6972, 0.7182]$ \\
+0 & $(\pi,\pi)$ & 286.1 & $[2.949622785204, 2.949622785212]$ & 2.949622785208 & 6.70e-03 & 2.63e-03 & $[0.9867, 0.9870]$ \\
+0 & $(\pi,0)$ & 286.1 & $[0.334729870470, 0.334729870478]$ & 0.334729870474 & 9.20e-03 & 2.86e-03 & $[0.9612, 0.9616]$ \\
+0.5 & $(\pi,\pi)$ & 965.43 & $[1.708292201631, 1.708292201646]$ & 1.708292201638 & 8.63e-02 & 2.69e-02 & $[0.9617, 0.9647]$ \\
+0.5 & $(\pi,0)$ & 965.43 & $[0.445089775615, 0.445089775630]$ & 0.445089775622 & 5.27e-02 & 1.01e-02 & $[0.6971, 0.7182]$ \\
 \bottomrule
 \end{tabular}}
 \end{table}
