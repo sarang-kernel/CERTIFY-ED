@@ -138,8 +138,8 @@ No constant changes.
 ## 4 Computational verification
 
 `docs/proofs/verify_C-07.py` (seed 20261030, `--cases 40`; exact Fractions for the rounding part, mpmath at 60 digits
-for the exact P and moments). Run of 2026-10-31; rerun on 2026-11-28 at a7c8e4c (`docs/proofs/runs/verify_C-07.txt`,
-whose first line names the commit), with Part A on orthonormalised columns (QR, since 5bc59a0) and on the same columns
+for the exact P and moments). Run of 2026-10-31; rerun on 2026-11-28 at a7c8e4c and at be9c6aa, the version 3.3.0
+(`docs/proofs/runs/verify_C-07.txt`, whose first line names the commit), with Part A on orthonormalised columns (QR, since 5bc59a0) and on the same columns
 perturbed by 10⁻³ with η declared as an upper bound on their Gram defect (since a7c8e4c); parts B and C give the
 counts of the first run:
 
@@ -179,4 +179,4 @@ Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12)
 Accounting of Lemma 3 and of b_k changed on 2026-11-27 and 2026-11-28 (rounds 8b and 9 of the review: `up` on e_y and
 ε_k, five relative errors for e_y, per-member `add_up`, `math.fsum` over the members, `add_up` for the last addition,
 ‖H‖ᵏ by upward products); UNVERIFIED (D-12). The re-derivation of 2026-10-30 predates these changes. Machine check rerun
-at a7c8e4c: 618 random + 192 adversarial cases, 0 violations.
+at a7c8e4c and at be9c6aa: 618 random + 192 adversarial cases, 0 violations.
