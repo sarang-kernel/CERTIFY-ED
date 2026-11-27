@@ -8,7 +8,9 @@ For a certified cluster (S4: g stored vectors X, projector P of the exact eigens
 are enclosed (docs/proofs/C-07_moments.md): tr(X^H O H^k O X) is computed by applying O once and H k times to the
 stored vectors (never forming H^k), with the rounding of every application accounted (Theorem 1 machinery: entrywise
 bounds gamma_dot |H||z|, propagated with ||H||), and |tr(P M) - tr(X X^H M)| <= (2 g s + g eta) ||M||_2 for the Hermitian
-M = O H^k O (trace-norm bound on P - X X^H, Hoelder), ||M||_2 <= ||O||^2 ||H||^k.
+M = O H^k O (trace-norm bound on P - X X^H, Hoelder), ||M||_2 <= ||O||^2 ||H||^k. The eta of the cluster record is
+checked against the stored vectors: when it is below a lower bound on ||X^H X - I||_2 computed from them, the bounds
+use the upper bound computed from them (the one the cluster radius uses) instead (state.eta_check, state.eta_used).
 
 Sum rules (consistency statements, not new theorems): the zeroth moment equals tr(P O^2)/g, which is also certified
 by Theorem 6 on the matrix O^2 (formed in floating point with its rounding bound) -- the two intervals must
@@ -30,8 +32,9 @@ import scipy.sparse as sp
 
 from .certificate_v2 import _jsonable, array_sha256, matrix_sha256
 from .eigenspace import EigenspaceCertificate, certify_observable
-from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, exact_sum, fro_upper, gamma, gamma_dot, inf_norm_upper,
-                 max_nnz_per_row, modulus_up, norm2_upper, sub_down, sub_up, underflow_scan, up)
+from .fp import (U, ULP_MIN, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, exact_gram, exact_sum, fro_upper, gamma,
+                 gamma_dot, gram_additive_term, inf_norm_upper, max_nnz_per_row, modulus_up, norm2_upper, sub_down, sub_up,
+                 underflow_scan, up)
 from .precision import _stored_values, binary64, summed, widening_record
 from .spec import canonical_json
 
@@ -39,6 +42,10 @@ MOMENTS_SCHEMA = "certify-ed/moments/1.0"
 MOMENTS_STATEMENT_IDS = ("M1.moments", "M2.sum_rule_zeroth", "M3.sum_rule_first", "M4.continued_fraction")
 STANDARD_MODEL = ("IEEE-754 binary64 round-to-nearest, standard model fl(a op b) = (a op b)(1 + delta), |delta| <= u, "
                   "no-underflow hypothesis (nonzero operands >= 2^-900); the S4 cluster record (s, eta) of the certificate")
+CLUSTER_RECORD = ("s bounds sin theta between span(X) and the eigenspace of the cluster, and eta bounds ||X^H X - I||_2; "
+                  "both are taken as given (the S4 record), and eta is only checked against a lower bound computed "
+                  "from X")
+DERIVATION = "derived in docs/proofs/C-07_moments.md; UNVERIFIED until an independent re-derivation (D-12)"
 
 __all__ = ["MOMENTS_SCHEMA", "MOMENTS_STATEMENT_IDS", "certified_moments", "moments_from_certificate", "format_moments",
            "hermitian_matrix_with_bound"]
@@ -117,6 +124,51 @@ def _overlap(i1, i2) -> bool:
     return max(i1[0], i2[0]) <= min(i1[1], i2[1])
 
 
+def _gram_defect_bounds(X: np.ndarray):
+    """(lower, upper) bounds on eta = ||X^H X - I||_2 computed from the stored vectors.
+
+    upper: the bound the cluster radius uses (enclosure._cluster_bound; docs/proofs/thm2_polar-factor.md, section 3):
+    accurately rounded Gram entries when n g (g + 1) / 2 is at most enclosure.EXACT_GRAM_BUDGET, the gamma_n bound of
+    the BLAS Gram matrix above it. lower: every entry of a matrix is at most its 2-norm in modulus. The diagonal
+    entries give the largest |x_i^H x_i - 1| over the columns, from the accurately rounded squared norms (fp.exact_dot,
+    error <= e_i): fl(v_i - 1) has relative error at most u, so |fl(v_i - 1)| (1 - 2u) - e_i, rounded down, is below
+    |x_i^H x_i - 1|; inf when a squared norm overflows (it then exceeds the largest binary64 number). When the
+    accurately rounded Gram matrix is formed (the first case of upper), the off-diagonal entries give
+    max(|Re G_ij|, |Im G_ij|) - E_ij, rounded down, for i < j, which is below |x_i^H x_j|: the two moduli are exact,
+    each is at most the modulus of the computed entry, and the computed entry is within E_ij of the exact one. An
+    entry that is not finite is skipped. Both lower bounds are new derivations, UNVERIFIED (D-12) like the rest of
+    C-07.
+
+    The caller compares the given eta with lower only: an eta at or above it is not contradicted by the vectors, which
+    does not show that it bounds the Gram defect."""
+    from .enclosure import EXACT_GRAM_BUDGET
+    n, g = X.shape
+    cplx = np.iscomplexobj(X)
+    lower = 0.0
+    for i in range(g):
+        v, e = exact_dot(X[:, i], X[:, i])
+        v = float(np.real(v))
+        if not math.isfinite(v):
+            lower = math.inf
+            break
+        lower = max(lower, float(sub_down(abs(v - 1.0) * (1 - 2 * U), float(e))))
+    if n * g * (g + 1) // 2 <= EXACT_GRAM_BUDGET:
+        G, Eg = exact_gram(X)
+        upper = float(up(fro_upper(G - np.eye(g)) + fro_upper(Eg) + 4 * U * g))
+        for i in range(g if math.isfinite(lower) else 0):
+            for j in range(i + 1, g):
+                zr, zi = float(np.real(G[i, j])), float(np.imag(G[i, j]))
+                m = max(abs(zr), abs(zi))
+                if math.isfinite(m) and math.isfinite(float(Eg[i, j])):
+                    lower = max(lower, float(sub_down(m, float(Eg[i, j]))))
+    else:
+        G = X.conj().T @ X
+        xf2 = fro_upper(X) ** 2
+        upper = float(up(fro_upper(G - np.eye(g)) + gamma_dot(n, cplx) * xf2) + gram_additive_term(g, n, cplx)
+                      + 2 * ULP_MIN)
+    return lower, upper
+
+
 # ------------------------------------------------------------------------------------------------ matrices with bounds
 
 def hermitian_matrix_with_bound(factors: Sequence[Any], widths: Sequence[int], coeff: float = 1.0):
@@ -170,7 +222,7 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     K = int(K)
     if K < 0:
         raise ValueError("K must be >= 0")
-    assume = [STANDARD_MODEL]
+    assume = [STANDARD_MODEL, CLUSTER_RECORD, DERIVATION]
     statements: List[dict] = []
     rec: Dict[str, Any] = {"schema": MOMENTS_SCHEMA, "description": description or f"moments k = 0..{K} on a certified cluster of dimension {g}",
                            "operator": {"kind": "matrix", "dimension": int(n), "H_sha256": matrix_sha256(H), "O_sha256": matrix_sha256(O),
@@ -201,6 +253,21 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
         annotate_record(rec)
         rec["record_sha256"] = _record_hash(rec)
         return rec
+
+    # ---- the Gram defect: the eta of the cluster record is checked against the stored vectors. An eta below the lower
+    # bound computed from them is understated (it would make the projector term too small): the bounds below then use
+    # the upper bound computed from the vectors. An eta that is not contradicted is used as given; "consistent" in the
+    # record means only that (not contradicted by the lower bound), not that eta bounds the defect.
+    eta_lower, eta_upper = _gram_defect_bounds(X)
+    consistent = float(eta) >= eta_lower
+    rec["state"]["eta_check"] = {"lower_bound_from_vectors": _rec_bound(eta_lower),
+                                 "upper_bound_from_vectors": _rec_bound(eta_upper), "consistent": bool(consistent)}
+    if not consistent:
+        if not eta_upper < 1.0:
+            raise ValueError(f"the eta of the cluster record ({float(eta):.3e}) is below the Gram defect of the stored "
+                             f"vectors (at least {eta_lower:.3e}), whose bound {eta_upper:.3e} is not below 1")
+        eta = eta_upper
+    rec["state"]["eta_used"] = float(eta)
 
     # ---- M1: moments by repeated application
     gO = gamma_dot(wO, cplx)

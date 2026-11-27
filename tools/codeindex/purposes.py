@@ -88,9 +88,10 @@ PURPOSE = {
     "legacy/v1/validators/unitarity_validator.py": (
         "Validator of version 1 that checks that the time-evolution operator built from the eigendecomposition is "
         "unitary and has the group property."),
-    # first docstring sentence is a heading
+    # first docstring sentence is a heading; it names only the first of the file's duties (revised at commit fa3689bd)
     "certify_ed/precision.py": (
-        "Exact conversion of stored operators, vectors and matrices to binary64 (`binary64`, `require_binary64`) and "
-        "the checks of integer and object values, applied by every entry point before a product or a format "
-        "conversion."),
+        "Checks that every entry point applies to its inputs before a product or a format conversion: the exact "
+        "conversion of narrower formats to binary64 (`binary64`, `require_binary64`), the checks of integer and "
+        "object values, the summing of repeated sparse entries (`summed`), and the reading of claimed values "
+        "(`claimed_reals`, `dropped_imaginary_parts`)."),
 }

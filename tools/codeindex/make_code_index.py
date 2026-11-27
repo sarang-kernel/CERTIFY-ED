@@ -56,6 +56,12 @@ GROUPS = [
     ("docs/", "Scripts under `docs/`",
      "The scripts that test the derivations of `docs/proofs/`, the independent adversarial searches, the cookbook "
      "snippets and the API page generator."),
+    ("lean/", "Scripts under `lean/`",
+     "The Python side of the Lean formalization: the export of certificates and applications to Lean, the runs of "
+     "the checkers and the second kernel, and the scripts that write the audit and result records."),
+    ("tools/", "Repository tools `tools/`",
+     "The scripts that write and check repository documents: the changelog, this index and the source hash, the "
+     "documentation lint, the roadmap, the Lean status tables and the verification report."),
     ("legacy/", "Legacy code `legacy/`",
      "Code of earlier stages kept for the record: version 1, symveig 1.0.0 and the application scripts of "
      "17 October 2026. Nothing in the package imports it; the imports of `certify_ed` in the files of version 1 "

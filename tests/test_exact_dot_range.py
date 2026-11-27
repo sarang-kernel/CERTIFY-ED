@@ -233,13 +233,11 @@ def test_statements_decided_at_the_top_of_the_range():
     v3 = st["V3.temple_lower"]
     assert v3["status"] == "NOT_CHECKED" and v3["evidence"].get("reason_code") == "NEEDS_DEPENDENCY", v3
     from certify_ed.moments import certified_moments
-    ms = {s["id"]: s for s in certified_moments(H, H, x[:, None], 1e-12, 1e-12, K=2)["statements"]}
-    assert ms["M3.sum_rule_first"]["status"] == "NOT_CHECKED", ms["M3.sum_rule_first"]
-    # M1 is decided on the exact inner products (INCONCLUSIVE, NONFINITE_BOUND at main; input outside its hypotheses,
-    # see the changelog); M2 stays INCONCLUSIVE as at main: its second route, tr(P O^2)/g, overflows
-    assert ms["M1.moments"]["status"] == "CERTIFIED", ms["M1.moments"]
-    m2 = ms["M2.sum_rule_zeroth"]
-    assert m2["status"] == "INCONCLUSIVE" and m2["evidence"].get("reason_code") == "NONFINITE_BOUND", m2
+    # the moments need a cluster record (s, eta) that the vector satisfies; this vector of norm 1.3e154 is far from
+    # unit norm, so its eta of 1e-12 is contradicted by the vector and the call is refused (since fix/backlog-small;
+    # before, M1 was CERTIFIED on this input outside its hypotheses)
+    with pytest.raises(ValueError, match="below the Gram defect"):
+        certified_moments(H, H, x[:, None], 1e-12, 1e-12, K=2)
     import certify_ed as ce
     cert = ce.certify(ce.Claim(np.array([1.0]), x[:, None], operator=H, kind="lowest"), None, ce.Options(seed=1))
     assert cert.statement("S2.eigenpairs")["status"] == "CERTIFIED"

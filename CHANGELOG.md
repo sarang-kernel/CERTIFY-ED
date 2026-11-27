@@ -292,6 +292,44 @@ against the summed matrices, which fails when an entry point skips `summed` or s
 `tests/test_modulus_up.py` and `tests/test_input_unchanged.py` pin the summation at the start. The computational source
 hash changes.
 
+### Moments: the Gram defect checked against the stored vectors; the code index
+
+The computational source hash changes; no certificate of `certify()` changes.
+
+- `moments.certified_moments` used the eta given with the cluster record (`||X^H X - I||_2`) as it was given; an
+  understated eta made the projector term of every moment too small. It now computes two bounds on the Gram defect
+  from the stored vectors: a lower bound, the largest `|x_i^H x_i - 1|` from the accurately rounded squared norms (a
+  diagonal entry is at most the 2-norm), and an upper bound, the one the cluster radius uses (`enclosure._cluster_bound`).
+  An eta below the lower bound is contradicted by the vectors, and the bounds then use the upper bound instead; when
+  that is not below 1 either, the call is refused (ValueError), as an eta of 1 or more already was. An eta that the
+  vectors do not contradict is used as given, so `moments_from_certificate` (whose eta is the upper bound of the same
+  vectors) and every consistent call give the same statements and bounds as before; the record adds
+  `state.eta_check` (both bounds and whether eta is consistent) and `state.eta_used`, so its hash changes. The lower bound is a new derivation of one line
+  (docstring of `moments._gram_defect_bounds`), UNVERIFIED (D-12) like the rest of C-07. Its modulus `abs(v - 1.0)`
+  is of a real number and is listed in `tests/abs_audit_allowlist.txt`.
+- `tests/test_moments.py::test_understated_eta_is_replaced_by_the_bound_from_the_vectors`: a vector of norm 1 + 1e-3
+  along the ground state, given eta = 0, is enclosed with the upper bound (about 2e-3); eta = 0 for a vector of norm
+  exactly 1 is kept. `tests/test_exact_dot_range.py::test_statements_decided_at_the_top_of_the_range` passed a vector
+  of norm 1.3e154 with eta = 1e-12, outside the hypotheses of the moments, and expected M1 CERTIFIED; it now expects
+  the refusal.
+- Round 8 of the review: when the accurately rounded Gram matrix is formed, the lower bound also takes the
+  off-diagonal entries, max(|Re G_ij|, |Im G_ij|) - E_ij rounded down (an entry is at most the 2-norm); with the
+  diagonal alone two equal unit columns had the lower bound 0 and eta = 0 was used. The docstring tags both lower
+  bounds UNVERIFIED (D-12) and says that "consistent" means only "not contradicted". Every M statement now lists two
+  more assumptions: what s and eta bound and that they are taken as given, and that the derivation
+  (`docs/proofs/C-07_moments.md`) is UNVERIFIED (D-12). The two new moduli are of real numbers and listed in
+  `tests/abs_audit_allowlist.txt`. `tests/test_moments.py::test_off_diagonal_gram_entries_bound_the_defect_from_below`
+  (equal columns refused; real and imaginary inner products of 1e-4 contradict eta = 1e-6; it fails at the previous
+  commit). A comment in `certify.py` still said that the radii and residual bounds are scanned for underflow; it now
+  agrees with the docstring of `_underflow_operands` (they are not, since INT-05).
+- `tools/codeindex/make_code_index.py` stopped with "files outside every group" for the Python files under `lean/` and
+  `tools/`; it has two groups for them. The hand-written sentence for `certify_ed/precision.py` in
+  `tools/codeindex/purposes.py` now names the duties added since it was written (the summing of repeated sparse
+  entries, the reading of claimed values). `docs/project/CODE_INDEX.md` is regenerated.
+- Not done: `pyproject.toml` should list mpmath in the `test` and `dev` extras (four test files take their
+  high-precision references from it and skip without it); it is listed as open in
+  `docs/project/failures/05_open_items.md`.
+
 ### Inner products and sums at the top of the range
 
 The computational source hash changes.
@@ -332,7 +370,9 @@ The computational source hash changes.
   `certified_moments` change for such a vector from INCONCLUSIVE (NONFINITE_BOUND) to the NOT_CHECKED (NEEDS_DEPENDENCY)
   they give for a vector of ordinary norm without the gap or level they need. M1 of `certified_moments` changes like V1,
   but there only for input outside its hypotheses: its interval rests on the caller's S4 record (s, eta), and a record
-  with eta < 1 excludes a vector whose Gram defect is near BIG. M2 stays INCONCLUSIVE (NONFINITE_BOUND), as at main: its
+  with eta < 1 excludes a vector whose Gram defect is near BIG. (Since the Gram defect check of the section "Moments:
+  the Gram defect checked against the stored vectors" above, `certified_moments` refuses such a vector with eta < 1,
+  so M1 to M3 are no longer decided for it.) M2 stays INCONCLUSIVE (NONFINITE_BOUND), as at main: its
   second route, tr(P O^2)/g, overflows. No statement was found to change from CERTIFIED; one could in principle where
   main accepted a sum within the cascade's slack above BIG + 2^970 (now nan, INCONCLUSIVE). The certificates of
   `certify` for such a vector (claims of kind lowest, all and window, the last with the Kato-Temple step) are unchanged
@@ -356,7 +396,8 @@ The computational source hash changes.
   chunk sizes 1, 7, 1024 and 4999, and at the default chunk size across one chunk boundary (2^20 + 2 terms: BIG in the
   first chunk cancels against -BIG in the second, which leaves the correctly rounded sum of the noise plus one, decided
   in exact rationals; and a sum beyond the range); zero, subnormal and non-finite companions of top-of-range pairs; the
-  statuses of V1 to V3, G2, G3, M1 to M3 and of certify's S2 for the vector above).
+  statuses of V1 to V3, G2, G3, M1 to M3 and of certify's S2 for the vector above; for M1 to M3 the test now expects
+  the refusal described above).
 
 ### Non-finite follow-ups
 

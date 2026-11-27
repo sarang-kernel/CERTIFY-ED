@@ -1254,8 +1254,9 @@ def _certify(claim: Claim, spec: Optional[ModelSpec], opts: Options, widened=Non
     bad_x = [] if X is None else nonfinite_columns(X, block_mb)
     nonfinite = bool(bad_mu or bad_x)
     # INT-01: the no-underflow hypothesis of the standard model (fp.UNDERFLOW_THRESHOLD) is checked on the
-    # operands before S2 and on the radii and residual bounds after the enclosure; a finding makes S2 and
-    # every statement that depends on it INCONCLUSIVE with reason code UNDERFLOW_RISK (never CERTIFIED)
+    # stored operands and the model shift before S2 (the radii and residual bounds are not scanned since INT-05;
+    # see _underflow_operands); a finding makes S2 and every statement that depends on it INCONCLUSIVE with
+    # reason code UNDERFLOW_RISK (never CERTIFIED)
     uf_findings = []
     uf_record = {"performed": bool(opts.underflow_check), "threshold": UNDERFLOW_THRESHOLD,
                  "scanned": [], "findings": uf_findings}

@@ -125,6 +125,9 @@ certify_ed/moments.py	certified_moments	abs(lo2)	real data only
 certify_ed/moments.py	certified_moments	abs(hi2)	real data only
 certify_ed/moments.py	certified_moments	abs(loC)	real data only
 certify_ed/moments.py	certified_moments	abs(hiC)	real data only
+certify_ed/moments.py	_gram_defect_bounds	abs(v - 1.0)	real data only
+certify_ed/moments.py	_gram_defect_bounds	abs(zr)	real data only
+certify_ed/moments.py	_gram_defect_bounds	abs(zi)	real data only
 certify_ed/nonhermitian.py	disc_groups	np.abs(np.subtract.outer(re, re))	real data only
 certify_ed/nonhermitian.py	disc_groups	np.abs(np.subtract.outer(im, im))	real data only
 certify_ed/operators.py	_build	np.abs(O.data.imag)	real data only
