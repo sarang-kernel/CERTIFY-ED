@@ -122,6 +122,11 @@ A new experiment and its record; no code of the package changes. The computation
   which is why they are the longest. `docs/results/RESULT_d04_speedup.md`,
   record `docs/results/d04_speedup_n16_20261122.json`; `docs/project/failures/05_open_items.md` and the D-04 row of the
   roadmap (`tools/make_development_roadmap.py`) say so.
+- Second run (27 November, f5864761, the script with all additions): speed-up 1.77, 2.66 and 2.80; certificate bodies
+  and arrays equal to the one-worker ones; the CPU seconds of the workers exceed the sum of their task times by 0.3 %
+  to 2.1 %, so every worker had been waited for. Record `docs/results/d04_speedup_n16_20261127.json`, section "Second
+  run" of the result document. The result document now says the Windows profile of nup = 7 is an unrecorded
+  observation.
 
 ### Peak memory of the planner measurements on Linux
 

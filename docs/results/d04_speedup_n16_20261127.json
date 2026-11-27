@@ -1,0 +1,1657 @@
+{
+ "d04_speedup": {
+  "N": 16,
+  "sectors": [
+   {
+    "nup": 3,
+    "dim": 560,
+    "k": 3,
+    "producer_seconds": 0.012
+   },
+   {
+    "nup": 4,
+    "dim": 1820,
+    "k": 3,
+    "producer_seconds": 0.028
+   },
+   {
+    "nup": 5,
+    "dim": 4368,
+    "k": 3,
+    "producer_seconds": 0.073
+   },
+   {
+    "nup": 6,
+    "dim": 8008,
+    "k": 3,
+    "producer_seconds": 0.149
+   },
+   {
+    "nup": 7,
+    "dim": 11440,
+    "k": 3,
+    "producer_seconds": 0.199
+   },
+   {
+    "nup": 8,
+    "dim": 12870,
+    "k": 3,
+    "producer_seconds": 0.198
+   },
+   {
+    "nup": 9,
+    "dim": 11440,
+    "k": 3,
+    "producer_seconds": 0.205
+   },
+   {
+    "nup": 10,
+    "dim": 8008,
+    "k": 3,
+    "producer_seconds": 0.138
+   },
+   {
+    "nup": 11,
+    "dim": 4368,
+    "k": 3,
+    "producer_seconds": 0.066
+   },
+   {
+    "nup": 12,
+    "dim": 1820,
+    "k": 3,
+    "producer_seconds": 0.025
+   },
+   {
+    "nup": 13,
+    "dim": 560,
+    "k": 3,
+    "producer_seconds": 0.011
+   }
+  ],
+  "cap_gib": 32.0,
+  "cap_mechanism": "RLIMIT_AS",
+  "cores_available": 16,
+  "cpu_count": 208,
+  "runs": [
+   {
+    "workers": 1,
+    "wall_seconds": 310.235,
+    "speedup": 1.0,
+    "cpu_seconds_parent": 309.735,
+    "cpu_seconds_workers": 0.19,
+    "identical_to_one_worker": true,
+    "fields_not_compared": [
+     "environment/created_utc",
+     "statements/[]/evidence/clusters/[]/counts/[]/residual/seconds",
+     "statements/[]/evidence/clusters/[]/counts/[]/seconds",
+     "statements/[]/evidence/counts/[]/residual/seconds",
+     "statements/[]/evidence/counts/[]/seconds",
+     "statements/[]/seconds",
+     "timing"
+    ],
+    "load_before": [
+     121.76,
+     122.06,
+     123.09
+    ],
+    "load_after": [
+     119.34,
+     120.89,
+     122.33
+    ],
+    "tasks": [
+     {
+      "where": "serial",
+      "seconds": 0.331,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 3.997,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 7.145,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 28.035,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 95.239,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 37.402,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 104.238,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 24.799,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 5.475,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 3.367,
+      "reason": ""
+     },
+     {
+      "where": "serial",
+      "seconds": 0.207,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ],
+      [
+       "S8.degeneracy",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ]
+    ]
+   },
+   {
+    "workers": 2,
+    "wall_seconds": 175.588,
+    "speedup": 1.767,
+    "cpu_seconds_parent": 2.231,
+    "cpu_seconds_workers": 321.34,
+    "identical_to_one_worker": true,
+    "fields_not_compared": [
+     "environment/created_utc",
+     "statements/[]/evidence/clusters/[]/counts/[]/residual/seconds",
+     "statements/[]/evidence/clusters/[]/counts/[]/seconds",
+     "statements/[]/evidence/counts/[]/residual/seconds",
+     "statements/[]/evidence/counts/[]/seconds",
+     "statements/[]/seconds",
+     "timing"
+    ],
+    "load_before": [
+     119.34,
+     120.89,
+     122.33
+    ],
+    "load_after": [
+     120.11,
+     120.87,
+     122.09
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.262,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.141,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 7.014,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 27.95,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 104.229,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 36.061,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 107.954,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 25.242,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 5.002,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.366,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.301,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ],
+      [
+       "S8.degeneracy",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ]
+    ]
+   },
+   {
+    "workers": 4,
+    "wall_seconds": 116.573,
+    "speedup": 2.661,
+    "cpu_seconds_parent": 1.62,
+    "cpu_seconds_workers": 332.11,
+    "identical_to_one_worker": true,
+    "fields_not_compared": [
+     "environment/created_utc",
+     "statements/[]/evidence/clusters/[]/counts/[]/residual/seconds",
+     "statements/[]/evidence/clusters/[]/counts/[]/seconds",
+     "statements/[]/evidence/counts/[]/residual/seconds",
+     "statements/[]/evidence/counts/[]/seconds",
+     "statements/[]/seconds",
+     "timing"
+    ],
+    "load_before": [
+     120.11,
+     120.87,
+     122.09
+    ],
+    "load_after": [
+     117.71,
+     120.0,
+     121.64
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.27,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.395,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 6.808,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 26.868,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 104.359,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 38.848,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 109.256,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 30.424,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 5.704,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.365,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.25,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ],
+      [
+       "S8.degeneracy",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ]
+    ]
+   },
+   {
+    "workers": 8,
+    "wall_seconds": 110.661,
+    "speedup": 2.803,
+    "cpu_seconds_parent": 1.432,
+    "cpu_seconds_workers": 325.17,
+    "identical_to_one_worker": true,
+    "fields_not_compared": [
+     "environment/created_utc",
+     "statements/[]/evidence/clusters/[]/counts/[]/residual/seconds",
+     "statements/[]/evidence/clusters/[]/counts/[]/seconds",
+     "statements/[]/evidence/counts/[]/residual/seconds",
+     "statements/[]/evidence/counts/[]/seconds",
+     "statements/[]/seconds",
+     "timing"
+    ],
+    "load_before": [
+     117.71,
+     120.0,
+     121.64
+    ],
+    "load_after": [
+     117.06,
+     119.32,
+     121.23
+    ],
+    "tasks": [
+     {
+      "where": "worker",
+      "seconds": 0.266,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.663,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 7.043,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 26.011,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 96.866,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 38.605,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 110.179,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 26.57,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 5.828,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 3.28,
+      "reason": ""
+     },
+     {
+      "where": "worker",
+      "seconds": 0.174,
+      "reason": ""
+     }
+    ],
+    "statuses": [
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ],
+      [
+       "S8.degeneracy",
+       "NOT_CHECKED",
+       "NO_CLUSTERS"
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ],
+     [
+      [
+       "S1.model_fidelity",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S2.eigenpairs",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S3.completeness",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S4.eigenspaces",
+       "CERTIFIED",
+       null
+      ],
+      [
+       "S8.degeneracy",
+       "CERTIFIED",
+       null
+      ]
+     ]
+    ]
+   }
+  ],
+  "peak_rss_mb": 1059.71875
+ },
+ "_elapsed_seconds": 715.1581909656525,
+ "environment": {
+  "experiment": "d04_speedup",
+  "seed": 12345,
+  "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+  "platform": "Linux-6.17.0-1020-gcp-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "cpu_count": 208,
+  "numpy": "2.5.4",
+  "git_commit": "f5864761afe89acdb52c8489f5c6baf77f7f17bc",
+  "source_hash": "d689f4159bae8dd2",
+  "source_dirty": false,
+  "tests_hash": "831ab730280cab3c",
+  "tests_dirty": false,
+  "started": "2026-11-27T07:44:35",
+  "scipy": "1.18.1",
+  "quspin": "not installed",
+  "mpmath": "1.3.0",
+  "flint": "0.9.0",
+  "matplotlib": "3.11.2",
+  "flint_c_library": "3.6.0",
+  "certify_ed": "3.3.0.dev0",
+  "cpu_model": "Intel(R) Xeon(R) Platinum 8481C CPU @ 2.70GHz",
+  "memory_GiB": 1842.6,
+  "float_environment": {
+   "standard_model_hypotheses_hold": true,
+   "checks": {
+    "gradual_underflow": true,
+    "subnormal_operands": true,
+    "round_to_nearest_up": true,
+    "round_to_nearest_down": true,
+    "round_to_nearest_not_toward_zero_pos": true,
+    "round_to_nearest_not_toward_zero_neg": true,
+    "ties_to_even": true,
+    "blas_full_precision": true,
+    "gemm_full_precision": true
+   },
+   "failed": []
+  },
+  "threads_env": {
+   "OMP_NUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1",
+   "MKL_NUM_THREADS": "1"
+  }
+ }
+}

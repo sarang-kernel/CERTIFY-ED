@@ -3,7 +3,7 @@
 Roadmap item D-04 (`certify_ed/parallel.py`) runs independent certifications in worker processes, each with a share of
 the process memory cap. It had shown no speed-up: the measurements before 22 November 2026 were made on a machine
 without free cores (`docs/project/failures/05_open_items.md`). This document records the first measurement on cores
-that were reserved for the run, on a host that other work shared.
+to which the run was pinned, on a host that other work shared, and a second run of 27 November.
 
 ## What was run
 
@@ -56,8 +56,9 @@ one-worker times and statuses per sector (statements S1, S2, S3, S4, S8 in this 
 In the sector nup = 8 the three claimed pairs contain no degenerate level, so S4 and S8 have nothing to certify and are
 NOT_CHECKED with the reason `NO_CLUSTERS`. In the sectors nup = 7 and 9, whose dimension is close to that of nup = 8, the
 claim contains a degenerate level, and S8 counts its degeneracy with two further sparse factorizations. That is why
-these two sectors take about three times as long as the largest one: in a profile of the same certifications on the
-Windows workstation, nup = 7 took 250 s, of which 82 s were S3 and 166 s S8, while nup = 8 took 92 s.
+these two sectors take about three times as long as the largest one. A profile of the same certifications on the
+Windows workstation, which was not kept as a record and is an observation only, gave 250 s for nup = 7, of which 82 s
+were S3 and 166 s S8, and 92 s for nup = 8.
 
 ## What it shows and does not show
 
@@ -86,8 +87,36 @@ little.
 A first attempt with the sectors of the chain of 18 sites (dimensions up to 48620) was cancelled after 81 minutes. Its
 one-worker run had not finished, and the job would not have finished within its clock; no number of it is recorded.
 
+## Second run (27 November 2026)
+
+The same command ran again at commit f5864761 (source hash d689f4159bae8dd2, no tracked changes), with the script of
+rounds 7 and 8, on the same host, pin, thread settings and cap. The load average was between 117 and 124 before and
+after every worker count (the record keeps both readings).
+
+| workers | wall (s) | speed-up | sum of task times (s) | longest task (s) | CPU s, this process | CPU s, workers | certificates equal to one worker |
+|---|---|---|---|---|---|---|---|
+| 1 | 310.2 | 1.00 | 310.2 | 104.2 | 309.7 | 0.19 | (reference) |
+| 2 | 175.6 | 1.77 | 320.5 | 108.0 | 2.2 | 321.3 | yes |
+| 4 | 116.6 | 2.66 | 329.5 | 109.3 | 1.6 | 332.1 | yes |
+| 8 | 110.7 | 2.80 | 318.5 | 110.2 | 1.4 | 325.2 | yes |
+
+Here the equality covers the whole certificate body and the arrays, except the seven time fields that the record lists
+as `fields_not_compared`. The statuses and reason codes are the same at every worker count and are those of the first
+run: every statement CERTIFIED except S4 and S8 at nup = 8, NOT_CHECKED with `NO_CLUSTERS`. The CPU seconds of the
+workers come from `os.times`, which counts only child processes that have been waited for; with 2, 4 and 8 workers they
+exceed the sum of the task times by 0.3 %, 0.8 % and 2.1 %, so every worker had finished and been waited for when the
+run was recorded.
+
+The speed-ups agree with the first run to within 0.09 (1.77 and 1.77, 2.58 and 2.66, 2.75 and 2.80). The
+longest one-worker task (nup = 9, 104.2 s of 310.2 s) bounds the speed-up at 2.98, and 8 workers reach 94 % of it. A list
+schedule of the one-worker times in input order ends after 173.7 s with 2 workers and 111.4 s with 4 (157.1 s and
+104.2 s with the longest task first), close to the measured 175.6 s and 116.6 s. The sum of the task times exceeds
+the serial run by 3.3 %, 6.2 % and 2.7 % with 2, 4 and 8 workers. Each configuration ran once.
+
 ## Files
 
 - `docs/results/d04_speedup_n16_20261122.json`: the record of the run (`d04_speedup`) with the versions and the
   commit of its environment.
+- `docs/results/d04_speedup_n16_20261127.json`: the record of the second run, in the same layout, with its
+  environment.
 - `experiments/d04_speedup.py`: the experiment.
