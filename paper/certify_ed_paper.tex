@@ -91,7 +91,8 @@ two-dimensional AKLT lattices, every criterion holding.\ifshowSone{} For spin~1 
 published couplings, an eigenvalue certified at or below $-1.6380246$, which is $5.0\times10^{-3}$ below the published
 spin-1 bound, in an outer-pair configuration that the published search did not include.\fi A development version adds certified bounds on the integrated
 spectral weight of an operator on a certified level, such as the dynamical structure factor, from certified Chebyshev
-moments, with every sign condition decided in exact integer arithmetic. Many of the theorems on which the
+moments, with every sign condition decided in exact integer arithmetic, and applies them to the
+Heisenberg ring and to the frustrated $J_1$--$J_2$ model on the $4\times4$ torus. Many of the theorems on which the
 floating-point bounds rest have been restated in Lean~4 with Mathlib and accepted by two independent kernels. We state throughout which results are textbook material,
 which are new and await the check of a second person, and which numbers are certified bounds rather than
 floating-point estimates or published values.
@@ -735,15 +736,61 @@ $N=16$ sites (dimension 12,870; Lanczos reference), at moment orders $K=32$, 64,
 \label{fig:m6}
 \end{figure}
 
+\paragraph{The $J_1$--$J_2$ model on the $4\times4$ torus.}
+The same construction was applied to $H=\sum_{\langle ij\rangle}\mathbf S_i\cdot\mathbf S_j
++J_2\sum_{\langle\langle ij\rangle\rangle}\mathbf S_i\cdot\mathbf S_j$ on the periodic $4\times4$ lattice, with
+$O_q=\sqrt{2/N}\sum_j\cos(q\cdot r_j)S^z_j$ for $q=(\pi,\pi)$ and $(\pi,0)$, in the $S^z=0$ block (dimension 12,870),
+at $J_2=0$ and at the frustrated point $J_2=0.5$ (\code{experiments/m6\_square\_lattice.py}; data
+\code{results/m6\_square\_20261126/}). At $J_2=0.5$ the sparse factorization of S3 does not fit in the 4.5~GiB of the
+workstation, so both points were run on a Linux host with eight BLAS threads. S2, S3, S4 and S8 are \CERT{} for both
+ground states, which took 286~s and 965~s to certify, and none of the 1,328 bounds compared with a
+Lanczos reference was violated (Table~\ref{tab:m6sq}, Figure~\ref{fig:m6sq}). At $(\pi,\pi)$ the lowest excitation
+that carries weight holds $[0.9868, 0.9870]$ of the sum rule at $J_2=0$ and $[0.9618, 0.9647]$
+at $J_2=0.5$. At $(\pi,0)$ it holds $[0.9612, 0.9616]$ of $S(\pi,0)$ at $J_2=0$ but only
+$[0.6972, 0.7182]$ at $J_2=0.5$: at the frustrated point between 28.2 and
+30.3\,\% of the weight is certified to lie above the lowest excitation. These are statements about the
+$4\times4$ cluster only.
+
+\begin{table}[ht]
+\centering\small
+\caption{Certified bounds on the integrated $S^{zz}(q,\omega)$ of the $J_1$--$J_2$ model on the $4\times4$ torus
+($S^z=0$ block, dimension 12,870; \code{docs/results/RESULT\_m6\_spectral\_bounds.md}; development version 3.3.0.dev0
+at commit 0fc1408, Linux host, eight BLAS threads). ``Certify'' is the time to certify the ground state, S3 included.
+Widths are the mean widths of the 83 bounds at $K=32$ and $K=256$. The last column is the certified fraction $W_1/S(q)$
+of the lowest window at $K=256$. Every bound holds against the Lanczos reference.}
+\label{tab:m6sq}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}rlrlllll@{}}
+\toprule
+$J_2$ & $q$ & certify (s) & $S(q)$ certified & $S(q)$ reference & width $K{=}32$ & width $K{=}256$ & $W_1/S(q)$ \\
+\midrule
+0 & $(\pi,\pi)$ & 286.1 & $[2.949622785204, 2.949622785212]$ & 2.949622785208 & 6.70e-03 & 2.63e-03 & $[0.9868, 0.9870]$ \\
+0 & $(\pi,0)$ & 286.1 & $[0.334729870470, 0.334729870477]$ & 0.334729870474 & 9.20e-03 & 2.86e-03 & $[0.9612, 0.9616]$ \\
+0.5 & $(\pi,\pi)$ & 965.43 & $[1.708292201631, 1.708292201646]$ & 1.708292201638 & 8.63e-02 & 2.69e-02 & $[0.9618, 0.9647]$ \\
+0.5 & $(\pi,0)$ & 965.43 & $[0.445089775615, 0.445089775630]$ & 0.445089775622 & 5.27e-02 & 1.01e-02 & $[0.6972, 0.7182]$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\repofig{m6_square_lattice.png}{0.95}
+\caption{Certified upper and lower bounds on the integrated weight $\int_0^\omega S^{zz}(q,\omega')\,d\omega'$,
+normalised by $S(q)$, for the $J_1$--$J_2$ model at $J_2=0.5$ on the $4\times4$ torus, at $q=(\pi,\pi)$ (left) and
+$(\pi,0)$ (right), moment orders $K=32$, 64, 128 and 256, with the Lanczos reference
+(\code{results/m6\_square\_20261126/j2\_05/}; development version 3.3.0.dev0).}
+\label{fig:m6sq}
+\end{figure}
+
 \paragraph{Limits.}
 The polynomials are not the optimal Chebyshev--Markov--Stieltjes polynomials for the given moment intervals, and
 nothing is claimed about the distance to them. From moments known to about $10^{-11}$ the modified Chebyshev algorithm
 recovers about 20 recurrence coefficients whatever $K$ is, which is where the Radau polynomials stop improving and the
 Chebyshev--Hermite polynomials take over. The window edges for the lowest excitation are taken from the reference
 spectrum, but they are query points only. The spectral density itself, a line shape, is not bounded; only integrated
-weights are. M6 takes 0.35 to 9.4~s per energy, dominated by the exact proofs on Python integers. A square-lattice
-version of the experiment is prepared (\code{experiments/m6\_square\_lattice.py}) and has been run only as a smoke
-test on a $4\times2$ torus.
+weights are. M6 takes 0.35 to 9.4~s per energy, dominated by the exact proofs on Python integers. The square-lattice
+references are floating point, as for $N=16$ of the ring, and the peak memory of the Linux runs was not
+recorded.
 
 %======================================================================================================================
 \section{Software}
