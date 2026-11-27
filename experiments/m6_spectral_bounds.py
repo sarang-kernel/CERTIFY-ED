@@ -25,6 +25,7 @@ import os
 import platform
 import sys
 import time
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from fractions import Fraction
 
 import numpy as np
@@ -106,6 +107,25 @@ def round_up(x: Fraction) -> float:
     return float(np.nextafter(f, np.inf)) if Fraction(f) < x else f
 
 
+def dec(x: float, places: int, upward: bool) -> str:
+    """The exact value of x rounded to `places` decimals, upward or downward (for the ends of certified intervals)."""
+    q = Decimal(float(x)).quantize(Decimal(1).scaleb(-places), rounding=ROUND_CEILING if upward else ROUND_FLOOR)
+    return format(q, "f")
+
+
+def interval_text(iv, places: int) -> str:
+    """[lo, hi] with the lower end rounded down and the upper end rounded up."""
+    return f"[{dec(iv[0], places, False)}, {dec(iv[1], places, True)}]"
+
+
+def fraction_interval(window, total):
+    """Certified fraction of the total weight held by the window: [w_lo / t_hi, w_hi / t_lo] in exact rationals,
+    rounded outward; [0, 1] when the lower end of the total is not positive."""
+    if not total[0] > 0:
+        return [0.0, 1.0]
+    return [round_down(Fraction(window[0]) / Fraction(total[1])), round_up(Fraction(window[1]) / Fraction(total[0]))]
+
+
 def window(ref, rel=1e-6):
     """(a, b, E1, weight) for the lowest level with weight > rel * total, halfway to its neighbours with weight."""
     lv, wt = np.asarray(ref["levels"]), np.asarray(ref["weights"])
@@ -172,7 +192,7 @@ def run(N, Ks, n_energies, omega_max):
             "n_energies": len(rows), "violations": viol, "mean_width": float(np.mean(ups - lows)),
             "median_width": float(np.median(ups - lows)), "max_width": float(np.max(ups - lows)),
             "methods": methods,
-            "lowest_window": {"certified": [w_lo, w_hi], "fraction_of_S_pi": [w_lo / t0_iv[1], w_hi / t0_iv[0]]},
+            "lowest_window": {"certified": [w_lo, w_hi], "fraction_of_S_pi": fraction_interval([w_lo, w_hi], t0_iv)},
             "curve": {"energy": [r["energy"] for r in rows], "lower": lows.tolist(), "upper": ups.tolist(),
                       "reference": Fr.tolist()}})
         print(f"N={N} K={K}: M5 {t_m5:.1f}s M6 {t_m6:.1f}s, violations {len(viol)}, mean width "
@@ -222,7 +242,7 @@ def tables(data):
         sp_ = last["S_pi_interval"]
         out.append(f"| {r['N']} | {r['dimension']} | {r['reference'].split(' (')[0]} | "
                    f"{st.get('S2.eigenpairs')} / {st.get('S3.completeness')} / {st.get('S4.eigenspaces')} | "
-                   f"{r['seconds']['certify']} | [{iv[0]:.10f}, {iv[1]:.10f}] | [{sp_[0]:.12f}, {sp_[1]:.12f}] | "
+                   f"{r['seconds']['certify']} | {interval_text(iv, 10)} | {interval_text(sp_, 12)} | "
                    f"{r['S_pi_reference']:.12f} |")
     out += ["", "| N | K | M6 (s) | energies | violations | mean width | median width | max width | "
             "lowest window, certified | reference | polynomials (radau / chebyshev / LP) |",
@@ -233,7 +253,7 @@ def tables(data):
             m = x["methods"]
             out.append(f"| {r['N']} | {x['K']} | {x['seconds']['M6']} | {x['n_energies']} | {len(x['violations'])} | "
                        f"{x['mean_width']:.2e} | {x['median_width']:.2e} | {x['max_width']:.2e} | "
-                       f"[{lw[0]:.6f}, {lw[1]:.6f}] | {r['window']['weight_reference']:.6f} | "
+                       f"{interval_text(lw, 6)} | {r['window']['weight_reference']:.6f} | "
                        f"{m.get('radau-hermite', 0)} / {m.get('chebyshev-hermite', 0)} / {m.get('linear program', 0)} |")
     return "\n".join(out)
 
@@ -261,10 +281,13 @@ def main():
     results = []
     try:
         import subprocess
-        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
-                              cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip()
-        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
-                                    text=True, cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip())
+        here = os.path.dirname(os.path.abspath(__file__))
+        r_head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=here)
+        r_dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
+                                 text=True, cwd=here)
+        ok = r_head.returncode == 0 and r_dirty.returncode == 0          # None, not False, when git gives no answer
+        head = r_head.stdout.strip() if ok else None
+        dirty = bool(r_dirty.stdout.strip()) if ok else None
     except OSError:
         head, dirty = None, None
     meta = {"git_head": head, "tracked_changes": dirty,

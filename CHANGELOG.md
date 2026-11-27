@@ -300,6 +300,16 @@ New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments rec
 - Experiment `experiments/m6_square_lattice.py` (J1–J2 model on the 4 × 4 torus, S^zz(q, ω) at q = (π, π) and
   (π, 0), J2 = 0 and 0.5, run on the Linux host because S3 at J2 = 0.5 needs more than 4.5 GiB):
   `results/m6_square_20261126/`, 1328 bounds and no violation, in the same result document.
+- Records (round 8 of the review): every M5 and M6 statement names the UNVERIFIED derivation (D-12) in its
+  assumptions, and `format_spectral` prints it; bounds on the spectrum declared by the caller are recorded as declared
+  and not checked; `spectral_bounds_from_certificate` refuses a certificate that records no matrix hash and records
+  the certificate's hash and members; a candidate polynomial whose floating-point check is not finite is skipped.
+- Accounting (round 8): the bound vectors of the matrix products are multiplied by `up` after `norm2_upper`, which
+  covers the roundings of their own evaluation, and the sum over the members of a cluster is correctly rounded
+  (`math.fsum`); Lemma 7 says so. Both make the M5 bounds larger by a few units in the last place of their rounding
+  terms.
+- Experiments (round 8): the `--table` writers round certified interval ends outward and compute the fraction of
+  S(q) in exact rationals; `git_head` and `tracked_changes` are null when git gives no answer.
 - Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
   one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
   fails).

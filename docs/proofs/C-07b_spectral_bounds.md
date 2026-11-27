@@ -7,6 +7,9 @@ Notation as in `docs/proofs/C-07_moments.md`: H Hermitian n × n and O Hermitian
 vectors of a certified S4 cluster, P the spectral projector of H onto the cluster's g eigenvalues, η = ‖XᴴX − I‖₂ < 1,
 s the certified sin θ bound, u = 2⁻⁵³, γ_m and γ̇_m as in `fp.py`, w_A the largest number of nonzeros per row of A.
 E(·) is the spectral measure of H, T_j and U_j the Chebyshev polynomials of the first and second kind.
+Two letters have a second meaning below: in Lemma 5 (c), Lemma 7 and Proposition 3, s is the scale of the map onto
+[−1, 1] (s_c in the code), not the sin θ bound of Lemma 6; in Lemma 8, s is the variable of the Bernstein
+polynomials and A a polynomial with integer coefficients, not the matrix (H − cI)s.
 
 ## 1 Statement
 
@@ -104,8 +107,11 @@ and per addition; its error is at most γ̇_{w+1} times the sum of the moduli of
 one relative rounding u, and γ̇_{w+1} + u(1 + γ̇_{w+1}) ≤ γ̇_{w+2}; with |(H − cI)z|_i at most the same sum of moduli,
 |â(z)_i − (Az)_i| ≤ s γ̇_{w+2} (Σ_k |h_ik||z_k| + |c||z_i|). The bound vector is formed from nonnegative numbers with at
 most w + 4 roundings per component (the products and sums of fl(|H|m), the product |c|m_i, the addition, the products
-by s and by γ̇), so the exact vector is at most the computed one divided by 1 − γ_{w+4}; `norm2_upper` bounds the
-2-norm of the stored vector, and m ≥ |z| componentwise. The subtraction: componentwise fl(a − b) = (a − b)(1 + θ),
+by s and by γ̇), so the exact vector is at most the computed one divided by 1 − γ_{w+4}. That quotient is itself
+evaluated in floating point: γ̇_{w+2} and γ_{w+4} are rounded, and so are 1 − γ_{w+4} and the division, at most four
+further relative errors u in each component. They are covered by `up` applied to the 2-norm (the factor 1 + 8u,
+itself rounded once, so at least 1 + 6u; ‖v(1 + θ)‖ ≤ (1 + max|θ_i|)‖v‖); the same holds for e_y,i. `norm2_upper`
+bounds the 2-norm of the stored vector, and m ≥ |z| componentwise. The subtraction: componentwise fl(a − b) = (a − b)(1 + θ),
 |θ| ≤ u (for complex data on the real and the imaginary part separately, which gives the same modulus bound), so
 ‖fl(a − b) − (a − b)‖ ≤ u‖a − b‖ ≤ u/(1 − u)‖fl(a − b)‖; with a = 2 â(ẑ_{j−1}) the product error enters twice.
 The true sequence z_j = T_j(A) ŷ_i satisfies z₀ = ŷ_i, z₁ = A z₀ and z_{j+1} = 2 A z_j − z_{j−1}; subtracting,
@@ -114,7 +120,8 @@ U_{m+1} = 2x U_m − U_{m−1} gives e_j = Σ_{l=1}^{j} U_{j−l}(A) f_l. For λ
 |U_m(λ)| = |sin((m + 1)θ)/sin θ| ≤ m + 1, so ‖U_m(A)‖₂ ≤ m + 1 and ‖e_j‖ ≤ Σ_l (j − l + 1) δ_l. The inner product:
 ⟨ŷ, ẑ_j⟩ − ⟨y, T_j(A) y⟩ = ⟨ŷ, e_j⟩ + ⟨ŷ − y, T_j(A) ŷ⟩ + ⟨y, T_j(A)(ŷ − y)⟩ with y = Ox_i; the three terms are
 at most ‖ŷ‖E_j, e_y‖ŷ‖ and (‖ŷ‖ + e_y) e_y. The exact_dot error, the sum and the division are those of Lemma 3 of
-C-07. ∎
+C-07; the sum over the g members of the rounding terms is formed with `math.fsum` (correctly rounded, one relative
+error u), covered by the `up` of b_j. ∎
 
 **Proposition 3.** For a Borel set S, E(S) is an orthogonal projector commuting with H, and
 tr(P O E(S) O) = tr(P P O E(S) E(S) O) = tr((E(S) O P)ᴴ (E(S) O P)) = ‖E(S) O P‖_F² ≥ 0 (cyclicity, P = P² = Pᴴ,
@@ -124,7 +131,8 @@ p ≥ 1_{[−1, ξ]} on [−1, 1] (which the two conditions state: on (ξ, 1] th
 F(ξ) = ∫ 1_{[−1,ξ]} dμ ≤ ∫ p dμ = Σ_j d_j τ_j, and each term d_j τ_j is at most max(d_j τ_j^lo, d_j τ_j^hi) because
 τ_j ∈ [τ_j^lo, τ_j^hi]. The lower bound is the same with the inequalities reversed (q ≤ 0 on [ξ, 1] is stronger than
 q ≤ 0 on (ξ, 1], so q ≤ 1_{[−1,ξ]} also at ξ). 0 ≤ F ≤ μ([−1,1]) = τ₀ is positivity; the cases ξ < −1 and ξ ≥ 1 are
-the support. The map E ↦ (E − c)/r is increasing, so F_H(E) = μ_H((−∞, E]) = μ([−1, (E − c)/r]). ∎
+the support. The map E ↦ (E − c)s is increasing (s > 0, the scale of Lemma 5 (c)), so
+F_H(E) = μ_H((−∞, E]) = μ([−1, (E − c)s]). ∎
 
 **Lemma 8.** (a) The standard change of basis tᵏ = Σ_{i ≥ k} C(i, k)/C(m, k) B_{i,m}(t) gives β_i; and
 C(i, k)/C(m, k) = C(m − k, i − k)/C(m, i) (both equal i!(m − k)!/(m!(i − k)!)). (b) The B_{i,m} are nonnegative on
@@ -176,4 +184,7 @@ distribution where it is known. Continued-fraction (Lanczos) bounds on the spect
 remain not implemented.
 
 The derivation is new and stays UNVERIFIED until Sarang's check (D-12). Lemma 7 rests on the same standard-model
-hypotheses as Lemma 3 of C-07 (no underflow of nonzero operands; the scans make the statements INCONCLUSIVE otherwise).
+hypotheses as Lemma 3 of C-07 (no underflow of nonzero operands). The scan covers the stored vectors and the entries
+of H and O and makes M5 INCONCLUSIVE when one of them is below the threshold; for the products formed later
+(ŷ = fl(Ox) and the iterates ẑ_j) the hypothesis is assumed, not scanned, as for the other standard-model bounds
+(`docs/limitations.md`).

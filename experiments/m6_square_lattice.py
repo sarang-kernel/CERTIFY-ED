@@ -42,7 +42,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import certify_ed as ce  # noqa: E402
 from certify_ed import spectral_bounds as sb  # noqa: E402
 from certify_ed.correlations import site_operator  # noqa: E402
-from m6_spectral_bounds import F_ref, lanczos_measure, round_down, round_up, window  # noqa: E402
+from m6_spectral_bounds import (F_ref, fraction_interval, interval_text, lanczos_measure, round_down,  # noqa: E402
+                                round_up, window)
 
 DENSE_MAX = 4000
 RESULT = "m6_square_lattice.json"
@@ -162,7 +163,7 @@ def run(Lx, Ly, J2, qs, Ks, n_energies, omega_max):
                     m_ = (r.get(k_) or {}).get("method")
                     if m_:
                         methods[m_] = methods.get(m_, 0) + 1
-            frac = [w_lo / t0_iv[1], w_hi / t0_iv[0]] if t0_iv[0] > 0 else [0.0, 1.0]
+            frac = fraction_interval([w_lo, w_hi], t0_iv)
             qo["runs"].append({
                 "K": K, "statuses": st, "seconds": {"M5": round(t_m5, 2), "M6": round(t_m6, 2)},
                 "spectrum_interval": rec["chebyshev"]["spectrum_interval"],
@@ -229,12 +230,12 @@ def tables(data):
     for r in data["results"]:
         for qo in r["wavevectors"]:
             for x in sorted(qo["runs"], key=lambda y: y["K"]):
-                lw, fr, sq, m = (x["lowest_window"]["certified"], x["lowest_window"]["fraction_of_S_q"],
-                                 x["S_q_interval"], x["methods"])
+                lw, sq, m = x["lowest_window"]["certified"], x["S_q_interval"], x["methods"]
+                fr = fraction_interval(lw, sq)          # from the certified ends (records before round 8 rounded it)
                 out.append(f"| {r['J2']:g} | {qo['label']} | {x['K']} | {x['seconds']['M6']} | {len(x['violations'])} | "
-                           f"{x['mean_width']:.2e} | {x['median_width']:.2e} | [{sq[0]:.12f}, {sq[1]:.12f}] | "
-                           f"{qo['S_q_reference']:.12f} | [{lw[0]:.6f}, {lw[1]:.6f}] | "
-                           f"{qo['window']['weight_reference']:.6f} | [{fr[0]:.4f}, {fr[1]:.4f}] | "
+                           f"{x['mean_width']:.2e} | {x['median_width']:.2e} | {interval_text(sq, 12)} | "
+                           f"{qo['S_q_reference']:.12f} | {interval_text(lw, 6)} | "
+                           f"{qo['window']['weight_reference']:.6f} | {interval_text(fr, 4)} | "
                            f"{m.get('radau-hermite', 0)} / {m.get('chebyshev-hermite', 0)} / "
                            f"{m.get('linear program', 0)} |")
     return "\n".join(out)
@@ -267,9 +268,12 @@ def main():
     try:
         import subprocess
         here = os.path.dirname(os.path.abspath(__file__))
-        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=here).stdout.strip()
-        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
-                                    text=True, cwd=here).stdout.strip())
+        r_head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=here)
+        r_dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True,
+                                 text=True, cwd=here)
+        ok = r_head.returncode == 0 and r_dirty.returncode == 0          # None, not False, when git gives no answer
+        head = r_head.stdout.strip() if ok else None
+        dirty = bool(r_dirty.stdout.strip()) if ok else None
     except OSError:
         head, dirty = None, None
     meta = {"git_head": head, "tracked_changes": dirty,

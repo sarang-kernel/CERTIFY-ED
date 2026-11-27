@@ -1,4 +1,5 @@
 """Chebyshev moments (M5) and distribution bounds (M6) on a certified level: docs/proofs/C-07b_spectral_bounds.md."""
+import copy
 import json
 import math
 import random
@@ -192,3 +193,49 @@ def test_distribution_needs_certified_moments(chain6):
     st = {s["id"]: s for s in out["statements"]}
     assert st["M6.distribution_bounds"]["status"] == "NOT_CHECKED"
     assert st["M6.distribution_bounds"]["evidence"]["reason_code"] == "NEEDS_DEPENDENCY"
+
+
+def test_statements_name_the_unverified_derivation(chain6):
+    H, O, cert, w, weights = chain6
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=8, energies=[-1.0])
+    for s in rec["statements"]:
+        assert sb.DERIVATION in s["assumptions"], s["id"]
+    assert "UNVERIFIED" in sb.DERIVATION and "D-12" in sb.DERIVATION
+    assert sb.DERIVATION in sb.format_spectral(rec)
+    assert rec["certificate"]["operator_hash_matches"] and rec["certificate"]["members"] == [0]
+
+
+def test_certificate_without_a_matrix_hash_is_refused(chain6):
+    H, O, cert, w, weights = chain6
+    c2 = copy.deepcopy(cert)
+    c2.body["subject"]["operator"]["matrix_sha256"] = None
+    with pytest.raises(ValueError, match="no matrix hash"):
+        sb.spectral_bounds_from_certificate(c2, H, O, K=4)
+
+
+def test_lowest_bound_is_taken_only_from_a_certified_lowest_claim(chain6):
+    H, O, cert, w, weights = chain6
+    lo, src = sb._lowest_lower_bound(cert)
+    assert lo is not None and lo <= w[0] and "certificate" in src
+    other = copy.deepcopy(cert)
+    other.body["claim"]["kind"] = "window"
+    assert sb._lowest_lower_bound(other) == (None, "")
+    sector = copy.deepcopy(cert)
+    sector.body["subject"]["sector"] = {"label": "test"}
+    assert sb._lowest_lower_bound(sector) == (None, "")
+    no_s3 = copy.deepcopy(cert)
+    real = no_s3.status_of
+    no_s3.status_of = lambda sid: "INCONCLUSIVE" if sid == "S3.completeness" else real(sid)
+    assert sb._lowest_lower_bound(no_s3) == (None, "")
+    rec = sb.spectral_bounds_from_certificate(no_s3, H, O, K=4)
+    assert rec["chebyshev"]["spectrum_source"] == "Gershgorin discs of the stored H"
+    assert rec["chebyshev"]["spectrum_interval"][0] == rec["chebyshev"]["gershgorin_interval"][0]
+
+
+def test_declared_spectrum_bounds_are_recorded_as_declared(chain6):
+    H, O, cert, w, weights = chain6
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=4, spectrum_lower=float(w[0]) - 1e-9)
+    assert rec["chebyshev"]["spectrum_source"] == "bounds declared by the caller, not checked"
+    assert rec["chebyshev"]["declared_bounds"]["lower"] == float(w[0]) - 1e-9
+    st = {s["id"]: s for s in rec["statements"]}
+    assert any("declared by the caller" in a for a in st["M5.chebyshev_moments"]["assumptions"])
