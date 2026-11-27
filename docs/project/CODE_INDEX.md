@@ -1,7 +1,7 @@
 # Code index
 
-This index lists every program file of the certify-ed repository at commit `4be77c4` (revision `HEAD` of
-`archive_v5/code/certify-ed`): 408 files ending in `.py`, `.c` or `.sh`, with 90032 lines in all. It is written by
+This index lists every program file of the certify-ed repository at commit `5bc59a0` (revision `HEAD` of
+`archive_v5/code/certify-ed`): 408 files ending in `.py`, `.c` or `.sh`, with 90035 lines in all. It is written by
 `tools/codeindex/make_code_index.py` from the committed files, and `python tools/codeindex/make_code_index.py --check`
 reports whether it is up to date. Apart from the introductions of the sections, which are part of the generator, and
 the sentences of `tools/codeindex/purposes.py`, every entry is taken from the files.
@@ -30,7 +30,7 @@ Of these program files, 96 count in the source fingerprint, 38 are excluded by t
 | Tests `tests/` | 104 | 23307 |
 | Verifier, corpus and conformance | 10 | 3010 |
 | Examples and the driver | 5 | 90 |
-| Scripts under `docs/` | 66 | 13942 |
+| Scripts under `docs/` | 66 | 13945 |
 | Scripts under `lean/` | 23 | 3542 |
 | Repository tools `tools/` | 9 | 2090 |
 | Legacy code `legacy/` | 57 | 8900 |
@@ -377,7 +377,7 @@ and the API page generator.
 | `docs/proofs/independent/adversarial_thm8_rho.py` | 213 | Independent adversarial search for Theorem 8 (docs/proofs/thm8_rho.md). | defines `part_a`, `part_b`, `u1_sectors`, `exact_mp`, `part_c`, `main`; arguments `--cases`, `--seed`; runs as a script; imports `certify_ed`, `checker`, `compose`, `construct` | none |
 | `docs/proofs/verify_C-03.py` | 373 | Computational verification of docs/proofs/C-03_entanglement.md (certify_ed.entanglement). | defines `to_mp`, `frac_mp`, `trace_norm`, `herm_eigs`, `partial_trace`, `entropy`, `orth_basis`, `part_A` (+6); runs as a script; imports `entanglement`, `ivl` | none |
 | `docs/proofs/verify_C-04.py` | 287 | Computational verification of docs/proofs/C-04_correlation_lift.md (certify_ed.correlations, sector lift). | defines `to_mp`, `spec_norm`, `polar`, `rand_frac_matrix`, `fmat`, `ftrans`, `ftrace`, `finv` (+5); runs as a script; imports `correlations`, `eigenspace` | none |
-| `docs/proofs/verify_C-07.py` | 256 | Computational verification of docs/proofs/C-07_moments.md (certified moments and sum rules). | defines `rand_herm`, `fr`, `exact_trace_moments`, `stmt`, `planted`, `exact_cluster`, `exact_moments_mp`, `s_eta_exact` (+1); arguments `--cases`, `--seed`; runs as a script; imports `construct`, `correlations`, `moments`, `spec` | none |
+| `docs/proofs/verify_C-07.py` | 259 | Computational verification of docs/proofs/C-07_moments.md (certified moments and sum rules). | defines `rand_herm`, `fr`, `exact_trace_moments`, `stmt`, `planted`, `exact_cluster`, `exact_moments_mp`, `s_eta_exact` (+1); arguments `--cases`, `--seed`; runs as a script; imports `construct`, `correlations`, `moments`, `spec` | none |
 | `docs/proofs/verify_C-07b.py` | 336 | Computational verification of docs/proofs/C-07b_spectral_bounds.md (Chebyshev moments M5, distribution bounds M6). | defines `rand_herm`, `exact_cluster_weights`, `s_eta_exact`, `up_float`, `part_a`, `exact_F`, `part_b`, `eval_frac` (+4); arguments `--cases`, `--seed`; runs as a script; imports `construct`, `correlations`, `spec`, `spectral_bounds` | none |
 | `docs/proofs/verify_C06.py` | 170 | Computational verification of Proposition 16' (C-06, docs/proofs/C06_truncated_thermodynamics.md). | defines `exact_thermo`, `one_case`, `check`, `negative_controls`, `run`, `main`; arguments `--random`, `--seed`; runs as a script; imports `thermo` | none |
 | `docs/proofs/verify_C16.py` | 251 | Computational verification of the C-16 statement (docs/proofs/C16_exact_bracket.md). | defines `check_A`, `check_B`, `check_C`, `check_D`, `run`, `main`; arguments `--random`, `--seed`; runs as a script; imports `certify_ed`, `checker`, `exact_degeneracy` | none |
