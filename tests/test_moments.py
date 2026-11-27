@@ -192,3 +192,27 @@ def test_understated_eta_is_replaced_by_the_bound_from_the_vectors(heis):
     e0[0] = 1.0
     rec3 = certified_moments(H, O, e0, 0.5, 0.0, K=0, sum_rules=False)
     assert rec3["state"]["eta_check"]["lower_bound_from_vectors"] == 0.0 and rec3["state"]["eta_used"] == 0.0
+
+
+def test_off_diagonal_gram_entries_bound_the_defect_from_below(heis):
+    """The lower bound on the Gram defect also uses the off-diagonal entries of the accurately rounded Gram matrix (an
+    entry of a matrix is at most its 2-norm in modulus). Two equal unit columns have defect 1 and a unit diagonal:
+    eta = 0 is contradicted and, the upper bound not being below 1, refused; from the diagonal alone the lower bound
+    was 0 and eta = 0 was used. Two unit columns whose inner product is 1e-4 (real, or imaginary for complex columns)
+    contradict eta = 1e-6, and the bounds use the upper bound computed from the vectors."""
+    spec, H, w, V, cert, O = heis
+    x = V[:, 0]
+    with pytest.raises(ValueError, match="below the Gram defect"):
+        certified_moments(H, O, np.column_stack([x, x]), 0.0, 0.0, K=0, sum_rules=False)
+    n, t = H.shape[0], 1e-4
+    for phase in (1.0, 1j):
+        e0 = np.zeros(n, dtype=complex if phase == 1j else float)
+        e1 = np.zeros_like(e0)
+        e0[0] = 1.0
+        e1[0], e1[1] = phase * t, np.sqrt(1 - t * t)
+        rec = certified_moments(H, O, np.column_stack([e0, e1]), 0.0, 1e-6, K=0, sum_rules=False)
+        chk = rec["state"]["eta_check"]
+        assert not chk["consistent"], phase
+        assert 0.99 * t < chk["lower_bound_from_vectors"] <= t * (1 + 1e-12), (phase, chk)
+        assert rec["state"]["eta_used"] == chk["upper_bound_from_vectors"] < 2 * t, (phase, chk)
+        assert validate_record(rec) in (True, None)
