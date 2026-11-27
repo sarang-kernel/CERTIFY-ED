@@ -297,6 +297,9 @@ New module `certify_ed.spectral_bounds`: statements M5 and M6 of the moments rec
 - M4 (the continued fraction) stays NOT_IMPLEMENTED; its summary names M5 and M6.
 - Experiment `experiments/m6_spectral_bounds.py` (Heisenberg ring, S^zz(π, ω) from the certified ground state,
   N = 8–16 in the S^z = 0 block): `results/m6_spectral_20261125/`, `RESULT_m6_spectral_bounds.md`.
+- Experiment `experiments/m6_square_lattice.py` (J1–J2 model on the 4 × 4 torus, S^zz(q, ω) at q = (π, π) and
+  (π, 0), J2 = 0 and 0.5, run on the Linux host because S3 at J2 = 0.5 needs more than 4.5 GiB):
+  `results/m6_square_20261126/`, 1328 bounds and no violation, in the same result document.
 - Tests `tests/test_spectral_bounds.py`: positive controls against exact diagonalization; negative controls (a dip of
   one unit, contradictory spectral bounds, another matrix than the certificate's, M5 not CERTIFIED, a proof that
   fails).

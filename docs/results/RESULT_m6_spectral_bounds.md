@@ -3,7 +3,8 @@
 Branch `feat/m4-spectral-bounds` from `fix/backlog-small` (6944e35f). Code `certify_ed/spectral_bounds.py` (statements
 M5 and M6 of the moments record family), derivation `docs/proofs/C-07b_spectral_bounds.md`, machine check
 `docs/proofs/verify_C-07b.py` (run record `docs/proofs/runs/verify_C-07b.txt`), tests `tests/test_spectral_bounds.py`,
-experiment `experiments/m6_spectral_bounds.py`, data `results/m6_spectral_20261125/` (commit 521c9384). All of it is
+experiment `experiments/m6_spectral_bounds.py`, data `results/m6_spectral_20261125/` (commit 521c9384); square-lattice
+experiment `experiments/m6_square_lattice.py`, data `results/m6_square_20261126/` (commit 0fc1408). All of it is
 UNVERIFIED until Sarang's check (D-12); no independent re-derivation has been made yet.
 
 ## What is certified
@@ -112,12 +113,69 @@ those runs except timings and the metadata block), bit for bit.
 * **Cost.** M5 takes about a second at most; M6 takes 0.35 to 9.4 s per energy (N = 8, K = 32 to N = 14, K = 256; the exact
   proofs run on Python integers and dominate). Certifying the N = 16 ground state (S3 included) took 225.44 s.
 
+## Experiment: S^zz(q, ω) of the J1–J2 model on the 4 × 4 torus
+
+`experiments/m6_square_lattice.py` applies the same construction to H = Σ⟨ij⟩ S_i · S_j + J2 Σ⟨⟨ij⟩⟩ S_i · S_j on the
+periodic 4 × 4 lattice (sites y·4 + x), with O_q = √(2/N) Σ_j cos(q · r_j) S^z_j for q = (π, π) and (π, 0), in the
+S^z = 0 block (dimension 12870), at J2 = 0 and at the frustrated point J2 = 0.5. The reference F is a floating-point
+Lanczos run with full reorthogonalization (800 steps) from O_q|0⟩ for the same ground-state vector, with the tolerance
+10⁻⁹ used above. At J2 = 0.5 the sparse factorization of S3 does not fit in the 4.5 GiB of the workstation
+(`docs/project/experiments/E2_cost.md`), so both points were run on the Linux host (Python 3.12.13, NumPy 2.5.5, SciPy
+1.18.1, python-flint 0.9.0, eight BLAS threads) from a `git archive` of 0fc1408;
+`results/m6_square_20261126/run_host.txt` gives the archive's SHA-256, the command and the times. The records'
+`git_head` is empty and `tracked_changes` false because the archive holds no repository, and their `outdir` was
+shortened to the repository path. Peak memory was not recorded.
+
+| lattice | J2 | dim | S2 / S3 / S4 | certify (s) | E0 (reference) | gap in the block (reference) |
+|---|---|---|---|---|---|---|
+| 4x4 | 0 | 12870 | CERTIFIED / CERTIFIED / CERTIFIED | 286.1 | -11.2284832084 | 0.578598 |
+| 4x4 | 0.5 | 12870 | CERTIFIED / CERTIFIED / CERTIFIED | 965.43 | -8.4579233514 | 0.318934 |
+
+| J2 | q | K | M6 (s) | violations | mean width | median width | S(q) certified | S(q) reference | lowest window, certified | reference | fraction of S(q) | polynomials (radau / chebyshev / LP) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | (pi, pi) | 32 | 10.59 | 0 | 6.70e-03 | 5.79e-04 | [2.949622785204, 2.949622785212] | 2.949622785208 | [2.910671, 2.911331] | 2.910928 | [0.9868, 0.9870] | 158 / 0 / 0 |
+| 0 | (pi, pi) | 64 | 18.34 | 0 | 5.89e-03 | 3.26e-04 | [2.949622785204, 2.949622785212] | 2.949622785208 | [2.910671, 2.911155] | 2.910928 | [0.9868, 0.9870] | 139 / 19 / 0 |
+| 0 | (pi, pi) | 128 | 40.94 | 0 | 4.21e-03 | 3.26e-04 | [2.949622785204, 2.949622785212] | 2.949622785208 | [2.910671, 2.911155] | 2.910928 | [0.9868, 0.9870] | 130 / 28 / 0 |
+| 0 | (pi, pi) | 256 | 104.38 | 0 | 2.63e-03 | 2.64e-04 | [2.949622785204, 2.949622785212] | 2.949622785208 | [2.910671, 2.911155] | 2.910928 | [0.9868, 0.9870] | 128 / 30 / 0 |
+| 0 | (pi, 0) | 32 | 12.64 | 0 | 9.20e-03 | 5.69e-04 | [0.334729870470, 0.334729870477] | 0.334729870474 | [0.320344, 0.324223] | 0.321814 | [0.9570, 0.9686] | 158 / 0 / 0 |
+| 0 | (pi, 0) | 64 | 24.61 | 0 | 4.34e-03 | 1.87e-05 | [0.334729870470, 0.334729870477] | 0.334729870474 | [0.321749, 0.323604] | 0.321814 | [0.9612, 0.9668] | 156 / 2 / 0 |
+| 0 | (pi, 0) | 128 | 54.09 | 0 | 3.39e-03 | 1.87e-05 | [0.334729870470, 0.334729870477] | 0.334729870474 | [0.321749, 0.322160] | 0.321814 | [0.9612, 0.9624] | 142 / 16 / 0 |
+| 0 | (pi, 0) | 256 | 133.66 | 0 | 2.86e-03 | 1.87e-05 | [0.334729870470, 0.334729870477] | 0.334729870474 | [0.321749, 0.321861] | 0.321814 | [0.9612, 0.9616] | 131 / 27 / 0 |
+| 0.5 | (pi, pi) | 32 | 10.65 | 0 | 8.63e-02 | 3.02e-02 | [1.708292201631, 1.708292201646] | 1.708292201638 | [1.552667, 1.666801] | 1.647072 | [0.9089, 0.9757] | 158 / 0 / 0 |
+| 0.5 | (pi, pi) | 64 | 20.11 | 0 | 8.27e-02 | 2.39e-02 | [1.708292201631, 1.708292201646] | 1.708292201638 | [1.552667, 1.666801] | 1.647072 | [0.9089, 0.9757] | 124 / 34 / 0 |
+| 0.5 | (pi, pi) | 128 | 51.42 | 0 | 2.93e-02 | 4.00e-03 | [1.708292201631, 1.708292201646] | 1.708292201638 | [1.643024, 1.647978] | 1.647072 | [0.9618, 0.9647] | 61 / 97 / 0 |
+| 0.5 | (pi, pi) | 256 | 145.43 | 0 | 2.69e-02 | 2.71e-03 | [1.708292201631, 1.708292201646] | 1.708292201638 | [1.643024, 1.647978] | 1.647072 | [0.9618, 0.9647] | 47 / 111 / 0 |
+| 0.5 | (pi, 0) | 32 | 11.44 | 0 | 5.27e-02 | 1.61e-02 | [0.445089775615, 0.445089775630] | 0.445089775622 | [0.141492, 0.418418] | 0.316294 | [0.3179, 0.9401] | 131 / 27 / 0 |
+| 0.5 | (pi, 0) | 64 | 25.25 | 0 | 4.01e-02 | 8.59e-03 | [0.445089775615, 0.445089775630] | 0.445089775622 | [0.225953, 0.376597] | 0.316294 | [0.5077, 0.8461] | 88 / 70 / 0 |
+| 0.5 | (pi, 0) | 128 | 60.91 | 0 | 1.75e-02 | 1.63e-03 | [0.445089775615, 0.445089775630] | 0.445089775622 | [0.309383, 0.322075] | 0.316294 | [0.6951, 0.7236] | 57 / 101 / 0 |
+| 0.5 | (pi, 0) | 256 | 162.49 | 0 | 1.01e-02 | 6.71e-04 | [0.445089775615, 0.445089775630] | 0.445089775622 | [0.310313, 0.319649] | 0.316294 | [0.6972, 0.7182] | 46 / 112 / 0 |
+
+![Certified bounds on the integrated structure factor, 4 × 4 torus, J2 = 0.5](../../results/m6_square_20261126/j2_05/m6_square_lattice.png)
+
+The figure for J2 = 0 is `results/m6_square_20261126/j2_0/m6_square_lattice.png`.
+
+* **No violation.** 1328 certified bounds (2 values of J2, 2 wavevectors, 4 values of K, 83 energies each), none
+  violated by the reference. S2, S3, S4 and S8 are CERTIFIED for both ground states, and S(q) = τ₀ is certified to an
+  interval of width at most 1.5e-11 (M5 alone).
+* **One level carries S(π, π).** At K = 256 the lowest excitation that carries weight at (π, π) holds
+  [0.9868, 0.9870] of S(π, π) at J2 = 0 and [0.9618, 0.9647] at J2 = 0.5.
+* **Frustration spreads the weight at (π, 0).** The lowest excitation at (π, 0) holds [0.9612, 0.9616] of
+  S(π, 0) at J2 = 0 and [0.6972, 0.7182] at J2 = 0.5; at the frustrated point 28.2 % to 30.3 % of the weight
+  lies above it. These are statements about the 4 × 4 cluster only.
+* **Resolution against K.** At J2 = 0.5 the mean width falls from 8.63e-02 (K = 32) to
+  2.69e-02 (K = 256) at (π, π) and from 5.27e-02 to 1.01e-02 at (π, 0); the share of
+  Chebyshev–Hermite polynomials grows with K, as for the ring. At J2 = 0 the measure is dominated by a few levels and
+  the widths are smaller (2.63e-03 and 2.86e-03 at K = 256).
+* **Cost.** Certifying the ground state took 286 s (J2 = 0) and 965 s (J2 = 0.5) on eight threads; M6 took
+  10.6 to 162.5 s per run of 83 energies.
+
 ## Limits
 
 * The polynomials are not the optimal Chebyshev–Markov–Stieltjes ones for the given moment intervals; nothing is
   claimed about the distance to them.
 * The window edges for the lowest excitation are taken from the reference spectrum; they are query points only, and
   the bracket [L(b) − U(a), U(b) − L(a)] holds for any a < b.
-* The N = 16 reference is not exact. The bounds hold with or without it; it only measures their width.
+* The N = 16 reference and the 4 × 4 references are not exact. The bounds hold with or without them; they only
+  measure their width.
 * The spectral density itself (a line shape) is not bounded; only integrated weights are. M4 (the continued fraction)
   stays NOT_IMPLEMENTED.
