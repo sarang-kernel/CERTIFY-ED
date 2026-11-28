@@ -5,9 +5,9 @@
 3.3.0 releases the work of `dev/3.3` and of the review rounds 1 to 10 on main. New statements: M5 (Chebyshev moments)
 and M6 (bounds on the integrated spectral weight) join the moments record family of 3.2.0 (M1 to M3; M4 stays
 NOT_IMPLEMENTED); their derivation C-07b, and C-07 with the accounting of rounds 8b to 10, are UNVERIFIED until
-Sarang's check (D-12). The derivations with UNVERIFIED parts in `docs/proofs` are C-04, C-07, C-07b, D-01, D-02, D-03,
-E-02, E-03, E-04, E-05, E-07, appendix A, fp_modulus-up, int05_underflow and thm1_fp-accounting (`VERDICTS.md` gives
-the independent verdicts). New paths: GPU products
+Sarang's check (D-12). Every derivation in `docs/proofs` awaits that check; those with parts marked UNVERIFIED are C-04,
+C-07, C-07b, D-01, D-02, D-03, E-02, E-03, E-04, E-05, E-07, appendix A, fp_modulus-up, int05_underflow and
+thm1_fp-accounting (`VERDICTS.md` gives the status of all of them and the independent verdicts). New paths: GPU products
 with a device probe (D-05), the worker pool (D-04), external verifiers of the Lean product (N-04), the non-Hermitian
 statements (E-02, N-13) and the exact re-check of N-11. Soundness fixes: repeated entries summed at the start, inputs
 in a narrower format than binary64, upper bounds for complex moduli, non-finite bounds giving no statement, inner
@@ -37,8 +37,17 @@ The version is 3.3.0 in `pyproject.toml` and `certify_ed/__init__.py`. The compu
 - Release: `CITATION.cff` and `.zenodo.json` name 3.3.0 (2026-11-28), and the one-version test compares them with the
   package in a release. `packaging/conda-forge/meta.yaml` keeps 3.1.0 and the sha256 of its sdist until 3.3.0 is on
   PyPI (checklist section 6: the sha256 is that of the published sdist). Documents that say "since 3.3.0.dev0" name
-  the development version in which a change was made and are not changed. The test count and the computational source
-  hash of the release follow below, from the suites of the final commit.
+  the development version in which a change was made and are not changed.
+- Release record (suites at 3530ce8, the last code commit; computational source hash ba23c806f5b559f2 on the clean
+  tree, as at cab66c6): Windows, Python 3.11.17, 2260 passed, 84 skipped (in a worktree, where one test needs a full
+  checkout); Linux, Python 3.12.3, 2217 passed, 122 skipped; Python 3.9.25 floor 2050 passed, 276 skipped; Python
+  3.10.21 floor 2083 passed, 243 skipped; GPU test files on an H100, 966 passed, 52 skipped, the device probe holding;
+  0 failed everywhere. `docs/proofs/runs/verify_C-07b.txt` was made at be9c6aa, before the M5 body moved into
+  `_chebyshev_moments`; the move changes no number (the readings of round 10b reran the script and compared M5 and M6
+  records between 9d14b2d and 3530ce8), and the script is run again with the evidence run.
+- `spectral_bounds_from_certificate` does not name its five accepted keywords in its docstring, and an explicit
+  `spectrum_lower=None` sets the certificate's bound aside (sound: the discs give the wider interval); both are left to
+  the next development version, since a docstring change moves the source hash.
 - `moments._gram_defect_bounds` forms the square of the Frobenius bound as a product, not with the library power.
   The same square in `enclosure._cluster_bound` touches certificates and is left to a branch of its own (open items).
 - `tools/lint_docs.py` stops with its usage and exit code 2 when no file or directory is given; before, it checked

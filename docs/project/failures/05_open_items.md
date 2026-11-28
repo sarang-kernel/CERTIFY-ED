@@ -208,4 +208,8 @@ The moments keep the no-underflow hypothesis for their intermediate quantities (
 the bounds on ‖H‖ᵏ in M1 (3.3.0) is a partial proxy: in round 10 of the review, inputs that pass every scan (a small
 ‖O‖, or a small ‖H‖ with a large k) made products of the M1 and M5 bounds subnormal, and every exact moment stayed in
 its interval. An upward step for every product of the two bounds (+ ULP_MIN, as for the norm power), or the
-underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived.
+underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived,
+and the probes that showed it are not recorded in the repository: tests with ‖O‖ near 1e-170 and with a small ‖H‖
+and a large K, comparing the exact rational moment with the interval, are open. `spectral_bounds_from_certificate`
+should name its five accepted keywords and say that an explicit `spectrum_lower=None` sets the certificate's bound
+aside.

@@ -31,8 +31,9 @@ iterates ẑ^{(k)}, e_y, ε_k, D_k, h_k and the products of the bound) are zero 
 the standard model holds for them. It is assumed, not scanned, except for the inputs X, H, O and, since 3.3.0, the
 bounds h_1, …, h_K: when one of them is below 2⁻⁹⁰⁰ the underflow check gives no statement (INCONCLUSIVE,
 UNDERFLOW_RISK). That scan is a partial proxy. The products of the bound can still underflow on inputs that pass it
-(a small ‖O‖, or a small ‖H‖ with a large k); the review of round 10 found every exact moment inside its interval in
-such cases, which the additive term of `exact_dot` may explain, but this is not derived (UNVERIFIED, D-12). An
+(a small ‖O‖, or a small ‖H‖ with a large k); the probes of the round-10 readings, which are not recorded in the
+repository, found every exact moment inside its interval in such cases, which the additive term of `exact_dot` may
+explain, but this is not derived (UNVERIFIED, D-12); recording such cases as tests is an open item. An
 upward step for every product (+ ULP_MIN, as for h_k) or the underflow-tolerant model of INT-05 is an open item.
 The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
 addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each

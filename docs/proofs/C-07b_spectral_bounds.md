@@ -194,7 +194,7 @@ The derivation is new and stays UNVERIFIED until Sarang's check (D-12). Lemma 7 
 hypotheses as Lemma 3 of C-07 (no underflow of nonzero operands). The scan covers the stored vectors and the entries
 of H and O and makes M5 INCONCLUSIVE when one of them is below the threshold; for the products formed later
 (ŷ = fl(Ox), the iterates ẑ_j and the products of b_j, such as the step-1 term (2‖ŷ‖ + e_y) e_y) the hypothesis is
-assumed, not scanned, as for the other standard-model bounds (`docs/limitations.md`). The review of round 10 found
-inputs that pass the scan and make such products subnormal (‖O‖ near 1e-170), with every exact moment inside its
-interval; why (perhaps the additive term of `exact_dot`) is not derived (UNVERIFIED, D-12), and an upward step for
+assumed, not scanned, as for the other standard-model bounds (`docs/limitations.md`). The probes of the round-10
+readings (not recorded in the repository) found inputs that pass the scan and make such products subnormal (‖O‖ near
+1e-170), with every exact moment inside its interval; why (perhaps the additive term of `exact_dot`) is not derived (UNVERIFIED, D-12), and an upward step for
 every product is an open item.
