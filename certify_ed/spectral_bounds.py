@@ -738,8 +738,9 @@ def _one_side(tau_hat, intervals, T, xi_f: Fraction, upper: bool, grid: Optional
 
 INTERVALS_COMPARED = "compared with record_sha256"
 INTERVALS_GIVEN = "taken as given"
-GIVEN_ASSUMPTION = ("the moment intervals of M5 are taken as given (check_record=False, now or in an earlier call): "
-                    "record_sha256 was not compared, so the bounds hold for these intervals, which M5 may not have "
+INTERVALS_UNRECORDED = "not recorded (an M6 record written before 3.3.1)"
+GIVEN_ASSUMPTION = ("the moment intervals of M5 are taken as given (check_record=False now or in an earlier call, or "
+                    "an M6 record written before 3.3.1): the bounds hold for these intervals, which M5 may not have "
                     "proved")
 
 
@@ -755,7 +756,8 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
     intervals themselves, compute M5 again from H, O and X. check_record=False takes the intervals as given (for
     negative controls that change them on purpose): the output then says so in distribution['moment_intervals'] and in
     an assumption of M6, and a later call on that output keeps the mark, so the bounds are seen to hold for the given
-    intervals only."""
+    intervals only. An M6 record without the key (written before 3.3.1, when nothing was compared) is labelled
+    'not recorded' and gets the same assumption."""
     from .diagnostics import annotate_record
     st0 = {x["id"]: x for x in rec.get("statements", [])}.get("M5.chebyshev_moments")
     if check_record and st0 is not None and st0.get("status") == "CERTIFIED":
@@ -766,7 +768,13 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
         if stored != _record_hash(rec):
             raise ValueError("the record was changed after M5: its record_sha256 does not match its body (pass "
                              "check_record=False to take its intervals as given)")
-    given = not check_record or (rec.get("distribution") or {}).get("moment_intervals") == INTERVALS_GIVEN
+    prior = rec.get("distribution")
+    mark = None if prior is None else prior.get("moment_intervals", INTERVALS_UNRECORDED)
+    if mark == INTERVALS_COMPARED and check_record:
+        mark = None
+    if not check_record and mark != INTERVALS_UNRECORDED:
+        mark = INTERVALS_GIVEN
+    given = mark is not None
     out = copy.deepcopy(rec)
     st = {s["id"]: s for s in out["statements"]}
     m5 = st.get("M5.chebyshev_moments")
@@ -818,7 +826,7 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
         best = min(best, rows[i]["upper"])
         rows[i]["upper_monotone"] = best
     out["distribution"] = {"degree": K, "rows": rows, "total_mass_interval": [t0_lo, t0_hi],
-                           "moment_intervals": INTERVALS_GIVEN if given else INTERVALS_COMPARED}
+                           "moment_intervals": mark if given else INTERVALS_COMPARED}
     if given and GIVEN_ASSUMPTION not in assume:
         assume.append(GIVEN_ASSUMPTION)
     failed = [row["energy"] for row in rows if (row.get("upper_proof") or {}).get("reason")

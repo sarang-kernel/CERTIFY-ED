@@ -154,6 +154,21 @@ def test_without_both_additive_terms_the_small_norm_intervals_fail(oscale, monke
     assert _m1(0, 1e-10, oscale, 27)[2]
 
 
+@pytest.mark.parametrize("term", ["TINY_BOUND", "norm_underflow_term"])
+def test_either_additive_term_alone_carries_the_small_norm_intervals(term, monkeypatch):
+    """With a norm of H near 1e-10 and K = 27, each of the two terms alone is enough."""
+    monkeypatch.setattr(fp, term, 0.0 if term == "TINY_BOUND" else (lambda N: 0.0))
+    assert not _m1(0, 1e-10, 0.5e-30, 27)[2]
+
+
+def test_near_1e_170_containment_needs_neither_term(monkeypatch):
+    """The exact moments are below the smallest subnormal number there, so the intervals hold without both terms."""
+    monkeypatch.setattr(fp, "TINY_BOUND", 0.0)
+    monkeypatch.setattr(fp, "norm_underflow_term", lambda N: 0.0)
+    assert not _m1(0, 1.0, 0.5e-170, 3)[2]
+    assert not _m5(0, 0.5e-170, 9)[2]
+
+
 def test_the_exact_reference_sees_a_wrong_interval():
     """Negative control: an interval moved off the exact moment by twice its half-width is outside the check."""
     H, O, X = _case(0, 7, 2, 1.0, 0.5)

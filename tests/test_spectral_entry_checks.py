@@ -94,6 +94,23 @@ def test_intervals_taken_as_given_are_marked_and_the_mark_is_kept(ring6):
         sb.distribution_bounds(stripped, [0.0])
 
 
+def test_an_m6_record_without_the_mark_is_labelled_unrecorded(ring6):
+    """An M6 record of 3.3.0 has no 'moment_intervals' key, and its hash was written by a call that compared nothing."""
+    H, O, cert = ring6
+    old = sb.distribution_bounds(sb.spectral_bounds_from_certificate(cert, H, O, K=6), [0.0])
+    del old["distribution"]["moment_intervals"]
+    old["statements"] = [s for s in old["statements"] if s["id"] != "M6.distribution_bounds"] + [
+        {**s, "assumptions": [a for a in s["assumptions"] if a != sb.GIVEN_ASSUMPTION]}
+        for s in old["statements"] if s["id"] == "M6.distribution_bounds"]
+    old["record_sha256"] = sb._record_hash(old)                                      # the form 3.3.0 wrote
+    out = sb.distribution_bounds(old, [1.0])
+    assert out["distribution"]["moment_intervals"] == sb.INTERVALS_UNRECORDED
+    m6 = {s["id"]: s for s in out["statements"]}["M6.distribution_bounds"]
+    assert sb.GIVEN_ASSUMPTION in m6["assumptions"]
+    again = sb.distribution_bounds(out, [1.0])
+    assert again["distribution"]["moment_intervals"] == sb.INTERVALS_UNRECORDED
+
+
 def test_a_record_without_its_hash_is_refused(ring6):
     H, O, cert = ring6
     rec = copy.deepcopy(sb.spectral_bounds_from_certificate(cert, H, O, K=6))
@@ -125,6 +142,6 @@ def test_the_driver_starts_scripts_without_the_safe_path_setting(monkeypatch):
     monkeypatch.setenv("PYTHONSAFEPATH", "1")
     env = cli._script_env(PYTHONPATH="x")
     assert "PYTHONSAFEPATH" not in env and env["PYTHONPATH"] == "x"
-    flag = subprocess.run([sys.executable, "-c", "import sys; print(sys.flags.safe_path)"], env=env,
-                          capture_output=True, text=True).stdout.strip()
-    assert flag in ("0", "False")
+    flag = subprocess.run([sys.executable, "-c", "import sys; print(getattr(sys.flags, 'safe_path', False))"],
+                          env=env, capture_output=True, text=True).stdout.strip()
+    assert flag in ("0", "False")                       # sys.flags.safe_path exists from Python 3.11 on
