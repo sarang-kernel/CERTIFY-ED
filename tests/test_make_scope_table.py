@@ -30,3 +30,9 @@ def test_the_scope_matrix_is_written_whole(tmp_path):
     tex = (tmp_path / "tables" / "scope_matrix.tex").read_text(encoding="utf-8")
     assert tex.isascii()
     assert "H$^{k}$ O" in tex
+
+
+def test_a_letter_between_angle_brackets_stays_in_their_math_span():
+    out = mst.tex_escape("\u27e8\u03c8|O|\u03c8\u27e9 and \u03bb, H\u1d4f")
+    assert out == "$\\langle \\psi O\\psi \\rangle$ and $\\lambda$, H$^{k}$"
+    assert "$$" not in out and out.count("$") % 2 == 0

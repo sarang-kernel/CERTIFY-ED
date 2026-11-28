@@ -2,7 +2,8 @@
 
 Parts:
   A  floating-point accounting: the exact rational tr(X^H O H^k O X)/g of the stored binary64 data lies within the
-     recorded rounding term of the computed value (Fractions; real and complex; k = 0..4; scales 1e-2..1e2)
+     recorded rounding term of the computed value (Fractions; real and complex; k = 0..4; scales 1e-2..1e2; orthonormal
+     columns, and the same columns perturbed by 1e-3 with eta declared as an upper bound on their Gram defect)
   B  full statement: random Hermitian H with a planted cluster of g eigenvalues, exact P (mpmath 60 digits), claimed
      vectors = rotated exact eigenvectors + perturbation, exact s = ||Qhat Qhat^H - P||_2 and eta fed as (rounded up)
      inputs: m_k = tr(P O H^k O)/g lies in every interval; both sum rules are consistent (CERTIFIED); vectors tilted out
@@ -16,6 +17,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
+import subprocess
 import sys
 from fractions import Fraction
 
@@ -125,12 +128,28 @@ def s_eta_exact(X, P):
     return s, eta
 
 
+def header(args):
+    """One line naming the run: arguments, commit, tracked changes and versions (None where git cannot tell)."""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    try:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True,
+                              check=True).stdout.strip()
+        changes = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root,
+                                 capture_output=True, text=True, check=True).stdout.strip() != ""
+    except (OSError, subprocess.CalledProcessError):
+        head, changes = None, None
+    return (f"# verify_C-07.py --cases {args.cases} --seed {args.seed}; commit {head}; tracked changes {changes}; "
+            f"Python {platform.python_version()}, NumPy {np.__version__}, mpmath {mp.__version__}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", type=int, default=40)
     ap.add_argument("--seed", type=int, default=20261030)
     a = ap.parse_args()
+    print(header(a))
     rng = np.random.default_rng(a.seed)
+    rng_p = np.random.default_rng(a.seed + 1)
     cA, cB, cC = Counter(), Counter(), Counter()
     neg_s_broken = neg_s_total = 0
     neg_x_broken = neg_x_total = 0
@@ -144,13 +163,22 @@ def main():
         H = rand_herm(rng, n, cplx, sc)
         O = rand_herm(rng, n, cplx, 1.0 / sc)
         X = rng.standard_normal((n, g)) + (1j * rng.standard_normal((n, g)) if cplx else 0)
+        # orthonormal columns: since the moments check eta against the vectors, s = eta = 0 is refused for vectors far
+        # from orthonormal (the projector term would be understated); this part checks the rounding term only
+        X = np.linalg.qr(X)[0]
         K = 4
-        rec = certified_moments(H, O, X, 0.0, 0.0, K=K, sum_rules=False)
-        ex = exact_trace_moments(H, O, X, K)
-        for m in rec["moments"]:
-            k = m["k"]
-            ok = abs(Fraction(m["value"]) - ex[k]) <= Fraction(m["terms"]["rounding"]) + Fraction(abs(m["value"])) * Fraction(2 ** -52)
-            cA.add(False, ok, f"A case {case} k={k}: |m_hat - exact| = {float(abs(Fraction(m['value']) - ex[k]))} > rounding {m['terms']['rounding']}")
+        # the same check on columns perturbed by 1e-3 with eta declared as an upper bound on their Gram defect (their
+        # own generator, so that parts B and C draw the same numbers as before)
+        Xp = X + 1e-3 * (rng_p.standard_normal((n, g)) + (1j * rng_p.standard_normal((n, g)) if cplx else 0))
+        Xm = to_mp(Xp)
+        eta_p = float(norm2(herm(Xm) * Xm - mp.eye(g))) * 1.01 + 1e-18
+        for label, Xv, eta in (("orthonormal", X, 0.0), ("perturbed", Xp, eta_p)):
+            rec = certified_moments(H, O, Xv, 0.0, eta, K=K, sum_rules=False)
+            ex = exact_trace_moments(H, O, Xv, K)
+            for m in rec["moments"]:
+                k = m["k"]
+                ok = abs(Fraction(m["value"]) - ex[k]) <= Fraction(m["terms"]["rounding"]) + Fraction(abs(m["value"])) * Fraction(2 ** -52)
+                cA.add(False, ok, f"A case {case} ({label}) k={k}: |m_hat - exact| = {float(abs(Fraction(m['value']) - ex[k]))} > rounding {m['terms']['rounding']}")
 
     # ---- B: planted clusters, exact P
     for case in range(a.cases):
@@ -245,11 +273,12 @@ def main():
     ok &= cC.report("C wrong level interval refuted by the first-moment sum rule")
     print(f"   negative control: s understated 10^4 x breaks the enclosure in {neg_s_broken}/{neg_s_total} moments; a random "
           f"orthonormal X with s = eta = 0 claimed breaks it in {neg_x_broken}/{neg_x_total} moments")
-    ok &= neg_s_broken > 0 and neg_x_broken > 0
+    fired = neg_s_broken > 0 and neg_x_broken > 0
     total_r = cA.random + cB.random + cC.random
     total_a = cA.adversarial + cB.adversarial + cC.adversarial
-    print(f"TOTAL: {total_r} random + {total_a} adversarial cases; violations: {0 if ok else 'see above'}")
-    return 0 if ok else 1
+    print(f"TOTAL: {total_r} random + {total_a} adversarial cases; violations: {0 if ok else 'see above'}"
+          + ("" if fired else "; a negative control did not fire"))
+    return 0 if ok and fired else 1
 
 
 if __name__ == "__main__":

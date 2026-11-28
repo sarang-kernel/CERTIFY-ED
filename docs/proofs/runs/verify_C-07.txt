@@ -1,5 +1,6 @@
-A rounding term covers the exact rational tr(X^H O H^k O X)/g: 200 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
+# verify_C-07.py --cases 40 --seed 20261030; commit a7c8e4c00279879a1a03d5fa31c206842d5750fe; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
+A rounding term covers the exact rational tr(X^H O H^k O X)/g: 400 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 B exact tr(P O H^k O)/g inside the intervals, sum rules consistent (planted clusters, tilted vectors, Heisenberg chains): 218 random + 152 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 C wrong level interval refuted by the first-moment sum rule: 0 random + 40 adversarial cases, 0 skipped (hypothesis not met), 0 violations
    negative control: s understated 10^4 x breaks the enclosure in 132/138 moments; a random orthonormal X with s = eta = 0 claimed breaks it in 138/138 moments
-TOTAL: 418 random + 192 adversarial cases; violations: 0
+TOTAL: 618 random + 192 adversarial cases; violations: 0

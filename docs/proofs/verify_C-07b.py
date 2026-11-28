@@ -325,11 +325,12 @@ def main():
           f"{neg['low_broken']}/{neg['low_total']} moments")
     print(f"   negative control: one moment interval shifted beyond its width moves the M6 bound in "
           f"{neg['shift_moved']}/{neg['shift_total']} queries and puts the exact F outside in {neg['shift_excludes']}")
-    ok &= neg["s0_broken"] > 0 and neg["low_broken"] > 0 and neg["shift_moved"] > 0
+    fired = neg["s0_broken"] > 0 and neg["low_broken"] > 0 and neg["shift_moved"] > 0
     total_r = cA.random + cB.random + cC.random
     total_a = cA.adversarial + cB.adversarial + cC.adversarial
-    print(f"TOTAL: {total_r} random + {total_a} adversarial cases; violations: {0 if ok else 'see above'}")
-    return 0 if ok else 1
+    print(f"TOTAL: {total_r} random + {total_a} adversarial cases; violations: {0 if ok else 'see above'}"
+          + ("" if fired else "; a negative control did not fire"))
+    return 0 if ok and fired else 1
 
 
 if __name__ == "__main__":

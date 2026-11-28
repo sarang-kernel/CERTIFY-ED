@@ -1,4 +1,4 @@
-# verify_C-07b.py --cases 60 --seed 20261124; commit 403b2859aba92e2bb4da80e1b5b55a196bbef035; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
+# verify_C-07b.py --cases 60 --seed 20261124; commit a7c8e4c00279879a1a03d5fa31c206842d5750fe; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
 A exact tau_j = tr(P O T_j(A) O)/g inside the M5 intervals; spectral interval holds the spectrum: 755 random + 393 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 B exact F(xi) between the M6 bounds (default candidates, Chebyshev-Hermite alone, linear program alone; atoms at the query point): 480 random + 520 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 C Bernstein proofs: no sign violation where proved; one-unit dips never proved: 53 random + 96 adversarial cases, 0 skipped (hypothesis not met), 0 violations

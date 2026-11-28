@@ -40,8 +40,8 @@ import scipy.sparse as sp
 from .certificate_v2 import array_sha256, matrix_sha256
 from .fp import (U, UNDERFLOW_THRESHOLD, abs_up, add_up, exact_dot, exact_sum, gamma, gamma_dot, inf_norm_upper,
                  max_nnz_per_row, modulus_up, norm2_upper, sub_down, underflow_scan, up)
-from .moments import (MOMENTS_SCHEMA, STANDARD_MODEL, _as_matrix, _gram_defect_bounds, _rec_bound, _record_hash,
-                      _vstmt)
+from .moments import (CLUSTER_RECORD, MOMENTS_SCHEMA, STANDARD_MODEL, _as_matrix, _gram_defect_bounds, _rec_bound,
+                      _record_hash, _sum_bounds, _vstmt)
 from .precision import binary64, widening_record
 
 # named in the assumptions of every M5 and M6 statement (rule D-12: new mathematics is marked until it is re-derived)
@@ -142,7 +142,7 @@ def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spec
     declared = spectrum_lower is not None or spectrum_upper is not None
     if declared and not spectrum_source:
         spectrum_source = "bounds declared by the caller, not checked"
-    assume = [STANDARD_MODEL, "the spectrum of H lies in the interval of the record (Gershgorin discs"
+    assume = [STANDARD_MODEL, CLUSTER_RECORD, "the spectrum of H lies in the interval of the record (Gershgorin discs"
               + (f"; {spectrum_source}" if spectrum_source else "") + ")", DERIVATION]
     rec: Dict[str, Any] = {
         "schema": MOMENTS_SCHEMA,
@@ -209,6 +209,8 @@ def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spec
         return np.array(out)
 
     Y = O @ X
+    # the divisor 1 - gamma_{w_O} covers the w_O roundings of fl(|O| m); the product by gamma_dot, the two rounded
+    # gammas, 1 - gamma and the division (at most five relative errors u) are covered by up() (at least 1 + 6u)
     e_y = np.array([float(up(norm2_upper(gO * (absO @ modulus_up(X[:, i])) / (1 - gwO)))) for i in range(g)])
     ynorm = np.array([float(norm2_upper(Y[:, i])) for i in range(g)])
     proj = float(up(up(2 * g * s + g * eta) * On * On))      # (2gs + g eta) ||O||^2 ||T_j(Hs)||, ||T_j(Hs)|| <= 1
@@ -238,12 +240,13 @@ def certified_chebyshev_moments(H, O, X, s: float, eta: float, K: int = 32, spec
             vals.append(float(np.real(v)))
             errs.append(float(e))
             absv.append(abs(float(np.real(v))))
-        # correctly rounded sum over the members (one relative error u, covered by the up() of the bound)
-        fp_terms = math.fsum(step1[i] + float(up(ynorm[i] * E[i])) + errs[i] for i in range(g))
+        # the three terms of each member are added upward (add_up); their sum over the members is correctly rounded
+        # (math.fsum: one relative error u, covered by the up() of the bound; inf when it overflows)
+        fp_terms = _sum_bounds(float(add_up(add_up(step1[i], float(up(ynorm[i] * E[i]))), errs[i])) for i in range(g))
         total = exact_sum(vals)
         sum_rnd = gamma(g + 1) * exact_sum(absv) + U * abs(total)
         t_hat = total / g
-        bound = float(up((proj + fp_terms + sum_rnd) / g) + 2 * U * abs(t_hat))
+        bound = float(add_up(up((proj + fp_terms + sum_rnd) / g), 2 * U * abs(t_hat)))   # the last addition upward
         lo, hi = float(np.nextafter(t_hat - bound, -np.inf)), float(np.nextafter(t_hat + bound, np.inf))
         moments.append({"j": j, "value": float(t_hat), "bound": bound, "interval": [lo, hi],
                         "terms": {"projector": float(proj / g), "rounding": float((fp_terms + sum_rnd) / g)}})
@@ -619,7 +622,10 @@ def _prove_and_bound(d, intervals, T, xi_f: Fraction, upper: bool, hints=None):
         return None, {"reason": "the floating-point check of the candidate is not finite"}
     for attempt in range(_ATTEMPTS):
         Dm = list(D)
-        shift = int(math.ceil(margin * 2.0 ** _DYADIC_BITS))
+        scaled = margin * 2.0 ** _DYADIC_BITS
+        if not math.isfinite(scaled):                 # the margin doubles per attempt; ceil(inf) would raise
+            return None, {"reason": "the margin of the candidate overflows"}
+        shift = int(math.ceil(scaled))
         Dm[0] += shift if upper else -shift
         if _prove_majorant(Dm, T, xi_f, upper, hints):
             return _bound_from(Dm, intervals, upper), {"margin": shift / 2.0 ** _DYADIC_BITS, "attempts": attempt + 1}
@@ -687,7 +693,11 @@ def _one_side(tau_hat, intervals, T, xi_f: Fraction, upper: bool, grid: Optional
 def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: Optional[int] = None,
                         grid: Optional[int] = None) -> Dict[str, Any]:
     """M6: bounds L(E) <= F(E) = tr(P O 1_{H <= E} O)/g <= U(E) at the given energies, from the M5 record of
-    certified_chebyshev_moments. Returns a copy of the record with the statement M6 and the key 'distribution'."""
+    certified_chebyshev_moments. Returns a copy of the record with the statement M6 and the key 'distribution'.
+
+    The moment intervals of the record are taken as given: its record_sha256 is not compared (the tests change
+    intervals on purpose as negative controls), so a record changed after M5 gives bounds for the changed
+    intervals. Comparing the hash on an entry for unmodified records is an open item."""
     from .diagnostics import annotate_record
     out = copy.deepcopy(rec)
     st = {s["id"]: s for s in out["statements"]}
@@ -775,13 +785,32 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
         raise ValueError("H is not the matrix of the certificate (matrix_sha256 differs)")
     cl = _cluster_record(cert, members)
     lower, source = _lowest_lower_bound(cert)
-    if lower is not None and "spectrum_lower" not in kw:
-        kw = dict(kw, spectrum_lower=lower, spectrum_source=source)
+    proved = lower is not None and "spectrum_lower" not in kw
+    if proved:
+        # one source per end. chebyshev_interval takes the larger of the certificate's bound and the Gershgorin bound
+        # for the lower end, and the Gershgorin bound for the upper end unless the caller gives one
+        glo = _gershgorin(_as_matrix(H, "H"))[0]
+        parts = [f"lower: {source}" if lower > glo else
+                 f"lower: Gershgorin discs of the stored H (not below the bound of the certificate: {source})"]
+        text = kw.get("spectrum_source")
+        if kw.get("spectrum_upper") is not None:
+            parts.append("upper: declared by the caller, not checked" + (f" ({text})" if text else ""))
+        elif text:
+            raise ValueError("spectrum_source names the source of a declared bound; give it with spectrum_upper (the "
+                             "lower end comes from the certificate)")
+        else:
+            parts.append("upper: Gershgorin discs of the stored H")
+        kw = dict(kw, spectrum_lower=lower, spectrum_source="; ".join(parts))
     rec = certified_chebyshev_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K=K,
                                       cluster={"members": list(members), "claimed": cl.get("claimed"),
                                                "status": cl.get("status")}, **kw)
     from .crossings import certificate_hash
     rec["certificate"] = {"hash": certificate_hash(cert), "members": list(members), "operator_hash_matches": True}
+    if proved:                                      # the lower end was proved, not declared
+        rec["chebyshev"]["declared_bounds"]["lower"] = None
+        rec["chebyshev"]["proved_bounds"] = {"lower": float(lower), "source": source,
+                                             "use": "the interval's lower end is the larger of this bound and the "
+                                                    "Gershgorin bound"}
     rec["record_sha256"] = _record_hash(rec)
     return distribution_bounds(rec, energies) if len(energies) else rec
 

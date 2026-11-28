@@ -97,10 +97,13 @@ those runs except timings and the metadata block), bit for bit.
 The tables are printed by `--table` from the record, with every certified end rounded outward (lower ends down, upper
 ends up) at the printed digit; certified fractions are computed in exact rationals from the certified ends and rounded
 outward. Earlier versions of these tables rounded the ends to nearest, so some printed ends lay inside the certified
-interval. The record predates the round-8 change that rounds the Lemma 7 bound vector upward and sums the
-floating-point terms with `math.fsum`. A rerun of N = 8 and 10 at K = 32 after that change (6aeefe1, one thread) gives
-725 of the 728 recorded values bit for bit; the three others move outward by one or two ulps (the two largest moment
-half-widths and the upper end of one fraction). With eight BLAS threads the reference vector changes in its last digits
+interval. The record predates the changes of rounds 8 and 8b to the rounding accounting (the Lemma 7 bound vector rounded
+upward, the floating-point terms summed with `math.fsum`, the terms of each member and the last addition of the bound
+rounded upward). A rerun of N = 8 and 10 at K = 32 at 35c0156 and again at a7c8e4c (one thread) gives 723 of the
+728 recorded values bit for bit: the two largest moment half-widths move outward by 9 and 7 ulps (relative 1.6e-15 and
+8.8e-16), the upper end of one fraction by 1 ulp, and the spectrum source of both runs names both ends ("lower: …;
+upper: Gershgorin discs of the stored H" at a7c8e4c). After 6aeefe1 alone
+the moves were 6, 4 and 1 ulps; an earlier version of this paragraph said one or two. With eight BLAS threads the reference vector changes in its last digits
 and the N = 10 widths with it (mean 7.94e-04 instead of 7.23e-04), before and after the change alike.
 
 ## Reading

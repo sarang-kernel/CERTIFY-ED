@@ -239,3 +239,47 @@ def test_declared_spectrum_bounds_are_recorded_as_declared(chain6):
     assert rec["chebyshev"]["declared_bounds"]["lower"] == float(w[0]) - 1e-9
     st = {s["id"]: s for s in rec["statements"]}
     assert any("declared by the caller" in a for a in st["M5.chebyshev_moments"]["assumptions"])
+
+
+def test_cluster_record_and_one_source_per_end(chain6):
+    """M5 and M6 name the cluster record taken as given; with the certificate's lower bound and a caller's upper bound
+    the record names one source per end and keeps the proved end apart from the declared one."""
+    from certify_ed.moments import CLUSTER_RECORD
+    H, O, cert, w, weights = chain6
+    alone = sb.spectral_bounds_from_certificate(cert, H, O, K=4)["chebyshev"]
+    assert alone["spectrum_source"].startswith("lower: ")
+    assert alone["spectrum_source"].endswith("; upper: Gershgorin discs of the stored H")
+    hi = alone["gershgorin_interval"][1]
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=4, energies=[-1.0], spectrum_upper=hi)
+    for s in rec["statements"]:
+        assert CLUSTER_RECORD in s["assumptions"], s["id"]
+    ch = rec["chebyshev"]
+    assert ch["spectrum_source"].startswith("lower: ")
+    assert "upper: declared by the caller, not checked" in ch["spectrum_source"]
+    assert ch["declared_bounds"] == {"lower": None, "upper": hi}
+    assert ch["proved_bounds"]["lower"] <= w[0] and "certificate" in ch["proved_bounds"]["source"]
+    assert "larger of this bound and the Gershgorin bound" in ch["proved_bounds"]["use"]
+    assert validate_record(rec) in (True, None)
+    named = sb.spectral_bounds_from_certificate(cert, H, O, K=4, spectrum_upper=hi, spectrum_source="a test bound")
+    assert named["chebyshev"]["spectrum_source"].endswith("; upper: declared by the caller, not checked (a test bound)")
+    with pytest.raises(ValueError, match="give it with spectrum_upper"):
+        sb.spectral_bounds_from_certificate(cert, H, O, K=4, spectrum_source="a source without a bound")
+
+
+def test_the_source_names_the_gershgorin_end_where_it_is_larger(chain6, monkeypatch):
+    """A certificate bound below the Gershgorin bound leaves the interval's lower end to the discs, and the record
+    says so."""
+    H, O, cert, w, weights = chain6
+    glo = sb._gershgorin(sb._as_matrix(H, "H"))[0]
+    monkeypatch.setattr(sb, "_lowest_lower_bound", lambda c: (glo - 1.0, "a bound below the discs"))
+    ch = sb.spectral_bounds_from_certificate(cert, H, O, K=4)["chebyshev"]
+    assert ch["spectrum_interval"][0] == glo
+    assert ch["spectrum_source"].startswith("lower: Gershgorin discs of the stored H (not below the bound of the "
+                                            "certificate: a bound below the discs)")
+    assert ch["proved_bounds"]["lower"] == glo - 1.0
+
+
+def test_a_margin_that_overflows_skips_the_candidate(monkeypatch):
+    monkeypatch.setattr(sb, "_float_violation", lambda D, xi, upper: 1e300)
+    val, info = sb._prove_and_bound(np.array([1.0, 0.0]), None, None, Fraction(0), True)
+    assert val is None and "overflows" in info["reason"]

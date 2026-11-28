@@ -194,7 +194,7 @@ OUTCOME = {
     "N-02": "done in 3.2.2; each of the 8 mutants fails the tests", "N-03": "done in 3.2.2; in 3.2.3 the cap no longer gates S1",
     "B-05": "part: see N-05", "E-02": "on `dev/3.3`, UNVERIFIED, Sarang's check pending",
     "D-03": "prototype on `dev/3.3`, not the default, draft without independent re-derivation",
-    "D-04": "on `dev/3.3`, one worker by default; speed-up 1.77 (2 workers) to 2.75 (8) on 11 sector claims (22 Nov 2026)",
+    "D-04": "on `dev/3.3`, one worker by default; speed-up 1.77 (2 workers) to 2.75 (8) on 11 sector claims (22 Nov 2026; second run 2.80 with 8, 27 Nov)",
     "H-04": "on `dev/3.3`, behind `pytest --perf`", "G-10": "script on `dev/3.3`, table of 4 small points",
     "N-04": "done: driver in `lean/Verify/`, `verify --external` on `dev/3.3`",
     "N-05": "partial: the radius check is refined (K2 and K+); for the count only the general theorem",

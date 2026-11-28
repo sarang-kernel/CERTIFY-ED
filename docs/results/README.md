@@ -8,7 +8,7 @@ documents written before it cite them by file name or by their path in the archi
 | file | what it records |
 |---|---|
 | `RESULT_D-05.md` | GPU products for S2 (D-05): measurements and bit identity on the device |
-| `RESULT_d04_speedup.md` | the worker pool of D-04 on 16 pinned cores of a shared host: speed-up, statuses per sector and equal statement records and arrays (record `d04_speedup_n16_20261122.json`) |
+| `RESULT_d04_speedup.md` | the worker pool of D-04 on 16 pinned cores of a shared host: speed-up, statuses per sector and equal statement records and arrays (records `d04_speedup_n16_20261122.json` and, for the second run, `d04_speedup_n16_20261127.json`) |
 | `RESULT_backlog-proofs.md` | track/backlog-proofs: derivations of the UNVERIFIED backlog (D-59) |
 | `RESULT_candidate_run.md` | candidate reproduction run: what was re-derived next to the reference run |
 | `RESULT_evidence_run_3.1.0.md` | evidence run of 3.1.0 (Windows) against the 3.0.0 run (Linux) |

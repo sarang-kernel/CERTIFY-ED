@@ -124,6 +124,15 @@ def _overlap(i1, i2) -> bool:
     return max(i1[0], i2[0]) <= min(i1[1], i2[1])
 
 
+def _sum_bounds(terms) -> float:
+    """Correctly rounded sum of nonnegative bounds (math.fsum, one relative error u); inf when the sum overflows
+    (math.fsum raises there, where the plain sum gave inf)."""
+    try:
+        return math.fsum(terms)
+    except OverflowError:
+        return math.inf
+
+
 def _gram_defect_bounds(X: np.ndarray):
     """(lower, upper) bounds on eta = ||X^H X - I||_2 computed from the stored vectors.
 
@@ -276,15 +285,18 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
     gwH = gamma(wH)
     absO, absH = _abs(O), _abs(H)
     Y = O @ X                                             # y_i = fl(O x_i)
-    e_y = np.array([float(norm2_upper(gO * (absO @ modulus_up(X[:, i])) / (1 - gwO))) for i in range(g)])
+    # up() covers the roundings of the quotient: the product by gamma_dot, the two rounded gammas, 1 - gamma and the
+    # division (at most five relative errors u; up() is a factor of at least 1 + 6u)
+    e_y = np.array([float(up(norm2_upper(gO * (absO @ modulus_up(X[:, i])) / (1 - gwO)))) for i in range(g)])
     ynorm_up = np.array([float(norm2_upper(Y[:, i])) for i in range(g)])
     Z = Y.copy()
     D = np.zeros(g)                                       # ||z_k - H^k y_hat||_2 bounds
     moments = []
     proj_norm1 = up(2 * g * s + g * eta)                  # trace-norm bound on P - X X^H
+    Hk = 1.0                                              # upper bound on ||H||^k
     for k in range(K + 1):
         if k > 0:
-            eps_k = np.array([float(norm2_upper(gH * (absH @ modulus_up(Z[:, i])) / (1 - gwH))) for i in range(g)])
+            eps_k = np.array([float(up(norm2_upper(gH * (absH @ modulus_up(Z[:, i])) / (1 - gwH)))) for i in range(g)])
             Z = H @ Z
             D = np.array([float(up(Hn * D[i] + eps_k[i])) for i in range(g)])
         vals, dots_err, abs_vals = [], [], []
@@ -293,17 +305,20 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
             vals.append(float(np.real(v)))
             dots_err.append(float(e))
             abs_vals.append(abs(float(np.real(v))))
-        try:
-            Hk = float(Hn ** k)
-        except OverflowError:                             # a Python float power raises where numpy gives inf
-            Hk = math.inf
+        if k > 0:
+            # ||H||^k bounded by repeated multiplication, each product rounded up (+ ULP_MIN for a product in the
+            # subnormal range): a library power is not covered by the standard model; an overflow gives inf
+            Hk = float(up(Hk * Hn)) + ULP_MIN
         # Step 1 (O x rounding): ||M|| (2 ||y_hat|| + e_y) e_y with ||M|| = ||H||^k; step 2-3: ||y_hat|| D_k; step 4: exact_dot error
-        fp_terms = sum(up(Hk * (2 * ynorm_up[i] + e_y[i]) * e_y[i]) + up(ynorm_up[i] * D[i]) + dots_err[i] for i in range(g))
+        # the three terms of each member are added upward; the sum over the members is correctly rounded (math.fsum,
+        # covered by the up() of the bound)
+        fp_terms = _sum_bounds(float(add_up(add_up(up(Hk * (2 * ynorm_up[i] + e_y[i]) * e_y[i]), up(ynorm_up[i] * D[i])),
+                                            dots_err[i])) for i in range(g))
         total = exact_sum(vals)                           # rounded exact sum; inf/nan for such terms, nan beyond range
         sum_rnd = gamma(g + 1) * exact_sum(abs_vals) + U * abs(total)
         m_hat = total / g
         proj_term = up(proj_norm1 * On * On * Hk)
-        bound = float(up((proj_term + fp_terms + sum_rnd) / g) + U * abs(m_hat) * 2)
+        bound = float(add_up(up((proj_term + fp_terms + sum_rnd) / g), U * abs(m_hat) * 2))   # the last addition upward
         moments.append({"k": k, "value": float(m_hat), "bound": bound,
                         "interval": [float(sub_down(m_hat, bound)), float(add_up(m_hat, bound))],
                         "terms": {"projector": float(proj_term / g), "rounding": float((fp_terms + sum_rnd) / g)},

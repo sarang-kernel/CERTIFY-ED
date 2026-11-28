@@ -201,10 +201,11 @@ def test_off_diagonal_gram_entries_bound_the_defect_from_below(heis):
     was 0 and eta = 0 was used. Two unit columns whose inner product is 1e-4 (real, or imaginary for complex columns)
     contradict eta = 1e-6, and the bounds use the upper bound computed from the vectors."""
     spec, H, w, V, cert, O = heis
-    x = V[:, 0]
-    with pytest.raises(ValueError, match="below the Gram defect"):
-        certified_moments(H, O, np.column_stack([x, x]), 0.0, 0.0, K=0, sum_rules=False)
     n, t = H.shape[0], 1e-4
+    b = np.zeros(n)
+    b[0] = 1.0                       # squared norm exactly 1: the diagonal alone does not contradict eta = 0
+    with pytest.raises(ValueError, match="below the Gram defect"):
+        certified_moments(H, O, np.column_stack([b, b]), 0.0, 0.0, K=0, sum_rules=False)
     for phase in (1.0, 1j):
         e0 = np.zeros(n, dtype=complex if phase == 1j else float)
         e1 = np.zeros_like(e0)

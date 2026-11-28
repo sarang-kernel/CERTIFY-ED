@@ -27,13 +27,27 @@ SURVEY_KEY = {  # scope-matrix row label (lower-cased start) -> survey quantity 
 }
 
 
+GREEK = {"\u03bb": "lambda", "\u03b7": "eta", "\u03c1": "rho", "\u03b2": "beta", "\u03c3": "sigma", "\u03c9": "omega",
+         "\u03b8": "theta", "\u03c8": "psi", "\u03c6": "phi"}
+
+
 def tex_escape(s):
-    s = (s.replace("\u27e8", "$\\langle ").replace("\u27e9", "\\rangle$").replace("\u2212", "-")
-         .replace("\u2192", "to").replace("\u00b7", " "))
-    for ch, name in (("\u03bb", "lambda"), ("\u03b7", "eta"), ("\u03c1", "rho"), ("\u03b2", "beta"), ("\u03c3", "sigma"),
-                     ("\u03c9", "omega"), ("\u03b8", "theta"), ("\u03c8", "psi"), ("\u03c6", "phi")):
-        s = s.replace(ch, "$\\" + name + "$")
-    s = s.replace("\u1d4f", "$^{k}$")
+    # one pass, so that a letter between the angle brackets is written inside their math span, not in a span of its own
+    out, inside = [], False
+    for ch in s:
+        if ch == "\u27e8":
+            out.append("$\\langle ")
+            inside = True
+        elif ch == "\u27e9":
+            out.append("\\rangle$")
+            inside = False
+        elif ch in GREEK:
+            out.append("\\" + GREEK[ch] + " " if inside else "$\\" + GREEK[ch] + "$")
+        elif ch == "\u1d4f":
+            out.append("^{k}" if inside else "$^{k}$")
+        else:
+            out.append(ch)
+    s = "".join(out).replace("\u2212", "-").replace("\u2192", "to").replace("\u00b7", " ")
     rest = sorted({ch for ch in s if ord(ch) >= 128})
     if rest:
         raise ValueError("no LaTeX spelling for " + ", ".join(f"U+{ord(ch):04X} {ch!r}" for ch in rest)
