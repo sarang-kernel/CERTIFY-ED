@@ -30,11 +30,14 @@ model (round 9). Hypothesis (no underflow, INT-01): the computed quantities of t
 iterates ẑ^{(k)}, e_y, ε_k, D_k, h_k and the products of the bound) are zero or at least 2⁻⁹⁰⁰ in magnitude, so that
 the standard model holds for them. It is assumed, not scanned, except for the inputs X, H, O and, since 3.3.0, the
 bounds h_1, …, h_K: when one of them is below 2⁻⁹⁰⁰ the underflow check gives no statement (INCONCLUSIVE,
-UNDERFLOW_RISK). That scan is a partial proxy. The products of the bound can still underflow on inputs that pass it
-(a small ‖O‖, or a small ‖H‖ with a large k); the probes of the round-10 readings found every exact moment inside its interval in such cases, as
-`tests/test_underflow_observations.py` records since 3.3.1.dev0; the additive term of `exact_dot` may explain it, but
-this is not derived (UNVERIFIED, D-12). An
-upward step for every product (+ ULP_MIN, as for h_k) or the underflow-tolerant model of INT-05 is an open item.
+UNDERFLOW_RISK). That scan is a partial proxy. Quantities of the bound can still underflow on inputs that pass it (a small ‖O‖, or a
+small ‖H‖ with a large k together with a small ‖O‖). `tests/test_underflow_observations.py` (since 3.3.1.dev0)
+records such inputs: the exact moments, in exact rationals, lie inside the intervals, and where they are subnormal
+the intervals are carried by the additive terms of INT-05 (2⁻⁹⁶⁶ for every product that `exact_dot` leaves out, and
+T_N in `norm2_upper`): with those terms set to zero they fail. This is an observation, not a derivation (UNVERIFIED,
+D-12). With a tiny ‖O‖ the products ‖O‖²h_k (the field M_norm_upper) and the projector term also round to zero. An
+upward step for every product (+ ULP_MIN, as for h_k), or a derivation from the additive terms of INT-05 (absolute
+errors of a few u_min per operation against T_N in every norm bound), is an open item.
 The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
 addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each
 member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`).

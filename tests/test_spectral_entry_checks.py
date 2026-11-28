@@ -1,10 +1,12 @@
 """The certificate entry of M5 and the record check of M6 (3.3.1.dev0).
 
 spectral_bounds_from_certificate treats spectrum_lower=None as not given, so the certificate's proved bound on the
-lowest eigenvalue is used, as without the keyword; distribution_bounds refuses an M5 record that was changed after M5
-wrote its record_sha256, unless check_record=False.
+lowest eigenvalue is used, as without the keyword; distribution_bounds refuses an M5 record that was changed after its
+record_sha256 was written, unless check_record=False, and then marks its output; the driver starts its scripts
+without PYTHONSAFEPATH.
 """
 import copy
+import json
 
 import numpy as np
 import pytest
@@ -62,6 +64,36 @@ def test_a_changed_interval_is_refused(ring6):
     assert out["distribution"]["rows"]
 
 
+@pytest.mark.parametrize("key,delta", [("center", 1e-3), ("scale", 1e-3)])
+def test_a_changed_chebyshev_map_is_refused(ring6, key, delta):
+    H, O, cert = ring6
+    rec = copy.deepcopy(sb.spectral_bounds_from_certificate(cert, H, O, K=6))
+    rec["chebyshev"][key] += delta
+    with pytest.raises(ValueError, match="changed after M5"):
+        sb.distribution_bounds(rec, [0.0])
+
+
+def test_intervals_taken_as_given_are_marked_and_the_mark_is_kept(ring6):
+    H, O, cert = ring6
+    rec = sb.spectral_bounds_from_certificate(cert, H, O, K=6)
+    plain = sb.distribution_bounds(rec, [0.0])
+    assert plain["distribution"]["moment_intervals"] == sb.INTERVALS_COMPARED
+    m6 = {s["id"]: s for s in plain["statements"]}["M6.distribution_bounds"]
+    assert sb.GIVEN_ASSUMPTION not in m6["assumptions"]
+    changed = copy.deepcopy(rec)
+    lo, hi = changed["chebyshev"]["moments"][2]["interval"]
+    changed["chebyshev"]["moments"][2]["interval"] = [lo - 0.3, hi + 0.3]
+    given = sb.distribution_bounds(changed, [0.0], check_record=False)
+    for out in (given, sb.distribution_bounds(json.loads(json.dumps(given)), [1.0])):   # a later call, checked
+        assert out["distribution"]["moment_intervals"] == sb.INTERVALS_GIVEN
+        m6 = {s["id"]: s for s in out["statements"]}["M6.distribution_bounds"]
+        assert sb.GIVEN_ASSUMPTION in m6["assumptions"] and "taken as given" in m6["summary"]
+    stripped = copy.deepcopy(given)
+    stripped["distribution"]["moment_intervals"] = sb.INTERVALS_COMPARED            # the mark is inside the hash
+    with pytest.raises(ValueError, match="changed after M5"):
+        sb.distribution_bounds(stripped, [0.0])
+
+
 def test_a_record_without_its_hash_is_refused(ring6):
     H, O, cert = ring6
     rec = copy.deepcopy(sb.spectral_bounds_from_certificate(cert, H, O, K=6))
@@ -77,6 +109,22 @@ def test_a_record_whose_m5_is_not_certified_needs_no_hash(ring6):
     for s in rec["statements"]:
         if s["id"] == "M5.chebyshev_moments":
             s["status"] = "INCONCLUSIVE"
+    del rec["record_sha256"]
     out = sb.distribution_bounds(rec, [0.0])
     st = {s["id"]: s for s in out["statements"]}
     assert st["M6.distribution_bounds"]["status"] == "NOT_CHECKED"
+
+
+def test_the_driver_starts_scripts_without_the_safe_path_setting(monkeypatch):
+    """The experiment scripts import their sibling modules (harness) from their own folder, which PYTHONSAFEPATH=1
+    takes off the module path."""
+    import subprocess
+    import sys
+
+    from certify_ed import cli
+    monkeypatch.setenv("PYTHONSAFEPATH", "1")
+    env = cli._script_env(PYTHONPATH="x")
+    assert "PYTHONSAFEPATH" not in env and env["PYTHONPATH"] == "x"
+    flag = subprocess.run([sys.executable, "-c", "import sys; print(sys.flags.safe_path)"], env=env,
+                          capture_output=True, text=True).stdout.strip()
+    assert flag in ("0", "False")

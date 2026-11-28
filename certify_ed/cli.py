@@ -539,11 +539,19 @@ def cmd_test(a):
     return code
 
 
+def _script_env(**extra) -> dict:
+    """The environment of a script the driver starts: the caller's, with `extra`, and without PYTHONSAFEPATH, since
+    the experiment scripts import their sibling modules from their own folder (as parallel._worker_env does)."""
+    env = dict(os.environ, **extra)
+    env.pop("PYTHONSAFEPATH", None)
+    return env
+
+
 def _run_experiment(root, name, args, out):
     """Run one experiment script with one BLAS thread; its records are the new directories of `out`
     whose name starts with the script's experiment number (safe when experiments run concurrently)."""
     script = EXPERIMENTS[name][0]
-    env = dict(os.environ, CERTIFY_RESULTS=out, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
+    env = _script_env(CERTIFY_RESULTS=out, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                MKL_NUM_THREADS="1", NUMBA_NUM_THREADS="1", PYTHONPATH=root)
     prefix = name.lower() + "_"
     before = {d for d in os.listdir(out) if d.startswith(prefix)}
@@ -562,7 +570,7 @@ def _numbers(root, run_dir, manuscript, log):
     """Application numbers always; the full manuscript numbers when E0-E5 records are present. The step
     records its own provenance (commit, blob hashes of the number scripts, source and tests hashes; IMP-06)."""
     from .provenance import numbers_fingerprint
-    env = dict(os.environ, CERTIFY_RESULTS=run_dir, PYTHONPATH=root)
+    env = _script_env(CERTIFY_RESULTS=run_dir, PYTHONPATH=root)
     out = {"provenance": numbers_fingerprint(root)}
     for script in ("make_numbers_apps.py", "make_numbers.py"):
         if script == "make_numbers.py":
@@ -674,7 +682,7 @@ def cmd_reproduce(a):
             for rec in r["records"]:
                 subprocess.run([sys.executable, "e6_classify.py", os.path.join(out, rec)],
                                cwd=os.path.join(root, "experiments"), stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL, env=dict(os.environ, PYTHONPATH=root))
+                               stderr=subprocess.DEVNULL, env=_script_env(PYTHONPATH=root))
         manifest["steps"][name] = r
         log(f"{name}: {r['status']} in {r['seconds']:.0f}s -> {', '.join(r['records']) or 'no record'}")
         save()

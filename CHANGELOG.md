@@ -3,18 +3,28 @@
 ## [3.3.1.dev0] — development after 3.3.0 (branch `fix/post-3.3.0`)
 
 - `spectral_bounds_from_certificate` names its accepted keywords in its docstring, and `spectrum_lower=None` now means
-  "not given": the certificate's proved bound on the lowest eigenvalue is used, as without the keyword (in 3.3.0 an
-  explicit None set it aside and the Gershgorin discs were used; sound, but wider). A number given as `spectrum_lower`
-  is still a declared bound that replaces the certificate's (`tests/test_spectral_entry_checks.py`).
+  "not given": the certificate's proved bound on the lowest eigenvalue is used, as without the keyword. In 3.3.0 an
+  explicit None set it aside and the Gershgorin discs were used (sound, but wider), so the M5 and M6 records of the
+  certificate entry called with `spectrum_lower=None` change: a narrower spectrum interval, another Chebyshev map and
+  other moment intervals and bounds. A number given as `spectrum_lower` is still a declared bound that replaces the
+  certificate's; `spectrum_lower=chebyshev_interval(H)['gershgorin'][0]` gives the discs alone
+  (`tests/test_spectral_entry_checks.py`).
 - `distribution_bounds` compares the `record_sha256` of an M5 record whose M5 is CERTIFIED with the hash of its body
-  and raises ValueError if the hash is missing or differs, so M6 uses only intervals that M5 proved;
-  `check_record=False` takes the intervals as given, for negative controls that change them on purpose (open item B N14,
-  part 2, of the review of round 8b).
-- `tests/test_underflow_observations.py` records the inputs of the round-10 readings that pass every scan of the
-  underflow check and still make products of the M1 and M5 bounds subnormal or zero (a norm of O near 1e-170; a norm of
-  H near 1e-10 with K = 27), and checks the intervals against the exact moments computed in Fractions. These are
-  observations, not a proof: the no-underflow hypothesis stays assumed for such products (UNVERIFIED, D-12), and a
-  negative control shows that the exact reference sees a wrong interval.
+  and raises ValueError if the hash is missing or differs, so a record changed after its hash was written is refused
+  (open item B N14, part 2, of round 8b). The comparison is an integrity check, not a signature: a record edited and
+  rehashed passes, and keys starting with '_' are outside the hash. `check_record=False` takes the intervals as given,
+  for negative controls; its output says so in `distribution['moment_intervals']` and in an assumption of M6, and a
+  later call keeps the mark (the mark is inside the hash).
+- `tests/test_underflow_observations.py` records inputs that pass every scan of the underflow check and still make
+  quantities of the M1 and M5 bounds subnormal or zero, and checks the intervals against the exact moments in
+  Fractions. Three regimes: near ‖O‖ = 1e-170 containment is trivial (the exact moments are below the smallest
+  subnormal number); near 1e-160 the intervals are carried by the additive term of `exact_dot` (2^-966 per left-out
+  product; with it set to zero they fail); for ‖H‖ near 1e-10 with K = 27 and a small ‖O‖ by that term or T_N of
+  `norm2_upper` (with both set to zero they fail). These are observations, not a proof: the no-underflow hypothesis
+  stays assumed for such quantities (UNVERIFIED, D-12).
+- The driver (`certify-ed reproduce`) starts the experiment scripts without PYTHONSAFEPATH, which takes their own
+  folder off the module path (`from harness import Run` failed with it set), as the parallel workers already did.
+- The computational source hash changes (spectral_bounds.py, cli.py, the version).
 
 ## [3.3.0] — 2026-11-28 (branch `release/3.3.0`; the tag `v3.3.0` and its evidence run follow the merge)
 

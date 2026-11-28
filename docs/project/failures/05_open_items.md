@@ -206,7 +206,11 @@ and is left to a branch of its own.
 
 The moments keep the no-underflow hypothesis for their intermediate quantities (`docs/limitations.md`). The scan of
 the bounds on ‖H‖ᵏ in M1 (3.3.0) is a partial proxy: in round 10 of the review, inputs that pass every scan (a small
-‖O‖, or a small ‖H‖ with a large k) made products of the M1 and M5 bounds subnormal, and every exact moment stayed in
-its interval. An upward step for every product of the two bounds (+ ULP_MIN, as for the norm power), or the
-underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived;
-`tests/test_underflow_observations.py` records the probes that showed it, as observations (since 3.3.1.dev0).
+‖O‖, or a small ‖H‖ with a large k together with a small ‖O‖) made quantities of the M1 and M5 bounds subnormal, and
+every exact moment stayed in its interval. `tests/test_underflow_observations.py` (since 3.3.1.dev0) records three
+regimes: containment is trivial near ‖O‖ = 1e-170, carried by the additive term of `exact_dot` near 1e-160, and by
+that term or T_N of `norm2_upper` for a small ‖H‖ with K = 27 (controls with the terms set to zero fail). The
+products ‖O‖²h_k (M_norm_upper) and the projector term of M1 round to zero for a tiny ‖O‖ and come first. An upward
+step for every product of the two bounds (+ ULP_MIN, as for the norm power), or a derivation from the additive terms
+of INT-05 (errors of a few u_min per operation against T_N in every norm bound), would remove the hypothesis there;
+neither is done, and the observations are not a derivation (UNVERIFIED, D-12).

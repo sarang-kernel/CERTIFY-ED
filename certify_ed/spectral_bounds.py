@@ -736,16 +736,26 @@ def _one_side(tau_hat, intervals, T, xi_f: Fraction, upper: bool, grid: Optional
     return val, info
 
 
+INTERVALS_COMPARED = "compared with record_sha256"
+INTERVALS_GIVEN = "taken as given"
+GIVEN_ASSUMPTION = ("the moment intervals of M5 are taken as given (check_record=False, now or in an earlier call): "
+                    "record_sha256 was not compared, so the bounds hold for these intervals, which M5 may not have "
+                    "proved")
+
+
 def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: Optional[int] = None,
                         grid: Optional[int] = None, check_record: bool = True) -> Dict[str, Any]:
     """M6: bounds L(E) <= F(E) = tr(P O 1_{H <= E} O)/g <= U(E) at the given energies, from the M5 record of
     certified_chebyshev_moments. Returns a copy of the record with the statement M6 and the key 'distribution'.
 
-    When M5 is CERTIFIED, the record must carry the record_sha256 that M5 wrote, and the hash of its body must equal
-    it: a record without the hash, or changed after M5 (an interval, a status, the Chebyshev map), raises ValueError,
-    so the bounds are those of the intervals M5 proved (when M5 is not CERTIFIED, M6 is NOT_CHECKED and no interval
-    is used). check_record=False takes the intervals as given (for negative controls that change them
-    on purpose); the bounds then hold for the changed intervals only."""
+    When M5 is CERTIFIED, the record must carry a record_sha256 equal to the hash of its body: a record without the
+    hash, or changed after the hash was written (an interval, a status, the Chebyshev map), raises ValueError (when M5
+    is not CERTIFIED, M6 is NOT_CHECKED and no interval is used). The comparison is an integrity check, not a
+    signature: a record edited and then rehashed passes, and keys starting with '_' are outside the hash; to check the
+    intervals themselves, compute M5 again from H, O and X. check_record=False takes the intervals as given (for
+    negative controls that change them on purpose): the output then says so in distribution['moment_intervals'] and in
+    an assumption of M6, and a later call on that output keeps the mark, so the bounds are seen to hold for the given
+    intervals only."""
     from .diagnostics import annotate_record
     st0 = {x["id"]: x for x in rec.get("statements", [])}.get("M5.chebyshev_moments")
     if check_record and st0 is not None and st0.get("status") == "CERTIFIED":
@@ -756,6 +766,7 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
         if stored != _record_hash(rec):
             raise ValueError("the record was changed after M5: its record_sha256 does not match its body (pass "
                              "check_record=False to take its intervals as given)")
+    given = not check_record or (rec.get("distribution") or {}).get("moment_intervals") == INTERVALS_GIVEN
     out = copy.deepcopy(rec)
     st = {s["id"]: s for s in out["statements"]}
     m5 = st.get("M5.chebyshev_moments")
@@ -806,7 +817,10 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
     for i in reversed(order):
         best = min(best, rows[i]["upper"])
         rows[i]["upper_monotone"] = best
-    out["distribution"] = {"degree": K, "rows": rows, "total_mass_interval": [t0_lo, t0_hi]}
+    out["distribution"] = {"degree": K, "rows": rows, "total_mass_interval": [t0_lo, t0_hi],
+                           "moment_intervals": INTERVALS_GIVEN if given else INTERVALS_COMPARED}
+    if given and GIVEN_ASSUMPTION not in assume:
+        assume.append(GIVEN_ASSUMPTION)
     failed = [row["energy"] for row in rows if (row.get("upper_proof") or {}).get("reason")
               or (row.get("lower_proof") or {}).get("reason")]
     text = "; ".join(f"F({row['energy']:.6g}) in [{row['lower_monotone']:.6g}, {row['upper_monotone']:.6g}]"
@@ -815,6 +829,8 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
                f"degree {K}: {text}" + (" ..." if len(rows) > 12 else ""))
     if failed:
         summary += f"; at {len(failed)} energies a polynomial was not proved and the trivial bound is given"
+    if given:
+        summary += "; the moment intervals were taken as given (record_sha256 not compared)"
     statements.append(_vstmt("M6.distribution_bounds", "CERTIFIED", summary,
                              {"rows": rows, "degree": K,
                               "basis": ("q <= 1_(-inf, E] <= p on the spectrum interval [c - r, c + r], signs proved "
@@ -835,7 +851,8 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
     underflow_check and description (as for certified_chebyshev_moments); any other raises TypeError. Without a
     spectrum_lower, or with spectrum_lower=None, the lower end is the certificate's proved bound on the lowest eigenvalue
     when it has one (a 'lowest' claim with S2 and S3 CERTIFIED), and the Gershgorin discs of H otherwise; a number
-    given as spectrum_lower is a declared bound and replaces the certificate's."""
+    given as spectrum_lower is a declared bound and replaces the certificate's; to use the discs alone, pass
+    spectrum_lower=chebyshev_interval(H)['gershgorin'][0]."""
     from .davis_kahan import _cluster_record
     X = cert.arrays.get("eigenvectors")
     if X is None:
