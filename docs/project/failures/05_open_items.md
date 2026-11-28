@@ -196,3 +196,20 @@ vectors; a control that isolates the rounding term (exact eigenvectors, s = eta 
 separate oracle for the floating-point products and is open. `spectral_bounds.distribution_bounds` takes the moment
 intervals of an M5 record as given and does not compare its `record_sha256`; the negative controls change intervals on
 purpose, so a hash check needs a separate entry for unmodified records.
+
+## Follow-ups of round 9 of the review (28 November 2026)
+
+`enclosure._cluster_bound` forms the square of the Frobenius bound of the stored vectors with the library power
+(`fro_upper(Xg) ** 2`) under an `up`, which covers it as long as the power is within about one ulp; a product needs no
+such assumption, as in `moments._gram_defect_bounds` since 3.3.0. The change touches the certificates of `certify()`
+and is left to a branch of its own.
+
+The moments keep the no-underflow hypothesis for their intermediate quantities (`docs/limitations.md`). The scan of
+the bounds on ‖H‖ᵏ in M1 (3.3.0) is a partial proxy: in round 10 of the review, inputs that pass every scan (a small
+‖O‖, or a small ‖H‖ with a large k) made products of the M1 and M5 bounds subnormal, and every exact moment stayed in
+its interval. An upward step for every product of the two bounds (+ ULP_MIN, as for the norm power), or the
+underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived,
+and the probes that showed it are not recorded in the repository: tests with ‖O‖ near 1e-170 and with a small ‖H‖
+and a large K, comparing the exact rational moment with the interval, are open. `spectral_bounds_from_certificate`
+should name its five accepted keywords and say that an explicit `spectrum_lower=None` sets the certificate's bound
+aside.

@@ -165,10 +165,10 @@ certify_ed/spectral_bounds.py	chebyshev_interval	abs(lo)	real data only
 certify_ed/spectral_bounds.py	chebyshev_interval	abs(hi)	real data only
 certify_ed/spectral_bounds.py	chebyshev_interval	abs(lo)	real data only
 certify_ed/spectral_bounds.py	chebyshev_interval	abs(hi)	real data only
-certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(c)	real data only
-certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(float(np.real(v)))	real data only
-certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(total)	real data only
-certify_ed/spectral_bounds.py	certified_chebyshev_moments	abs(t_hat)	real data only
+certify_ed/spectral_bounds.py	_chebyshev_moments	abs(c)	real data only
+certify_ed/spectral_bounds.py	_chebyshev_moments	abs(float(np.real(v)))	real data only
+certify_ed/spectral_bounds.py	_chebyshev_moments	abs(total)	real data only
+certify_ed/spectral_bounds.py	_chebyshev_moments	abs(t_hat)	real data only
 certify_ed/spectral_bounds.py	_radau_hermite	abs(r)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
 certify_ed/spectral_bounds.py	_radau_hermite	np.abs(nodes - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)
 certify_ed/spectral_bounds.py	_radau_hermite	abs(nodes[j] - xi)	not part of a bound (candidate polynomial; the bound rests on the exact proof)

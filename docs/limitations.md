@@ -78,5 +78,9 @@ From the CHANGELOG (ids INT-xx; D-57):
   the norm bounds and the residual bound carry additive terms of order 10⁻¹⁶⁰, so these quantities no longer need the
   2⁻⁹⁰⁰ hypothesis and are no longer scanned. The other standard-model bounds keep it, and the inputs are scanned
   for it (INT-01).
+- **The moments (3.3.0).** M1 to M3, M5 and M6 keep the 2⁻⁹⁰⁰ hypothesis for their intermediate quantities. The
+  inputs X, H, O and, in M1, the bounds h_1, …, h_K on ‖H‖ᵏ are scanned; ŷ = fl(OX), the iterates and the products
+  of the bounds are assumed, not scanned. Inputs that pass the scan can make such a product subnormal (a small ‖O‖,
+  or a small ‖H‖ with a large k); see C-07 Lemma 3 and the open items.
 - Certificates made with 3.2.0.dev0 are not comparable by `source_hash` with the 3.1.0 evidence run (the
   computational source changed); a version the paper cites needs its own full run (D-44).

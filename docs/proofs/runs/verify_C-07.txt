@@ -1,4 +1,4 @@
-# verify_C-07.py --cases 40 --seed 20261030; commit a7c8e4c00279879a1a03d5fa31c206842d5750fe; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
+# verify_C-07.py --cases 40 --seed 20261030; commit be9c6aa2bef6da19b1e6adadbb6254414a659c48; tracked changes False; Python 3.11.17, NumPy 2.4.4, mpmath 1.4.1
 A rounding term covers the exact rational tr(X^H O H^k O X)/g: 400 random + 0 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 B exact tr(P O H^k O)/g inside the intervals, sum rules consistent (planted clusters, tilted vectors, Heisenberg chains): 218 random + 152 adversarial cases, 0 skipped (hypothesis not met), 0 violations
 C wrong level interval refuted by the first-moment sum rule: 0 random + 40 adversarial cases, 0 skipped (hypothesis not met), 0 violations

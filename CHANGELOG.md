@@ -1,11 +1,69 @@
 # Changelog
 
-## [3.3.0.dev0] — unreleased (dev/3.3)
+## [3.3.0] — 2026-11-28 (branch `release/3.3.0`; the tag `v3.3.0` and its evidence run follow the merge)
+
+3.3.0 releases the work of `dev/3.3` and of the review rounds 1 to 10 on main. New statements: M5 (Chebyshev moments)
+and M6 (bounds on the integrated spectral weight) join the moments record family of 3.2.0 (M1 to M3; M4 stays
+NOT_IMPLEMENTED); their derivation C-07b, and C-07 with the accounting of rounds 8b to 10, are UNVERIFIED until
+Sarang's check (D-12). Every derivation in `docs/proofs` awaits that check; those with parts marked UNVERIFIED are C-04,
+C-07, C-07b, D-01, D-02, D-03, E-02, E-03, E-04, E-05, E-07, appendix A, fp_modulus-up, int05_underflow and
+thm1_fp-accounting (`VERDICTS.md` gives the status of all of them and the independent verdicts). New paths: GPU products
+with a device probe (D-05), the worker pool (D-04), external verifiers of the Lean product (N-04), the non-Hermitian
+statements (E-02, N-13) and the exact re-check of N-11. Soundness fixes: repeated entries summed at the start, inputs
+in a narrower format than binary64, upper bounds for complex moduli, non-finite bounds giving no statement, inner
+products and sums at the top of the range. The declared version floors are tested on Python 3.9 and 3.10. The
+sections below keep the order in which the changes were made, the newest first.
 
 `dev/3.3` starts at `v3.2.2`, merges `fix/3.2.3` (tag `v3.2.3`) and carries everything of [3.2.3] and [3.2.2] below. The integration sets the version to
 3.3.0.dev0, lets `parallel.process_memory_cap_mb` read the cap through `cost.process_memory_cap` (the reader of the
 3.2.2 memory gate), so that the worker budgets and the gate see the same limit, and widens the version pattern of
 `tests/test_review_fixes.py`.
+
+### Release 3.3.0: version and the round-9 follow-ups
+
+The version is 3.3.0 in `pyproject.toml` and `certify_ed/__init__.py`. The computational source hash changes.
+
+- M5 records: `certified_chebyshev_moments` names each end of the spectral interval from the bound in use
+  ("lower: …; upper: …" whenever a bound is given): a caller's text stays behind "declared by the caller, not checked",
+  a declared bound that the Gershgorin discs beat is named as such, and a `spectrum_source` without a declared bound
+  is refused at both entry points. `spectral_bounds_from_certificate` passes the certificate's bound as proved
+  through an internal function, so that no caller can record a bound of its own as proved; the record keeps it under
+  `chebyshev.proved_bounds`.
+- M1: the underflow check also scans the bounds h_1, …, h_K on ‖H‖ᵏ (found by the stage test at ‖H‖ near 1e-160:
+  inputs above 2⁻⁹⁰⁰ do not keep them out of the subnormal range when ‖H‖ is small and K large); when one is below
+  2⁻⁹⁰⁰, M1 to M3 are INCONCLUSIVE with UNDERFLOW_RISK. The scan is a partial proxy: other products of the M1 and M5
+  bounds can still underflow on inputs that pass it, and the hypothesis stays assumed for them, as C-07 Lemma 3,
+  C-07b, `docs/limitations.md` and the open items say (round 10 of the review).
+- Release: `CITATION.cff` and `.zenodo.json` name 3.3.0 (2026-11-28), and the one-version test compares them with the
+  package in a release. `packaging/conda-forge/meta.yaml` keeps 3.1.0 and the sha256 of its sdist until 3.3.0 is on
+  PyPI (checklist section 6: the sha256 is that of the published sdist). Documents that say "since 3.3.0.dev0" name
+  the development version in which a change was made and are not changed.
+- Release record (suites at 3530ce8, the last code commit; computational source hash ba23c806f5b559f2 on the clean
+  tree, as at cab66c6): Windows, Python 3.11.17, 2260 passed, 84 skipped (in a worktree, where one test needs a full
+  checkout); Linux, Python 3.12.3, 2217 passed, 122 skipped; Python 3.9.25 floor 2050 passed, 276 skipped; Python
+  3.10.21 floor 2083 passed, 243 skipped; GPU test files on an H100, 966 passed, 52 skipped, the device probe holding;
+  0 failed everywhere. `docs/proofs/runs/verify_C-07b.txt` was made at be9c6aa, before the M5 body moved into
+  `_chebyshev_moments`; the move changes no number (the readings of round 10b reran the script and compared M5 and M6
+  records between 9d14b2d and 3530ce8), and the script is run again with the evidence run.
+- `spectral_bounds_from_certificate` does not name its five accepted keywords in its docstring, and an explicit
+  `spectrum_lower=None` sets the certificate's bound aside (sound: the discs give the wider interval); both are left to
+  the next development version, since a docstring change moves the source hash.
+- `moments._gram_defect_bounds` forms the square of the Frobenius bound as a product, not with the library power.
+  The same square in `enclosure._cluster_bound` touches certificates and is left to a branch of its own (open items).
+- `tools/lint_docs.py` stops with its usage and exit code 2 when no file or directory is given; before, it checked
+  nothing and reported 0 problems.
+- `tests/test_moment_bound_stages.py` runs at K = 3: it also rebuilds the recursion of D in M1 and, in M5, the local
+  error with the subtraction term and the two accumulations, each checked upward in exact rationals. It pins the norm
+  power through `M_norm_upper`, has two M1 cases whose norm power falls into the subnormal range (where only ULP_MIN
+  keeps it above the exact power), and a negative control (plain additions in place of `add_up` fail).
+- C-07 Lemma 3 and C-07b Lemma 7: the summation term reaches the argument of the `up` through up to six roundings,
+  also within its factor.
+- C-07 section 3 names the functions and variables instead of line numbers.
+- Labels: where the Gershgorin discs beat a declared bound, the caller's text stays in the label.
+- `test_the_norm_power_scan_at_its_boundaries`: a norm near 1e-100 at K = 2 (no finding) and K = 3 (from k = 3),
+  and near 1e-140 at K = 2 (from k = 2, where h_2 lies between 1e-308 and 2⁻⁹⁰⁰).
+- Tests: `test_each_end_is_named_from_the_bound_in_use`; the source tests use a declared upper bound below the discs;
+  the private argument is refused at both entry points.
 
 ### Round 9 of the review: the norm power, records and checks
 

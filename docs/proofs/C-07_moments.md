@@ -26,13 +26,23 @@ and m̂_k = fl(Σ_i Re v_i)/g. Then
 where ‖ŷ_i‖ is replaced by its upper bound `norm2_upper`(ŷ_i), ‖H‖, ‖O‖ by the row-sum bounds of `inf_norm_upper`,
 and ‖H‖ᵏ by h_k with h_0 = 1 and h_k = up(h_{k−1}‖H‖) + ULP_MIN (one rounding per product, which the `up` covers;
 ULP_MIN for a product in the subnormal range), so h_k ≥ ‖H‖ᵏ; a library power would not be covered by the standard
-model (round 9).
+model (round 9). Hypothesis (no underflow, INT-01): the computed quantities of the bound (ŷ, the
+iterates ẑ^{(k)}, e_y, ε_k, D_k, h_k and the products of the bound) are zero or at least 2⁻⁹⁰⁰ in magnitude, so that
+the standard model holds for them. It is assumed, not scanned, except for the inputs X, H, O and, since 3.3.0, the
+bounds h_1, …, h_K: when one of them is below 2⁻⁹⁰⁰ the underflow check gives no statement (INCONCLUSIVE,
+UNDERFLOW_RISK). That scan is a partial proxy. The products of the bound can still underflow on inputs that pass it
+(a small ‖O‖, or a small ‖H‖ with a large k); the probes of the round-10 readings, which are not recorded in the
+repository, found every exact moment inside its interval in such cases, which the additive term of `exact_dot` may
+explain, but this is not derived (UNVERIFIED, D-12); recording such cases as tests is an open item. An
+upward step for every product (+ ULP_MIN, as for h_k) or the underflow-tolerant model of INT-05 is an open item.
 The certified interval of M1 is m̂_k ± b_k with b_k = up((projector term + rounding terms)/g) + 2u|m̂_k|, the last
 addition rounded upward (2u|m̂_k| is one more rounding than the division needs); the three rounding terms of each
 member are added upward and summed over the members with `math.fsum` (one relative error u, covered by the `up`).
 The argument of that `up` carries at most four relative errors u (the `math.fsum`, the two
 additions of the projector, rounding and summation terms, and the division by g), and `up` multiplies by 1 + 8u with
-one rounding of its own, which covers them. Hᵏ is never formed.
+one rounding of its own, which covers them; the summation term γ_{g+1} Σ|Re v_i| (spare while the sum is
+correctly rounded) reaches the argument through up to six roundings, also within that factor, since
+1 + 7u − 8u² ≥ (1 − u)⁻⁶. Hᵏ is never formed.
 
 **Lemma 4 (explicitly formed products; `moments.hermitian_matrix_with_bound`).** For stored F₁, …, F_m (n × n) and the
 left-to-right floating-point product T̂ = fl(⋯fl(fl(F₁F₂)F₃)⋯F_m), with w₁ the largest number of nonzeros per row of F₁,
@@ -106,20 +116,21 @@ subtractions add u(|S₁| + |C|) entrywise, with (1 + 4u) for their own rounding
 
 ## 3 Where the code implements it
 
-`certify_ed/moments.py` (branch `track/variational`):
+`certify_ed/moments.py`, function `certified_moments` unless another is named (the code index gives the lines):
 
-* Lemma 1: `proj_norm1` at line 176 (`up(2gs + gη)`), used in `proj_term` at 194 with ‖O‖²‖H‖ᵏ.
-* Lemma 2 / Lemma 3: ŷ = fl(OX) at 170, e_y at 171, ‖ŷ_i‖ upper at 172, ε_k at 179, ẑ^{(k)} = fl(Hẑ^{(k−1)}) at 180, D_k at
-  181 (`up`), `exact_dot` at 184, the three rounding terms at 190, the sum term at 192, the interval half-width at 195
-  (`up`, + 2u|m̂_k|). Hᵏ is never formed (only H @ Z).
-* Lemma 4: `hermitian_matrix_with_bound` (86–110): M accumulated at 99, E at 107 (`up(γ_M)/(1 − γ_M)`).
-* Proposition 1: 216–233 (Ô₂ at 216, dev₂ at 218, Theorem 6 at 219 with ‖Ô₂‖ ≤ ‖O‖² + dev₂, the interval at 220–223,
-  overlap at 225; FAILED when disjoint).
-* Proposition 2: 240–270 (the three products 241–243, C and E_C at 244–246, dev_C at 248, ‖C‖ bound at 249, Theorem 6 at
-  250, the right-hand interval 251–254, the product interval at 257, the left-hand interval at 258, overlap at 259).
-* `moments_from_certificate` (289–312): reads X, (s, η) of the CERTIFIED S4 cluster and the level interval (union of the
-  members' outward-rounded enclosures, line 300) from a certificate; warns when H's hash differs from the certificate's.
-* The no-underflow scan of X, H, O at 149–151 (INCONCLUSIVE / UNDERFLOW_RISK before any bound); M4 at `_m4` (277–281).
+* Lemma 1: `proj_norm1` (`up(2gs + gη)`), used in `proj_term` with h_k.
+* Lemma 2 / Lemma 3: ŷ = fl(OX) (`Y`), `e_y`, `ynorm_up`, `eps_k`, ẑ^{(k)} = fl(Hẑ^{(k−1)}) (`Z = H @ Z`), D_k (`D`,
+  `up`), h_k (`Hk`), `exact_dot`, the three rounding terms of each member and their sum (`fp_terms`: `add_up`,
+  `_sum_bounds`), the sum term (`sum_rnd`), the interval half-width (`bound`: `up`, + 2u|m̂_k| by `add_up`). Hᵏ is never
+  formed (only H @ Z).
+* Lemma 4: `hermitian_matrix_with_bound` (M accumulated, E from `up(γ_M)/(1 − γ_M)`).
+* Proposition 1: `O2`, `dev2`, Theorem 6 through `certify_observable` with ‖Ô₂‖ ≤ ‖O‖² + dev₂, the interval `lo2`, `hi2`,
+  the overlap; FAILED when disjoint.
+* Proposition 2: the three products, C and E_C, `devC`, the ‖C‖ bound `Cn`, Theorem 6, the right-hand interval `loC`,
+  `hiC`, the product interval, the left-hand interval, the overlap.
+* `moments_from_certificate`: reads X, (s, η) of the CERTIFIED S4 cluster and the level interval (union of the
+  members' outward-rounded enclosures) from a certificate; warns when H's hash differs from the certificate's.
+* The no-underflow scan of X, H, O and of h_1, …, h_K (INCONCLUSIVE / UNDERFLOW_RISK before any bound); M4 in `_m4`.
 
 Rounding directions: every error term up (`norm2_upper`, `up`, `add_up`), interval endpoints outward (`sub_down`,
 `add_up`, `sub_up`, the 4u steps of the interval product).
@@ -134,8 +145,8 @@ No constant changes.
 ## 4 Computational verification
 
 `docs/proofs/verify_C-07.py` (seed 20261030, `--cases 40`; exact Fractions for the rounding part, mpmath at 60 digits
-for the exact P and moments). Run of 2026-10-31; rerun on 2026-11-28 at a7c8e4c (`docs/proofs/runs/verify_C-07.txt`,
-whose first line names the commit), with Part A on orthonormalised columns (QR, since 5bc59a0) and on the same columns
+for the exact P and moments). Run of 2026-10-31; rerun on 2026-11-28 at a7c8e4c and at be9c6aa, the version 3.3.0
+(`docs/proofs/runs/verify_C-07.txt`, whose first line names the commit), with Part A on orthonormalised columns (QR, since 5bc59a0) and on the same columns
 perturbed by 10⁻³ with η declared as an upper bound on their Gram defect (since a7c8e4c); parts B and C give the
 counts of the first run:
 
@@ -175,4 +186,4 @@ Correction for complex moduli on 2026-11-18 (end of section 3; UNVERIFIED, D-12)
 Accounting of Lemma 3 and of b_k changed on 2026-11-27 and 2026-11-28 (rounds 8b and 9 of the review: `up` on e_y and
 ε_k, five relative errors for e_y, per-member `add_up`, `math.fsum` over the members, `add_up` for the last addition,
 ‖H‖ᵏ by upward products); UNVERIFIED (D-12). The re-derivation of 2026-10-30 predates these changes. Machine check rerun
-at a7c8e4c: 618 random + 192 adversarial cases, 0 violations.
+at a7c8e4c and at be9c6aa: 618 random + 192 adversarial cases, 0 violations.

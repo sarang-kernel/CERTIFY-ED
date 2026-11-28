@@ -1,6 +1,7 @@
 """Regression tests for the fixes of the external review of 2026-10-21 (ids IMP-xx, SS-xx, MS-Nxx refer to
 REVIEW_CERTIFY-ED_2026-10-21). Each test names the finding it closes; the attack cases of the review
 are in test_adversarial.py."""
+import json
 import math
 import os
 import shutil
@@ -410,6 +411,11 @@ def test_imp26_version_and_source_hash(heis6):
         m = re.search(r'^version = "([^"]+)"', f.read(), re.M)
     assert m and m.group(1) == ce.__version__          # one version, in pyproject and the package
     assert re.match(r"^3\.(1|2|3)\.", ce.__version__)
+    if "dev" not in ce.__version__:                     # a release: the citation files name it too
+        with open(os.path.join(root, "CITATION.cff"), encoding="utf-8") as f:
+            assert re.search(r'^version: "([^"]+)"', f.read(), re.M).group(1) == ce.__version__
+        with open(os.path.join(root, ".zenodo.json"), encoding="utf-8") as f:
+            assert json.load(f)["version"] == ce.__version__
     spec, H, w, V = heis6
     c = ce.certify(ce.Claim(w[:2], V[:, :2], operator=H, kind="lowest"), spec)
     env = c.body["environment"]

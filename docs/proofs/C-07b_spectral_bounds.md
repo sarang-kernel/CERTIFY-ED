@@ -126,7 +126,9 @@ C-07; the three rounding terms of each member are added upward (`add_up`), their
 with `math.fsum` (correctly rounded, one relative error u, covered by the `up` of b_j), and the last addition of b_j
 is rounded upward. The argument of that `up` carries at most four relative errors u (the `math.fsum`, the two
 additions of the projector, rounding and summation terms, and the division by g), and `up` multiplies by 1 + 8u with
-one rounding of its own, which covers them. ∎
+one rounding of its own, which covers them; the summation term γ_{g+1} Σ|Re v_i| (spare while the sum is
+correctly rounded) reaches the argument through up to six roundings, also within that factor, since
+1 + 7u − 8u² ≥ (1 − u)⁻⁶. ∎
 
 **Proposition 3.** For a Borel set S, E(S) is an orthogonal projector commuting with H, and
 tr(P O E(S) O) = tr(P P O E(S) E(S) O) = tr((E(S) O P)ᴴ (E(S) O P)) = ‖E(S) O P‖_F² ≥ 0 (cyclicity, P = P² = Pᴴ,
@@ -191,5 +193,8 @@ remain not implemented.
 The derivation is new and stays UNVERIFIED until Sarang's check (D-12). Lemma 7 rests on the same standard-model
 hypotheses as Lemma 3 of C-07 (no underflow of nonzero operands). The scan covers the stored vectors and the entries
 of H and O and makes M5 INCONCLUSIVE when one of them is below the threshold; for the products formed later
-(ŷ = fl(Ox) and the iterates ẑ_j) the hypothesis is assumed, not scanned, as for the other standard-model bounds
-(`docs/limitations.md`).
+(ŷ = fl(Ox), the iterates ẑ_j and the products of b_j, such as the step-1 term (2‖ŷ‖ + e_y) e_y) the hypothesis is
+assumed, not scanned, as for the other standard-model bounds (`docs/limitations.md`). The probes of the round-10
+readings (not recorded in the repository) found inputs that pass the scan and make such products subnormal (‖O‖ near
+1e-170), with every exact moment inside its interval; why (perhaps the additive term of `exact_dot`) is not derived (UNVERIFIED, D-12), and an upward step for
+every product is an open item.

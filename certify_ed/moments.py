@@ -172,7 +172,8 @@ def _gram_defect_bounds(X: np.ndarray):
                     lower = max(lower, float(sub_down(m, float(Eg[i, j]))))
     else:
         G = X.conj().T @ X
-        xf2 = fro_upper(X) ** 2
+        xf = fro_upper(X)
+        xf2 = xf * xf                                     # a product, one rounding (not the library power)
         upper = float(up(fro_upper(G - np.eye(g)) + gamma_dot(n, cplx) * xf2) + gram_additive_term(g, n, cplx)
                       + 2 * ULP_MIN)
     return lower, upper
@@ -251,6 +252,15 @@ def certified_moments(H, O, X, s: float, eta: float, K: int = 2, level: Optional
         findings = underflow_scan([("cluster.vectors", X, UNDERFLOW_THRESHOLD),
                                    ("H.entries", H.data if sp.issparse(H) else H, UNDERFLOW_THRESHOLD),
                                    ("O.entries", O.data if sp.issparse(O) else O, UNDERFLOW_THRESHOLD)])
+        # the inputs above the threshold do not keep the norm power of the bound out of the subnormal range (a small
+        # ||H|| and a large K), where its products in the bound lose their relative error bound
+        hk = 1.0
+        for k in range(1, K + 1 if Hn > 0 else 1):
+            hk = float(up(hk * Hn)) + ULP_MIN
+            if hk < UNDERFLOW_THRESHOLD:
+                findings.append({"where": f"the bound on ||H||^k from k = {k}", "count": 1, "first_indices": [k],
+                                 "min_magnitude": hk, "threshold": float(UNDERFLOW_THRESHOLD)})
+                break
     rec["underflow_check"] = {"enabled": bool(underflow_check), "findings": findings}
     if findings:
         from .certify import _underflow_statement_note
