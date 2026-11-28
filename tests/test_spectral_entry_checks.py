@@ -107,8 +107,24 @@ def test_an_m6_record_without_the_mark_is_labelled_unrecorded(ring6):
     assert out["distribution"]["moment_intervals"] == sb.INTERVALS_UNRECORDED
     m6 = {s["id"]: s for s in out["statements"]}["M6.distribution_bounds"]
     assert sb.GIVEN_ASSUMPTION in m6["assumptions"]
+    assert "written before 3.3.1" in m6["summary"]
     again = sb.distribution_bounds(out, [1.0])
     assert again["distribution"]["moment_intervals"] == sb.INTERVALS_UNRECORDED
+    unchecked = sb.distribution_bounds(out, [1.0], check_record=False)               # the check skipped now
+    assert unchecked["distribution"]["moment_intervals"] == sb.INTERVALS_GIVEN
+    m6 = {s["id"]: s for s in unchecked["statements"]}["M6.distribution_bounds"]
+    assert "check_record=False in this call" in m6["summary"]
+
+
+def test_an_unknown_label_is_read_as_taken_as_given(ring6):
+    H, O, cert = ring6
+    rec = sb.distribution_bounds(sb.spectral_bounds_from_certificate(cert, H, O, K=6), [0.0])
+    rec["distribution"]["moment_intervals"] = "checked by hand"
+    rec["record_sha256"] = sb._record_hash(rec)                                      # an edit, rehashed
+    out = sb.distribution_bounds(rec, [0.0])
+    assert out["distribution"]["moment_intervals"] == sb.INTERVALS_GIVEN
+    m6 = {s["id"]: s for s in out["statements"]}["M6.distribution_bounds"]
+    assert sb.GIVEN_ASSUMPTION in m6["assumptions"]
 
 
 def test_a_record_without_its_hash_is_refused(ring6):

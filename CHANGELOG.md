@@ -15,7 +15,8 @@
   rehashed passes, and keys starting with '_' are outside the hash. `check_record=False` takes the intervals as given,
   for negative controls; its output says so in `distribution['moment_intervals']` and in an assumption of M6, and a
   later call keeps the mark (the mark is inside the hash). An M6 record of 3.3.0, which has no such key and whose hash
-  was written when nothing was compared, is labelled "not recorded" and gets the same assumption.
+  was written when nothing was compared, is labelled "not recorded" in a checked call and gets the same assumption; a
+  label the module does not write is read as "taken as given"; the clause in the M6 summary names the cause.
 - `tests/test_underflow_observations.py` records inputs that pass every scan of the underflow check and still make
   quantities of the M1 and M5 bounds subnormal or zero, and checks the intervals against the exact moments in
   Fractions. Three regimes: near ‖O‖ = 1e-170 containment is trivial (the exact moments are below the smallest

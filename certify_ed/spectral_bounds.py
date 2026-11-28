@@ -757,7 +757,8 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
     negative controls that change them on purpose): the output then says so in distribution['moment_intervals'] and in
     an assumption of M6, and a later call on that output keeps the mark, so the bounds are seen to hold for the given
     intervals only. An M6 record without the key (written before 3.3.1, when nothing was compared) is labelled
-    'not recorded' and gets the same assumption."""
+    'not recorded' in a checked call and gets the same assumption; a label the module does not write is read as
+    'taken as given'."""
     from .diagnostics import annotate_record
     st0 = {x["id"]: x for x in rec.get("statements", [])}.get("M5.chebyshev_moments")
     if check_record and st0 is not None and st0.get("status") == "CERTIFIED":
@@ -770,10 +771,15 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
                              "check_record=False to take its intervals as given)")
     prior = rec.get("distribution")
     mark = None if prior is None else prior.get("moment_intervals", INTERVALS_UNRECORDED)
-    if mark == INTERVALS_COMPARED and check_record:
+    if mark is not None and mark not in (INTERVALS_COMPARED, INTERVALS_GIVEN, INTERVALS_UNRECORDED):
+        mark = INTERVALS_GIVEN                           # a label the module does not write: taken as given
+    if mark == INTERVALS_COMPARED:
         mark = None
-    if not check_record and mark != INTERVALS_UNRECORDED:
-        mark = INTERVALS_GIVEN
+    cause = {INTERVALS_GIVEN: "check_record=False in an earlier call",
+             INTERVALS_UNRECORDED: "an M6 record written before 3.3.1, whose hash was written without a comparison"
+             }.get(mark)
+    if not check_record:
+        mark, cause = INTERVALS_GIVEN, "check_record=False in this call"
     given = mark is not None
     out = copy.deepcopy(rec)
     st = {s["id"]: s for s in out["statements"]}
@@ -838,7 +844,7 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
     if failed:
         summary += f"; at {len(failed)} energies a polynomial was not proved and the trivial bound is given"
     if given:
-        summary += "; the moment intervals were taken as given (record_sha256 not compared)"
+        summary += f"; the moment intervals were taken as given ({cause})"
     statements.append(_vstmt("M6.distribution_bounds", "CERTIFIED", summary,
                              {"rows": rows, "degree": K,
                               "basis": ("q <= 1_(-inf, E] <= p on the spectrum interval [c - r, c + r], signs proved "
