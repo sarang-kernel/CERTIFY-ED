@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.3.1.dev0] — development after 3.3.0 (branch `fix/post-3.3.0`)
+
+- `spectral_bounds_from_certificate` names its accepted keywords in its docstring, and `spectrum_lower=None` now means
+  "not given": the certificate's proved bound on the lowest eigenvalue is used, as without the keyword (in 3.3.0 an
+  explicit None set it aside and the Gershgorin discs were used; sound, but wider). A number given as `spectrum_lower`
+  is still a declared bound that replaces the certificate's (`tests/test_spectral_entry_checks.py`).
+- `distribution_bounds` compares the `record_sha256` of an M5 record whose M5 is CERTIFIED with the hash of its body
+  and raises ValueError if the hash is missing or differs, so M6 uses only intervals that M5 proved;
+  `check_record=False` takes the intervals as given, for negative controls that change them on purpose (open item B N14,
+  part 2, of the review of round 8b).
+- `tests/test_underflow_observations.py` records the inputs of the round-10 readings that pass every scan of the
+  underflow check and still make products of the M1 and M5 bounds subnormal or zero (a norm of O near 1e-170; a norm of
+  H near 1e-10 with K = 27), and checks the intervals against the exact moments computed in Fractions. These are
+  observations, not a proof: the no-underflow hypothesis stays assumed for such products (UNVERIFIED, D-12), and a
+  negative control shows that the exact reference sees a wrong interval.
+
 ## [3.3.0] — 2026-11-28 (branch `release/3.3.0`; the tag `v3.3.0` and its evidence run follow the merge)
 
 3.3.0 releases the work of `dev/3.3` and of the review rounds 1 to 10 on main. New statements: M5 (Chebyshev moments)

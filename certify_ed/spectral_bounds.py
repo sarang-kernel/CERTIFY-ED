@@ -737,14 +737,25 @@ def _one_side(tau_hat, intervals, T, xi_f: Fraction, upper: bool, grid: Optional
 
 
 def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: Optional[int] = None,
-                        grid: Optional[int] = None) -> Dict[str, Any]:
+                        grid: Optional[int] = None, check_record: bool = True) -> Dict[str, Any]:
     """M6: bounds L(E) <= F(E) = tr(P O 1_{H <= E} O)/g <= U(E) at the given energies, from the M5 record of
     certified_chebyshev_moments. Returns a copy of the record with the statement M6 and the key 'distribution'.
 
-    The moment intervals of the record are taken as given: its record_sha256 is not compared (the tests change
-    intervals on purpose as negative controls), so a record changed after M5 gives bounds for the changed
-    intervals. Comparing the hash on an entry for unmodified records is an open item."""
+    When M5 is CERTIFIED, the record must carry the record_sha256 that M5 wrote, and the hash of its body must equal
+    it: a record without the hash, or changed after M5 (an interval, a status, the Chebyshev map), raises ValueError,
+    so the bounds are those of the intervals M5 proved (when M5 is not CERTIFIED, M6 is NOT_CHECKED and no interval
+    is used). check_record=False takes the intervals as given (for negative controls that change them
+    on purpose); the bounds then hold for the changed intervals only."""
     from .diagnostics import annotate_record
+    st0 = {x["id"]: x for x in rec.get("statements", [])}.get("M5.chebyshev_moments")
+    if check_record and st0 is not None and st0.get("status") == "CERTIFIED":
+        stored = rec.get("record_sha256")
+        if not stored:
+            raise ValueError("the record carries no record_sha256 (pass check_record=False to take its intervals as "
+                             "given)")
+        if stored != _record_hash(rec):
+            raise ValueError("the record was changed after M5: its record_sha256 does not match its body (pass "
+                             "check_record=False to take its intervals as given)")
     out = copy.deepcopy(rec)
     st = {s["id"]: s for s in out["statements"]}
     m5 = st.get("M5.chebyshev_moments")
@@ -818,7 +829,13 @@ def distribution_bounds(rec: Dict[str, Any], energies: Sequence[float], degree: 
 def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence[float] = (), members=(0,),
                                      **kw) -> Dict[str, Any]:
     """M5 and M6 from a saved certificate with stored eigenvectors and a CERTIFIED S4 cluster with the given members
-    (Options(store_eigenvectors=True, eigenspaces='all'))."""
+    (Options(store_eigenvectors=True, eigenspaces='all')).
+
+    Keywords accepted besides K, energies and members: spectrum_lower, spectrum_upper, spectrum_source,
+    underflow_check and description (as for certified_chebyshev_moments); any other raises TypeError. Without a
+    spectrum_lower, or with spectrum_lower=None, the lower end is the certificate's proved bound on the lowest eigenvalue
+    when it has one (a 'lowest' claim with S2 and S3 CERTIFIED), and the Gershgorin discs of H otherwise; a number
+    given as spectrum_lower is a declared bound and replaces the certificate's."""
     from .davis_kahan import _cluster_record
     X = cert.arrays.get("eigenvectors")
     if X is None:
@@ -837,7 +854,7 @@ def spectral_bounds_from_certificate(cert, H, O, K: int = 32, energies: Sequence
     if unknown:
         raise TypeError(f"unexpected arguments: {sorted(unknown)}")
     args.update(kw)
-    proved = lower is not None and "spectrum_lower" not in kw
+    proved = lower is not None and kw.get("spectrum_lower") is None
     if proved:
         args["spectrum_lower"] = lower
     rec = _chebyshev_moments(H, O, np.asarray(X)[:, list(members)], cl["sin_theta_bound"], cl["eta"], K,

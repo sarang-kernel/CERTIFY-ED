@@ -193,9 +193,9 @@ container recipes install it. Adding `"mpmath>=1.2"` to both extras is open.
 
 Two items of round 8 are left for later. Part A of `docs/proofs/verify_C-07b.py` checks the M5 enclosure on tilted
 vectors; a control that isolates the rounding term (exact eigenvectors, s = eta = 0, the rounding term removed) needs a
-separate oracle for the floating-point products and is open. `spectral_bounds.distribution_bounds` takes the moment
-intervals of an M5 record as given and does not compare its `record_sha256`; the negative controls change intervals on
-purpose, so a hash check needs a separate entry for unmodified records.
+separate oracle for the floating-point products and is open. Since 3.3.1.dev0 `spectral_bounds.distribution_bounds`
+compares the `record_sha256` of a record whose M5 is CERTIFIED with its body and refuses a changed record;
+`check_record=False` is the entry for negative controls that change intervals on purpose.
 
 ## Follow-ups of round 9 of the review (28 November 2026)
 
@@ -208,8 +208,5 @@ The moments keep the no-underflow hypothesis for their intermediate quantities (
 the bounds on ‖H‖ᵏ in M1 (3.3.0) is a partial proxy: in round 10 of the review, inputs that pass every scan (a small
 ‖O‖, or a small ‖H‖ with a large k) made products of the M1 and M5 bounds subnormal, and every exact moment stayed in
 its interval. An upward step for every product of the two bounds (+ ULP_MIN, as for the norm power), or the
-underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived,
-and the probes that showed it are not recorded in the repository: tests with ‖O‖ near 1e-170 and with a small ‖H‖
-and a large K, comparing the exact rational moment with the interval, are open. `spectral_bounds_from_certificate`
-should name its five accepted keywords and say that an explicit `spectrum_lower=None` sets the certificate's bound
-aside.
+underflow-tolerant model of INT-05, would remove the hypothesis there; the reason the intervals held is not derived;
+`tests/test_underflow_observations.py` records the probes that showed it, as observations (since 3.3.1.dev0).
